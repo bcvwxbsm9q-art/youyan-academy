@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台 - 游雁学院</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+    .fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-up { animation: slideUp 0.3s ease-out; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .modal { animation: modalIn 0.2s ease-out; }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .sidebar-item { transition: all 0.2s; }
+    .sidebar-item:hover { background: rgba(255,255,255,0.1); }
+    .sidebar-item.active { background: rgba(255,255,255,0.15); border-left: 3px solid #60a5fa; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .btn-primary:hover { background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%); }
+    .stat-icon { background: linear-gradient(135deg, var(--tw-gradient-from) 0%, var(--tw-gradient-to) 100%); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <!-- 顶部导航 -->
+  <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-100">
+    <div class="flex items-center justify-between px-6 py-4">
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 btn-primary rounded-xl flex items-center justify-center shadow-lg">
+          <i class="fas fa-graduation-cap text-white text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-slate-800">游雁学院</h1>
+          <p class="text-xs text-slate-400">管理后台</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-6">
+        <span class="text-sm text-slate-500">
+          <i class="fas fa-clock mr-1"></i>
+          <span id="current-time"></span>
+        </span>
+        <a href="index.html" class="text-slate-500 hover:text-slate-700 transition" title="返回首页">
+          <i class="fas fa-home text-lg"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex">
+    <!-- 左侧边栏 -->
+    <aside class="w-64 bg-slate-800 min-h-[calc(100vh-73px)] fixed left-0 top-[73px] overflow-y-auto">
+      <nav class="p-4 space-y-1">
+        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium">数据中心</div>
+        <button onclick="switchTab('dashboard')" data-tab="dashboard" class="sidebar-item active w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-chart-pie w-5"></i><span>数据概览</span>
+        </button>
+        <button onclick="switchTab('courses')" data-tab="courses" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-book w-5"></i><span>课程管理</span>
+        </button>
+        <button onclick="switchTab('categories')" data-tab="categories" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-folder-tree w-5"></i><span>分类管理</span>
+        </button>
+        <button onclick="switchTab('lecturers')" data-tab="lecturers" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-chalkboard-teacher w-5"></i><span>讲师管理</span>
+        </button>
+        
+        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium mt-6">运营中心</div>
+        <button onclick="switchTab('training')" data-tab="training" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-calendar-alt w-5"></i><span>培训管理</span>
+        </button>
+        <button onclick="switchTab('notices')" data-tab="notices" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-bullhorn w-5"></i><span>公告管理</span>
+        </button>
+        
+        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium mt-6">数据工具</div>
+        <button onclick="switchTab('export')" data-tab="export" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-download w-5"></i><span>数据导出</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="flex-1 ml-64 p-6">
+      
+      <!-- 数据概览 -->
+      <div id="tab-dashboard" class="tab-content fade-in">
+        <h2 class="text-2xl font-bold text-slate-800 mb-6">
+          <i class="fas fa-chart-pie text-indigo-500 mr-2"></i>数据概览
+        </h2>
+        
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-slate-500 mb-1">课程总数</p>
+                <p class="text-3xl font-bold text-slate-800" id="stat-courses">0</p>
+              </div>
+              <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-book text-white text-xl"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-green-500"><i class="fas fa-arrow-up mr-1"></i><span id="stat-courses-growth">0</span>%</span>
+              <span class="text-slate-400 ml-2">较上月</span>
+            </div>
+          </div>
+          
+          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-slate-500 mb-1">讲师总数</p>
+                <p class="text-3xl font-bold text-slate-800" id="stat-lecturers">0</p>
+              </div>
+              <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-chalkboard-teacher text-white text-xl"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-green-500"><i class="fas fa-arrow-up mr-1"></i><span id="stat-lecturers-growth">0</span>%</span>
+              <span class="text-slate-400 ml-2">较上月</span>
+            </div>
+          </div>
+          
+          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-slate-500 mb-1">用户总数</p>
+                <p class="text-3xl font-bold text-slate-800" id="stat-users">0</p>
+              </div>
+              <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-users text-white text-xl"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-green-500"><i class="fas fa-arrow-up mr-1"></i><span id="stat-users-growth">0</span>%</span>
+              <span class="text-slate-400 ml-2">较上月</span>
+            </div>
+          </div>
+          
+          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-slate-500 mb-1">分类总数</p>
+                <p class="text-3xl font-bold text-slate-800" id="stat-categories">0</p>
+              </div>
+              <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-folder text-white text-xl"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm text-slate-400">
+              <span id="stat-categories-child">0</span> 个子分类
+            </div>
+          </div>
+        </div>
+        
+        <!-- 快速操作 -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm">
+          <h3 class="text-lg font-semibold text-slate-800 mb-4">
+            <i class="fas fa-bolt text-yellow-500 mr-2"></i>快捷操作
+          </h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <button onclick="switchTab('courses'); setTimeout(openCourseModal, 100)" class="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition text-center">
+              <i class="fas fa-plus-circle text-blue-500 text-2xl mb-2"></i>
+              <p class="text-sm font-medium text-slate-700">添加课程</p>
+            </button>
+            <button onclick="switchTab('categories'); setTimeout(() => openCategoryModal('parent'), 100)" class="p-4 bg-green-50 hover:bg-green-100 rounded-xl transition text-center">
+              <i class="fas fa-folder-plus text-green-500 text-2xl mb-2"></i>
+              <p class="text-sm font-medium text-slate-700">添加分类</p>
+            </button>
+            <button onclick="switchTab('lecturers'); setTimeout(openLecturerModal, 100)" class="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition text-center">
+              <i class="fas fa-user-plus text-purple-500 text-2xl mb-2"></i>
+              <p class="text-sm font-medium text-slate-700">添加讲师</p>
+            </button>
+            <button onclick="switchTab('export')" class="p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition text-center">
+              <i class="fas fa-file-export text-orange-500 text-2xl mb-2"></i>
+              <p class="text-sm font-medium text-slate-700">导出数据</p>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 课程管理 -->
+      <div id="tab-courses" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-book text-blue-500 mr-2"></i>课程管理
+          </h2>
+          <button onclick="openCourseModal()" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition">
+            <i class="fas fa-plus mr-2"></i>添加课程
+          </button>
+        </div>
+        
+        <!-- 筛选栏 -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm mb-6 flex flex-wrap gap-4">
+          <div class="flex-1 min-w-[200px]">
+            <input type="text" id="course-search" placeholder="搜索课程名称..." 
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+              oninput="renderCourses()">
+          </div>
+          <select id="course-status-filter" onchange="renderCourses()" 
+            class="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition">
+            <option value="">全部状态</option>
+            <option value="published">已发布</option>
+            <option value="draft">草稿</option>
+            <option value="offline">已下架</option>
+          </select>
+          <select id="course-category-filter" onchange="renderCourses()" 
+            class="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition">
+            <option value="">全部分类</option>
+          </select>
+        </div>
+        
+        <!-- 课程列表 -->
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-6 py-4 text-left text-sm font-semibold text-slate-600">课程信息</th>
+                  <th class="px-6 py-4 text-left text-sm font-semibold text-slate-600">分类/讲师</th>
+                  <th class="px-6 py-4 text-center text-sm font-semibold text-slate-600">时长</th>
+                  <th class="px-6 py-4 text-center text-sm font-semibold text-slate-600">观看</th>
+                  <th class="px-6 py-4 text-center text-sm font-semibold text-slate-600">状态</th>
+                  <th class="px-6 py-4 text-center text-sm font-semibold text-slate-600">操作</th>
+                </tr>
+              </thead>
+              <tbody id="course-list" class="divide-y divide-slate-100">
+              </tbody>
+            </table>
+          </div>
+          <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+            <p class="text-sm text-slate-500">共 <span id="course-count" class="font-semibold text-slate-700">0</span> 条记录</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 分类管理 -->
+      <div id="tab-categories" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-folder-tree text-green-500 mr-2"></i>分类管理
+          </h2>
+          <button onclick="openCategoryModal('parent')" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition">
+            <i class="fas fa-plus mr-2"></i>添加一级分类
+          </button>
+        </div>
+        
+        <!-- 分类统计 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+            <p class="text-2xl font-bold text-blue-500" id="cat-parent-count">0</p>
+            <p class="text-sm text-slate-500">一级分类</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+            <p class="text-2xl font-bold text-purple-500" id="cat-child-count">0</p>
+            <p class="text-sm text-slate-500">二级分类</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+            <p class="text-2xl font-bold text-green-500" id="cat-course-count">0</p>
+            <p class="text-sm text-slate-500">课程数</p>
+          </div>
+        </div>
+        
+        <!-- 分类列表 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="category-list">
+        </div>
+      </div>
+
+      <!-- 讲师管理 -->
+      <div id="tab-lecturers" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-chalkboard-teacher text-purple-500 mr-2"></i>讲师管理
+          </h2>
+          <button onclick="openLecturerModal()" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition">
+            <i class="fas fa-plus mr-2"></i>添加讲师
+          </button>
+        </div>
+        
+        <!-- 讲师统计 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+            <p class="text-2xl font-bold text-slate-800" id="lect-total">0</p>
+            <p class="text-sm text-slate-500">讲师总数</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+            <p class="text-2xl font-bold text-green-500" id="lect-enabled">0</p>
+            <p class="text-sm text-slate-500">启用中</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+            <p class="text-2xl font-bold text-purple-500" id="lect-chief">0</p>
+            <p class="text-sm text-slate-500">首席讲师</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+            <p class="text-2xl font-bold text-blue-500" id="lect-courses">0</p>
+            <p class="text-sm text-slate-500">课程数</p>
+          </div>
+        </div>
+        
+        <!-- 讲师列表 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="lecturer-list">
+        </div>
+      </div>
+
+      <!-- 培训管理 -->
+      <div id="tab-training" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-calendar-alt text-orange-500 mr-2"></i>培训管理
+          </h2>
+          <button onclick="openTrainingModal()" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition">
+            <i class="fas fa-plus mr-2"></i>添加培训
+          </button>
+        </div>
+        
+        <div id="training-list" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        </div>
+      </div>
+
+      <!-- 公告管理 -->
+      <div id="tab-notices" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-bullhorn text-red-500 mr-2"></i>公告管理
+          </h2>
+          <button onclick="openNoticeModal()" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition">
+            <i class="fas fa-plus mr-2"></i>发布公告
+          </button>
+        </div>
+        
+        <div id="notice-list" class="space-y-4">
+        </div>
+      </div>
+
+      <!-- 数据导出 -->
+      <div id="tab-export" class="tab-content hidden">
+        <h2 class="text-2xl font-bold text-slate-800 mb-6">
+          <i class="fas fa-download text-indigo-500 mr-2"></i>数据导出
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
+            <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mb-4">
+              <i class="fas fa-book text-blue-500 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">课程数据</h3>
+            <p class="text-sm text-slate-500 mb-4">导出所有课程信息，包含分类、讲师、状态等</p>
+            <button onclick="exportData('courses')" class="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition">
+              <i class="fas fa-download mr-2"></i>导出 CSV
+            </button>
+          </div>
+          
+          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
+            <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mb-4">
+              <i class="fas fa-chalkboard-teacher text-emerald-500 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">讲师数据</h3>
+            <p class="text-sm text-slate-500 mb-4">导出所有讲师信息，包含等级、部门、课程数等</p>
+            <button onclick="exportData('lecturers')" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium transition">
+              <i class="fas fa-download mr-2"></i>导出 CSV
+            </button>
+          </div>
+          
+          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
+            <div class="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-4">
+              <i class="fas fa-users text-purple-500 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">用户数据</h3>
+            <p class="text-sm text-slate-500 mb-4">导出所有用户信息，包含注册时间、状态等</p>
+            <button onclick="exportData('users')" class="w-full py-2.5 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-medium transition">
+              <i class="fas fa-download mr-2"></i>导出 CSV
+            </button>
+          </div>
+          
+          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
+            <div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mb-4">
+              <i class="fas fa-folder text-orange-500 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">分类数据</h3>
+            <p class="text-sm text-slate-500 mb-4">导出一级和二级分类的层级结构</p>
+            <button onclick="exportData('categories')" class="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-medium transition">
+              <i class="fas fa-download mr-2"></i>导出 CSV
+            </button>
+          </div>
+          
+          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
+            <div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mb-4">
+              <i class="fas fa-history text-red-500 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">学习记录</h3>
+            <p class="text-sm text-slate-500 mb-4">导出台账学习记录</p>
+            <button onclick="exportData('learning')" class="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition">
+              <i class="fas fa-download mr-2"></i>导出 CSV
+            </button>
+          </div>
+          
+          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
+            <div class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+              <i class="fas fa-database text-slate-500 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">全部数据</h3>
+            <p class="text-sm text-slate-500 mb-4">导出完整的 JSON 数据文件，可用于数据备份</p>
+            <button onclick="exportData('all')" class="w-full py-2.5 bg-slate-600 hover:bg-slate-700 text-white rounded-xl font-medium transition">
+              <i class="fas fa-download mr-2"></i>导出 JSON
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 模态框容器 -->
+  <div id="modal-container"></div>
+  
+  <!-- Toast 提示 -->
+  <div id="toast" class="fixed bottom-6 right-6 px-6 py-3 rounded-xl shadow-lg z-50 hidden transform transition-all duration-300 translate-y-4 opacity-0">
+  </div>
+
+  <script>
+    // ========== 全局配置 ==========
+    const API = window.location.origin + '/api';
+    
+    // 数据存储
+    let data = {
+      courses: [],
+      categories: [],
+      lecturers: [],
+      training: [],
+      notices: [],
+      users: []
+    };
+    
+    // ========== 初始化 ==========
+    document.addEventListener('DOMContentLoaded', async () => {
+      updateTime();
+      setInterval(updateTime, 1000);
+      await loadAllData();
+      switchTab('dashboard');
+    });
+    
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('current-time').textContent = now.toLocaleString('zh-CN', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+    }
+    
+    async function loadAllData() {
+      try {
+        const [coursesRes, catsRes, lectRes, trainRes, noticesRes] = await Promise.all([
+          fetch(API + '/courses'),
+          fetch(API + '/categories'),
+          fetch(API + '/lecturers'),
+          fetch(API + '/training'),
+          fetch(API + '/notices')
+        ]);
+        data.courses = await coursesRes.json();
+        data.categories = await catsRes.json();
+        data.lecturers = await lectRes.json();
+        data.training = await trainRes.json();
+        data.notices = await noticesRes.json();
+        
+        // 确保分类是数组格式
+        if (!Array.isArray(data.categories)) {
+          data.categories = [];
+        }
+        
+        // 更新分类筛选下拉
+        updateCategoryFilter();
+      } catch (e) {
+        console.error('加载数据失败', e);
+        toast('数据加载失败', 'error');
+      }
+    }
+    
+    function updateCategoryFilter() {
+      const select = document.getElementById('course-category-filter');
+      if (!select) return;
+      const options = data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      select.innerHTML = '<option value="">全部分类</option>' + options;
+    }
+    
+    // ========== 标签切换 ==========
+    function switchTab(name) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById('tab-' + name).classList.remove('hidden');
+      document.querySelector(`[data-tab="${name}"]`).classList.add('active');
+      
+      // 加载对应标签页数据
+      const loaders = {
+        dashboard: loadDashboard,
+        courses: renderCourses,
+        categories: renderCategories,
+        lecturers: renderLecturers,
+        training: renderTraining,
+        notices: renderNotices
+      };
+      if (loaders[name]) loaders[name]();
+    }
+    
+    // ========== Toast 提示 ==========
+    function toast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      const colors = {
+        success: 'bg-emerald-500 text-white',
+        error: 'bg-red-500 text-white',
+        warning: 'bg-amber-500 text-white'
+      };
+      t.className = `fixed bottom-6 right-6 px-6 py-3 rounded-xl shadow-lg z-50 transform transition-all duration-300 ${colors[type] || colors.success}`;
+      t.innerHTML = `<i class="fas ${type === 'error' ? 'fa-times-circle' : 'fa-check-circle'} mr-2"></i>${msg}`;
+      t.classList.remove('hidden', 'translate-y-4', 'opacity-0');
+      setTimeout(() => {
+        t.classList.add('translate-y-4', 'opacity-0');
+        setTimeout(() => t.classList.add('hidden'), 300);
+      }, 3000);
+    }
+    
+    // ========== 数据统计 ==========
+    async function loadDashboard() {
+      document.getElementById('stat-courses').textContent = data.courses.length;
+      document.getElementById('stat-lecturers').textContent = data.lecturers.length;
+      document.getElementById('stat-users').textContent = '-';
+      document.getElementById('stat-categories').textContent = data.categories.length;
+      
+      const childCount = data.categories.reduce((sum, c) => sum + (c.children?.length || 0), 0);
+      document.getElementById('stat-categories-child').textContent = childCount;
+      
+      // 随机增长数据（实际项目中从后端获取）
+      document.getElementById('stat-courses-growth').textContent = Math.floor(Math.random() * 20 + 5);
+      document.getElementById('stat-lecturers-growth').textContent = Math.floor(Math.random() * 10 + 2);
+      document.getElementById('stat-users-growth').textContent = Math.floor(Math.random() * 15 + 3);
+    }
+    
+    // ========== 课程管理 ==========
+    function renderCourses() {
+      const search = document.getElementById('course-search').value.toLowerCase();
+      const status = document.getElementById('course-status-filter').value;
+      const categoryId = document.getElementById('course-category-filter').value;
+      
+      let filtered = data.courses.filter(c => {
+        const matchSearch = !search || c.title.toLowerCase().includes(search);
+        const matchStatus = !status || c.status === status;
+        const matchCategory = !categoryId || c.categoryId == categoryId;
+        return matchSearch && matchStatus && matchCategory;
+      });
+      
+      document.getElementById('course-count').textContent = filtered.length;
+      
+      if (filtered.length === 0) {
+        document.getElementById('course-list').innerHTML = `
+          <tr>
+            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+              <i class="fas fa-inbox text-3xl mb-3"></i>
+              <p>暂无课程数据</p>
+            </td>
+          </tr>`;
+        return;
+      }
+      
+      const statusMap = {
+        published: { class: 'bg-emerald-100 text-emerald-700', text: '已发布' },
+        draft: { class: 'bg-amber-100 text-amber-700', text: '草稿' },
+        offline: { class: 'bg-slate-100 text-slate-600', text: '已下架' }
+      };
+      
+      document.getElementById('course-list').innerHTML = filtered.map(c => {
+        const cat = data.categories.find(x => x.id == c.categoryId);
+        const subcat = cat?.children?.find(s => s.id == c.subcategoryId);
+        const lect = data.lecturers.find(x => x.id == c.lecturerId);
+        const st = statusMap[c.status] || statusMap.draft;
+        const videoCount = c.videos?.length || 0;
+        const attachmentCount = c.attachments?.length || 0;
+        
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-6 py-4">
+              <div class="flex items-center space-x-4">
+                <img src="${c.cover || 'https://via.placeholder.com/80x50'}" class="w-20 h-12 object-cover rounded-lg" onerror="this.src='https://via.placeholder.com/80x50'">
+                <div>
+                  <p class="font-medium text-slate-800 truncate max-w-xs">${c.title}</p>
+                  <p class="text-xs text-slate-400">ID: ${c.id}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <p class="text-sm text-slate-700">${cat?.name || '-'}${subcat ? ' / ' + subcat.name : ''}</p>
+              <p class="text-xs text-slate-400">${lect?.name || '-'}</p>
+            </td>
+            <td class="px-6 py-4 text-center text-sm text-slate-600">
+              <div class="flex flex-col items-center gap-1">
+                <span>${formatDuration(c.duration)}</span>
+                ${videoCount > 0 ? `<span class="text-xs text-blue-500"><i class="fas fa-video mr-1"></i>${videoCount}</span>` : ''}
+              </div>
+            </td>
+            <td class="px-6 py-4 text-center text-sm text-slate-600">${(c.views || 0).toLocaleString()}</td>
+            <td class="px-6 py-4 text-center"><span class="px-2.5 py-1 rounded-full text-xs font-medium ${st.class}">${st.text}</span></td>
+            <td class="px-6 py-4 text-center">
+              <div class="flex items-center justify-center space-x-2">
+                <button onclick="editCourse(${c.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑">
+                  <i class="fas fa-edit"></i>
+                </button>
+                ${attachmentCount > 0 ? `<span class="text-xs text-emerald-500" title="${attachmentCount}个附件"><i class="fas fa-paperclip"></i></span>` : ''}
+                <button onclick="toggleCourseStatus(${c.id})" class="p-2 ${c.status === 'published' ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'} rounded-lg transition" title="${c.status === 'published' ? '下架' : '发布'}">
+                  <i class="fas ${c.status === 'published' ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+                </button>
+                <button onclick="deleteCourse(${c.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+    
+    function formatDuration(seconds) {
+      if (!seconds) return '0分钟';
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      return h > 0 ? `${h}小时${m}分钟` : `${m}分钟`;
+    }
+    
+    function openCourseModal(course = null) {
+      const isEdit = !!course;
+      const parentOptions = data.categories.map(c => `<option value="${c.id}" ${course?.categoryId == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      const lectOptions = data.lecturers.map(l => `<option value="${l.id}" ${course?.lecturerId == l.id ? 'selected' : ''}>${l.name}</option>`).join('');
+      const coverUrl = course?.cover || '';
+      const selectedCategoryId = course?.categoryId || '';
+      const selectedSubcategoryId = course?.subcategoryId || '';
+      
+      // 获取当前选中的一级分类下的二级分类
+      const selectedCategory = data.categories.find(c => c.id == selectedCategoryId);
+      const subcategoryOptions = selectedCategory?.children?.map(s => 
+        `<option value="${s.id}" ${course?.subcategoryId == s.id ? 'selected' : ''}>${s.name}</option>`
+      ).join('') || '';
+      
+      // 已上传的附件
+      const attachments = course?.attachments || [];
+      const videos = course?.videos || [];
+      
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑课程' : '添加课程'}</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveCourse(event, ${course?.id || 'null'})" class="p-6 space-y-5">
+            <!-- 课程封面 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">课程封面 <span class="text-red-500">*</span></label>
+              <div class="flex items-start space-x-4">
+                <div id="cover-preview" class="w-40 h-24 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-50 cursor-pointer hover:border-indigo-400 transition overflow-hidden" onclick="document.getElementById('c-cover-file').click()">
+                  ${coverUrl ? `<img src="${coverUrl}" class="w-full h-full object-cover">` : `<div class="text-center"><i class="fas fa-image text-slate-300 text-2xl mb-1"></i><p class="text-xs text-slate-400">点击上传</p></div>`}
+                </div>
+                <div class="flex-1">
+                  <input type="file" id="c-cover-file" accept="image/*" class="hidden" onchange="handleCoverUpload(this)">
+                  <input type="text" id="c-cover" value="${coverUrl}" class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm" placeholder="或输入封面URL">
+                  <p class="text-xs text-slate-400 mt-1">支持 JPG、PNG 格式，建议尺寸 400x225</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 课程名称 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">课程名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="c-title" value="${course?.title || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="输入课程名称">
+            </div>
+            
+            <!-- 分类联动 -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">一级分类 <span class="text-red-500">*</span></label>
+                <select id="c-category" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" onchange="onCategoryChange(this.value)">
+                  <option value="">请选择一级分类</option>
+                  ${parentOptions}
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">二级分类</label>
+                <select id="c-subcategory" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <option value="">请选择二级分类</option>
+                  ${subcategoryOptions}
+                </select>
+              </div>
+            </div>
+            
+            <!-- 讲师 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">讲师 <span class="text-red-500">*</span></label>
+              <select id="c-lecturer" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="">请选择讲师</option>
+                ${lectOptions}
+              </select>
+            </div>
+            
+            <!-- 课程描述 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">课程描述</label>
+              <textarea id="c-desc" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="输入课程描述">${course?.description || ''}</textarea>
+            </div>
+            
+            <!-- 视频上传 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">课程视频</label>
+              <div id="video-upload-area" class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-indigo-400 transition cursor-pointer" onclick="document.getElementById('c-video-file').click()">
+                <i class="fas fa-video text-slate-400 text-2xl mb-2"></i>
+                <p class="text-sm text-slate-500">点击或拖拽上传视频</p>
+                <p class="text-xs text-slate-400 mt-1">支持 MP4、MOV、AVI 格式</p>
+              </div>
+              <input type="file" id="c-video-file" accept="video/*" class="hidden" multiple onchange="handleVideoUpload(this)">
+              <div id="video-list" class="mt-3 space-y-2">
+                ${videos.map((v, i) => `
+                  <div class="flex items-center justify-between bg-slate-50 rounded-lg p-3">
+                    <div class="flex items-center space-x-3">
+                      <i class="fas fa-play-circle text-blue-500"></i>
+                      <span class="text-sm text-slate-700 truncate max-w-xs">${v.title || v.url}</span>
+                    </div>
+                    <button type="button" onclick="removeVideo(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+                  </div>
+                `).join('')}
+              </div>
+              <input type="hidden" id="c-videos" value='${JSON.stringify(videos)}'>
+            </div>
+            
+            <!-- 文档/资料上传 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">课程资料（文档、图片等）</label>
+              <div id="doc-upload-area" class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-indigo-400 transition cursor-pointer" onclick="document.getElementById('c-doc-file').click()">
+                <i class="fas fa-file-alt text-slate-400 text-2xl mb-2"></i>
+                <p class="text-sm text-slate-500">点击或拖拽上传资料</p>
+                <p class="text-xs text-slate-400 mt-1">支持 PDF、Word、Excel、图片等（可多选）</p>
+              </div>
+              <input type="file" id="c-doc-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif" multiple class="hidden" onchange="handleDocUpload(this)">
+              <div id="doc-list" class="mt-3 space-y-2">
+                ${attachments.map((a, i) => `
+                  <div class="flex items-center justify-between bg-slate-50 rounded-lg p-3">
+                    <div class="flex items-center space-x-3">
+                      <i class="fas ${getDocIcon(a.type)} text-emerald-500"></i>
+                      <span class="text-sm text-slate-700 truncate max-w-xs">${a.name || a.url}</span>
+                    </div>
+                    <button type="button" onclick="removeAttachment(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+                  </div>
+                `).join('')}
+              </div>
+              <input type="hidden" id="c-attachments" value='${JSON.stringify(attachments)}'>
+            </div>
+            
+            <!-- 状态 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">状态</label>
+              <div class="flex space-x-4">
+                <label class="flex items-center"><input type="radio" name="c-status" value="published" ${(course?.status || 'published') === 'published' ? 'checked' : ''} class="mr-2">发布</label>
+                <label class="flex items-center"><input type="radio" name="c-status" value="draft" ${course?.status === 'draft' ? 'checked' : ''} class="mr-2">草稿</label>
+                <label class="flex items-center"><input type="radio" name="c-status" value="offline" ${course?.status === 'offline' ? 'checked' : ''} class="mr-2">下架</label>
+              </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 pt-4 border-t">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">保存</button>
+            </div>
+          </form>
+        </div>
+      `);
+      
+      // 初始化拖拽上传
+      initDragDrop();
+    }
+    
+    // 分类联动 - 一级分类变化时更新二级分类
+    function onCategoryChange(categoryId) {
+      const subcategorySelect = document.getElementById('c-subcategory');
+      subcategorySelect.innerHTML = '<option value="">请选择二级分类</option>';
+      
+      if (!categoryId) return;
+      
+      const category = data.categories.find(c => c.id == categoryId);
+      if (category && category.children && category.children.length > 0) {
+        category.children.forEach(child => {
+          const option = document.createElement('option');
+          option.value = child.id;
+          option.textContent = child.name;
+          subcategorySelect.appendChild(option);
+        });
+      }
+    }
+    
+    // 获取文档图标
+    function getDocIcon(type) {
+      if (!type) return 'fa-file';
+      if (type.includes('pdf')) return 'fa-file-pdf text-red-500';
+      if (type.includes('word') || type.includes('doc')) return 'fa-file-word text-blue-500';
+      if (type.includes('excel') || type.includes('sheet') || type.includes('xls')) return 'fa-file-excel text-green-500';
+      if (type.includes('image') || type.includes('jpg') || type.includes('png') || type.includes('gif')) return 'fa-file-image text-purple-500';
+      return 'fa-file-alt text-slate-500';
+    }
+    
+    // 处理课程封面上传
+    async function handleCoverUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      try {
+        input.disabled = true;
+        const response = await fetch(API + '/upload?type=covers', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+          document.getElementById('c-cover').value = result.url;
+          document.getElementById('cover-preview').innerHTML = `<img src="${result.url}" class="w-full h-full object-cover">`;
+          toast('封面上传成功');
+        } else {
+          toast(result.error || '上传失败', 'error');
+        }
+      } catch (err) {
+        toast('上传失败', 'error');
+      } finally {
+        input.disabled = false;
+      }
+    }
+    
+    // 处理视频上传
+    async function handleVideoUpload(input) {
+      const files = Array.from(input.files);
+      if (files.length === 0) return;
+      
+      const videoList = document.getElementById('video-list');
+      const videos = JSON.parse(document.getElementById('c-videos').value || '[]');
+      
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+          const response = await fetch(API + '/upload?type=videos', {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          
+          if (result.success) {
+            videos.push({
+              url: result.url,
+              title: file.name,
+              size: result.size,
+              type: result.mimetype
+            });
+            
+            const index = videos.length - 1;
+            const videoItem = document.createElement('div');
+            videoItem.className = 'flex items-center justify-between bg-slate-50 rounded-lg p-3';
+            videoItem.id = `video-item-${index}`;
+            videoItem.innerHTML = `
+              <div class="flex items-center space-x-3">
+                <i class="fas fa-play-circle text-blue-500"></i>
+                <span class="text-sm text-slate-700 truncate max-w-xs">${file.name}</span>
+              </div>
+              <button type="button" onclick="removeVideo(${index})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+            `;
+            videoList.appendChild(videoItem);
+          }
+        } catch (err) {
+          console.error('上传失败', err);
+        }
+      }
+      
+      document.getElementById('c-videos').value = JSON.stringify(videos);
+      input.value = '';
+      toast(`${files.length} 个视频上传完成`);
+    }
+    
+    // 处理文档上传（支持批量）
+    async function handleDocUpload(input) {
+      const files = Array.from(input.files);
+      if (files.length === 0) return;
+      
+      const docList = document.getElementById('doc-list');
+      const attachments = JSON.parse(document.getElementById('c-attachments').value || '[]');
+      
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // 根据文件类型选择上传目录
+        let uploadType = 'documents';
+        if (file.type.startsWith('image/')) {
+          uploadType = 'images';
+        }
+        
+        try {
+          const response = await fetch(API + `/upload?type=${uploadType}`, {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          
+          if (result.success) {
+            attachments.push({
+              url: result.url,
+              name: file.name,
+              size: result.size,
+              type: result.mimetype
+            });
+            
+            const index = attachments.length - 1;
+            const docItem = document.createElement('div');
+            docItem.className = 'flex items-center justify-between bg-slate-50 rounded-lg p-3';
+            docItem.id = `doc-item-${index}`;
+            docItem.innerHTML = `
+              <div class="flex items-center space-x-3">
+                <i class="fas ${getDocIcon(file.type)}"></i>
+                <span class="text-sm text-slate-700 truncate max-w-xs">${file.name}</span>
+              </div>
+              <button type="button" onclick="removeAttachment(${index})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+            `;
+            docList.appendChild(docItem);
+          }
+        } catch (err) {
+          console.error('上传失败', err);
+        }
+      }
+      
+      document.getElementById('c-attachments').value = JSON.stringify(attachments);
+      input.value = '';
+      toast(`${files.length} 个文件上传完成`);
+    }
+    
+    // 删除视频
+    function removeVideo(index) {
+      const videos = JSON.parse(document.getElementById('c-videos').value || '[]');
+      videos.splice(index, 1);
+      document.getElementById('c-videos').value = JSON.stringify(videos);
+      const item = document.getElementById(`video-item-${index}`);
+      if (item) item.remove();
+      // 重新渲染列表
+      renderVideoList(videos);
+    }
+    
+    // 删除附件
+    function removeAttachment(index) {
+      const attachments = JSON.parse(document.getElementById('c-attachments').value || '[]');
+      attachments.splice(index, 1);
+      document.getElementById('c-attachments').value = JSON.stringify(attachments);
+      const item = document.getElementById(`doc-item-${index}`);
+      if (item) item.remove();
+      // 重新渲染列表
+      renderAttachmentList(attachments);
+    }
+    
+    // 渲染视频列表
+    function renderVideoList(videos) {
+      const videoList = document.getElementById('video-list');
+      if (!videoList) return;
+      videoList.innerHTML = videos.map((v, i) => `
+        <div class="flex items-center justify-between bg-slate-50 rounded-lg p-3" id="video-item-${i}">
+          <div class="flex items-center space-x-3">
+            <i class="fas fa-play-circle text-blue-500"></i>
+            <span class="text-sm text-slate-700 truncate max-w-xs">${v.title || v.url}</span>
+          </div>
+          <button type="button" onclick="removeVideo(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+        </div>
+      `).join('');
+    }
+    
+    // 渲染附件列表
+    function renderAttachmentList(attachments) {
+      const docList = document.getElementById('doc-list');
+      if (!docList) return;
+      docList.innerHTML = attachments.map((a, i) => `
+        <div class="flex items-center justify-between bg-slate-50 rounded-lg p-3" id="doc-item-${i}">
+          <div class="flex items-center space-x-3">
+            <i class="fas ${getDocIcon(a.type)} text-emerald-500"></i>
+            <span class="text-sm text-slate-700 truncate max-w-xs">${a.name || a.url}</span>
+          </div>
+          <button type="button" onclick="removeAttachment(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+        </div>
+      `).join('');
+    }
+    
+    // 初始化拖拽上传
+    function initDragDrop() {
+      ['video-upload-area', 'doc-upload-area'].forEach(areaId => {
+        const area = document.getElementById(areaId);
+        if (!area) return;
+        
+        area.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          area.classList.add('border-indigo-400', 'bg-indigo-50');
+        });
+        
+        area.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          area.classList.remove('border-indigo-400', 'bg-indigo-50');
+        });
+        
+        area.addEventListener('drop', (e) => {
+          e.preventDefault();
+          area.classList.remove('border-indigo-400', 'bg-indigo-50');
+          
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            const inputId = areaId === 'video-upload-area' ? 'c-video-file' : 'c-doc-file';
+            const input = document.getElementById(inputId);
+            const dataTransfer = new DataTransfer();
+            files.forEach(f => dataTransfer.items.add(f));
+            input.files = dataTransfer.files;
+            
+            if (areaId === 'video-upload-area') {
+              handleVideoUpload(input);
+            } else {
+              handleDocUpload(input);
+            }
+          }
+        });
+      });
+    }
+    
+    async function saveCourse(e, id) {
+      e.preventDefault();
+      const categorySelect = document.getElementById('c-category');
+      const subcategorySelect = document.getElementById('c-subcategory');
+      
+      const formData = {
+        title: document.getElementById('c-title').value.trim(),
+        cover: document.getElementById('c-cover').value.trim() || 'https://via.placeholder.com/400x225',
+        categoryId: categorySelect.value ? parseInt(categorySelect.value) : null,
+        subcategoryId: subcategorySelect.value ? parseInt(subcategorySelect.value) : null,
+        lecturerId: parseInt(document.getElementById('c-lecturer').value),
+        description: document.getElementById('c-desc').value.trim(),
+        status: document.querySelector('input[name="c-status"]:checked').value,
+        videos: JSON.parse(document.getElementById('c-videos').value || '[]'),
+        attachments: JSON.parse(document.getElementById('c-attachments').value || '[]'),
+        duration: 0,
+        views: 0,
+        rating: 0
+      };
+      
+      if (!formData.categoryId) {
+        toast('请选择一级分类', 'error');
+        return;
+      }
+      
+      try {
+        let res, result;
+        if (id) {
+          res = await fetch(API + '/courses/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        } else {
+          res = await fetch(API + '/courses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        }
+        result = await res.json();
+        
+        if (result.success || res.ok) {
+          toast(id ? '课程已更新' : '课程已添加');
+          closeModal();
+          await loadAllData();
+          renderCourses();
+          // 广播课程变更，通知其他页面（如播放页）刷新数据
+          try {
+            localStorage.setItem('youyan_academy_sync', JSON.stringify({
+              type: 'courses', timestamp: Date.now(), source: '/dashboard.html'
+            }));
+          } catch(e) {}
+        } else {
+          toast(result.error || '操作失败', 'error');
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+    
+    function editCourse(id) {
+      const course = data.courses.find(c => c.id === id);
+      if (course) openCourseModal(course);
+    }
+    
+    async function toggleCourseStatus(id) {
+      const course = data.courses.find(c => c.id === id);
+      if (!course) return;
+      const newStatus = course.status === 'published' ? 'offline' : 'published';
+      try {
+        const res = await fetch(API + '/courses/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...course, status: newStatus })
+        });
+        const result = await res.json();
+        if (result.success || res.ok) {
+          toast(newStatus === 'published' ? '课程已发布' : '课程已下架');
+          await loadAllData();
+          renderCourses();
+          try { localStorage.setItem('youyan_academy_sync', JSON.stringify({ type: 'courses', timestamp: Date.now(), source: '/dashboard.html' })); } catch(e) {}
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+    
+    async function deleteCourse(id) {
+      if (!confirm('确定要删除这门课程吗？')) return;
+      try {
+        const res = await fetch(API + '/courses/' + id, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success || res.ok) {
+          toast('课程已删除');
+          await loadAllData();
+          renderCourses();
+          try { localStorage.setItem('youyan_academy_sync', JSON.stringify({ type: 'courses', timestamp: Date.now(), source: '/dashboard.html' })); } catch(e) {}
+        } else {
+          toast(result.error || '删除失败', 'error');
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+    
+    // ========== 分类管理 ==========
+    function renderCategories() {
+      document.getElementById('cat-parent-count').textContent = data.categories.length;
+      const childCount = data.categories.reduce((sum, c) => sum + (c.children?.length || 0), 0);
+      document.getElementById('cat-child-count').textContent = childCount;
+      document.getElementById('cat-course-count').textContent = data.courses.length;
+      
+      if (data.categories.length === 0) {
+        document.getElementById('category-list').innerHTML = `
+          <div class="col-span-2 bg-white rounded-2xl p-12 text-center text-slate-400">
+            <i class="fas fa-folder-open text-4xl mb-4"></i>
+            <p>暂无分类数据</p>
+          </div>`;
+        return;
+      }
+      
+      document.getElementById('category-list').innerHTML = data.categories.map(cat => `
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="p-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <i class="fas ${cat.icon || 'fa-folder'} text-xl"></i>
+                <div>
+                  <span class="font-semibold">${cat.name}</span>
+                  <span class="text-xs opacity-75 ml-2">${cat.key || ''}</span>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <button onclick="openCategoryModal('child', ${cat.id})" class="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition" title="添加子分类">
+                  <i class="fas fa-plus"></i>
+                </button>
+                <button onclick="editCategory(${cat.id})" class="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition" title="编辑">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="deleteCategory(${cat.id})" class="p-2 bg-white/20 hover:bg-red-500 rounded-lg transition" title="删除">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="p-4">
+            <p class="text-xs text-slate-400 mb-3">子分类 (${cat.children?.length || 0})</p>
+            <div class="flex flex-wrap gap-2">
+              ${(cat.children || []).map(child => `
+                <span class="inline-flex items-center px-3 py-1.5 bg-slate-100 rounded-lg text-sm">
+                  ${child.name}
+                  <button onclick="editCategory(${cat.id}, ${child.id})" class="ml-2 text-slate-400 hover:text-blue-500"><i class="fas fa-edit text-xs"></i></button>
+                  <button onclick="deleteCategory(${cat.id}, ${child.id})" class="ml-1 text-slate-400 hover:text-red-500"><i class="fas fa-times text-xs"></i></button>
+                </span>
+              `).join('') || '<span class="text-slate-400 text-sm">暂无子分类</span>'}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function openCategoryModal(type, parentId = null, child = null) {
+      const isChild = type === 'child';
+      const parentCat = parentId ? data.categories.find(c => c.id === parentId) : null;
+      
+      let modalContent = `
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">${child ? '编辑' : '添加'}${isChild ? '二级' : '一级'}分类</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveCategory(event, '${type}', ${parentId || 'null'}, ${child?.id || 'null'})" class="p-6 space-y-4">
+            ${isChild && parentCat ? `<div><label class="block text-sm text-slate-500 mb-1">父分类</label><p class="font-medium">${parentCat.name}</p></div>` : ''}
+            ${!isChild ? `
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">分类名称 <span class="text-red-500">*</span></label>
+                <input type="text" id="cat-name" value="${child?.name || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">标识(key)</label>
+                <input type="text" id="cat-key" value="${child?.key || parentCat?.key || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="如: frontend">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">图标</label>
+                <div class="flex flex-wrap gap-2">
+                  ${['fa-sitemap', 'fa-code', 'fa-paint-brush', 'fa-line-chart', 'fa-users', 'fa-book', 'fa-gamepad', 'fa-chart-bar'].map(icon => `
+                    <button type="button" onclick="selectIcon(this, '${icon}')" class="icon-btn w-10 h-10 rounded-lg border ${(child?.key || parentCat?.icon) === icon ? 'bg-indigo-100 border-indigo-500' : 'border-slate-200'} flex items-center justify-center hover:border-indigo-300">
+                      <i class="fas ${icon}"></i>
+                    </button>
+                  `).join('')}
+                </div>
+                <input type="hidden" id="cat-icon" value="${parentCat?.icon || 'fa-folder'}">
+              </div>
+            ` : `
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">分类名称 <span class="text-red-500">*</span></label>
+                <input type="text" id="cat-child-name" value="${child?.name || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">标识(key)</label>
+                <input type="text" id="cat-child-key" value="${child?.key || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="如: game-planning">
+              </div>
+            `}
+            <div class="flex justify-end space-x-3 pt-4">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">保存</button>
+            </div>
+          </form>
+        </div>`;
+      
+      showModal(modalContent);
+    }
+    
+    function selectIcon(btn, icon) {
+      document.querySelectorAll('.icon-btn').forEach(b => {
+        b.classList.remove('bg-indigo-100', 'border-indigo-500');
+        b.classList.add('border-slate-200');
+      });
+      btn.classList.add('bg-indigo-100', 'border-indigo-500');
+      btn.classList.remove('border-slate-200');
+      document.getElementById('cat-icon').value = icon;
+    }
+    
+    async function saveCategory(e, type, parentId, childId) {
+      e.preventDefault();
+      
+      try {
+        if (type === 'parent') {
+          const name = document.getElementById('cat-name').value.trim();
+          const key = document.getElementById('cat-key').value.trim();
+          const icon = document.getElementById('cat-icon').value;
+          
+          if (childId) {
+            // 编辑一级分类
+            const cat = data.categories.find(c => c.id === parentId);
+            if (!cat) return;
+            const res = await fetch(API + '/categories/' + parentId, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...cat, name, key, icon })
+            });
+            if (res.ok) { toast('分类已更新'); closeModal(); await loadAllData(); renderCategories(); }
+          } else {
+            // 新增一级分类
+            const res = await fetch(API + '/categories', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name, key, icon, children: [] })
+            });
+            if (res.ok) { toast('分类已添加'); closeModal(); await loadAllData(); renderCategories(); }
+          }
+        } else {
+          // 子分类
+          const name = document.getElementById('cat-child-name').value.trim();
+          const key = document.getElementById('cat-child-key').value.trim();
+          const parent = data.categories.find(c => c.id === parentId);
+          if (!parent) return;
+          
+          if (childId) {
+            // 编辑子分类
+            const child = parent.children.find(c => c.id === childId);
+            if (child) { child.name = name; child.key = key; }
+          } else {
+            // 新增子分类
+            parent.children = parent.children || [];
+            parent.children.push({ id: Date.now(), name, key });
+          }
+          
+          const res = await fetch(API + '/categories/' + parentId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(parent)
+          });
+          if (res.ok) { toast('子分类已保存'); closeModal(); await loadAllData(); renderCategories(); }
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+    
+    function editCategory(parentId, childId) {
+      if (!childId) {
+        const cat = data.categories.find(c => c.id === parentId);
+        if (cat) openCategoryModal('parent', parentId, cat);
+      } else {
+        const parent = data.categories.find(c => c.id === parentId);
+        const child = parent?.children?.find(c => c.id === childId);
+        if (child) openCategoryModal('child', parentId, child);
+      }
+    }
+    
+    async function deleteCategory(parentId, childId) {
+      if (!confirm('确定要删除吗？')) return;
+      
+      try {
+        if (!childId) {
+          // 删除一级分类
+          if (data.courses.some(c => c.categoryId === parentId)) {
+            toast('该分类下有课程，不能删除', 'error');
+            return;
+          }
+          const res = await fetch(API + '/categories/' + parentId, { method: 'DELETE' });
+          if (res.ok) { toast('分类已删除'); await loadAllData(); renderCategories(); }
+        } else {
+          // 删除子分类
+          const parent = data.categories.find(c => c.id === parentId);
+          if (data.courses.some(c => c.subcategoryId === childId)) {
+            toast('该分类下有课程，不能删除', 'error');
+            return;
+          }
+          parent.children = parent.children.filter(c => c.id !== childId);
+          const res = await fetch(API + '/categories/' + parentId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(parent)
+          });
+          if (res.ok) { toast('子分类已删除'); await loadAllData(); renderCategories(); }
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+    
+    // ========== 讲师管理 ==========
+    function renderLecturers() {
+      document.getElementById('lect-total').textContent = data.lecturers.length;
+      document.getElementById('lect-enabled').textContent = data.lecturers.filter(l => l.status === 'enabled').length;
+      document.getElementById('lect-chief').textContent = data.lecturers.filter(l => l.level === 'chief').length;
+      document.getElementById('lect-courses').textContent = data.courses.length;
+      
+      if (data.lecturers.length === 0) {
+        document.getElementById('lecturer-list').innerHTML = `
+          <div class="col-span-3 bg-white rounded-2xl p-12 text-center text-slate-400">
+            <i class="fas fa-chalkboard-teacher text-4xl mb-4"></i>
+            <p>暂无讲师数据</p>
+          </div>`;
+        return;
+      }
+      
+      const levelMap = {
+        chief: { class: 'bg-purple-100 text-purple-700', text: '首席' },
+        senior: { class: 'bg-blue-100 text-blue-700', text: '高级' },
+        intermediate: { class: 'bg-emerald-100 text-emerald-700', text: '中级' },
+        junior: { class: 'bg-slate-100 text-slate-600', text: '初级' }
+      };
+      
+      document.getElementById('lecturer-list').innerHTML = data.lecturers.map(lect => {
+        const lv = levelMap[lect.level] || levelMap.junior;
+        const courseCount = data.courses.filter(c => c.lecturerId === lect.id).length;
+        return `
+          <div class="bg-white rounded-2xl shadow-sm p-6 card-hover transition-all duration-300">
+            <div class="flex items-start space-x-4 mb-4">
+              <img src="${lect.avatar || 'https://via.placeholder.com/60'}" class="w-16 h-16 rounded-full object-cover border-2 border-slate-100">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-semibold text-slate-800 truncate">${lect.name}</h4>
+                  <span class="px-2 py-0.5 rounded-full text-xs font-medium ${lv.class}">${lv.text}</span>
+                </div>
+                <p class="text-sm text-slate-500">${lect.department || '暂无部门'}</p>
+                <p class="text-xs text-slate-400">${lect.title || '暂无职称'}</p>
+              </div>
+            </div>
+            <p class="text-sm text-slate-600 line-clamp-2 mb-4">${lect.intro || '暂无简介'}</p>
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+              <span class="text-sm text-slate-500"><i class="fas fa-book mr-1"></i>${courseCount} 个课程</span>
+              <div class="flex items-center space-x-2">
+                <button onclick="editLecturer(${lect.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="toggleLecturerStatus(${lect.id})" class="p-2 ${lect.status === 'enabled' ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'} rounded-lg transition" title="${lect.status === 'enabled' ? '禁用' : '启用'}">
+                  <i class="fas ${lect.status === 'enabled' ? 'fa-ban' : 'fa-check'}"></i>
+                </button>
+                <button onclick="deleteLecturer(${lect.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+    
+    function openLecturerModal(lecturer = null) {
+      const isEdit = !!lecturer;
+      const levelOptions = ['chief', 'senior', 'intermediate', 'junior'].map(l => 
+        `<option value="${l}" ${lecturer?.level === l ? 'selected' : ''}>${l === 'chief' ? '首席' : l === 'senior' ? '高级' : l === 'intermediate' ? '中级' : '初级'}</option>`
+      ).join('');
+      const avatarUrl = lecturer?.avatar || '';
+      
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑讲师' : '添加讲师'}</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveLecturer(event, ${lecturer?.id || 'null'})" class="p-6 space-y-4">
+            <!-- 头像上传区域 -->
+            <div class="flex items-center space-x-6">
+              <div class="flex-shrink-0">
+                <div id="avatar-preview" class="w-24 h-24 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-50 overflow-hidden cursor-pointer hover:border-indigo-400 transition" onclick="document.getElementById('l-avatar-file').click()">
+                  ${avatarUrl ? `<img src="${avatarUrl}" class="w-full h-full object-cover">` : `<i class="fas fa-user text-slate-300 text-3xl"></i>`}
+                </div>
+                <input type="file" id="l-avatar-file" accept="image/*" class="hidden" onchange="handleAvatarUpload(this)">
+              </div>
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-slate-700 mb-1">头像</label>
+                <p class="text-xs text-slate-400 mb-2">支持 JPG、PNG、GIF 格式，点击图片区域上传</p>
+                <input type="text" id="l-avatar" value="${avatarUrl}" class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm" placeholder="或输入头像URL">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">姓名 <span class="text-red-500">*</span></label>
+              <input type="text" id="l-name" value="${lecturer?.name || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">部门</label>
+                <input type="text" id="l-dept" value="${lecturer?.department || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="技术部">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">职称</label>
+                <input type="text" id="l-title" value="${lecturer?.title || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="高级工程师">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">等级</label>
+              <select id="l-level" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">${levelOptions}</select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">简介</label>
+              <textarea id="l-intro" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none" placeholder="讲师简介">${lecturer?.intro || ''}</textarea>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">保存</button>
+            </div>
+          </form>
+        </div>
+      `);
+    }
+    
+    // 处理讲师头像上传
+    async function handleAvatarUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      try {
+        input.disabled = true;
+        const response = await fetch(API + '/upload?type=avatars', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+          document.getElementById('l-avatar').value = result.url;
+          document.getElementById('avatar-preview').innerHTML = `<img src="${result.url}" class="w-full h-full object-cover">`;
+          toast('头像上传成功');
+        } else {
+          toast(result.error || '上传失败', 'error');
+        }
+      } catch (err) {
+        toast('上传失败', 'error');
+      } finally {
+        input.disabled = false;
+      }
+    }
+    
+    async function saveLecturer(e, id) {
+      e.preventDefault();
+      const levelNames = { chief: '首席', senior: '高级', intermediate: '中级', junior: '初级' };
+      const formData = {
+        name: document.getElementById('l-name').value.trim(),
+        department: document.getElementById('l-dept').value.trim(),
+        title: document.getElementById('l-title').value.trim(),
+        level: document.getElementById('l-level').value,
+        levelName: levelNames[document.getElementById('l-level').value],
+        avatar: document.getElementById('l-avatar').value.trim() || 'https://via.placeholder.com/60',
+        intro: document.getElementById('l-intro').value.trim(),
+        status: 'enabled',
+        type: 'internal',
+        skills: [],
+        courseCount: 0,
+        regDate: new Date().toISOString().split('T')[0]
+      };
+      
+      try {
+        let res;
+        if (id) {
+          res = await fetch(API + '/lecturers/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...formData, id })
+          });
+        } else {
+          res = await fetch(API + '/lecturers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        }
+        if (res.ok) {
+          toast(id ? '讲师已更新' : '讲师已添加');
+          closeModal();
+          await loadAllData();
+          renderLecturers();
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+    
+    function editLecturer(id) {
+      const lect = data.lecturers.find(l => l.id === id);
+      if (lect) openLecturerModal(lect);
+    }
+    
+    async function toggleLecturerStatus(id) {
+      const lect = data.lecturers.find(l => l.id === id);
+      if (!lect) return;
+      const newStatus = lect.status === 'enabled' ? 'disabled' : 'enabled';
+      try {
+        const res = await fetch(API + '/lecturers/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...lect, status: newStatus })
+        });
+        if (res.ok) {
+          toast(newStatus === 'enabled' ? '讲师已启用' : '讲师已禁用');
+          await loadAllData();
+          renderLecturers();
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+    
+    async function deleteLecturer(id) {
+      if (!confirm('确定要删除这位讲师吗？')) return;
+      try {
+        const res = await fetch(API + '/lecturers/' + id, { method: 'DELETE' });
+        if (res.ok) {
+          toast('讲师已删除');
+          await loadAllData();
+          renderLecturers();
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+    
+    // ========== 培训管理 ==========
+    function renderTraining() {
+      if (data.training.length === 0) {
+        document.getElementById('training-list').innerHTML = `
+          <div class="col-span-2 bg-white rounded-2xl p-12 text-center text-slate-400">
+            <i class="fas fa-calendar-alt text-4xl mb-4"></i>
+            <p>暂无培训计划</p>
+            <button onclick="openTrainingModal()" class="mt-4 btn-primary px-6 py-2.5 text-white rounded-xl font-medium">新建培训</button>
+          </div>`;
+        return;
+      }
+      
+      const statusMap = {
+        active: { class: 'bg-emerald-100 text-emerald-700', text: '进行中' },
+        completed: { class: 'bg-slate-100 text-slate-600', text: '已完成' },
+        pending: { class: 'bg-amber-100 text-amber-700', text: '待开始' }
+      };
+      
+      document.getElementById('training-list').innerHTML = data.training.map(t => {
+        const st = statusMap[t.status] || statusMap.pending;
+        return `
+          <div class="bg-white rounded-2xl shadow-sm p-6 card-hover transition-all duration-300">
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <h4 class="font-semibold text-slate-800">${t.name}</h4>
+                <p class="text-sm text-slate-500 mt-1">${t.manager || t.leader || '暂无负责人'}</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-xs font-medium ${st.class}">${st.text}</span>
+            </div>
+            <p class="text-sm text-slate-600 mb-4">${t.desc || ''}</p>
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+              <span class="text-sm text-slate-400"><i class="fas fa-calendar mr-1"></i>${t.startDate} ~ ${t.endDate}</span>
+              <div class="flex items-center space-x-2">
+                <button onclick="editTraining(${t.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><i class="fas fa-edit"></i></button>
+                <button onclick="deleteTraining(${t.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+    
+    function openTrainingModal(training = null) {
+      const isEdit = !!training;
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑' : '添加'}培训计划</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveTraining(event, ${training?.id || 'null'})" class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">培训名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="t-name" value="${training?.name || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">负责人</label>
+                <input type="text" id="t-manager" value="${training?.manager || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">状态</label>
+                <select id="t-status" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="pending" ${training?.status === 'pending' ? 'selected' : ''}>待开始</option>
+                  <option value="active" ${(training?.status || 'active') === 'active' ? 'selected' : ''}>进行中</option>
+                  <option value="completed" ${training?.status === 'completed' ? 'selected' : ''}>已完成</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">开始日期</label>
+                <input type="date" id="t-start" value="${training?.startDate || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">结束日期</label>
+                <input type="date" id="t-end" value="${training?.endDate || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">描述</label>
+              <textarea id="t-desc" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none">${training?.desc || ''}</textarea>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">保存</button>
+            </div>
+          </form>
+        </div>
+      `);
+    }
+    
+    async function saveTraining(e, id) {
+      e.preventDefault();
+      const formData = {
+        name: document.getElementById('t-name').value.trim(),
+        manager: document.getElementById('t-manager').value.trim(),
+        leader: document.getElementById('t-manager').value.trim(),
+        status: document.getElementById('t-status').value,
+        startDate: document.getElementById('t-start').value,
+        endDate: document.getElementById('t-end').value,
+        desc: document.getElementById('t-desc').value.trim(),
+        stages: []
+      };
+      
+      try {
+        let res;
+        if (id) {
+          res = await fetch(API + '/training/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        } else {
+          res = await fetch(API + '/training', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        }
+        if (res.ok) {
+          toast(id ? '培训已更新' : '培训已添加');
+          closeModal();
+          await loadAllData();
+          renderTraining();
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+    
+    function editTraining(id) {
+      const t = data.training.find(x => x.id === id);
+      if (t) openTrainingModal(t);
+    }
+    
+    async function deleteTraining(id) {
+      if (!confirm('确定要删除这个培训计划吗？')) return;
+      try {
+        const res = await fetch(API + '/training/' + id, { method: 'DELETE' });
+        if (res.ok) {
+          toast('培训已删除');
+          await loadAllData();
+          renderTraining();
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+    
+    // ========== 公告管理 ==========
+    function renderNotices() {
+      if (data.notices.length === 0) {
+        document.getElementById('notice-list').innerHTML = `
+          <div class="bg-white rounded-2xl p-12 text-center text-slate-400">
+            <i class="fas fa-bullhorn text-4xl mb-4"></i>
+            <p>暂无公告</p>
+            <button onclick="openNoticeModal()" class="mt-4 btn-primary px-6 py-2.5 text-white rounded-xl font-medium">发布公告</button>
+          </div>`;
+        return;
+      }
+      
+      document.getElementById('notice-list').innerHTML = data.notices.map(n => `
+        <div class="bg-white rounded-2xl shadow-sm p-6 card-hover transition-all duration-300">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h4 class="font-semibold text-slate-800">${n.title}</h4>
+              <p class="text-sm text-slate-400 mt-1">发布于 ${n.publishedAt || n.createdAt}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="px-2.5 py-1 rounded-full text-xs font-medium ${n.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${n.status === 'published' ? '已发布' : '草稿'}</span>
+              <button onclick="editNotice(${n.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><i class="fas fa-edit"></i></button>
+              <button onclick="deleteNotice(${n.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="text-sm text-slate-600">${n.content?.replace(/<\/?p>/g, '') || ''}</div>
+        </div>`).join('');
+    }
+    
+    function openNoticeModal(notice = null) {
+      const isEdit = !!notice;
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑' : '发布'}公告</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveNotice(event, ${notice?.id || 'null'})" class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">标题 <span class="text-red-500">*</span></label>
+              <input type="text" id="n-title" value="${notice?.title || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">内容 <span class="text-red-500">*</span></label>
+              <textarea id="n-content" rows="4" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none">${notice?.content?.replace(/<\/?p>/g, '') || ''}</textarea>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">发布</button>
+            </div>
+          </form>
+        </div>
+      `);
+    }
+    
+    async function saveNotice(e, id) {
+      e.preventDefault();
+      const formData = {
+        title: document.getElementById('n-title').value.trim(),
+        content: `<p>${document.getElementById('n-content').value.trim()}</p>`,
+        status: 'published',
+        publishedAt: new Date().toLocaleString('zh-CN')
+      };
+      
+      try {
+        let res;
+        if (id) {
+          res = await fetch(API + '/notices/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        } else {
+          res = await fetch(API + '/notices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        }
+        if (res.ok) {
+          toast(id ? '公告已更新' : '公告已发布');
+          closeModal();
+          await loadAllData();
+          renderNotices();
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+    
+    function editNotice(id) {
+      const n = data.notices.find(x => x.id === id);
+      if (n) openNoticeModal(n);
+    }
+    
+    async function deleteNotice(id) {
+      if (!confirm('确定要删除这条公告吗？')) return;
+      try {
+        const res = await fetch(API + '/notices/' + id, { method: 'DELETE' });
+        if (res.ok) {
+          toast('公告已删除');
+          await loadAllData();
+          renderNotices();
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+    
+    // ========== 数据导出 ==========
+    function exportData(type) {
+      const baseUrl = API + '/export';
+      const filenames = {
+        courses: 'courses',
+        lecturers: 'lecturers',
+        users: 'users',
+        categories: 'categories',
+        learning: 'learning-records',
+        all: 'all_data'
+      };
+      window.location.href = `${baseUrl}/${filenames[type]}`;
+      toast(`${type === 'all' ? 'JSON' : 'CSV'} 文件开始下载`);
+    }
+    
+    // ========== 模态框工具 ==========
+    function showModal(content) {
+      const container = document.getElementById('modal-container');
+      container.innerHTML = `
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="handleModalClick(event)">
+          ${content}
+        </div>`;
+    }
+    
+    function handleModalClick(e) {
+      if (e.target.classList.contains('fixed')) closeModal();
+    }
+    
+    function closeModal() {
+      document.getElementById('modal-container').innerHTML = '';
+    }
+  </script>
+</body>
+</html>

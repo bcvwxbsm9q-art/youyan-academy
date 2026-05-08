@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - 游雁学院</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3B82F6;
+        }
+        body { font-family: 'Microsoft YaHei', sans-serif; }
+        .sidebar-item { transition: all 0.2s; }
+        .sidebar-item:hover { background: rgba(59, 130, 246, 0.1); }
+        .sidebar-item.active { background: rgba(59, 130, 246, 0.15); color: var(--primary); }
+        .sidebar-item.active i { color: var(--primary); }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        .table-row:hover { background: rgba(59, 130, 246, 0.05); }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- 侧边栏 -->
+        <aside class="w-64 bg-white shadow-lg flex flex-col">
+            <div class="p-4 border-b">
+                <h1 class="text-xl font-bold text-blue-600">
+                    <i class="fas fa-graduation-cap mr-2"></i>游雁学院
+                </h1>
+                <p class="text-sm text-gray-500">后台管理系统</p>
+            </div>
+            
+            <nav class="flex-1 overflow-y-auto p-4">
+                <!-- 主菜单 -->
+                <div class="mb-4">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">主菜单</p>
+                    <a href="#" onclick="showPanel('dashboard')" class="sidebar-item active flex items-center py-2.5 px-3 rounded-lg mb-1" data-panel="dashboard">
+                        <i class="fas fa-home w-5"></i>
+                        <span>工作台</span>
+                    </a>
+                </div>
+                
+                <!-- 内容管理 -->
+                <div class="mb-4">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">内容管理</p>
+                    <a href="#" onclick="showPanel('course')" class="sidebar-item flex items-center py-2.5 px-3 rounded-lg mb-1" data-panel="course">
+                        <i class="fas fa-book w-5"></i>
+                        <span>课程管理</span>
+                    </a>
+                    <a href="#" onclick="showPanel('category')" class="sidebar-item flex items-center py-2.5 px-3 rounded-lg mb-1" data-panel="category">
+                        <i class="fas fa-tags w-5"></i>
+                        <span>分类管理</span>
+                    </a>
+                    <a href="#" onclick="showPanel('question')" class="sidebar-item flex items-center py-2.5 px-3 rounded-lg mb-1" data-panel="question">
+                        <i class="fas fa-question-circle w-5"></i>
+                        <span>题库管理</span>
+                    </a>
+                    <a href="#" onclick="showPanel('teacher')" class="sidebar-item flex items-center py-2.5 px-3 rounded-lg mb-1" data-panel="teacher">
+                        <i class="fas fa-chalkboard-teacher w-5"></i>
+                        <span>师资管理</span>
+                    </a>
+                    <a href="#" onclick="showPanel('training')" class="sidebar-item flex items-center py-2.5 px-3 rounded-lg mb-1" data-panel="training">
+                        <i class="fas fa-clipboard-list w-5"></i>
+                        <span>培训管理</span>
+                    </a>
+                </div>
+                
+                <!-- 用户与数据 -->
+                <div class="mb-4">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">用户与数据</p>
+                    <a href="#" onclick="showPanel('users')" class="sidebar-item flex items-center py-2.5 px-3 rounded-lg mb-1" data-panel="users">
+                        <i class="fas fa-users w-5"></i>
+                        <span>用户管理</span>
+                    </a>
+                    <a href="#" onclick="showPanel('report')" class="sidebar-item flex items-center py-2.5 px-3 rounded-lg mb-1" data-panel="report">
+                        <i class="fas fa-chart-bar w-5"></i>
+                        <span>报表管理</span>
+                    </a>
+                    <a href="#" onclick="showPanel('operation')" class="sidebar-item flex items-center py-2.5 px-3 rounded-lg mb-1" data-panel="operation">
+                        <i class="fas fa-bullhorn w-5"></i>
+                        <span>运营管理</span>
+                    </a>
+                </div>
+                
+                <!-- 系统 -->
+                <div class="mb-4">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">系统</p>
+                    <a href="#" onclick="showPanel('knowledge')" class="sidebar-item flex items-center py-2.5 px-3 rounded-lg mb-1" data-panel="knowledge">
+                        <i class="fas fa-book-open w-5"></i>
+                        <span>知识库</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区 -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- 顶部栏 -->
+            <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+                <div class="flex items-center">
+                    <span class="text-gray-600" id="currentPageTitle">工作台</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <span id="userName" class="text-sm">管理员</span>
+                        <button onclick="logout()" class="text-sm text-red-500 hover:text-red-700">退出</button>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 内容区 -->
+            <div class="flex-1 overflow-auto p-6">
+                
+                <!-- 工作台 -->
+                <div id="panel-dashboard" class="tab-panel active">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">欢迎回来，<span id="welcomeName">管理员</span></h2>
+                    
+                    <!-- 统计卡片 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-blue-500">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-gray-500 text-sm">用户总数</p>
+                                    <p id="statUsers" class="text-3xl font-bold text-gray-800">-</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <i class="fas fa-users text-blue-500 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-green-500">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-gray-500 text-sm">课程总数</p>
+                                    <p id="statCourses" class="text-3xl font-bold text-gray-800">-</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                                    <i class="fas fa-book text-green-500 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-yellow-500">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-gray-500 text-sm">题库总数</p>
+                                    <p id="statQuestionBanks" class="text-3xl font-bold text-gray-800">-</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                                    <i class="fas fa-question-circle text-yellow-500 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-purple-500">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-gray-500 text-sm">试题总数</p>
+                                    <p id="statQuestions" class="text-3xl font-bold text-gray-800">-</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                                    <i class="fas fa-file-alt text-purple-500 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 快捷入口 -->
+                    <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">快捷入口</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <a href="#" onclick="showPanel('course')" class="flex flex-col items-center p-4 rounded-lg hover:bg-blue-50 transition cursor-pointer">
+                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
+                                    <i class="fas fa-plus text-blue-500 text-xl"></i>
+                                </div>
+                                <span class="text-sm text-gray-600">添加课程</span>
+                            </a>
+                            <a href="#" onclick="showPanel('question')" class="flex flex-col items-center p-4 rounded-lg hover:bg-green-50 transition cursor-pointer">
+                                <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-2">
+                                    <i class="fas fa-question text-green-500 text-xl"></i>
+                                </div>
+                                <span class="text-sm text-gray-600">添加试题</span>
+                            </a>
+                            <a href="#" onclick="showPanel('teacher')" class="flex flex-col items-center p-4 rounded-lg hover:bg-yellow-50 transition cursor-pointer">
+                                <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center mb-2">
+                                    <i class="fas fa-user-plus text-yellow-500 text-xl"></i>
+                                </div>
+                                <span class="text-sm text-gray-600">添加讲师</span>
+                            </a>
+                            <a href="#" onclick="showPanel('users')" class="flex flex-col items-center p-4 rounded-lg hover:bg-purple-50 transition cursor-pointer">
+                                <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-2">
+                                    <i class="fas fa-user-cog text-purple-500 text-xl"></i>
+                                </div>
+                                <span class="text-sm text-gray-600">用户管理</span>
+                            </a>
+                            <a href="#" onclick="showPanel('report')" class="flex flex-col items-center p-4 rounded-lg hover:bg-red-50 transition cursor-pointer">
+                                <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-2">
+                                    <i class="fas fa-file-export text-red-500 text-xl"></i>
+                                </div>
+                                <span class="text-sm text-gray-600">导出数据</span>
+                            </a>
+                            <a href="#" onclick="showPanel('operation')" class="flex flex-col items-center p-4 rounded-lg hover:bg-indigo-50 transition cursor-pointer">
+                                <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mb-2">
+                                    <i class="fas fa-cog text-indigo-500 text-xl"></i>
+                                </div>
+                                <span class="text-sm text-gray-600">运营设置</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- 系统信息 -->
+                    <div class="bg-white rounded-xl p-6 shadow-sm">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">系统信息</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center py-2 border-b">
+                                <div class="w-2 h-2 rounded-full bg-green-500 mr-3"></div>
+                                <span class="text-gray-600 flex-1">系统状态</span>
+                                <span class="text-green-500 text-sm">运行正常</span>
+                            </div>
+                            <div class="flex items-center py-2 border-b">
+                                <div class="w-2 h-2 rounded-full bg-blue-500 mr-3"></div>
+                                <span class="text-gray-600 flex-1">数据库连接</span>
+                                <span class="text-blue-500 text-sm">已连接</span>
+                            </div>
+                            <div class="flex items-center py-2 border-b">
+                                <div class="w-2 h-2 rounded-full bg-yellow-500 mr-3"></div>
+                                <span class="text-gray-600 flex-1">最后备份</span>
+                                <span class="text-gray-500 text-sm" id="lastBackup">-</span>
+                            </div>
+                            <div class="flex items-center py-2">
+                                <div class="w-2 h-2 rounded-full bg-gray-500 mr-3"></div>
+                                <span class="text-gray-600 flex-1">版本信息</span>
+                                <span class="text-gray-500 text-sm">v1.0.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 课程管理 -->
+                <div id="panel-course" class="tab-panel">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">课程管理</h2>
+                        <button onclick="openCourseModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                            <i class="fas fa-plus mr-2"></i>添加课程
+                        </button>
+                    </div>
+                    
+                    <!-- 搜索和筛选 -->
+                    <div class="bg-white rounded-xl p-4 shadow-sm mb-6">
+                        <div class="flex flex-wrap gap-4">
+                            <input type="text" id="courseSearch" placeholder="搜索课程名称..." 
+                                   class="flex-1 min-w-[200px] px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <select id="courseStatusFilter" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">全部状态</option>
+                                <option value="draft">草稿</option>
+                                <option value="published">已发布</option>
+                                <option value="offline">已下架</option>
+                            </select>
+                            <button onclick="loadCourses()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+                                搜索
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 课程列表 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">课程名称</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">时长</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">观看数</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="courseList" class="divide-y divide-gray-200">
+                                <tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 分类管理 -->
+                <div id="panel-category" class="tab-panel">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">分类管理</h2>
+                        <button onclick="openCategoryModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                            <i class="fas fa-plus mr-2"></i>添加分类
+                        </button>
+                    </div>
+                    
+                    <!-- 分类列表 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类名称</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">图标</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">课程数</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoryList" class="divide-y divide-gray-200">
+                                <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 题库管理 -->
+                <div id="panel-question" class="tab-panel">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">题库管理</h2>
+                        <button onclick="openQuestionModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                            <i class="fas fa-plus mr-2"></i>添加试题
+                        </button>
+                    </div>
+                    
+                    <!-- 筛选 -->
+                    <div class="bg-white rounded-xl p-4 shadow-sm mb-6">
+                        <div class="flex flex-wrap gap-4">
+                            <select id="questionBankFilter" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">全部题库</option>
+                            </select>
+                            <select id="questionTypeFilter" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">全部类型</option>
+                                <option value="single">单选题</option>
+                                <option value="multiple">多选题</option>
+                                <option value="judge">判断题</option>
+                            </select>
+                            <button onclick="loadQuestions()" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+                                筛选
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 试题列表 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">题目</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">类型</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">难度</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="questionList" class="divide-y divide-gray-200">
+                                <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 师资管理 -->
+                <div id="panel-teacher" class="tab-panel">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">师资管理</h2>
+                        <button onclick="openTeacherModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                            <i class="fas fa-plus mr-2"></i>添加讲师
+                        </button>
+                    </div>
+                    
+                    <!-- 讲师列表 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">讲师</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">职称</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">课程数</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teacherList" class="divide-y divide-gray-200">
+                                <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 培训管理 -->
+                <div id="panel-training" class="tab-panel">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">培训管理</h2>
+                        <button onclick="openTrainingModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                            <i class="fas fa-plus mr-2"></i>创建培训
+                        </button>
+                    </div>
+                    
+                    <!-- 培训列表 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">培训名称</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">时间</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">参与人数</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trainingList" class="divide-y divide-gray-200">
+                                <tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 用户管理 -->
+                <div id="panel-users" class="tab-panel">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">用户管理</h2>
+                    
+                    <!-- 用户统计 -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-users text-blue-500"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-sm">总用户数</p>
+                                    <p id="totalUsers" class="text-2xl font-bold">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-user-check text-green-500"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-sm">活跃用户</p>
+                                    <p id="activeUsers" class="text-2xl font-bold">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-chalkboard-teacher text-purple-500"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-sm">讲师数</p>
+                                    <p id="teacherCount" class="text-2xl font-bold">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-user-graduate text-yellow-500"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-sm">学员数</p>
+                                    <p id="studentCount" class="text-2xl font-bold">-</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 用户列表 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="p-4 border-b flex justify-between items-center">
+                            <h3 class="font-bold">用户列表</h3>
+                            <input type="text" id="userSearch" placeholder="搜索用户名/邮箱..." 
+                                   class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">用户</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">角色</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">部门</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">注册时间</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userList" class="divide-y divide-gray-200">
+                                <tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 报表管理 -->
+                <div id="panel-report" class="tab-panel">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">报表管理</h2>
+                    
+                    <!-- 报表卡片 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm cursor-pointer hover:shadow-md transition">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                                    <i class="fas fa-chart-line text-blue-500 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold">学习报表</h3>
+                                    <p class="text-sm text-gray-500">课程学习数据统计</p>
+                                </div>
+                            </div>
+                            <button class="w-full py-2 border rounded-lg hover:bg-gray-50">查看报表</button>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm cursor-pointer hover:shadow-md transition">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
+                                    <i class="fas fa-user-chart text-green-500 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold">用户报表</h3>
+                                    <p class="text-sm text-gray-500">用户活跃度分析</p>
+                                </div>
+                            </div>
+                            <button class="w-full py-2 border rounded-lg hover:bg-gray-50">查看报表</button>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm cursor-pointer hover:shadow-md transition">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center mr-4">
+                                    <i class="fas fa-clipboard-check text-yellow-500 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold">考试报表</h3>
+                                    <p class="text-sm text-gray-500">考试成绩统计</p>
+                                </div>
+                            </div>
+                            <button class="w-full py-2 border rounded-lg hover:bg-gray-50">查看报表</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 运营管理 -->
+                <div id="panel-operation" class="tab-panel">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">运营管理</h2>
+                    
+                    <!-- 运营设置 -->
+                    <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+                        <h3 class="font-bold mb-4">Banner管理</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 border rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-16 h-10 bg-gray-200 rounded mr-4 flex items-center justify-center">
+                                        <i class="fas fa-image text-gray-400"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">首页Banner</p>
+                                        <p class="text-sm text-gray-500">1920x500</p>
+                                    </div>
+                                </div>
+                                <button class="px-4 py-2 border rounded-lg hover:bg-gray-50">编辑</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 shadow-sm">
+                        <h3 class="font-bold mb-4">公告管理</h3>
+                        <button onclick="openNoticeModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                            <i class="fas fa-plus mr-2"></i>发布公告
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 知识库 -->
+                <div id="panel-knowledge" class="tab-panel">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">知识库</h2>
+                        <button onclick="openKnowledgeModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                            <i class="fas fa-plus mr-2"></i>添加文档
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">文档标题</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">更新时间</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="knowledgeList" class="divide-y divide-gray-200">
+                                <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">暂无文档</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 课程弹窗 -->
+    <div id="courseModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+        <div class="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-auto m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-lg font-bold" id="courseModalTitle">添加课程</h3>
+                <button onclick="closeCourseModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="courseForm" class="p-4 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">课程名称 *</label>
+                    <input type="text" name="title" required maxlength="100" 
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">课程分类 *</label>
+                        <select name="category" required 
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">请选择</option>
+                            <option value="tech">技术培训</option>
+                            <option value="management">管理培训</option>
+                            <option value="safety">安全培训</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                        <select name="status" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="draft">草稿</option>
+                            <option value="published">发布</option>
+                            <option value="offline">下架</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">课程描述</label>
+                    <textarea name="description" rows="3" maxlength="500" 
+                              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">课程封面</label>
+                    <input type="text" name="cover_image" placeholder="输入图片URL" 
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeCourseModal()" class="px-6 py-2 border rounded-lg hover:bg-gray-50">取消</button>
+                    <button type="submit" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 分类弹窗 -->
+    <div id="categoryModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+        <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-auto m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-lg font-bold" id="categoryModalTitle">添加分类</h3>
+                <button onclick="closeCategoryModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="categoryForm" class="p-4 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">分类名称 *</label>
+                    <input type="text" name="name" required maxlength="50" 
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeCategoryModal()" class="px-6 py-2 border rounded-lg hover:bg-gray-50">取消</button>
+                    <button type="submit" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let editingCourseId = null;
+        let editingCategoryId = null;
+        
+        // 面板切换
+        function showPanel(panelName) {
+            // 隐藏所有面板
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            // 显示目标面板
+            const panel = document.getElementById('panel-' + panelName);
+            if (panel) {
+                panel.classList.add('active');
+            }
+            
+            // 更新侧边栏
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            const activeItem = document.querySelector(`.sidebar-item[data-panel="${panelName}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+            
+            // 更新标题
+            const titles = {
+                dashboard: '工作台',
+                course: '课程管理',
+                category: '分类管理',
+                question: '题库管理',
+                teacher: '师资管理',
+                training: '培训管理',
+                users: '用户管理',
+                report: '报表管理',
+                operation: '运营管理',
+                knowledge: '知识库'
+            };
+            document.getElementById('currentPageTitle').textContent = titles[panelName] || panelName;
+            
+            // 加载对应数据
+            switch(panelName) {
+                case 'course': loadCourses(); break;
+                case 'category': loadCategories(); break;
+                case 'question': loadQuestions(); break;
+                case 'teacher': loadTeachers(); break;
+                case 'training': loadTrainings(); break;
+                case 'users': loadUsers(); break;
+                case 'dashboard': loadStats(); break;
+            }
+        }
+        
+        // 检查登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            loadUserInfo();
+            loadStats();
+        }
+        
+        // 加载用户信息
+        async function loadUserInfo() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('userName').textContent = result.data.username;
+                    document.getElementById('welcomeName').textContent = result.data.real_name || result.data.username;
+                }
+            } catch (e) {
+                console.error('加载用户信息失败:', e);
+            }
+        }
+        
+        // 加载统计数据
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/health');
+                const result = await response.json();
+                if (result.status === 'ok') {
+                    document.getElementById('statUsers').textContent = result.stats.users || 0;
+                    document.getElementById('statCourses').textContent = result.stats.courses || 0;
+                    document.getElementById('statQuestionBanks').textContent = result.stats.question_banks || 0;
+                    document.getElementById('statQuestions').textContent = result.stats.questions || 0;
+                }
+            } catch (e) {
+                console.error('加载统计数据失败:', e);
+            }
+        }
+        
+        // 加载课程
+        async function loadCourses() {
+            const tbody = document.getElementById('courseList');
+            try {
+                const response = await fetch('/api/data/courses');
+                const courses = await response.json();
+                
+                if (!courses.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">暂无课程</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = courses.map(course => `
+                    <tr class="table-row">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="w-16 h-10 bg-gray-200 rounded mr-3 flex-shrink-0 flex items-center justify-center">
+                                    ${course.cover_image ? `<img src="${course.cover_image}" class="w-full h-full object-cover rounded">` : '<i class="fas fa-book text-gray-400"></i>'}
+                                </div>
+                                <span class="font-medium">${course.title}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">${course.category || '-'}</td>
+                        <td class="px-6 py-4 text-gray-600">${course.duration_minutes || 0} 分钟</td>
+                        <td class="px-6 py-4 text-gray-600">${course.view_count || 0}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs rounded-full ${getCourseStatusClass(course.status)}">${getCourseStatusText(course.status)}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button onclick="editCourse(${course.id})" class="text-blue-500 hover:text-blue-700 mr-3">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteCourse(${course.id})" class="text-red-500 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">加载失败</td></tr>';
+            }
+        }
+        
+        function getCourseStatusClass(status) {
+            const classes = {
+                draft: 'bg-gray-100 text-gray-600',
+                published: 'bg-green-100 text-green-600',
+                offline: 'bg-red-100 text-red-600'
+            };
+            return classes[status] || classes.draft;
+        }
+        
+        function getCourseStatusText(status) {
+            const texts = { draft: '草稿', published: '已发布', offline: '已下架' };
+            return texts[status] || status;
+        }
+        
+        function openCourseModal(id = null) {
+            editingCourseId = id;
+            document.getElementById('courseModal').classList.add('active');
+            document.getElementById('courseForm').reset();
+            document.getElementById('courseModalTitle').textContent = id ? '编辑课程' : '添加课程';
+        }
+        
+        function closeCourseModal() {
+            document.getElementById('courseModal').classList.remove('active');
+            editingCourseId = null;
+        }
+        
+        async function editCourse(id) {
+            openCourseModal(id);
+        }
+        
+        async function deleteCourse(id) {
+            if (!confirm('确定要删除这门课程吗？')) return;
+            alert('删除功能需要后端API支持');
+        }
+        
+        document.getElementById('courseForm').onsubmit = async (e) => {
+            e.preventDefault();
+            alert('保存功能需要后端API支持');
+            closeCourseModal();
+        };
+        
+        // 加载分类
+        async function loadCategories() {
+            const tbody = document.getElementById('categoryList');
+            try {
+                const response = await fetch('/api/data/categories');
+                const categories = await response.json();
+                
+                if (!categories.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">暂无分类</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = categories.map(cat => `
+                    <tr class="table-row">
+                        <td class="px-6 py-4 font-medium">${cat.name}</td>
+                        <td class="px-6 py-4"><i class="fas fa-tag text-gray-400"></i></td>
+                        <td class="px-6 py-4 text-gray-600">${cat.course_count || 0}</td>
+                        <td class="px-6 py-4">
+                            <button onclick="editCategory(${cat.id})" class="text-blue-500 hover:text-blue-700 mr-3">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteCategory(${cat.id})" class="text-red-500 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">加载失败</td></tr>';
+            }
+        }
+        
+        function openCategoryModal(id = null) {
+            editingCategoryId = id;
+            document.getElementById('categoryModal').classList.add('active');
+            document.getElementById('categoryForm').reset();
+            document.getElementById('categoryModalTitle').textContent = id ? '编辑分类' : '添加分类';
+        }
+        
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').classList.remove('active');
+            editingCategoryId = null;
+        }
+        
+        async function editCategory(id) { openCategoryModal(id); }
+        async function deleteCategory(id) {
+            if (!confirm('确定要删除这个分类吗？')) return;
+            alert('删除功能需要后端API支持');
+        }
+        
+        document.getElementById('categoryForm').onsubmit = async (e) => {
+            e.preventDefault();
+            alert('保存功能需要后端API支持');
+            closeCategoryModal();
+        };
+        
+        // 加载题库
+        async function loadQuestions() {
+            const tbody = document.getElementById('questionList');
+            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">暂无试题</td></tr>';
+        }
+        
+        function openQuestionModal() {
+            alert('添加试题功能需要后端API支持');
+        }
+        
+        // 加载讲师
+        async function loadTeachers() {
+            const tbody = document.getElementById('teacherList');
+            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">暂无讲师</td></tr>';
+        }
+        
+        function openTeacherModal() {
+            alert('添加讲师功能需要后端API支持');
+        }
+        
+        // 加载培训
+        async function loadTrainings() {
+            const tbody = document.getElementById('trainingList');
+            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">暂无培训</td></tr>';
+        }
+        
+        function openTrainingModal() {
+            alert('创建培训功能需要后端API支持');
+        }
+        
+        // 加载用户
+        async function loadUsers() {
+            const tbody = document.getElementById('userList');
+            try {
+                const response = await fetch('/api/data/users');
+                const users = await response.json();
+                
+                document.getElementById('totalUsers').textContent = users.length;
+                document.getElementById('activeUsers').textContent = users.filter(u => u.status === 'active').length;
+                document.getElementById('teacherCount').textContent = users.filter(u => u.role === 'teacher').length;
+                document.getElementById('studentCount').textContent = users.filter(u => u.role === 'student').length;
+                
+                if (!users.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">暂无用户</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = users.map(user => `
+                    <tr class="table-row">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-user text-blue-500"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">${user.real_name || user.username}</p>
+                                    <p class="text-sm text-gray-500">${user.email || '-'}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs rounded-full ${getRoleClass(user.role)}">${getRoleText(user.role)}</span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">${user.department || '-'}</td>
+                        <td class="px-6 py-4 text-gray-600">${user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
+                                ${user.status === 'active' ? '正常' : '禁用'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button class="text-blue-500 hover:text-blue-700 mr-3"><i class="fas fa-edit"></i></button>
+                            <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">加载失败</td></tr>';
+            }
+        }
+        
+        function getRoleClass(role) {
+            const classes = { admin: 'bg-purple-100 text-purple-600', teacher: 'bg-blue-100 text-blue-600', student: 'bg-green-100 text-green-600' };
+            return classes[role] || classes.student;
+        }
+        
+        function getRoleText(role) {
+            const texts = { admin: '管理员', teacher: '讲师', student: '学员' };
+            return texts[role] || role;
+        }
+        
+        // 公告弹窗
+        function openNoticeModal() {
+            alert('发布公告功能需要后端API支持');
+        }
+        
+        // 知识库弹窗
+        function openKnowledgeModal() {
+            alert('添加文档功能需要后端API支持');
+        }
+        
+        // 退出登录
+        async function logout() {
+            try {
+                const token = localStorage.getItem('token');
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } catch (e) {
+                console.error('登出失败:', e);
+            }
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+        
+        // 页面加载时检查认证
+        checkAuth();
+    </script>
+</body>
+</html>

@@ -1,0 +1,713 @@
+/**
+ * ============================================================
+ * 移动端 H5 增强样式 - 参考酷学院设计风格
+ * ============================================================
+ * 特点：
+ *   - 完全响应式布局，适配各种屏幕尺寸
+ *   - 触摸友好的交互设计
+ *   - 流畅的动画过渡效果
+ *   - 现代化的视觉层次
+ */
+
+/* ==================== 基础重置 ==================== */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
+}
+
+/* ==================== 固定宽度容器 - 1200px ==================== */
+.container-responsive {
+  width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ==================== 移动端导航优化 ==================== */
+.mobile-nav {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.nav-item {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 20px;
+  height: 2px;
+  background: currentColor;
+  transition: transform 0.3s ease;
+}
+
+.nav-item:hover::after,
+.nav-item.active::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+/* ==================== 卡片增强样式 ==================== */
+.card-enhanced {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card-enhanced:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.card-enhanced:active {
+  transform: translateY(-4px);
+}
+
+/* ==================== 按钮增强 ==================== */
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px 0 rgba(102, 126, 234, 0.39);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.23);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* ==================== 骨架屏加载 ==================== */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ==================== 空状态样式 ==================== */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #6b7280;
+}
+
+.empty-state-desc {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ==================== 轮播图增强 ==================== */
+.carousel-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.carousel-slide {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.carousel-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.carousel-indicator.active {
+  width: 24px;
+  background: white;
+}
+
+/* ==================== 课程卡片增强 ==================== */
+.course-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.course-card-image-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.course-card-image {
+  transition: transform 0.5s ease;
+}
+
+.course-card:hover .course-card-image {
+  transform: scale(1.05);
+}
+
+.course-card-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.course-card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  padding: 40px 16px 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.course-card:hover .course-card-overlay {
+  opacity: 1;
+}
+
+/* ==================== 讲师卡片增强 ==================== */
+ lecturer-card {
+  text-align: center;
+  padding: 24px;
+}
+
+.lecturer-avatar-wrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 16px;
+}
+
+.lecturer-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.lecturer-card:hover .lecturer-avatar {
+  transform: scale(1.05);
+}
+
+.lecturer-level-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 不同等级颜色 */
+.level-chief { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+.level-senior { background: linear-gradient(135deg, #10b981, #059669); }
+.level-intermediate { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.level-junior { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.level-trainee { background: linear-gradient(135deg, #6b7280, #4b5563); }
+
+/* ==================== 统计卡片增强 ==================== */
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+.stat-card-icon.primary {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #2563eb;
+}
+
+.stat-card-icon.success {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #10b981;
+}
+
+.stat-card-icon.warning {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #f59e0b;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1f2937, #4b5563);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ==================== 进度条增强 ==================== */
+.progress-enhanced {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  position: relative;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: progress-shine 2s infinite;
+}
+
+@keyframes progress-shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ==================== 标签增强 ==================== */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.tag-blue {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1d4ed8;
+}
+
+.tag-orange {
+  background: linear-gradient(135deg, #fed7aa, #fdba74);
+  color: #c2410c;
+}
+
+.tag-green {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #047857;
+}
+
+.tag-purple {
+  background: linear-gradient(135deg, #e9d5ff, #d8b4fe);
+  color: #6b21a8;
+}
+
+/* ==================== 搜索框增强 ==================== */
+.search-enhanced {
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  padding: 14px 48px 14px 48px;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  transition: color 0.3s ease;
+}
+
+.search-input:focus + .search-icon {
+  color: #667eea;
+}
+
+/* ==================== 筛选器增强 ==================== */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  background: white;
+  border: 2px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filter-chip:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.filter-chip.active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border-color: transparent;
+}
+
+/* ==================== 底部导航栏（移动端） ==================== */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  display: none;
+  justify-content: space-around;
+  padding: 8px 0;
+  z-index: 100;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0;
+  z-index: 100;
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 12px;
+  color: #9ca3af;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.bottom-nav-item.active,
+.bottom-nav-item:hover {
+  color: #667eea;
+}
+
+.bottom-nav-icon {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.bottom-nav-label {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav { display: flex; }
+}
+
+/* ==================== 动画工具类 ==================== */
+.fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease forwards;
+}
+
+.scale-in {
+  animation: scaleIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ==================== 脉冲动画（用于通知等） ==================== */
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ==================== 滚动条美化 ==================== */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
+}
+
+/* ==================== 左侧分类栏样式 ==================== */
+#category-sidebar {
+  min-height: 200px;
+}
+
+.category-parent {
+  margin: 2px 0;
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  margin: 2px 8px;
+  border-radius: 8px;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.category-item:hover {
+  background: rgba(102, 126, 234, 0.08);
+  color: #667eea;
+}
+
+.category-item.active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.category-item i {
+  width: 20px;
+  font-size: 14px;
+  text-align: center;
+  margin-right: 10px;
+}
+
+.category-item span {
+  font-weight: 500;
+}
+
+/* 父级分类样式 */
+.category-parent-item {
+  font-weight: 600;
+}
+
+.category-arrow {
+  margin-left: auto !important;
+  width: auto !important;
+}
+
+/* 二级分类子项 */
+.category-children {
+  padding-left: 8px;
+  margin-bottom: 4px;
+}
+
+.category-child-item {
+  padding: 8px 16px 8px 32px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.category-child-item:hover {
+  background: rgba(102, 126, 234, 0.05);
+  color: #667eea;
+}
+
+.category-child-item.active {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+  color: #667eea;
+  font-weight: 500;
+}
+
+/* 分类区块标题 */
+.category-section {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+/* 课程卡片网格与左侧分类等高 */
+#courses-by-category {
+  flex: 1;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .container mx-auto.max-w-\[1200px\] {
+    padding: 0 12px;
+  }
+}
+
+/* ==================== 暗黑模式支持 ==================== */
+@media (prefers-color-scheme: dark) {
+  .card-enhanced {
+    background: #1f2937;
+  }
+  
+  .stat-card {
+    background: #1f2937;
+  }
+  
+  .filter-chip {
+    background: #374151;
+    border-color: #4b5563;
+  }
+  
+  .search-input {
+    background: #1f2937;
+    border-color: #4b5563;
+    color: white;
+  }
+  
+  .stat-value {
+    background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .category-item {
+    color: #9ca3af;
+  }
+  
+  .category-item:hover {
+    background: rgba(102, 126, 234, 0.15);
+    color: #a5b4fc;
+  }
+}

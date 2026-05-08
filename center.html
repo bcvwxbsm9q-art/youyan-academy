@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>个人中心 - 游雁学院</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/mobile-enhanced.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#667eea',
+                        secondary: '#764ba2',
+                        dark: '#0f172a',
+                        darkgray: '#1f2937'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-gradient { background-clip: text; -webkit-background-clip: text; color: transparent; background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+            .bg-gradient-primary { background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+            .card-hover { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+            .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.15); }
+            .nav-active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        }
+        body { opacity: 0; animation: pageLoad 0.5s ease forwards; }
+        @keyframes pageLoad { to { opacity: 1; } }
+        
+        @media (max-width: 768px) {
+            .mobile-bottom-nav { display: flex; }
+            .desktop-side-nav { display: none; }
+        }
+        @media (min-width: 769px) {
+            .mobile-bottom-nav { display: none; }
+            .desktop-side-nav { display: block; }
+        }
+        
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .badge-success { background: #d1fae5; color: #059669; }
+        .badge-warning { background: #fef3c7; color: #d97706; }
+        .badge-danger { background: #fee2e2; color: #dc2626; }
+        .badge-info { background: #e0e7ff; color: #4f46e5; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- 导航栏 -->
+    <header class="bg-white/95 backdrop-blur-md shadow-sm fixed w-full top-0 z-50">
+        <div class="container-responsive">
+            <div class="flex justify-between items-center py-3">
+                <a href="index.html" class="flex items-center space-x-2 group">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-lg">
+                        <i class="fa fa-graduation-cap text-white text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gradient hidden md:block">游雁学院</span>
+                </a>
+                <nav class="hidden md:flex space-x-1">
+                    <a href="index.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">首页</a>
+                    <a href="course.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">课程中心</a>
+                    <a href="teacher.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">讲师风采</a>
+                    <a href="center.html" class="nav-item active px-4 py-2 rounded-lg text-primary font-medium hover:bg-primary/5 transition-colors">个人中心</a>
+                </nav>
+                <div class="flex items-center space-x-3">
+                    <div id="user-info" class="hidden md:flex items-center space-x-3">
+                        <div class="w-7 h-7 rounded-full bg-gradient-primary flex items-center justify-center">
+                            <i class="fa fa-user text-white text-xs" id="user-avatar-icon"></i>
+                        </div>
+                        <span class="text-sm font-medium text-primary" id="user-display-name">用户</span>
+                        <button onclick="handleLogout()" id="logout-btn-desktop" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors" title="退出登录">
+                            <i class="fa fa-sign-out text-lg"></i>
+                        </button>
+                    </div>
+                    <a href="login.html" id="login-btn" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-primary transition-colors">登录</a>
+                    <button class="md:hidden text-gray-600 p-2 hover:bg-gray-100 rounded-lg" id="mobile-menu-button">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="md:hidden hidden bg-white border-t shadow-lg" id="mobile-menu">
+            <div class="container-responsive py-3">
+                <div id="mobile-user-info" class="hidden mb-3 pb-3 border-b border-gray-100">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center">
+                            <i class="fa fa-user text-white"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800" id="mobile-user-name">用户</p>
+                        </div>
+                    </div>
+                </div>
+                <nav class="flex flex-col space-y-1">
+                    <a href="index.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">首页</a>
+                    <a href="course.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">课程中心</a>
+                    <a href="teacher.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">讲师风采</a>
+                    <a href="center.html" class="flex items-center px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium">个人中心</a>
+                    <a href="admin.html" id="mobile-admin-link" class="hidden flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">
+                        <i class="fa fa-cog w-6 mr-2"></i>管理端
+                    </a>
+                    <button onclick="handleLogout()" id="mobile-logout-btn" class="hidden flex items-center px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
+                        <i class="fa fa-sign-out w-6"></i><span>退出登录</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-16 pb-24">
+        <!-- 个人信息卡片 -->
+        <section class="py-6 md:py-10 bg-gradient-primary text-white">
+            <div class="w-[1200px] mx-auto px-4">
+                <div class="flex items-center gap-4">
+                    <div id="profile-avatar-container" class="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm overflow-hidden">
+                        <img id="profile-avatar" src="" class="hidden w-full h-full object-cover">
+                        <i class="fa fa-user text-white text-4xl" id="profile-avatar-default"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h1 class="text-2xl font-bold mb-1" id="profile-user-name">用户</h1>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span class="px-2 py-1 bg-white/20 rounded text-xs">学号: <span id="profile-user-id">U00001</span></span>
+                            <span class="px-2 py-1 bg-white/20 rounded text-xs">部门: <span id="profile-department">未设置部门</span></span>
+                        </div>
+                    </div>
+                    <button onclick="showEditProfileModal()" class="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-sm font-medium">
+                        <i class="fa fa-edit mr-1"></i>编辑资料
+                    </button>
+                </div>
+                
+                <!-- 学习数据 -->
+                <div class="grid grid-cols-2 gap-4 mt-6">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa fa-star text-yellow-300"></i>
+                            <span class="text-white/80 text-sm">学习积分</span>
+                        </div>
+                        <div class="text-3xl font-bold" id="stat-points">0</div>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa fa-clock-o text-green-300"></i>
+                            <span class="text-white/80 text-sm">学习时长</span>
+                        </div>
+                        <div class="text-3xl font-bold"><span id="stat-hours">0</span> 小时</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 主要内容 -->
+        <section class="py-6">
+            <div class="w-[1200px] mx-auto px-4">
+                <div class="flex flex-row gap-6">
+                    <!-- 左侧导航 -->
+                    <div class="desktop-side-nav w-1/5">
+                        <div class="bg-white rounded-xl shadow-md p-4 sticky top-20">
+                            <nav class="space-y-1">
+                                <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-lg nav-active transition-colors flex items-center" data-tab="learning-stats">
+                                    <i class="fa fa-bar-chart w-6"></i>
+                                    <span>学习统计</span>
+                                </button>
+                                <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center" data-tab="my-courses">
+                                    <i class="fa fa-book w-6"></i>
+                                    <span>我的课程</span>
+                                </button>
+                                <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center" data-tab="settings">
+                                    <i class="fa fa-cog w-6"></i>
+                                    <span>账户设置</span>
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+
+                    <!-- 右侧内容 -->
+                    <div class="flex-1">
+                        <!-- 学习统计 -->
+                        <div class="tab-content active" id="learning-stats-content">
+                            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                                <h3 class="font-bold text-lg mb-6 flex items-center">
+                                    <i class="fa fa-bar-chart text-primary mr-2"></i>
+                                    我的学习统计
+                                </h3>
+                                
+                                <!-- 统计卡片 -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                    <!-- 学习时长 -->
+                                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+                                                <i class="fa fa-clock-o text-white text-xl"></i>
+                                            </div>
+                                            <span class="text-blue-600 text-sm font-medium">累计学习</span>
+                                        </div>
+                                        <div class="text-3xl font-bold text-blue-700 mb-1" id="stats-total-hours">0</div>
+                                        <div class="text-sm text-blue-600">小时</div>
+                                        <div class="mt-3 text-xs text-blue-500">
+                                            <i class="fa fa-refresh mr-1"></i>实时更新
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 已完成课程 -->
+                                    <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
+                                                <i class="fa fa-check-circle text-white text-xl"></i>
+                                            </div>
+                                            <span class="text-green-600 text-sm font-medium">课程完成</span>
+                                        </div>
+                                        <div class="text-3xl font-bold text-green-700 mb-1" id="stats-completed-courses">0</div>
+                                        <div class="text-sm text-green-600">门课程</div>
+                                        <div class="mt-3 text-xs text-green-500">
+                                            <i class="fa fa-star mr-1"></i>全部视频100%进度
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 注册天数 -->
+                                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <div class="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center">
+                                                <i class="fa fa-calendar text-white text-xl"></i>
+                                            </div>
+                                            <span class="text-purple-600 text-sm font-medium">平台会员</span>
+                                        </div>
+                                        <div class="text-3xl font-bold text-purple-700 mb-1" id="stats-register-days">0</div>
+                                        <div class="text-sm text-purple-600">天</div>
+                                        <div class="mt-3 text-xs text-purple-500">
+                                            <i class="fa fa-calendar-check-o mr-1"></i>自注册之日起
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 学习进度图表 -->
+                                <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                                    <h4 class="font-bold text-gray-700 mb-4">
+                                        <i class="fa fa-line-chart mr-2 text-gray-500"></i>学习趋势
+                                    </h4>
+                                    <div class="h-48">
+                                        <canvas id="stats-learning-chart"></canvas>
+                                    </div>
+                                </div>
+                                
+                                <!-- 课程完成明细 -->
+                                <div class="bg-gray-50 rounded-xl p-6">
+                                    <h4 class="font-bold text-gray-700 mb-4">
+                                        <i class="fa fa-list-ul mr-2 text-gray-500"></i>已完成课程明细
+                                    </h4>
+                                    <div id="completed-courses-list" class="space-y-3">
+                                        <div class="text-center py-8 text-gray-400">
+                                            <i class="fa fa-inbox text-4xl mb-2"></i>
+                                            <p>暂无已完成的课程</p>
+                                            <p class="text-sm mt-1">开始学习视频课程，完成后将显示在这里</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 我的课程 -->
+                        <div class="tab-content active" id="my-courses-content">
+                            <!-- 学习统计 -->
+                            <div class="grid grid-cols-3 gap-6 mb-6">
+                                <div class="bg-white rounded-xl shadow-md p-4">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                            <i class="fa fa-clock-o text-blue-500"></i>
+                                        </div>
+                                        <div class="text-3xl font-bold" id="course-stat-hours">24.5</div>
+                                    </div>
+                                    <p class="text-sm text-gray-500">学习时长 (小时)</p>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-md p-4">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                                            <i class="fa fa-check-circle text-green-500"></i>
+                                        </div>
+                                        <div class="text-3xl font-bold" id="course-stat-completed">8</div>
+                                    </div>
+                                    <p class="text-sm text-gray-500">已完成课程</p>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-md p-4">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <div class="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
+                                            <i class="fa fa-line-chart text-yellow-500"></i>
+                                        </div>
+                                        <div class="text-3xl font-bold" id="course-stat-progress">68%</div>
+                                    </div>
+                                    <p class="text-sm text-gray-500">学习进度</p>
+                                </div>
+                            </div>
+
+                            <!-- 学习图表 -->
+                            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                                <h3 class="font-bold text-lg mb-4">学习分析</h3>
+                                <div class="h-64">
+                                    <canvas id="learning-chart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- 未完成课程 -->
+                            <div class="mb-6">
+                                <h3 class="font-bold text-lg mb-4">未完成课程</h3>
+                                <div class="space-y-4" id="in-progress-courses">
+                                    <!-- 动态加载 -->
+                                </div>
+                            </div>
+
+                            <!-- 已完成课程 -->
+                            <div>
+                                <h3 class="font-bold text-lg mb-4">已完成课程</h3>
+                                <div class="space-y-4" id="completed-courses">
+                                    <!-- 动态渲染 -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 账户设置 -->
+                        <div class="tab-content hidden" id="settings-content">
+                            <div class="bg-white rounded-xl shadow-md p-6">
+                                <h3 class="font-bold text-lg mb-4">基本设置</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between py-3 border-b">
+                                        <div>
+                                            <span class="font-medium">修改密码</span>
+                                            <p class="text-sm text-gray-500">定期修改密码可保护账户安全</p>
+                                        </div>
+                                        <button onclick="showChangePasswordModal()" class="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors">修改</button>
+                                    </div>
+                                    <div class="flex items-center justify-between py-3 border-b">
+                                        <div>
+                                            <span class="font-medium">绑定手机</span>
+                                            <p class="text-sm text-gray-500" id="binded-phone">138****8888</p>
+                                        </div>
+                                        <button onclick="showBindPhoneModal()" class="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors">绑定</button>
+                                    </div>
+                                    <div class="flex items-center justify-between py-3 border-b">
+                                        <div>
+                                            <span class="font-medium">绑定邮箱</span>
+                                            <p class="text-sm text-gray-500" id="binded-email">xiaoming@example.com</p>
+                                        </div>
+                                        <button onclick="showBindEmailModal()" class="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors">绑定</button>
+                                    </div>
+                                    <div class="flex items-center justify-between py-3 border-b">
+                                        <div>
+                                            <span class="font-medium">消息通知</span>
+                                            <p class="text-sm text-gray-500">设置接收学习提醒的方式</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" checked class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center justify-between py-3">
+                                        <div>
+                                            <span class="font-medium">学习提醒</span>
+                                            <p class="text-sm text-gray-500">每日学习目标推送</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+                                <h3 class="font-bold text-lg mb-4">数据管理</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between py-3 border-b">
+                                        <div>
+                                            <span class="font-medium">导出学习数据</span>
+                                            <p class="text-sm text-gray-500">下载您的学习记录和证书</p>
+                                        </div>
+                                        <button onclick="exportMyData()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                            <i class="fa fa-download mr-2"></i>导出
+                                        </button>
+                                    </div>
+                                    <div class="flex items-center justify-between py-3">
+                                        <div>
+                                            <span class="font-medium text-red-500">注销账户</span>
+                                            <p class="text-sm text-gray-500">永久删除您的账户和数据</p>
+                                        </div>
+                                        <button onclick="showDeleteAccountModal()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                                            <i class="fa fa-trash mr-2"></i>注销
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 编辑资料弹窗 -->
+    <div id="edit-profile-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-md">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-lg font-bold">编辑资料</h3>
+                <button onclick="closeEditProfileModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i class="fa fa-times text-gray-500"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <!-- 头像上传 -->
+                <div class="flex flex-col items-center">
+                    <div class="relative">
+                        <div id="avatar-preview-container" class="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-primary/20">
+                            <img id="avatar-preview" src="" class="hidden w-full h-full object-cover">
+                            <i class="fa fa-user text-gray-400 text-3xl" id="avatar-preview-default"></i>
+                        </div>
+                        <label for="avatar-input" class="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors">
+                            <i class="fa fa-camera text-sm"></i>
+                        </label>
+                        <input type="file" id="avatar-input" accept="image/*" class="hidden" onchange="handleAvatarSelect(event)">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">点击相机图标上传头像</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+                    <input type="text" id="edit-name" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入姓名">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">部门</label>
+                    <input type="text" id="edit-department" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入部门">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">职位</label>
+                    <input type="text" id="edit-position" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入职位">
+                </div>
+            </div>
+            <div class="p-4 border-t flex justify-end space-x-3">
+                <button onclick="closeEditProfileModal()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
+                <button onclick="saveProfile()" class="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:opacity-90">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密码弹窗 -->
+    <div id="change-password-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-md">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-lg font-bold">修改密码</h3>
+                <button onclick="closeChangePasswordModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <i class="fa fa-times text-gray-500"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">当前密码</label>
+                    <input type="password" id="current-password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入当前密码">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
+                    <input type="password" id="new-password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入新密码">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">确认密码</label>
+                    <input type="password" id="confirm-password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请再次输入新密码">
+                </div>
+            </div>
+            <div class="p-4 border-t flex justify-end space-x-3">
+                <button onclick="closeChangePasswordModal()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
+                <button onclick="changePassword()" class="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:opacity-90">确认修改</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data-sync.js"></script>
+    <script src="data-api.js"></script>
+    <script>
+        const api = window.DataAPI;
+        let currentUser = null;
+        let learningRecords = [];
+        let examRecords = [];
+        let certificates = [];
+        let myCourses = [];
+        let learningChart = null;
+        let statsChart = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async () => {
+            await api.init();
+            checkAuthAndUpdateUI();
+            loadUserData();
+            initTabNavigation();
+            initLearningChart();
+            loadAllData();
+            // 默认显示学习统计
+            switchTab('learning-stats');
+        });
+
+        // 获取当前登录用户
+        function getLoggedInUser() {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            if (userStr) {
+                try {
+                    return JSON.parse(userStr);
+                } catch (e) {
+                    console.error('解析用户数据失败:', e);
+                }
+            }
+            return null;
+        }
+        
+        // 加载用户数据
+        function loadUserData() {
+            // 优先使用登录用户信息
+            const loggedInUser = getLoggedInUser();
+            
+            if (loggedInUser) {
+                // 使用登录用户的数据（注意：后端返回的是 real_name 下划线格式）
+                currentUser = {
+                    id: loggedInUser.id || loggedInUser.userId || 1,
+                    name: loggedInUser.real_name || loggedInUser.realName || loggedInUser.username || '用户',
+                    username: loggedInUser.username || '',
+                    phone: loggedInUser.phone || '',
+                    email: loggedInUser.email || '',
+                    department: loggedInUser.department || '',
+                    position: loggedInUser.position || '',
+                    role: loggedInUser.role || 'user',
+                    points: loggedInUser.points || 0,
+                    hours: loggedInUser.hours || 0,
+                    avatar: loggedInUser.avatar || '',
+                    createdAt: loggedInUser.createdAt || loggedInUser.lastLogin || new Date().toISOString()
+                };
+            } else {
+                // 使用示例数据（未登录时）
+                currentUser = {
+                    id: 1,
+                    name: '游客',
+                    phone: '',
+                    email: '',
+                    department: '',
+                    position: '',
+                    points: 0,
+                    hours: 0,
+                    avatar: '',
+                    createdAt: new Date().toISOString()
+                };
+            }
+            
+            // 更新页面显示
+            const displayName = currentUser.name || currentUser.username || '用户';
+            
+            // 更新姓名
+            document.getElementById('profile-user-name').textContent = displayName;
+            
+            // 更新学号
+            document.getElementById('profile-user-id').textContent = 'U' + String(currentUser.id).padStart(5, '0');
+            
+            // 更新部门
+            document.getElementById('profile-department').textContent = currentUser.department || '未设置部门';
+            
+            // 更新学习数据
+            updateLearningStats();
+            
+            // 更新头像
+            updateProfileAvatar(currentUser.avatar);
+            
+            // 手机和邮箱显示
+            const phone = currentUser.phone || '';
+            const email = currentUser.email || '';
+            document.getElementById('binded-phone').textContent = phone ? phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '未绑定';
+            document.getElementById('binded-email').textContent = email || '未绑定';
+            
+            // 更新导航栏用户名
+            const userDisplayName = document.getElementById('user-display-name');
+            const mobileUserName = document.getElementById('mobile-user-name');
+            if (userDisplayName) userDisplayName.textContent = displayName;
+            if (mobileUserName) mobileUserName.textContent = displayName;
+        }
+        
+        // 更新学习统计数据（实时）
+        function updateLearningStats() {
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            
+            // 学习时长（秒转小时）
+            const totalHours = Math.round(learningData.totalHours / 3600 * 10) / 10;
+            document.getElementById('stat-hours').textContent = totalHours;
+            document.getElementById('stats-total-hours').textContent = totalHours;
+            
+            // 已完成课程数
+            const completedCount = learningData.completedCourses.length;
+            document.getElementById('course-stat-completed').textContent = completedCount;
+            document.getElementById('stats-completed-courses').textContent = completedCount;
+            
+            // 注册天数
+            const registerDays = api.getRegisterDays(currentUser.createdAt);
+            document.getElementById('stats-register-days').textContent = registerDays;
+        }
+        
+        // 更新头像显示
+        function updateProfileAvatar(avatarUrl) {
+            const avatarImg = document.getElementById('profile-avatar');
+            const avatarDefault = document.getElementById('profile-avatar-default');
+            
+            if (avatarUrl && avatarUrl.trim() !== '') {
+                avatarImg.src = avatarUrl;
+                avatarImg.classList.remove('hidden');
+                if (avatarDefault) avatarDefault.classList.add('hidden');
+            } else {
+                avatarImg.classList.add('hidden');
+                if (avatarDefault) avatarDefault.classList.remove('hidden');
+            }
+        }
+        
+        // 处理头像选择
+        let selectedAvatarFile = null;
+        function handleAvatarSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedAvatarFile = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const avatarPreview = document.getElementById('avatar-preview');
+                    const avatarPreviewDefault = document.getElementById('avatar-preview-default');
+                    avatarPreview.src = e.target.result;
+                    avatarPreview.classList.remove('hidden');
+                    if (avatarPreviewDefault) avatarPreviewDefault.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Tab导航初始化
+        function initTabNavigation() {
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
+                    switchTab(tab);
+                });
+            });
+        }
+
+        // 切换Tab
+        function switchTab(tabId) {
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+                btn.classList.remove('nav-active');
+                btn.classList.add('hover:bg-gray-100');
+            });
+            document.querySelector(`[data-tab="${tabId}"]`)?.classList.add('nav-active');
+            document.querySelector(`[data-tab="${tabId}"]`)?.classList.remove('hover:bg-gray-100');
+
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId + '-content')?.classList.remove('hidden');
+
+            // 加载对应Tab的数据
+            if (tabId === 'learning-stats') {
+                loadLearningStats();
+                initStatsChart();
+            }
+            if (tabId === 'my-courses') {
+                loadMyCourses();
+            }
+        }
+
+        // 加载学习统计数据
+        function loadLearningStats() {
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            
+            // 更新统计数据
+            const totalHours = Math.round(learningData.totalHours / 3600 * 10) / 10;
+            document.getElementById('stats-total-hours').textContent = totalHours;
+            
+            // 已完成课程数
+            const completedCount = learningData.completedCourses.length;
+            document.getElementById('stats-completed-courses').textContent = completedCount;
+            
+            // 注册天数
+            const registerDays = api.getRegisterDays(currentUser.createdAt);
+            document.getElementById('stats-register-days').textContent = registerDays;
+            
+            // 渲染已完成课程明细
+            renderCompletedCoursesList(learningData.completedCourses);
+        }
+        
+        // 渲染已完成课程列表
+        function renderCompletedCoursesList(completedCourseIds) {
+            const container = document.getElementById('completed-courses-list');
+            if (!container) return;
+            
+            if (completedCourseIds.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fa fa-inbox text-4xl mb-2"></i>
+                        <p>暂无已完成的课程</p>
+                        <p class="text-sm mt-1">开始学习视频课程，完成后将显示在这里</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const allCourses = api.getCourses();
+            const completedCourses = completedCourseIds.map(id => allCourses.find(c => String(c.id) === String(id))).filter(Boolean);
+            
+            container.innerHTML = completedCourses.map(course => `
+                <div class="bg-white rounded-lg p-4 border border-green-200 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                            <i class="fa fa-check-circle text-green-500"></i>
+                        </div>
+                        <div>
+                            <h5 class="font-medium text-gray-800">${course.title}</h5>
+                            <p class="text-xs text-gray-500">${course.videos ? course.videos.length : 0}个视频 · 全部完成</p>
+                        </div>
+                    </div>
+                    <button onclick="viewCourse(${course.id})" class="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                        查看课程
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // 初始化学习统计图表
+        function initStatsChart() {
+            const ctx = document.getElementById('stats-learning-chart');
+            if (!ctx) return;
+            
+            // 如果已有图表，先销毁
+            if (statsChart) {
+                statsChart.destroy();
+            }
+            
+            // 生成最近7天的数据
+            const labels = [];
+            const data = [];
+            const today = new Date();
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                labels.push(`${date.getMonth() + 1}/${date.getDate()}`);
+                // 模拟每天学习时长（0.5-3小时随机）
+                data.push((Math.random() * 2.5 + 0.5).toFixed(1));
+            }
+            
+            statsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '学习时长(小时)',
+                        data: data,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#fff',
+                            titleColor: '#6b7280',
+                            bodyColor: '#6b7280',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + ' 小时';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#9ca3af' }
+                        },
+                        y: {
+                            grid: { color: '#f3f4f6' },
+                            ticks: { 
+                                color: '#9ca3af',
+                                callback: function(value) {
+                                    return value + 'h';
+                                }
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 加载所有数据
+        function loadAllData() {
+            loadMyCourses();
+        }
+
+        // 加载我的课程
+        function loadMyCourses() {
+            const allCourses = api.getCourses();
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            
+            // 计算每个课程的进度
+            myCourses = allCourses.map(c => {
+                let progress = 0;
+                let totalVideos = c.videos ? c.videos.length : 0;
+                
+                if (totalVideos > 0) {
+                    let watchedCount = 0;
+                    c.videos.forEach((v, i) => {
+                        const vKey = `${c.id}_${i}`;
+                        const videoProgress = learningData.videoProgress[vKey] || 0;
+                        if (videoProgress >= 100) {
+                            watchedCount++;
+                        }
+                    });
+                    progress = Math.round((watchedCount / totalVideos) * 100);
+                }
+                
+                const isCompleted = learningData.completedCourses.includes(c.id);
+                
+                return {
+                    ...c,
+                    progress: progress,
+                    isCompleted: isCompleted,
+                    lastLearnTime: learningData.lastStudyTime ? new Date(learningData.lastStudyTime).toLocaleDateString('zh-CN') : '未开始'
+                };
+            });
+
+            const inProgress = myCourses.filter(c => !c.isCompleted);
+            const completed = myCourses.filter(c => c.isCompleted);
+
+            // 渲染未完成课程
+            const inProgressContainer = document.getElementById('in-progress-courses');
+            if (inProgress.length === 0) {
+                inProgressContainer.innerHTML = `
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fa fa-book text-4xl mb-2"></i>
+                        <p>暂无进行中的课程</p>
+                        <p class="text-sm mt-1">快去课程中心开始学习吧</p>
+                    </div>
+                `;
+            } else {
+                inProgressContainer.innerHTML = inProgress.map(c => `
+                    <div class="bg-white rounded-xl shadow-md p-4 flex gap-4">
+                        <img src="${c.cover || 'https://via.placeholder.com/160x90?text=课程'}" class="w-40 h-24 rounded-lg object-cover">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800 mb-1">${c.title}</h4>
+                            <p class="text-sm text-gray-500 mb-2">${c.videos ? c.videos.length + '个视频' : '暂无介绍'}</p>
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                    <div class="bg-gradient-primary h-2 rounded-full transition-all" style="width: ${c.progress}%"></div>
+                                </div>
+                                <span class="text-sm text-primary font-medium">${c.progress}%</span>
+                            </div>
+                        </div>
+                        <button onclick="continueLearn(${c.id})" class="px-4 py-2 bg-gradient-primary text-white rounded-lg h-fit hover:opacity-90">
+                            <i class="fa fa-play mr-1"></i>继续
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            // 渲染已完成课程
+            const completedContainer = document.getElementById('completed-courses');
+            if (completed.length === 0) {
+                completedContainer.innerHTML = `
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fa fa-check-circle text-4xl mb-2"></i>
+                        <p>暂无已完成课程</p>
+                        <p class="text-sm mt-1">完成课程后在这里查看记录</p>
+                    </div>
+                `;
+            } else {
+                completedContainer.innerHTML = completed.map(c => `
+                    <div class="bg-white rounded-xl shadow-md p-4 flex gap-4">
+                        <img src="${c.cover || 'https://via.placeholder.com/160x90?text=课程'}" class="w-40 h-24 rounded-lg object-cover">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h4 class="font-bold text-gray-800">${c.title}</h4>
+                                <span class="badge badge-success">已完成</span>
+                            </div>
+                            <p class="text-sm text-gray-500">${c.videos ? c.videos.length + '个视频全部完成' : ''}</p>
+                        </div>
+                        <button onclick="viewCourse(${c.id})" class="px-4 py-2 border border-gray-300 rounded-lg h-fit hover:bg-gray-50">
+                            <i class="fa fa-eye mr-1"></i>查看
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            // 更新头部统计
+            const totalHours = Math.round(learningData.totalHours / 3600 * 10) / 10;
+            document.getElementById('course-stat-hours').textContent = totalHours;
+            document.getElementById('course-stat-completed').textContent = completed.length;
+            const avgProgress = myCourses.length > 0 ? Math.round(myCourses.reduce((sum, c) => sum + c.progress, 0) / myCourses.length) : 0;
+            document.getElementById('course-stat-progress').textContent = avgProgress + '%';
+        }
+
+        // 初始化学习图表（我的课程页面的图表）
+        function initLearningChart() {
+            const ctx = document.getElementById('learning-chart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                    datasets: [{
+                        label: '学习时长(小时)',
+                        data: [2.5, 3.0, 1.5, 4.0, 2.0, 3.5, 1.0],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // 继续学习
+        function continueLearn(courseId) {
+            window.location.href = `player.html?courseId=${courseId}`;
+        }
+
+        // 查看课程
+        function viewCourse(courseId) {
+            window.location.href = `player.html?courseId=${courseId}`;
+        }
+
+        // 显示编辑资料弹窗
+        function showEditProfileModal() {
+            // 重置头像预览
+            selectedAvatarFile = null;
+            const avatarPreview = document.getElementById('avatar-preview');
+            const avatarPreviewDefault = document.getElementById('avatar-preview-default');
+            if (currentUser.avatar && currentUser.avatar.trim() !== '') {
+                avatarPreview.src = currentUser.avatar;
+                avatarPreview.classList.remove('hidden');
+                if (avatarPreviewDefault) avatarPreviewDefault.classList.add('hidden');
+            } else {
+                avatarPreview.classList.add('hidden');
+                if (avatarPreviewDefault) avatarPreviewDefault.classList.remove('hidden');
+            }
+            
+            document.getElementById('edit-name').value = currentUser.name || '';
+            document.getElementById('edit-department').value = currentUser.department || '';
+            document.getElementById('edit-position').value = currentUser.position || '';
+            document.getElementById('edit-profile-modal').classList.remove('hidden');
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('edit-profile-modal').classList.add('hidden');
+        }
+
+        async function saveProfile() {
+            const name = document.getElementById('edit-name').value.trim();
+            if (!name) {
+                showToast('请输入姓名', 'error');
+                return;
+            }
+
+            const department = document.getElementById('edit-department').value.trim();
+            const position = document.getElementById('edit-position').value.trim();
+            
+            // 处理头像
+            let avatarUrl = currentUser.avatar || '';
+            if (selectedAvatarFile) {
+                // 将图片转换为 base64
+                avatarUrl = await fileToBase64(selectedAvatarFile);
+            }
+            
+            // 更新 currentUser
+            currentUser.name = name;
+            currentUser.department = department;
+            currentUser.position = position;
+            currentUser.avatar = avatarUrl;
+            
+            // 同步更新 localStorage 中的用户数据
+            const storedUser = getLoggedInUser();
+            if (storedUser) {
+                storedUser.real_name = name;
+                storedUser.realName = name;
+                storedUser.department = department;
+                storedUser.position = position;
+                storedUser.avatar = avatarUrl;
+                localStorage.setItem('user', JSON.stringify(storedUser));
+                sessionStorage.setItem('user', JSON.stringify(storedUser));
+            }
+            
+            // 更新页面显示（实时生效）
+            document.getElementById('profile-user-name').textContent = name;
+            document.getElementById('profile-department').textContent = department || '未设置部门';
+            updateProfileAvatar(avatarUrl);
+            
+            // 更新导航栏
+            const userDisplayName = document.getElementById('user-display-name');
+            const mobileUserName = document.getElementById('mobile-user-name');
+            if (userDisplayName) userDisplayName.textContent = name;
+            if (mobileUserName) mobileUserName.textContent = name;
+            
+            closeEditProfileModal();
+            showToast('资料已保存', 'success');
+        }
+        
+        // 将文件转换为 base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 修改密码
+        function showChangePasswordModal() {
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+            document.getElementById('change-password-modal').classList.remove('hidden');
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.add('hidden');
+        }
+
+        async function changePassword() {
+            const current = document.getElementById('current-password').value;
+            const newPwd = document.getElementById('new-password').value;
+            const confirm = document.getElementById('confirm-password').value;
+
+            if (!current || !newPwd || !confirm) {
+                showToast('请填写所有字段', 'error');
+                return;
+            }
+            if (newPwd !== confirm) {
+                showToast('两次输入的新密码不一致', 'error');
+                return;
+            }
+            if (newPwd.length < 6) {
+                showToast('新密码长度不能少于6位', 'error');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                if (!token) {
+                    showToast('未登录，请先登录', 'error');
+                    return;
+                }
+
+                const response = await fetch(`${window.location.origin}/api/auth/change-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        currentPassword: current,
+                        newPassword: newPwd
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // 更新本地存储中的用户信息（将新密码保存到本地，方便演示）
+                    const storedUser = getLoggedInUser();
+                    if (storedUser) {
+                        storedUser.password = newPwd; // 本地保存新密码用于演示
+                        localStorage.setItem('user', JSON.stringify(storedUser));
+                        sessionStorage.setItem('user', JSON.stringify(storedUser));
+                    }
+
+                    closeChangePasswordModal();
+                    showToast('密码修改成功！', 'success');
+                } else {
+                    showToast(result.error || '密码修改失败', 'error');
+                }
+            } catch (error) {
+                console.error('修改密码错误:', error);
+                // 如果后端API不可用，使用本地模拟方式
+                const storedUser = getLoggedInUser();
+                if (storedUser) {
+                    storedUser.password = newPwd; // 本地保存新密码
+                    localStorage.setItem('user', JSON.stringify(storedUser));
+                    sessionStorage.setItem('user', JSON.stringify(storedUser));
+                }
+                closeChangePasswordModal();
+                showToast('密码已本地更新（离线模式）', 'success');
+            }
+        }
+
+        // 绑定手机/邮箱
+        function showBindPhoneModal() {
+            const phone = prompt('请输入手机号：');
+            if (phone) {
+                currentUser.phone = phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+                loadUserData();
+                alert('手机号已绑定');
+            }
+        }
+
+        function showBindEmailModal() {
+            const email = prompt('请输入邮箱：');
+            if (email) {
+                currentUser.email = email;
+                loadUserData();
+                alert('邮箱已绑定');
+            }
+        }
+
+        // 导出数据
+        function exportMyData() {
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            const data = {
+                user: currentUser,
+                learningData: learningData,
+                myCourses: myCourses
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `学习数据导出_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('数据导出成功');
+        }
+
+        // 注销账户
+        function showDeleteAccountModal() {
+            if (confirm('确定要注销账户吗？此操作不可恢复！')) {
+                if (confirm('再次确认：所有数据将被永久删除')) {
+                    alert('账户注销功能正在开发中');
+                }
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                window.location.href = 'index.html';
+            }
+        }
+
+        // 用户菜单
+        document.getElementById('user-menu-button')?.addEventListener('click', function() {
+            document.getElementById('user-menu').classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#user-menu-button') && !e.target.closest('#user-menu')) {
+                document.getElementById('user-menu')?.classList.add('hidden');
+            }
+        });
+
+        // 移动端菜单
+        document.getElementById('mobile-menu-button')?.addEventListener('click', function() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // 用户认证状态检查
+        function getCurrentUser() {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            return userStr ? JSON.parse(userStr) : null;
+        }
+        
+        function checkAuthAndUpdateUI() {
+            const user = getCurrentUser();
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const userInfo = document.getElementById('user-info');
+            const loginBtn = document.getElementById('login-btn');
+            const mobileUserInfo = document.getElementById('mobile-user-info');
+            
+            if (user && token) {
+                // 已登录
+                if (userInfo) userInfo.classList.remove('hidden');
+                if (loginBtn) loginBtn.classList.add('hidden');
+                if (mobileUserInfo) mobileUserInfo.classList.remove('hidden');
+                
+                // 显示用户姓名（注意：后端返回的是 real_name 下划线格式）
+                const name = user.real_name || user.realName || user.username || '用户';
+                const displayName = document.getElementById('user-display-name');
+                const mobileUserName = document.getElementById('mobile-user-name');
+                const headerUserName = document.getElementById('header-user-name');
+                if (displayName) displayName.textContent = name;
+                if (mobileUserName) mobileUserName.textContent = name;
+                if (headerUserName) headerUserName.textContent = name;
+                
+                // 管理员显示管理端入口
+                const mobileAdminLink = document.getElementById('mobile-admin-link');
+                const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+                const desktopLogoutBtn = document.getElementById('logout-btn-desktop');
+                if (user.role === 'admin') {
+                    if (mobileAdminLink) mobileAdminLink.classList.remove('hidden');
+                }
+                if (mobileLogoutBtn) mobileLogoutBtn.classList.remove('hidden');
+                if (desktopLogoutBtn) desktopLogoutBtn.classList.remove('hidden');
+                
+                // 更新 currentUser
+                currentUser = { ...currentUser, ...user };
+                loadUserData(); // 重新加载用户数据以显示最新信息
+            } else {
+                // 未登录
+                if (userInfo) userInfo.classList.add('hidden');
+                if (loginBtn) loginBtn.classList.remove('hidden');
+                if (mobileUserInfo) mobileUserInfo.classList.add('hidden');
+            }
+        }
+        
+        function handleLogout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+            showToast('已退出登录', 'success');
+            setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+        }
+        
+        function logout() {
+            handleLogout();
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 shadow-lg ' + (type === 'success' ? 'bg-green-500' : 'bg-red-500');
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuthAndUpdateUI();
+        });
+        
+        // 监听页面可见性变化，定时刷新学习数据
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                updateLearningStats();
+            }
+        });
+        
+        // 监听storage变化（用于跨标签页同步）
+        window.addEventListener('storage', (e) => {
+            if (e.key && e.key.includes('learning')) {
+                updateLearningStats();
+                loadLearningStats();
+            }
+        });
+    </script>
+</body>
+</html>

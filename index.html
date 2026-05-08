@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>游雁学院 - 企业在线学习平台</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- 移动端增强样式 -->
+    <link rel="stylesheet" href="css/mobile-enhanced.css">
+    <!-- 统一的 Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#667eea',
+                        secondary: '#764ba2',
+                        dark: '#0f172a',
+                        darkgray: '#1f2937',
+                        lightgray: '#9ca3af',
+                        accent: '#f59e0b'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.5s ease-in-out',
+                        'scale-in': 'scaleIn 0.3s ease-in-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(30px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.9)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        }
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-gradient {
+                background-clip: text;
+                -webkit-background-clip: text;
+                color: transparent;
+                background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            .bg-gradient-primary {
+                background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            .card-hover {
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .card-hover:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.15), 0 10px 10px -5px rgba(102, 126, 234, 0.1);
+            }
+            .line-clamp-2 {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .line-clamp-3 {
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+        }
+        
+        body {
+            opacity: 0;
+            animation: pageLoad 0.5s ease forwards;
+        }
+        
+        @keyframes pageLoad {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-white text-gray-800 dark:text-gray-800">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white/95 dark:bg-white/95 backdrop-blur-md shadow-sm fixed w-full top-0 z-50 transition-all duration-300">
+        <div class="container-responsive">
+            <div class="flex justify-between items-center py-3">
+                <a href="index.html" class="flex items-center space-x-2 group">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                        <i class="fa fa-graduation-cap text-white text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gradient hidden sm:block">游雁学院</span>
+                </a>
+                
+                <nav class="hidden md:flex space-x-1">
+                    <a href="index.html" class="nav-item active px-4 py-2 rounded-lg text-primary font-medium hover:bg-primary/5 transition-colors">首页</a>
+                    <a href="course.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/5 transition-colors">课程中心</a>
+                    <a href="teacher.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/5 transition-colors">讲师风采</a>
+                    <a href="center.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/5 transition-colors">个人中心</a>
+                </nav>
+                
+                <div class="flex items-center space-x-3">
+                    <div id="user-info" class="hidden md:flex items-center space-x-3">
+                        <div class="w-7 h-7 rounded-full bg-gradient-primary flex items-center justify-center">
+                            <i class="fa fa-user text-white text-xs" id="user-avatar-icon"></i>
+                        </div>
+                        <span class="text-sm font-medium text-primary" id="user-display-name">用户</span>
+                        <button onclick="handleLogout()" id="logout-btn-desktop" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors" title="退出登录">
+                            <i class="fa fa-sign-out text-lg"></i>
+                        </button>
+                    </div>
+                    <a href="login.html" id="login-btn" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-primary transition-colors">登录</a>
+                    <button class="md:hidden text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors" id="mobile-menu-button" aria-label="菜单">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="md:hidden hidden bg-white border-t border-gray-100 shadow-lg" id="mobile-menu">
+            <div class="container-responsive py-3">
+                <div id="mobile-user-info" class="hidden mb-3 pb-3 border-b border-gray-100">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center">
+                            <i class="fa fa-user text-white"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800" id="mobile-user-name">用户</p>
+                        </div>
+                    </div>
+                </div>
+                <nav class="flex flex-col space-y-1">
+                    <a href="index.html" class="flex items-center px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium">
+                        <i class="fa fa-home w-6"></i><span>首页</span>
+                    </a>
+                    <a href="course.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                        <i class="fa fa-book w-6"></i><span>课程中心</span>
+                    </a>
+                    <a href="teacher.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                        <i class="fa fa-users w-6"></i><span>讲师风采</span>
+                    </a>
+                    <a href="center.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                        <i class="fa fa-user-circle w-6"></i><span>个人中心</span>
+                    </a>
+                    <a href="admin.html" id="mobile-admin-link" class="hidden flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                        <i class="fa fa-cog w-6"></i><span>管理端</span>
+                    </a>
+                    <button onclick="handleLogout()" id="mobile-logout-btn" class="hidden flex items-center px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
+                        <i class="fa fa-sign-out w-6"></i><span>退出登录</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-16 pb-16">
+        <!-- 轮播图 -->
+        <section class="relative bg-white dark:bg-darkgray overflow-hidden w-full" style="height: 500px;">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-primary"></div>
+            <div class="carousel-container w-[1200px] mx-auto h-full" id="banner-container">
+                <button class="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-gray-800 dark:text-white flex items-center justify-center hover:bg-white dark:hover:bg-gray-700 transition-all shadow-lg hover:shadow-xl active:scale-95 z-10" id="prev-slide" aria-label="上一张">
+                    <i class="fa fa-chevron-left"></i>
+                </button>
+                <button class="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-gray-800 dark:text-white flex items-center justify-center hover:bg-white dark:hover:bg-gray-700 transition-all shadow-lg hover:shadow-xl active:scale-95 z-10" id="next-slide" aria-label="下一张">
+                    <i class="fa fa-chevron-right"></i>
+                </button>
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-10" id="banner-indicators"></div>
+            </div>
+        </section>
+
+
+
+        <!-- 公告通知 -->
+        <section class="py-4 bg-white dark:bg-white" id="notice-section">
+            <div class="container-responsive">
+                <div class="flex items-center justify-between p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-sm">
+                    <div class="flex items-center space-x-3 flex-1 min-w-0" id="notice-content"></div>
+                    <a href="#" class="text-primary hover:underline flex items-center text-base whitespace-nowrap ml-4" id="notice-all-link">
+                        全部公告 <i class="fa fa-angle-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 精品课程 -->
+        <section class="py-8 md:py-12 bg-white dark:bg-white">
+            <div class="container-responsive">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-xl md:text-2xl font-bold text-gray-800 dark:text-white">精品课程</h2>
+                        <p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">精选优质课程，助力职业成长</p>
+                    </div>
+                    <a href="course.html" class="text-primary hover:underline flex items-center text-base">查看全部 <i class="fa fa-angle-right ml-1"></i></a>
+                </div>
+                <div class="grid grid-cols-4 gap-6" id="featured-courses-inner">
+                    <div class="card-enhanced"><div class="skeleton h-44"></div><div class="p-4"><div class="skeleton h-4 w-20 mb-3"></div><div class="skeleton h-6 w-full mb-2"></div><div class="skeleton h-6 w-3/4"></div></div></div>
+                    <div class="card-enhanced"><div class="skeleton h-44"></div><div class="p-4"><div class="skeleton h-4 w-20 mb-3"></div><div class="skeleton h-6 w-full mb-2"></div><div class="skeleton h-6 w-3/4"></div></div></div>
+                    <div class="card-enhanced"><div class="skeleton h-44"></div><div class="p-4"><div class="skeleton h-4 w-20 mb-3"></div><div class="skeleton h-6 w-full mb-2"></div><div class="skeleton h-6 w-3/4"></div></div></div>
+                    <div class="card-enhanced"><div class="skeleton h-44"></div><div class="p-4"><div class="skeleton h-4 w-20 mb-3"></div><div class="skeleton h-6 w-full mb-2"></div><div class="skeleton h-6 w-3/4"></div></div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 明星讲师 -->
+        <section class="py-8 md:py-12 bg-white dark:bg-white">
+            <div class="container-responsive">
+                <div id="featured-lecturers-grid">
+                    <!-- 动态渲染明星讲师 -->
+                </div>
+            </div>
+        </section>
+
+
+    </main>
+
+    <script src="js/data-sync.js"></script>
+    <script src="data-api.js"></script>
+    <script src="js/index-enhanced.js"></script>
+    <script>
+        // API 基础 URL
+        const API_BASE = window.location.origin + '/api';
+        
+        // 获取当前登录用户
+        function getCurrentUser() {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            return userStr ? JSON.parse(userStr) : null;
+        }
+        
+        // 检查登录状态并更新 UI
+        function checkAuthAndUpdateUI() {
+            const user = getCurrentUser();
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            
+            const userInfo = document.getElementById('user-info');
+            const loginBtn = document.getElementById('login-btn');
+            const mobileUserInfo = document.getElementById('mobile-user-info');
+            
+            if (user && token) {
+                // 已登录状态
+                if (userInfo) userInfo.classList.remove('hidden');
+                if (loginBtn) loginBtn.classList.add('hidden');
+                if (mobileUserInfo) mobileUserInfo.classList.remove('hidden');
+                
+                // 更新用户名显示（注意：后端返回的是 real_name 下划线格式）
+                const displayName = document.getElementById('user-display-name');
+                const mobileUserName = document.getElementById('mobile-user-name');
+                
+                const name = user.real_name || user.realName || user.username || '用户';
+                if (displayName) displayName.textContent = name;
+                if (mobileUserName) mobileUserName.textContent = name;
+                
+                // 如果是管理员，显示管理端链接
+                const mobileAdminLink = document.getElementById('mobile-admin-link');
+                const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+                const desktopLogoutBtn = document.getElementById('logout-btn-desktop');
+                if (user.role === 'admin') {
+                    if (mobileAdminLink) mobileAdminLink.classList.remove('hidden');
+                }
+                if (mobileLogoutBtn) mobileLogoutBtn.classList.remove('hidden');
+                if (desktopLogoutBtn) desktopLogoutBtn.classList.remove('hidden');
+            } else {
+                // 未登录状态
+                if (userInfo) userInfo.classList.add('hidden');
+                if (loginBtn) loginBtn.classList.remove('hidden');
+                if (mobileUserInfo) mobileUserInfo.classList.add('hidden');
+            }
+        }
+        
+        // 退出登录
+        function handleLogout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+            
+            showToast('已退出登录', 'success');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+        
+        // Toast 提示
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 shadow-lg ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // 用户菜单切换
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuthAndUpdateUI();
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+

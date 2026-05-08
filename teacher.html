@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>讲师风采 - 游雁学院</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/mobile-enhanced.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#667eea',
+                        secondary: '#764ba2',
+                        dark: '#0f172a',
+                        darkgray: '#1f2937'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-gradient { background-clip: text; -webkit-background-clip: text; color: transparent; background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+            .bg-gradient-primary { background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+            .card-hover { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+            .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.15); }
+            .level-chief { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+            .level-senior { background: linear-gradient(135deg, #10b981, #059669); }
+            .level-intermediate { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+            .level-junior { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+            .level-trainee { background: linear-gradient(135deg, #6b7280, #4b5563); }
+        }
+        body { opacity: 0; animation: pageLoad 0.5s ease forwards; }
+        @keyframes pageLoad { to { opacity: 1; } }
+        
+        /* 讲师卡片样式 */
+        .lecturer-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 16px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+        .lecturer-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.15);
+            border-color: #667eea;
+        }
+        .lecturer-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            overflow: hidden;
+            border: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .lecturer-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .lecturer-level {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 12px;
+        }
+        .lecturer-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        .lecturer-title {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+        .lecturer-stats {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .lecturer-stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .lecturer-tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 12px;
+        }
+        .lecturer-tag {
+            padding: 2px 8px;
+            background: #f3f4f6;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-dark text-gray-800 dark:text-gray-200">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white/95 dark:bg-darkgray/95 backdrop-blur-md shadow-sm fixed w-full top-0 z-50">
+        <div class="container-responsive">
+            <div class="flex justify-between items-center py-3">
+                <a href="index.html" class="flex items-center space-x-2 group">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-lg">
+                        <i class="fa fa-graduation-cap text-white text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gradient hidden md:block">游雁学院</span>
+                </a>
+                <nav class="hidden md:flex space-x-1">
+                    <a href="index.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/5 transition-colors">首页</a>
+                    <a href="course.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/5 transition-colors">课程中心</a>
+                    <a href="teacher.html" class="nav-item active px-4 py-2 rounded-lg text-primary font-medium hover:bg-primary/5 transition-colors">讲师风采</a>
+                    <a href="center.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/5 transition-colors">个人中心</a>
+                </nav>
+                <div class="flex items-center space-x-3">
+                    <div id="user-info" class="hidden md:flex items-center space-x-3">
+                        <div class="w-7 h-7 rounded-full bg-gradient-primary flex items-center justify-center">
+                            <i class="fa fa-user text-white text-xs" id="user-avatar-icon"></i>
+                        </div>
+                        <span class="text-sm font-medium text-primary" id="user-display-name">用户</span>
+                        <button onclick="handleLogout()" id="logout-btn-desktop" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors" title="退出登录">
+                            <i class="fa fa-sign-out text-lg"></i>
+                        </button>
+                    </div>
+                    <a href="login.html" id="login-btn" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-primary transition-colors">登录</a>
+                    <button class="md:hidden text-gray-600 p-2 hover:bg-gray-100 rounded-lg" id="mobile-menu-button">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="md:hidden hidden bg-white border-t border-gray-100 shadow-lg" id="mobile-menu">
+            <div class="container-responsive py-3">
+                <div id="mobile-user-info" class="hidden mb-3 pb-3 border-b border-gray-100">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center">
+                            <i class="fa fa-user text-white"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800" id="mobile-user-name">用户</p>
+                        </div>
+                    </div>
+                </div>
+                <nav class="flex flex-col space-y-1">
+                    <a href="index.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">首页</a>
+                    <a href="course.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">课程中心</a>
+                    <a href="teacher.html" class="flex items-center px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium">讲师风采</a>
+                    <a href="center.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">个人中心</a>
+                    <a href="admin.html" id="mobile-admin-link" class="hidden flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">
+                        <i class="fa fa-cog w-6 mr-2"></i>管理端
+                    </a>
+                    <button onclick="handleLogout()" id="mobile-logout-btn" class="hidden flex items-center px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
+                        <i class="fa fa-sign-out w-6"></i><span>退出登录</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-16 pb-6">
+        <!-- 页面标题 -->
+        <section class="py-6 md:py-8 bg-gradient-primary text-white">
+            <div class="container-responsive">
+                <h1 class="text-3xl md:text-4xl font-bold mb-3">讲师风采</h1>
+                <p class="text-white/80 text-base md:text-lg">汇聚行业专家，分享实战经验</p>
+            </div>
+        </section>
+
+        <!-- 筛选区域 -->
+        <section class="py-3 bg-white dark:bg-darkgray border-b dark:border-gray-700 sticky top-16 z-40 shadow-sm">
+            <div class="container-responsive">
+                <div class="flex flex-col md:flex-row gap-3">
+                    <!-- 搜索框 -->
+                    <div class="search-enhanced flex-1">
+                        <input type="text" id="teacher-search" placeholder="搜索讲师姓名..." class="search-input">
+                        <i class="fa fa-search search-icon"></i>
+                    </div>
+                    <!-- 级别筛选 -->
+                    <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-2 md:pb-0">
+                        <button class="filter-chip active whitespace-nowrap" data-level="all">全部级别</button>
+                        <button class="filter-chip whitespace-nowrap" data-level="chief">首席讲师</button>
+                        <button class="filter-chip whitespace-nowrap" data-level="senior">高级讲师</button>
+                        <button class="filter-chip whitespace-nowrap" data-level="intermediate">中级讲师</button>
+                        <button class="filter-chip whitespace-nowrap" data-level="junior">初级讲师</button>
+                        <button class="filter-chip whitespace-nowrap" data-level="trainee">实习讲师</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 讲师列表 -->
+        <section class="py-6">
+            <div class="container-responsive max-w-[1400px]">
+                <!-- 统计信息 -->
+                <div class="mb-4 flex items-center justify-between flex-wrap gap-3">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        共找到 <span id="teacher-count" class="font-bold text-primary">0</span> 位讲师
+                    </p>
+                    <select id="sort-filter" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary text-sm">
+                        <option value="default">默认排序</option>
+                        <option value="courses">按课程数</option>
+                        <option value="name">按姓名</option>
+                    </select>
+                </div>
+
+                <!-- 讲师网格 - 一行5个，对称布局 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6" id="teacher-grid">
+                    <!-- 骨架屏占位 -->
+                    <div class="card-enhanced lecturer-card"><div class="skeleton w-20 h-20 md:w-24 md:h-24 rounded-full mx-auto mb-4"></div><div class="skeleton h-5 w-24 mx-auto mb-2"></div><div class="skeleton h-4 w-16 mx-auto"></div></div>
+                    <div class="card-enhanced lecturer-card"><div class="skeleton w-20 h-20 md:w-24 md:h-24 rounded-full mx-auto mb-4"></div><div class="skeleton h-5 w-24 mx-auto mb-2"></div><div class="skeleton h-4 w-16 mx-auto"></div></div>
+                    <div class="card-enhanced lecturer-card"><div class="skeleton w-20 h-20 md:w-24 md:h-24 rounded-full mx-auto mb-4"></div><div class="skeleton h-5 w-24 mx-auto mb-2"></div><div class="skeleton h-4 w-16 mx-auto"></div></div>
+                    <div class="card-enhanced lecturer-card"><div class="skeleton w-20 h-20 md:w-24 md:h-24 rounded-full mx-auto mb-4"></div><div class="skeleton h-5 w-24 mx-auto mb-2"></div><div class="skeleton h-4 w-16 mx-auto"></div></div>
+                    <div class="card-enhanced lecturer-card"><div class="skeleton w-20 h-20 md:w-24 md:h-24 rounded-full mx-auto mb-4"></div><div class="skeleton h-5 w-24 mx-auto mb-2"></div><div class="skeleton h-4 w-16 mx-auto"></div></div>
+                </div>
+
+                <!-- 空状态 -->
+                <div id="empty-state" class="hidden py-12">
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fa fa-users"></i></div>
+                        <div class="empty-state-title">暂无讲师</div>
+                        <div class="empty-state-desc">请调整筛选条件</div>
+                    </div>
+                </div>
+
+                <!-- 分页 -->
+                <div id="pagination" class="mt-6 flex justify-center">
+                    <nav class="flex items-center space-x-2"></nav>
+                </div>
+            </div>
+        </section>
+
+        <!-- 成为讲师 -->
+        <section class="py-8 bg-white border-t border-gray-200">
+            <div class="w-[1200px] mx-auto px-4">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div class="flex-1 text-center md:text-left">
+                        <h2 class="text-2xl font-bold mb-3 text-gray-800">分享知识，传递价值</h2>
+                        <p class="text-gray-600 text-base mb-6">成为认证讲师，开启教学新篇章</p>
+                        <button class="px-6 py-3 rounded-lg bg-gradient-primary text-white font-medium hover:opacity-90 shadow-lg transition-all transform hover:scale-105">
+                            <i class="fa fa-edit mr-2"></i>申请成为讲师
+                        </button>
+                    </div>
+                    <div class="w-48 h-48 md:w-64 md:h-64 flex-shrink-0">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cartoon%20teacher%20character%20with%20glasses%20and%20graduation%20cap%2C%20friendly%20smile%2C%20teaching%20pose%2C%20flat%20design%2C%20purple%20and%20blue%20colors&image_size=square_hd" alt="讲师卡通形象" class="w-full h-full object-contain">
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/data-sync.js"></script>
+    <script src="data-api.js"></script>
+    <script src="js/teacher-enhanced.js"></script>
+    <script>
+        function getCurrentUser() {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            return userStr ? JSON.parse(userStr) : null;
+        }
+        
+        function checkAuthAndUpdateUI() {
+            const user = getCurrentUser();
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const userInfo = document.getElementById('user-info');
+            const loginBtn = document.getElementById('login-btn');
+            const mobileUserInfo = document.getElementById('mobile-user-info');
+            
+            if (user && token) {
+                // 已登录
+                if (userInfo) userInfo.classList.remove('hidden');
+                if (loginBtn) loginBtn.classList.add('hidden');
+                if (mobileUserInfo) mobileUserInfo.classList.remove('hidden');
+                
+                // 显示用户姓名（注意：后端返回的是 real_name 下划线格式）
+                const name = user.real_name || user.realName || user.username || '用户';
+                const displayName = document.getElementById('user-display-name');
+                const mobileUserName = document.getElementById('mobile-user-name');
+                if (displayName) displayName.textContent = name;
+                if (mobileUserName) mobileUserName.textContent = name;
+                
+                // 管理员显示管理端入口
+                const mobileAdminLink = document.getElementById('mobile-admin-link');
+                const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+                const desktopLogoutBtn = document.getElementById('logout-btn-desktop');
+                if (user.role === 'admin') {
+                    if (mobileAdminLink) mobileAdminLink.classList.remove('hidden');
+                }
+                if (mobileLogoutBtn) mobileLogoutBtn.classList.remove('hidden');
+                if (desktopLogoutBtn) desktopLogoutBtn.classList.remove('hidden');
+            } else {
+                // 未登录
+                if (userInfo) userInfo.classList.add('hidden');
+                if (loginBtn) loginBtn.classList.remove('hidden');
+                if (mobileUserInfo) mobileUserInfo.classList.add('hidden');
+            }
+        }
+        
+        function handleLogout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+            showToast('已退出登录', 'success');
+            setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 shadow-lg ' + (type === 'success' ? 'bg-green-500' : 'bg-red-500');
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuthAndUpdateUI();
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

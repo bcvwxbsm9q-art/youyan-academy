@@ -1,0 +1,780 @@
+{
+  "lecturers": [
+    {
+      "id": 1,
+      "name": "朱子墨",
+      "gender": "男",
+      "level": "chief",
+      "levelName": "首席讲师",
+      "department": "技术部",
+      "title": "资深前端工程师",
+      "paymentRate": 500,
+      "avatar": "https://p3-doubao-search-sign.byteimg.com/tos-cn-i-xv4ileqgde/49e48d5ec11e46789459aaa59464547a~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "intro": "前端开发专家，10年教学经验，曾任职于多家知名互联网公司，开发过多个大型项目。",
+      "skills": [
+        "前端开发",
+        "JavaScript",
+        "React"
+      ],
+      "status": "enabled",
+      "courseCount": 12
+    },
+    {
+      "id": 2,
+      "name": "柯博文",
+      "gender": "男",
+      "level": "senior",
+      "levelName": "高级讲师",
+      "department": "设计部",
+      "title": "设计总监",
+      "paymentRate": 300,
+      "avatar": "https://p26-doubao-search-sign.byteimg.com/labis/a1205f7cab4c69cff4701b799f3cba04~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "intro": "游戏开发专家，前硅谷技术总监，拥有丰富的项目开发和团队管理经验，专注于移动应用开发。",
+      "skills": [
+        "游戏开发",
+        "移动开发",
+        "Unity"
+      ],
+      "status": "enabled",
+      "courseCount": 8
+    },
+    {
+      "id": 3,
+      "name": "屠建清",
+      "gender": "男",
+      "level": "intermediate",
+      "levelName": "中级讲师",
+      "department": "财务部",
+      "title": "财务管理专家",
+      "paymentRate": 400,
+      "avatar": "https://p26-doubao-search-sign.byteimg.com/los-cn-i-xv4ileqgde/d80a6f01a4c047e09b89bd106d2195fa~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "intro": "财务管理专家，注册会计师，拥有丰富的企业财务管理和培训经验，擅长财务分析和规划。",
+      "skills": [
+        "财务管理",
+        "会计",
+        "财务分析"
+      ],
+      "status": "enabled",
+      "courseCount": 6
+    },
+    {
+      "id": 4,
+      "name": "沈宇庭",
+      "gender": "男",
+      "level": "senior",
+      "levelName": "高级讲师",
+      "department": "管理部",
+      "title": "企业管理专家",
+      "paymentRate": 450,
+      "avatar": "https://p26-doubao-search-sign.byteimg.com/tos-cn-i-6w9my0ksvp/76b4e1d0e75d42fd9dff3e3baff02596~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "intro": "企业管理专家，资本运营顾问，拥有丰富的企业管理和投资经验，擅长战略规划和团队管理。",
+      "skills": [
+        "企业管理",
+        "战略规划",
+        "团队建设"
+      ],
+      "status": "enabled",
+      "courseCount": 10
+    }
+  ],
+  "course_categories": [
+    {
+      "id": 1,
+      "name": "策划",
+      "key": "planning",
+      "icon": "fa-sitemap",
+      "children": [
+        {
+          "id": 11,
+          "name": "游戏策划",
+          "key": "game-planning"
+        },
+        {
+          "id": 12,
+          "name": "活动策划",
+          "key": "event-planning"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "美术",
+      "key": "art",
+      "icon": "fa-paint-brush",
+      "children": [
+        {
+          "id": 21,
+          "name": "平面设计",
+          "key": "graphic"
+        },
+        {
+          "id": 22,
+          "name": "UI设计",
+          "key": "ui"
+        },
+        {
+          "id": 23,
+          "name": "3D建模",
+          "key": "3d"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "技术",
+      "key": "tech",
+      "icon": "fa-code",
+      "children": [
+        {
+          "id": 31,
+          "name": "前端开发",
+          "key": "frontend"
+        },
+        {
+          "id": 32,
+          "name": "后端开发",
+          "key": "backend"
+        },
+        {
+          "id": 33,
+          "name": "移动开发",
+          "key": "mobile"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "运营",
+      "key": "operation",
+      "icon": "fa-line-chart",
+      "children": [
+        {
+          "id": 41,
+          "name": "新媒体运营",
+          "key": "social"
+        },
+        {
+          "id": 42,
+          "name": "数据分析",
+          "key": "data"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "软技能",
+      "key": "softskill",
+      "icon": "fa-users",
+      "children": [
+        {
+          "id": 51,
+          "name": "职场沟通",
+          "key": "communication"
+        },
+        {
+          "id": 52,
+          "name": "团队管理",
+          "key": "management"
+        }
+      ]
+    }
+  ],
+  "management_courses": [
+    {
+      "id": 1,
+      "title": "视频课程在线学习 - 从小白到专家的进阶之路",
+      "cover": "https://p26-doubao-search-sign.byteimg.com/labis/3e50046a89d633ced89e4d242d60f064~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 1,
+      "categoryId": 31,
+      "subcategoryId": null,
+      "status": "published",
+      "videos": [
+        {
+          "title": "第一章：HTML基础",
+          "duration": 1800,
+          "url": ""
+        },
+        {
+          "title": "第二章：CSS样式",
+          "duration": 2100,
+          "url": ""
+        },
+        {
+          "title": "第三章：JavaScript入门",
+          "duration": 2400,
+          "url": ""
+        }
+      ],
+      "duration": 6300,
+      "description": "本课程从零基础开始，系统讲解前端开发的完整知识体系，涵盖HTML、CSS、JavaScript等核心技术。",
+      "rating": 4.8,
+      "views": 12000,
+      "createdAt": "2024-04-01"
+    },
+    {
+      "id": 2,
+      "title": "新年回好课 - 2024年企业运营策略与实践",
+      "cover": "https://p11-doubao-search-sign.byteimg.com/labis/56e578a8ce507c83f91f47e08e2ec86d~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 3,
+      "categoryId": 41,
+      "subcategoryId": null,
+      "status": "published",
+      "videos": [
+        {
+          "title": "企业运营概述",
+          "duration": 1500,
+          "url": ""
+        },
+        {
+          "title": "运营策略制定",
+          "duration": 1800,
+          "url": ""
+        }
+      ],
+      "duration": 3300,
+      "description": "系统讲解企业运营的核心策略与实践方法，帮助管理者提升运营能力。",
+      "rating": 4.6,
+      "views": 5200,
+      "createdAt": "2024-03-15"
+    },
+    {
+      "id": 3,
+      "title": "平面设计进阶课程 - 14天在家安心学",
+      "cover": "https://p3-doubao-search-sign.byteimg.com/labis/7cf2d040059ee347d85e5b21237a98b7~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 2,
+      "categoryId": 21,
+      "subcategoryId": null,
+      "status": "published",
+      "videos": [
+        {
+          "title": "平面设计基础",
+          "duration": 1200,
+          "url": ""
+        },
+        {
+          "title": "色彩理论与配色",
+          "duration": 1500,
+          "url": ""
+        },
+        {
+          "title": "排版设计技巧",
+          "duration": 1800,
+          "url": ""
+        }
+      ],
+      "duration": 4500,
+      "description": "平面设计进阶课程，涵盖设计基础理论、色彩搭配、排版技巧等核心内容。",
+      "rating": 4.9,
+      "views": 8700,
+      "createdAt": "2024-02-20"
+    },
+    {
+      "id": 4,
+      "title": "宅家舞蹈 - 12节在线直播跳操课",
+      "cover": "https://p11-doubao-search-sign.byteimg.com/labis/image/c4dfbfac6c444139eb6917c20c5531f7~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 4,
+      "categoryId": 51,
+      "subcategoryId": null,
+      "status": "published",
+      "videos": [
+        {
+          "title": "热身运动",
+          "duration": 600,
+          "url": ""
+        },
+        {
+          "title": "基础舞蹈动作",
+          "duration": 1800,
+          "url": ""
+        }
+      ],
+      "duration": 2400,
+      "description": "居家健身舞蹈课程，12节直播跳操课，帮助保持健康体态。",
+      "rating": 4.7,
+      "views": 3500,
+      "createdAt": "2024-02-01"
+    }
+  ],
+  "training_projects": [
+    {
+      "id": 1,
+      "name": "2024年度新员工入职培训",
+      "manager": "张华",
+      "leader": "张华",
+      "desc": "针对新入职员工的全方位培训项目",
+      "startDate": "2024-03-01",
+      "endDate": "2024-03-31",
+      "status": "active",
+      "stages": [
+        {
+          "id": 1,
+          "name": "企业文化培训",
+          "type": "offline",
+          "lecturerId": 1,
+          "location": "会议室A",
+          "schedule": "2024-03-01 09:00",
+          "videos": [],
+          "attendance": {
+            "required": true,
+            "method": "qr"
+          },
+          "exam": {
+            "id": 1,
+            "name": "企业文化测试",
+            "passingScore": 60
+          },
+          "survey": {
+            "id": 1,
+            "name": "培训满意度调研"
+          }
+        },
+        {
+          "id": 2,
+          "name": "产品知识培训",
+          "type": "online",
+          "lecturerId": 3,
+          "videos": [
+            {
+              "title": "产品基础知识",
+              "duration": 1800,
+              "url": ""
+            }
+          ],
+          "attendance": {
+            "required": true,
+            "method": "face"
+          },
+          "exam": {
+            "id": 2,
+            "name": "产品知识测试",
+            "passingScore": 70
+          },
+          "survey": {
+            "id": 2,
+            "name": "课程满意度调研"
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "技术能力提升培训班",
+      "manager": "李明",
+      "leader": "李明",
+      "desc": "提升团队技术能力的专项培训",
+      "startDate": "2024-04-01",
+      "endDate": "2024-04-20",
+      "status": "active",
+      "stages": [
+        {
+          "id": 1,
+          "name": "前端框架深入",
+          "type": "online",
+          "lecturerId": 1,
+          "videos": [
+            {
+              "title": "React进阶",
+              "duration": 3600,
+              "url": ""
+            },
+            {
+              "title": "Vue3实战",
+              "duration": 3600,
+              "url": ""
+            }
+          ],
+          "attendance": {
+            "required": false,
+            "method": "qr"
+          },
+          "exam": {
+            "id": 3,
+            "name": "前端技术测评",
+            "passingScore": 65
+          },
+          "survey": null
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "管理层领导力培训",
+      "manager": "王芳",
+      "leader": "王芳",
+      "desc": "提升管理层的领导能力和团队管理能力",
+      "startDate": "2024-02-15",
+      "endDate": "2024-03-01",
+      "status": "completed",
+      "stages": [
+        {
+          "id": 1,
+          "name": "领导力基础",
+          "type": "offline",
+          "lecturerId": 4,
+          "location": "大会议室",
+          "schedule": "2024-02-15 14:00",
+          "videos": [],
+          "attendance": {
+            "required": true,
+            "method": "qr"
+          },
+          "exam": {
+            "id": 4,
+            "name": "领导力测试",
+            "passingScore": 60
+          },
+          "survey": {
+            "id": 3,
+            "name": "培训综合评价"
+          }
+        }
+      ]
+    }
+  ],
+  "index_banners": [
+    {
+      "id": 1,
+      "courseId": 1,
+      "courseName": "视频课程在线学习 - 从小白到专家的进阶之路",
+      "img": "https://p26-doubao-search-sign.byteimg.com/labis/3e50046a89d633ced89e4d242d60f064~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "order": 1,
+      "title": "欢迎来到游雁学院"
+    },
+    {
+      "id": 2,
+      "courseId": 2,
+      "courseName": "新年回好课 - 2024年企业运营策略与实践",
+      "img": "https://p11-doubao-search-sign.byteimg.com/labis/56e578a8ce507c83f91f47e08e2ec86d~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "order": 2,
+      "title": "提升技能，助力职业发展"
+    },
+    {
+      "id": 3,
+      "courseId": 3,
+      "courseName": "平面设计进阶课程",
+      "img": "https://p3-doubao-search-sign.byteimg.com/labis/7cf2d040059ee347d85e5b21237a98b7~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "order": 3,
+      "title": "专业讲师，优质课程"
+    }
+  ],
+  "index_featured_courses": [
+    1,
+    2,
+    3
+  ],
+  "index_featured_lecturers_v2": [
+    1,
+    2
+  ],
+  "index_notices": [
+    {
+      "id": 1,
+      "title": "关于线上学习平台积分系统功能关闭下线的公告",
+      "content": "<p>尊敬的用户：为优化平台服务，积分系统将于近期关闭下线，请知悉。</p>",
+      "status": "published",
+      "createdAt": "2024-04-15",
+      "publishedAt": "2024-04-15"
+    }
+  ],
+  "course_center_sync": [
+    {
+      "id": 1,
+      "title": "视频课程在线学习 - 从小白到专家的进阶之路",
+      "cover": "https://p26-doubao-search-sign.byteimg.com/labis/3e50046a89d633ced89e4d242d60f064~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 1,
+      "categoryId": 31,
+      "duration": 6300,
+      "description": "本课程从零基础开始，系统讲解前端开发的完整知识体系。",
+      "rating": 4.8,
+      "views": 12000,
+      "videos": [],
+      "status": "published",
+      "createdAt": "2024-04-01"
+    },
+    {
+      "id": 2,
+      "title": "新年回好课 - 2024年企业运营策略与实践",
+      "cover": "https://p11-doubao-search-sign.byteimg.com/labis/56e578a8ce507c83f91f47e08e2ec86d~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 3,
+      "categoryId": 41,
+      "duration": 3300,
+      "description": "系统讲解企业运营的核心策略与实践方法。",
+      "rating": 4.6,
+      "views": 5200,
+      "videos": [],
+      "status": "published",
+      "createdAt": "2024-03-15"
+    },
+    {
+      "id": 3,
+      "title": "平面设计进阶课程 - 14天在家安心学",
+      "cover": "https://p3-doubao-search-sign.byteimg.com/labis/7cf2d040059ee347d85e5b21237a98b7~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 2,
+      "categoryId": 21,
+      "duration": 4500,
+      "description": "平面设计进阶课程，涵盖设计基础理论、色彩搭配、排版技巧。",
+      "rating": 4.9,
+      "views": 8700,
+      "videos": [],
+      "status": "published",
+      "createdAt": "2024-02-20"
+    }
+  ],
+  "center_training_data": {
+    "trainings": [
+      {
+        "id": 1,
+        "name": "2024年度新员工入职培训",
+        "leader": "张华",
+        "desc": "针对新入职员工的全方位培训项目",
+        "startDate": "2024-03-01",
+        "endDate": "2024-03-31",
+        "status": "active",
+        "stages": [
+          {
+            "id": 1,
+            "name": "企业文化培训",
+            "type": "offline",
+            "location": "会议室A",
+            "schedule": "2024-03-01 09:00",
+            "lecturerId": 1
+          },
+          {
+            "id": 2,
+            "name": "产品知识培训",
+            "type": "online",
+            "lecturerId": 3
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "name": "技术能力提升培训班",
+        "leader": "李明",
+        "desc": "提升团队技术能力的专项培训",
+        "startDate": "2024-04-01",
+        "endDate": "2024-04-20",
+        "status": "active",
+        "stages": [
+          {
+            "id": 1,
+            "name": "前端框架深入",
+            "type": "online",
+            "lecturerId": 1
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "name": "管理层领导力培训",
+        "leader": "王芳",
+        "desc": "提升管理层的领导能力和团队管理能力",
+        "startDate": "2024-02-15",
+        "endDate": "2024-03-01",
+        "status": "completed",
+        "stages": [
+          {
+            "id": 1,
+            "name": "领导力基础",
+            "type": "offline",
+            "location": "大会议室",
+            "schedule": "2024-02-15 14:00",
+            "lecturerId": 4
+          }
+        ]
+      }
+    ]
+  },
+  "my_enrolled_trainings": [],
+  "my_courses": [
+    {
+      "id": 101,
+      "courseId": 1,
+      "status": "in_progress",
+      "progress": 75,
+      "learnedHours": 15,
+      "totalHours": 20,
+      "chapters": 15,
+      "totalChapters": 20,
+      "completedAt": null
+    },
+    {
+      "id": 102,
+      "courseId": 2,
+      "status": "in_progress",
+      "progress": 40,
+      "learnedHours": 8,
+      "totalHours": 20,
+      "chapters": 8,
+      "totalChapters": 20,
+      "completedAt": null
+    },
+    {
+      "id": 103,
+      "courseId": 3,
+      "status": "completed",
+      "progress": 100,
+      "learnedHours": 18,
+      "totalHours": 18,
+      "chapters": 18,
+      "totalChapters": 18,
+      "completedAt": "2024-03-15"
+    }
+  ],
+  "my_exams": [
+    {
+      "id": 1,
+      "examId": 1,
+      "name": "企业文化测试",
+      "score": 92,
+      "status": "passed",
+      "date": "2024-04-10"
+    },
+    {
+      "id": 2,
+      "examId": 2,
+      "name": "产品知识测试",
+      "score": 85,
+      "status": "passed",
+      "date": "2024-04-05"
+    },
+    {
+      "id": 3,
+      "examId": 3,
+      "name": "前端技术测评",
+      "score": 78,
+      "status": "passed",
+      "date": "2024-03-28"
+    },
+    {
+      "id": 4,
+      "examId": 4,
+      "name": "领导力测试",
+      "score": 65,
+      "status": "failed",
+      "date": "2024-03-20"
+    }
+  ],
+  "training_attendances": [],
+  "training_exams": [
+    {
+      "id": 1,
+      "stageId": 1,
+      "name": "企业文化测试",
+      "passingScore": 60,
+      "duration": 30
+    },
+    {
+      "id": 2,
+      "stageId": 2,
+      "name": "产品知识测试",
+      "passingScore": 70,
+      "duration": 45
+    },
+    {
+      "id": 3,
+      "stageId": 3,
+      "name": "前端技术测评",
+      "passingScore": 65,
+      "duration": 60
+    },
+    {
+      "id": 4,
+      "stageId": 4,
+      "name": "领导力测试",
+      "passingScore": 60,
+      "duration": 30
+    }
+  ],
+  "training_surveys": [],
+  "learning_history": [
+    {
+      "courseId": 1,
+      "courseName": "视频课程在线学习",
+      "date": "2024-04-14",
+      "duration": 45
+    },
+    {
+      "courseId": 2,
+      "courseName": "新年回好课",
+      "date": "2024-04-13",
+      "duration": 30
+    },
+    {
+      "courseId": 1,
+      "courseName": "视频课程在线学习",
+      "date": "2024-04-12",
+      "duration": 60
+    },
+    {
+      "courseId": 3,
+      "courseName": "平面设计进阶课程",
+      "date": "2024-04-10",
+      "duration": 90
+    }
+  ],
+  "certificates": [
+    {
+      "id": 1,
+      "courseId": 3,
+      "title": "平面设计进阶课程证书",
+      "issuedDate": "2024-03-15",
+      "certNo": "CERT-2024-0315-001"
+    }
+  ],
+  "current_user": {
+    "id": 1,
+    "name": "张小明",
+    "username": "zhangxiaoming",
+    "email": "zhangxiaoming@example.com",
+    "phone": "138****1234",
+    "department": "技术部",
+    "role": "员工",
+    "avatar": ""
+  },
+  "question_banks": [
+    {
+      "id": 1,
+      "name": "前端开发基础题库",
+      "category": "tech",
+      "description": "HTML、CSS、JavaScript 基础知识测试",
+      "status": "active",
+      "questionCount": 5,
+      "usageCount": 2,
+      "createdAt": "2024-01-15T08:00:00.000Z",
+      "updatedAt": "2024-01-15T08:00:00.000Z"
+    }
+  ],
+  "questions": [
+    {
+      "id": 1,
+      "bankId": 1,
+      "type": "single",
+      "content": "HTML 中哪个标签用于定义内部样式表？",
+      "options": [
+        {
+          "label": "A",
+          "content": "<css>"
+        },
+        {
+          "label": "B",
+          "content": "<script>"
+        },
+        {
+          "label": "C",
+          "content": "<style>"
+        },
+        {
+          "label": "D",
+          "content": "<link>"
+        }
+      ],
+      "answer": "C",
+      "analysis": "<style> 标签用于定义 HTML 文档的内部样式表。",
+      "knowledge": "HTML 基础",
+      "difficulty": "easy",
+      "createdAt": "2024-01-15T08:00:00.000Z",
+      "updatedAt": "2024-01-15T08:00:00.000Z"
+    }
+  ]
+}
