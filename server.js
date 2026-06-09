@@ -1115,66 +1115,6 @@ app.delete('/api/users/:id', (req, res) => {
 });
 
 // ============================================================
-// 公告管理 API
-// ============================================================
-
-// GET /api/notices - 获取所有公告
-app.get('/api/notices', (req, res) => {
-  const data = readData();
-  res.json(data.index_notices || []);
-});
-
-// POST /api/notices - 添加公告
-app.post('/api/notices', (req, res) => {
-  const notice = req.body;
-  const data = readData();
-  if (!data.index_notices) data.index_notices = [];
-  notice.id = Date.now();
-  notice.createdAt = new Date().toLocaleString('zh-CN');
-  notice.publishedAt = notice.publishedAt || notice.createdAt;
-  data.index_notices.push(notice);
-  if (writeData(data)) {
-    res.json({ success: true, notice });
-  } else {
-    res.status(500).json({ success: false, error: '写入失败' });
-  }
-});
-
-// PUT /api/notices/:id - 更新公告
-app.put('/api/notices/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const updates = req.body;
-  const data = readData();
-  const index = data.index_notices?.findIndex(n => n.id === id);
-  if (index !== -1) {
-    data.index_notices[index] = { ...data.index_notices[index], ...updates };
-    if (writeData(data)) {
-      res.json({ success: true, notice: data.index_notices[index] });
-    } else {
-      res.status(500).json({ success: false, error: '写入失败' });
-    }
-  } else {
-    res.status(404).json({ success: false, error: '公告不存在' });
-  }
-});
-
-// DELETE /api/notices/:id - 删除公告
-app.delete('/api/notices/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const data = readData();
-  if (data.index_notices) {
-    data.index_notices = data.index_notices.filter(n => n.id !== id);
-    if (writeData(data)) {
-      res.json({ success: true });
-    } else {
-      res.status(500).json({ success: false, error: '写入失败' });
-    }
-  } else {
-    res.status(404).json({ success: false, error: '公告列表不存在' });
-  }
-});
-
-// ============================================================
 // Banner管理 API
 // ============================================================
 
@@ -1698,66 +1638,6 @@ app.delete('/api/upload/:type/:filename', (req, res) => {
     res.json({ success: true, message: '文件已删除' });
   } else {
     res.status(404).json({ success: false, error: '文件不存在' });
-  }
-});
-
-// ============================================================
-// 公告管理 API
-// ============================================================
-
-// GET /api/notices - 获取所有公告
-app.get('/api/notices', (req, res) => {
-  const data = readData();
-  res.json(data.notices || []);
-});
-
-// POST /api/notices - 添加公告
-app.post('/api/notices', (req, res) => {
-  const notice = req.body;
-  const data = readData();
-  if (!data.notices) data.notices = [];
-  notice.id = Date.now();
-  notice.createdAt = new Date().toISOString();
-  data.notices.push(notice);
-  if (writeData(data)) {
-    res.json({ success: true, notice });
-  } else {
-    res.status(500).json({ success: false, error: '写入失败' });
-  }
-});
-
-// PUT /api/notices/:id - 更新公告
-app.put('/api/notices/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const updates = req.body;
-  const data = readData();
-  const index = data.notices?.findIndex(n => n.id === id);
-  if (index !== -1) {
-    data.notices[index] = { ...data.notices[index], ...updates };
-    if (writeData(data)) {
-      res.json({ success: true, notice: data.notices[index] });
-    } else {
-      res.status(500).json({ success: false, error: '写入失败' });
-    }
-  } else {
-    res.status(404).json({ success: false, error: '公告不存在' });
-  }
-});
-
-// DELETE /api/notices/:id - 删除公告
-app.delete('/api/notices/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const data = readData();
-  const index = data.notices?.findIndex(n => n.id === id);
-  if (index !== -1) {
-    data.notices.splice(index, 1);
-    if (writeData(data)) {
-      res.json({ success: true });
-    } else {
-      res.status(500).json({ success: false, error: '写入失败' });
-    }
-  } else {
-    res.status(404).json({ success: false, error: '公告不存在' });
   }
 });
 

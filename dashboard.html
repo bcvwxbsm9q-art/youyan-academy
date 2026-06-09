@@ -1163,7 +1163,7 @@
           </div>
         </div>
         
-        <!-- 公告管理 -->
+        <!-- 公告管理（动态渲染） -->
         <div id="portal-notices" class="subtab-content hidden">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-slate-700">公告管理</h3>
@@ -1177,168 +1177,28 @@
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">标题</th>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                  <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-200">
-                <tr class="hover:bg-slate-50 transition">
-                  <td class="px-6 py-4 text-sm text-slate-700">关于春节放假安排的通知</td>
-                  <td class="px-6 py-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">已发布</span></td>
-                  <td class="px-6 py-4">
-                    <button class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
-                    <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-50 transition">
-                  <td class="px-6 py-4 text-sm text-slate-700">新员工培训计划启动</td>
-                  <td class="px-6 py-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">已发布</span></td>
-                  <td class="px-6 py-4">
-                    <button class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
-                    <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
-                  </td>
-                </tr>
+              <tbody id="portal-notice-list" class="divide-y divide-slate-200">
+                <tr><td colspan="3" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-bullhorn text-2xl mb-2 block"></i><p>暂无公告</p></td></tr>
               </tbody>
             </table>
           </div>
         </div>
         
-        <!-- 分类管理 -->
+        <!-- 分类管理（动态渲染） -->
         <div id="portal-categories" class="subtab-content hidden">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-slate-700">分类管理</h3>
-            <button onclick="openCategoryModal()" class="btn-primary px-4 py-2 text-white rounded-lg font-medium shadow transition text-sm">
+            <button onclick="openCategoryModal('parent')" class="btn-primary px-4 py-2 text-white rounded-lg font-medium shadow transition text-sm">
               <i class="fas fa-plus mr-1"></i>添加一级分类
             </button>
           </div>
-          
-          <div class="space-y-4">
-            <div class="bg-white rounded-xl shadow-sm p-4">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-3">
-                  <span class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 font-bold">1</span>
-                  <span class="font-medium text-slate-800">策划</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button onclick="openSubCategoryModal(1)" class="w-7 h-7 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center text-green-600 transition cursor-pointer" title="添加二级分类">
-                    <i class="fas fa-plus text-sm"></i>
-                  </button>
-                  <button onclick="editCategory(1, '策划')" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 transition cursor-pointer" title="编辑分类">
-                    <i class="fas fa-edit text-sm"></i>
-                  </button>
-                  <button onclick="deleteCategory(1, '策划')" class="w-7 h-7 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center text-red-600 transition cursor-pointer" title="删除分类">
-                    <i class="fas fa-trash text-sm"></i>
-                  </button>
-                </div>
-              </div>
-              <div class="flex flex-wrap gap-2 pl-11">
-                <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm">系统策划</span>
-                <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm">数值策划</span>
-              </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-sm p-4">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-3">
-                  <span class="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center text-pink-600 font-bold">2</span>
-                  <span class="font-medium text-slate-800">美术</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button onclick="openSubCategoryModal(2)" class="w-7 h-7 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center text-green-600 transition cursor-pointer" title="添加二级分类">
-                    <i class="fas fa-plus text-sm"></i>
-                  </button>
-                  <button onclick="editCategory(2, '美术')" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 transition cursor-pointer" title="编辑分类">
-                    <i class="fas fa-edit text-sm"></i>
-                  </button>
-                  <button onclick="deleteCategory(2, '美术')" class="w-7 h-7 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center text-red-600 transition cursor-pointer" title="删除分类">
-                    <i class="fas fa-trash text-sm"></i>
-                  </button>
-                </div>
-              </div>
-              <div class="flex flex-wrap gap-2 pl-11">
-                <span class="px-3 py-1 bg-pink-50 text-pink-600 rounded-full text-sm">原画</span>
-                <span class="px-3 py-1 bg-pink-50 text-pink-600 rounded-full text-sm">UI</span>
-                <span class="px-3 py-1 bg-pink-50 text-pink-600 rounded-full text-sm">模型</span>
-                <span class="px-3 py-1 bg-pink-50 text-pink-600 rounded-full text-sm">场景</span>
-                <span class="px-3 py-1 bg-pink-50 text-pink-600 rounded-full text-sm">动效</span>
-              </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-sm p-4">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-3">
-                  <span class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 font-bold">3</span>
-                  <span class="font-medium text-slate-800">技术</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button onclick="openSubCategoryModal(3)" class="w-7 h-7 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center text-green-600 transition cursor-pointer" title="添加二级分类">
-                    <i class="fas fa-plus text-sm"></i>
-                  </button>
-                  <button onclick="editCategory(3, '技术')" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 transition cursor-pointer" title="编辑分类">
-                    <i class="fas fa-edit text-sm"></i>
-                  </button>
-                  <button onclick="deleteCategory(3, '技术')" class="w-7 h-7 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center text-red-600 transition cursor-pointer" title="删除分类">
-                    <i class="fas fa-trash text-sm"></i>
-                  </button>
-                </div>
-              </div>
-              <div class="flex flex-wrap gap-2 pl-11">
-                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm">客户端</span>
-                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm">服务端</span>
-                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm">运维</span>
-                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm">PHP</span>
-              </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-sm p-4">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-3">
-                  <span class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 font-bold">4</span>
-                  <span class="font-medium text-slate-800">市场</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button onclick="openSubCategoryModal(4)" class="w-7 h-7 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center text-green-600 transition cursor-pointer" title="添加二级分类">
-                    <i class="fas fa-plus text-sm"></i>
-                  </button>
-                  <button onclick="editCategory(4, '市场')" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 transition cursor-pointer" title="编辑分类">
-                    <i class="fas fa-edit text-sm"></i>
-                  </button>
-                  <button onclick="deleteCategory(4, '市场')" class="w-7 h-7 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center text-red-600 transition cursor-pointer" title="删除分类">
-                    <i class="fas fa-trash text-sm"></i>
-                  </button>
-                </div>
-              </div>
-              <div class="flex flex-wrap gap-2 pl-11">
-                <span class="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-sm">运营</span>
-                <span class="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-sm">投放</span>
-                <span class="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-sm">设计</span>
-                <span class="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-sm">客服</span>
-              </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-sm p-4">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-3">
-                  <span class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 font-bold">5</span>
-                  <span class="font-medium text-slate-800">软技能</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button onclick="openSubCategoryModal(5)" class="w-7 h-7 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center text-green-600 transition cursor-pointer" title="添加二级分类">
-                    <i class="fas fa-plus text-sm"></i>
-                  </button>
-                  <button onclick="editCategory(5, '软技能')" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 transition cursor-pointer" title="编辑分类">
-                    <i class="fas fa-edit text-sm"></i>
-                  </button>
-                  <button onclick="deleteCategory(5, '软技能')" class="w-7 h-7 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center text-red-600 transition cursor-pointer" title="删除分类">
-                    <i class="fas fa-trash text-sm"></i>
-                  </button>
-                </div>
-              </div>
-              <div class="flex flex-wrap gap-2 pl-11">
-                <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm">沟通</span>
-                <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm">思维</span>
-                <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm">管理</span>
-                <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm">领导力</span>
-              </div>
+          <div class="space-y-3" id="portal-category-list">
+            <div class="bg-white rounded-xl shadow-sm p-8 text-center text-slate-400">
+              <i class="fas fa-spinner fa-spin text-xl mb-2"></i>
+              <p>加载中...</p>
             </div>
           </div>
         </div>
@@ -1855,15 +1715,21 @@
         }
         
         // 广播数据变更，通知其他页面（如课程中心）同步
+        console.log('[Dashboard] loadAllData完成，准备广播分类变更');
         if (window.DataSync) {
           localStorage.setItem('categories_sync_time', Date.now().toString());
           window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+          console.log('[Dashboard] 已广播分类变更事件');
+        } else {
+          console.warn('[Dashboard] DataSync未加载，无法广播');
         }
         
         // 更新分类筛选下拉
         updateCategoryFilter();
-        // 数据加载完成后刷新公告列表（如果面板已渲染）
+        // 数据加载完成后刷新各面板（无论当前显示哪个 tab）
         if (document.getElementById('notice-list')) renderNotices();
+        if (document.getElementById('portal-notice-list')) renderPortalNotices();
+        if (document.getElementById('portal-category-list')) renderPortalCategories();
       } catch (e) {
         console.error('加载数据失败', e);
         toast('数据加载失败', 'error');
@@ -2859,69 +2725,64 @@
           </div>
         </div>
       `).join('');
+
+      // 同步更新站点管理子标签的分类列表
+      renderPortalCategories();
     }
-    
-    function editCategory(id, name) {
-      let modalContent = `
-        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-            <h3 class="text-lg font-semibold text-slate-800">编辑分类</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
-          </div>
-          <form onsubmit="saveEditCategory(event, ${id})" class="p-6 space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">分类名称 <span class="text-red-500">*</span></label>
-              <input type="text" id="edit-cat-name" value="${name}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div class="flex gap-3 pt-4">
-              <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">
-                取消
-              </button>
-              <button type="submit" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition">
-                保存修改
-              </button>
-            </div>
-          </form>
-        </div>
-      `;
-      
-      document.getElementById('modal-container').innerHTML = modalContent;
-      document.getElementById('modal-container').classList.add('flex');
-      document.getElementById('modal-container').classList.remove('hidden');
-    }
-    
-    function saveEditCategory(event, id) {
-      event.preventDefault();
-      const name = document.getElementById('edit-cat-name').value;
-      
-      fetch(`/api/categories/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
-      }).then(res => res.json()).then(data => {
-        if (data.success) {
-          showToast('分类修改成功');
-          closeModal();
-        } else {
-          showToast('修改失败', 'error');
-        }
-      }).catch(() => showToast('修改失败', 'error'));
-    }
-    
-    function deleteCategory(id, name) {
-      if (confirm(`确定要删除分类「${name}」吗？删除后该分类下的所有课程和子分类也将被删除。`)) {
-        fetch(`/api/categories/${id}`, {
-          method: 'DELETE'
-        }).then(res => res.json()).then(data => {
-          if (data.success) {
-            showToast('分类删除成功');
-          } else {
-            showToast('删除失败', 'error');
-          }
-        }).catch(() => showToast('删除失败', 'error'));
+
+    // renderPortalCategories — 站点管理子标签用（精简列表风格）
+    function renderPortalCategories() {
+      const container = document.getElementById('portal-category-list');
+      if (!container) return;
+
+      if (data.categories.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-xl shadow-sm p-8 text-center text-slate-400">
+            <i class="fas fa-folder-open text-3xl mb-2 block"></i>
+            <p>暂无分类，点击右上角按钮添加</p>
+          </div>`;
+        return;
       }
+
+      container.innerHTML = data.categories.map((cat, idx) => {
+        const colorMap = ['indigo', 'pink', 'emerald', 'orange', 'purple', 'blue', 'teal', 'red'];
+        const color = colorMap[idx % colorMap.length];
+        const childCount = cat.children?.length || 0;
+        return `
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 bg-${color}-100 rounded-lg flex items-center justify-center text-${color}-600 font-bold text-sm">${idx + 1}</span>
+                <span class="font-medium text-slate-800">${cat.name}</span>
+                ${cat.key ? `<span class="text-xs text-slate-400">(${cat.key})</span>` : ''}
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="openCategoryModal('child', ${cat.id})" class="w-7 h-7 bg-green-50 hover:bg-green-100 rounded-full flex items-center justify-center text-green-600 transition" title="添加二级分类">
+                  <i class="fas fa-plus text-xs"></i>
+                </button>
+                <button onclick="editCategory(${cat.id})" class="w-7 h-7 bg-slate-50 hover:bg-slate-100 rounded-full flex items-center justify-center text-slate-600 transition" title="编辑分类">
+                  <i class="fas fa-edit text-xs"></i>
+                </button>
+                <button onclick="deleteCategory(${cat.id})" class="w-7 h-7 bg-red-50 hover:bg-red-100 rounded-full flex items-center justify-center text-red-600 transition" title="删除分类">
+                  <i class="fas fa-trash text-xs"></i>
+                </button>
+              </div>
+            </div>
+            ${childCount > 0 ? `
+              <div class="flex flex-wrap gap-2 pl-11">
+                ${cat.children.map(child => `
+                  <span class="inline-flex items-center px-2.5 py-0.5 bg-${color}-50 text-${color}-600 rounded-full text-xs">
+                    ${child.name}
+                    <button onclick="editCategory(${cat.id}, ${child.id})" class="ml-1.5 hover:text-${color}-800"><i class="fas fa-edit text-[10px]"></i></button>
+                    <button onclick="deleteCategory(${cat.id}, ${child.id})" class="ml-0.5 hover:text-red-500"><i class="fas fa-times text-[10px]"></i></button>
+                  </span>
+                `).join('')}
+              </div>
+            ` : '<p class="pl-11 text-xs text-slate-400">暂无子分类</p>'}
+          </div>`;
+      }).join('');
     }
-    
+
     function openBookModal(type = 'add', book = null) {
       const isEdit = type === 'edit';
       let modalContent = `
@@ -3561,65 +3422,6 @@
       }
     }
     
-    function openSubCategoryModal(parentId) {
-      const parentNames = ['', '策划', '美术', '技术', '市场', '软技能'];
-      const parentName = parentNames[parentId] || '未知分类';
-      
-      let modalContent = `
-        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-            <h3 class="text-lg font-semibold text-slate-800">添加二级分类</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
-          </div>
-          <form onsubmit="saveSubCategory(event, ${parentId})" class="p-6 space-y-4">
-            <div>
-              <label class="block text-sm text-slate-500 mb-1">父分类</label>
-              <p class="font-medium text-indigo-600">${parentName}</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">二级分类名称 <span class="text-red-500">*</span></label>
-              <input type="text" id="subcat-name" required placeholder="请输入二级分类名称" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">标识(key)</label>
-              <input type="text" id="subcat-key" placeholder="如: frontend" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div class="flex gap-3 pt-4">
-              <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">
-                取消
-              </button>
-              <button type="submit" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition">
-                确认添加
-              </button>
-            </div>
-          </form>
-        </div>
-      `;
-      
-      document.getElementById('modal-container').innerHTML = modalContent;
-      document.getElementById('modal-container').classList.add('flex');
-      document.getElementById('modal-container').classList.remove('hidden');
-    }
-    
-    function saveSubCategory(event, parentId) {
-      event.preventDefault();
-      const name = document.getElementById('subcat-name').value;
-      const key = document.getElementById('subcat-key').value || name.toLowerCase().replace(/\s+/g, '-');
-      
-      fetch(`/api/categories/${parentId}/children`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, key })
-      }).then(res => res.json()).then(data => {
-        if (data.success) {
-          showToast('二级分类添加成功');
-          closeModal();
-        } else {
-          showToast('添加失败', 'error');
-        }
-      }).catch(() => showToast('添加失败', 'error'));
-    }
-    
     function openCategoryModal(type, parentId = null, child = null) {
       const isChild = type === 'child';
       const parentCat = parentId ? data.categories.find(c => c.id === parentId) : null;
@@ -3700,7 +3502,16 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ ...cat, name, key, icon })
             });
-            if (res.ok) { toast('分类已更新'); closeModal(); await loadAllData(); renderCategories(); }
+            if (res.ok) { 
+              toast('分类已更新'); 
+              closeModal(); 
+              await loadAllData(); 
+              renderCategories(); 
+              // 额外广播一次，确保其他页面收到通知
+              if (window.DataSync) {
+                window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+              }
+            }
           } else {
             // 新增一级分类
             const res = await fetch(API + '/categories', {
@@ -3708,7 +3519,16 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ name, key, icon, children: [] })
             });
-            if (res.ok) { toast('分类已添加'); closeModal(); await loadAllData(); renderCategories(); }
+            if (res.ok) { 
+              toast('分类已添加'); 
+              closeModal(); 
+              await loadAllData(); 
+              renderCategories(); 
+              // 额外广播一次，确保其他页面收到通知
+              if (window.DataSync) {
+                window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+              }
+            }
           }
         } else {
           // 子分类
@@ -3732,9 +3552,19 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(parent)
           });
-          if (res.ok) { toast('子分类已保存'); closeModal(); await loadAllData(); renderCategories(); }
+          if (res.ok) { 
+            toast('子分类已保存'); 
+            closeModal(); 
+            await loadAllData(); 
+            renderCategories(); 
+            // 额外广播一次，确保其他页面收到通知
+            if (window.DataSync) {
+              window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+            }
+          }
         }
       } catch (err) {
+        console.error('保存分类失败:', err);
         toast('操作失败', 'error');
       }
     }
@@ -3761,7 +3591,15 @@
             return;
           }
           const res = await fetch(API + '/categories/' + parentId, { method: 'DELETE' });
-          if (res.ok) { toast('分类已删除'); await loadAllData(); renderCategories(); }
+          if (res.ok) { 
+            toast('分类已删除'); 
+            await loadAllData(); 
+            renderCategories(); 
+            // 广播通知其他页面
+            if (window.DataSync) {
+              window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+            }
+          }
         } else {
           // 删除子分类
           const parent = data.categories.find(c => c.id === parentId);
@@ -3775,9 +3613,18 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(parent)
           });
-          if (res.ok) { toast('子分类已删除'); await loadAllData(); renderCategories(); }
+          if (res.ok) { 
+            toast('子分类已删除'); 
+            await loadAllData(); 
+            renderCategories(); 
+            // 广播通知其他页面
+            if (window.DataSync) {
+              window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+            }
+          }
         }
       } catch (err) {
+        console.error('删除分类失败:', err);
         toast('删除失败', 'error');
       }
     }
@@ -4440,6 +4287,9 @@
           
           <!-- 操作 -->
           <td class="px-6 py-4 text-center">
+            <button onclick="toggleNoticeStatus(${n.id})" class="px-3 py-1.5 rounded-lg text-xs font-medium transition mr-2 ${n.status === 'published' ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}" title="${n.status === 'published' ? '下架' : '发布'}">
+              <i class="fas ${n.status === 'published' ? 'fa-eye-slash' : 'fa-eye'} mr-1"></i>${n.status === 'published' ? '下架' : '发布'}
+            </button>
             <button onclick="viewNotice(${n.id})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs hover:bg-indigo-100 transition mr-2">
               <i class="fas fa-eye mr-1"></i>查看
             </button>
@@ -4452,11 +4302,59 @@
           </td>
         </tr>
       `).join('');
+
+      // 同步更新站点管理子标签的公告列表
+      renderPortalNotices();
     }
-    
+
+    // renderPortalNotices — 站点管理子标签用（精简表格风格）
+    function renderPortalNotices() {
+      const tbody = document.getElementById('portal-notice-list');
+      if (!tbody) return;
+
+      if (!data.notices || data.notices.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-bullhorn text-2xl mb-2 block"></i><p>暂无公告</p></td></tr>`;
+        return;
+      }
+
+      // 按置顶和发布时间排序
+      const sorted = [...data.notices].sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(b.publishedAt || b.createdAt) - new Date(a.publishedAt || a.createdAt);
+      });
+
+      tbody.innerHTML = sorted.map(n => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-6 py-4">
+            <div class="text-sm font-medium text-slate-800">${n.title}</div>
+            <div class="text-xs text-slate-400 mt-0.5">${n.publishedAt || n.createdAt || '-'}</div>
+          </td>
+          <td class="px-6 py-4">
+            <span class="px-2 py-1 rounded text-xs font-medium ${n.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
+              ${n.status === 'published' ? '已发布' : '草稿'}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-center">
+            <button onclick="toggleNoticeStatus(${n.id})" class="px-2.5 py-1 rounded text-xs font-medium transition mr-1 ${n.status === 'published' ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}" title="${n.status === 'published' ? '下架' : '发布'}">
+              <i class="fas ${n.status === 'published' ? 'fa-eye-slash' : 'fa-eye'}"></i>
+            </button>
+            <button onclick="viewNotice(${n.id})" class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded text-xs hover:bg-indigo-100 mr-1" title="查看">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button onclick="editNotice(${n.id})" class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded text-xs hover:bg-blue-100 mr-1" title="编辑">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="deleteNotice(${n.id})" class="px-2.5 py-1 bg-red-50 text-red-600 rounded text-xs hover:bg-red-100" title="删除">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
     function openNoticeModal(notice = null) {
       const isEdit = !!notice;
-      const coverUrl = notice?.cover || '';
       const content = notice?.content || '';
       
       showModal(`
@@ -4468,31 +4366,11 @@
           </div>
           
           <!-- 表单内容 - 可滚动 -->
-          <form id="notice-form" onsubmit="saveNotice(event, ${notice?.id || 'null'})" class="flex-1 overflow-y-auto p-6 space-y-4">
+          <form id="notice-form" onsubmit="saveNotice(event, ${notice?.id ?? 'null'})" class="flex-1 overflow-y-auto p-6 space-y-4">
             <!-- 标题 -->
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">标题 <span class="text-red-500">*</span></label>
               <input type="text" id="n-title" value="${notice?.title || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入公告标题">
-            </div>
-            
-            <!-- 封面图 -->
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">封面图</label>
-              <div class="flex items-start gap-4">
-                <div class="flex-1">
-                  <div class="relative">
-                    <input type="text" id="n-cover" value="${coverUrl}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 pr-24" placeholder="输入图片URL或点击下方上传">
-                    <button type="button" onclick="uploadNoticeCover()" class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs hover:bg-indigo-100 transition">
-                      <i class="fas fa-upload mr-1"></i>上传
-                    </button>
-                  </div>
-                  <input type="file" id="n-cover-file" accept="image/*" class="hidden" onchange="handleNoticeCoverUpload(event)">
-                  <p class="text-xs text-slate-400 mt-1">支持 JPG、PNG 格式，建议尺寸 800x400</p>
-                </div>
-                <div id="n-cover-preview" class="w-32 h-20 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  ${coverUrl ? `<img src="${coverUrl}" class="w-full h-full object-cover">` : '<i class="fas fa-image text-slate-300 text-2xl"></i>'}
-                </div>
-              </div>
             </div>
             
             <!-- 富文本编辑器 -->
@@ -4583,14 +4461,14 @@
     
     async function saveNotice(e, id) {
       e.preventDefault();
-      
+
       // 从 Quill 编辑器获取内容
       const content = document.getElementById('n-content').value;
       if (!content || content === '<p><br></p>') {
         toast('请输入公告内容', 'error');
         return;
       }
-      
+
       const formData = {
         title: document.getElementById('n-title').value.trim(),
         cover: document.getElementById('n-cover').value.trim(),
@@ -4599,10 +4477,11 @@
         pinned: parseInt(document.getElementById('n-pinned').value) || 0,
         publishedAt: new Date().toISOString().split('T')[0]
       };
-      
+
       try {
         let res;
-        if (id) {
+        // id 为 null、undefined 或字符串 'null' 时走新建
+        if (id && id !== 'null') {
           res = await fetch(API + '/notices/' + id, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -4620,64 +4499,11 @@
           closeModal();
           await loadAllData();
           renderNotices();
+          // 广播通知首页刷新
+          if (window.DataSync) window.DataSync.broadcast('notices');
         }
       } catch (err) {
         toast('操作失败', 'error');
-      }
-    }
-    
-    // 封面图上传
-    function uploadNoticeCover() {
-      document.getElementById('n-cover-file').click();
-    }
-    
-    async function handleNoticeCoverUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      
-      // 验证文件类型
-      if (!file.type.startsWith('image/')) {
-        toast('请上传图片文件', 'error');
-        return;
-      }
-      
-      // 验证文件大小（5MB）
-      if (file.size > 5 * 1024 * 1024) {
-        toast('图片大小不能超过5MB', 'error');
-        return;
-      }
-      
-      try {
-        const formData = new FormData();
-        formData.append('cover', file);
-        
-        const res = await fetch(API + '/upload/notice-cover', {
-          method: 'POST',
-          body: formData
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
-          document.getElementById('n-cover').value = data.url;
-          updateCoverPreview(data.url);
-          toast('封面图上传成功');
-        } else {
-          toast('上传失败', 'error');
-        }
-      } catch (err) {
-        toast('上传失败', 'error');
-      }
-    }
-    
-    // 更新封面图预览
-    function updateCoverPreview(url) {
-      const preview = document.getElementById('n-cover-preview');
-      if (!preview) return;
-      
-      if (url) {
-        preview.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
-      } else {
-        preview.innerHTML = '<i class="fas fa-image text-slate-300 text-2xl"></i>';
       }
     }
     
@@ -4742,9 +4568,35 @@
           toast('公告已删除');
           await loadAllData();
           renderNotices();
+          if (window.DataSync) window.DataSync.broadcast('notices');
         }
       } catch (err) {
         toast('删除失败', 'error');
+      }
+    }
+
+    // 切换公告发布/下架状态
+    async function toggleNoticeStatus(id) {
+      const notice = data.notices.find(n => n.id === id);
+      if (!notice) return;
+      const newStatus = notice.status === 'published' ? 'draft' : 'published';
+      const actionText = newStatus === 'published' ? '发布' : '下架';
+      if (!confirm(`确定要${actionText}公告「${notice.title}」吗？`)) return;
+
+      try {
+        const res = await fetch(API + '/notices/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+        if (res.ok) {
+          toast(`公告已${actionText}`);
+          await loadAllData();
+          renderNotices();
+          if (window.DataSync) window.DataSync.broadcast('notices');
+        }
+      } catch (err) {
+        toast(`${actionText}失败`, 'error');
       }
     }
     

@@ -70,8 +70,12 @@
 
             // 监听数据同步事件
             if (window.DataSync) {
-                window.DataSync.listen(DataSync.EventTypes.ALL, function(event) {
+                window.DataSync.listen(DataSync.EventTypes.ALL, async function(event) {
                     console.log('[Index] 数据更新:', event.type);
+                    // 从服务器重新加载最新数据，确保缓存不陈旧
+                    if (window.DataAPI && window.DataAPI.reloadFromServer) {
+                        await window.DataAPI.reloadFromServer();
+                    }
                     renderAll();
                 });
             }

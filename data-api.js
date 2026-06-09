@@ -430,7 +430,7 @@
          * 获取首页公告
          */
         getNotices() {
-            return this.get('index_notices') || [];
+            return this.get('notices') || [];
         },
 
         /**

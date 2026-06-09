@@ -85,13 +85,16 @@
         // 监听页面可见性变化，页面重新显示时刷新分类数据
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
+                console.log('[Course] 页面重新可见，刷新数据');
                 refreshData();
             }
         });
 
         // 监听storage变化（跨页面同步分类数据）
         window.addEventListener('storage', function(e) {
+            console.log('[Course] storage事件触发:', e.key, e.newValue);
             if (e.key === 'categories_sync_time' || e.key === 'course_center_sync') {
+                console.log('[Course] 检测到分类变更，刷新数据');
                 refreshData();
             }
         });
@@ -99,7 +102,7 @@
         // 监听 DataSync 模块的数据更新
         if (window.DataSync) {
             window.DataSync.listen(DataSync.EventTypes.ALL, function(event) {
-                console.log('[Course] 数据更新:', event.type);
+                console.log('[Course] DataSync收到事件:', event.type, event);
                 refreshData();
             });
         }
@@ -360,7 +363,7 @@
         if (currentCategoryId === 'all') {
             // 全部课程：直接显示所有课程卡片，不分组
             html = `
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     ${filteredCourses.map(c => renderCourseCard(c, api)).join('')}
                 </div>
             `;
@@ -411,7 +414,7 @@
                     </span>
                     <span class="text-gray-500 dark:text-gray-400 text-sm">共 ${courses.length} 门课程</span>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     ${courses.map(c => renderCourseCard(c, api)).join('')}
                 </div>
             </div>
@@ -431,25 +434,25 @@
         const tagStyle = TAG_STYLES[catName] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
 
         return `
-            <div class="card-enhanced course-card cursor-pointer fade-in" onclick="location.href='player.html?courseId=${c.id}'">
-                <div class="course-card-image-wrapper relative">
-                    <img src="${c.cover || ''}" alt="${c.title || ''}" class="course-card-image w-full h-40 md:h-44 object-cover" onerror="this.src='https://placehold.co/400x225/667eea/white?text=${encodeURIComponent((c.title || '').substring(0, 8))}'">
-                    <div class="course-card-badge">
+            <div class="card-enhanced course-card cursor-pointer fade-in group" onclick="location.href='player.html?courseId=${c.id}'">
+                <div class="course-card-image-wrapper relative overflow-hidden" style="aspect-ratio: 16 / 9;">
+                    <img src="${c.cover || ''}" alt="${c.title || ''}" class="course-card-image w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='https://placehold.co/400x225/667eea/white?text=${encodeURIComponent((c.title || '').substring(0, 8))}'">
+                    <div class="course-card-badge absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <i class="fa fa-play-circle mr-1"></i>${duration}分钟
                     </div>
                 </div>
-                <div class="p-4">
-                    <div class="flex items-center mb-2">
-                        <span class="text-xs ${tagStyle} px-2 py-1 rounded">${catName}</span>
+                <div class="p-3">
+                    <div class="flex items-center mb-1.5">
+                        <span class="text-xs ${tagStyle} px-2 py-0.5 rounded">${catName}</span>
                         <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto">
                             <i class="fa fa-user mr-1"></i>${learners}
                         </span>
                     </div>
-                    <h3 class="font-bold mb-2 line-clamp-2 h-12 text-gray-800 dark:text-white">${c.title || ''}</h3>
+                    <h3 class="font-bold mb-1.5 line-clamp-2 text-gray-800 dark:text-white" style="min-height: 2.5rem; font-size: 0.875rem; line-height: 1.25rem;">${c.title || ''}</h3>
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2">
-                            <img src="${lecAvatar}" alt="${lecName}" class="w-6 h-6 rounded-full" onerror="this.style.display='none'">
-                            <span class="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[100px]">${lecName}</span>
+                            <img src="${lecAvatar}" alt="${lecName}" class="w-5 h-5 rounded-full" onerror="this.style.display='none'">
+                            <span class="text-xs text-gray-600 dark:text-gray-400 truncate" style="max-width: 80px;">${lecName}</span>
                         </div>
                         <div class="flex items-center text-yellow-500">
                             <i class="fa fa-star text-xs"></i>
