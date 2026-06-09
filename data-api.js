@@ -343,6 +343,47 @@
         },
 
         /**
+         * 从服务器同步分类数据（保证与后台分类管理联动）
+         */
+        async syncCategoriesFromServer() {
+            try {
+                const data = await this.fetchFromServer(API.CATEGORIES);
+                if (data && Array.isArray(data)) {
+                    memoryCache.course_categories = data;
+                    this._saveToLocalStorage();
+                    console.log('[DataAPI] 分类数据已从服务器同步');
+                    return true;
+                }
+            } catch (e) {
+                console.error('[DataAPI] 同步分类数据失败:', e);
+            }
+            return false;
+        },
+
+        /**
+         * 从服务器重新加载所有数据
+         */
+        async reloadFromServer() {
+            try {
+                const response = await fetch(API.GET_ALL, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    memoryCache = { ...memoryCache, ...data };
+                    isServerConnected = true;
+                    this._saveToLocalStorage();
+                    console.log('[DataAPI] 已从服务器重新加载数据');
+                    return true;
+                }
+            } catch (e) {
+                console.error('[DataAPI] 从服务器重新加载失败:', e);
+            }
+            return false;
+        },
+
+        /**
          * 获取分类名称
          */
         getCategoryName(categoryId) {

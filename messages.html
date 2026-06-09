@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>消息中心 - 游雁学院</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/mobile-enhanced.css?v=20260520b">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#667eea',
+                        secondary: '#764ba2',
+                        dark: '#0f172a',
+                        darkgray: '#1f2937'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-gradient { background-clip: text; -webkit-background-clip: text; color: transparent; background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+            .bg-gradient-primary { background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        }
+        body { opacity: 0; animation: pageLoad 0.5s ease forwards; }
+        @keyframes pageLoad { to { opacity: 1; } }
+
+        .msg-table { width: 100%; border-collapse: collapse; }
+        .msg-table th {
+            background: #f8fafc;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #475569;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        .msg-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: top;
+            font-size: 14px;
+        }
+        .msg-table tr:hover td { background: #fafbff; }
+        .msg-table tr.unread-row td { background: #fefce8; }
+        .msg-table tr.unread-row:hover td { background: #fef9c3; }
+        .msg-checkbox {
+            width: 18px; height: 18px;
+            accent-color: #667eea;
+            cursor: pointer;
+        }
+        .unread-dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            flex-shrink: 0;
+            margin-right: 8px;
+            margin-top: 6px;
+        }
+        .type-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .type-learning { background: #dbeafe; color: #2563eb; }
+        .type-review { background: #fef3c7; color: #d97706; }
+        .type-system { background: #e0e7ff; color: #4f46e5; }
+        .type-announcement { background: #fce7f3; color: #be185d; }
+        .type-training { background: #dbeafe; color: #2563eb; }
+        .type-exam { background: #fef3c7; color: #d97706; }
+        .type-default { background: #f1f5f9; color: #64748b; }
+
+        /* 消息详情弹窗 */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .modal-container {
+            background: #fff;
+            border-radius: 16px;
+            width: 90%; max-width: 520px;
+            max-height: 80vh;
+            display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            animation: slideUp 0.25s ease;
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .modal-body {
+            padding: 20px 24px 24px;
+            overflow-y: auto;
+            flex: 1;
+            font-size: 15px;
+            line-height: 1.8;
+            color: #334155;
+            word-break: break-word;
+        }
+        /* 公告富文本内容样式 */
+        .modal-body.html-content { white-space: normal; }
+        .modal-body.html-content img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
+        .modal-body.html-content p { margin: 0 0 8px; }
+        .modal-body.html-content h1, .modal-body.html-content h2, .modal-body.html-content h3 { font-weight: 600; margin: 12px 0 6px; }
+        .modal-body.html-content ul, .modal-body.html-content ol { padding-left: 20px; margin: 8px 0; }
+        .modal-body.html-content a { color: #667eea; text-decoration: underline; }
+        /* 普通文本内容（非公告）保持原样 */
+        .modal-body.plain-content { white-space: pre-wrap; }
+        .modal-close {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: #f1f5f9;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: #e2e8f0; color: #334155; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 消息行可点击样式 */
+        .msg-table tbody tr.msg-clickable { cursor: pointer; }
+        .msg-table tbody tr.msg-clickable:hover td { background: #eef2ff; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-white text-gray-800 min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white/95 backdrop-blur-md shadow-sm fixed w-full top-0 z-50">
+        <div class="container-responsive">
+            <div class="flex justify-between items-center py-3">
+                <a href="index.html" class="flex items-center space-x-2 group">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-lg">
+                        <i class="fas fa-graduation-cap text-white text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gradient hidden sm:block">游雁学院</span>
+                </a>
+                <nav class="hidden md:flex space-x-1">
+                    <a href="index.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">首页</a>
+                    <a href="training-plan.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">培训</a>
+                    <a href="course.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">课程</a>
+                    <a href="teacher.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">讲师</a>
+                    <a href="library.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">书吧</a>
+                    <a href="center.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">我的</a>
+                </nav>
+                <div class="flex items-center space-x-3">
+                    <!-- 返回按钮 -->
+                    <a href="javascript:history.back()" class="md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div id="user-info" class="hidden md:flex items-center space-x-3">
+                        <div class="w-7 h-7 rounded-full bg-gradient-primary flex items-center justify-center">
+                            <i class="fa fa-user text-white text-xs" id="user-avatar-icon"></i>
+                        </div>
+                        <span class="text-sm font-medium text-primary" id="user-display-name">用户</span>
+                        <div class="relative">
+                            <button onclick="window.location.href='messages.html'" class="relative p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary cursor-pointer" title="消息通知">
+                                <i class="fa fa-bell text-lg"></i>
+                                <span id="notification-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1">0</span>
+                            </button>
+                        </div>
+                        <button onclick="handleLogout()" id="logout-btn-desktop" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors" title="退出登录">
+                            <i class="fa fa-sign-out text-lg"></i>
+                        </button>
+                    </div>
+                    <button class="md:hidden text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors" id="mobile-menu-button" aria-label="菜单">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="md:hidden hidden bg-white border-t border-gray-100 shadow-lg" id="mobile-menu">
+            <div class="container-responsive py-3">
+                <nav class="flex flex-col space-y-1">
+                    <a href="index.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">首页</a>
+                    <a href="training-plan.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">培训</a>
+                    <a href="course.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">课程</a>
+                    <a href="teacher.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">讲师</a>
+                    <a href="library.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">书吧</a>
+                    <a href="center.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">我的</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-20 pb-12 min-h-screen">
+        <!-- 页面标题 + 操作区 -->
+        <section class="bg-gradient-primary text-white">
+            <div class="container mx-auto max-w-[1200px] px-4 py-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold"><i class="far fa-bell mr-2"></i>消息中心</h1>
+                        <p class="text-white/70 text-sm mt-1">共 <span id="total-count">0</span> 条消息，其中 <span id="unread-count" class="font-semibold text-yellow-300">0</span> 条未读</p>
+                    </div>
+                    <div class="flex items-center gap-2" id="batch-actions">
+                        <button onclick="batchMarkRead()" id="btn-batch-read" disabled
+                            class="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed">
+                            <i class="far fa-check-square mr-1"></i>批量已读
+                        </button>
+                        <button onclick="batchDelete()" id="btn-batch-delete" disabled
+                            class="px-4 py-2 rounded-lg bg-red-500/80 hover:bg-red-500 text-white text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed">
+                            <i class="far fa-trash-can mr-1"></i>批量删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 消息列表 -->
+        <section class="py-6">
+            <div class="container mx-auto max-w-[1200px] px-4">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <!-- 表头 -->
+                    <div class="overflow-x-auto">
+                        <table class="msg-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:44px;text-align:center">
+                                        <input type="checkbox" id="select-all" class="msg-checkbox" onchange="toggleSelectAll()">
+                                    </th>
+                                    <th>消息名称</th>
+                                    <th style="width:120px">消息类型</th>
+                                    <th style="width:160px">时间</th>
+                                </tr>
+                            </thead>
+                            <tbody id="message-tbody">
+                                <tr>
+                                    <td colspan="4" class="text-center py-12 text-gray-400">
+                                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i><br>加载中...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 空状态 -->
+                    <div id="empty-state" class="hidden py-16 text-center">
+                        <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                            <i class="fas fa-inbox text-3xl text-gray-300"></i>
+                        </div>
+                        <p class="text-gray-400 text-base">暂无消息通知</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 消息详情弹窗 -->
+    <div id="msg-detail-modal" class="modal-overlay hidden" style="display:none;" onclick="if(event.target===this)closeDetail()">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="flex-1 min-w-0 pr-4">
+                    <h3 id="modal-title" class="text-base font-bold text-gray-800 truncate">消息标题</h3>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span id="modal-type-badge" class="type-badge type-default">其他</span>
+                        <span id="modal-time" class="text-xs text-gray-400">2024-01-01 00:00</span>
+                    </div>
+                </div>
+                <button class="modal-close" onclick="closeDetail()">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-content">
+                消息内容加载中...
+            </div>
+        </div>
+    </div>
+
+    <!-- 统一数据访问层 -->
+    <script src="js/data-sync.js?v=2026051301"></script>
+    <script src="data-api.js?v=20260520c"></script>
+    <script src="js/auth-modal.js?v=20260526c"></script>
+    <script src="js/auth-guard.js?v=20260526d"></script>
+    <script>
+    // 移动端菜单切换
+    (function() {
+        const btn = document.getElementById('mobile-menu-button');
+        const menu = document.getElementById('mobile-menu');
+        if (btn && menu) {
+            btn.addEventListener('click', function() { menu.classList.toggle('hidden'); });
+        }
+    })();
+    </script>
+    <script>
+    (function () {
+        let allMessages = [];
+        const selectedIds = new Set();
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function formatTime(isoStr) {
+            if (!isoStr) return '';
+            const d = new Date(isoStr);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const h = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            return y + '-' + m + '-' + day + ' ' + h + ':' + min;
+        }
+
+        function getTypeBadge(type) {
+            const map = {
+                'learning_reminder': ['学习提醒', 'type-learning'],
+                'application_reviewed': ['审核结果', 'type-review'],
+                'system': ['系统通知', 'type-system'],
+                'announcement': ['平台公告', 'type-announcement'],
+                'training_assign': ['培训指派', 'type-training'],
+                'exam': ['考试通知', 'type-exam']
+            };
+            const [label, cls] = map[type] || ['其他', 'type-default'];
+            return '<span class="type-badge ' + cls + '">' + label + '</span>';
+        }
+
+        function renderMessages() {
+            const tbody = document.getElementById('message-tbody');
+            const emptyState = document.getElementById('empty-state');
+
+            allMessages.sort((a, b) => {
+                if (a.read !== b.read) return a.read ? 1 : -1;
+                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+            });
+
+            if (allMessages.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                document.querySelector('.msg-table thead').parentElement.classList.add('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            document.querySelector('.msg-table thead').parentElement.classList.remove('hidden');
+
+            tbody.innerHTML = allMessages.map(msg => {
+                const isChecked = selectedIds.has(msg.id);
+                const rowClass = msg.read ? 'msg-clickable' : 'unread-row msg-clickable';
+                const dotHtml = msg.read ? '' : '<span class="unread-dot"></span>';
+                return '<tr class="' + rowClass + '" data-id="' + msg.id + '" onclick="openDetail(' + msg.id + ')">' +
+                    '<td style="text-align:center;vertical-align:middle" onclick="event.stopPropagation()">' +
+                        '<input type="checkbox" class="msg-checkbox msg-row-cb" data-id="' + msg.id + '"' +
+                        (isChecked ? ' checked' : '') + ' onchange="onRowCheck(this)">' +
+                    '</td>' +
+                    '<td>' +
+                        '<div class="flex">' + dotHtml +
+                            '<div>' +
+                                '<div class="font-medium text-gray-800 text-sm leading-relaxed">' + escapeHtml(msg.title) + '</div>' +
+                                '<div class="text-gray-400 text-xs mt-1 line-clamp-2">' + escapeHtml(msg.content) + '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</td>' +
+                    '<td style="vertical-align:middle" onclick="event.stopPropagation()">' + getTypeBadge(msg.type) + '</td>' +
+                    '<td class="text-gray-500 text-sm" style="vertical-align:middle" onclick="event.stopPropagation()">' + formatTime(msg.createdAt) + '</td>' +
+                '</tr>';
+            }).join('');
+
+            updateCounts();
+            updateBatchButtons();
+        }
+
+        function updateCounts() {
+            document.getElementById('total-count').textContent = allMessages.length;
+            const unreadNum = allMessages.filter(m => !m.read).length;
+            document.getElementById('unread-count').textContent = unreadNum;
+
+            const badge = document.getElementById('notification-badge');
+            if (badge) {
+                if (unreadNum > 0) {
+                    badge.textContent = unreadNum > 99 ? '99+' : unreadNum;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        }
+
+        function updateBatchButtons() {
+            const btnRead = document.getElementById('btn-batch-read');
+            const btnDel = document.getElementById('btn-batch-delete');
+            const hasSelection = selectedIds.size > 0;
+            btnRead.disabled = !hasSelection;
+            btnDel.disabled = !hasSelection;
+        }
+
+        window.toggleSelectAll = function () {
+            const cb = document.getElementById('select-all');
+            const rowCbs = document.querySelectorAll('.msg-row-cb');
+            if (cb.checked) {
+                rowCbs.forEach(function (el) { el.checked = true; selectedIds.add(parseInt(el.dataset.id)); });
+            } else {
+                rowCbs.forEach(function (el) { el.checked = false; selectedIds.delete(parseInt(el.dataset.id)); });
+            }
+            updateBatchButtons();
+        };
+
+        window.onRowCheck = function (cb) {
+            const id = parseInt(cb.dataset.id);
+            if (cb.checked) selectedIds.add(id); else selectedIds.delete(id);
+            const allCbs = document.querySelectorAll('.msg-row-cb');
+            const selectAllCb = document.getElementById('select-all');
+            selectAllCb.checked = selectedIds.size === allCbs.length && allCbs.length > 0;
+            selectAllCb.indeterminate = selectedIds.size > 0 && selectedIds.size < allCbs.length;
+            updateBatchButtons();
+        };
+
+        window.batchMarkRead = async function () {
+            if (selectedIds.size === 0) return;
+            try {
+                const ids = Array.from(selectedIds);
+                const res = await fetch('/api/notifications/batch-read', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: ids })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('已将 ' + result.updated + ' 条消息标记为已读', 'success');
+                    selectedIds.clear();
+                    await loadMessages();
+                } else {
+                    showToast(result.error || '操作失败', 'error');
+                }
+            } catch (e) {
+                showToast('网络错误，请重试', 'error');
+            }
+        };
+
+        window.batchDelete = async function () {
+            if (selectedIds.size === 0) return;
+            if (!confirm('确定要删除选中的 ' + selectedIds.size + ' 条消息吗？此操作不可恢复。')) return;
+            try {
+                const ids = Array.from(selectedIds);
+                const res = await fetch('/api/notifications/batch-delete', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: ids })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('已删除 ' + result.deleted + ' 条消息', 'success');
+                    selectedIds.clear();
+                    await loadMessages();
+                } else {
+                    showToast(result.error || '操作失败', 'error');
+                }
+            } catch (e) {
+                showToast('网络错误，请重试', 'error');
+            }
+        };
+
+        window.markAsRead = async function (msgId) {
+            try {
+                const res = await fetch('/api/notifications/' + msgId + '/read', { method: 'PUT' });
+                const result = await res.json();
+                if (result.success) {
+                    const msg = allMessages.find(m => m.id === msgId);
+                    if (msg) msg.read = true;
+                    renderMessages();
+                }
+            } catch (e) {
+                // 即使 API 失败也继续弹窗
+            }
+        };
+
+        window.openDetail = async function (msgId) {
+            const msg = allMessages.find(m => m.id === msgId);
+            if (!msg) return;
+
+            await markAsRead(msgId);
+
+            document.getElementById('modal-title').textContent = msg.title || '消息详情';
+            document.getElementById('modal-type-badge').innerHTML = getTypeBadge(msg.type);
+            document.getElementById('modal-time').textContent = formatTime(msg.createdAt);
+
+            const contentEl = document.getElementById('modal-content');
+
+            if (msg.type === 'training_assign' && msg.trainingId) {
+                contentEl.className = 'modal-body';
+                contentEl.innerHTML = '<div class="text-center text-gray-400 py-4"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>';
+                document.getElementById('msg-detail-modal').style.display = 'flex';
+                await loadTrainingDetail(msg.trainingId, msgId);
+            } else if (msg.type === 'exam' && msg.examId) {
+                contentEl.className = 'modal-body';
+                contentEl.innerHTML = '<div class="text-center text-gray-400 py-4"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>';
+                document.getElementById('msg-detail-modal').style.display = 'flex';
+                await loadExamDetail(msg.examId, msgId);
+            } else {
+                contentEl.className = 'modal-body ' + (msg.isHtml ? 'html-content' : 'plain-content');
+                contentEl.innerHTML = msg.isHtml ? msg.content : escapeHtml(msg.content || '暂无内容');
+                document.getElementById('msg-detail-modal').style.display = 'flex';
+            }
+        };
+
+        window.closeDetail = function () {
+            document.getElementById('msg-detail-modal').style.display = 'none';
+        };
+
+        async function loadTrainingDetail(trainingId, msgId) {
+            try {
+                const res = await fetch('/api/training/' + trainingId);
+                const result = await res.json();
+                if (result.success && result.data) {
+                    renderTrainingDetail(result.data, msgId);
+                } else {
+                    document.getElementById('modal-content').innerHTML = '<p class="text-gray-500">培训信息加载失败</p>';
+                }
+            } catch (e) {
+                document.getElementById('modal-content').innerHTML = '<p class="text-gray-500">网络错误</p>';
+            }
+        }
+
+        function renderTrainingDetail(project, msgId) {
+            const contentEl = document.getElementById('modal-content');
+            contentEl.className = 'modal-body html-content';
+
+            const statusMap = {
+                published: ['已发布', '#6366f1'],
+                pending: ['待开始', '#f59e0b'],
+                active: ['进行中', '#10b981'],
+                completed: ['已完成', '#3b82f6']
+            };
+            const [statusText, statusColor] = statusMap[project.status] || ['未知', '#6b7280'];
+
+            let html = '';
+            html += '<div style="padding-bottom:12px;border-bottom:1px solid #f1f5f9;margin-bottom:16px;">';
+            html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
+            html += '<span style="font-weight:700;color:#1e293b;font-size:16px">' + escapeHtml(project.name || '未命名培训') + '</span>';
+            html += '<span style="padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;color:' + statusColor + ';background:' + statusColor + '15">' + statusText + '</span>';
+            html += '</div>';
+            if (project.desc) {
+                html += '<p style="font-size:14px;color:#64748b;line-height:1.6">' + escapeHtml(project.desc) + '</p>';
+            }
+            html += '</div>';
+
+            const stages = project.stages || [];
+            const stagesCount = stages.length;
+
+            if (stagesCount > 0) {
+                html += '<div style="position:relative;padding-left:16px;">';
+                html += '<div style="position:absolute;left:8px;top:4px;bottom:4px;width:2px;background:#e2e8f0;"></div>';
+
+                stages.forEach(function (stage, idx) {
+                    html += '<div style="position:relative;margin-bottom:20px;padding-left:24px;">';
+                    if (idx < stagesCount - 1) {
+                        html += '<div style="position:absolute;left:-12px;top:2px;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(99,102,241,0.3)">' + (idx + 1) + '</div>';
+                    } else {
+                        html += '<div style="position:absolute;left:-12px;top:2px;width:24px;height:24px;border-radius:50%;background:#fff;border:2px dashed #cbd5e1;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;font-weight:700;">' + (idx + 1) + '</div>';
+                    }
+
+                    html += '<div>';
+                    html += '<span style="font-weight:700;color:#1e293b;font-size:15px">' + escapeHtml(stage.name || '未命名阶段') + '</span>';
+
+                    const otherItems = [];
+                    const offlineItems = [];
+
+                    if (stage.type === 'offline') {
+                        offlineItems.push({ courseName: stage.name, time: stage.schedule, location: stage.location });
+                    }
+
+                    if (stage.videos && stage.videos.length > 0) {
+                        stage.videos.forEach(function (v) {
+                            otherItems.push({ type: 'video', title: v.title, duration: v.duration });
+                        });
+                    }
+
+                    if (otherItems.length > 0) {
+                        html += '<div style="margin-top:8px;">';
+                        otherItems.forEach(function (item) {
+                            html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f8fafc;border-radius:8px;margin-bottom:4px;">';
+                            if (item.type === 'video') {
+                                html += '<i class="fa fa-video text-blue-500"></i>';
+                                html += '<span style="font-size:13px;color:#475569;flex:1">' + escapeHtml(item.title) + '</span>';
+                                if (item.duration) {
+                                    const mins = Math.floor(item.duration / 60);
+                                    html += '<span style="font-size:12px;color:#94a3b8">' + mins + '分钟</span>';
+                                }
+                            }
+                            html += '</div>';
+                        });
+                        html += '</div>';
+                    }
+
+                    if (offlineItems.length > 0) {
+                        html += '<div style="margin-top:8px;">';
+                        offlineItems.forEach(function(item) {
+                            html += '<div style="padding:12px;background:#fff3e0;border-radius:8px;border:1px solid #ffe0b2;">';
+                            html += '<span style="font-weight:600;color:#1e293b;font-size:14px">' + escapeHtml(item.courseName || '线下课') + '</span>';
+                            html += '<div style="margin-top:8px;display:flex;flex-wrap:gap-3;font-size:13px;color:#64748b;">';
+                            if (item.time) html += '<span><i class="fa fa-clock-o mr-1"></i>' + escapeHtml(item.time) + '</span>';
+                            if (item.location) html += '<span><i class="fa fa-map-marker-alt mr-1"></i>' + escapeHtml(item.location) + '</span>';
+                            html += '</div>';
+                            html += '</div>';
+                        });
+                        html += '</div>';
+                    }
+
+                    html += '</div>';
+                    html += '</div>';
+                });
+
+                html += '</div>';
+            }
+
+            html += '<button onclick="window.location.href=\'training-plan.html\';closeDetail()" style="width:100%;margin-top:16px;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-weight:500;cursor:pointer;transition:opacity 0.2s;hover:opacity 0.9;">';
+            html += '<i class="fa fa-calendar-check-o mr-2"></i>查看培训计划';
+            html += '</button>';
+
+            contentEl.innerHTML = html;
+        }
+
+        async function loadExamDetail(examId, msgId) {
+            try {
+                const res = await fetch('/api/exam/' + examId);
+                const result = await res.json();
+                if (result.success && result.data) {
+                    renderExamDetail(result.data, msgId);
+                } else {
+                    document.getElementById('modal-content').innerHTML = '<p class="text-gray-500">考试信息加载失败</p>';
+                }
+            } catch (e) {
+                document.getElementById('modal-content').innerHTML = '<p class="text-gray-500">网络错误</p>';
+            }
+        }
+
+        function renderExamDetail(exam, msgId) {
+            const contentEl = document.getElementById('modal-content');
+            contentEl.className = 'modal-body html-content';
+
+            let html = '';
+
+            html += '<div style="padding-bottom:12px;border-bottom:1px solid #f1f5f9;margin-bottom:16px;">';
+            html += '<div style="font-weight:700;color:#1e293b;font-size:16px;margin-bottom:8px">' + escapeHtml(exam.title || '未命名考试') + '</div>';
+            html += '<div style="display:flex;flex-wrap:gap-4;font-size:13px;color:#64748b;">';
+            if (exam.duration) html += '<span><i class="fa fa-clock-o mr-1"></i>' + exam.duration + '分钟</span>';
+            if (exam.totalScore) html += '<span><i class="fa fa-score mr-1"></i>满分' + exam.totalScore + '分</span>';
+            if (exam.passingScore) html += '<span><i class="fa fa-target mr-1"></i>及格线' + exam.passingScore + '分</span>';
+            html += '</div>';
+            html += '</div>';
+
+            if (exam.description) {
+                html += '<div style="padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:16px;">';
+                html += '<p style="font-size:14px;color:#475569;line-height:1.6">' + escapeHtml(exam.description) + '</p>';
+                html += '</div>';
+            }
+
+            let examCardHtml = '';
+            examCardHtml += '<div style="padding:16px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:12px;">';
+            examCardHtml += '<div style="display:flex;align-items:center;gap:12px;">';
+            examCardHtml += '<div style="width:48px;height:48px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-center;">';
+            examCardHtml += '<i class="fa fa-file-text text-orange-500 text-xl"></i>';
+            examCardHtml += '</div>';
+            examCardHtml += '<div style="flex:1;">';
+            examCardHtml += '<div style="font-weight:600;color:#92400e;">' + escapeHtml(exam.title || '考试') + '</div>';
+            examCardHtml += '<div style="font-size:13px;color:#b45309;margin-top:2px;">';
+            if (exam.duration) examCardHtml += exam.duration + '分钟 ';
+            if (exam.totalScore) examCardHtml += '共' + exam.totalScore + '分';
+            examCardHtml += '</div>';
+            examCardHtml += '</div>';
+            examCardHtml += '</div>';
+            examCardHtml += '<button onclick="startExam(' + examId + ')" style="width:100%;margin-top:12px;padding:10px;border:none;border-radius:8px;background:#fff;color:#92400e;font-weight:500;cursor:pointer;transition:background 0.2s;hover:bg:#fef9c3;">';
+            examCardHtml += '<i class="fa fa-play-circle mr-2"></i>开始考试';
+            examCardHtml += '</button>';
+            examCardHtml += '<p style="text-center;margin-top:14px;font-size:12px;color:#94a3b8"><i class="fa fa-circle-info" style="margin-right:4px"></i>点击按钮后将开始计时，请确保网络连接稳定</p>';
+            examCardHtml += '</div>';
+
+            html += examCardHtml;
+            contentEl.innerHTML = html;
+        }
+
+        function startExam(examId) {
+            window.location.href = 'exam.html?id=' + examId;
+        }
+
+        async function loadMessages() {
+            try {
+                const res = await fetch('/api/notifications');
+                const result = await res.json();
+                allMessages = result.success ? (result.data || []) : [];
+            } catch (e) {
+                allMessages = [
+                    { id: 1, title: '欢迎加入游雁学院', content: '欢迎您加入游雁学院学习平台！在这里您可以学习各类课程，参加培训活动。', type: 'system', read: false, createdAt: '2026-01-15 09:00' },
+                    { id: 2, title: '新员工入职培训通知', content: '您已被指派参加新员工入职培训，请及时查看培训计划并按时参加。', type: 'training_assign', read: false, createdAt: '2026-01-14 14:30', trainingId: 1 },
+                    { id: 3, title: '课程学习提醒', content: '您有3门课程待学习，请尽快完成学习进度。', type: 'learning_reminder', read: true, createdAt: '2026-01-13 10:00' },
+                    { id: 4, title: '平台公告：春节放假通知', content: '<p>春节放假安排：2026年1月28日至2月3日放假调休，共7天。</p><p>放假期间平台正常开放，但客服响应时间可能延迟。</p>', type: 'announcement', isHtml: true, read: true, createdAt: '2026-01-12 09:00' },
+                    { id: 5, title: '考试通知', content: '您有一场考试即将开始，请做好准备。', type: 'exam', read: false, createdAt: '2026-01-11 16:00', examId: 1 }
+                ];
+            }
+            renderMessages();
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:10px;color:#fff;font-size:14px;z-index:1000;box-shadow:0 4px 20px rgba(0,0,0,0.2);animation:slideUp 0.3s ease;';
+            toast.style.background = type === 'success' ? 'linear-gradient(135deg,#10b981,#059669)' : 'linear-gradient(135deg,#ef4444,#dc2626)';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeDetail();
+        });
+
+        (async function () {
+            await new Promise(resolve => {
+                const check = setInterval(() => {
+                    if (window.isUserLoggedIn !== undefined) {
+                        clearInterval(check);
+                        resolve();
+                    }
+                }, 100);
+            });
+            await loadMessages();
+
+            window.addEventListener('userProfileUpdated', () => {
+                loadMessages();
+            });
+        })();
+    })();
+    </script>
+</body>
+</html>

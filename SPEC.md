@@ -17,7 +17,7 @@
 
 ### 2.2 页面结构
 ```
-admin.html          - 管理后台主页（入口）
+dashboard.html       - 管理后台主页（入口，含考试管理）
 admin-course.html   - 课程管理页面
 admin-category.html - 分类管理页面
 admin-lecturer.html - 讲师管理页面
@@ -237,7 +237,7 @@ Gray-900:  #111827
 ## 8. 测试地址
 
 ```
-后台管理主页: http://localhost:3003/admin.html
+后台管理主页: http://localhost:3003/dashboard.html
 课程管理:    http://localhost:3003/admin-course.html
 分类管理:    http://localhost:3003/admin-category.html
 讲师管理:    http://localhost:3003/admin-lecturer.html

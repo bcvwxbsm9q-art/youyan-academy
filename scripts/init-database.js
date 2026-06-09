@@ -299,6 +299,6 @@ console.log('   管理员：admin / admin123');
 console.log('   学生：student / student123');
 console.log('\n💡 下一步：');
 console.log('   1. 运行 npm start 启动服务器');
-console.log('   2. 访问 http://localhost:3003/login.html');
+console.log('   2. 访问 http://localhost:3003/index.html（将弹出登录窗口）');
 console.log('   3. 使用默认账户登录测试');
 console.log('');

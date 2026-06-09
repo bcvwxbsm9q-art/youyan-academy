@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>填写问卷 - 游雁学院</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: '#667eea', secondary: '#764ba2' } } }
+    }
+  </script>
+  <style>
+    body { opacity: 0; animation: pageLoad 0.4s ease forwards; }
+    @keyframes pageLoad { to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-up { animation: slideUp 0.4s ease-out; }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    .scale-in { animation: scaleIn 0.3s ease-out; }
+    .text-gradient { background-clip: text; -webkit-background-clip: text; color: transparent; background-image: linear-gradient(135deg, #667eea, #764ba2); }
+    .bg-gradient-primary { background-image: linear-gradient(135deg, #667eea, #764ba2); }
+    .q-card { transition: all 0.2s; border: 2px solid transparent; }
+    .q-card:hover { border-color: #c7d2fe; }
+    .q-card.answered { border-color: #a5b4fc; background: #f5f3ff; }
+    /* 评分星星 */
+    .rating-star { cursor: pointer; font-size: 28px; color: #d1d5db; transition: color 0.15s, transform 0.15s; }
+    .rating-star:hover { transform: scale(1.15); }
+    .rating-star.active { color: #f59e0b; }
+    /* 单选/多选样式 */
+    .option-item { transition: all 0.15s; }
+    .option-item:hover { background: #f5f3ff; }
+    .option-item.selected { background: #ede9fe; border-color: #a78bfa; }
+    .option-item.selected .option-dot { background: #7c3aed; border-color: #7c3aed; }
+    .option-item.selected .option-check { background: #7c3aed; border-color: #7c3aed; }
+    /* Toast */
+    .toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 9999; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 500; box-shadow: 0 8px 30px rgba(0,0,0,0.12); animation: toastIn 0.3s ease; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    .toast.success { background: #10b981; color: #fff; }
+    .toast.error { background: #ef4444; color: #fff; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <!-- 顶部导航 -->
+  <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-100">
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+      <button onclick="history.back()" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-500">
+        <i class="fa fa-arrow-left"></i>
+      </button>
+      <h1 class="text-base font-semibold text-slate-800">填写问卷</h1>
+      <div class="w-8"></div>
+    </div>
+  </header>
+
+  <!-- 主内容 -->
+  <main class="max-w-2xl mx-auto px-4 py-6" id="survey-main">
+    <!-- 加载中 -->
+    <div id="loading-state" class="text-center py-20">
+      <i class="fa fa-spinner fa-spin text-3xl text-primary mb-4 block"></i>
+      <p class="text-slate-400">加载问卷中...</p>
+    </div>
+    <!-- 问卷不存在 -->
+    <div id="error-state" class="hidden text-center py-20">
+      <i class="fa fa-exclamation-circle text-5xl text-red-300 mb-4 block"></i>
+      <p class="text-slate-500 text-lg mb-2">问卷不存在或已下线</p>
+      <button onclick="history.back()" class="mt-4 px-6 py-2 bg-gradient-primary text-white rounded-xl text-sm font-medium hover:opacity-90 transition">返回</button>
+    </div>
+    <!-- 已填写 -->
+    <div id="submitted-state" class="hidden text-center py-20">
+      <div class="w-24 h-24 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-6 scale-in">
+        <i class="fa fa-check-circle text-5xl text-emerald-400"></i>
+      </div>
+      <h2 class="text-2xl font-bold text-slate-800 mb-2">感谢您的参与！</h2>
+      <p class="text-slate-400 mb-6">您已成功提交该问卷</p>
+      <button onclick="history.back()" class="px-6 py-2.5 bg-gradient-primary text-white rounded-xl text-sm font-medium hover:opacity-90 transition">返回</button>
+    </div>
+    <!-- 问卷表单 -->
+    <div id="survey-form" class="hidden">
+      <!-- 问卷头部 -->
+      <div id="survey-header" class="mb-6"></div>
+      <!-- 题目列表 -->
+      <div id="questions-container" class="space-y-4 mb-6"></div>
+      <!-- 提交按钮 -->
+      <div class="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-slate-100 py-4 -mx-4 px-4">
+        <button id="submit-btn" onclick="submitSurvey()" class="w-full py-3 bg-gradient-primary text-white rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed">
+          <i class="fa fa-paper-plane mr-2"></i>提交问卷
+        </button>
+        <p id="progress-text" class="text-center text-xs text-slate-400 mt-2"></p>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/auth-guard.js?v=20260526c"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const surveyId = params.get('id');
+    const trainingId = params.get('trainingId');
+    const stageIdx = params.get('stageIdx');
+    let surveyData = null;
+    let userAnswers = {};
+
+    function getUser() {
+      const s = localStorage.getItem('user') || sessionStorage.getItem('user');
+      try { return s ? JSON.parse(s) : null; } catch(e) { return null; }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function toast(msg, type) {
+      const el = document.createElement('div');
+      el.className = 'toast ' + type;
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    async function loadSurvey() {
+      if (!surveyId) {
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('error-state').classList.remove('hidden');
+        return;
+      }
+      try {
+        const res = await fetch('/api/surveys/' + surveyId);
+        const result = await res.json();
+        if (!result.success || !result.data) {
+          document.getElementById('loading-state').classList.add('hidden');
+          document.getElementById('error-state').classList.remove('hidden');
+          return;
+        }
+        surveyData = result.data;
+        // 检查问卷状态
+        if (surveyData.status !== 'published') {
+          document.getElementById('loading-state').classList.add('hidden');
+          document.getElementById('error-state').classList.remove('hidden');
+          return;
+        }
+        // 检查是否已填写
+        const user = getUser();
+        if (user) {
+          let checkUrl = '/api/surveys/' + surveyId + '/check-responded?userId=' + user.id;
+          if (trainingId !== null && stageIdx !== null) {
+            checkUrl += '&trainingId=' + trainingId + '&stageIdx=' + stageIdx;
+          }
+          const checkRes = await fetch(checkUrl);
+          const checkResult = await checkRes.json();
+          if (checkResult.success && checkResult.responded) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('submitted-state').classList.remove('hidden');
+            return;
+          }
+        }
+        // 渲染问卷
+        renderSurvey();
+      } catch(e) {
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('error-state').classList.remove('hidden');
+      }
+    }
+
+    function renderSurvey() {
+      document.getElementById('loading-state').classList.add('hidden');
+      document.getElementById('survey-form').classList.remove('hidden');
+
+      // 头部
+      const header = document.getElementById('survey-header');
+      header.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden slide-up">
+          <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-6 py-5">
+            <h2 class="text-xl font-bold text-white mb-1">${escapeHtml(surveyData.title)}</h2>
+            <p class="text-white/70 text-sm"><i class="fa fa-list-alt mr-1"></i>${(surveyData.questions || []).length} 道题目</p>
+          </div>
+          ${surveyData.description ? `<div class="px-6 py-4 bg-indigo-50/50 border-b border-indigo-100"><p class="text-sm text-slate-600 leading-relaxed">${escapeHtml(surveyData.description)}</p></div>` : ''}
+        </div>`;
+
+      // 题目
+      const container = document.getElementById('questions-container');
+      const questions = surveyData.questions || [];
+      userAnswers = {};
+      questions.forEach(q => { userAnswers[q.id] = q.type === 'checkbox' ? [] : (q.type === 'rating' ? 0 : ''); });
+
+      container.innerHTML = questions.map((q, idx) => renderQuestion(q, idx)).join('');
+      updateProgress();
+    }
+
+    function renderQuestion(q, idx) {
+      const required = q.required ? '<span class="text-red-400 ml-1">*</span>' : '';
+      let body = '';
+
+      if (q.type === 'radio') {
+        body = `<div class="space-y-2 mt-3">${(q.options || []).map((opt, oi) => `
+          <div class="option-item flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer" onclick="selectRadio(${q.id}, ${oi}, this)">
+            <div class="option-dot w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center flex-shrink-0 transition">
+              <div class="w-2.5 h-2.5 rounded-full bg-white transition"></div>
+            </div>
+            <span class="text-sm text-slate-700">${escapeHtml(opt.label)}</span>
+          </div>`).join('')}</div>`;
+      } else if (q.type === 'checkbox') {
+        body = `<div class="space-y-2 mt-3">${(q.options || []).map((opt, oi) => `
+          <div class="option-item flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer" onclick="toggleCheckbox(${q.id}, ${oi}, this)">
+            <div class="option-check w-5 h-5 rounded-md border-2 border-slate-300 flex items-center justify-center flex-shrink-0 transition">
+              <i class="fa fa-check text-white text-xs"></i>
+            </div>
+            <span class="text-sm text-slate-700">${escapeHtml(opt.label)}</span>
+          </div>`).join('')}</div>`;
+      } else if (q.type === 'text') {
+        body = `<textarea class="w-full mt-3 p-3 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-300 resize-none" rows="3" placeholder="请输入您的回答" oninput="userAnswers[${q.id}]=this.value;updateProgress();markAnswered(${q.id})"></textarea>`;
+      } else if (q.type === 'rating') {
+        const maxScore = Math.max(...(q.options || []).map(o => o.score || 0), 5);
+        body = `<div class="flex items-center gap-2 mt-3" id="rating-${q.id}">
+          ${Array.from({length: maxScore}, (_, i) => `
+            <span class="rating-star" onclick="selectRating(${q.id}, ${i+1})" data-score="${i+1}"><i class="fa fa-star"></i></span>
+          `).join('')}
+          <span class="text-sm text-slate-400 ml-2" id="rating-label-${q.id}">请评分</span>
+        </div>`;
+      }
+
+      return `
+        <div class="q-card bg-white rounded-2xl shadow-sm border border-slate-100 p-5" id="qcard-${q.id}">
+          <div class="flex items-start gap-3">
+            <span class="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 text-white text-xs font-bold flex items-center justify-center">${idx + 1}</span>
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-slate-800">${escapeHtml(q.title)}${required}</p>
+              ${body}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function selectRadio(qId, optIdx, el) {
+      const q = surveyData.questions.find(x => x.id == qId);
+      userAnswers[qId] = (q.options[optIdx] || {}).label || '';
+      // UI
+      const card = document.getElementById('qcard-' + qId);
+      card.querySelectorAll('.option-item').forEach((item, i) => {
+        item.classList.toggle('selected', i === optIdx);
+      });
+      markAnswered(qId);
+      updateProgress();
+    }
+
+    function toggleCheckbox(qId, optIdx, el) {
+      if (!Array.isArray(userAnswers[qId])) userAnswers[qId] = [];
+      const q = surveyData.questions.find(x => x.id == qId);
+      const label = (q.options[optIdx] || {}).label || '';
+      const idx = userAnswers[qId].indexOf(label);
+      if (idx >= 0) {
+        userAnswers[qId].splice(idx, 1);
+        el.classList.remove('selected');
+      } else {
+        userAnswers[qId].push(label);
+        el.classList.add('selected');
+      }
+      markAnswered(qId);
+      updateProgress();
+    }
+
+    function selectRating(qId, score) {
+      userAnswers[qId] = score;
+      const container = document.getElementById('rating-' + qId);
+      const stars = container.querySelectorAll('.rating-star');
+      stars.forEach((star, i) => {
+        star.classList.toggle('active', i < score);
+      });
+      const q = surveyData.questions.find(x => x.id == qId);
+      const opt = (q.options || []).find(o => o.score == score);
+      const labelEl = document.getElementById('rating-label-' + qId);
+      if (labelEl) labelEl.textContent = opt ? opt.label : score + '分';
+      markAnswered(qId);
+      updateProgress();
+    }
+
+    function markAnswered(qId) {
+      const card = document.getElementById('qcard-' + qId);
+      const val = userAnswers[qId];
+      const answered = Array.isArray(val) ? val.length > 0 : (val !== '' && val !== 0);
+      if (answered) card.classList.add('answered');
+      else card.classList.remove('answered');
+    }
+
+    function updateProgress() {
+      const questions = surveyData.questions || [];
+      let answered = 0;
+      questions.forEach(q => {
+        const val = userAnswers[q.id];
+        if (Array.isArray(val) ? val.length > 0 : (val && val !== '' && val !== 0)) answered++;
+      });
+      const pctEl = document.getElementById('progress-text');
+      if (pctEl) pctEl.textContent = `已完成 ${answered}/${questions.length} 题`;
+      const btn = document.getElementById('submit-btn');
+      if (btn) {
+        const requiredOk = questions.filter(q => q.required).every(q => {
+          const val = userAnswers[q.id];
+          return Array.isArray(val) ? val.length > 0 : (val && val !== '' && val !== 0);
+        });
+        btn.disabled = !requiredOk;
+      }
+    }
+
+    async function submitSurvey() {
+      const user = getUser();
+      if (!user) { toast('请先登录', 'error'); return; }
+
+      const questions = surveyData.questions || [];
+      // 检查必答题
+      const unansweredRequired = questions.filter(q => {
+        if (!q.required) return false;
+        const val = userAnswers[q.id];
+        return Array.isArray(val) ? val.length === 0 : (!val || val === '' || val === 0);
+      });
+      if (unansweredRequired.length > 0) {
+        toast('还有 ' + unansweredRequired.length + ' 道必答题未完成', 'error');
+        return;
+      }
+
+      // 构造答案数组
+      const answers = questions.map(q => {
+        const val = userAnswers[q.id];
+        return {
+          questionId: q.id,
+          questionTitle: q.title,
+          type: q.type,
+          value: val
+        };
+      });
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>提交中...';
+
+      try {
+        const res = await fetch('/api/surveys/' + surveyId + '/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            userName: user.real_name || user.realName || user.username || '未知用户',
+            answers,
+            trainingId: trainingId || null,
+            stageIdx: stageIdx !== null ? stageIdx : null
+          })
+        });
+        const result = await res.json();
+        if (result.success) {
+          document.getElementById('survey-form').classList.add('hidden');
+          document.getElementById('submitted-state').classList.remove('hidden');
+        } else {
+          if (result.error === '您已填写过该问卷') {
+            document.getElementById('survey-form').classList.add('hidden');
+            document.getElementById('submitted-state').classList.remove('hidden');
+          } else {
+            toast(result.error || '提交失败', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa fa-paper-plane mr-2"></i>提交问卷';
+          }
+        }
+      } catch(e) {
+        toast('网络错误，请重试', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-paper-plane mr-2"></i>提交问卷';
+      }
+    }
+
+    // 页面加载
+    document.addEventListener('DOMContentLoaded', loadSurvey);
+  </script>
+</body>
+</html>

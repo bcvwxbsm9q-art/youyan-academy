@@ -1,0 +1,222 @@
+/**
+ * ============================================================
+ * 管理后台专用样式 - manner.html
+ * ============================================================
+ */
+
+/* 侧边栏滚动条样式 */
+.admin-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* 表格增强 */
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+table thead tr:first-child th:first-child {
+    border-top-left-radius: 12px;
+}
+
+table thead tr:first-child th:last-child {
+    border-top-right-radius: 12px;
+}
+
+/* 输入框聚焦效果 */
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #667eea !important;
+}
+
+/* 按钮悬停效果 */
+button:active {
+    transform: scale(0.98);
+}
+
+/* 模态框动画 */
+#add-user-modal,
+#add-course-modal,
+#add-lecturer-modal,
+#add-announcement-modal {
+    animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 卡片悬停阴影 */
+.admin-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.admin-card:hover::before {
+    transform: scaleX(1);
+}
+
+/* 统计卡片渐变动画 */
+.stat-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover::after {
+    opacity: 1;
+}
+
+/* 导航项指示器 */
+.admin-sidebar-item {
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-sidebar-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 60%;
+    background: white;
+    border-radius: 0 4px 4px 0;
+}
+
+/* 徽章动画 */
+.badge {
+    transition: all 0.2s ease;
+}
+
+.badge:hover {
+    transform: scale(1.05);
+}
+
+/* 表格行悬停 */
+.table-row {
+    transition: background-color 0.2s ease;
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+    .stat-card {
+        padding: 16px;
+    }
+    
+    .stat-card h3 {
+        font-size: 24px !important;
+    }
+    
+    .admin-card {
+        border-radius: 12px;
+    }
+}
+
+/* 深色模式支持（可选） */
+@media (prefers-color-scheme: dark) {
+    /* 如需支持深色模式，在此添加样式 */
+}
+
+/* 打印样式优化 */
+@media print {
+    .admin-sidebar,
+    header {
+        display: none !important;
+    }
+    
+    .lg\\:ml-64 {
+        margin-left: 0 !important;
+    }
+}
+
+/* 加载动画 */
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 空状态样式 */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-state-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: #9ca3af;
+}
+
+.empty-state-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #6b7280;
+}
+
+.empty-state-desc {
+    font-size: 14px;
+    color: #9ca3af;
+}

@@ -1,0 +1,1895 @@
+﻿{
+  "lecturers": [
+    {
+      "name": "娌堝鎴?,
+      "department": "鐏典簯宸ヤ綔瀹?,
+      "title": "楂樼骇鍓嶇绋嬪簭",
+      "level": "intern",
+      "levelName": "瀹炰範璁插笀",
+      "avatar": "/uploads/avatars/1779099988677-516091138.png",
+      "intro": "545鏄?,
+      "totalFee": 0,
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "鍓嶇",
+        "drawcall"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-05-20",
+      "id": 1779100004608
+    },
+    {
+      "name": "榄忓皯閾?,
+      "department": "杩愯惀宸ヤ綔瀹?,
+      "title": "杩愯惀缁勯暱",
+      "level": "junior",
+      "levelName": "鍒濈骇璁插笀",
+      "avatar": "/uploads/avatars/1779100013925-839467471.png",
+      "intro": "",
+      "totalFee": 0,
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "杩愯惀",
+        "鏁版嵁鍒嗘瀽"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-05-25",
+      "id": 1779100033432
+    },
+    {
+      "name": "鏇硅春閽?,
+      "department": "绉湪宸ヤ綔瀹?,
+      "title": "涓荤瓥",
+      "level": "senior",
+      "levelName": "楂樼骇璁插笀",
+      "avatar": "/uploads/avatars/1779100043215-271073472.png",
+      "intro": "",
+      "totalFee": 0,
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "鎴愬氨绯荤粺",
+        "鎴樻枟绯荤粺"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-05-20",
+      "id": 1779100066464
+    },
+    {
+      "name": "鏉庡哺",
+      "department": "涔濆窞宸ヤ綔瀹?,
+      "title": "鍚庣涓荤▼",
+      "level": "junior",
+      "levelName": "鍒濈骇璁插笀",
+      "avatar": "/uploads/avatars/1779327361386-272584310.png",
+      "intro": "鎷ユ湁澶氬勾鍚庣缁忛獙锛岃兘澶熷紑鍙戞湇鍔″櫒",
+      "totalFee": 0,
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "鍚庣C++",
+        "鍐呭瓨绠＄悊"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-05-21",
+      "id": 1779327401095
+    },
+    {
+      "name": "鍙ゆ捣閿?,
+      "department": "铚楃墰宸ヤ綔瀹?,
+      "title": "鎵ц涓荤瓥",
+      "level": "intermediate",
+      "levelName": "涓骇璁插笀",
+      "avatar": "/uploads/avatars/1779327411654-727878683.png",
+      "intro": "",
+      "totalFee": 0,
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "绯荤粺璁捐",
+        "鎴樻枟绯荤粺"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-05-21",
+      "id": 1779327449501
+    },
+    {
+      "name": "榛勬槑鑺?,
+      "department": "铚楃墰宸ヤ綔瀹?,
+      "title": "涓荤編",
+      "level": "intermediate",
+      "levelName": "涓骇璁插笀",
+      "avatar": "/uploads/avatars/1779327552341-797292411.png",
+      "intro": "",
+      "totalFee": 0,
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "瑙掕壊妯″瀷",
+        "3D璁捐"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-05-21",
+      "id": 1779327570069
+    },
+    {
+      "name": "鑾不钀?,
+      "department": "铚楃墰宸ヤ綔瀹?,
+      "title": "楂樼骇鍓嶇绋嬪簭",
+      "level": "intermediate",
+      "levelName": "涓骇璁插笀",
+      "avatar": "/uploads/avatars/1779343924723-35672144.png",
+      "intro": "",
+      "totalFee": 0,
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "澶村儚鍒朵綔",
+        "娓叉煋"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-05-21",
+      "id": 1779343952423
+    },
+    {
+      "name": "鍚翠匠瀹?,
+      "department": "铚楃墰宸ヤ綔瀹?,
+      "title": "楂樼骇鍓嶇绋嬪簭",
+      "level": "senior",
+      "levelName": "楂樼骇璁插笀",
+      "avatar": "/uploads/avatars/1779344034826-914212500.png",
+      "intro": "",
+      "totalFee": 0,
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "鎸傛満绯荤粺",
+        "鎵樼"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-05-21",
+      "id": 1779344059813
+    }
+  ],
+  "course_categories": [
+    {
+      "id": 1,
+      "name": "绛栧垝",
+      "key": "planning",
+      "icon": "fa-sitemap",
+      "children": [
+        {
+          "id": 11,
+          "name": "绯荤粺绛栧垝",
+          "key": "game-planning"
+        },
+        {
+          "id": 12,
+          "name": "鏁板€肩瓥鍒?,
+          "key": "event-planning"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "缇庢湳",
+      "key": "art",
+      "icon": "fa-paint-brush",
+      "children": [
+        {
+          "id": 21,
+          "name": "鍘熺敾",
+          "key": "graphic"
+        },
+        {
+          "id": 22,
+          "name": "UI",
+          "key": "ui"
+        },
+        {
+          "id": 23,
+          "name": "妯″瀷",
+          "key": "3d"
+        },
+        {
+          "id": 1777512575015,
+          "name": "鍦烘櫙",
+          "key": ""
+        },
+        {
+          "id": 1777512581774,
+          "name": "鍔ㄦ晥",
+          "key": ""
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "鎶€鏈?,
+      "key": "tech",
+      "icon": "fa-code",
+      "children": [
+        {
+          "id": 31,
+          "name": "瀹㈡埛绔?,
+          "key": "frontend"
+        },
+        {
+          "id": 32,
+          "name": "鏈嶅姟绔?,
+          "key": "backend"
+        },
+        {
+          "id": 33,
+          "name": "杩愮淮",
+          "key": "mobile"
+        },
+        {
+          "id": 1777512628278,
+          "name": "PHP",
+          "key": ""
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "甯傚満",
+      "key": "operation",
+      "icon": "fa-line-chart",
+      "children": [
+        {
+          "id": 41,
+          "name": "杩愯惀",
+          "key": "social"
+        },
+        {
+          "id": 42,
+          "name": "鎶曟斁",
+          "key": "data"
+        },
+        {
+          "id": 1777512687134,
+          "name": "璁捐",
+          "key": ""
+        },
+        {
+          "id": 1777512715817,
+          "name": "瀹㈡湇",
+          "key": ""
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "杞妧鑳?,
+      "key": "softskill",
+      "icon": "fa-users",
+      "children": [
+        {
+          "id": 51,
+          "name": "娌熼€?,
+          "key": "communication"
+        },
+        {
+          "id": 52,
+          "name": "鎬濈淮",
+          "key": "management"
+        },
+        {
+          "id": 1777512740422,
+          "name": "绠＄悊",
+          "key": ""
+        },
+        {
+          "id": 1777512745614,
+          "name": "棰嗗鍔?,
+          "key": ""
+        }
+      ]
+    }
+  ],
+  "management_courses": [
+    {
+      "title": "鎴愬氨绯荤粺璁捐锛氫粠鐞嗚鍒板疄璺?,
+      "cover": "/uploads/covers/1779269919821-103395115.png",
+      "categoryId": 1,
+      "subcategoryId": 11,
+      "lecturerId": 1779100066464,
+      "description": "鏈湡璇剧▼涓昏璁茶В鎴愬氨绯荤粺鐨勮璁＄悊璁轰笌璁捐鎬濊矾銆佺Щ鍔ㄧUI/UX涓庢妧鏈疄鐜帮紝骞剁粨鍚堝疄闄呮渚嬭繘琛岀浉鍏冲垎鏋愶紝甯姪澶у鎻愬崌鎴愬氨绯荤粺鐨勮璁¤兘鍔涖€?,
+      "status": "published",
+      "videos": [
+        {
+          "url": "/uploads/videos/1779269969404-502970312.mp4",
+          "title": "鎴愬氨绯荤粺璁捐锛氫粠鐞嗚鍒板疄璺?mp4",
+          "size": 91320786,
+          "type": "video/mp4",
+          "duration": 2415
+        }
+      ],
+      "attachments": [],
+      "duration": 2415,
+      "views": 5,
+      "rating": 0,
+      "id": 1779269978533,
+      "createdAt": "2026/5/20 17:39:38",
+      "updatedAt": "2026/5/21 15:00:01",
+      "avgRating": 5,
+      "ratingCount": 1
+    },
+    {
+      "title": "瑙掕壊鎶€鑳借璁℃€濊矾",
+      "cover": "/uploads/covers/1779327305946-651945193.png",
+      "categoryId": 1,
+      "subcategoryId": 11,
+      "lecturerId": 1779327449501,
+      "description": "",
+      "status": "published",
+      "videos": [
+        {
+          "url": "/uploads/videos/1779327319834-55597296.mp4",
+          "title": "瑙掕壊鎶€鑳借璁℃€濊矾.mp4",
+          "size": 182437996,
+          "type": "video/mp4",
+          "duration": 1909
+        }
+      ],
+      "attachments": [],
+      "duration": 1909,
+      "views": 9,
+      "rating": 0,
+      "id": 1779327336678,
+      "createdAt": "2026/5/21 09:35:36",
+      "avgRating": 3,
+      "ratingCount": 1,
+      "likes": 1
+    },
+    {
+      "title": "KMP绠楁硶",
+      "cover": "/uploads/covers/1779327485448-539154346.png",
+      "categoryId": 3,
+      "subcategoryId": 32,
+      "lecturerId": 1779327401095,
+      "description": "鏈湡璇剧▼灏嗕富瑕佽瑙MP绠楁硶鐨勫熀鏈蹇靛拰瀹炵幇鍘熺悊锛屽府鍔╁ぇ瀹舵繁鍏ョ悊瑙ｅ瓧绗︿覆鍖归厤鐨勬牳蹇冩妧鏈紝瀛︿範鍏堕珮鏁堣В鍐冲瓧绗︿覆鍖归厤闅鹃鐨勭畻娉曟€濇兂銆?,
+      "status": "published",
+      "videos": [
+        {
+          "url": "/uploads/videos/1779327517436-220094446.mp4",
+          "title": "KMP绠楁硶.mp4",
+          "size": 52811693,
+          "type": "video/mp4",
+          "duration": 1644
+        }
+      ],
+      "attachments": [],
+      "duration": 1644,
+      "views": 10,
+      "rating": 0,
+      "id": 1779327523598,
+      "createdAt": "2026/5/21 09:38:43",
+      "likes": 1,
+      "avgRating": 4,
+      "ratingCount": 1
+    },
+    {
+      "title": "TCP绠€浠?,
+      "cover": "/uploads/covers/1779328193616-546013777.png",
+      "categoryId": 3,
+      "subcategoryId": 32,
+      "lecturerId": 1779327401095,
+      "description": "",
+      "status": "published",
+      "videos": [
+        {
+          "url": "/uploads/videos/1779328208513-19822779.mp4",
+          "title": "TCP绠€浠?mp4",
+          "size": 81728074,
+          "type": "video/mp4",
+          "duration": 2705
+        }
+      ],
+      "attachments": [],
+      "duration": 2705,
+      "views": 15,
+      "rating": 0,
+      "id": 1779328221100,
+      "createdAt": "2026/5/21 09:50:21",
+      "likes": 1,
+      "avgRating": 3,
+      "ratingCount": 1
+    }
+  ],
+  "training_projects": [
+    {
+      "id": 1,
+      "name": "2024骞村害鏂板憳宸ュ叆鑱屽煿璁?,
+      "manager": "",
+      "leader": "",
+      "desc": "閽堝鏂板叆鑱屽憳宸ョ殑鍏ㄦ柟浣嶅煿璁」鐩?,
+      "startDate": "2026-05-26T14:11",
+      "endDate": "2026-05-27T16:11",
+      "status": "published",
+      "stages": [
+        {
+          "id": 2,
+          "name": "浜у搧鐭ヨ瘑鍩硅",
+          "type": "online",
+          "lecturerId": 3,
+          "videos": [
+            {
+              "title": "浜у搧鍩虹鐭ヨ瘑",
+              "duration": 1800,
+              "url": ""
+            }
+          ],
+          "attendance": {
+            "required": true,
+            "method": "face"
+          },
+          "exam": {
+            "id": 2,
+            "name": "浜у搧鐭ヨ瘑娴嬭瘯",
+            "passingScore": 70
+          },
+          "survey": {
+            "id": 2,
+            "name": "璇剧▼婊℃剰搴﹁皟鐮?
+          },
+          "items": [
+            {
+              "type": "offline",
+              "courseName": "浜у搧鍩硅",
+              "location": "鍏氬缓浼氳瀹?,
+              "startTime": "2026-05-26T14:11",
+              "endTime": "2026-05-27T16:11",
+              "lecturerId": 1779327401095,
+              "lecturerName": "鏉庡哺"
+            },
+            {
+              "type": "survey",
+              "surveyId": "1779780920087",
+              "surveyTitle": "婊℃剰搴﹁皟鏌?,
+              "responses": [
+                {
+                  "id": 1779785380235,
+                  "userId": 1779269749493,
+                  "userName": "浣曢摱",
+                  "answers": [
+                    {
+                      "questionId": 1779780890350,
+                      "questionTitle": "璇剧▼瀵逛釜浜烘垚闀跨殑甯姪鎬?,
+                      "type": "rating",
+                      "value": 5
+                    }
+                  ],
+                  "submittedAt": "2026-05-26T08:49:40.235Z"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 1779775864773,
+          "name": "闃舵2",
+          "requirePrevious": false,
+          "items": [
+            {
+              "type": "offline",
+              "courseName": "浼佷笟鏂囧寲涓庢寚瀵?,
+              "location": "B鍖哄煿璁",
+              "startTime": "2026-05-26T14:11",
+              "endTime": "2026-05-26T14:11",
+              "lecturerId": 1779100004608,
+              "lecturerName": "娌堝鎴?
+            },
+            {
+              "type": "survey",
+              "surveyId": "1779780920087",
+              "surveyTitle": "婊℃剰搴﹁皟鏌?,
+              "responses": [
+                {
+                  "id": 1779785388081,
+                  "userId": 1779269749493,
+                  "userName": "浣曢摱",
+                  "answers": [
+                    {
+                      "questionId": 1779780890350,
+                      "questionTitle": "璇剧▼瀵逛釜浜烘垚闀跨殑甯姪鎬?,
+                      "type": "rating",
+                      "value": 3
+                    }
+                  ],
+                  "submittedAt": "2026-05-26T08:49:48.081Z"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "categoryId": 2,
+      "cover": "/uploads/covers/1779775963605-177330024.png",
+      "students": [
+        {
+          "userId": "1779170734294",
+          "name": "璁稿織寮?,
+          "employeeId": "",
+          "department": "浜哄姏璧勬簮閮?,
+          "leaderUserId": "",
+          "leaderName": "",
+          "position": "浜轰簨缁忕悊",
+          "phone": "14718596470",
+          "email": "",
+          "joinTime": "",
+          "entryTime": "",
+          "workLocation": "",
+          "employeeType": ""
+        },
+        {
+          "userId": "1779269749493",
+          "name": "浣曢摱",
+          "employeeId": "",
+          "department": "澶╄宸ヤ綔瀹?,
+          "leaderUserId": "",
+          "leaderName": "",
+          "position": "涓荤瓥鍒?,
+          "phone": "15302206488",
+          "email": "",
+          "joinTime": "",
+          "entryTime": "",
+          "workLocation": "",
+          "employeeType": ""
+        }
+      ],
+      "qrToken": "bd02dd5cddd1a869"
+    },
+    {
+      "name": "LUA鍏ラ棬",
+      "categoryId": 2,
+      "status": "published",
+      "startDate": "2026-05-26T09:30",
+      "endDate": "2026-05-26T10:00",
+      "desc": "寰堟",
+      "manager": "",
+      "leader": "",
+      "cover": "/uploads/covers/1779703865007-881563684.png",
+      "stages": [
+        {
+          "id": 1779703871259,
+          "name": "LUA鍏ラ棬",
+          "requirePrevious": false,
+          "items": [
+            {
+              "type": "offline",
+              "courseName": "LUA鍏ラ棬",
+              "location": "B鍖哄煿璁",
+              "startTime": "2026-05-26T09:30",
+              "endTime": "2026-05-26T10:00",
+              "lecturerId": 1779344059813,
+              "lecturerName": "鍚翠匠瀹?
+            },
+            {
+              "type": "survey",
+              "surveyId": "1779780920087",
+              "surveyTitle": "婊℃剰搴﹁皟鏌?,
+              "responses": [
+                {
+                  "id": 1779789441893,
+                  "userId": 1779269749493,
+                  "userName": "浣曢摱",
+                  "answers": [
+                    {
+                      "questionId": 1779780890350,
+                      "questionTitle": "璇剧▼瀵逛釜浜烘垚闀跨殑甯姪鎬?,
+                      "type": "rating",
+                      "value": 5
+                    },
+                    {
+                      "questionId": 1779789028337,
+                      "questionTitle": "璇剧▼鍐呭璁捐涓庡煿璁」鐩殑鍚诲悎搴?,
+                      "type": "rating",
+                      "value": 5
+                    },
+                    {
+                      "questionId": 1779789059617,
+                      "questionTitle": "璇句欢鍐呭椤甸潰璁捐涓庢帓鐗堜笓涓氭€?,
+                      "type": "rating",
+                      "value": 5
+                    },
+                    {
+                      "questionId": 1779789069552,
+                      "questionTitle": "璁插笀璇惧爞浜掑姩姘涘洿鐨勫紩瀵艰兘鍔?,
+                      "type": "rating",
+                      "value": 5
+                    },
+                    {
+                      "questionId": 1779789103745,
+                      "questionTitle": "璁插笀璇█琛ㄨ揪鏄惁閫氫織鏄撴噦",
+                      "type": "rating",
+                      "value": 5
+                    },
+                    {
+                      "questionId": 1779789122961,
+                      "questionTitle": "璁插笀鎺堣閲嶇偣绐佸嚭銆佽В绛旈棶棰樼殑绮惧噯搴?,
+                      "type": "rating",
+                      "value": 5
+                    },
+                    {
+                      "questionId": 1779789130665,
+                      "questionTitle": "璁插笀瀵硅绋嬫椂闂磋妭濂忕殑鎶婃帶鍔?,
+                      "type": "rating",
+                      "value": 5
+                    },
+                    {
+                      "questionId": 1779789139017,
+                      "questionTitle": "鏈鍩硅缁勭粐宸ヤ綔鐨勬弧鎰忕▼搴?,
+                      "type": "rating",
+                      "value": 5
+                    },
+                    {
+                      "questionId": 1779789148145,
+                      "questionTitle": "鏈鍩硅淇℃伅閫氱煡鐨勫浼犲姏搴?,
+                      "type": "rating",
+                      "value": 5
+                    },
+                    {
+                      "questionId": 1779789158633,
+                      "questionTitle": "鎮ㄥ鏈鍩硅鎬讳綋璇勪环",
+                      "type": "rating",
+                      "value": 5
+                    },
+                    {
+                      "questionId": 1779789177465,
+                      "questionTitle": "鎮ㄨ涓烘湰娆¤绋嬪睘浜庡摢涓€绉嶉毦搴︾瓑绾э紵锛堣鎸夊疄闄呮儏鍐靛～鍐欙級",
+                      "type": "radio",
+                      "value": "杩涢樁/涓瓑"
+                    },
+                    {
+                      "questionId": 1779789215321,
+                      "questionTitle": "鎮ㄥ弬鍔犳湰娆″煿璁殑涓昏鏀惰幏鏈夊摢浜涳紵",
+                      "type": "text",
+                      "value": ""
+                    },
+                    {
+                      "questionId": 1779789223129,
+                      "questionTitle": "鎮ㄨ繕鎯宠鍚埌鍝簺鍩硅璇撅紵瀵逛粈涔堢被鍨嬬殑鍩硅鎰熷叴瓒ｏ紵",
+                      "type": "text",
+                      "value": "寰堟"
+                    },
+                    {
+                      "questionId": 1779789230873,
+                      "questionTitle": "鎮ㄥ鏈鍩硅鏈夊摢浜涘缓璁紵",
+                      "type": "text",
+                      "value": "寰堝ソ"
+                    }
+                  ],
+                  "submittedAt": "2026-05-26T09:57:21.893Z"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "students": [
+        {
+          "userId": "1779170734294",
+          "name": "璁稿織寮?,
+          "employeeId": "",
+          "department": "浜哄姏璧勬簮閮?,
+          "leaderUserId": "",
+          "leaderName": "",
+          "position": "浜轰簨缁忕悊",
+          "phone": "14718596470",
+          "email": "",
+          "joinTime": "",
+          "entryTime": "",
+          "workLocation": "",
+          "employeeType": ""
+        },
+        {
+          "userId": "1779269749493",
+          "name": "浣曢摱",
+          "employeeId": "",
+          "department": "澶╄宸ヤ綔瀹?,
+          "leaderUserId": "",
+          "leaderName": "",
+          "position": "涓荤瓥鍒?,
+          "phone": "15302206488",
+          "email": "",
+          "joinTime": "",
+          "entryTime": "",
+          "workLocation": "",
+          "employeeType": ""
+        }
+      ],
+      "id": 1779703916926,
+      "createdAt": "2026/5/25 18:11:56",
+      "qrToken": "42b5bd9ace1b54fa"
+    }
+  ],
+  "index_banners": [
+    {
+      "id": 1,
+      "courseId": 1779269978533,
+      "courseName": "鎴愬氨绯荤粺璁捐锛氫粠鐞嗚鍒板疄璺?,
+      "img": "/uploads/images/1779327738808-46555875.png",
+      "order": 1,
+      "title": ""
+    },
+    {
+      "id": 2,
+      "courseId": 1779327523598,
+      "courseName": "KMP绠楁硶",
+      "img": "/uploads/images/1779327729148-35494355.png",
+      "order": 2,
+      "title": "鎻愬崌鎶€鑳斤紝鍔╁姏鑱屼笟鍙戝睍"
+    },
+    {
+      "id": 3,
+      "courseId": 1779327336678,
+      "courseName": "瑙掕壊鎶€鑳借璁℃€濊矾",
+      "img": "/uploads/images/1779327717163-995684748.png",
+      "order": 3,
+      "title": "涓撲笟璁插笀锛屼紭璐ㄨ绋?
+    },
+    {
+      "order": 4,
+      "img": "/uploads/images/1778639283838-355915789.jpg",
+      "courseId": null,
+      "courseName": "",
+      "id": 1778639279331
+    },
+    {
+      "order": 5,
+      "img": "/uploads/images/1778639299111-849539429.png",
+      "courseId": null,
+      "courseName": "",
+      "id": 1778639299956
+    }
+  ],
+  "index_featured_courses": [
+    1,
+    2,
+    3
+  ],
+  "index_featured_lecturers_v2": [
+    1,
+    2
+  ],
+  "index_notices": [
+    {
+      "title": "閽夐拤澶氱淮琛ㄤ娇鐢ㄦ暀绋嬧€斺€斿厓姘旇亴鍦虹涓€鏈?,
+      "content": "<p><img src=\"/uploads/images/1779159521032-759182088.jpg\"></p>",
+      "status": "published",
+      "publishedAt": "2026/5/19 10:58:47",
+      "createdAt": "2026/5/19 10:58:47",
+      "id": 1779159527760
+    },
+    {
+      "title": "濡備綍瓒呰秺鑷垜鈥斺€斿厓姘旇亴鍦虹浜屾湡",
+      "content": "<p><img src=\"/uploads/images/1779160745649-230017280.png\"></p>",
+      "status": "published",
+      "publishedAt": "2026/5/19 11:19:16",
+      "createdAt": "2026/5/19 11:19:16",
+      "id": 1779160756694
+    },
+    {
+      "title": "鑱屽満绀间华瑙勮寖鈥斺€斿厓姘旇亴鍦虹涓夋湡",
+      "content": "<p><img src=\"/uploads/images/1779444649813-36295840.png\"></p>",
+      "status": "published",
+      "publishedAt": "2026/5/22 18:10:50",
+      "createdAt": "2026/5/22 18:10:50",
+      "id": 1779444650790
+    }
+  ],
+  "course_center_sync": [
+    {
+      "id": 1,
+      "title": "瑙嗛璇剧▼鍦ㄧ嚎瀛︿範 - 浠庡皬鐧藉埌涓撳鐨勮繘闃朵箣璺?,
+      "cover": "https://p26-doubao-search-sign.byteimg.com/labis/3e50046a89d633ced89e4d242d60f064~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 1,
+      "categoryId": 31,
+      "duration": 6300,
+      "description": "鏈绋嬩粠闆跺熀纭€寮€濮嬶紝绯荤粺璁茶В鍓嶇寮€鍙戠殑瀹屾暣鐭ヨ瘑浣撶郴銆?,
+      "rating": 4.8,
+      "views": 12000,
+      "videos": [],
+      "status": "published",
+      "createdAt": "2024-04-01"
+    },
+    {
+      "id": 2,
+      "title": "鏂板勾鍥炲ソ璇?- 2024骞翠紒涓氳繍钀ョ瓥鐣ヤ笌瀹炶返",
+      "cover": "https://p11-doubao-search-sign.byteimg.com/labis/56e578a8ce507c83f91f47e08e2ec86d~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 3,
+      "categoryId": 41,
+      "duration": 3300,
+      "description": "绯荤粺璁茶В浼佷笟杩愯惀鐨勬牳蹇冪瓥鐣ヤ笌瀹炶返鏂规硶銆?,
+      "rating": 4.6,
+      "views": 5200,
+      "videos": [],
+      "status": "published",
+      "createdAt": "2024-03-15"
+    },
+    {
+      "id": 3,
+      "title": "骞抽潰璁捐杩涢樁璇剧▼ - 14澶╁湪瀹跺畨蹇冨",
+      "cover": "https://p3-doubao-search-sign.byteimg.com/labis/7cf2d040059ee347d85e5b21237a98b7~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 2,
+      "categoryId": 21,
+      "duration": 4500,
+      "description": "骞抽潰璁捐杩涢樁璇剧▼锛屾兜鐩栬璁″熀纭€鐞嗚銆佽壊褰╂惌閰嶃€佹帓鐗堟妧宸с€?,
+      "rating": 4.9,
+      "views": 8700,
+      "videos": [],
+      "status": "published",
+      "createdAt": "2024-02-20"
+    }
+  ],
+  "center_training_data": {
+    "trainings": [
+      {
+        "id": 1,
+        "name": "2024骞村害鏂板憳宸ュ叆鑱屽煿璁?,
+        "leader": "寮犲崕",
+        "desc": "閽堝鏂板叆鑱屽憳宸ョ殑鍏ㄦ柟浣嶅煿璁」鐩?,
+        "startDate": "2024-03-01",
+        "endDate": "2024-03-31",
+        "status": "active",
+        "stages": [
+          {
+            "id": 1,
+            "name": "浼佷笟鏂囧寲鍩硅",
+            "type": "offline",
+            "location": "浼氳瀹",
+            "schedule": "2024-03-01 09:00",
+            "lecturerId": 1
+          },
+          {
+            "id": 2,
+            "name": "浜у搧鐭ヨ瘑鍩硅",
+            "type": "online",
+            "lecturerId": 3
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "name": "鎶€鏈兘鍔涙彁鍗囧煿璁彮",
+        "leader": "鏉庢槑",
+        "desc": "鎻愬崌鍥㈤槦鎶€鏈兘鍔涚殑涓撻」鍩硅",
+        "startDate": "2024-04-01",
+        "endDate": "2024-04-20",
+        "status": "active",
+        "stages": [
+          {
+            "id": 1,
+            "name": "鍓嶇妗嗘灦娣卞叆",
+            "type": "online",
+            "lecturerId": 1
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "name": "绠＄悊灞傞瀵煎姏鍩硅",
+        "leader": "鐜嬭姵",
+        "desc": "鎻愬崌绠＄悊灞傜殑棰嗗鑳藉姏鍜屽洟闃熺鐞嗚兘鍔?,
+        "startDate": "2024-02-15",
+        "endDate": "2024-03-01",
+        "status": "completed",
+        "stages": [
+          {
+            "id": 1,
+            "name": "棰嗗鍔涘熀纭€",
+            "type": "offline",
+            "location": "澶т細璁",
+            "schedule": "2024-02-15 14:00",
+            "lecturerId": 4
+          }
+        ]
+      }
+    ]
+  },
+  "my_enrolled_trainings": [],
+  "my_courses": [
+    {
+      "id": 101,
+      "courseId": 1,
+      "status": "in_progress",
+      "progress": 75,
+      "learnedHours": 15,
+      "totalHours": 20,
+      "chapters": 15,
+      "totalChapters": 20,
+      "completedAt": null
+    },
+    {
+      "id": 102,
+      "courseId": 2,
+      "status": "in_progress",
+      "progress": 40,
+      "learnedHours": 8,
+      "totalHours": 20,
+      "chapters": 8,
+      "totalChapters": 20,
+      "completedAt": null
+    },
+    {
+      "id": 103,
+      "courseId": 3,
+      "status": "completed",
+      "progress": 100,
+      "learnedHours": 18,
+      "totalHours": 18,
+      "chapters": 18,
+      "totalChapters": 18,
+      "completedAt": "2024-03-15"
+    }
+  ],
+  "my_exams": [
+    {
+      "id": 1,
+      "examId": 1,
+      "name": "浼佷笟鏂囧寲娴嬭瘯",
+      "score": 92,
+      "status": "passed",
+      "date": "2024-04-10"
+    },
+    {
+      "id": 2,
+      "examId": 2,
+      "name": "浜у搧鐭ヨ瘑娴嬭瘯",
+      "score": 85,
+      "status": "passed",
+      "date": "2024-04-05"
+    },
+    {
+      "id": 3,
+      "examId": 3,
+      "name": "鍓嶇鎶€鏈祴璇?,
+      "score": 78,
+      "status": "passed",
+      "date": "2024-03-28"
+    },
+    {
+      "id": 4,
+      "examId": 4,
+      "name": "棰嗗鍔涙祴璇?,
+      "score": 65,
+      "status": "failed",
+      "date": "2024-03-20"
+    }
+  ],
+  "training_attendances": [],
+  "training_exams": [
+    {
+      "id": 1,
+      "stageId": 1,
+      "name": "浼佷笟鏂囧寲娴嬭瘯",
+      "passingScore": 60,
+      "duration": 30
+    },
+    {
+      "id": 2,
+      "stageId": 2,
+      "name": "浜у搧鐭ヨ瘑娴嬭瘯",
+      "passingScore": 70,
+      "duration": 45
+    },
+    {
+      "id": 3,
+      "stageId": 3,
+      "name": "鍓嶇鎶€鏈祴璇?,
+      "passingScore": 65,
+      "duration": 60
+    },
+    {
+      "id": 4,
+      "stageId": 4,
+      "name": "棰嗗鍔涙祴璇?,
+      "passingScore": 60,
+      "duration": 30
+    }
+  ],
+  "training_surveys": [],
+  "learning_history": [
+    {
+      "courseId": 1,
+      "courseName": "瑙嗛璇剧▼鍦ㄧ嚎瀛︿範",
+      "date": "2024-04-14",
+      "duration": 45
+    },
+    {
+      "courseId": 2,
+      "courseName": "鏂板勾鍥炲ソ璇?,
+      "date": "2024-04-13",
+      "duration": 30
+    },
+    {
+      "courseId": 1,
+      "courseName": "瑙嗛璇剧▼鍦ㄧ嚎瀛︿範",
+      "date": "2024-04-12",
+      "duration": 60
+    },
+    {
+      "courseId": 3,
+      "courseName": "骞抽潰璁捐杩涢樁璇剧▼",
+      "date": "2024-04-10",
+      "duration": 90
+    }
+  ],
+  "certificates": [
+    {
+      "id": 1,
+      "courseId": 3,
+      "title": "骞抽潰璁捐杩涢樁璇剧▼璇佷功",
+      "issuedDate": "2024-03-15",
+      "certNo": "CERT-2024-0315-001"
+    }
+  ],
+  "current_user": {
+    "id": 1,
+    "name": "寮犲皬鏄?,
+    "username": "zhangxiaoming",
+    "phone": "138****1234",
+    "department": "鎶€鏈儴",
+    "role": "鍛樺伐",
+    "avatar": ""
+  },
+  "question_banks": [
+    {
+      "id": 1779864977590,
+      "name": "浼佷笟鏂囧寲涓庡埗搴?,
+      "category": "缇庢湳",
+      "categoryId": 2,
+      "description": "",
+      "status": "draft",
+      "questionCount": 0,
+      "usageCount": 0,
+      "createdBy": "admin",
+      "createdAt": "2026-05-27T06:56:17.590Z",
+      "updatedAt": "2026-05-27T06:56:17.590Z"
+    }
+  ],
+  "questions": [],
+  "registered_users": [
+    {
+      "id": 1779170734294,
+      "username": "14718596470",
+      "passwordHash": "c893b5cc6cc1de8d2bbfebb26e1da6990461f2c8eb8177006ab3df1ab0ea916c",
+      "phone": "14718596470",
+      "realName": "璁稿織寮?,
+      "department": "浜哄姏璧勬簮閮?,
+      "role": "student",
+      "avatar": "data:image/jpeg;base64,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",
+      "createdAt": "2026/5/19 14:05:34",
+      "lastLogin": "2026/5/22 18:17:08",
+      "status": "active",
+      "real_name": "璁稿織寮?,
+      "position": "浜轰簨缁忕悊"
+    },
+    {
+      "id": 1779269749493,
+      "username": "15302206488",
+      "passwordHash": "c893b5cc6cc1de8d2bbfebb26e1da6990461f2c8eb8177006ab3df1ab0ea916c",
+      "phone": "15302206488",
+      "realName": "浣曢摱",
+      "department": "澶╄宸ヤ綔瀹?,
+      "role": "user",
+      "avatar": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCADIAKIDASIAAhEBAxEB/8QAHQAAAgIDAQEBAAAAAAAAAAAAAAYFBwMECAIBCf/EAEgQAAEDAwIDBQQGBgcGBwAAAAECAwQABREGIRIxQQcTUWFxFCKBoRUyQlKRsQgjM2KCwRYkQ3Ki4fBUY5Ky0fEXJTVTdMLS/8QAGwEAAgMBAQEAAAAAAAAAAAAAAAUDBAYCAQf/xAA5EQABAwIEAgcHAwIHAAAAAAABAAIDBBEFEiExQVETYXGBkaHwBhQiMrHB0SNC4TPxFRZSYnKCkv/aAAwDAQACEQMRAD8A5UooooQiiimHROkrlq+8NwLY0STutw7JQnqSa5e9sbS55sAumtLzZqXq+pSVKASCSeQFdg6V7GdMWeChE6L9ISiPfdcUpIz5AEbetReo+zyy6Xnpvdut7ZhnCHm1e93KifdWCfs52OfEH0TnG4rkNY7q0sD67Ewjw4uIDnWuuerFoS+3jhUzELTR5rd90U92rseaGFXOeon7jQ5+tWQq5KAw20lIHLJzWM3B88uEfClM2L1UnyfCFoIcJpIvmGY9ag4fZxpyInK4qnsffOf86fLV2PWdTHeXGNbLaMBQacHGsA8ir3gE9dt/5VC265KZucF6VhUdmS064nh5pSsE/lVma1gTL1Ojy7XHEqIWU8DzKkqCsk/66/OqTqicjM55J7SupmxtkbFGAwHjYeGqru/9lVliwvbm4EKZbSeEyGUqQUHi4feSSds7ZBPwpJuXZXYpSFez97GWeSknOPhyq9cyNM6NuaL2pARJaW3HilYUorUMYx4bgnB23quGrkAAHEH1Sa9FVUMs5jiO9ewRwzZmStDgDobDXwVF6m7OLpZ3UKZIkxVqCe8T9nPjXSmhuzCw2GxR2ZVvYlTVoBfdeTxHiI3A8hUR3seW2ptXCpKhgoUOdbSNdP6ZYjxbpEdmxgeFEpLgC0o6JUCPeI8cjI881b99mrQ2F5sRy0v681XmwyOnJli2+ijNf9iFmvDDsjT6RbpwGQ2P2az/AC/L0rmTUNknafuj1vujCmZDRwQRz8xXeFouUW725mdAdDsd0ZSrGD5gjoRVQfpP2WG/pWLdeEC4NPpZSQN1pIJx8MfOmFDVyRPETySDpruPXWlVVTNc0vbuFy3RWRxpxsZcbWkfvJIrHWhSciyKKKKEIooooQiiiihCyR2VSH22m/rLUEjNdtdlujo2jtMMRm0D2x5KXJLmNyrHL0Gfzriy2PmJcI8gpJDawo7dK7o0hqe3aqtDM62voWVJBcaB95tXUEfzpNi2cho/bx7dLJnh4bqeKlZ0uPAhuypjqWY7SeJbijgAVB2XUlj1c1NhQ3e+SEFDrTqCkrQdiQDzG+PiKX+2W03a6WiIbY0t+OwtTj7Le6jsOEhP2sb7Dfeqy7NXZcXXVsTHbX3ine7dRjcIOyifQb/CqcVM2SIvvqmSnpUSTbLhJt8ppeI7vdIfx7rgxxJ38SnB/GvDi0NoKnFJQkdVHAqxr5aoeoNSsxUKcw0kOTlsnGAkKDaM9FErV54+FNFugaXsTaS3bojC0/2rygtfrxr3pXMG59Fb97cxoGW5VOW+BOuaOO2wJktvotlhSkH+LGPnTNZNO64jhSLbHlQGlnJ7yWltOfEpBO/nirBndomn4fumY28rlwxyXj/gBxUevtOiKz7Nabi74EpS2P8AERXHy8PH0FA6eqm0bHp4pfd7ONS3B/v7pdIS3iMca3XXlAeG4G3lWdHZRMP7S9MD+7FJ/NdbMntNuAJDFiZSOhemBJ/AJP51ou9pF9Ufcj2ZkfvOrWR+VeZuxAjrzoBbwWx/4SvY/wDXt/8A4g//AFXif2UzpUJcZd5jPNqG3eRVApPiCF1ou9oV8I3uNrbPg3HKj/z1ETtV3eaCH77OUj7scIZH4pGfnRnsb/b+FK2Cu/c8DwUrZJ9r0JphcG4Od3NivLQ8wFcS3XdjlI290jhIOwwRnfNKVxlS9UzvbbkylEdCcMIWP1bSTzxndROBlWMbbbV5U813xeDCVvnm68ouLP8AEd68PPuPH9Yony6VLJUueNBYnirUVM2M5nG5WnNtkB5KmVMNOtkYV7gANUl2gWFux3cJjAiO8OJAPTxq9KqXtikocusNhP1mmzn4mr+DyyCfJfQqli8bDAXkajZV7RRRWpWURRRRQhWD2f6DF6Y+kLq6WYOcJSPrLqz4WndOQEhMe2JVj7SuZ+NeNPhCbFb0NY7pDKQnFb9YysrJppDdxA5BbWkpIoIxlaCea+iLahytjHxFe22ba2riahd0rxbWUn5GsdFU7u5nxKuXHIeCkmZ6mf2M26tDwTLXj8Cqsjl0ecQtJuNxHGMFSVpSojw4gM/OolIU482yy2t19w4Q22MqUfIfzpwsuhHnwh29vFlOc+zR1bkeCl/yT+NSMbI7iVDJJEz5gPBLEd6O2lMGM7cnAckR2nlniPU8KTv64qXtmlp8r3m7LGiJ5hyaocR/hAKvxxVj222QrY0W7fFajoPPgTgq9TzPxrebQpxYQ2kqWdgAMk1MIgdyT3qq6rI+QAJJh6MkE5nXVSU/+3EZSjH8SuL8qxzbbpG3yfZrrccv7EtyJqgfiAQB+FWamxSu743VMsp/3i8Um6p7LrVfnnZi05lK+u/CfyTgY3Scj5Vcjoi3VzCB1BUzXZzYv818h6a04plDsa2QHm1jKXCgOhQ8QTnNbbVgtDRWUWuCOI8R/q6NtgNttuVR+i9MJ0tEkxmpr0llxzjSlwAd3449f5Ux1E6wJDTcLq5O6QtfXfTul2WkO2SBKmvAqQz7O2AE/eUeHYZrV0TamtQxJEi+aWg29rKTHWwhTJcBzn3c522365p+/o/brldWZ8yG07IYSEIeUjjUkZyAkeOScfGme3Kt7j/srUi1iVk/qFOB53bxAIwfEAbeJq/T0rp4/hFus/ZVpqpsJsd1WsjQVpcSe4cmRj04HuIfgsGlbUGlJtkgvTRJbmRWsFeGyhxCc7qxkggczy2zV9y7e0pQbksIYKiEtyGM8JPgofZ+Y88nFLdwhlBfiSkAggoWk8lAj8iKqVdE+H5hcKWnrjJ8pXP12uLFsgOypKwlCE5361z9fLk5dro/MdJy4rYHoOgpr7WnrhD1NKskpZ7iEvgQPvp+yo+owaRabYZRiBnSE3J+io4nWmd3Rt2H1RRRRTRKkUUUUIVydl99ROtIgOqxIjjAB6p6U8VzfarhItc5qVEXwuoOfUeBq7dK6qhX2MkcaWpQA421HBz5VmMUoHRvMrB8J8lqcMrmysETz8Q80x1rzn1sR1rbRxrAJA6DAzk1sVr3JaW4EhS1BI7tQGTjJxsKUxi7gE1cbAlXFpmwRLJEHcp45TgBefXutZ8PIeAG1TNeGVBTSFDkUg17q2EnJJ1KKa7XGTbrcJBb45LuMJ5HJOyfLnvSsjBWni5ZGad52PabeCSAXzt4nu1/9/hTbC4w5znngl9e8gBo4r7HhIB72Th+Sea1DIT5JHQf6NU92h9psrSurXbTcLTGfYSlLqHGiW3Cg8ilWdjsRy6VJ9rHaFddFXlPsLMeSwttALT4OATxe8CCD0FUdrh12/21jVtxvkCTdJ75ZXbWdlxkJBxtkkJ2HP7w3O9OXuy6BVqaDOcz9lfdn1BA1TbBc7a5xe9wPJUOFaVdOJPIHbfGx2PXA2qpLsHlPp1JcIqVH2dyEpxaenElxsA/4jV21na5obLccdU1jblGXkq17ZtUS7VGi2m3uqZclNqddcQcKCCeEAeGSlW/PG3U1A9hGpYWnNRTZ17S8mE4wGTM7tS0MKKgRxYBxxYxmpDt0s0h5MC7stqWyygx3lJ+wM8SSfLJVvVb23UF3i2SZYoMhSYFwWkvMJQCVqGMYOMjkOXhTSkd+k2y4fGHNI57rsPT+p7Pqz2xm1uGVGbSApzhKUrySDjODtjn+Fad9BUxDdUSpzCmlqPMlJxn86UuwSzu2XTUibOBbbWAlO2ckEk4xz3IG3M02X1ZSiIwocLiUqcWnOcKUckVJiVhAb76eKXUotPZu2q42/SZjJZ7Qy8kbvMIJ+AAqo67v1Fo3T+onC5ebYzJdKQnjVkKwOW4NUt2h9gyWozs3SLi1lHvGI5uoj90jn6fnVekrowxsbtLKWppHucXtXPNFZJDLkZ9bL6FIdQcKSoYINY6apYRZFFFFCEV7adcZcC2lqQsclJOCK8Uz9n+mk6mvzUaTLZhw0HiefeWEhKfDfmTjl/3rl7gxpc7Zdxtc9wa3dOXZcvV+pZqYsBKXoyP2j74ISgeZ/0fWuj9OaPhWpSZEn+u3AY/XOJ2R/cTyT68/OvmlzYLNbGrbp9UdTDY2DbiSVHxOOZqa+kBndo/jWTqP1nl2XKOX5/G3atBGXtZke4lb1FY2HA62FgEA+Ne1HhGTXGy7X2m6G+bja0FlSTLZwQFHAKh4+R5Z8zSI5NCVYyK27fcHGnQ4wsoWNsip6OsED+o7qKppHSs6wsfarpJOsrR7RBQozGAUOM8lgA5G3iDn1B2ztXN7+jL21ILIhqUQcZG3yO/yrq0XUyVo76IHJA2S4ytTa/TI3x5cq3m7ZKllLj2GQN094tTqk+YycA+fOn7aqKcfCCT67kvZ0tNoSAOv1dUnpS1N9nGk5t3vLSnJ0ngCkN7qQjPup8skgn0TS/P7W7kpRMSBCYRnYLWp1Xyx+VdJO6ZtkmM4xOZ9radBS4l45CgfEVUeuew2zMQptztF0dt7bDS3iw+A43sCcBRIKR65qD3QvJfKBft4KeOsjvlJSPYe0e/3e9Rbe5Bgy2ZLgacZDShxIJ334tsDfPTGatiDpPTTEoSEw0IXzKFpURn1SoZHlipPsn0dpnT1nRcbO+1PkvtDvZylpUQOZSMbIHiOe25OKdoyoV0ih9ttDrCiQlakbKAOMjPMHoeo3G1TNgkj/ouA6lBPURvNi09qX13JppDQaAcLQw2gN92035hOTk+p2pdn3E98pbiipajkmnaZp+M6kmOSyv1yKU7naVxnyiQnGeSuih5UoxFlVu/bq2VyhfT3s1Q1xvjFtgLlTFpaZTzUrp8BzPlVV3vt8s8J1TcBiRMWk4JwG0/A4Oauf2ZotKbWhK0KGClQyCPMVR3aZ2MR71qGMrS6mYTrwK5Lage7bT94YHU7AeW2wOI6IQk2nUtSX2vCqW7SNS2/Vd4+k4Vu9hkOftkpUClZ+9yG/8AnShV42PsAnPagmQrvdmGo0dtDiXY6CtTgVnGAcYxwnOfhmq57TNIOaJ1Q7alyBJb4EuNu8PCVJPiOhp9DNET0cZ2SeeKX+o8JUoooqyqqK9IcW2coUpJ8jivNFCFsonS0EcMl4Y/fNdJfo+6fvsuAm8Xu5zfo8nEeKXDwueJPkPDqfTfn7RtoXftUWy2N4zJfS3vyGT18q7g7+FZLc1GaKG48dAbSVKCUpAGBk0rxKXK0RtGpTOhYTd5OilEgJACQAB0FfHE8SSKVP6eWFuSGXrvb+MnGEvDn65xTPGlMyEJU0sKChkb86SOjc35gmQdyWjIhFajz55rdtFtdfkhpke8o5OeQHjWemzTEUNQi+R77p/ACuqOjbNKBw4rypq3RxLdttuYgNgNjicx7yzzNblFFatjGsGVosFnXOLzdx1WhdbYicjiQ89GlJSQ2+wvhUn+Sh5EEVyXqaVra/zpVuvkybJEV5Ta0O4bb4knHIAJPriuw6X79pG1XuR7RLaWiRjBcaVwlQ8+h9a4kaXD4U0wmuhpJCZm3HA2vZcoWrQN1uE+PFZVF7x9aUY4lHmeZ93pzrs1pAbaQhPJICR8KhrBpe12NanITJL6hguuHiUB4Dw+FTdETC0arrF8RbWvb0YsB53RWndmWX4S0PkAc0nqD0rFdrxDtkVx+U+022gZUtawlKfUmq2u+oJOp3Cw1L+irUsKSp9xYafeHL9WDu2n94+8egHOo6qohhjJmOh80up4ZJHfpjZJ+te0u32OZ9HR0uzrqpXAiHFHEsq8FEcvQU06PblGzIl3SKqNcpZLr7S1cRRuQlOfJITt456k1GafsFpsd6W6yxDdkrQGhMaSCSBnABHLnjx5U30kq4mwHo26je/MHYjq+6Z0VT7zH0lrHYg7gjcFQDjb69Qz0MPdxJLLLrS8ApUgFQ4FA9OLjzjBwoYOa039MacvyX7jerPGdlOjgkGSeMtlOxSFdAMcxjPPrTE3DQi4PTCpSnXG0NYPJKUlRwPio/KoW7sW1pi8p1CY6LTKKXCH3AkKPAEq65H1R8c1A1xvoVbIB3XHd7t9iZvM9qHNWqMiQ4logZygKIG/XbFFY7unTwu00QlPmKH19zj7nEeH5YorTC9uKTkC+zUt0UUVKqSndE37+jOoo11DXerYyUJ/extmpG76k1Nrm7oZ7yVKecJDUZgHAz4AfOtLRGmH9V3pMFhxLSQOJxZGSE5A91PU7/mTgCuvuyXTWmdLw0MMRDHlq2cffwpbh81dB5bCqNVIWXdCzO8eQ5238B22U7ZRG0CV2Vp6jr1X2HefFVH2ffo6XG4pal6okqiIJz7MwQV/xL5D4Zq3pvZ9P03GaOlZb3szQHFFdUXUHxOFHPnsQatpIASAkADpivtZWWsqJnZnv7uHh+VfhmbCfgaLdfHv/CpiLqufFeLNzgOjhOFOR8ugH95BwsfAGrL0treyz48eJGnRly0oAVH7wJdB6+4rCqiO0DTSrjEEy2gNzmdxjADg+6fXx6HyzVWNvsTSlq4w23DxcBDqQlSFZ3BCtgQfSrNHiLoCXFl+xM/dIK+O7HZSOB1XSQuLH2uNJ8xXr6QjffP/AAmuevYITLxYS9IhOgcXdh1xnbxHCoDFZTb5I/Y3K7KT/u7i7j5rpm3HoSNWny/KrH2el4PHmr/Nwjj7RP8ACa8KubW/ChxWPKqB9ieJw7OvavWY+r/7V6+hYr2O/YkSAf8AaHC5/wA6jQcdi/a0+X5Xo9npf3PHmrZufaFYoD5YduMP2kbFltzvXB/AjJ+VKl27SJsouN2i3rDQG8iae6b9Qge8R68NLsaFFYcEeDFC3Tt3bSQAPXGwHrTJZ7bEiSkuXXikSUe8I7CCpto+Z5cXrv5VQqcfeB8IDes+rKcYRT04zSkuPLb12pMuCJUqQiVqR6VLfbJcYaW2UJQfFCQMJ9d1eJr3CksttIT30Zs4APCn3ifE+NWddYMPUsEGE6GpTC+JJUgpKTjGFpODgj/KorT+nLjFucVcphhtlhRJUhziChgjAGM9aTSSSTOzvdc80yp6+njgIy5SP27fbj4pbECRIbVJhQ3UhIClvlBbTjzzur/W9bt41darBZfbr1LQwE+6QfrLUOgHU+njVlSu5TGWl/AaKSCPKuJ/0hr5bLjeY9vguB6TAWtDjqFZRg4wPAnbO3Ll6P8ADIYqiExvd8bTf/qd7DqOt+tZirxGY1QkDPgIt3ja546aWU9d/wBImd7Y+LVaY/svJpT6jxepAPyqo9Y6tu+rrl7ZeZJcUBwobTshA8AKX6KfRU0URuwaqnJUySCzjoiiiip1AisjDS33m2mklTjiglKRzJPIVjpr7Km2Xe0SwJk47sSkKweRI3A/GuXuytLuS7jbncG811Z2UaFi6L0yywplBuj6QuY6cElX3QfAcqZrpbBLZ/qzvsz6d0rCAoZ8FDqPQg+dSCFBaApJyDyr1WVMry/pL6rQdG3LkI0Wppi/PwZBtl4HAoDLahlSSPFJ5kbgY5g+op2aUVtpUpBQSM8J5jyNIV6bDzbTbJQm4BXeRVE4La0/bBwcAA77YOcHnW08J87h+k56loCcFmMksNqPidyo+nFjyrmqtUOElrHj1nn+eZ1VCOh6K7WH4eHUOX48Fu9o2qRpDS791EdMkoWloIK+EAq5E9T6D5c659sl6uOqr2eBtt+Y6kqUG0Bvj4U535AHkAT5A5GCJLtetUx76KjQbAmKyp4pK4pSUvuqOEJIAG/PBUPtEDztrsw7OoOkYLMp9vvb46zwSXe8KkjJBKEjlgYAzjJx51djNLS0bhI0Oe69jxHLjoOfNVpGTw1LXxvIAtccCOKrqBci2UNyO9HcKKUke67HV1Az08UnY0+aUbsF4V7NdGmGJ7qx3EhjLTb+QPdGDlK8gngPjsTW9rTRDV0JlwSGJoH7QDPEB9lQ6jz5jpVWOCXbpC4s1pTDysgoVuh0JPNJ5KAI9R5GlVNIwPzloNtwVog8VDP0nFp6jZXa92fxyD7POltnp74UP8QJ+dazPZ+4XsSri64x91ICCfUjf8MVW7GqrgrgauMqXJiAcIHeErQOgwPrj197+9TDa7k4hKZFmkuJQobKbXlJ+ByM+tailosPq7OaADxvoB1HX7ELMV+MYjhziyUG3A7k9mn3BT5d7THselZarYy226wkOowNipKgRnx5czSJdrsu1Ow/Zg09Dw426nhPGVjhwQrl1VnYknwwae4F2+ntL3JmQkCUhhaHU42VlJwoDz/MGluPFjtktOpU2UYHChLew6EZSdiKzvtLhsb6qNsrg1oB0sbHw7dExw2sEtP0oaX3NzrY99+tRumL289cG5clTTSFSiwltKCFBktg+8Sd/fweLAxy8acL7qO32aC9LmSGmY7Qyt1xXChPx60gdqGpGdH6VN4REkTkx3EhLbroSniV7qdgMYyfWuRdda7vmtJpdu8k+zg5bit7NN+g6nzO9VcNwl0l2Qu/TB3t5Afcruqnjs172Frv9N76XNrlWV2v9uczUBetmmXHY1vOUOSvquPDwSPsp+Z8qownJyedfKK2NNSR0rMkY/J7UqlldKbuRRRRVlRIooooQissWQ7EktSI6y280oLQocwQcg1iooQDbVdZdlnavA1DFai3B1uLdgAFtLISl0/eQeXwq1mpTTn2uE+Ctq/PgEpIIJBHIirf7FdYXR68G13G7TlQwyS0kKSpSMeHGlW2OlKZ8LLyTDqeX4/CYsxFjG3mNhz4d66dgDvrrcZKlZ7tSYzYzslIQlZPqSvf+6nwqSpQb1JCtDsNE+5RnI01RQ07+zUlYGcLTkj+IbZ2wNstnH3jaiypJVjYncA+YpO4Eb+rJm14cLhQ96kyij2T2JQL7iWmZAWkoQsqHApWcFODg+oA5kA2TVdRm59xvMO3zFRG2FK75ZjqUtSg2pKsEEAJBOATk88dQasSq9SdgqdSbuAR60javtrM7Tlsekxw61IU4VHfKVLVxJII5HGd6crg53UGQsc0tqI9cbVJfRzDloRb30cbAaS2Ry5AY+O1MsBY0zue8XAFj3/2S6ta51OWxmziRY9n91zldLJMtgU42TMij7o/WoHmPteo38utalvmrZdL8N8oURwqUncH+8k7HHwPTIq371pGfHUkweOa113SlSfXJGfh+FLE/QU24LW6iBIYlq/tW+FJOOXFxHCh8/Cm8+Bt6LpopBm5cP479FDSY/Lm91roS5vO1/Hge7VfNF6kZjTpCro4iO27Dcb7wElpS8pIBP2OSvrYG+ATVisxI06DEcWlKyWk4WN8jFUveNO3zTiu+ls8bTY4jKiEkIP7w+sn13HnXmwagftzSDbZK4zZVxj2fCmlZ55aPu/FPCfOkOKST1LmipGrRbb15J3TYbDFGfcnaE339FM/6RlsQ72O3hDSMBgoe/BQrheu5dRahVqjStyskyGmR7YwUB2ErPgd21YWOXTi9aofUvZ/b5dmV9FRkRpbJITw81Ec0r/e/LNS4VVspwY3cT6+ijloJpW5uI4c+KpKivbza2XVtOpKXEEpUk8wRXitMk+yKKKKEIooooQiiiihCKkdPXF+1XqHMi5LrTgISPteXxqOq8/0d9AsynF6x1C1/wCVQTmM0pOS+6ORA64Ow8T6V0xxa4ObuFy9rXtLXbFPOr9BtXGy2+5vPrh3R9OURVo4k92dzxbjhOTzGfDHUbliMe0wo8OW3N7tpAR3rMpxPF5kBWPlUDH1VfrtrK5yL/BVDgOL7qO0vAVHCTgJUPz8DTUlC3FJbabLjijhKBgZ2z1wOQPOnhwmGtiz1QOZ2t7kEeuu6ycuMVGHziGiIyNFraEHt437CE3aZulvghRtL7RW59b2vKnFeRcJz8CabWdQp4MyYrif3miHE/8AWqgTFhCTw8KrhJCeL2WBkgDxW54dNvicVKXGJdm7cue483CcbAIjxQAEJ5HKupG3LbY+OyCq9mS5+WN7Xf8AIZXdWrdD2liZw44CzPM1zT/tOYdejte4OVpszI15kxokZxSv1gddBSQQlB4uviQkfGm2ubbZfb4EiRGuK0OkcCznByDy/GpRGsNVN7CfxeuDVqi9mpqVpsQCTzJ7r5RfntxXj/aimcA0hxtxsBfuzHs34K/qKoUa21V/taP+EV8VrLVKxgzkJ9BV3/Bp+Y8f4XH+ZKTk7w/lXHqpDf0O644kYQpBKvAcYzVaaj09YrmpT0Fp9mTnPfsp7oH+9nZXxBpakaivktZZk3TvMAKU2TnbzFVN2qdpslCXbbbp6n5SvdcdQcJbHUDzpLiPs9L0omeW2sBe55nSwAJ/9BMaH2hZNaKDMDc8B1a3JIA7inm5tqtknuxMhzU5PvMOAKQR0IO34Gta2Sks957Ul5TDoUVBCeIlWVFKgfHkDvyVvyFR/YFIclaaZYW+9wpdcOAsjc8yfwqavK3UXIGQ+642z3ieJ1ZVwgkHry5VkpW5ZHMPAn1x+q3FLVCUiI3uADftt2fRUF2owFxtTOyykBubl0cP1Qc4IHl4eVJ9OHaXqJF9vQRGIMWMChCvvHqaT61NJmELQ/eyz1Zk6Z2Q6IoooqwqyKKKKEIoorbtVvk3W5RoEBpT0qQsNtoSNyTQhNPZRoaVrzVTFvaC0QmyHJb4/s2/+p5Cri1j2hQ4+v8ATOkdMqQ1YrPKbDpb5OOpOw9AR+NetWTYnYn2atadtLiFaqurfFJfRzbBG6vLwFc5W6Qtm6RpJUeNDyVlRO+QrNSQuyyNJ5hRyjMxwHJdV9oEcM6zvLZAKVuhzB6hSEqPzJrRiPCVCdiSPedbQVN5JysAbH1HI/51N9o2JVytN4bH6m6W1p3P745/JSKVMqSpK2zwuJOUn/XSttSfqU7OYH00XznER0VZIOBN/HVWwfo+1wOJvuosVzBITsFnpt9o4z4ml/UWqI0iG7DjNrV34LZKhuoHmEpG5pcihdybQ8qY4pKAG+FSRxN8Ixw55Y28N+fWt1tqPCQSAE55qUcqV6nmapU+HRQSvmGrnkE9wspqvE5Zo2w7NbcDnr9F4trbiEOqcSUcauIJPPkBv+FblasNc26O93aIa3x1dPutp9VHb4DJ8qn4mj31tOPXq5LCEJ4lNxfcSgeKln89q8q8TpqZ2WR3xchqfAfddUWDVdW3NGyzeZ0Hnv3KJJA5kCorUFwTCYRxSEMIUFKU4TuAMcvxqbXP01bgpNvtCJqh/bSjkE+RXxH8Biqi7T7U5fGHZUB4goJUiDGSS2Mkk4+JO3IeFEVVPIC/oCABpcgE91yVI/D6WN7YzUAkmxsCQO/ZLese0Fx9t2BYlKajrJDj/wBpz0NVyolRJUSSdyTWSTHeiuluS0tpwfZWkg1irOVVTLUPzSeHJbOjpIaWMMhGnPmpC23m5WwYt86RGGc4bWU1ml6jvExCkSrlKdSrmFLO9RNFUzGwm5AurwkeNASiiiiu1wiiiihCKKKKEL6lJUoJSCVE4AHWujuyHTkLs30ZK7QNWtcMxbZTBjODCt+WB4q+QqjNLMNOSlLUoB1GOEE8vE1N9oWsLlfY0C1TJrkiPbwQgE7DPTzwOteL2ygNXahnap1DMvF0cK5MlZUd9kjokeQqHoor1eLrC3y3L52K6TuaML9idXEfPVPFy+GQgfEVBSSpLClIOFDcVh/Rrubd30bqjSch9ttwt+1Rw6oJSFAjByf3gj8KhdSapgW2GrjdSp4p2bScqJ8K1uG1LRC7ObW18dfrdYnGaJ76lhjbe+nh/FlpO9o0e2ajjtMrQ9AKVIfwjBQrO2/XBz+Jq2+zeJa9Zl+SJQuK2XO7MVs5SOoKscwR02A3zXILzhdeccVzWoqPxq0+w6+ybY5Pj2+ZJhyl4XxsulPGnkQR1xSj3qevcadj8mY7j6d6cuoaXD2iqkZnyC1j9bcbLseWzaNM29uRqCWzGZA4Wo6NuLH2Ugbn0FVlrDtDl3mG5brRFbt1rUd0qSFOujOd+iRt0yfOkzEifOST7RMmvHhSSVOuLPhk5NO1u0dEtq2f6SFyXcHTlq0wzlRHi4vOyfPIHmauU+G0mGAOk1d69XKoT4pW4uSyAZWbEn6fwEp223Sr06ti3wHZziSOPhGUpPTiJ90fE0yR9MMofMW5XlpMxAy5DtjKpTrfkogYSfUY86eGLVKlxm2rgpuDBScpttvPdtgeC1jCleg4R5GoPV+vdLaAglp5xhLwGUQooHET5gcvjvXM2LSSG0enZ9yfx3qWm9nqeIB0vxdv2A9dSqvtx0baW9GvXOPGvjUuMpOH54YCFg7cPuEKyfQ8q5sp+7UO0y7a8lhL59mtrRy1FQdh5nxNINJ6mXpXZjqeafU0IhZlaLDgEUUUVXVlFFFFCEUUUUIRRRRQhfQSOVfKKKEIooooQsjLzrBJZdW2SMEoURkeG1eCSo5JJPiaKK9udl5Ybr5Ulp65rs92YmN5PAfeA6p6iiivWPLHBzdwuZGNkaWO2K620DqXTjdiju2O5RE3WW1xS50vCfZE5/ZoSTufActsq6Jr1ee1jROkmnURJirnNWSp1TJ41uK8VuHmfTIHlRRTaqbmb0jjcnU+urgldKchETBYDQevqqY1x286hvgcj2cC1Q1ZH6s5cI81f9KqGTIelPKdkurddUclSzkmiilTpC4W4Jo1gab8ViooorhdoooooQiiiihCKKKKEIooooQv/9k=",
+      "createdAt": "2026/5/20 17:35:49",
+      "lastLogin": "2026/5/27 10:21:11",
+      "status": "active",
+      "real_name": "浣曢摱",
+      "position": "涓荤瓥鍒?
+    }
+  ],
+  "user_learning_1777372952831": {
+    "totalHours": 0,
+    "completedCourses": [],
+    "videoProgress": {},
+    "lastStudyTime": null,
+    "studyDates": []
+  },
+  "user_learning_1": {
+    "totalHours": 0,
+    "completedCourses": [],
+    "videoProgress": {
+      "1778151200269_0": 0,
+      "1779085718532_0": 0
+    },
+    "lastStudyTime": "2026-05-18T06:45:04.036Z",
+    "studyDates": [
+      "2026-05-18"
+    ],
+    "totalSeconds": 1283,
+    "dailyData": [
+      {
+        "date": "2026-05-18",
+        "seconds": 1283
+      }
+    ]
+  },
+  "study_session_1777372952831_1778151200269": {
+    "seconds": 580,
+    "lastSaveTime": "2026-05-08T02:43:11.732Z"
+  },
+  "course_stats_1778151200269": {
+    "likes": 0,
+    "favorites": 0
+  },
+  "user_learning_1778208244936": {
+    "totalHours": 0,
+    "completedCourses": [],
+    "videoProgress": {
+      "1778151200269_0": 0
+    },
+    "lastStudyTime": "2026-05-08T08:18:42.387Z",
+    "studyDates": [
+      "2026-05-08"
+    ],
+    "totalSeconds": 1440,
+    "dailyData": [
+      {
+        "date": "2026-05-08",
+        "seconds": 1440
+      }
+    ]
+  },
+  "study_session_1_1778151200269": {
+    "seconds": 149,
+    "lastSaveTime": "2026-05-08T07:04:07.693Z"
+  },
+  "study_session_1778208244936_1778151200269": {
+    "seconds": 360,
+    "lastSaveTime": "2026-05-08T08:18:42.388Z"
+  },
+  "user_favorites_1778208244936": [],
+  "user_learning_1778229377038": {
+    "totalHours": 0,
+    "completedCourses": [],
+    "videoProgress": {},
+    "lastStudyTime": null,
+    "studyDates": []
+  },
+  "user_learning_1778580745210": {
+    "videoProgress": {
+      "1779088409769_0": 0,
+      "1779088409769_1": 100,
+      "1779098100373_0": 0,
+      "1779098265203_0": 100,
+      "1779098231611_0": 100
+    },
+    "completedCourses": [
+      "1779088409769",
+      "1779098231611",
+      "1779098265203"
+    ],
+    "totalSeconds": 1822,
+    "totalHours": 0,
+    "studyTime": 1822,
+    "lastStudyTime": "2026-05-20T02:34:48.357Z",
+    "studyDates": [
+      "2026-05-20"
+    ],
+    "dailyData": [
+      {
+        "date": "2026-05-20",
+        "seconds": 1822
+      }
+    ]
+  },
+  "note_1778580745210_1779088409769_0": {
+    "content": "dsf ",
+    "timestamp": "2026-05-18T07:15:05.670Z"
+  },
+  "course_stats_1779098100373": {
+    "likes": 411,
+    "favorites": 70,
+    "isLiked": false,
+    "isFavorited": false
+  },
+  "user_learning_1779170734294": {
+    "videoProgress": {
+      "1779098231611_0": 0,
+      "1779098265203_0": 100,
+      "1779098190483_0": 0,
+      "1779088409769_0": 0,
+      "1779328221100_0": 100,
+      "1779327523598_0": 0,
+      "1779269978533_0": 60,
+      "1779327336678_0": 0
+    },
+    "completedCourses": [
+      "1779098265203",
+      "1779328221100"
+    ],
+    "totalSeconds": 11053,
+    "totalHours": 3,
+    "studyTime": 11053,
+    "lastStudyTime": "2026-05-25T01:44:23.546Z",
+    "studyDates": [
+      "2026-05-19",
+      "2026-05-20",
+      "2026-05-22",
+      "2026-05-25"
+    ],
+    "dailyData": [
+      {
+        "date": "2026-05-20",
+        "seconds": 4254
+      },
+      {
+        "date": "2026-05-22",
+        "seconds": 5552
+      },
+      {
+        "date": "2026-05-25",
+        "seconds": 636
+      }
+    ]
+  },
+  "user_learning_1779183739731": {
+    "videoProgress": {
+      "1779098265203_0": 0
+    },
+    "completedCourses": [],
+    "totalSeconds": 21,
+    "totalHours": 0,
+    "studyTime": 21,
+    "lastStudyTime": "2026-05-19T10:40:09.655Z",
+    "studyDates": [
+      "2026-05-19"
+    ],
+    "dailyData": [
+      {
+        "date": "2026-05-19",
+        "seconds": 21
+      }
+    ]
+  },
+  "note_1779170734294_1779098265203_0": {
+    "content": "10326",
+    "timestamp": "2026-05-20T03:51:56.730Z"
+  },
+  "course_stats_1779098265203": {
+    "likes": 959,
+    "isLiked": true
+  },
+  "course_rate_1779170734294_1779098265203": {
+    "userId": 1779170734294,
+    "courseId": 1779098265203,
+    "score": 5,
+    "timestamp": "2026-05-20T06:34:16.484Z"
+  },
+  "course_rate_1779170734294_1779098190483": {
+    "userId": 1779170734294,
+    "courseId": 1779098190483,
+    "score": 1,
+    "timestamp": "2026-05-20T06:08:55.550Z"
+  },
+  "course_stats_1779098190483": {
+    "likes": 1,
+    "isLiked": true
+  },
+  "course_rate_1779170734294_1779098231611": {
+    "userId": 1779170734294,
+    "courseId": 1779098231611,
+    "score": 3,
+    "timestamp": "2026-05-20T06:34:29.563Z"
+  },
+  "course_stats_1779098231611": {
+    "likes": 1,
+    "isLiked": true
+  },
+  "user_learning_null": {
+    "videoProgress": {
+      "1779098231611_0": 0,
+      "1779327523598_0": 0
+    },
+    "completedCourses": [],
+    "totalSeconds": 6,
+    "totalHours": 0,
+    "studyTime": 6,
+    "lastStudyTime": "2026-05-20T07:18:32.454Z",
+    "studyDates": [],
+    "dailyData": [
+      {
+        "date": "2026-05-20",
+        "seconds": 6
+      }
+    ]
+  },
+  "lecturer_applications": [
+    {
+      "id": 1779445316823,
+      "userId": 1779170734294,
+      "name": "璁稿織寮?,
+      "department": "浜哄姏璧勬簮閮?,
+      "position": "浜轰簨缁忕悊",
+      "skills": [
+        "浜哄姏",
+        "鍩硅"
+      ],
+      "experience": "鏃?,
+      "intro": "寰堝ソ",
+      "motivation": "寰堝ソ",
+      "status": "approved",
+      "createdAt": "2026-05-22T10:21:56.823Z",
+      "reviewedAt": "2026-05-22T10:22:11.549Z",
+      "reviewNote": ""
+    }
+  ],
+  "notifications": [
+    {
+      "id": 1,
+      "userId": 1779170734294,
+      "type": "announcement",
+      "title": "鑱屽満绀间华瑙勮寖鈥斺€斿厓姘旇亴鍦虹涓夋湡",
+      "content": "鐐瑰嚮鏌ョ湅鍏憡璇︽儏",
+      "read": true,
+      "createdAt": "2026-05-22T10:10:50.790Z",
+      "noticeId": 1779444650790
+    },
+    {
+      "id": 2,
+      "userId": 1779269749493,
+      "type": "announcement",
+      "title": "鑱屽満绀间华瑙勮寖鈥斺€斿厓姘旇亴鍦虹涓夋湡",
+      "content": "鐐瑰嚮鏌ョ湅鍏憡璇︽儏",
+      "read": true,
+      "createdAt": "2026-05-22T10:10:50.790Z",
+      "noticeId": 1779444650790
+    },
+    {
+      "id": 3,
+      "userId": 1779170734294,
+      "type": "application_reviewed",
+      "title": "璁插笀鐢宠瀹℃牳缁撴灉",
+      "content": "鎭枩锛佹偍鐨勮甯堢敵璇峰凡閫氳繃锛屾杩庡姞鍏ヨ甯堝洟闃燂紒",
+      "read": true,
+      "createdAt": "2026-05-22T10:22:11.549Z"
+    },
+    {
+      "id": 4,
+      "userId": 1,
+      "type": "training_assign",
+      "title": "鍩硅鎸囨淳閫氱煡",
+      "content": "鎮ㄥ凡琚寚娲惧弬鍔犲煿璁」鐩€屚ㄖ拷锟斤拷锟斤拷锟侥裤€嶏紙鏂板憳宸ュ煿璁級锛岃鍙婃椂鍏虫敞銆?,
+      "read": false,
+      "createdAt": "2026-05-25T10:55:41.642Z",
+      "trainingId": 1779706541642
+    },
+    {
+      "id": 5,
+      "userId": 2,
+      "type": "training_assign",
+      "title": "鍩硅鎸囨淳閫氱煡",
+      "content": "鎮ㄥ凡琚寚娲惧弬鍔犲煿璁」鐩€屚ㄖ拷锟斤拷锟斤拷锟侥裤€嶏紙鏂板憳宸ュ煿璁級锛岃鍙婃椂鍏虫敞銆?,
+      "read": false,
+      "createdAt": "2026-05-25T10:55:41.642Z",
+      "trainingId": 1779706541642
+    },
+    {
+      "id": 6,
+      "userId": 1779170734294,
+      "type": "training_assign",
+      "title": "鍩硅鎸囨淳閫氱煡",
+      "content": "鎮ㄥ凡琚寚娲惧弬鍔犲煿璁」鐩€?024骞村害鏂板憳宸ュ叆鑱屽煿璁€嶏紙涓撲笟鍔涘煿璁級锛岃鍙婃椂鍏虫敞銆?,
+      "read": false,
+      "createdAt": "2026-05-26T06:12:05.656Z",
+      "trainingId": 1
+    },
+    {
+      "id": 7,
+      "userId": 1779269749493,
+      "type": "training_assign",
+      "title": "鍩硅鎸囨淳閫氱煡",
+      "content": "鎮ㄥ凡琚寚娲惧弬鍔犲煿璁」鐩€?024骞村害鏂板憳宸ュ叆鑱屽煿璁€嶏紙涓撲笟鍔涘煿璁級锛岃鍙婃椂鍏虫敞銆?,
+      "read": true,
+      "createdAt": "2026-05-26T06:12:05.656Z",
+      "trainingId": 1
+    },
+    {
+      "id": 8,
+      "userId": 1779170734294,
+      "type": "training_assign",
+      "title": "鍩硅鎸囨淳閫氱煡",
+      "content": "鎮ㄥ凡琚寚娲惧弬鍔犲煿璁」鐩€孡UA鍏ラ棬銆嶏紙涓撲笟鍔涘煿璁級锛岃鍙婃椂鍏虫敞銆?,
+      "read": false,
+      "createdAt": "2026-05-26T09:56:53.523Z",
+      "trainingId": 1779703916926
+    },
+    {
+      "id": 9,
+      "userId": 1779269749493,
+      "type": "training_assign",
+      "title": "鍩硅鎸囨淳閫氱煡",
+      "content": "鎮ㄥ凡琚寚娲惧弬鍔犲煿璁」鐩€孡UA鍏ラ棬銆嶏紙涓撲笟鍔涘煿璁級锛岃鍙婃椂鍏虫敞銆?,
+      "read": true,
+      "createdAt": "2026-05-26T09:56:53.523Z",
+      "trainingId": 1779703916926
+    }
+  ],
+  "user_learning_1779269749493": {
+    "videoProgress": {
+      "1779269978533_0": 100,
+      "1779327523598_0": 0,
+      "1779328221100_0": 0,
+      "1779327336678_0": 20
+    },
+    "completedCourses": [
+      "1779269978533"
+    ],
+    "totalSeconds": 3100,
+    "totalHours": 0,
+    "studyTime": 3100,
+    "lastStudyTime": "2026-05-26T08:52:14.960Z",
+    "studyDates": [
+      "2026-05-21",
+      "2026-05-26"
+    ],
+    "dailyData": [
+      {
+        "date": "2026-05-21",
+        "seconds": 2935
+      },
+      {
+        "date": "2026-05-26",
+        "seconds": 165
+      }
+    ]
+  },
+  "course_stats_1779327523598": {
+    "likes": 1,
+    "isLiked": true
+  },
+  "course_rate_1779269749493_1779327523598": {
+    "userId": 1779269749493,
+    "courseId": 1779327523598,
+    "score": 4,
+    "timestamp": "2026-05-21T01:50:37.737Z"
+  },
+  "course_stats_1779328221100": {
+    "likes": 1,
+    "isLiked": true
+  },
+  "course_rate_1779269749493_1779328221100": {
+    "userId": 1779269749493,
+    "courseId": 1779328221100,
+    "score": 2,
+    "timestamp": "2026-05-21T01:50:47.913Z"
+  },
+  "course_rate_1779269749493_1779327336678": {
+    "userId": 1779269749493,
+    "courseId": 1779327336678,
+    "score": 5,
+    "timestamp": "2026-05-21T02:04:58.536Z"
+  },
+  "course_stats_1779327336678": {
+    "likes": 1,
+    "isLiked": true
+  },
+  "course_rate_1779170734294_1779327523598": {
+    "userId": 1779170734294,
+    "courseId": 1779327523598,
+    "score": 4,
+    "timestamp": "2026-05-22T10:35:04.811Z"
+  },
+  "course_rate_1779170734294_1779327336678": {
+    "userId": 1779170734294,
+    "courseId": 1779327336678,
+    "score": 3,
+    "timestamp": "2026-05-22T10:23:07.644Z"
+  },
+  "course_rate_1779170734294_1779269978533": {
+    "userId": 1779170734294,
+    "courseId": 1779269978533,
+    "score": 5,
+    "timestamp": "2026-05-22T10:23:17.611Z"
+  },
+  "course_stats_1779269978533": {
+    "ratings": [
+      {
+        "userId": 1779170734294,
+        "score": 5,
+        "timestamp": "2026-05-22T10:23:17.611Z"
+      }
+    ],
+    "avgRating": 5,
+    "ratingCount": 1
+  },
+  "course_rate_1779170734294_1779328221100": {
+    "userId": 1779170734294,
+    "courseId": 1779328221100,
+    "score": 3,
+    "timestamp": "2026-05-25T01:31:16.257Z"
+  },
+  "surveys": [
+    {
+      "id": 1779780920087,
+      "title": "婊℃剰搴﹁皟鏌?,
+      "description": "鎰熻阿澶у鍙傚姞鏈湡鍩硅锛岃鎮ㄥ尶鍚嶅～鍐欐湰娆″煿璁弧鎰忓害璋冩煡闂嵎锛屾偍鐨勬剰瑙佸拰寤鸿灏嗕綔涓烘垜浠粖鍚庡煿璁畨鎺掔殑閲嶈鎸囧紩銆?,
+      "questions": [
+        {
+          "id": 1779780890350,
+          "type": "rating",
+          "title": "璇剧▼瀵逛釜浜烘垚闀跨殑甯姪鎬?,
+          "required": true,
+          "options": [
+            {
+              "label": "闈炲父涓嶆弧鎰?,
+              "value": "1",
+              "score": 1
+            },
+            {
+              "label": "涓嶆弧鎰?,
+              "value": "2",
+              "score": 2
+            },
+            {
+              "label": "涓€鑸?,
+              "value": "3",
+              "score": 3
+            },
+            {
+              "label": "婊℃剰",
+              "value": "4",
+              "score": 4
+            },
+            {
+              "label": "闈炲父婊℃剰",
+              "value": "5",
+              "score": 5
+            }
+          ]
+        },
+        {
+          "id": 1779789028337,
+          "type": "rating",
+          "title": "璇剧▼鍐呭璁捐涓庡煿璁」鐩殑鍚诲悎搴?,
+          "required": true,
+          "options": [
+            {
+              "label": "闈炲父涓嶆弧鎰?,
+              "value": "1",
+              "score": 1
+            },
+            {
+              "label": "涓嶆弧鎰?,
+              "value": "2",
+              "score": 2
+            },
+            {
+              "label": "涓€鑸?,
+              "value": "3",
+              "score": 3
+            },
+            {
+              "label": "婊℃剰",
+              "value": "4",
+              "score": 4
+            },
+            {
+              "label": "闈炲父婊℃剰",
+              "value": "5",
+              "score": 5
+            }
+          ]
+        },
+        {
+          "id": 1779789059617,
+          "type": "rating",
+          "title": "璇句欢鍐呭椤甸潰璁捐涓庢帓鐗堜笓涓氭€?,
+          "required": true,
+          "options": [
+            {
+              "label": "闈炲父涓嶆弧鎰?,
+              "value": "1",
+              "score": 1
+            },
+            {
+              "label": "涓嶆弧鎰?,
+              "value": "2",
+              "score": 2
+            },
+            {
+              "label": "涓€鑸?,
+              "value": "3",
+              "score": 3
+            },
+            {
+              "label": "婊℃剰",
+              "value": "4",
+              "score": 4
+            },
+            {
+              "label": "闈炲父婊℃剰",
+              "value": "5",
+              "score": 5
+            }
+          ]
+        },
+        {
+          "id": 1779789069552,
+          "type": "rating",
+          "title": "璁插笀璇惧爞浜掑姩姘涘洿鐨勫紩瀵艰兘鍔?,
+          "required": true,
+          "options": [
+            {
+              "label": "闈炲父涓嶆弧鎰?,
+              "value": "1",
+              "score": 1
+            },
+            {
+              "label": "涓嶆弧鎰?,
+              "value": "2",
+              "score": 2
+            },
+            {
+              "label": "涓€鑸?,
+              "value": "3",
+              "score": 3
+            },
+            {
+              "label": "婊℃剰",
+              "value": "4",
+              "score": 4
+            },
+            {
+              "label": "闈炲父婊℃剰",
+              "value": "5",
+              "score": 5
+            }
+          ]
+        },
+        {
+          "id": 1779789103745,
+          "type": "rating",
+          "title": "璁插笀璇█琛ㄨ揪鏄惁閫氫織鏄撴噦",
+          "required": true,
+          "options": [
+            {
+              "label": "闈炲父涓嶆弧鎰?,
+              "value": "1",
+              "score": 1
+            },
+            {
+              "label": "涓嶆弧鎰?,
+              "value": "2",
+              "score": 2
+            },
+            {
+              "label": "涓€鑸?,
+              "value": "3",
+              "score": 3
+            },
+            {
+              "label": "婊℃剰",
+              "value": "4",
+              "score": 4
+            },
+            {
+              "label": "闈炲父婊℃剰",
+              "value": "5",
+              "score": 5
+            }
+          ]
+        },
+        {
+          "id": 1779789122961,
+          "type": "rating",
+          "title": "璁插笀鎺堣閲嶇偣绐佸嚭銆佽В绛旈棶棰樼殑绮惧噯搴?,
+          "required": true,
+          "options": [
+            {
+              "label": "闈炲父涓嶆弧鎰?,
+              "value": "1",
+              "score": 1
+            },
+            {
+              "label": "涓嶆弧鎰?,
+              "value": "2",
+              "score": 2
+            },
+            {
+              "label": "涓€鑸?,
+              "value": "3",
+              "score": 3
+            },
+            {
+              "label": "婊℃剰",
+              "value": "4",
+              "score": 4
+            },
+            {
+              "label": "闈炲父婊℃剰",
+              "value": "5",
+              "score": 5
+            }
+          ]
+        },
+        {
+          "id": 1779789130665,
+          "type": "rating",
+          "title": "璁插笀瀵硅绋嬫椂闂磋妭濂忕殑鎶婃帶鍔?,
+          "required": true,
+          "options": [
+            {
+              "label": "闈炲父涓嶆弧鎰?,
+              "value": "1",
+              "score": 1
+            },
+            {
+              "label": "涓嶆弧鎰?,
+              "value": "2",
+              "score": 2
+            },
+            {
+              "label": "涓€鑸?,
+              "value": "3",
+              "score": 3
+            },
+            {
+              "label": "婊℃剰",
+              "value": "4",
+              "score": 4
+            },
+            {
+              "label": "闈炲父婊℃剰",
+              "value": "5",
+              "score": 5
+            }
+          ]
+        },
+        {
+          "id": 1779789139017,
+          "type": "rating",
+          "title": "鏈鍩硅缁勭粐宸ヤ綔鐨勬弧鎰忕▼搴?,
+          "required": true,
+          "options": [
+            {
+              "label": "闈炲父涓嶆弧鎰?,
+              "value": "1",
+              "score": 1
+            },
+            {
+              "label": "涓嶆弧鎰?,
+              "value": "2",
+              "score": 2
+            },
+            {
+              "label": "涓€鑸?,
+              "value": "3",
+              "score": 3
+            },
+            {
+              "label": "婊℃剰",
+              "value": "4",
+              "score": 4
+            },
+            {
+              "label": "闈炲父婊℃剰",
+              "value": "5",
+              "score": 5
+            }
+          ]
+        },
+        {
+          "id": 1779789148145,
+          "type": "rating",
+          "title": "鏈鍩硅淇℃伅閫氱煡鐨勫浼犲姏搴?,
+          "required": true,
+          "options": [
+            {
+              "label": "闈炲父涓嶆弧鎰?,
+              "value": "1",
+              "score": 1
+            },
+            {
+              "label": "涓嶆弧鎰?,
+              "value": "2",
+              "score": 2
+            },
+            {
+              "label": "涓€鑸?,
+              "value": "3",
+              "score": 3
+            },
+            {
+              "label": "婊℃剰",
+              "value": "4",
+              "score": 4
+            },
+            {
+              "label": "闈炲父婊℃剰",
+              "value": "5",
+              "score": 5
+            }
+          ]
+        },
+        {
+          "id": 1779789158633,
+          "type": "rating",
+          "title": "鎮ㄥ鏈鍩硅鎬讳綋璇勪环",
+          "required": true,
+          "options": [
+            {
+              "label": "闈炲父涓嶆弧鎰?,
+              "value": "1",
+              "score": 1
+            },
+            {
+              "label": "涓嶆弧鎰?,
+              "value": "2",
+              "score": 2
+            },
+            {
+              "label": "涓€鑸?,
+              "value": "3",
+              "score": 3
+            },
+            {
+              "label": "婊℃剰",
+              "value": "4",
+              "score": 4
+            },
+            {
+              "label": "闈炲父婊℃剰",
+              "value": "5",
+              "score": 5
+            }
+          ]
+        },
+        {
+          "id": 1779789177465,
+          "type": "radio",
+          "title": "鎮ㄨ涓烘湰娆¤绋嬪睘浜庡摢涓€绉嶉毦搴︾瓑绾э紵锛堣鎸夊疄闄呮儏鍐靛～鍐欙級",
+          "required": true,
+          "options": [
+            {
+              "label": "鍏ラ棬/绠€鍗?,
+              "value": "opt1"
+            },
+            {
+              "label": "杩涢樁/涓瓑",
+              "value": "opt2"
+            },
+            {
+              "label": "楂橀樁/鍥伴毦",
+              "value": "opt3"
+            }
+          ]
+        },
+        {
+          "id": 1779789215321,
+          "type": "text",
+          "title": "鎮ㄥ弬鍔犳湰娆″煿璁殑涓昏鏀惰幏鏈夊摢浜涳紵",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": 1779789223129,
+          "type": "text",
+          "title": "鎮ㄨ繕鎯宠鍚埌鍝簺鍩硅璇撅紵瀵逛粈涔堢被鍨嬬殑鍩硅鎰熷叴瓒ｏ紵",
+          "required": true,
+          "options": []
+        },
+        {
+          "id": 1779789230873,
+          "type": "text",
+          "title": "鎮ㄥ鏈鍩硅鏈夊摢浜涘缓璁紵",
+          "required": false,
+          "options": []
+        }
+      ],
+      "status": "published",
+      "createdBy": "admin",
+      "createdAt": "2026-05-26T07:35:20.087Z",
+      "updatedAt": "2026-05-26T09:54:00.396Z",
+      "publishedAt": null,
+      "responses": []
+    }
+  ]
+}

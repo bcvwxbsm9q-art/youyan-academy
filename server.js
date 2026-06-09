@@ -7,6 +7,10 @@ const multer = require('multer');
 const app = express();
 const port = 3003;
 
+// 中间件配置
+app.use(express.json({ limit: '50mb' }));  // 解析 JSON 请求体
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));  // 解析 URL 编码的请求体
+
 // 创建 uploads 目录
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -161,7 +165,7 @@ app.get('/api/data', (req, res) => {
   res.json(data);
 });
 
-// GET /api/data/courses  - admin.html 兼容路由
+// GET /api/data/courses  - dashboard.html 兼容路由
 app.get('/api/data/courses', (req, res) => {
   const data = readData();
   const courses = (data.management_courses || []).map(c => ({
@@ -182,7 +186,7 @@ app.get('/api/data/courses', (req, res) => {
   res.json(courses);
 });
 
-// GET /api/data/categories - admin.html 兼容路由
+// GET /api/data/categories - dashboard.html 兼容路由
 app.get('/api/data/categories', (req, res) => {
   const data = readData();
   const categories = (data.course_categories || []).map(c => ({
@@ -196,7 +200,7 @@ app.get('/api/data/categories', (req, res) => {
   res.json(categories);
 });
 
-// GET /api/data/users - admin.html 兼容路由
+// GET /api/data/users - dashboard.html 兼容路由
 app.get('/api/data/users', (req, res) => {
   const data = readData();
   const users = (data.registered_users || []).map(u => {
@@ -777,6 +781,282 @@ app.delete('/api/training/:id', (req, res) => {
 });
 
 // ============================================================
+// 考试管理 API
+// ============================================================
+
+// GET /api/exams - 获取所有考试
+app.get('/api/exams', (req, res) => {
+  const data = readData();
+  const exams = data.exams || [];
+  // 关联题目数量
+  const enriched = exams.map(exam => ({
+    ...exam,
+    questionCount: (exam.questions || []).length,
+    attemptCount: (data.exam_attempts || []).filter(a => a.examId === exam.id).length
+  }));
+  res.json(enriched);
+});
+
+// POST /api/exams - 创建考试
+app.post('/api/exams', (req, res) => {
+  const { title, description, duration, passingScore, totalScore, bankId, shuffleQuestions, showAnswer, status, questions } = req.body;
+  if (!title) {
+    return res.status(400).json({ success: false, error: '考试名称不能为空' });
+  }
+  const data = readData();
+  if (!data.exams) data.exams = [];
+  const newExam = {
+    id: Date.now(),
+    title,
+    description: description || '',
+    duration: parseInt(duration) || 60,
+    passingScore: parseInt(passingScore) || 60,
+    totalScore: parseInt(totalScore) || 100,
+    bankId: bankId || null,
+    shuffleQuestions: !!shuffleQuestions,
+    showAnswer: !!showAnswer,
+    status: status || 'draft',
+    questions: questions || [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  data.exams.push(newExam);
+  if (writeData(data)) {
+    res.json({ success: true, exam: newExam });
+  } else {
+    res.status(500).json({ success: false, error: '创建失败' });
+  }
+});
+
+// PUT /api/exams/:id - 更新考试
+app.put('/api/exams/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const exams = data.exams || [];
+  const index = exams.findIndex(e => e.id === id);
+  if (index === -1) {
+    return res.status(404).json({ success: false, error: '考试不存在' });
+  }
+  const updates = req.body;
+  delete updates.id; // 不允许修改ID
+  delete updates.createdAt; // 不允许修改创建时间
+  updates.updatedAt = new Date().toISOString();
+  data.exams[index] = { ...exams[index], ...updates };
+  if (writeData(data)) {
+    res.json({ success: true, exam: data.exams[index] });
+  } else {
+    res.status(500).json({ success: false, error: '更新失败' });
+  }
+});
+
+// DELETE /api/exams/:id - 删除考试
+app.delete('/api/exams/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const exams = data.exams || [];
+  const index = exams.findIndex(e => e.id === id);
+  if (index === -1) {
+    return res.status(404).json({ success: false, error: '考试不存在' });
+  }
+  exams.splice(index, 1);
+  // 同时删除相关成绩记录
+  if (data.exam_attempts) {
+    data.exam_attempts = data.exam_attempts.filter(a => a.examId !== id);
+  }
+  if (writeData(data)) {
+    res.json({ success: true, message: '考试已删除' });
+  } else {
+    res.status(500).json({ success: false, error: '删除失败' });
+  }
+});
+
+// PUT /api/exams/:id/status - 发布/下架考试
+app.put('/api/exams/:id/status', (req, res) => {
+  const id = parseInt(req.params.id);
+  const { status } = req.body;
+  if (!['draft', 'published', 'closed'].includes(status)) {
+    return res.status(400).json({ success: false, error: '无效的状态值' });
+  }
+  const data = readData();
+  const exams = data.exams || [];
+  const index = exams.findIndex(e => e.id === id);
+  if (index === -1) {
+    return res.status(404).json({ success: false, error: '考试不存在' });
+  }
+  exams[index].status = status;
+  exams[index].updatedAt = new Date().toISOString();
+  if (writeData(data)) {
+    res.json({ success: true, exam: exams[index] });
+  } else {
+    res.status(500).json({ success: false, error: '状态更新失败' });
+  }
+});
+
+// GET /api/exams/:id/questions - 获取考试题目详情（含完整题目内容）
+app.get('/api/exams/:id/questions', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const exam = (data.exams || []).find(e => e.id === id);
+  if (!exam) {
+    return res.status(404).json({ success: false, error: '考试不存在' });
+  }
+  const allQuestions = data.questions || [];
+  const examQuestions = (exam.questions || []).map(eq => {
+    const q = allQuestions.find(qq => qq.id === eq.questionId);
+    return { ...eq, questionDetail: q || null };
+  });
+  res.json({ success: true, questions: examQuestions });
+});
+
+// PUT /api/exams/:id/questions - 设置考试题目
+app.put('/api/exams/:id/questions', (req, res) => {
+  const id = parseInt(req.params.id);
+  const { questions } = req.body;
+  const data = readData();
+  const exams = data.exams || [];
+  const index = exams.findIndex(e => e.id === id);
+  if (index === -1) {
+    return res.status(404).json({ success: false, error: '考试不存在' });
+  }
+  exams[index].questions = questions || [];
+  exams[index].updatedAt = new Date().toISOString();
+  if (writeData(data)) {
+    res.json({ success: true, questions: exams[index].questions });
+  } else {
+    res.status(500).json({ success: false, error: '保存失败' });
+  }
+});
+
+// GET /api/exams/:id/results - 获取考试成绩列表
+app.get('/api/exams/:id/results', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const attempts = (data.exam_attempts || []).filter(a => a.examId === id);
+  // 关联用户信息
+  const users = data.users || [];
+  const results = attempts.map(a => {
+    const user = users.find(u => u.id === a.userId);
+    return { ...a, userName: user ? (user.real_name || user.username) : '未知用户' };
+  }).sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+  res.json({ success: true, results });
+});
+
+// POST /api/exams/:id/take - 学员开始考试（获取试卷）
+app.post('/api/exams/:id/take', (req, res) => {
+  const id = parseInt(req.params.id);
+  const { userId } = req.query;
+  const data = readData();
+  const exam = (data.exams || []).find(e => e.id === id && e.status === 'published');
+  if (!exam) {
+    return res.status(404).json({ success: false, error: '考试不存在或未发布' });
+  }
+  const allQuestions = data.questions || [];
+  let examQuestions = (exam.questions || [])
+    .map(eq => {
+      const q = allQuestions.find(qq => qq.id === eq.questionId);
+      return q ? { ...q, score: eq.score || 1, order: eq.order || 0 } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.order - b.order);
+
+  // 如果配置了随机打乱
+  if (exam.shuffleQuestions) {
+    examQuestions = examQuestions.sort(() => Math.random() - 0.5);
+  }
+
+  // 去掉答案
+  const safeQuestions = examQuestions.map(({ answer, analysis, ...rest }) => rest);
+
+  res.json({
+    success: true,
+    exam: { ...exam, questions: undefined },
+    questions: safeQuestions,
+    totalQuestions: examQuestions.length,
+    duration: exam.duration * 60 // 转换为秒
+  });
+});
+
+// POST /api/exams/:id/enter - 学员进入考试（记录开始）
+app.post('/api/exams/:id/enter', (req, res) => {
+  const id = parseInt(req.params.id);
+  const { userId } = req.body;
+  const data = readData();
+  if (!data.exam_attempts) data.exam_attempts = [];
+  const attemptId = Date.now();
+  data.exam_attempts.push({
+    id: attemptId,
+    examId: id,
+    userId: userId,
+    status: 'taking',
+    startedAt: new Date().toISOString(),
+    answers: {},
+    score: null,
+    passed: null
+  });
+  writeData(data);
+  res.json({ success: true, attemptId });
+});
+
+// POST /api/exams/:id/submit - 提交考试答卷
+app.post('/api/exams/:id/submit', (req, res) => {
+  const id = parseInt(req.params.id);
+  const { userId, attemptId, answers } = req.body;
+  const data = readData();
+  const exam = (data.exams || []).find(e => e.id === id);
+  if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
+
+  const allQuestions = data.questions || [];
+  let correctCount = 0;
+  let totalScore = 0;
+
+  Object.entries(answers || {}).forEach(([questionId, userAnswer]) => {
+    const q = allQuestions.find(qq => qq.id === parseInt(questionId));
+    if (q) {
+      const isCorrect = userAnswer === q.answer;
+      if (isCorrect) correctCount++;
+      totalScore += isCorrect ? (exam.totalScore / ((exam.questions || []).length) || 1) : 0;
+    }
+  });
+
+  const finalScore = Math.round(totalScore);
+  const passed = finalScore >= exam.passingScore;
+
+  // 更新 attempt 记录
+  const attempts = data.exam_attempts || [];
+  const attemptIndex = attempts.findIndex(a => a.id === attemptId);
+  if (attemptIndex !== -1) {
+    attempts[attemptIndex] = {
+      ...attempts[attemptIndex],
+      status: 'completed',
+      completedAt: new Date().toISOString(),
+      answers: answers || {},
+      score: finalScore,
+      passed,
+      correctCount,
+      totalQuestions: (exam.questions || []).length
+    };
+  }
+
+  writeData(data);
+  res.json({ success: true, score: finalScore, passed, correctCount, totalQuestions: (exam.questions || []).length });
+});
+
+// POST /api/exams/:id/abandon - 放弃考试
+app.post('/api/exams/:id/abandon', (req, res) => {
+  const id = parseInt(req.params.id);
+  const { attemptId } = req.body;
+  const data = readData();
+  const attempts = data.exam_attempts || [];
+  const index = attempts.findIndex(a => a.id === attemptId);
+  if (index !== -1) {
+    attempts[index].status = 'abandoned';
+    attempts[index].completedAt = new Date().toISOString();
+    writeData(data);
+  }
+  res.json({ success: true });
+});
+
+// ============================================================
 // 用户管理 API
 // ============================================================
 
@@ -901,15 +1181,41 @@ app.delete('/api/notices/:id', (req, res) => {
 // GET /api/banners - 获取所有Banner
 app.get('/api/banners', (req, res) => {
   const data = readData();
-  res.json(data.index_banners || []);
+  const banners = (data.index_banners || []).sort((a, b) => (a.order || 0) - (b.order || 0));
+  // 附带关联课程信息
+  const courses = data.management_courses || [];
+  const enriched = banners.map(b => {
+    const course = b.courseId ? courses.find(c => c.id === b.courseId) : null;
+    return { ...b, courseTitle: course ? course.title : null };
+  });
+  res.json(enriched);
 });
 
-// POST /api/banners - 添加Banner
-app.post('/api/banners', (req, res) => {
-  const banner = req.body;
+// POST /api/banners - 添加Banner（支持上传封面）
+app.post('/api/banners', upload.single('cover'), (req, res) => {
   const data = readData();
   if (!data.index_banners) data.index_banners = [];
-  banner.id = Date.now();
+
+  let banner;
+  if (req.file) {
+    // 文件上传模式
+    const coverUrl = '/uploads/covers/' + req.file.filename;
+    banner = {
+      id: Date.now(),
+      img: coverUrl,
+      courseId: req.body.courseId ? parseInt(req.body.courseId) : null,
+      order: data.index_banners.length + 1,
+      status: 'published',
+      createdAt: new Date().toISOString()
+    };
+  } else {
+    // JSON 模式
+    banner = req.body;
+    banner.id = Date.now();
+    banner.status = banner.status || 'published';
+    banner.createdAt = banner.createdAt || new Date().toISOString();
+  }
+
   data.index_banners.push(banner);
   if (writeData(data)) {
     res.json({ success: true, banner });
@@ -934,21 +1240,117 @@ app.delete('/api/banners/:id', (req, res) => {
   }
 });
 
-// PUT /api/banners/:id - 更新Banner
-app.put('/api/banners/:id', (req, res) => {
+// PUT /api/banners/:id - 更新Banner（支持上传封面）
+app.put('/api/banners/:id', upload.single('cover'), (req, res) => {
   const id = parseInt(req.params.id);
-  const updates = req.body;
   const data = readData();
   const index = data.index_banners?.findIndex(b => b.id === id);
-  if (index !== -1) {
-    data.index_banners[index] = { ...data.index_banners[index], ...updates };
+  if (index === -1 || index === undefined) {
+    return res.status(404).json({ success: false, error: 'Banner不存在' });
+  }
+
+  const updates = {};
+  if (req.file) {
+    updates.img = '/uploads/covers/' + req.file.filename;
+  }
+  if (req.body.courseId !== undefined) updates.courseId = req.body.courseId ? parseInt(req.body.courseId) : null;
+  if (req.body.order !== undefined) updates.order = parseInt(req.body.order);
+  if (req.body.status !== undefined) updates.status = req.body.status;
+
+  data.index_banners[index] = { ...data.index_banners[index], ...updates, updatedAt: new Date().toISOString() };
+  if (writeData(data)) {
+    res.json({ success: true, banner: data.index_banners[index] });
+  } else {
+    res.status(500).json({ success: false, error: '写入失败' });
+  }
+});
+
+// PUT /api/banners/reorder - 批量更新排序
+app.put('/api/banners/reorder', (req, res) => {
+  const { orders } = req.body; // [{id, order}, ...]
+  const data = readData();
+  if (!data.index_banners || !Array.isArray(orders)) {
+    return res.status(400).json({ success: false, error: '参数错误' });
+  }
+  orders.forEach(({ id, order }) => {
+    const b = data.index_banners.find(b => b.id === id);
+    if (b) b.order = order;
+  });
+  if (writeData(data)) {
+    res.json({ success: true });
+  } else {
+    res.status(500).json({ success: false, error: '写入失败' });
+  }
+});
+
+// ============================================================
+// 公告管理 API
+// ============================================================
+
+// GET /api/notices - 获取所有公告
+app.get('/api/notices', (req, res) => {
+  const data = readData();
+  res.json(data.notices || []);
+});
+
+// POST /api/notices - 添加公告
+app.post('/api/notices', (req, res) => {
+  const notice = req.body;
+  const data = readData();
+  if (!data.notices) data.notices = [];
+  
+  // 验证必填字段
+  if (!notice.title || !notice.content) {
+    return res.status(400).json({ success: false, error: '标题和内容不能为空' });
+  }
+  
+  notice.id = Date.now();
+  notice.createdAt = new Date().toISOString();
+  notice.updatedAt = new Date().toISOString();
+  
+  data.notices.push(notice);
+  if (writeData(data)) {
+    res.json({ success: true, notice });
+  } else {
+    res.status(500).json({ success: false, error: '写入失败' });
+  }
+});
+
+// PUT /api/notices/:id - 更新公告
+app.put('/api/notices/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const index = data.notices?.findIndex(n => n.id === id);
+  
+  if (index === -1 || index === undefined) {
+    return res.status(404).json({ success: false, error: '公告不存在' });
+  }
+  
+  const updates = req.body;
+  updates.updatedAt = new Date().toISOString();
+  
+  data.notices[index] = { ...data.notices[index], ...updates };
+  if (writeData(data)) {
+    res.json({ success: true, notice: data.notices[index] });
+  } else {
+    res.status(500).json({ success: false, error: '写入失败' });
+  }
+});
+
+// DELETE /api/notices/:id - 删除公告
+app.delete('/api/notices/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  
+  if (data.notices) {
+    data.notices = data.notices.filter(n => n.id !== id);
     if (writeData(data)) {
-      res.json({ success: true, banner: data.index_banners[index] });
+      res.json({ success: true });
     } else {
-      res.status(500).json({ success: false, error: '写入失败' });
+      res.status(500).json({ success: false, error: '删除失败' });
     }
   } else {
-    res.status(404).json({ success: false, error: 'Banner不存在' });
+    res.status(404).json({ success: false, error: '公告不存在' });
   }
 });
 
@@ -1021,13 +1423,24 @@ app.get('/api/stats', (req, res) => {
   const lecturers = data.lecturers || [];
   const users = data.registered_users || [];
   const categories = data.course_categories || [];
-  
+  const exams = data.exams || [];
+  const attempts = data.exam_attempts || [];
+
   const stats = {
     courses: {
       total: courses.length,
       published: courses.filter(c => c.status === 'published').length,
       draft: courses.filter(c => c.status === 'draft').length,
       offline: courses.filter(c => c.status === 'offline').length
+    },
+    exams: {
+      total: exams.length,
+      published: exams.filter(e => e.status === 'published').length,
+      draft: exams.filter(e => e.status === 'draft').length,
+      closed: exams.filter(e => e.status === 'closed').length,
+      totalAttempts: attempts.length,
+      completedAttempts: attempts.filter(a => a.status === 'completed').length,
+      passRate: attempts.filter(a => a.status === 'completed' && a.passed).length / (attempts.filter(a => a.status === 'completed').length || 1) * 100
     },
     lecturers: {
       total: lecturers.length,
@@ -1093,7 +1506,7 @@ app.get('/api/export/lecturers', (req, res) => {
   const data = readData();
   const lecturers = data.lecturers || [];
   
-  const levelMap = { chief: '首席讲师', senior: '高级讲师', intermediate: '中级讲师', junior: '初级讲师' };
+  const levelMap = { chief: '首席讲师', senior: '高级讲师', intermediate: '中级讲师', junior: '初级讲师', intern: '实习讲师' };
   const typeMap = { internal: '内聘', external: '外聘' };
   
   const csvRows = ['讲师ID,姓名,类型,部门,等级,职称,课程数,状态,标签,登记时间'];
@@ -1286,6 +1699,114 @@ app.delete('/api/upload/:type/:filename', (req, res) => {
   } else {
     res.status(404).json({ success: false, error: '文件不存在' });
   }
+});
+
+// ============================================================
+// 公告管理 API
+// ============================================================
+
+// GET /api/notices - 获取所有公告
+app.get('/api/notices', (req, res) => {
+  const data = readData();
+  res.json(data.notices || []);
+});
+
+// POST /api/notices - 添加公告
+app.post('/api/notices', (req, res) => {
+  const notice = req.body;
+  const data = readData();
+  if (!data.notices) data.notices = [];
+  notice.id = Date.now();
+  notice.createdAt = new Date().toISOString();
+  data.notices.push(notice);
+  if (writeData(data)) {
+    res.json({ success: true, notice });
+  } else {
+    res.status(500).json({ success: false, error: '写入失败' });
+  }
+});
+
+// PUT /api/notices/:id - 更新公告
+app.put('/api/notices/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const updates = req.body;
+  const data = readData();
+  const index = data.notices?.findIndex(n => n.id === id);
+  if (index !== -1) {
+    data.notices[index] = { ...data.notices[index], ...updates };
+    if (writeData(data)) {
+      res.json({ success: true, notice: data.notices[index] });
+    } else {
+      res.status(500).json({ success: false, error: '写入失败' });
+    }
+  } else {
+    res.status(404).json({ success: false, error: '公告不存在' });
+  }
+});
+
+// DELETE /api/notices/:id - 删除公告
+app.delete('/api/notices/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const index = data.notices?.findIndex(n => n.id === id);
+  if (index !== -1) {
+    data.notices.splice(index, 1);
+    if (writeData(data)) {
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ success: false, error: '写入失败' });
+    }
+  } else {
+    res.status(404).json({ success: false, error: '公告不存在' });
+  }
+});
+
+// POST /api/upload/notice-cover - 上传公告封面图
+app.post('/api/upload/notice-cover', (req, res) => {
+  // 动态设置上传目录为 images
+  const uploadNoticeCover = multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        const targetDir = path.join(uploadsDir, 'images');
+        if (!fs.existsSync(targetDir)) {
+          fs.mkdirSync(targetDir, { recursive: true });
+        }
+        cb(null, targetDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, uniqueSuffix + ext);
+      }
+    }),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('只允许上传图片文件'));
+      }
+    }
+  }).single('cover');
+  
+  uploadNoticeCover(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: '未找到文件' });
+    }
+    
+    const fileUrl = `/uploads/images/${req.file.filename}`;
+    
+    res.json({
+      success: true,
+      url: fileUrl,
+      filename: req.file.filename,
+      originalName: req.file.originalname
+    });
+  });
 });
 
 // ============================================================

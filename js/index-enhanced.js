@@ -33,41 +33,50 @@
         '活动策划': 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
     };
 
+    let isIndexInitialized = false;
+    
     // 等待 DOM 加载完成
     document.addEventListener('DOMContentLoaded', function() {
-        // 初始化数据
-        initData();
+        if (isIndexInitialized) return;
+        isIndexInitialized = true;
+        
+        try {
+            // 初始化数据
+            initData();
 
-        // 移动端菜单切换
-        const mobileMenuBtn = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        if (mobileMenuBtn && mobileMenu) {
-            mobileMenuBtn.addEventListener('click', function() {
-                mobileMenu.classList.toggle('hidden');
-            });
-        }
+            // 移动端菜单切换
+            const mobileMenuBtn = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
 
-        // 用户菜单切换
-        const userMenuBtn = document.getElementById('user-menu-button');
-        const userMenu = document.getElementById('user-menu');
-        if (userMenuBtn && userMenu) {
-            userMenuBtn.addEventListener('click', function() {
-                userMenu.classList.toggle('hidden');
-            });
+            // 用户菜单切换
+            const userMenuBtn = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            if (userMenuBtn && userMenu) {
+                userMenuBtn.addEventListener('click', function() {
+                    userMenu.classList.toggle('hidden');
+                });
 
-            document.addEventListener('click', function(event) {
-                if (!userMenuBtn.contains(event.target) && !userMenu.contains(event.target)) {
-                    userMenu.classList.add('hidden');
-                }
-            });
-        }
+                document.addEventListener('click', function(event) {
+                    if (!userMenuBtn.contains(event.target) && !userMenu.contains(event.target)) {
+                        userMenu.classList.add('hidden');
+                    }
+                });
+            }
 
-        // 监听数据同步事件
-        if (window.DataSync) {
-            window.DataSync.listen(DataSync.EventTypes.ALL, function(event) {
-                console.log('[Index] 数据更新:', event.type);
-                renderAll();
-            });
+            // 监听数据同步事件
+            if (window.DataSync) {
+                window.DataSync.listen(DataSync.EventTypes.ALL, function(event) {
+                    console.log('[Index] 数据更新:', event.type);
+                    renderAll();
+                });
+            }
+        } catch (error) {
+            console.error('[Index] 初始化失败:', error);
         }
     });
 
@@ -115,130 +124,155 @@
     }
 
     /**
-     * 渲染轮播图
+     * 渲染轮播图（从 API 动态加载）
      */
-    function renderBanners() {
+    async function renderBanners() {
         const container = document.getElementById('banner-container');
         const indicators = document.getElementById('banner-indicators');
         
         if (!container || !indicators) return;
 
-        // 优先使用 DataAPI 的数据
         let banners = [];
-        if (window.DataAPI) {
-            banners = window.DataAPI.getBanners();
+
+        // 从 API 获取轮播图数据
+        try {
+            const res = await fetch(`${API_SERVER}/banners`);
+            if (res.ok) {
+                banners = await res.json();
+                // 只显示已发布的
+                banners = banners.filter(b => b.status !== 'draft');
+            }
+        } catch (e) {
+            console.error('加载轮播图失败:', e);
         }
 
-        // 如果没有数据，添加默认 Banner
+        // 如果 API 无数据，回退到 DataAPI
         if (!banners || banners.length === 0) {
-            banners = [
-                {
-                    id: 1,
-                    img: 'https://p26-doubao-search-sign.byteimg.com/labis/3e50046a89d633ced89e4d242d60f064~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32',
-                    order: 1,
-                    title: '欢迎来到游雁学院',
-                    description: '持续学习，成就更好的自己'
-                }
-            ];
+            if (window.DataAPI) {
+                banners = window.DataAPI.getBanners();
+            }
+        }
+
+        // 最终兜底
+        if (!banners || banners.length === 0) {
+            banners = [{
+                id: 1,
+                img: '',
+                order: 1,
+                title: '欢迎来到游雁学院',
+                description: '持续学习，成就更好的自己'
+            }];
         }
 
         const sorted = [...banners].sort((a, b) => (a.order || 0) - (b.order || 0));
+        const total = sorted.length;
 
-        const slides = sorted.map((b, i) => {
-            const clickHandler = b.courseId ? 
-                `onclick="location.href='player.html?courseId=${b.courseId}'"` : 
+        // ---- 重建轮播 HTML ----
+        // 第一张用 relative（撑开容器高度），其余 absolute 叠放
+        const slidesHtml = sorted.map((b, i) => {
+            const clickHandler = b.courseId ?
+                `onclick="location.href='player.html?courseId=${b.courseId}'"` :
                 `onclick="location.href='course.html'"`;
-            return `
-            <div class="carousel-slide absolute inset-0 transition-opacity duration-500 ${i===0?'opacity-100':'opacity-0'}" ${clickHandler}>
-                ${b.img ? `<img src="${b.img}" alt="${b.title||'Banner'}" class="w-full h-full object-cover cursor-pointer" onerror="this.parentElement.querySelector('div').style.display='flex'">` : ''}
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-center justify-center">
-                    <div class="text-center text-white px-4">
-                        <h2 class="text-2xl md:text-4xl font-bold mb-4">${b.title || ''}</h2>
-                        <p class="text-sm md:text-lg opacity-90">${b.description || ''}</p>
-                        ${b.courseId ? '<div class="mt-3"><span class="px-4 py-2 bg-white/20 backdrop-blur rounded-full text-white text-sm">点击查看课程</span></div>' : ''}
-                    </div>
-                </div>
-            </div>
-        `}).join('');
+            const imgTag = b.img ?
+                `<img src="${b.img}" alt="轮播图" class="w-full h-auto block">` :
+                `<div class="w-full bg-gradient-to-br from-indigo-500 to-purple-600" style="padding-top:37.5%"></div>`;
+            if (i === 0) {
+                // 第一张 relative，撑开容器高度（用 style 强制覆盖任何外部 CSS）
+                return `<div class="carousel-slide cursor-pointer" data-idx="0" ${clickHandler} style="position:relative;width:100%;">
+                    ${imgTag}
+                    ${b.courseId ? `<div style="position:absolute;bottom:24px;right:24px;z-index:10;"><span class="inline-block px-4 py-2 bg-white/20 backdrop-blur rounded-full text-white text-sm">点击查看课程 →</span></div>` : ''}
+                </div>`;
+            } else {
+                // 其余绝对定位叠放，初始透明
+                return `<div class="carousel-slide cursor-pointer" data-idx="${i}" ${clickHandler} style="position:absolute;top:0;left:0;right:0;bottom:0;opacity:0;transition:opacity 0.5s;z-index:${i+1};">
+                    ${imgTag}
+                    ${b.courseId ? `<div style="position:absolute;bottom:24px;right:24px;z-index:10;"><span class="inline-block px-4 py-2 bg-white/20 backdrop-blur rounded-full text-white text-sm">点击查看课程 →</span></div>` : ''}
+                </div>`;
+            }
+        }).join('');
 
-        const dots = sorted.map((b, i) =>
+        const dotsHtml = sorted.map((b, i) =>
             `<button class="carousel-indicator ${i===0?'active':''}" data-idx="${i}" aria-label="第${i+1}张"></button>`
         ).join('');
 
-        // 保留按钮
-        const prevBtn = document.getElementById('prev-slide');
-        const nextBtn = document.getElementById('next-slide');
-        
-        // 清空容器（保留按钮）
-        const tempPrev = prevBtn ? prevBtn.cloneNode(true) : null;
-        const tempNext = nextBtn ? nextBtn.cloneNode(true) : null;
-        container.innerHTML = slides;
-        if (tempPrev) container.appendChild(tempPrev);
-        if (tempNext) container.appendChild(nextBtn);
-        
-        indicators.innerHTML = dots;
-        
-        initCarousel(sorted.length);
+        // 注入 slides 和控制按钮
+        container.innerHTML = slidesHtml +
+            `<button id="prev-slide" class="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm text-gray-800 flex items-center justify-center hover:bg-white transition-all shadow-lg hover:shadow-xl active:scale-95" style="z-index:30" aria-label="上一张"><i class="fa fa-chevron-left"></i></button>` +
+            `<button id="next-slide" class="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm text-gray-800 flex items-center justify-center hover:bg-white transition-all shadow-lg hover:shadow-xl active:scale-95" style="z-index:30" aria-label="下一张"><i class="fa fa-chevron-right"></i></button>`;
+
+        indicators.innerHTML = dotsHtml;
+
+        initCarousel(container, total);
     }
 
     let currentSlide = 0;
     let carouselTimer = null;
 
-    function initCarousel(totalSlides) {
-        const slides = document.querySelectorAll('.carousel-slide');
-        const indicators = document.querySelectorAll('.carousel-indicator');
-        
-        if (!slides.length) return;
+    function initCarousel(container, totalSlides) {
+        // 清除旧定时器
+        if (carouselTimer) { clearInterval(carouselTimer); carouselTimer = null; }
+        currentSlide = 0;
+
+        function getSlides() { return Array.from(container.querySelectorAll('.carousel-slide')); }
+        function getDots()   { return Array.from(document.querySelectorAll('.carousel-indicator')); }
 
         function goToSlide(index) {
-            slides.forEach((slide, i) => {
-                slide.classList.toggle('opacity-100', i === index);
-                slide.classList.toggle('opacity-0', i !== index);
+            getSlides().forEach((slide, i) => {
+                const isFirst = slide.dataset.idx === '0';
+                if (i === index) {
+                    slide.style.opacity = '1';
+                    slide.style.zIndex  = String(totalSlides + 2);
+                } else {
+                    slide.style.opacity = '0';
+                    slide.style.zIndex  = isFirst ? '1' : String(parseInt(slide.dataset.idx) + 1);
+                }
             });
-            indicators.forEach((dot, i) => {
-                dot.classList.toggle('active', i === index);
-            });
+            getDots().forEach((dot, i) => dot.classList.toggle('active', i === index));
             currentSlide = index;
         }
 
-        function nextSlide() {
-            const next = (currentSlide + 1) % totalSlides;
-            goToSlide(next);
-        }
+        function nextSlide() { goToSlide((currentSlide + 1) % totalSlides); }
+        function prevSlide() { goToSlide((currentSlide - 1 + totalSlides) % totalSlides); }
+
+        // 初始显示第一张
+        goToSlide(0);
 
         // 自动轮播
-        if (totalSlides > 1 && !carouselTimer) {
+        if (totalSlides > 1) {
             carouselTimer = setInterval(nextSlide, 5000);
         }
 
         // 指示器点击
-        indicators.forEach(dot => {
+        getDots().forEach(dot => {
             dot.addEventListener('click', () => {
-                const idx = parseInt(dot.dataset.idx);
-                goToSlide(idx);
-                if (carouselTimer) {
-                    clearInterval(carouselTimer);
-                    carouselTimer = setInterval(nextSlide, 5000);
-                }
+                goToSlide(parseInt(dot.dataset.idx));
+                if (carouselTimer) { clearInterval(carouselTimer); carouselTimer = setInterval(nextSlide, 5000); }
             });
         });
 
-        // 按钮事件
-        const prevBtn = document.getElementById('prev-slide');
-        const nextBtn = document.getElementById('next-slide');
-        
-        if (prevBtn) {
-            prevBtn.addEventListener('click', () => {
-                const prev = (currentSlide - 1 + totalSlides) % totalSlides;
-                goToSlide(prev);
-            });
-        }
-        
-        if (nextBtn) {
-            nextBtn.addEventListener('click', () => {
+        // 左右按钮（事件委托，只绑一次）
+        container.addEventListener('click', function carouselClick(e) {
+            if (e.target.closest('#prev-slide')) {
+                e.stopPropagation();
+                prevSlide();
+                if (carouselTimer) { clearInterval(carouselTimer); carouselTimer = setInterval(nextSlide, 5000); }
+            } else if (e.target.closest('#next-slide')) {
+                e.stopPropagation();
                 nextSlide();
-            });
-        }
+                if (carouselTimer) { clearInterval(carouselTimer); carouselTimer = setInterval(nextSlide, 5000); }
+            }
+        });
+
+        // 触摸滑动支持
+        let touchStartX = 0;
+        container.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+        container.addEventListener('touchend', e => {
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) {
+                diff > 0 ? nextSlide() : prevSlide();
+                if (carouselTimer) { clearInterval(carouselTimer); carouselTimer = setInterval(nextSlide, 5000); }
+            }
+        }, { passive: true });
     }
 
     /**
@@ -276,11 +310,26 @@
     /**
      * 显示公告详情弹窗
      */
-    window.showNoticeDetail = function(noticeId) {
+    window.showNoticeDetail = async function(noticeId) {
         let notices = [];
-        if (window.DataAPI) {
-            notices = window.DataAPI.getNotices() || [];
+        
+        // 优先从 API 获取
+        try {
+            const res = await fetch(`${API_SERVER}/notices`);
+            if (res.ok) {
+                notices = await res.json();
+            }
+        } catch (e) {
+            console.error('加载公告失败:', e);
         }
+        
+        // 回退到 DataAPI
+        if (!notices || notices.length === 0) {
+            if (window.DataAPI) {
+                notices = window.DataAPI.getNotices() || [];
+            }
+        }
+        
         const notice = notices.find(n => n.id === noticeId);
         if (!notice) return;
 
@@ -289,36 +338,76 @@
         modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
         modal.innerHTML = `
             <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeNoticeModal()"></div>
-            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-                <div class="flex items-center justify-between px-6 py-4 border-b">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col animate-fade-in">
+                <!-- 头部 -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+                    <div class="flex items-center space-x-3 flex-1 min-w-0">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
                             <i class="fas fa-bullhorn text-white"></i>
                         </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-800">${notice.title || '公告详情'}</h3>
-                            <p class="text-xs text-gray-500">${notice.publishedAt || notice.createdAt || ''}</p>
+                        <div class="min-w-0">
+                            <h3 class="font-semibold text-gray-800 text-lg truncate">${notice.title || '公告详情'}</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                ${notice.pinned ? '<span class="text-red-500 mr-1"><i class="fas fa-thumbtack"></i>置顶</span>' : ''}
+                                ${notice.publishedAt || notice.createdAt || ''}
+                            </p>
                         </div>
                     </div>
-                    <button onclick="closeNoticeModal()" class="text-gray-400 hover:text-gray-600 transition">
+                    <button onclick="closeNoticeModal()" class="text-gray-400 hover:text-gray-600 transition ml-2 flex-shrink-0">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <div class="flex-1 overflow-y-auto p-6">
-                    <div class="prose max-w-none">
-                        ${notice.content || '暂无内容'}
+                
+                <!-- 内容区 -->
+                <div class="flex-1 overflow-y-auto">
+                    <!-- 封面图 -->
+                    ${notice.cover ? `
+                        <div class="w-full h-48 md:h-64 overflow-hidden">
+                            <img src="${notice.cover}" alt="${notice.title}" class="w-full h-full object-cover">
+                        </div>
+                    ` : ''}
+                    
+                    <!-- 富文本内容 -->
+                    <div class="p-6 md:p-8">
+                        <div class="prose prose-indigo max-w-none notice-content">
+                            ${notice.content || '<p class="text-gray-400 text-center py-8">暂无内容</p>'}
+                        </div>
                     </div>
                 </div>
-                ${notice.urgent ? '<div class="px-6 py-3 bg-red-50 border-t"><span class="text-red-600 text-sm"><i class="fas fa-exclamation-circle mr-1"></i>紧急公告</span></div>' : ''}
+                
+                <!-- 底部 -->
+                <div class="px-6 py-4 border-t border-gray-100 flex justify-end flex-shrink-0">
+                    <button onclick="closeNoticeModal()" class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition font-medium">
+                        关闭
+                    </button>
+                </div>
             </div>
         `;
         document.body.appendChild(modal);
-        modal.classList.add('animate-fade-in');
+        
+        // 阻止事件冒泡
+        modal.querySelector('.relative').addEventListener('click', (e) => e.stopPropagation());
+        
+        // ESC 键关闭
+        const handleEsc = (e) => {
+            if (e.key === 'Escape') {
+                closeNoticeModal();
+                document.removeEventListener('keydown', handleEsc);
+            }
+        };
+        document.addEventListener('keydown', handleEsc);
+        
+        // 锁定滚动
+        document.body.style.overflow = 'hidden';
     };
 
     window.closeNoticeModal = function() {
         const modal = document.getElementById('notice-modal');
-        if (modal) modal.remove();
+        if (modal) {
+            modal.remove();
+            // 恢复滚动
+            document.body.style.overflow = '';
+        }
     };
 
     /**
@@ -427,29 +516,32 @@
 
         container.innerHTML = `
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-gray-800 dark:text-white">明星讲师</h2>
-                <a href="teacher.html" class="text-primary hover:underline flex items-center text-base">全部 <i class="fa fa-angle-right ml-1"></i></a>
+                <h2 class="text-xl font-bold text-gray-800">明星讲师</h2>
+                <a href="teacher.html" class="text-indigo-600 hover:text-indigo-700 hover:underline flex items-center text-sm font-medium">全部 <i class="fa fa-angle-right ml-1"></i></a>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 ${featured.map(l => {
                     const skills = l.skills || [];
                     const skillTags = Array.isArray(skills) ? skills : skills.split(',').map(s => s.trim());
-                    const levelName = l.levelName || '讲师';
+                    const levelName = l.levelName || '初级讲师';
                     const courseCount = l.courseCount || 0;
                     
                     return `
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer" onclick="location.href='teacher.html'">
+                    <div class="group bg-white rounded-2xl border border-gray-100 p-5 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50/50 transition-all duration-300 cursor-pointer transform hover:-translate-y-0.5" onclick="location.href='teacher.html'">
                         <div class="flex items-center space-x-4">
-                            <div class="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-primary">
-                                <img src="${l.avatar || ''}" alt="${l.name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/64x64/667eea/white?text=${encodeURIComponent(l.name.charAt(0))}'">
+                            <div class="relative">
+                                <div class="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-indigo-50 to-purple-50 p-0.5">
+                                    <img src="${l.avatar || ''}" alt="${l.name}" class="w-full h-full rounded-full object-cover" onerror="this.src='https://placehold.co/64x64/f0f0f0/666?text=${encodeURIComponent(l.name.charAt(0))}'">
+                                </div>
+                                <div class="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-gray-800 dark:text-white mb-1">${l.name}</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">${levelName}</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">${courseCount}个原创内容</p>
+                                <h3 class="font-semibold text-gray-800 text-lg mb-1 group-hover:text-indigo-600 transition-colors">${l.name}</h3>
+                                <p class="text-sm text-gray-500 mb-1">${levelName}</p>
+                                <p class="text-sm text-gray-400 mb-3">${courseCount}个原创内容</p>
                                 <div class="flex flex-wrap gap-2">
                                     ${skillTags.slice(0, 2).map(skill => `
-                                        <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-1 rounded">${skill}</span>
+                                        <span class="text-xs font-medium bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full group-hover:bg-indigo-100 transition-colors">${skill}</span>
                                     `).join('')}
                                 </div>
                             </div>

@@ -103,7 +103,7 @@
 
 ### 管理后台
 ```
-管理主页:   http://localhost:3003/admin.html
+管理主页:   http://localhost:3003/dashboard.html
 课程管理:   http://localhost:3003/admin-course.html
 分类管理:   http://localhost:3003/admin-category.html
 讲师管理:   http://localhost:3003/admin-lecturer.html
@@ -183,7 +183,7 @@ npm start
 ```
 
 ### 2. 访问管理后台
-在浏览器中打开 `http://localhost:3003/admin.html`
+在浏览器中打开 `http://localhost:3003/dashboard.html`
 
 ### 3. 登录
 使用管理员账号登录（admin / admin2026）
@@ -204,7 +204,7 @@ npm start
 ## 文件结构
 
 ```
-├── admin.html           # 管理后台主页
+├── dashboard.html       # 管理后台主页（含考试管理）
 ├── admin-course.html    # 课程管理
 ├── admin-category.html  # 分类管理
 ├── admin-lecturer.html  # 讲师管理

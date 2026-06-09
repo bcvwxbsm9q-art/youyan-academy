@@ -66,6 +66,7 @@ __pycache__/
 Thumbs.db
 *.swp
 *.swo
+nul
 
 # Railway部署后会产生这些
 .vercel/

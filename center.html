@@ -63,9 +63,11 @@
                 </a>
                 <nav class="hidden md:flex space-x-1">
                     <a href="index.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">首页</a>
-                    <a href="course.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">课程中心</a>
-                    <a href="teacher.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">讲师风采</a>
-                    <a href="center.html" class="nav-item active px-4 py-2 rounded-lg text-primary font-medium hover:bg-primary/5 transition-colors">个人中心</a>
+                    <a href="training-plan.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">培训</a>
+                    <a href="course.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">课程</a>
+                    <a href="teacher.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">讲师</a>
+                    <a href="library.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">书吧</a>
+                    <a href="center.html" class="nav-item active px-4 py-2 rounded-lg text-primary font-medium hover:bg-primary/5 transition-colors">我的</a>
                 </nav>
                 <div class="flex items-center space-x-3">
                     <div id="user-info" class="hidden md:flex items-center space-x-3">
@@ -73,11 +75,16 @@
                             <i class="fa fa-user text-white text-xs" id="user-avatar-icon"></i>
                         </div>
                         <span class="text-sm font-medium text-primary" id="user-display-name">用户</span>
+                        <div class="relative">
+                            <button onclick="window.location.href='messages.html'" class="relative p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary cursor-pointer" title="消息通知">
+                                <i class="fa fa-bell text-lg"></i>
+                                <span id="notification-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1">0</span>
+                            </button>
+                        </div>
                         <button onclick="handleLogout()" id="logout-btn-desktop" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors" title="退出登录">
                             <i class="fa fa-sign-out text-lg"></i>
                         </button>
                     </div>
-                    <a href="login.html" id="login-btn" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-primary transition-colors">登录</a>
                     <button class="md:hidden text-gray-600 p-2 hover:bg-gray-100 rounded-lg" id="mobile-menu-button">
                         <i class="fa fa-bars text-xl"></i>
                     </button>
@@ -98,10 +105,12 @@
                 </div>
                 <nav class="flex flex-col space-y-1">
                     <a href="index.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">首页</a>
-                    <a href="course.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">课程中心</a>
-                    <a href="teacher.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">讲师风采</a>
-                    <a href="center.html" class="flex items-center px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium">个人中心</a>
-                    <a href="admin.html" id="mobile-admin-link" class="hidden flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">
+                    <a href="training-plan.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">培训</a>
+                    <a href="course.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">课程</a>
+                    <a href="teacher.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">讲师</a>
+                    <a href="library.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">书吧</a>
+                    <a href="center.html" class="flex items-center px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium">我的</a>
+                    <a href="dashboard.html" id="mobile-admin-link" class="hidden flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50">
                         <i class="fa fa-cog w-6 mr-2"></i>管理端
                     </a>
                     <button onclick="handleLogout()" id="mobile-logout-btn" class="hidden flex items-center px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
@@ -472,6 +481,8 @@
         </div>
     </div>
 
+    <script src="js/auth-modal.js"></script>
+    <script src="js/auth-guard.js"></script>
     <script src="js/data-sync.js"></script>
     <script src="data-api.js"></script>
     <script>
@@ -1232,12 +1243,7 @@
         }
         
         function handleLogout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            sessionStorage.removeItem('token');
-            sessionStorage.removeItem('user');
-            showToast('已退出登录', 'success');
-            setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+            AuthGuard.logout();
         }
         
         function logout() {

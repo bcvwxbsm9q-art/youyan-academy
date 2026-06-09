@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>游雁学院 - 书吧</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/mobile-enhanced.css?v=20260520b">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#667eea',
+                        secondary: '#764ba2',
+                        dark: '#0f172a',
+                        darkgray: '#1f2937',
+                        lightgray: '#9ca3af',
+                        accent: '#f59e0b'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.5s ease-in-out',
+                        'scale-in': 'scaleIn 0.3s ease-in-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(30px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.9)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        }
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-gradient {
+                background-clip: text;
+                -webkit-background-clip: text;
+                color: transparent;
+                background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            .bg-gradient-primary {
+                background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            .card-hover {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .card-hover:hover {
+                transform: translateY(-6px) scale(1.02);
+                box-shadow: 0 25px 35px -10px rgba(102, 126, 234, 0.2), 0 10px 15px -5px rgba(102, 126, 234, 0.1);
+            }
+            .line-clamp-2 {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .line-clamp-3 {
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .category-tab.active {
+            background-color: #667eea !important;
+            color: white !important;
+        }
+            .btn-press {
+                transition: all 0.15s ease;
+            }
+            .btn-press:active {
+                transform: scale(0.97);
+            }
+            .nav-link-active {
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+                color: #667eea;
+            }
+            .nav-link-active i {
+                color: #667eea;
+            }
+        }
+        
+        body {
+            opacity: 0;
+            animation: pageLoad 0.6s ease forwards;
+        }
+        
+        @keyframes pageLoad {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            0% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes slideInLeft {
+            0% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutLeft {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes fadeScaleIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes fadeScaleOut {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        .slide-in-right {
+            animation: slideInRight 0.35s ease-out;
+        }
+        
+        .slide-out-right {
+            animation: slideOutRight 0.3s ease-in;
+        }
+        
+        .slide-in-left {
+            animation: slideInLeft 0.35s ease-out;
+        }
+        
+        .slide-out-left {
+            animation: slideOutLeft 0.3s ease-in;
+        }
+        
+        .fade-scale-in {
+            animation: fadeScaleIn 0.3s ease-out;
+        }
+        
+        .fade-scale-out {
+            animation: fadeScaleOut 0.25s ease-in;
+        }
+        
+        .animate-pulse-custom {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .animate-bounce-in {
+            animation: bounceIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+        }
+        
+        .section-fade-in {
+            animation: sectionFadeIn 0.4s ease-out;
+        }
+        
+        @keyframes sectionFadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .btn-ripple {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ripple-effect {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        }
+        
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+        
+        .book-card {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .book-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .book-card:hover::before {
+            opacity: 1;
+        }
+        
+        .bag-badge {
+            animation: badgePop 0.3s ease-out;
+        }
+        
+        @keyframes badgePop {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.3);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeletonLoading 1.5s infinite;
+        }
+        
+        @keyframes skeletonLoading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+        
+        .carousel-dot.active {
+            background-color: white;
+        }
+        
+    </style>
+</head>
+<body class="bg-gray-50">
+    <header class="bg-white/95 dark:bg-white/95 backdrop-blur-md shadow-sm fixed w-full top-0 z-50 transition-all duration-300" style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; z-index: 9999 !important;">
+        <div class="container-responsive">
+            <div class="flex justify-between items-center py-3">
+                <a href="index.html" class="flex items-center space-x-2 group">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                        <i class="fa fa-graduation-cap text-white text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gradient hidden sm:block">游雁学院</span>
+                </a>
+                
+                <nav class="hidden md:flex space-x-1">
+                    <a href="index.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">首页</a>
+                    <a href="training-plan.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">培训</a>
+                    <a href="course.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">课程</a>
+                    <a href="teacher.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">讲师</a>
+                    <a href="library.html" class="nav-item active px-4 py-2 rounded-lg text-primary font-medium hover:bg-primary/5 transition-colors">书吧</a>
+                    <a href="center.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">我的</a>
+                </nav>
+                
+                <div class="flex items-center space-x-3">
+                    <div id="user-info" class="hidden md:flex items-center space-x-3">
+                        <div class="w-7 h-7 rounded-full bg-gradient-primary flex items-center justify-center">
+                            <i class="fa fa-user text-white text-xs" id="user-avatar-icon"></i>
+                        </div>
+                        <span class="text-sm font-medium text-primary" id="user-display-name">用户</span>
+                        <div class="relative">
+                            <button onclick="window.location.href='messages.html'" class="relative p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary cursor-pointer" title="消息通知">
+                                <i class="fa fa-bell text-lg"></i>
+                                <span id="notification-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1">0</span>
+                            </button>
+                        </div>
+                        <button onclick="handleLogout()" id="logout-btn-desktop" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors" title="退出登录">
+                            <i class="fa fa-sign-out text-lg"></i>
+                        </button>
+                    </div>
+                    <button class="md:hidden text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors" id="mobile-menu-button" aria-label="菜单">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="md:hidden hidden bg-white border-t border-gray-100 shadow-lg" id="mobile-menu">
+            <div class="container-responsive py-3">
+                <div id="mobile-user-info" class="hidden mb-3 pb-3 border-b border-gray-100">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center">
+                            <i class="fa fa-user text-white"></i>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <p class="font-medium text-primary" id="mobile-user-name">用户</p>
+                            <button onclick="handleLogout()" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors" title="退出登录">
+                                <i class="fa fa-sign-out text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <nav class="flex flex-col space-y-1">
+                    <a href="index.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">首页</a>
+                    <a href="training-plan.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">培训</a>
+                    <a href="course.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">课程</a>
+                    <a href="teacher.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">讲师</a>
+                    <a href="library.html" class="flex items-center px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium">书吧</a>
+                    <a href="center.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">我的</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-[72px] pb-16">
+        <div class="container-responsive">
+            <div class="flex gap-6">
+                <aside class="w-56 shrink-0 hidden lg:block sticky top-[72px] z-[40] self-start h-fit">
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="bg-gradient-primary px-4 py-3">
+                            <h3 class="text-white font-semibold text-sm">图书分类</h3>
+                        </div>
+                        <nav class="p-2 space-y-0">
+                            <button onclick="filterByCategory('all')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span>全部分类</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">50</span>
+                            </button>
+                            <div class="border-t border-gray-100 my-1"></div>
+                            <button onclick="filterByCategory('A')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">A</span>政治/军事</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">8</span>
+                            </button>
+                            <button onclick="filterByCategory('B')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">B</span>哲学/宗教</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">6</span>
+                            </button>
+                            <button onclick="filterByCategory('C')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">C</span>管理学</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">10</span>
+                            </button>
+                            <button onclick="filterByCategory('D')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">D</span>心理学</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">7</span>
+                            </button>
+                            <button onclick="filterByCategory('E')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">E</span>经济</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">9</span>
+                            </button>
+                            <button onclick="filterByCategory('G')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">G</span>游戏开发</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">5</span>
+                            </button>
+                            <button onclick="filterByCategory('H')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">H</span>保健/养生</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">8</span>
+                            </button>
+                            <button onclick="filterByCategory('I')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">I</span>文学/小说</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">15</span>
+                            </button>
+                            <button onclick="filterByCategory('J')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">J</span>艺术/设计</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">11</span>
+                            </button>
+                            <button onclick="filterByCategory('K')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">K</span>历史/传记</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">12</span>
+                            </button>
+                            <button onclick="filterByCategory('L')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">L</span>休闲/爱好</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">6</span>
+                            </button>
+                            <button onclick="filterByCategory('M')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">M</span>教育/体育</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">7</span>
+                            </button>
+                            <button onclick="filterByCategory('N')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">N</span>计算机/网络</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">13</span>
+                            </button>
+                            <button onclick="filterByCategory('O')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">O</span>办公软件</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">4</span>
+                            </button>
+                            <button onclick="filterByCategory('P')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">P</span>动画/电影</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">5</span>
+                            </button>
+                            <button onclick="filterByCategory('Q')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">Q</span>市场营销</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">8</span>
+                            </button>
+                            <button onclick="filterByCategory('R')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">R</span>企业管理</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">9</span>
+                            </button>
+                            <button onclick="filterByCategory('S')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">S</span>科普读物</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">7</span>
+                            </button>
+                            <button onclick="filterByCategory('T')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">T</span>旅游/地图</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">6</span>
+                            </button>
+                            <button onclick="filterByCategory('U')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">U</span>成功/励志</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">10</span>
+                            </button>
+                            <button onclick="filterByCategory('V')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">V</span>演讲/沟通</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">5</span>
+                            </button>
+                            <button onclick="filterByCategory('W')" class="category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors text-sm">
+                                <span><span class="text-primary font-medium mr-2">W</span>党建</span>
+                                <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-sm">4</span>
+                            </button>
+                        </nav>
+                        
+
+                    </div>
+                </aside>
+
+                <div class="flex-1 min-w-0">
+
+                    <div id="home-section" class="section-content">
+                        <div class="carousel-container relative bg-white rounded-2xl overflow-hidden shadow-sm mb-6">
+                            <div class="carousel-track flex transition-transform duration-500 ease-out">
+                                <div class="carousel-item w-full flex-shrink-0">
+                                    <img src="https://picsum.photos/seed/carousel1/1200/400" alt="轮播图1" class="w-full h-48 md:h-56 object-cover">
+                                    <div class="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center">
+                                        <div class="px-8">
+                                            <h3 class="text-2xl font-bold text-white mb-2">新书上架</h3>
+                                            <p class="text-white/80">精选热门技术书籍，限时借阅优惠</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="carousel-item w-full flex-shrink-0">
+                                    <img src="https://picsum.photos/seed/carousel2/1200/400" alt="轮播图2" class="w-full h-48 md:h-56 object-cover">
+                                    <div class="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center">
+                                        <div class="px-8">
+                                            <h3 class="text-2xl font-bold text-white mb-2">阅读挑战</h3>
+                                            <p class="text-white/80">参与月度阅读挑战，赢取精美礼品</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="carousel-item w-full flex-shrink-0">
+                                    <img src="https://picsum.photos/seed/carousel3/1200/400" alt="轮播图3" class="w-full h-48 md:h-56 object-cover">
+                                    <div class="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center">
+                                        <div class="px-8">
+                                            <h3 class="text-2xl font-bold text-white mb-2">电子书专区</h3>
+                                            <p class="text-white/80">海量电子书资源，随时随地阅读</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button class="carousel-prev absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-md hover:bg-white transition-colors z-10">
+                                <i class="fa fa-chevron-left text-gray-700"></i>
+                            </button>
+                            <button class="carousel-next absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-md hover:bg-white transition-colors z-10">
+                                <i class="fa fa-chevron-right text-gray-700"></i>
+                            </button>
+                            
+                            <div class="carousel-indicators absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                                <button class="w-2 h-2 bg-white/60 rounded-full hover:bg-white transition-colors carousel-dot active"></button>
+                                <button class="w-2 h-2 bg-white/60 rounded-full hover:bg-white transition-colors carousel-dot"></button>
+                                <button class="w-2 h-2 bg-white/60 rounded-full hover:bg-white transition-colors carousel-dot"></button>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <div class="flex gap-4 mb-4 flex-wrap">
+                                <div class="flex-1 relative min-w-[200px]">
+                                    <i onclick="performSearch()" class="fa fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-primary transition-colors"></i>
+                                    <input type="text" id="book-search" placeholder="搜索书籍..." class="w-full pl-12 pr-12 py-3 border-2 border-gray-200 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" onkeyup="handleSearchKeyup(event)">
+                                    <button id="search-clear-btn" onclick="clearSearch()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors hidden">
+                                        <i class="fa fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="relative hidden sm:block">
+                                    <select id="book-filter" class="appearance-none px-4 py-3 pr-10 border-2 border-gray-200 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white" onchange="onFilterChange()">
+                                        <option value="all">全部</option>
+                                        <option value="ebook">电子书</option>
+                                        <option value="physical">实体书</option>
+                                    </select>
+                                    <i class="fa fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                                </div>
+                                <div class="relative hidden md:block">
+                                    <select id="book-sort" class="appearance-none px-4 py-3 pr-10 border-2 border-gray-200 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white" onchange="onSortChange()">
+                                        <option value="default">默认排序</option>
+                                        <option value="newest">最新上架</option>
+                                        <option value="borrowCount">借阅最多</option>
+                                        <option value="score">评分最高</option>
+                                    </select>
+                                    <i class="fa fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                                </div>
+                                <button onclick="openMobileCategoryDrawer()" class="sm:hidden px-4 py-3 border-2 border-gray-200 rounded-2xl hover:border-primary transition-colors flex items-center gap-2">
+                                    <i class="fa fa-filter text-gray-500"></i>
+                                    <span class="text-gray-600 text-sm">筛选</span>
+                                </button>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <h2 class="text-lg font-bold text-gray-800">新书速递</h2>
+                                        <button onclick="filterNewBooks('all')" id="cat-all" class="text-primary text-sm font-medium">全部</button>
+                                        <span class="text-gray-300">|</span>
+                                        <button onclick="filterNewBooks('literature')" id="cat-literature" class="text-gray-600 text-sm hover:text-primary transition-colors">文学</button>
+                                        <button onclick="filterNewBooks('novel')" id="cat-novel" class="text-gray-600 text-sm hover:text-primary transition-colors">小说</button>
+                                        <button onclick="filterNewBooks('history')" id="cat-history" class="text-gray-600 text-sm hover:text-primary transition-colors">历史文化</button>
+                                        <button onclick="filterNewBooks('society')" id="cat-society" class="text-gray-600 text-sm hover:text-primary transition-colors">社会纪实</button>
+                                        <button onclick="filterNewBooks('science')" id="cat-science" class="text-gray-600 text-sm hover:text-primary transition-colors">科学新知</button>
+                                        <button onclick="filterNewBooks('art')" id="cat-art" class="text-gray-600 text-sm hover:text-primary transition-colors">艺术设计</button>
+                                        <button onclick="filterNewBooks('business')" id="cat-business" class="text-gray-600 text-sm hover:text-primary transition-colors">商业经管</button>
+                                        <button onclick="filterNewBooks('comic')" id="cat-comic" class="text-gray-600 text-sm hover:text-primary transition-colors">绘本漫画</button>
+                                    </div>
+                                    <button onclick="showAllCategories()" class="text-gray-500 text-sm hover:text-primary transition-colors">更多&gt;</button>
+                                </div>
+                            </div>
+                            
+                            <div id="new-books-grid">
+                                <div class="grid grid-cols-5 gap-4">
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(1)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book1/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm text-gray-600 text-xs rounded-full shadow-sm border border-gray-200/50 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                        实体书
+                                    </span>
+                                    <button onclick="event.stopPropagation(); toggleFavorite(1)" class="favorite-btn absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm border border-gray-200/50 hover:bg-red-50 hover:text-red-500 transition-colors" title="收藏">
+                                        <i class="fa fa-heart-o text-gray-400 text-sm"></i>
+                                    </button>
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">深入理解计算机系统</h4>
+                                    <p class="text-gray-500 text-xs mt-1">兰德尔·E·布莱恩特</p>
+                                    <div class="mt-2 flex items-center gap-1">
+                                        <div class="flex items-center text-amber-500">
+                                            <i class="fa fa-star text-xs"></i>
+                                            <span class="text-xs font-medium ml-0.5">4.8</span>
+                                        </div>
+                                        <span class="text-gray-300">|</span>
+                                        <span class="text-gray-400 text-xs">156次借阅</span>
+                                    </div>
+                                    <div class="mt-1 flex items-center justify-between">
+                                        <span class="text-green-600 text-xs font-medium">可借</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(2)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book2/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm text-primary text-xs rounded-full shadow-sm border border-primary/20 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                        电子书
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">JavaScript高级程序设计</h4>
+                                    <p class="text-gray-500 text-xs mt-1">马特·弗里斯比</p>
+                                    <div class="mt-2 flex items-center justify-between">
+                                        <span class="text-gray-400 text-xs font-medium">已借出</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(3)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book3/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm text-primary text-xs rounded-full shadow-sm border border-primary/20 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                        电子书
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">Vue.js设计与实现</h4>
+                                    <p class="text-gray-500 text-xs mt-1">霍春阳</p>
+                                    <div class="mt-2 flex items-center justify-between">
+                                        <span class="text-green-600 text-xs font-medium">免费</span>
+                                        <button onclick="event.stopPropagation(); readEbook(3)" class="text-primary text-xs hover:text-primary/80">立即阅读</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(4)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book4/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm text-gray-600 text-xs rounded-full shadow-sm border border-gray-200/50 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                        实体书
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">代码大全</h4>
+                                    <p class="text-gray-500 text-xs mt-1">史蒂夫·麦康奈尔</p>
+                                    <div class="mt-2 flex items-center justify-between">
+                                        <span class="text-green-600 text-xs font-medium">可借</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(5)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book5/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm text-primary text-xs rounded-full shadow-sm border border-primary/20 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                        电子书
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">Python编程：从入门到实践</h4>
+                                    <p class="text-gray-500 text-xs mt-1">埃里克·马瑟斯</p>
+                                    <div class="mt-2 flex items-center justify-between">
+                                        <span class="text-green-600 text-xs font-medium">免费</span>
+                                        <button onclick="event.stopPropagation(); readEbook(5)" class="text-primary text-xs hover:text-primary/80">立即阅读</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(6)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book6/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm text-gray-600 text-xs rounded-full shadow-sm border border-gray-200/50 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                        实体书
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">设计模式</h4>
+                                    <p class="text-gray-500 text-xs mt-1">Erich Gamma</p>
+                                    <div class="mt-2 flex items-center justify-between">
+                                        <span class="text-gray-400 text-xs font-medium">已借出</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(7)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book7/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm text-gray-600 text-xs rounded-full shadow-sm border border-gray-200/50 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                        实体书
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">人月神话</h4>
+                                    <p class="text-gray-500 text-xs mt-1">Frederick P. Brooks</p>
+                                    <div class="mt-2 flex items-center justify-between">
+                                        <span class="text-green-600 text-xs font-medium">可借</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(8)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book8/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm text-gray-600 text-xs rounded-full shadow-sm border border-gray-200/50 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                        实体书
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">高效能人士的七个习惯</h4>
+                                    <p class="text-gray-500 text-xs mt-1">史蒂芬·柯维</p>
+                                    <div class="mt-2 flex items-center justify-between">
+                                        <span class="text-green-600 text-xs font-medium">可借</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(9)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book9/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm text-gray-600 text-xs rounded-full shadow-sm border border-gray-200/50 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                        实体书
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">设计心理学</h4>
+                                    <p class="text-gray-500 text-xs mt-1">唐纳德·诺曼</p>
+                                    <div class="mt-2 flex items-center justify-between">
+                                        <span class="text-green-600 text-xs font-medium">可借</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(10)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book10/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm text-gray-600 text-xs rounded-full shadow-sm border border-gray-200/50 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                        实体书
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">写给大家看的设计书</h4>
+                                    <p class="text-gray-500 text-xs mt-1">威廉斯</p>
+                                    <div class="mt-2 flex items-center justify-between">
+                                        <span class="text-gray-400 text-xs font-medium">已借出</span>
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-center gap-2 mt-4">
+                                <button onclick="prevPage()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                                    <i class="fa fa-chevron-left text-gray-600"></i>
+                                </button>
+                                <span id="page-dot-1" class="w-2 h-2 bg-primary rounded-full cursor-pointer"></span>
+                                <span id="page-dot-2" class="w-2 h-2 bg-gray-300 rounded-full cursor-pointer"></span>
+                                <span id="page-dot-3" class="w-2 h-2 bg-gray-300 rounded-full cursor-pointer"></span>
+                                <span id="page-dot-4" class="w-2 h-2 bg-gray-300 rounded-full cursor-pointer"></span>
+                                <span id="page-dot-5" class="w-2 h-2 bg-gray-300 rounded-full cursor-pointer"></span>
+                                <button onclick="nextPage()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                                    <i class="fa fa-chevron-right text-gray-600"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="all-books-section" class="section-content hidden">
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <button onclick="filterBooks('all')" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium">全部</button>
+                            <button onclick="filterBooks('tech')" class="px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">技术开发</button>
+                            <button onclick="filterBooks('management')" class="px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">管理</button>
+                            <button onclick="filterBooks('design')" class="px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">设计</button>
+                            <button onclick="filterBooks('culture')" class="px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">文化</button>
+                        </div>
+                        <div id="books-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        </div>
+                    </div>
+
+                    <div id="ebooks-section" class="section-content hidden">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(3)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book3/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">Vue.js设计与实现</h4>
+                                    <p class="text-gray-500 text-xs mt-1">霍春阳</p>
+                                    <div class="mt-2">
+                                        <span class="text-green-600 text-xs font-medium">免费</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(5)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book5/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">Python编程：从入门到实践</h4>
+                                    <p class="text-gray-500 text-xs mt-1">埃里克·马瑟斯</p>
+                                    <div class="mt-2">
+                                        <span class="text-green-600 text-xs font-medium">免费</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(13)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book13/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">React设计模式</h4>
+                                    <p class="text-gray-500 text-xs mt-1">Michael Chan</p>
+                                    <div class="mt-2">
+                                        <span class="text-green-600 text-xs font-medium">免费</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(14)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book14/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">TypeScript实战指南</h4>
+                                    <p class="text-gray-500 text-xs mt-1">梁宵</p>
+                                    <div class="mt-2">
+                                        <span class="text-green-600 text-xs font-medium">免费</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(15)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book15/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">Docker容器技术</h4>
+                                    <p class="text-gray-500 text-xs mt-1">James Turnbull</p>
+                                    <div class="mt-2">
+                                        <span class="text-green-600 text-xs font-medium">免费</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(16)">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/book16/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                                </div>
+                                <div class="p-3">
+                                    <h4 class="font-medium text-gray-800 line-clamp-2 h-10">微服务架构设计</h4>
+                                    <p class="text-gray-500 text-xs mt-1">Sam Newman</p>
+                                    <div class="mt-2">
+                                        <span class="text-green-600 text-xs font-medium">免费</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="book-detail-modal" class="fixed inset-0 bg-black/50 z-[200] hidden fade-in flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden scale-in">
+            <button onclick="closeBookDetail()" class="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg transition-colors z-10">
+                <i class="fa fa-times text-gray-500"></i>
+            </button>
+            <div class="flex flex-col md:flex-row">
+                <div class="md:w-1/3 p-6">
+                    <img id="modal-cover" src="" alt="图书封面" class="w-full h-72 object-cover rounded-xl">
+                </div>
+                <div class="md:w-2/3 p-6 overflow-y-auto">
+                    <div id="modal-title" class="text-xl font-bold text-gray-800 mb-2"></div>
+                    <div id="modal-author" class="text-gray-500 mb-4"></div>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center gap-2 text-sm">
+                            <i class="fa fa-building text-gray-400"></i>
+                            <span id="modal-publisher" class="text-gray-600"></span>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm">
+                            <i class="fa fa-barcode text-gray-400"></i>
+                            <span id="modal-isbn" class="text-gray-600"></span>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm">
+                            <i class="fa fa-map-marker text-gray-400"></i>
+                            <span id="modal-location" class="text-gray-600"></span>
+                        </div>
+                    </div>
+                    <div class="text-gray-600 text-sm leading-relaxed mb-6">
+                        <p id="modal-description"></p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button id="add-to-bag-btn" onclick="addToBagFromModal()" class="flex-1 py-2.5 border-2 border-primary text-primary rounded-xl hover:bg-primary/5 transition-colors font-medium">
+                            加入读书袋
+                        </button>
+                        <button id="borrow-now-btn" onclick="borrowNow()" class="flex-1 py-2.5 bg-gradient-primary text-white rounded-xl hover:opacity-90 transition-opacity font-medium">
+                            立即借阅
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-category-drawer" class="fixed inset-0 bg-black/50 z-[200] hidden fade-in">
+        <div class="absolute left-0 top-0 h-full w-full max-w-sm bg-white shadow-2xl slide-in-left overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between px-4 py-4 border-b border-gray-100 bg-white">
+                <h3 class="font-semibold text-gray-800">筛选分类</h3>
+                <button onclick="closeMobileCategoryDrawer()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i class="fa fa-times text-gray-500"></i>
+                </button>
+            </div>
+            
+            <div class="p-4 border-b border-gray-100">
+                <label class="text-sm font-medium text-gray-700 mb-2 block">图书类型</label>
+                <div class="flex gap-2">
+                    <button onclick="filterMobileType('all')" id="mobile-type-all" class="flex-1 py-2 px-3 bg-primary text-white rounded-lg text-sm">全部</button>
+                    <button onclick="filterMobileType('ebook')" id="mobile-type-ebook" class="flex-1 py-2 px-3 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200">电子书</button>
+                    <button onclick="filterMobileType('physical')" id="mobile-type-physical" class="flex-1 py-2 px-3 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200">实体书</button>
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4">
+                <label class="text-sm font-medium text-gray-700 mb-3 block">图书分类</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="filterMobileCategory('all')" id="mobile-cat-all" class="py-2.5 px-3 bg-primary/10 text-primary rounded-lg text-sm font-medium">全部</button>
+                    <button onclick="filterMobileCategory('literature')" class="py-2.5 px-3 bg-gray-50 text-gray-600 rounded-lg text-sm hover:bg-gray-100">文学</button>
+                    <button onclick="filterMobileCategory('novel')" class="py-2.5 px-3 bg-gray-50 text-gray-600 rounded-lg text-sm hover:bg-gray-100">小说</button>
+                    <button onclick="filterMobileCategory('history')" class="py-2.5 px-3 bg-gray-50 text-gray-600 rounded-lg text-sm hover:bg-gray-100">历史文化</button>
+                    <button onclick="filterMobileCategory('society')" class="py-2.5 px-3 bg-gray-50 text-gray-600 rounded-lg text-sm hover:bg-gray-100">社会纪实</button>
+                    <button onclick="filterMobileCategory('science')" class="py-2.5 px-3 bg-gray-50 text-gray-600 rounded-lg text-sm hover:bg-gray-100">科学新知</button>
+                    <button onclick="filterMobileCategory('art')" class="py-2.5 px-3 bg-gray-50 text-gray-600 rounded-lg text-sm hover:bg-gray-100">艺术设计</button>
+                    <button onclick="filterMobileCategory('business')" class="py-2.5 px-3 bg-gray-50 text-gray-600 rounded-lg text-sm hover:bg-gray-100">商业经管</button>
+                    <button onclick="filterMobileCategory('comic')" class="py-2.5 px-3 bg-gray-50 text-gray-600 rounded-lg text-sm hover:bg-gray-100">绘本漫画</button>
+                    <button onclick="filterMobileCategory('N')" class="py-2.5 px-3 bg-gray-50 text-gray-600 rounded-lg text-sm hover:bg-gray-100">计算机</button>
+                    <button onclick="filterMobileCategory('C')" class="py-2.5 px-3 bg-gray-50 text-gray-600 rounded-lg text-sm hover:bg-gray-100">管理学</button>
+                    <button onclick="filterMobileCategory('U')" class="py-2.5 px-3 bg-gray-50 text-gray-600 rounded-lg text-sm hover:bg-gray-100">成功励志</button>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-gray-100 bg-white">
+                <button onclick="closeMobileCategoryDrawer()" class="w-full py-2.5 bg-gradient-primary text-white rounded-xl font-medium">
+                    应用筛选
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ebook-reader" class="fixed inset-0 bg-black/50 z-[200] hidden fade-in">
+        <div class="absolute right-0 top-0 h-full w-full max-w-3xl bg-white shadow-2xl slide-in-right overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between px-4 py-4 border-b border-gray-100 bg-white sticky top-0 z-10">
+                <div>
+                    <h3 id="reader-title" class="font-semibold text-gray-800">Vue.js设计与实现</h3>
+                    <p class="text-xs text-gray-500">霍春阳</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="adjustFontSize(-1)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i class="fa fa-minus text-gray-500"></i>
+                    </button>
+                    <span id="font-size-display" class="text-sm text-gray-600">16px</span>
+                    <button onclick="adjustFontSize(1)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i class="fa fa-plus text-gray-500"></i>
+                    </button>
+                    <button onclick="toggleNightMode()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i class="fa fa-moon text-gray-500"></i>
+                    </button>
+                    <button onclick="closeReader()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i class="fa fa-times text-gray-500"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-8 bg-white" id="reader-content">
+                <div class="max-w-2xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-6">第一章 Vue.js 简介</h1>
+                    <p class="text-gray-700 leading-relaxed mb-4">Vue.js 是一套用于构建用户界面的渐进式JavaScript框架。与其他重量级框架不同的是，Vue 采用自底向上增量开发的设计。</p>
+                    <p class="text-gray-700 leading-relaxed mb-4">Vue 的核心库只关注视图层，不仅易于上手，还便于与第三方库或既有项目整合。另一方面，当与单文件组件和 Vue 生态系统支持的库结合使用时，Vue 也完全能够为复杂的单页应用提供驱动。</p>
+                    <h2 class="text-xl font-semibold text-gray-800 mt-8 mb-4">1.1 什么是Vue.js</h2>
+                    <p class="text-gray-700 leading-relaxed mb-4">Vue (发音为 /vjuː/，类似 view) 是一套用于构建用户界面的渐进式框架。与其他重量级框架不同的是，Vue 采用自底向上增量开发的设计。Vue 的核心库只关注视图层，不仅易于上手，还便于与第三方库或既有项目整合。</p>
+                    <p class="text-gray-700 leading-relaxed mb-4">另一方面，当与单文件组件和 Vue 生态系统支持的库结合使用时，Vue 也完全能够为复杂的单页应用提供驱动。</p>
+                    <h2 class="text-xl font-semibold text-gray-800 mt-8 mb-4">1.2 为什么选择Vue</h2>
+                    <p class="text-gray-700 leading-relaxed mb-4">Vue.js 的目标是通过尽可能简单的 API 实现响应式数据绑定和组合的视图组件。</p>
+                    <p class="text-gray-700 leading-relaxed mb-4">Vue.js 自身不是一个全能框架——它只聚焦于视图层。因此它非常容易学习，非常容易与其他库或已有项目整合。另一方面，在与单文件组件和 Vue 生态系统支持的库结合使用时，Vue.js 也完全能够驱动复杂的单页应用。</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-between px-4 py-4 border-t border-gray-100 bg-white">
+                <button onclick="prevPage()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i class="fa fa-chevron-left mr-1"></i>上一页
+                </button>
+                <span class="text-sm text-gray-500">第 1 页 / 共 128 页</span>
+                <button onclick="nextPage()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                    下一页 <i class="fa fa-chevron-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification-panel" class="hidden fixed top-20 right-4 w-80 max-h-[70vh] bg-white rounded-2xl shadow-2xl z-[100] overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <h3 class="font-semibold text-gray-800 text-sm"><i class="fa fa-bell text-amber-500 mr-2"></i>消息通知</h3>
+            <button onclick="closeNotifications()" class="text-xs text-gray-500 hover:text-gray-700">关闭</button>
+        </div>
+        <div class="p-4 space-y-3">
+            <div class="flex gap-3 p-2 bg-yellow-50 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                    <i class="fa fa-calendar text-yellow-600 text-sm"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-800">书籍即将到期提醒</p>
+                    <p class="text-xs text-gray-500">《代码大全》明天到期，请及时归还</p>
+                </div>
+            </div>
+            <div class="flex gap-3 p-2 bg-red-50 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                    <i class="fa fa-alert-circle text-red-600 text-sm"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-800">书籍逾期提醒</p>
+                    <p class="text-xs text-gray-500">《设计模式》已逾期3天，请尽快归还</p>
+                </div>
+            </div>
+            <div class="flex gap-3 p-2 bg-green-50 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <i class="fa fa-check-circle text-green-600 text-sm"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-800">借阅成功</p>
+                    <p class="text-xs text-gray-500">《深入理解计算机系统》借阅成功</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="success-toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-lg z-[300] hidden fade-in flex items-center gap-2">
+        <i class="fa fa-check-circle text-green-400"></i>
+        <span>操作成功</span>
+    </div>
+
+    <script src="js/auth-modal.js"></script>
+    <script src="js/auth-guard.js"></script>
+    <script>
+        const books = [
+            { id: 1, title: '深入理解计算机系统', author: '兰德尔·E·布莱恩特', publisher: '机械工业出版社', isbn: '978-7-111-54493-7', location: 'A区-01-01', category: 'N', available: true, cover: 'https://picsum.photos/seed/book1/160/224', isEbook: false, description: '本书从程序员的视角详细阐述计算机系统的本质概念，包括程序如何映射到系统上，程序如何执行以及程序如何与其他程序交互。', score: 4.8, borrowCount: 156 },
+            { id: 2, title: 'JavaScript高级程序设计', author: '马特·弗里斯比', publisher: '人民邮电出版社', isbn: '978-7-115-36339-9', location: 'A区-01-02', category: 'N', available: false, cover: 'https://picsum.photos/seed/book2/160/224', isEbook: false, description: '本书是JavaScript技术经典名著，全面介绍了JavaScript语言的核心概念、高级特性和最佳实践。', score: 4.7, borrowCount: 128 },
+            { id: 3, title: 'Vue.js设计与实现', author: '霍春阳', publisher: '人民邮电出版社', isbn: '978-7-115-57554-4', location: 'A区-02-01', category: 'N', available: true, cover: 'https://picsum.photos/seed/book3/160/224', isEbook: true, description: '从源码角度深度解析Vue.js的设计思想和实现原理，帮助读者理解Vue.js的核心机制。', score: 4.9, borrowCount: 89 },
+            { id: 4, title: '代码大全', author: '史蒂夫·麦康奈尔', publisher: '电子工业出版社', isbn: '978-7-121-15555-8', location: 'B区-01-01', category: 'N', available: true, cover: 'https://picsum.photos/seed/book4/160/224', isEbook: false, description: '软件开发领域的经典著作，涵盖了软件开发的各个方面，从编码规范到项目管理。', score: 4.6, borrowCount: 203 },
+            { id: 5, title: 'Python编程：从入门到实践', author: '埃里克·马瑟斯', publisher: '人民邮电出版社', isbn: '978-7-115-42857-7', location: 'A区-03-01', category: 'N', available: true, cover: 'https://picsum.photos/seed/book5/160/224', isEbook: true, description: '针对所有层次Python读者的经典编程入门书籍，以项目驱动的方式教授Python编程。', score: 4.5, borrowCount: 176 },
+            { id: 6, title: '设计模式', author: 'Erich Gamma', publisher: '机械工业出版社', isbn: '978-7-111-07554-7', location: 'B区-02-01', category: 'N', available: false, cover: 'https://picsum.photos/seed/book6/160/224', isEbook: false, description: '软件开发领域的经典著作，介绍了23种经典设计模式，是每个程序员必读的书籍。', score: 4.8, borrowCount: 195 },
+            { id: 7, title: '人月神话', author: 'Frederick P. Brooks', publisher: '清华大学出版社', isbn: '978-7-302-22675-2', location: 'C区-01-01', category: 'C', available: true, cover: 'https://picsum.photos/seed/book7/160/224', isEbook: false, description: '软件工程领域的经典著作，探讨了软件开发中的管理问题和经验教训。', score: 4.7, borrowCount: 142 },
+            { id: 8, title: '高效能人士的七个习惯', author: '史蒂芬·柯维', publisher: '中国青年出版社', isbn: '978-7-5006-4903-6', location: 'C区-01-02', category: 'U', available: true, cover: 'https://picsum.photos/seed/book8/160/224', isEbook: false, description: '全球畅销的个人管理经典，帮助读者培养高效能的工作和生活习惯。', score: 4.6, borrowCount: 256 },
+            { id: 9, title: '设计心理学', author: '唐纳德·诺曼', publisher: '中信出版社', isbn: '978-7-5086-1193-8', location: 'D区-01-01', category: 'J', available: true, cover: 'https://picsum.photos/seed/book9/160/224', isEbook: false, description: '设计领域的经典著作，从心理学角度探讨设计原则和用户体验。', score: 4.5, borrowCount: 112 },
+            { id: 10, title: '写给大家看的设计书', author: '威廉斯', publisher: '人民邮电出版社', isbn: '978-7-115-19207-4', location: 'D区-01-02', category: 'J', available: false, cover: 'https://picsum.photos/seed/book10/160/224', isEbook: false, description: '一本面向非设计专业人士的设计入门书籍，通俗易懂。', score: 4.4, borrowCount: 87 },
+            { id: 11, title: '活着', author: '余华', publisher: '作家出版社', isbn: '978-7-5063-5816-4', location: 'E区-01-01', category: 'I', available: true, cover: 'https://picsum.photos/seed/book11/160/224', isEbook: false, description: '中国当代文学经典，讲述了一个人历经世间沧桑和磨难的一生。', score: 4.9, borrowCount: 312 },
+            { id: 12, title: '三体', author: '刘慈欣', publisher: '重庆出版社', isbn: '978-7-5366-9293-0', location: 'E区-01-02', category: 'I', available: false, cover: 'https://picsum.photos/seed/book12/160/224', isEbook: false, description: '中国科幻文学的里程碑之作，讲述人类文明与三体文明的史诗级碰撞。', score: 4.9, borrowCount: 389 },
+            { id: 13, title: 'React设计模式', author: 'Michael Chan', publisher: 'O\'Reilly', isbn: '978-1-4920-5172-6', location: '电子书库', category: 'N', available: true, cover: 'https://picsum.photos/seed/book13/160/224', isEbook: true, description: '深入探讨React应用中的设计模式和最佳实践。', score: 4.6, borrowCount: 67 },
+            { id: 14, title: 'TypeScript实战指南', author: '梁宵', publisher: '机械工业出版社', isbn: '978-7-111-67238-8', location: '电子书库', category: 'N', available: true, cover: 'https://picsum.photos/seed/book14/160/224', isEbook: true, description: '全面介绍TypeScript的核心特性和实战应用。', score: 4.5, borrowCount: 54 },
+            { id: 15, title: 'Docker容器技术', author: 'James Turnbull', publisher: 'O\'Reilly', isbn: '978-1-4919-1576-5', location: '电子书库', category: 'N', available: true, cover: 'https://picsum.photos/seed/book15/160/224', isEbook: true, description: '深入理解Docker容器技术的原理和实践。', score: 4.4, borrowCount: 43 },
+            { id: 16, title: '微服务架构设计', author: 'Sam Newman', publisher: 'O\'Reilly', isbn: '978-1-4919-5035-7', location: '电子书库', category: 'N', available: true, cover: 'https://picsum.photos/seed/book16/160/224', isEbook: true, description: '微服务架构设计的权威指南，涵盖设计模式和最佳实践。', score: 4.7, borrowCount: 78 }
+        ];
+        
+        let favorites = JSON.parse(localStorage.getItem('bookFavorites') || '[]');
+
+        let currentBookDetail = null;
+        let currentFilter = 'all';
+        let currentSearchTerm = '';
+        let currentTypeFilter = 'all';
+        let currentSection = 'home';
+        let isProcessing = false;
+
+        function showSection(sectionId) {
+            if (sectionId === currentSection || isProcessing) return;
+            isProcessing = true;
+            
+            const currentSectionEl = document.getElementById(`${currentSection}-section`);
+            const nextSectionEl = document.getElementById(`${sectionId}-section`);
+            
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('nav-link-active');
+            });
+            
+            document.querySelectorAll('button').forEach(btn => {
+                if (btn.onclick && btn.onclick.toString().includes(`showSection('${sectionId}')`)) {
+                    btn.classList.add('nav-link-active');
+                }
+            });
+            
+            if (currentSectionEl) {
+                currentSectionEl.style.opacity = '0';
+                currentSectionEl.style.transform = 'translateY(10px)';
+            }
+            
+            setTimeout(() => {
+                document.querySelectorAll('.section-content').forEach(section => {
+                    section.classList.add('hidden');
+                });
+                
+                nextSectionEl.classList.remove('hidden');
+                nextSectionEl.style.opacity = '0';
+                nextSectionEl.style.transform = 'translateY(10px)';
+                
+                setTimeout(() => {
+                    nextSectionEl.style.transition = 'all 0.4s ease-out';
+                    nextSectionEl.style.opacity = '1';
+                    nextSectionEl.style.transform = 'translateY(0)';
+                    
+                    currentSection = sectionId;
+                    isProcessing = false;
+                    
+                    if (sectionId === 'all-books') {
+                        renderAllBooks();
+                    }
+                }, 50);
+            }, 200);
+        }
+
+        function showBookshelfTab(tabId) {
+            document.querySelectorAll('#my-bookshelf-section > div[id$="-borrows"], #my-bookshelf-section > div[id$="-books"], #my-bookshelf-section > div[id$="-history"]').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            if (tabId === 'current') {
+                document.getElementById('current-borrows').classList.remove('hidden');
+            } else if (tabId === 'history') {
+                document.getElementById('borrow-history').classList.remove('hidden');
+            } else if (tabId === 'reserved') {
+                document.getElementById('reserved-books').classList.remove('hidden');
+            }
+        }
+
+        function renderAllBooks(filter = currentFilter) {
+            const grid = document.getElementById('books-grid');
+            const ebooksSection = document.getElementById('ebooks-section');
+            
+            let filteredBooks = [...books];
+            
+            // 应用分类筛选
+            if (filter !== 'all' && filter !== 'ebook') {
+                filteredBooks = filteredBooks.filter(b => b.category === filter);
+            }
+            
+            // 应用类型筛选（电子书/实体书）
+            if (currentTypeFilter === 'ebook') {
+                filteredBooks = filteredBooks.filter(b => b.isEbook);
+            } else if (currentTypeFilter === 'physical') {
+                filteredBooks = filteredBooks.filter(b => !b.isEbook);
+            }
+            
+            // 应用搜索筛选
+            if (currentSearchTerm) {
+                const searchLower = currentSearchTerm.toLowerCase();
+                filteredBooks = filteredBooks.filter(b => 
+                    b.title.toLowerCase().includes(searchLower) || 
+                    b.author.toLowerCase().includes(searchLower)
+                );
+            }
+            
+            // 应用排序
+            if (currentSort === 'borrowCount') {
+                filteredBooks.sort((a, b) => (b.borrowCount || 0) - (a.borrowCount || 0));
+            } else if (currentSort === 'score') {
+                filteredBooks.sort((a, b) => (b.score || 0) - (a.score || 0));
+            } else if (currentSort === 'newest') {
+                filteredBooks.sort((a, b) => b.id - a.id);
+            }
+            
+            if (filteredBooks.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fa fa-book text-gray-400 text-2xl"></i>
+                        </div>
+                        <p class="text-gray-500">该分类暂无图书</p>
+                        <button onclick="filterByCategory('all')" class="mt-3 text-primary hover:underline">查看全部分类</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = filteredBooks.map(book => `
+                <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(${book.id})">
+                    <div class="relative">
+                        <img src="${book.cover}" alt="${book.title}" class="w-full h-56 object-cover">
+                        <span class="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur-sm ${book.isEbook ? 'text-primary border-primary/20' : 'text-gray-600 border-gray-200/50'} text-xs rounded-full shadow-sm border flex items-center gap-1">
+                            ${book.isEbook ? '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' : '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>'}
+                            ${book.isEbook ? '电子书' : '实体书'}
+                        </span>
+                        <button onclick="event.stopPropagation(); toggleFavorite(${book.id})" class="favorite-btn absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm border border-gray-200/50 hover:bg-red-50 hover:text-red-500 transition-colors" title="收藏">
+                            <i class="fa fa-heart-o text-gray-400 text-sm"></i>
+                        </button>
+                    </div>
+                    <div class="p-3">
+                        <h4 class="font-medium text-gray-800 line-clamp-2 h-10">${book.title}</h4>
+                        <p class="text-gray-500 text-xs mt-1">${book.author}</p>
+                        <div class="mt-2 flex items-center gap-1">
+                            <div class="flex items-center text-amber-500">
+                                <i class="fa fa-star text-xs"></i>
+                                <span class="text-xs font-medium ml-0.5">${book.score || '4.0'}</span>
+                            </div>
+                            <span class="text-gray-300">|</span>
+                            <span class="text-gray-400 text-xs">${book.borrowCount || 0}次借阅</span>
+                        </div>
+                        <div class="mt-1">
+                            <span class="${book.available ? 'text-green-600' : 'text-gray-400'} text-xs font-medium">${book.available ? (book.isEbook ? '免费' : '可借') : '已借出'}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterByCategory(category) {
+            currentFilter = category;
+            
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.remove('nav-link-active');
+            });
+            
+            document.querySelectorAll('button').forEach(btn => {
+                if (btn.onclick && btn.onclick.toString().includes(`filterByCategory('${category}')`)) {
+                    btn.classList.add('bg-primary', 'text-white');
+                    btn.classList.add('nav-link-active');
+                }
+            });
+            
+            document.querySelectorAll('[id^="cat-"]').forEach(btn => {
+                btn.classList.remove('text-primary', 'font-medium');
+                btn.classList.add('text-gray-600');
+            });
+            document.getElementById('cat-all').classList.add('text-primary', 'font-medium');
+            document.getElementById('cat-all').classList.remove('text-gray-600');
+            
+            showSection('all-books');
+        }
+
+        function filterBooks(category) {
+            currentFilter = category;
+            renderAllBooks();
+        }
+
+        let currentPage = 1;
+        const totalPages = 5;
+        
+        function showAllCategories() {
+            document.querySelectorAll('[id^="cat-"]').forEach(btn => {
+                btn.classList.remove('text-primary', 'font-medium');
+                btn.classList.add('text-gray-600');
+            });
+            
+            document.getElementById('cat-all').classList.add('text-primary', 'font-medium');
+            document.getElementById('cat-all').classList.remove('text-gray-600');
+            
+            const grid = document.getElementById('new-books-grid');
+            const booksContainer = grid.querySelector('.grid');
+            
+            booksContainer.style.transition = 'all 0.3s ease-out';
+            booksContainer.style.opacity = '0';
+            booksContainer.style.transform = 'scale(0.95)';
+            
+            setTimeout(() => {
+                booksContainer.innerHTML = `
+                    <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(1)">
+                        <div class="relative">
+                            <img src="https://picsum.photos/seed/book1/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-medium text-gray-800 line-clamp-2 h-10">深入理解计算机系统</h4>
+                            <p class="text-gray-500 text-xs mt-1">兰德尔·E·布莱恩特</p>
+                            <div class="mt-2 flex items-center justify-between">
+                                <span class="text-green-600 text-xs font-medium">可借</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(2)">
+                        <div class="relative">
+                            <img src="https://picsum.photos/seed/book2/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-medium text-gray-800 line-clamp-2 h-10">JavaScript高级程序设计</h4>
+                            <p class="text-gray-500 text-xs mt-1">Nicholas C.Zakas</p>
+                            <div class="mt-2 flex items-center justify-between">
+                                <span class="text-green-600 text-xs font-medium">免费</span>
+                                <button onclick="event.stopPropagation(); readEbook(2)" class="text-primary text-xs hover:text-primary/80">立即阅读</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(3)">
+                        <div class="relative">
+                            <img src="https://picsum.photos/seed/book3/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-medium text-gray-800 line-clamp-2 h-10">Vue.js设计与实现</h4>
+                            <p class="text-gray-500 text-xs mt-1">霍春阳</p>
+                            <div class="mt-2 flex items-center justify-between">
+                                <span class="text-gray-400 text-xs font-medium">已借出</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(4)">
+                        <div class="relative">
+                            <img src="https://picsum.photos/seed/book4/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-medium text-gray-800 line-clamp-2 h-10">代码大全</h4>
+                            <p class="text-gray-500 text-xs mt-1">Steve McConnell</p>
+                            <div class="mt-2 flex items-center justify-between">
+                                <span class="text-green-600 text-xs font-medium">可借</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(5)">
+                        <div class="relative">
+                            <img src="https://picsum.photos/seed/book5/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-medium text-gray-800 line-clamp-2 h-10">Python编程：从入门到实践</h4>
+                            <p class="text-gray-500 text-xs mt-1">埃里克·马瑟斯</p>
+                            <div class="mt-2 flex items-center justify-between">
+                                <span class="text-green-600 text-xs font-medium">免费</span>
+                                <button onclick="event.stopPropagation(); readEbook(5)" class="text-primary text-xs hover:text-primary/80">立即阅读</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(6)">
+                        <div class="relative">
+                            <img src="https://picsum.photos/seed/book6/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-medium text-gray-800 line-clamp-2 h-10">设计模式</h4>
+                            <p class="text-gray-500 text-xs mt-1">Erich Gamma</p>
+                            <div class="mt-2 flex items-center justify-between">
+                                <span class="text-gray-400 text-xs font-medium">已借出</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(7)">
+                        <div class="relative">
+                            <img src="https://picsum.photos/seed/book7/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-medium text-gray-800 line-clamp-2 h-10">人月神话</h4>
+                            <p class="text-gray-500 text-xs mt-1">Frederick P. Brooks</p>
+                            <div class="mt-2 flex items-center justify-between">
+                                <span class="text-green-600 text-xs font-medium">可借</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(8)">
+                        <div class="relative">
+                            <img src="https://picsum.photos/seed/book8/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-medium text-gray-800 line-clamp-2 h-10">高效能人士的七个习惯</h4>
+                            <p class="text-gray-500 text-xs mt-1">史蒂芬·柯维</p>
+                            <div class="mt-2 flex items-center justify-between">
+                                <span class="text-green-600 text-xs font-medium">可借</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(9)">
+                        <div class="relative">
+                            <img src="https://picsum.photos/seed/book9/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-medium text-gray-800 line-clamp-2 h-10">设计心理学</h4>
+                            <p class="text-gray-500 text-xs mt-1">唐纳德·诺曼</p>
+                            <div class="mt-2 flex items-center justify-between">
+                                <span class="text-green-600 text-xs font-medium">可借</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(10)">
+                        <div class="relative">
+                            <img src="https://picsum.photos/seed/book10/160/224" alt="图书封面" class="w-full h-56 object-cover">
+                        </div>
+                        <div class="p-3">
+                            <h4 class="font-medium text-gray-800 line-clamp-2 h-10">写给大家看的设计书</h4>
+                            <p class="text-gray-500 text-xs mt-1">威廉斯</p>
+                            <div class="mt-2 flex items-center justify-between">
+                                <span class="text-gray-400 text-xs font-medium">已借出</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    booksContainer.style.opacity = '1';
+                    booksContainer.style.transform = 'scale(1)';
+                }, 50);
+            }, 300);
+        }
+        
+        function filterNewBooks(category) {
+            const grid = document.getElementById('new-books-grid');
+            const booksContainer = grid.querySelector('.grid');
+            
+            document.querySelectorAll('[id^="cat-"]').forEach(btn => {
+                btn.classList.remove('text-primary', 'font-medium');
+                btn.classList.add('text-gray-600');
+            });
+            document.getElementById(`cat-${category}`).classList.add('text-primary', 'font-medium');
+            document.getElementById(`cat-${category}`).classList.remove('text-gray-600');
+            
+            booksContainer.style.transition = 'all 0.3s ease-out';
+            booksContainer.style.opacity = '0';
+            booksContainer.style.transform = 'scale(0.95)';
+            
+            setTimeout(() => {
+                const bookData = {
+                    all: [
+                        { id: 1, cover: 'https://picsum.photos/seed/book1/160/224', title: '深入理解计算机系统', author: '兰德尔·E·布莱恩特', available: true, isEbook: false },
+                        { id: 2, cover: 'https://picsum.photos/seed/book2/160/224', title: 'JavaScript高级程序设计', author: 'Nicholas C.Zakas', available: true, isEbook: true },
+                        { id: 3, cover: 'https://picsum.photos/seed/book3/160/224', title: 'Vue.js设计与实现', author: '霍春阳', available: false, isEbook: false },
+                        { id: 4, cover: 'https://picsum.photos/seed/book4/160/224', title: '代码大全', author: 'Steve McConnell', available: true, isEbook: false },
+                        { id: 5, cover: 'https://picsum.photos/seed/book5/160/224', title: 'Python编程：从入门到实践', author: '埃里克·马瑟斯', available: true, isEbook: true },
+                        { id: 6, cover: 'https://picsum.photos/seed/book6/160/224', title: '设计模式', author: 'Erich Gamma', available: false, isEbook: false },
+                        { id: 7, cover: 'https://picsum.photos/seed/book7/160/224', title: '人月神话', author: 'Frederick P. Brooks', available: true, isEbook: false },
+                        { id: 8, cover: 'https://picsum.photos/seed/book8/160/224', title: '高效能人士的七个习惯', author: '史蒂芬·柯维', available: true, isEbook: false },
+                        { id: 9, cover: 'https://picsum.photos/seed/book9/160/224', title: '设计心理学', author: '唐纳德·诺曼', available: true, isEbook: false },
+                        { id: 10, cover: 'https://picsum.photos/seed/book10/160/224', title: '写给大家看的设计书', author: '威廉斯', available: false, isEbook: false }
+                    ],
+                    literature: [
+                        { id: 11, cover: 'https://picsum.photos/seed/lit1/160/224', title: '百年孤独', author: '加西亚·马尔克斯', available: true, isEbook: false },
+                        { id: 12, cover: 'https://picsum.photos/seed/lit2/160/224', title: '红楼梦', author: '曹雪芹', available: true, isEbook: true },
+                        { id: 13, cover: 'https://picsum.photos/seed/lit3/160/224', title: '围城', author: '钱钟书', available: true, isEbook: false }
+                    ],
+                    novel: [
+                        { id: 14, cover: 'https://picsum.photos/seed/nov1/160/224', title: '三体', author: '刘慈欣', available: true, isEbook: true },
+                        { id: 15, cover: 'https://picsum.photos/seed/nov2/160/224', title: '活着', author: '余华', available: true, isEbook: false },
+                        { id: 16, cover: 'https://picsum.photos/seed/nov3/160/224', title: '白夜行', author: '东野圭吾', available: false, isEbook: false }
+                    ],
+                    history: [
+                        { id: 17, cover: 'https://picsum.photos/seed/his1/160/224', title: '明朝那些事儿', author: '当年明月', available: true, isEbook: true },
+                        { id: 18, cover: 'https://picsum.photos/seed/his2/160/224', title: '万历十五年', author: '黄仁宇', available: true, isEbook: false }
+                    ],
+                    society: [],
+                    science: [
+                        { id: 19, cover: 'https://picsum.photos/seed/sci1/160/224', title: '时间简史', author: '史蒂芬·霍金', available: true, isEbook: true },
+                        { id: 20, cover: 'https://picsum.photos/seed/sci2/160/224', title: '宇宙的琴弦', author: 'B·格林', available: true, isEbook: false }
+                    ],
+                    art: [
+                        { id: 21, cover: 'https://picsum.photos/seed/art1/160/224', title: '写给大家看的设计书', author: '威廉斯', available: true, isEbook: false },
+                        { id: 22, cover: 'https://picsum.photos/seed/art2/160/224', title: '配色设计原理', author: '伊达千代', available: true, isEbook: false }
+                    ],
+                    business: [
+                        { id: 23, cover: 'https://picsum.photos/seed/bus1/160/224', title: '经济学原理', author: '曼昆', available: true, isEbook: true },
+                        { id: 24, cover: 'https://picsum.photos/seed/bus2/160/224', title: '精益创业', author: '埃里克·莱斯', available: true, isEbook: false }
+                    ],
+                    comic: [
+                        { id: 25, cover: 'https://picsum.photos/seed/com1/160/224', title: '海贼王', author: '尾田荣一郎', available: true, isEbook: false },
+                        { id: 26, cover: 'https://picsum.photos/seed/com2/160/224', title: '灌篮高手', author: '井上雄彦', available: false, isEbook: false }
+                    ]
+                };
+                
+                const filteredBooks = bookData[category] || [];
+                
+                if (filteredBooks.length === 0) {
+                    booksContainer.innerHTML = `
+                        <div class="col-span-5 text-center py-12">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fa fa-book text-gray-400 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-500">该分类暂无书籍</p>
+                            <button onclick="filterNewBooks('all')" class="mt-3 text-primary hover:underline">查看全部分类</button>
+                        </div>
+                    `;
+                } else {
+                    booksContainer.innerHTML = filteredBooks.map(book => `
+                        <div class="book-card bg-white rounded-xl overflow-hidden cursor-pointer card-hover" onclick="showBookDetail(${book.id})">
+                            <div class="relative">
+                                <img src="${book.cover}" alt="${book.title}" class="w-full h-56 object-cover">
+                            </div>
+                            <div class="p-3">
+                                <h4 class="font-medium text-gray-800 line-clamp-2 h-10">${book.title}</h4>
+                                <p class="text-gray-500 text-xs mt-1">${book.author}</p>
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="${book.available ? (book.isEbook ? 'text-green-600' : 'text-green-600') : 'text-gray-400'} text-xs font-medium">${book.available ? (book.isEbook ? '免费' : '可借') : '已借出'}</span>
+                                    ${book.isEbook && book.available ? `<button onclick="event.stopPropagation(); readEbook(${book.id})" class="text-primary text-xs hover:text-primary/80">立即阅读</button>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                setTimeout(() => {
+                    booksContainer.style.opacity = '1';
+                    booksContainer.style.transform = 'scale(1)';
+                }, 50);
+            }, 300);
+        }
+        
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                updatePageDisplay();
+            }
+        }
+        
+        function nextPage() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                updatePageDisplay();
+            }
+        }
+        
+        function goToPage(pageNum) {
+            if (pageNum >= 1 && pageNum <= totalPages) {
+                currentPage = pageNum;
+                updatePageDisplay();
+            }
+        }
+        
+        function updatePageDisplay() {
+            const grid = document.getElementById('new-books-grid');
+            const booksContainer = grid.querySelector('.grid');
+            
+            booksContainer.style.opacity = '0';
+            booksContainer.style.transform = 'translateX(-20px)';
+            
+            setTimeout(() => {
+                for (let i = 1; i <= totalPages; i++) {
+                    const dot = document.getElementById(`page-dot-${i}`);
+                    if (dot) {
+                        dot.className = `w-2 h-2 rounded-full cursor-pointer ${i === currentPage ? 'bg-primary' : 'bg-gray-300'}`;
+                        dot.onclick = () => goToPage(i);
+                    }
+                }
+                
+                setTimeout(() => {
+                    booksContainer.style.transition = 'all 0.3s ease-out';
+                    booksContainer.style.opacity = '1';
+                    booksContainer.style.transform = 'translateX(0)';
+                }, 50);
+            }, 300);
+        }
+
+        function showBookDetail(bookId) {
+            const book = books.find(b => b.id === bookId);
+            if (!book) return;
+            
+            currentBookDetail = book;
+            document.getElementById('modal-cover').src = book.cover;
+            document.getElementById('modal-title').textContent = book.title;
+            document.getElementById('modal-author').textContent = book.author;
+            document.getElementById('modal-publisher').textContent = book.publisher;
+            document.getElementById('modal-isbn').textContent = book.isbn;
+            document.getElementById('modal-location').textContent = book.location;
+            document.getElementById('modal-description').textContent = book.description;
+            
+            const addBtn = document.getElementById('add-to-bag-btn');
+            const borrowBtn = document.getElementById('borrow-now-btn');
+            
+            if (book.isEbook) {
+                addBtn.style.display = 'none';
+                borrowBtn.textContent = '立即阅读';
+                borrowBtn.onclick = () => readEbook(bookId);
+            } else {
+                addBtn.style.display = 'block';
+                borrowBtn.textContent = '立即借阅';
+                borrowBtn.onclick = () => borrowNow();
+                addBtn.onclick = () => addToBagFromModal();
+            }
+            
+            document.getElementById('book-detail-modal').classList.remove('hidden');
+        }
+
+        function closeBookDetail() {
+            document.getElementById('book-detail-modal').classList.add('hidden');
+            currentBookDetail = null;
+        }
+
+        function addToBagFromModal() {
+            if (currentBookDetail && !currentBookDetail.isEbook) {
+                showToast('已加入读书袋');
+            }
+        }
+
+        function borrowNow() {
+            if (currentBookDetail) {
+                showToast('借阅成功！');
+                closeBookDetail();
+            }
+        }
+
+        function renewBook(bookId) {
+            showToast('续借成功，延长15天');
+        }
+
+        function readEbook(bookId) {
+            const book = books.find(b => b.id === bookId);
+            if (book) {
+                document.getElementById('reader-title').textContent = book.title;
+                document.getElementById('ebook-reader').classList.remove('hidden');
+            }
+        }
+
+        function closeReader() {
+            document.getElementById('ebook-reader').classList.add('hidden');
+        }
+
+        function adjustFontSize(delta) {
+            const content = document.getElementById('reader-content');
+            const currentSize = parseInt(window.getComputedStyle(content).fontSize);
+            const newSize = Math.min(Math.max(currentSize + delta, 12), 24);
+            content.style.fontSize = newSize + 'px';
+            document.getElementById('font-size-display').textContent = newSize + 'px';
+        }
+
+        function toggleNightMode() {
+            const content = document.getElementById('reader-content');
+            content.classList.toggle('bg-gray-900');
+            content.classList.toggle('text-white');
+        }
+
+        function prevPage() {
+            showToast('上一页');
+        }
+
+        function nextPage() {
+            showToast('下一页');
+        }
+
+        function showNotifications() {
+            document.getElementById('notification-panel').classList.toggle('hidden');
+        }
+
+        function closeNotifications() {
+            document.getElementById('notification-panel').classList.add('hidden');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('success-toast');
+            const icon = toast.querySelector('i');
+            const text = toast.querySelector('span');
+            
+            text.textContent = message;
+            
+            toast.classList.remove('hidden');
+            toast.style.transform = 'translate(-50%, 0) scale(0.9)';
+            toast.style.opacity = '0';
+            
+            setTimeout(() => {
+                toast.style.transition = 'all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                toast.style.transform = 'translate(-50%, 0) scale(1)';
+                toast.style.opacity = '1';
+            }, 10);
+            
+            setTimeout(() => {
+                toast.style.transition = 'all 0.3s ease-in';
+                toast.style.transform = 'translate(-50%, 20px) scale(0.95)';
+                toast.style.opacity = '0';
+                
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                    toast.style.transform = '';
+                    toast.style.opacity = '';
+                }, 300);
+            }, 2500);
+        }
+
+        // 退出登录（使用统一认证模块）
+        function handleLogout() {
+            AuthGuard.logout();
+        }
+        function logout() {
+            AuthGuard.logout();
+        }
+
+        function handleSearchKeyup(event) {
+            const clearBtn = document.getElementById('search-clear-btn');
+            const searchInput = document.getElementById('book-search');
+            
+            if (searchInput.value.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        }
+        
+        function performSearch() {
+            const searchInput = document.getElementById('book-search');
+            currentSearchTerm = searchInput.value.trim();
+            renderAllBooks();
+            showSection('all-books');
+        }
+        
+        function clearSearch() {
+            const searchInput = document.getElementById('book-search');
+            const clearBtn = document.getElementById('search-clear-btn');
+            
+            searchInput.value = '';
+            currentSearchTerm = '';
+            clearBtn.classList.add('hidden');
+            renderAllBooks();
+            
+            document.querySelectorAll('[id^="cat-"]').forEach(btn => {
+                btn.classList.remove('text-primary', 'font-medium');
+                btn.classList.add('text-gray-600');
+            });
+            document.getElementById('cat-all').classList.add('text-primary', 'font-medium');
+            document.getElementById('cat-all').classList.remove('text-gray-600');
+        }
+        
+        let currentSort = 'default';
+        
+        function onFilterChange() {
+            const filterSelect = document.getElementById('book-filter');
+            currentTypeFilter = filterSelect.value;
+            renderAllBooks();
+        }
+        
+        function onSortChange() {
+            const sortSelect = document.getElementById('book-sort');
+            currentSort = sortSelect.value;
+            renderAllBooks();
+        }
+        
+        function openMobileCategoryDrawer() {
+            document.getElementById('mobile-category-drawer').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeMobileCategoryDrawer() {
+            document.getElementById('mobile-category-drawer').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        
+        function filterMobileType(type) {
+            document.querySelectorAll('[id^="mobile-type-"]').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            document.getElementById(`mobile-type-${type}`).classList.add('bg-primary', 'text-white');
+            document.getElementById(`mobile-type-${type}`).classList.remove('bg-gray-100', 'text-gray-600');
+            
+            currentTypeFilter = type;
+        }
+        
+        function filterMobileCategory(category) {
+            document.querySelectorAll('[id^="mobile-cat-"]').forEach(btn => {
+                btn.classList.remove('bg-primary/10', 'text-primary', 'font-medium');
+                btn.classList.add('bg-gray-50', 'text-gray-600');
+            });
+            document.getElementById(`mobile-cat-${category}`).classList.add('bg-primary/10', 'text-primary', 'font-medium');
+            document.getElementById(`mobile-cat-${category}`).classList.remove('bg-gray-50', 'text-gray-600');
+            
+            currentFilter = category;
+        }
+        
+        function toggleFavorite(bookId) {
+            const index = favorites.indexOf(bookId);
+            const btn = event.target.closest('.favorite-btn');
+            const icon = btn.querySelector('i');
+            
+            if (index === -1) {
+                favorites.push(bookId);
+                icon.classList.remove('fa-heart-o', 'text-gray-400');
+                icon.classList.add('fa-heart', 'text-red-500');
+                btn.classList.add('bg-red-50');
+                showToast('已加入收藏');
+            } else {
+                favorites.splice(index, 1);
+                icon.classList.remove('fa-heart', 'text-red-500');
+                icon.classList.add('fa-heart-o', 'text-gray-400');
+                btn.classList.remove('bg-red-50');
+                showToast('已取消收藏');
+            }
+            
+            localStorage.setItem('bookFavorites', JSON.stringify(favorites));
+        }
+        
+        function initFavorites() {
+            document.querySelectorAll('.favorite-btn').forEach(btn => {
+                const bookId = parseInt(btn.getAttribute('onclick').match(/\d+/)[0]);
+                const icon = btn.querySelector('i');
+                
+                if (favorites.includes(bookId)) {
+                    icon.classList.remove('fa-heart-o', 'text-gray-400');
+                    icon.classList.add('fa-heart', 'text-red-500');
+                    btn.classList.add('bg-red-50');
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 搜索框事件监听
+            const searchInput = document.getElementById('book-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    currentSearchTerm = e.target.value.trim();
+                    
+                    const clearBtn = document.getElementById('search-clear-btn');
+                    if (e.target.value.length > 0) {
+                        clearBtn.classList.remove('hidden');
+                    } else {
+                        clearBtn.classList.add('hidden');
+                    }
+                    
+                    renderAllBooks();
+                });
+            }
+            
+            // 筛选框事件监听
+            const filterSelect = document.getElementById('book-filter');
+            if (filterSelect) {
+                filterSelect.addEventListener('change', (e) => {
+                    currentTypeFilter = e.target.value;
+                    renderAllBooks();
+                });
+            }
+            
+            setTimeout(() => {
+                document.querySelectorAll('.book-card').forEach((card, index) => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        card.style.transition = 'all 0.4s ease-out';
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, index * 50);
+                });
+            }, 300);
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeBookDetail();
+                    closeNotifications();
+                    closeReader();
+                }
+            });
+
+            new Chart(document.getElementById('borrow-chart'), {
+                type: 'bar',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                    datasets: [{
+                        label: '借阅量',
+                        data: [120, 150, 135, 180, 145, 156],
+                        backgroundColor: '#667eea',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            document.getElementById('mobile-menu-button').addEventListener('click', () => {
+                const menu = document.getElementById('mobile-menu');
+                menu.classList.toggle('hidden');
+                
+                if (!menu.classList.contains('hidden')) {
+                    menu.style.maxHeight = '0';
+                    menu.style.opacity = '0';
+                    setTimeout(() => {
+                        menu.style.transition = 'all 0.3s ease-out';
+                        menu.style.maxHeight = '500px';
+                        menu.style.opacity = '1';
+                    }, 10);
+                }
+            });
+
+            document.getElementById('book-entry-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                showToast('图书录入成功', 'success');
+            });
+
+            document.getElementById('borrow-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                showToast('借书成功', 'success');
+            });
+
+            document.getElementById('return-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                showToast('还书成功', 'success');
+            });
+
+            document.getElementById('settings-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                showToast('设置保存成功', 'success');
+            });
+
+            document.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    ripple.className = 'ripple-effect';
+                    
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => ripple.remove(), 600);
+                });
+            });
+
+            const categoryButtons = document.querySelectorAll('.category-btn');
+            categoryButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    categoryButtons.forEach(b => b.classList.remove('bg-primary', 'text-white'));
+                    categoryButtons.forEach(b => b.classList.add('bg-white', 'text-gray-700'));
+                    this.classList.remove('bg-white', 'text-gray-700');
+                    this.classList.add('bg-primary', 'text-white');
+                });
+            });
+
+            const carouselTrack = document.querySelector('.carousel-track');
+            const carouselItems = document.querySelectorAll('.carousel-item');
+            const prevBtn = document.querySelector('.carousel-prev');
+            const nextBtn = document.querySelector('.carousel-next');
+            const dots = document.querySelectorAll('.carousel-dot');
+            
+            let currentSlide = 0;
+            const slideCount = carouselItems.length;
+            
+            function goToSlide(index) {
+                currentSlide = (index + slideCount) % slideCount;
+                const offset = -currentSlide * 100;
+                carouselTrack.style.transform = `translateX(${offset}%)`;
+                
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === currentSlide);
+                });
+            }
+            
+            function nextSlide() {
+                goToSlide(currentSlide + 1);
+            }
+            
+            function prevSlide() {
+                goToSlide(currentSlide - 1);
+            }
+            
+            prevBtn.addEventListener('click', prevSlide);
+            nextBtn.addEventListener('click', nextSlide);
+            
+            dots.forEach((dot, index) => {
+                dot.addEventListener('click', () => goToSlide(index));
+            });
+            
+            let carouselInterval = setInterval(nextSlide, 5000);
+            
+            const carouselContainer = document.querySelector('.carousel-container');
+            carouselContainer.addEventListener('mouseenter', () => {
+                clearInterval(carouselInterval);
+            });
+            
+            carouselContainer.addEventListener('mouseleave', () => {
+                carouselInterval = setInterval(nextSlide, 5000);
+            });
+        });
+    </script>
+</body>
+</html>

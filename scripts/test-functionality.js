@@ -568,15 +568,14 @@ async function testPageAccessibility() {
     logSection('6. 页面可访问性测试');
 
     const pages = [
-        { path: '/login.html', name: '登录页' },
-        { path: '/register.html', name: '注册页' },
-        { path: '/index.html', name: '首页' },
+        { path: '/index.html', name: '首页(弹窗登录)' },
+        { path: '/course.html', name: '课程页' },
         { path: '/course.html', name: '课程中心' },
         { path: '/teacher.html', name: '讲师风采' },
         { path: '/center.html', name: '个人中心' },
         { path: '/dashboard.html', name: '学习仪表盘' },
         { path: '/player.html', name: '视频播放器' },
-        { path: '/admin.html', name: '管理后台' }
+        { path: '/dashboard.html', name: '管理后台' }
     ];
 
     for (const page of pages) {

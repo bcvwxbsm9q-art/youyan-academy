@@ -44,7 +44,7 @@ npm start
 ├── course.html          # 课程中心
 ├── teacher.html         # 讲师风采
 ├── center.html          # 个人中心
-├── admin.html           # 管理后台
+├── dashboard.html       # 管理后台（含考试管理）
 ├── server.js            # 服务器入口
 ├── data/                 # 数据存储
 ├── css/                  # 样式文件

@@ -97,9 +97,9 @@ app.listen(port, () => {
     console.log('');
     console.log('📋 可用页面:');
     console.log(`   - 首页:     http://localhost:${port}/index.html`);
-    console.log(`   - 登录页:   http://localhost:${port}/login.html`);
+    console.log(`   - 首页:     http://localhost:${port}/index.html (弹窗登录)`);
     console.log(`   - 课程页:   http://localhost:${port}/course.html`);
-    console.log(`   - 管理后台: http://localhost:${port}/admin.html`);
+    console.log(`   - 管理后台: http://localhost:${port}/dashboard.html`);
     console.log('');
     console.log('⚠️  注意: 这是测试服务器，数据操作将被模拟');
     console.log('   如需完整功能，请安装 Windows SDK 后运行完整服务器');

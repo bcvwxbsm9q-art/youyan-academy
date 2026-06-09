@@ -17,7 +17,7 @@
         'senior': { class: 'level-senior', name: '高级讲师', icon: 'fa-certificate' },
         'intermediate': { class: 'level-intermediate', name: '中级讲师', icon: 'fa-graduation-cap' },
         'junior': { class: 'level-junior', name: '初级讲师', icon: 'fa-user' },
-        'trainee': { class: 'level-trainee', name: '见习讲师', icon: 'fa-user-o' }
+        'intern': { class: 'level-intern', name: '实习讲师', icon: 'fa-user-o' }
     };
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -139,7 +139,7 @@
                 case 'default':
                 default:
                     // 按等级排序
-                    const levelOrder = ['chief', 'senior', 'intermediate', 'junior', 'trainee'];
+                    const levelOrder = ['chief', 'senior', 'intermediate', 'junior', 'intern'];
                     return levelOrder.indexOf(a.level) - levelOrder.indexOf(b.level);
             }
         });
@@ -172,7 +172,7 @@
         if (emptyState) emptyState.classList.add('hidden');
 
         container.innerHTML = filteredLecturers.map(l => {
-            const levelInfo = LEVEL_STYLES[l.level] || LEVEL_STYLES['trainee'];
+            const levelInfo = LEVEL_STYLES[l.level] || LEVEL_STYLES['intern'];
             
             return `
             <div class="card-enhanced lecturer-card cursor-pointer fade-in" onclick="showTeacherDetail(${l.id})">
@@ -195,7 +195,7 @@
     }
 
     /**
-     * 显示讲师详情（弹窗）
+     * 显示讲师详情（弹窗）- 桌面端小窗口样式
      */
     window.showTeacherDetail = function(lecturerId) {
         const api = window.DataAPI;
@@ -203,89 +203,96 @@
         
         if (!lecturer) return;
 
-        const levelInfo = LEVEL_STYLES[lecturer.level] || LEVEL_STYLES['trainee'];
+        const levelInfo = LEVEL_STYLES[lecturer.level] || LEVEL_STYLES['intern'];
         const catName = (api && api.getCategoryName(lecturer.categoryId)) || '';
 
         const modalHtml = `
-            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center" onclick="closeTeacherModal()">
-                <div class="bg-white dark:bg-darkgray rounded-t-3xl w-full max-h-[85vh] overflow-y-auto slide-up" onclick="event.stopPropagation()">
-                    <!-- 顶部指示条 -->
-                    <div class="flex justify-center pt-3 pb-2">
-                        <div class="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-                    </div>
+            <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="closeTeacherModal()">
+                <div class="bg-white dark:bg-darkgray rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl transform transition-all scale-100" onclick="event.stopPropagation()">
+                    <!-- 关闭按钮 -->
+                    <button class="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300 transition-colors z-10" onclick="closeTeacherModal()">
+                        <i class="fa fa-close text-lg"></i>
+                    </button>
                     
                     <!-- 头部背景 -->
-                    <div class="h-28 bg-gradient-primary relative -mt-2">
-                        <button class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors" onclick="closeTeacherModal()">
-                            <i class="fa fa-close"></i>
-                        </button>
+                    <div class="h-32 bg-gradient-primary relative">
+                        <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/20 to-transparent"></div>
                     </div>
                     
                     <!-- 头像和信息 -->
-                    <div class="px-6 pb-6 -mt-16 text-center">
-                        <img src="${lecturer.avatar || ''}" alt="${lecturer.name}" class="w-32 h-32 rounded-full border-4 border-white dark:border-darkgray mx-auto shadow-lg object-cover" onerror="this.src='https://placehold.co/128x128/667eea/white?text=${encodeURIComponent(lecturer.name.charAt(0))}'">
-                        
-                        <h2 class="text-xl font-bold mt-4 text-gray-800 dark:text-white">${lecturer.name}</h2>
-                        <div class="inline-block mt-2 ${levelInfo.class} text-white px-4 py-1 rounded-full text-sm font-medium">${levelInfo.name}</div>
-                        
-                        <div class="flex items-center justify-center gap-6 mt-4 text-sm text-gray-600 dark:text-gray-400">
-                            <div class="text-center">
-                                <div class="font-bold text-lg text-gray-800 dark:text-white">${lecturer.courseCount || 0}</div>
-                                <div class="text-xs">门课程</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="font-bold text-lg text-gray-800 dark:text-white">${(lecturer.students || 0) > 1000 ? ((lecturer.students / 1000).toFixed(1) + 'k') : (lecturer.students || 0)}</div>
-                                <div class="text-xs">学员数</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="font-bold text-lg text-gray-800 dark:text-white">${lecturer.rating ? lecturer.rating.toFixed(1) : '--'}</div>
-                                <div class="text-xs">评分</div>
+                    <div class="px-8 pb-6 -mt-16">
+                        <div class="flex flex-col md:flex-row items-start gap-6">
+                            <!-- 头像 -->
+                            <img src="${lecturer.avatar || ''}" alt="${lecturer.name}" class="w-28 h-28 rounded-2xl border-4 border-white dark:border-darkgray shadow-xl object-cover flex-shrink-0" onerror="this.src='https://placehold.co/112x112/667eea/white?text=${encodeURIComponent(lecturer.name.charAt(0))}'">
+                            
+                            <!-- 基本信息 -->
+                            <div class="flex-1 pt-2">
+                                <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">${lecturer.name}</h2>
+                                <div class="inline-block ${levelInfo.class} text-white px-4 py-1.5 rounded-full text-sm font-medium mb-3">${levelInfo.name}</div>
+                                
+                                <div class="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa fa-book text-primary"></i>
+                                        <span><strong class="text-gray-800 dark:text-white">${lecturer.courseCount || 0}</strong> 门课程</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa fa-users text-primary"></i>
+                                        <span><strong class="text-gray-800 dark:text-white">${(lecturer.students || 0) > 1000 ? ((lecturer.students / 1000).toFixed(1) + 'k') : (lecturer.students || 0)}</strong> 学员</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa fa-star text-yellow-500"></i>
+                                        <span><strong class="text-gray-800 dark:text-white">${lecturer.rating ? lecturer.rating.toFixed(1) : '--'}</strong> 评分</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- 简介 -->
-                    <div class="px-6 pb-6">
-                        <h3 class="font-bold text-gray-800 dark:text-white mb-3 flex items-center">
-                            <i class="fa fa-user mr-2 text-primary"></i>个人简介
+                    <div class="px-8 pb-6">
+                        <h3 class="font-bold text-gray-800 dark:text-white mb-3 flex items-center text-base">
+                            <i class="fa fa-user-circle mr-2 text-primary"></i>个人简介
                         </h3>
                         <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">${lecturer.intro || '暂无简介'}</p>
                     </div>
 
                     <!-- 专长领域 -->
                     ${lecturer.skills && lecturer.skills.length ? `
-                    <div class="px-6 pb-6">
-                        <h3 class="font-bold text-gray-800 dark:text-white mb-3 flex items-center">
+                    <div class="px-8 pb-6">
+                        <h3 class="font-bold text-gray-800 dark:text-white mb-3 flex items-center text-base">
                             <i class="fa fa-tags mr-2 text-primary"></i>专长领域
                         </h3>
                         <div class="flex flex-wrap gap-2">
-                            ${lecturer.skills.map(skill => `<span class="tag tag-blue">${skill}</span>`).join('')}
+                            ${lecturer.skills.map(skill => `<span class="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium">${skill}</span>`).join('')}
                         </div>
                     </div>
                     ` : ''}
 
                     <!-- 授课课程 -->
-                    <div class="px-6 pb-6">
-                        <h3 class="font-bold text-gray-800 dark:text-white mb-3 flex items-center">
+                    <div class="px-8 pb-6">
+                        <h3 class="font-bold text-gray-800 dark:text-white mb-3 flex items-center text-base">
                             <i class="fa fa-book mr-2 text-primary"></i>授课课程
                         </h3>
                         <div class="space-y-3">
                             ${(api && api.getCourses().filter(c => c.lecturerId === lecturer.id).slice(0, 3).map(c => `
-                                <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" onclick="location.href='player.html?courseId=${c.id}'">
-                                    <img src="${c.cover || ''}" class="w-16 h-12 rounded object-cover flex-shrink-0" onerror="this.src='https://placehold.co/64x48/667eea/white?text=Course'">
+                                <div class="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors group" onclick="location.href='player.html?courseId=${c.id}'">
+                                    <img src="${c.cover || ''}" class="w-20 h-14 rounded-lg object-cover flex-shrink-0 group-hover:scale-105 transition-transform" onerror="this.src='https://placehold.co/80x56/667eea/white?text=Course'">
                                     <div class="flex-1 min-w-0">
-                                        <div class="text-sm font-medium text-gray-800 dark:text-white truncate">${c.title}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${Math.floor((c.duration || 0) / 60)}分钟 · ${(c.views || 0) > 10000 ? ((c.views / 10000).toFixed(1) + '万') : (c.views || 0)}人学习</div>
+                                        <div class="text-sm font-semibold text-gray-800 dark:text-white group-hover:text-primary transition-colors truncate">${c.title}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-center gap-3">
+                                            <span><i class="fa fa-clock-o mr-1"></i>${Math.floor((c.duration || 0) / 60)}分钟</span>
+                                            <span><i class="fa fa-eye mr-1"></i>${(c.views || 0) > 10000 ? ((c.views / 10000).toFixed(1) + '万') : (c.views || 0)}人学习</span>
+                                        </div>
                                     </div>
                                 </div>
-                            `).join('')) || '<p class="text-sm text-gray-500">暂无课程</p>'}
+                            `).join('')) || '<p class="text-sm text-gray-500 italic">暂无课程</p>'}
                         </div>
                     </div>
 
                     <!-- 底部按钮 -->
-                    <div class="px-6 pb-6 flex gap-3">
-                        <button class="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-medium hover:bg-primary/90 transition-colors" onclick="closeTeacherModal()">
-                            关闭
+                    <div class="px-8 pb-6 flex gap-3">
+                        <button class="flex-1 px-6 py-3 rounded-xl bg-gradient-primary text-white font-semibold hover:opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5" onclick="closeTeacherModal()">
+                            <i class="fa fa-times mr-2"></i>关闭
                         </button>
                     </div>
                 </div>

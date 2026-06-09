@@ -151,7 +151,7 @@ body {
 }
 
 .carousel-slide {
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .carousel-indicator {
@@ -261,7 +261,7 @@ body {
 .level-senior { background: linear-gradient(135deg, #10b981, #059669); }
 .level-intermediate { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .level-junior { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-.level-trainee { background: linear-gradient(135deg, #6b7280, #4b5563); }
+.level-intern { background: linear-gradient(135deg, #f97316, #ea580c); }
 
 /* ==================== 统计卡片增强 ==================== */
 .stat-card {

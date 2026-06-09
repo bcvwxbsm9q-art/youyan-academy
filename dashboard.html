@@ -6,6 +6,9 @@
   <title>管理后台 - 游雁学院</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Quill.js 富文本编辑器 -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
   <style>
     * { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
     .fade-in { animation: fadeIn 0.3s ease-out; }
@@ -25,6 +28,37 @@
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    /* Quill 编辑器样式优化 */
+    .ql-container {
+      font-size: 14px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .ql-toolbar.ql-snow {
+      border-bottom: 1px solid #e2e8f0 !important;
+      flex-shrink: 0;
+    }
+    .ql-container.ql-snow .ql-editor {
+      min-height: auto;
+      max-height: none;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .ql-editor img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto;
+      cursor: pointer;
+    }
+    .ql-editor video {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto;
+    }
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -57,29 +91,38 @@
     <!-- 左侧边栏 -->
     <aside class="w-64 bg-slate-800 min-h-[calc(100vh-73px)] fixed left-0 top-[73px] overflow-y-auto">
       <nav class="p-4 space-y-1">
-        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium">数据中心</div>
+        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium">学习发展</div>
         <button onclick="switchTab('dashboard')" data-tab="dashboard" class="sidebar-item active w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
-          <i class="fas fa-chart-pie w-5"></i><span>数据概览</span>
+          <i class="fas fa-home w-5"></i><span>工作台</span>
+        </button>
+        <button onclick="switchTab('training')" data-tab="training" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-calendar-alt w-5"></i><span>培训管理</span>
         </button>
         <button onclick="switchTab('courses')" data-tab="courses" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
           <i class="fas fa-book w-5"></i><span>课程管理</span>
         </button>
-        <button onclick="switchTab('categories')" data-tab="categories" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
-          <i class="fas fa-folder-tree w-5"></i><span>分类管理</span>
-        </button>
         <button onclick="switchTab('lecturers')" data-tab="lecturers" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
           <i class="fas fa-chalkboard-teacher w-5"></i><span>讲师管理</span>
         </button>
-        
-        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium mt-6">运营中心</div>
-        <button onclick="switchTab('training')" data-tab="training" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
-          <i class="fas fa-calendar-alt w-5"></i><span>培训管理</span>
+        <button onclick="switchTab('library')" data-tab="library" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-book-open w-5"></i><span>书吧管理</span>
         </button>
-        <button onclick="switchTab('notices')" data-tab="notices" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
-          <i class="fas fa-bullhorn w-5"></i><span>公告管理</span>
+        <button onclick="switchTab('exams')" data-tab="exams" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-file-alt w-5"></i><span>问卷管理</span>
         </button>
         
-        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium mt-6">数据工具</div>
+        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium mt-6">平台管理</div>
+        <button onclick="switchTab('users')" data-tab="users" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-users w-5"></i><span>用户管理</span>
+        </button>
+        <button onclick="switchTab('portal')" data-tab="portal" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-globe w-5"></i><span>门户运营</span>
+        </button>
+        
+        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium mt-6">数据中心</div>
+        <button onclick="switchTab('dashboard')" data-tab="dashboard" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-chart-pie w-5"></i><span>数据概览</span>
+        </button>
         <button onclick="switchTab('export')" data-tab="export" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
           <i class="fas fa-download w-5"></i><span>数据导出</span>
         </button>
@@ -306,10 +349,219 @@
         </div>
         
         <!-- 讲师列表 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="lecturer-list">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-4 py-4 text-left text-sm font-semibold text-slate-600">姓名</th>
+                  <th class="px-4 py-4 text-left text-sm font-semibold text-slate-600">部门</th>
+                  <th class="px-4 py-4 text-left text-sm font-semibold text-slate-600">岗位</th>
+                  <th class="px-4 py-4 text-center text-sm font-semibold text-slate-600">等级</th>
+                  <th class="px-4 py-4 text-left text-sm font-semibold text-slate-600">标签</th>
+                  <th class="px-4 py-4 text-center text-sm font-semibold text-slate-600">课程数</th>
+                  <th class="px-4 py-4 text-center text-sm font-semibold text-slate-600">累计课酬</th>
+                  <th class="px-4 py-4 text-center text-sm font-semibold text-slate-600">创建时间</th>
+                  <th class="px-4 py-4 text-center text-sm font-semibold text-slate-600">状态</th>
+                  <th class="px-4 py-4 text-center text-sm font-semibold text-slate-600">操作</th>
+                </tr>
+              </thead>
+              <tbody id="lecturer-list" class="divide-y divide-slate-100">
+              </tbody>
+            </table>
+          </div>
+          <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+            <p class="text-sm text-slate-500">共 <span id="lecturer-count" class="font-semibold text-slate-700">0</span> 条记录</p>
+          </div>
         </div>
       </div>
 
+      <!-- 书吧管理 -->
+      <div id="tab-library" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-book-open text-amber-500 mr-2"></i>书吧管理
+          </h2>
+          <button onclick="openBookModal()" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition">
+            <i class="fas fa-plus mr-2"></i>添加书籍
+          </button>
+        </div>
+        
+        <!-- 搜索和筛选 -->
+        <div class="flex items-center gap-4 mb-6">
+          <div class="flex-1 relative">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="book-search-input" placeholder="搜索书籍名称或作者..." class="w-full pl-12 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <select id="book-category-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            <option value="all">全部分类</option>
+            <option value="literature">文学小说</option>
+            <option value="tech">科技编程</option>
+            <option value="business">商业管理</option>
+            <option value="art">艺术设计</option>
+            <option value="life">生活百科</option>
+          </select>
+          <select id="book-type-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            <option value="all">全部类型</option>
+            <option value="ebook">电子书</option>
+            <option value="physical">实体书</option>
+          </select>
+        </div>
+        
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-2xl font-bold text-slate-800">245</p>
+            <p class="text-sm text-slate-500">书籍总数</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-2xl font-bold text-green-500">186</p>
+            <p class="text-sm text-slate-500">可借阅</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-2xl font-bold text-blue-500">59</p>
+            <p class="text-sm text-slate-500">已借出</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-2xl font-bold text-purple-500">89</p>
+            <p class="text-sm text-slate-500">电子书</p>
+          </div>
+        </div>
+        
+        <!-- 书籍列表 -->
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">封面</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">书籍信息</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">分类</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">类型</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100" id="book-list">
+              <tr class="hover:bg-slate-50 transition">
+                <td class="px-6 py-4">
+                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=book%20cover%20programming%20javascript&image_size=square" alt="JavaScript高级程序设计" class="w-12 h-16 object-cover rounded-lg">
+                </td>
+                <td class="px-6 py-4">
+                  <p class="font-medium text-slate-800">JavaScript高级程序设计</p>
+                  <p class="text-sm text-slate-500">作者：Nicholas C. Zakas</p>
+                  <p class="text-xs text-slate-400">ISBN：978-7-115-36339-2</p>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">科技编程</td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">电子书</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">可借阅</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <button onclick="editBook(1)" class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
+                  <button onclick="deleteBook(1)" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition">
+                <td class="px-6 py-4">
+                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=book%20cover%20novel%20literature&image_size=square" alt="百年孤独" class="w-12 h-16 object-cover rounded-lg">
+                </td>
+                <td class="px-6 py-4">
+                  <p class="font-medium text-slate-800">百年孤独</p>
+                  <p class="text-sm text-slate-500">作者：加西亚·马尔克斯</p>
+                  <p class="text-xs text-slate-400">ISBN：978-7-5442-4490-9</p>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">文学小说</td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">实体书</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">可借阅</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <button onclick="editBook(2)" class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
+                  <button onclick="deleteBook(2)" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition">
+                <td class="px-6 py-4">
+                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=book%20cover%20business%20management&image_size=square" alt="精益创业" class="w-12 h-16 object-cover rounded-lg">
+                </td>
+                <td class="px-6 py-4">
+                  <p class="font-medium text-slate-800">精益创业</p>
+                  <p class="text-sm text-slate-500">作者：埃里克·莱斯</p>
+                  <p class="text-xs text-slate-400">ISBN：978-7-111-35663-8</p>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">商业管理</td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">电子书</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">已借出</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <button onclick="editBook(3)" class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
+                  <button onclick="deleteBook(3)" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition">
+                <td class="px-6 py-4">
+                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=book%20cover%20design%20art&image_size=square" alt="设计心理学" class="w-12 h-16 object-cover rounded-lg">
+                </td>
+                <td class="px-6 py-4">
+                  <p class="font-medium text-slate-800">设计心理学</p>
+                  <p class="text-sm text-slate-500">作者：唐纳德·诺曼</p>
+                  <p class="text-xs text-slate-400">ISBN：978-7-111-21653-3</p>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">艺术设计</td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">实体书</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">可借阅</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <button onclick="editBook(4)" class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
+                  <button onclick="deleteBook(4)" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition">
+                <td class="px-6 py-4">
+                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=book%20cover%20self%20help%20life&image_size=square" alt="高效能人士的七个习惯" class="w-12 h-16 object-cover rounded-lg">
+                </td>
+                <td class="px-6 py-4">
+                  <p class="font-medium text-slate-800">高效能人士的七个习惯</p>
+                  <p class="text-sm text-slate-500">作者：史蒂芬·柯维</p>
+                  <p class="text-xs text-slate-400">ISBN：978-7-111-20565-7</p>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">生活百科</td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">实体书</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">已借出</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <button onclick="editBook(5)" class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
+                  <button onclick="deleteBook(5)" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+            <p class="text-sm text-slate-500">共 245 条记录</p>
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm">上一页</button>
+              <span class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm">1</span>
+              <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm">2</button>
+              <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm">3</button>
+              <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm">下一页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <!-- 培训管理 -->
       <div id="tab-training" class="tab-content hidden">
         <div class="flex items-center justify-between mb-6">
@@ -336,15 +588,173 @@
           </button>
         </div>
         
-        <div id="notice-list" class="space-y-4">
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">封面图</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">标题</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">置顶</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">发布时间</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+              </tr>
+            </thead>
+            <tbody id="notice-list" class="divide-y divide-slate-200">
+              <tr>
+                <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                  <i class="fas fa-bullhorn text-4xl mb-3 block"></i>
+                  <p>暂无公告</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
       <!-- 数据导出 -->
       <div id="tab-export" class="tab-content hidden">
-        <h2 class="text-2xl font-bold text-slate-800 mb-6">
-          <i class="fas fa-download text-indigo-500 mr-2"></i>数据导出
-        </h2>
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-download text-indigo-500 mr-2"></i>数据导出
+          </h2>
+        </div>
+        
+        <!-- 子标签页 -->
+        <div class="bg-white rounded-xl shadow-sm p-1 mb-6 inline-flex gap-1">
+          <button onclick="switchSubTab('export', 'course-report')" class="subtab-btn active px-4 py-2 rounded-lg text-sm font-medium">课程报表</button>
+          <button onclick="switchSubTab('export', 'training-report')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">培训报表</button>
+          <button onclick="switchSubTab('export', 'exam-report')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">考试报表</button>
+          <button onclick="switchSubTab('export', 'student-archive')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">学员档案</button>
+        </div>
+        
+        <!-- 课程报表 -->
+        <div id="export-course-report" class="subtab-content">
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">课程名称</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">讲师</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">播放量</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">JavaScript基础入门</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">朱子墨</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">1,234</td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">Vue.js实战</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">柯博文</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">856</td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- 培训报表 -->
+        <div id="export-training-report" class="subtab-content hidden">
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">培训名称</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">参与人数</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">完成率</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">新员工入职培训</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">50</td>
+                  <td class="px-6 py-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">98%</span></td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">技术能力提升培训</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">30</td>
+                  <td class="px-6 py-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">85%</span></td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- 考试报表 -->
+        <div id="export-exam-report" class="subtab-content hidden">
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">考试名称</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">参考人数</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">平均分</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">JavaScript基础知识测试</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">45</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">85</td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- 学员档案 -->
+        <div id="export-student-archive" class="subtab-content hidden">
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">姓名</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">部门</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">完成课程</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">张三</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">研发部</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">12</td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">李四</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">产品部</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">8</td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
@@ -414,6 +824,740 @@
           </div>
         </div>
       </div>
+
+      <!-- 问卷管理 -->
+      <div id="tab-exams" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-file-alt text-indigo-500 mr-2"></i>问卷管理
+          </h2>
+        </div>
+        
+        <!-- 子标签页 -->
+        <div class="bg-white rounded-xl shadow-sm p-1 mb-6 inline-flex gap-1">
+          <button onclick="switchSubTab('exams', 'question-bank')" class="subtab-btn active px-4 py-2 rounded-lg text-sm font-medium">题库管理</button>
+          <button onclick="switchSubTab('exams', 'exam-papers')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">试卷管理</button>
+          <button onclick="switchSubTab('exams', 'survey')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">调研管理</button>
+          <button onclick="switchSubTab('exams', 'survey-results')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">调研结果</button>
+        </div>
+        
+        <!-- 题库管理内容 -->
+        <div id="exams-question-bank" class="subtab-content">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-slate-700">题库管理</h3>
+            <button onclick="openQuestionModal()" class="btn-primary px-4 py-2 text-white rounded-lg font-medium shadow transition text-sm">
+              <i class="fas fa-plus mr-1"></i>添加题目
+            </button>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">题目内容</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">题型</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">难度</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">JavaScript中let和const的区别是什么？</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">选择题</td>
+                  <td class="px-6 py-4"><span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">中等</span></td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
+                    <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">什么是闭包（Closure）？</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">问答题</td>
+                  <td class="px-6 py-4"><span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">困难</span></td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
+                    <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">HTTP状态码404表示什么？</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">选择题</td>
+                  <td class="px-6 py-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">简单</span></td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
+                    <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- 试卷管理内容 -->
+        <div id="exams-exam-papers" class="subtab-content hidden">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-slate-700">试卷管理</h3>
+            <button onclick="openExamModal()" class="btn-primary px-4 py-2 text-white rounded-lg font-medium shadow transition text-sm">
+              <i class="fas fa-plus mr-1"></i>创建试卷
+            </button>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <!-- 考试统计卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
+                <p class="text-sm opacity-80">总考试数</p>
+                <p class="text-3xl font-bold mt-1">5</p>
+              </div>
+              <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white">
+                <p class="text-sm opacity-80">已发布</p>
+                <p class="text-3xl font-bold mt-1">3</p>
+              </div>
+              <div class="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl p-6 text-white">
+                <p class="text-sm opacity-80">草稿</p>
+                <p class="text-3xl font-bold mt-1">2</p>
+              </div>
+              <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
+                <p class="text-sm opacity-80">总参与人次</p>
+                <p class="text-3xl font-bold mt-1">128</p>
+              </div>
+            </div>
+            <table class="w-full">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">试卷名称</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">题目数</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody id="examList" class="divide-y divide-slate-200">
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">JavaScript基础知识测试</td>
+                  <td class="px-6 py-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">已发布</span></td>
+                  <td class="px-6 py-4 text-sm text-slate-600">20</td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
+                    <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">前端技能考核</td>
+                  <td class="px-6 py-4"><span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">草稿</span></td>
+                  <td class="px-6 py-4 text-sm text-slate-600">25</td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
+                    <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- 调研管理内容 -->
+        <div id="exams-survey" class="subtab-content hidden">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-slate-700">调研管理</h3>
+            <button onclick="openSurveyModal()" class="btn-primary px-4 py-2 text-white rounded-lg font-medium shadow transition text-sm">
+              <i class="fas fa-plus mr-1"></i>创建调研
+            </button>
+          </div>
+          
+          <!-- 搜索和筛选 -->
+          <div class="flex items-center gap-4 mb-6">
+            <div class="flex-1 relative">
+              <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <input type="text" id="survey-search-input" placeholder="搜索调研标题..." class="w-full pl-12 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <select id="survey-status-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+              <option value="all">全部状态</option>
+              <option value="draft">草稿</option>
+              <option value="active">进行中</option>
+              <option value="ended">已结束</option>
+            </select>
+          </div>
+          
+          <!-- 调研列表 -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow">
+              <div class="flex items-start justify-between mb-4">
+                <div>
+                  <h4 class="font-semibold text-slate-800 mb-1">2024年度培训满意度调研</h4>
+                  <p class="text-sm text-slate-500">创建于 2024-01-15</p>
+                </div>
+                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">进行中</span>
+              </div>
+              <p class="text-sm text-slate-600 mb-4">本次调研旨在了解员工对公司培训体系的满意程度，收集改进建议。</p>
+              <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <div class="flex items-center gap-4 text-sm">
+                  <span class="text-slate-500"><i class="fas fa-users mr-1"></i>128 人参与</span>
+                  <span class="text-slate-500"><i class="fas fa-file-alt mr-1"></i>10 题</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="viewSurveyResults(1)" class="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-sm hover:bg-indigo-200 transition">查看结果</button>
+                  <button onclick="editSurvey(1)" class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-edit"></i></button>
+                  <button onclick="deleteSurvey(1)" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow">
+              <div class="flex items-start justify-between mb-4">
+                <div>
+                  <h4 class="font-semibold text-slate-800 mb-1">新员工入职反馈调研</h4>
+                  <p class="text-sm text-slate-500">创建于 2024-01-10</p>
+                </div>
+                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">已结束</span>
+              </div>
+              <p class="text-sm text-slate-600 mb-4">收集新员工入职两周后的感受和建议，帮助优化入职流程。</p>
+              <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <div class="flex items-center gap-4 text-sm">
+                  <span class="text-slate-500"><i class="fas fa-users mr-1"></i>86 人参与</span>
+                  <span class="text-slate-500"><i class="fas fa-file-alt mr-1"></i>8 题</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="viewSurveyResults(2)" class="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-sm hover:bg-indigo-200 transition">查看结果</button>
+                  <button onclick="editSurvey(2)" class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-edit"></i></button>
+                  <button onclick="deleteSurvey(2)" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 调研结果内容 -->
+        <div id="exams-survey-results" class="subtab-content hidden">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-slate-700">调研结果统计</h3>
+          </div>
+          
+          <!-- 统计卡片 -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+              <p class="text-2xl font-bold text-slate-800">12</p>
+              <p class="text-sm text-slate-500">调研总数</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+              <p class="text-2xl font-bold text-green-500">5</p>
+              <p class="text-sm text-slate-500">进行中</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+              <p class="text-2xl font-bold text-blue-500">328</p>
+              <p class="text-sm text-slate-500">总参与人数</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+              <p class="text-2xl font-bold text-purple-500">94.5%</p>
+              <p class="text-sm text-slate-500">平均完成率</p>
+            </div>
+          </div>
+          
+          <!-- 满意度分布图表 -->
+          <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+            <h4 class="font-semibold text-slate-800 mb-4">培训满意度分布</h4>
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm text-slate-600">非常满意</span>
+                  <span class="text-sm font-medium text-slate-700">45%</span>
+                </div>
+                <div class="h-3 bg-slate-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-green-500 rounded-full" style="width: 45%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm text-slate-600">满意</span>
+                  <span class="text-sm font-medium text-slate-700">35%</span>
+                </div>
+                <div class="h-3 bg-slate-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-blue-500 rounded-full" style="width: 35%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm text-slate-600">一般</span>
+                  <span class="text-sm font-medium text-slate-700">15%</span>
+                </div>
+                <div class="h-3 bg-slate-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-yellow-500 rounded-full" style="width: 15%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm text-slate-600">不满意</span>
+                  <span class="text-sm font-medium text-slate-700">5%</span>
+                </div>
+                <div class="h-3 bg-slate-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-red-500 rounded-full" style="width: 5%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 主要建议 -->
+          <div class="bg-white rounded-xl p-6 shadow-sm">
+            <h4 class="font-semibold text-slate-800 mb-4">主要建议</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="bg-slate-50 rounded-lg p-3">
+                <p class="text-sm text-slate-600">• 希望增加更多技术类课程</p>
+              </div>
+              <div class="bg-slate-50 rounded-lg p-3">
+                <p class="text-sm text-slate-600">• 建议延长培训时间</p>
+              </div>
+              <div class="bg-slate-50 rounded-lg p-3">
+                <p class="text-sm text-slate-600">• 希望有更多线上课程选择</p>
+              </div>
+              <div class="bg-slate-50 rounded-lg p-3">
+                <p class="text-sm text-slate-600">• 增加互动式培训方式</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+      
+      <!-- 门户运营 -->
+      <div id="tab-portal" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-globe text-indigo-500 mr-2"></i>门户运营
+          </h2>
+        </div>
+        
+        <!-- 子标签页 -->
+        <div class="bg-white rounded-xl shadow-sm p-1 mb-6 inline-flex gap-1">
+          <button onclick="switchSubTab('portal', 'carousel')" class="subtab-btn active px-4 py-2 rounded-lg text-sm font-medium">轮播管理</button>
+          <button onclick="switchSubTab('portal', 'notices')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">公告管理</button>
+          <button onclick="switchSubTab('portal', 'categories')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">分类管理</button>
+          <button onclick="switchSubTab('portal', 'lecturer-apply')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">讲师报名</button>
+        </div>
+        
+        <!-- 轮播管理 -->
+        <div id="portal-carousel" class="subtab-content">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-slate-700">轮播管理</h3>
+            <button onclick="openCarouselModal()" class="btn-primary px-4 py-2 text-white rounded-lg font-medium shadow transition text-sm">
+              <i class="fas fa-plus mr-1"></i>添加轮播图
+            </button>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">封面图</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">关联课程</th>
+                  <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">排序</th>
+                  <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
+                  <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody id="carousel-list" class="divide-y divide-slate-200">
+                <tr>
+                  <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                    <i class="fas fa-images text-4xl mb-3 block"></i>
+                    <p>暂无轮播图</p>
+                    <button onclick="openCarouselModal()" class="mt-4 btn-primary px-6 py-2.5 text-white rounded-xl font-medium">添加轮播图</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- 公告管理 -->
+        <div id="portal-notices" class="subtab-content hidden">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-slate-700">公告管理</h3>
+            <button onclick="openNoticeModal()" class="btn-primary px-4 py-2 text-white rounded-lg font-medium shadow transition text-sm">
+              <i class="fas fa-plus mr-1"></i>发布公告
+            </button>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">标题</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">关于春节放假安排的通知</td>
+                  <td class="px-6 py-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">已发布</span></td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
+                    <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">新员工培训计划启动</td>
+                  <td class="px-6 py-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">已发布</span></td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-edit"></i></button>
+                    <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- 分类管理 -->
+        <div id="portal-categories" class="subtab-content hidden">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-slate-700">分类管理</h3>
+            <button onclick="openCategoryModal()" class="btn-primary px-4 py-2 text-white rounded-lg font-medium shadow transition text-sm">
+              <i class="fas fa-plus mr-1"></i>添加一级分类
+            </button>
+          </div>
+          
+          <div class="space-y-4">
+            <div class="bg-white rounded-xl shadow-sm p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <span class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 font-bold">1</span>
+                  <span class="font-medium text-slate-800">策划</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="openSubCategoryModal(1)" class="w-7 h-7 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center text-green-600 transition cursor-pointer" title="添加二级分类">
+                    <i class="fas fa-plus text-sm"></i>
+                  </button>
+                  <button onclick="editCategory(1, '策划')" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 transition cursor-pointer" title="编辑分类">
+                    <i class="fas fa-edit text-sm"></i>
+                  </button>
+                  <button onclick="deleteCategory(1, '策划')" class="w-7 h-7 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center text-red-600 transition cursor-pointer" title="删除分类">
+                    <i class="fas fa-trash text-sm"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2 pl-11">
+                <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm">系统策划</span>
+                <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm">数值策划</span>
+              </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <span class="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center text-pink-600 font-bold">2</span>
+                  <span class="font-medium text-slate-800">美术</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="openSubCategoryModal(2)" class="w-7 h-7 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center text-green-600 transition cursor-pointer" title="添加二级分类">
+                    <i class="fas fa-plus text-sm"></i>
+                  </button>
+                  <button onclick="editCategory(2, '美术')" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 transition cursor-pointer" title="编辑分类">
+                    <i class="fas fa-edit text-sm"></i>
+                  </button>
+                  <button onclick="deleteCategory(2, '美术')" class="w-7 h-7 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center text-red-600 transition cursor-pointer" title="删除分类">
+                    <i class="fas fa-trash text-sm"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2 pl-11">
+                <span class="px-3 py-1 bg-pink-50 text-pink-600 rounded-full text-sm">原画</span>
+                <span class="px-3 py-1 bg-pink-50 text-pink-600 rounded-full text-sm">UI</span>
+                <span class="px-3 py-1 bg-pink-50 text-pink-600 rounded-full text-sm">模型</span>
+                <span class="px-3 py-1 bg-pink-50 text-pink-600 rounded-full text-sm">场景</span>
+                <span class="px-3 py-1 bg-pink-50 text-pink-600 rounded-full text-sm">动效</span>
+              </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <span class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 font-bold">3</span>
+                  <span class="font-medium text-slate-800">技术</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="openSubCategoryModal(3)" class="w-7 h-7 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center text-green-600 transition cursor-pointer" title="添加二级分类">
+                    <i class="fas fa-plus text-sm"></i>
+                  </button>
+                  <button onclick="editCategory(3, '技术')" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 transition cursor-pointer" title="编辑分类">
+                    <i class="fas fa-edit text-sm"></i>
+                  </button>
+                  <button onclick="deleteCategory(3, '技术')" class="w-7 h-7 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center text-red-600 transition cursor-pointer" title="删除分类">
+                    <i class="fas fa-trash text-sm"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2 pl-11">
+                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm">客户端</span>
+                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm">服务端</span>
+                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm">运维</span>
+                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm">PHP</span>
+              </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <span class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 font-bold">4</span>
+                  <span class="font-medium text-slate-800">市场</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="openSubCategoryModal(4)" class="w-7 h-7 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center text-green-600 transition cursor-pointer" title="添加二级分类">
+                    <i class="fas fa-plus text-sm"></i>
+                  </button>
+                  <button onclick="editCategory(4, '市场')" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 transition cursor-pointer" title="编辑分类">
+                    <i class="fas fa-edit text-sm"></i>
+                  </button>
+                  <button onclick="deleteCategory(4, '市场')" class="w-7 h-7 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center text-red-600 transition cursor-pointer" title="删除分类">
+                    <i class="fas fa-trash text-sm"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2 pl-11">
+                <span class="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-sm">运营</span>
+                <span class="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-sm">投放</span>
+                <span class="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-sm">设计</span>
+                <span class="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-sm">客服</span>
+              </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <span class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 font-bold">5</span>
+                  <span class="font-medium text-slate-800">软技能</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="openSubCategoryModal(5)" class="w-7 h-7 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center text-green-600 transition cursor-pointer" title="添加二级分类">
+                    <i class="fas fa-plus text-sm"></i>
+                  </button>
+                  <button onclick="editCategory(5, '软技能')" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 transition cursor-pointer" title="编辑分类">
+                    <i class="fas fa-edit text-sm"></i>
+                  </button>
+                  <button onclick="deleteCategory(5, '软技能')" class="w-7 h-7 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center text-red-600 transition cursor-pointer" title="删除分类">
+                    <i class="fas fa-trash text-sm"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2 pl-11">
+                <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm">沟通</span>
+                <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm">思维</span>
+                <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm">管理</span>
+                <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm">领导力</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 讲师报名 -->
+        <div id="portal-lecturer-apply" class="subtab-content hidden">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-slate-700">讲师报名</h3>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">姓名</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">部门</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">张三</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">研发部</td>
+                  <td class="px-6 py-4"><span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">待审核</span></td>
+                  <td class="px-6 py-4">
+                    <button class="text-green-600 hover:text-green-800 mr-3"><i class="fas fa-check"></i></button>
+                    <button class="text-red-600 hover:text-red-800"><i class="fas fa-times"></i></button>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-6 py-4 text-sm text-slate-700">李四</td>
+                  <td class="px-6 py-4 text-sm text-slate-600">产品部</td>
+                  <td class="px-6 py-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">已通过</span></td>
+                  <td class="px-6 py-4">
+                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-eye"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 用户管理 -->
+      <div id="tab-users" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-users text-purple-500 mr-2"></i>用户管理
+          </h2>
+          <button onclick="openUserModal()" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition">
+            <i class="fas fa-plus mr-2"></i>添加用户
+          </button>
+        </div>
+        
+        <!-- 搜索和筛选 -->
+        <div class="flex items-center gap-4 mb-6">
+          <div class="flex-1 relative">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="user-search-input" placeholder="搜索用户名、邮箱或手机号..." class="w-full pl-12 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <select id="user-role-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            <option value="all">全部角色</option>
+            <option value="admin">管理员</option>
+            <option value="teacher">讲师</option>
+            <option value="student">学员</option>
+          </select>
+          <select id="user-status-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            <option value="all">全部状态</option>
+            <option value="active">正常</option>
+            <option value="disabled">禁用</option>
+          </select>
+        </div>
+        
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-2xl font-bold text-slate-800">256</p>
+            <p class="text-sm text-slate-500">用户总数</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-2xl font-bold text-green-500">8</p>
+            <p class="text-sm text-slate-500">管理员</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-2xl font-bold text-blue-500">24</p>
+            <p class="text-sm text-slate-500">讲师</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-2xl font-bold text-purple-500">224</p>
+            <p class="text-sm text-slate-500">学员</p>
+          </div>
+        </div>
+        
+        <!-- 用户列表 -->
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">头像</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">基本信息</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">角色</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">部门</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">注册时间</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100" id="user-list">
+              <tr class="hover:bg-slate-50 transition">
+                <td class="px-6 py-4">
+                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=professional%20avatar%20male%20business&image_size=square" alt="用户头像" class="w-10 h-10 rounded-full object-cover">
+                </td>
+                <td class="px-6 py-4">
+                  <p class="font-medium text-slate-800">张三</p>
+                  <p class="text-sm text-slate-500">zhangsan@company.com</p>
+                  <p class="text-xs text-slate-400">138****8888</p>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">管理员</span>
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-slate-600">技术部</td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">正常</span>
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-slate-500">2024-01-10</td>
+                <td class="px-6 py-4 text-center">
+                  <button onclick="viewUserDetail(1)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-eye"></i></button>
+                  <button onclick="editUser(1)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-edit"></i></button>
+                  <button onclick="resetUserPassword(1)" class="text-orange-600 hover:text-orange-800 mr-2"><i class="fas fa-key"></i></button>
+                  <button onclick="toggleUserStatus(1)" class="text-red-600 hover:text-red-800"><i class="fas fa-ban"></i></button>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition">
+                <td class="px-6 py-4">
+                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=professional%20avatar%20female%20business&image_size=square" alt="用户头像" class="w-10 h-10 rounded-full object-cover">
+                </td>
+                <td class="px-6 py-4">
+                  <p class="font-medium text-slate-800">李四</p>
+                  <p class="text-sm text-slate-500">lisi@company.com</p>
+                  <p class="text-xs text-slate-400">139****6666</p>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">讲师</span>
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-slate-600">产品部</td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">正常</span>
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-slate-500">2024-01-12</td>
+                <td class="px-6 py-4 text-center">
+                  <button onclick="viewUserDetail(2)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-eye"></i></button>
+                  <button onclick="editUser(2)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-edit"></i></button>
+                  <button onclick="resetUserPassword(2)" class="text-orange-600 hover:text-orange-800 mr-2"><i class="fas fa-key"></i></button>
+                  <button onclick="toggleUserStatus(2)" class="text-red-600 hover:text-red-800"><i class="fas fa-ban"></i></button>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition">
+                <td class="px-6 py-4">
+                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=professional%20avatar%20male%20young&image_size=square" alt="用户头像" class="w-10 h-10 rounded-full object-cover">
+                </td>
+                <td class="px-6 py-4">
+                  <p class="font-medium text-slate-800">王五</p>
+                  <p class="text-sm text-slate-500">wangwu@company.com</p>
+                  <p class="text-xs text-slate-400">137****5555</p>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">学员</span>
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-slate-600">市场部</td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">正常</span>
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-slate-500">2024-01-15</td>
+                <td class="px-6 py-4 text-center">
+                  <button onclick="viewUserDetail(3)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-eye"></i></button>
+                  <button onclick="editUser(3)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-edit"></i></button>
+                  <button onclick="resetUserPassword(3)" class="text-orange-600 hover:text-orange-800 mr-2"><i class="fas fa-key"></i></button>
+                  <button onclick="toggleUserStatus(3)" class="text-red-600 hover:text-red-800"><i class="fas fa-ban"></i></button>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-50 transition">
+                <td class="px-6 py-4">
+                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=professional%20avatar%20female%20young&image_size=square" alt="用户头像" class="w-10 h-10 rounded-full object-cover">
+                </td>
+                <td class="px-6 py-4">
+                  <p class="font-medium text-slate-800">赵六</p>
+                  <p class="text-sm text-slate-500">zhaoliu@company.com</p>
+                  <p class="text-xs text-slate-400">136****4444</p>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">学员</span>
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-slate-600">人力资源</td>
+                <td class="px-6 py-4 text-center">
+                  <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">禁用</span>
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-slate-500">2024-01-08</td>
+                <td class="px-6 py-4 text-center">
+                  <button onclick="viewUserDetail(4)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-eye"></i></button>
+                  <button onclick="editUser(4)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-edit"></i></button>
+                  <button onclick="resetUserPassword(4)" class="text-orange-600 hover:text-orange-800 mr-2"><i class="fas fa-key"></i></button>
+                  <button onclick="toggleUserStatus(4)" class="text-green-600 hover:text-green-800"><i class="fas fa-check"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+            <p class="text-sm text-slate-500">共 256 条记录</p>
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm">上一页</button>
+              <span class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm">1</span>
+              <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm">2</button>
+              <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm">3</button>
+              <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm">下一页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
     </main>
   </div>
 
@@ -422,6 +1566,226 @@
   
   <!-- Toast 提示 -->
   <div id="toast" class="fixed bottom-6 right-6 px-6 py-3 rounded-xl shadow-lg z-50 hidden transform transition-all duration-300 translate-y-4 opacity-0">
+  </div>
+
+  <!-- ========== 轮播图弹窗 ========== -->
+  <div id="carouselModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
+      <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
+        <h3 class="text-lg font-bold text-slate-800" id="carouselModalTitle">添加轮播图</h3>
+        <button onclick="closeCarouselModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <form id="carouselForm" onsubmit="saveCarousel(event)" class="p-6 space-y-5">
+        <input type="hidden" id="carousel-id">
+        <!-- 封面图片 -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">封面图片 <span class="text-red-500">*</span></label>
+          <div id="carousel-cover-preview" class="w-full h-40 bg-slate-100 rounded-xl flex items-center justify-center mb-3 overflow-hidden">
+            <div id="carousel-cover-placeholder" class="text-slate-400 text-center">
+              <i class="fas fa-image text-3xl mb-1"></i>
+              <p class="text-sm">点击上传封面</p>
+              <p class="text-xs text-slate-300">建议尺寸 1920×500，16:9 比例</p>
+            </div>
+            <img id="carousel-cover-img" src="" class="w-full h-full object-cover hidden" alt="封面预览">
+          </div>
+          <input type="file" id="carousel-cover-input" accept="image/*" onchange="handleCarouselCoverUpload(this)" class="hidden">
+          <input type="hidden" id="carousel-cover-url">
+          <button type="button" onclick="document.getElementById('carousel-cover-input').click()" class="w-full px-4 py-2 border-2 border-dashed border-slate-300 rounded-xl text-sm text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition">
+            <i class="fas fa-cloud-upload-alt mr-1"></i>本地上传封面图片
+          </button>
+        </div>
+        <!-- 关联课程 -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">关联课程 <span class="text-slate-400 font-normal">（可选，点击轮播图跳转到该课程）</span></label>
+          <select id="carousel-course" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none">
+            <option value="">不关联课程</option>
+          </select>
+        </div>
+        <!-- 排序 -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">排序</label>
+          <input type="number" id="carousel-order" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none" placeholder="数字越小越靠前" min="1">
+        </div>
+        <!-- 状态 -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">状态</label>
+          <select id="carousel-status" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none">
+            <option value="published">已发布</option>
+            <option value="draft">草稿</option>
+          </select>
+        </div>
+        <!-- 按钮 -->
+        <div class="flex gap-3 pt-2">
+          <button type="submit" class="flex-1 px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition text-sm">
+            <i class="fas fa-check mr-1"></i>保存
+          </button>
+          <button type="button" onclick="closeCarouselModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition text-sm">取消</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== 考试弹窗 ========== -->
+  <div id="examModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
+      <div class="flex justify-between items-center p-6 border-b border-slate-100">
+        <h3 class="text-lg font-bold text-slate-800" id="examModalTitle">创建考试</h3>
+        <button onclick="closeExamModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <form id="examForm" onsubmit="saveExam(event)" class="p-6 space-y-4">
+        <input type="hidden" id="examId">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">考试名称 <span class="text-red-500">*</span></label>
+          <input type="text" id="examTitle" required placeholder="请输入考试名称"
+            class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">考试描述</label>
+          <textarea id="examDesc" rows="2" placeholder="简要说明考试内容"
+            class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">时长（分钟）</label>
+            <input type="number" id="examDuration" value="60" min="5" max="300"
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">总分</label>
+            <input type="number" id="examTotalScore" value="100" min="1"
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">及格分数</label>
+            <input type="number" id="examPassingScore" value="60" min="0"
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">状态</label>
+            <select id="examStatus" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="draft">草稿</option>
+              <option value="published">已发布</option>
+              <option value="closed">已结束</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <label class="flex items-center space-x-2 pt-2">
+            <input type="checkbox" id="examShuffle" class="w-4 h-4 text-indigo-500 rounded border-slate-300">
+            <span class="text-sm text-slate-600">随机打乱题目顺序</span>
+          </label>
+          <label class="flex items-center space-x-2 pt-2">
+            <input type="checkbox" id="examShowAnswer" checked class="w-4 h-4 text-indigo-500 rounded border-slate-300">
+            <span class="text-sm text-slate-600">考后显示答案解析</span>
+          </label>
+        </div>
+
+        <!-- 题目选择区域 -->
+        <div class="border-t border-slate-200 pt-4 mt-4">
+          <div class="flex justify-between items-center mb-3">
+            <label class="block text-sm font-bold text-slate-700">📝 考试题目（点击下方按钮从题库选择）</label>
+            <button type="button" onclick="openQuestionPicker()" class="text-sm px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
+              <i class="fas fa-list mr-1"></i>从题库选题目
+            </button>
+          </div>
+          <div id="examSelectedQuestions" class="space-y-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
+            <p class="text-sm text-slate-400 text-center py-4">暂未选择题目，请从题库中选取</p>
+          </div>
+          <p class="text-xs text-slate-400 mt-1" id="examQuestionCountHint">已选 0 题</p>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+          <button type="button" onclick="closeExamModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+          <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium transition">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== 题目选择器弹窗 ========== -->
+  <div id="questionPickerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden m-4 flex flex-col shadow-2xl">
+      <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-check-square mr-2 text-indigo-500"></i>从题库选择题目</h3>
+        <button onclick="closeQuestionPicker()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <!-- 筛选栏 -->
+      <div class="px-6 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0 flex gap-3 flex-wrap">
+        <select id="qpBankFilter" onchange="loadQuestionPool()" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <option value="">全部题库</option>
+        </select>
+        <select id="qpTypeFilter" onchange="loadQuestionPool()" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <option value="">全部题型</option>
+          <option value="single">单选题</option>
+          <option value="multiple">多选题</option>
+          <option value="judge">判断题</option>
+        </select>
+        <select id="qpDiffFilter" onchange="loadQuestionPool()" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <option value="">全部难度</option>
+          <option value="easy">简单</option>
+          <option value="medium">中等</option>
+          <option value="hard">困难</option>
+        </select>
+        <input type="text" id="qpSearch" placeholder="搜索题目内容..." onkeyup="if(event.key==='Enter')loadQuestionPool()"
+          class="flex-1 min-w-[150px] px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+      </div>
+      <!-- 题目列表 -->
+      <div class="flex-1 overflow-y-auto p-6">
+        <table class="w-full">
+          <thead class="sticky top-0 bg-white">
+            <tr class="text-left text-xs text-slate-500 uppercase border-b border-slate-200">
+              <th class="py-2 w-10"><input type="checkbox" id="qpSelectAll" onchange="toggleQpSelectAll()"></th>
+              <th class="py-2">题目内容</th>
+              <th class="py-2 w-20">题型</th>
+              <th class="py-2 w-16">难度</th>
+              <th class="py-2 w-14">分值</th>
+            </tr>
+          </thead>
+          <tbody id="questionPoolBody" class="divide-y divide-slate-100 text-sm">
+            <tr><td colspan="5" class="py-8 text-center text-slate-400">请先选择分类筛选题目</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- 底部操作栏 -->
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex-shrink-0 flex justify-between items-center">
+        <span class="text-sm text-slate-500">已勾选 <strong id="qpCheckedCount" class="text-indigo-600">0</strong> 题</span>
+        <div class="space-x-2">
+          <button type="button" onclick="closeQuestionPicker()" class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm transition">取消</button>
+          <button type="button" onclick="confirmQuestionPick()" class="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm transition">确认添加到考试</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 考试成绩弹窗 ========== -->
+  <div id="examResultsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden m-4 flex flex-col shadow-2xl">
+      <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-chart-line mr-2 text-green-500"></i>考试成绩 — <span id="resultsExamTitle">考试</span></h3>
+        <button onclick="closeExamResults()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-6">
+        <table class="w-full">
+          <thead class="sticky top-0 bg-slate-50">
+            <tr class="text-left text-xs text-slate-500 uppercase border-b border-slate-200">
+              <th class="py-2 px-3">学员姓名</th>
+              <th class="py-2 px-3">得分</th>
+              <th class="py-2 px-3">正确/总题</th>
+              <th class="py-2 px-3">结果</th>
+              <th class="py-2 px-3">提交时间</th>
+            </tr>
+          </thead>
+          <tbody id="examResultsBody" class="divide-y divide-slate-100 text-sm">
+            <tr><td colspan="5" class="py-8 text-center text-slate-400">暂无成绩记录</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="p-4 border-t border-slate-100 flex-shrink-0 text-right">
+        <button type="button" onclick="closeExamResults()" class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm transition">关闭</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -438,12 +1802,28 @@
       users: []
     };
     
+    let isInitialized = false;
+    
     // ========== 初始化 ==========
     document.addEventListener('DOMContentLoaded', async () => {
+      if (isInitialized) return;
+      isInitialized = true;
+      
       updateTime();
       setInterval(updateTime, 1000);
-      await loadAllData();
-      switchTab('dashboard');
+      
+      try {
+        await loadAllData();
+      } catch (error) {
+        console.error('初始化加载数据失败:', error);
+        toast('数据加载失败，部分功能可能受限', 'warning');
+      }
+      
+      try {
+        switchTab('dashboard');
+      } catch (error) {
+        console.error('切换标签页失败:', error);
+      }
     });
     
     function updateTime() {
@@ -474,8 +1854,16 @@
           data.categories = [];
         }
         
+        // 广播数据变更，通知其他页面（如课程中心）同步
+        if (window.DataSync) {
+          localStorage.setItem('categories_sync_time', Date.now().toString());
+          window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+        }
+        
         // 更新分类筛选下拉
         updateCategoryFilter();
+        // 数据加载完成后刷新公告列表（如果面板已渲染）
+        if (document.getElementById('notice-list')) renderNotices();
       } catch (e) {
         console.error('加载数据失败', e);
         toast('数据加载失败', 'error');
@@ -489,6 +1877,284 @@
       select.innerHTML = '<option value="">全部分类</option>' + options;
     }
     
+    // ========== 子菜单切换 ==========
+    function toggleSubMenu(menuId) {
+      const menu = document.getElementById(menuId);
+      if (menu) {
+        menu.classList.toggle('hidden');
+        const btn = menu.previousElementSibling;
+        if (btn) {
+          const icon = btn.querySelector('.fa-chevron-right');
+          if (icon) {
+            icon.style.transform = menu.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(90deg)';
+          }
+        }
+      }
+    }
+
+    // ========== 子标签页切换 ==========
+    function switchSubTab(tabName, subTabName) {
+      const subtabBtns = document.querySelectorAll('.subtab-btn');
+      subtabBtns.forEach(btn => btn.classList.remove('active', 'bg-indigo-600', 'text-white'));
+      subtabBtns.forEach(btn => btn.classList.add('text-slate-600', 'hover:bg-slate-100'));
+      
+      const activeBtn = document.querySelector(`.subtab-btn:not([onclick*="${tabName}"])`);
+      const targetBtn = Array.from(subtabBtns).find(btn => btn.onclick && btn.onclick.toString().includes(tabName) && btn.onclick.toString().includes(subTabName));
+      if (targetBtn) {
+        targetBtn.classList.add('active', 'bg-indigo-600', 'text-white');
+        targetBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+      }
+      
+      const subtabContents = document.querySelectorAll('.subtab-content');
+      subtabContents.forEach(content => content.classList.add('hidden'));
+      
+      const targetContent = document.getElementById(`${tabName}-${subTabName}`);
+      if (targetContent) {
+        targetContent.classList.remove('hidden');
+      }
+
+      // 切换到轮播管理时加载数据
+      if (tabName === 'portal' && subTabName === 'carousel') {
+        loadCarousels();
+      }
+    }
+
+    // ========== 轮播管理 ==========
+    async function loadCarousels() {
+      const tbody = document.getElementById('carousel-list');
+      if (!tbody) return;
+      
+      try {
+        const res = await fetch(API + '/banners');
+        const banners = await res.json();
+        
+        if (!banners || banners.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                <i class="fas fa-images text-4xl mb-3 block"></i>
+                <p>暂无轮播图</p>
+                <p class="text-sm">点击上方按钮添加</p>
+              </td>
+            </tr>`;
+          return;
+        }
+        
+        // 按排序号升序排列
+        const sortedBanners = [...banners].sort((a, b) => (a.order || 99) - (b.order || 99));
+        
+        tbody.innerHTML = sortedBanners.map(b => `
+          <tr class="hover:bg-slate-50 transition">
+            <!-- 封面图 -->
+            <td class="px-6 py-4">
+              <div class="w-32 h-20 rounded-lg overflow-hidden bg-slate-100">
+                <img src="${escHtml(b.img)}" alt="${escHtml(b.courseTitle||'')}" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22128%22 height=%2280%22><rect fill=%22%23e2e8f0%22 width=%22128%22 height=%2280%22/><text x=%2264%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2212%22>暂无封面</text></svg>'">
+              </div>
+            </td>
+            
+            <!-- 关联课程 -->
+            <td class="px-6 py-4 text-sm text-slate-700">
+              ${b.courseTitle ? escHtml(b.courseTitle) : '<span class="text-slate-400">未关联</span>'}
+            </td>
+            
+            <!-- 排序 -->
+            <td class="px-6 py-4 text-center text-sm text-slate-600">
+              <span class="px-2 py-1 bg-slate-100 rounded-md font-medium">${b.order || '-'}</span>
+            </td>
+            
+            <!-- 状态 -->
+            <td class="px-6 py-4 text-center">
+              ${b.status === 'draft' 
+                ? '<span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium">草稿</span>'
+                : '<span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">已发布</span>'
+              }
+            </td>
+            
+            <!-- 操作 -->
+            <td class="px-6 py-4 text-center">
+              <button onclick="editCarousel(${b.id})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs hover:bg-indigo-100 transition mr-2">
+                <i class="fas fa-edit mr-1"></i>编辑
+              </button>
+              <button onclick="deleteCarousel(${b.id})" class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs hover:bg-red-100 transition">
+                <i class="fas fa-trash mr-1"></i>删除
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('加载轮播图失败:', err);
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-6 py-12 text-center text-red-400">
+              <i class="fas fa-exclamation-circle text-3xl mb-2 block"></i>
+              <p>加载失败，请刷新重试</p>
+            </td>
+          </tr>`;
+      }
+    }
+
+    function openCarouselModal(banner = null) {
+      document.getElementById('carousel-id').value = banner ? banner.id : '';
+      document.getElementById('carousel-order').value = banner ? banner.order || '' : '';
+      document.getElementById('carousel-status').value = banner ? banner.status || 'published' : 'published';
+      document.getElementById('carousel-cover-url').value = banner ? banner.img || '' : '';
+      document.getElementById('carouselModalTitle').textContent = banner ? '编辑轮播图' : '添加轮播图';
+
+      // 封面预览
+      const placeholder = document.getElementById('carousel-cover-placeholder');
+      const img = document.getElementById('carousel-cover-img');
+      if (banner && banner.img) {
+        img.src = banner.img;
+        img.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+      } else {
+        img.src = '';
+        img.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+      }
+
+      // 加载课程列表到下拉框
+      loadCarouselCourseOptions();
+
+      const modal = document.getElementById('carouselModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeCarouselModal() {
+      const modal = document.getElementById('carouselModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.getElementById('carouselForm').reset();
+      document.getElementById('carousel-cover-img').classList.add('hidden');
+      document.getElementById('carousel-cover-placeholder').classList.remove('hidden');
+    }
+
+    async function loadCarouselCourseOptions() {
+      const select = document.getElementById('carousel-course');
+      const currentCourseId = document.getElementById('carousel-id').value ? '' : ''; // 编辑时从已有数据恢复
+      try {
+        const res = await fetch(API + '/courses');
+        const courses = await res.json();
+        const published = (courses || []).filter(c => c.status === 'published');
+        select.innerHTML = '<option value="">不关联课程</option>' +
+          published.map(c => `<option value="${c.id}">${escHtml(c.title)}</option>`).join('');
+        // 编辑时回填课程
+        if (currentCourseId) select.value = currentCourseId;
+      } catch (err) {
+        select.innerHTML = '<option value="">加载课程失败</option>';
+      }
+    }
+
+    // 编辑时回填关联课程
+    async function editCarousel(id) {
+      try {
+        const res = await fetch(API + '/banners');
+        const banners = await res.json();
+        const banner = banners.find(b => b.id === id);
+        if (banner) {
+          openCarouselModal(banner);
+          // 加载课程选项后再回填
+          setTimeout(() => {
+            document.getElementById('carousel-course').value = banner.courseId || '';
+          }, 300);
+        }
+      } catch (err) {
+        toast('获取轮播图信息失败', 'error');
+      }
+    }
+
+    async function handleCarouselCoverUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        input.disabled = true;
+        const res = await fetch(API + '/upload?type=covers', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await res.json();
+        if (result.success) {
+          document.getElementById('carousel-cover-url').value = result.url;
+          const img = document.getElementById('carousel-cover-img');
+          img.src = result.url;
+          img.classList.remove('hidden');
+          document.getElementById('carousel-cover-placeholder').classList.add('hidden');
+          toast('封面上传成功');
+        } else {
+          toast(result.error || '上传失败', 'error');
+        }
+      } catch (err) {
+        toast('上传失败', 'error');
+      } finally {
+        input.disabled = false;
+        input.value = '';
+      }
+    }
+
+    async function saveCarousel(e) {
+      e.preventDefault();
+      const id = document.getElementById('carousel-id').value;
+      const coverUrl = document.getElementById('carousel-cover-url').value.trim();
+
+      if (!coverUrl) {
+        toast('请上传封面图片', 'error');
+        return;
+      }
+
+      const bannerData = {
+        img: coverUrl,
+        courseId: document.getElementById('carousel-course').value ? parseInt(document.getElementById('carousel-course').value) : null,
+        order: parseInt(document.getElementById('carousel-order').value) || 99,
+        status: document.getElementById('carousel-status').value
+      };
+
+      try {
+        const url = id ? `${API}/banners/${id}` : `${API}/banners`;
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bannerData)
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast(id ? '轮播图已更新' : '轮播图已添加');
+          closeCarouselModal();
+          loadCarousels();
+        } else {
+          toast(result.error || '保存失败', 'error');
+        }
+      } catch (err) {
+        toast('保存失败', 'error');
+      }
+    }
+
+    async function deleteCarousel(id) {
+      if (!confirm('确定要删除这个轮播图吗？')) return;
+      try {
+        const res = await fetch(`${API}/banners/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) {
+          toast('轮播图已删除');
+          loadCarousels();
+        } else {
+          toast(result.error || '删除失败', 'error');
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+
+    function escHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     // ========== 标签切换 ==========
     function switchTab(name) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -504,7 +2170,9 @@
         categories: renderCategories,
         lecturers: renderLecturers,
         training: renderTraining,
-        notices: renderNotices
+        notices: renderNotices,
+        portal: () => loadCarousels(),
+        exams: loadExams
       };
       if (loaders[name]) loaders[name]();
     }
@@ -1193,6 +2861,765 @@
       `).join('');
     }
     
+    function editCategory(id, name) {
+      let modalContent = `
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">编辑分类</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveEditCategory(event, ${id})" class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">分类名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="edit-cat-name" value="${name}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="flex gap-3 pt-4">
+              <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">
+                取消
+              </button>
+              <button type="submit" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition">
+                保存修改
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+      
+      document.getElementById('modal-container').innerHTML = modalContent;
+      document.getElementById('modal-container').classList.add('flex');
+      document.getElementById('modal-container').classList.remove('hidden');
+    }
+    
+    function saveEditCategory(event, id) {
+      event.preventDefault();
+      const name = document.getElementById('edit-cat-name').value;
+      
+      fetch(`/api/categories/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          showToast('分类修改成功');
+          closeModal();
+        } else {
+          showToast('修改失败', 'error');
+        }
+      }).catch(() => showToast('修改失败', 'error'));
+    }
+    
+    function deleteCategory(id, name) {
+      if (confirm(`确定要删除分类「${name}」吗？删除后该分类下的所有课程和子分类也将被删除。`)) {
+        fetch(`/api/categories/${id}`, {
+          method: 'DELETE'
+        }).then(res => res.json()).then(data => {
+          if (data.success) {
+            showToast('分类删除成功');
+          } else {
+            showToast('删除失败', 'error');
+          }
+        }).catch(() => showToast('删除失败', 'error'));
+      }
+    }
+    
+    function openBookModal(type = 'add', book = null) {
+      const isEdit = type === 'edit';
+      let modalContent = `
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑书籍' : '添加书籍'}</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="${isEdit ? `saveEditBook(event, ${book.id})` : 'saveBook(event)'}" class="p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">书名 <span class="text-red-500">*</span></label>
+                <input type="text" id="book-title" value="${isEdit ? book.title : ''}" required placeholder="请输入书名" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">作者 <span class="text-red-500">*</span></label>
+                <input type="text" id="book-author" value="${isEdit ? book.author : ''}" required placeholder="请输入作者" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">ISBN</label>
+                <input type="text" id="book-isbn" value="${isEdit ? book.isbn : ''}" placeholder="请输入ISBN" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">分类 <span class="text-red-500">*</span></label>
+                <select id="book-category" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                  <option value="">请选择分类</option>
+                  <option value="literature">文学小说</option>
+                  <option value="tech">科技编程</option>
+                  <option value="business">商业管理</option>
+                  <option value="art">艺术设计</option>
+                  <option value="life">生活百科</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">封面图片URL</label>
+              <input type="text" id="book-cover" value="${isEdit ? book.cover : ''}" placeholder="请输入封面图片URL" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">书籍简介</label>
+              <textarea id="book-desc" rows="3" placeholder="请输入书籍简介" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none">${isEdit ? book.description : ''}</textarea>
+            </div>
+            <div class="flex items-center gap-6">
+              <label class="flex items-center gap-2">
+                <input type="checkbox" id="book-ebook" ${isEdit && book.isEbook ? 'checked' : ''} class="w-4 h-4 text-indigo-600 rounded">
+                <span class="text-sm text-slate-600">电子书</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" id="book-available" ${isEdit && book.available ? 'checked' : 'checked'} class="w-4 h-4 text-indigo-600 rounded">
+                <span class="text-sm text-slate-600">可借阅</span>
+              </label>
+            </div>
+            <div class="flex gap-3 pt-4">
+              <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">
+                取消
+              </button>
+              <button type="submit" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition">
+                ${isEdit ? '保存修改' : '确认添加'}
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+      
+      document.getElementById('modal-container').innerHTML = modalContent;
+      document.getElementById('modal-container').classList.add('flex');
+      document.getElementById('modal-container').classList.remove('hidden');
+    }
+    
+    function saveBook(event) {
+      event.preventDefault();
+      const data = {
+        title: document.getElementById('book-title').value,
+        author: document.getElementById('book-author').value,
+        isbn: document.getElementById('book-isbn').value,
+        category: document.getElementById('book-category').value,
+        cover: document.getElementById('book-cover').value,
+        description: document.getElementById('book-desc').value,
+        isEbook: document.getElementById('book-ebook').checked,
+        available: document.getElementById('book-available').checked
+      };
+      
+      fetch('/api/books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          showToast('书籍添加成功');
+          closeModal();
+        } else {
+          showToast('添加失败', 'error');
+        }
+      }).catch(() => showToast('添加失败', 'error'));
+    }
+    
+    function editBook(id) {
+      const books = [
+        { id: 1, title: 'JavaScript高级程序设计', author: 'Nicholas C. Zakas', isbn: '978-7-115-36339-2', category: 'tech', cover: '', description: '', isEbook: true, available: true },
+        { id: 2, title: '百年孤独', author: '加西亚·马尔克斯', isbn: '978-7-5442-4490-9', category: 'literature', cover: '', description: '', isEbook: false, available: true },
+        { id: 3, title: '精益创业', author: '埃里克·莱斯', isbn: '978-7-111-35663-8', category: 'business', cover: '', description: '', isEbook: true, available: false },
+        { id: 4, title: '设计心理学', author: '唐纳德·诺曼', isbn: '978-7-111-21653-3', category: 'art', cover: '', description: '', isEbook: false, available: true },
+        { id: 5, title: '高效能人士的七个习惯', author: '史蒂芬·柯维', isbn: '978-7-111-20565-7', category: 'life', cover: '', description: '', isEbook: false, available: false }
+      ];
+      const book = books.find(b => b.id === id);
+      if (book) {
+        openBookModal('edit', book);
+      }
+    }
+    
+    function saveEditBook(event, id) {
+      event.preventDefault();
+      const data = {
+        title: document.getElementById('book-title').value,
+        author: document.getElementById('book-author').value,
+        isbn: document.getElementById('book-isbn').value,
+        category: document.getElementById('book-category').value,
+        cover: document.getElementById('book-cover').value,
+        description: document.getElementById('book-desc').value,
+        isEbook: document.getElementById('book-ebook').checked,
+        available: document.getElementById('book-available').checked
+      };
+      
+      fetch(`/api/books/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          showToast('书籍修改成功');
+          closeModal();
+        } else {
+          showToast('修改失败', 'error');
+        }
+      }).catch(() => showToast('修改失败', 'error'));
+    }
+    
+    function openSurveyModal(type = 'add', survey = null) {
+      const isEdit = type === 'edit';
+      let modalContent = `
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑调研' : '创建调研'}</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="${isEdit ? `saveEditSurvey(event, ${survey.id})` : 'saveSurvey(event)'}" class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">调研标题 <span class="text-red-500">*</span></label>
+              <input type="text" id="survey-title" value="${isEdit ? survey.title : ''}" required placeholder="请输入调研标题" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">调研描述</label>
+              <textarea id="survey-desc" rows="3" placeholder="请输入调研描述" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none">${isEdit ? survey.description : ''}</textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">开始时间</label>
+                <input type="date" id="survey-start" value="${isEdit ? survey.startDate : ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">结束时间</label>
+                <input type="date" id="survey-end" value="${isEdit ? survey.endDate : ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">问题列表</label>
+              <div id="survey-questions">
+                <div class="flex items-center gap-2 mb-2">
+                  <input type="text" placeholder="问题1：请输入问题内容..." class="flex-1 px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                  <select class="px-3 py-2 border border-slate-200 rounded-lg">
+                    <option value="single">单选</option>
+                    <option value="multiple">多选</option>
+                    <option value="text">填空</option>
+                  </select>
+                </div>
+                <div class="flex items-center gap-2 mb-2">
+                  <input type="text" placeholder="问题2：请输入问题内容..." class="flex-1 px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                  <select class="px-3 py-2 border border-slate-200 rounded-lg">
+                    <option value="single">单选</option>
+                    <option value="multiple">多选</option>
+                    <option value="text">填空</option>
+                  </select>
+                </div>
+              </div>
+              <button type="button" onclick="addSurveyQuestion()" class="mt-2 text-indigo-600 hover:text-indigo-800 text-sm flex items-center gap-1">
+                <i class="fas fa-plus"></i> 添加问题
+              </button>
+            </div>
+            <div class="flex gap-3 pt-4">
+              <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">
+                取消
+              </button>
+              <button type="submit" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition">
+                ${isEdit ? '保存修改' : '创建调研'}
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+      
+      document.getElementById('modal-container').innerHTML = modalContent;
+      document.getElementById('modal-container').classList.add('flex');
+      document.getElementById('modal-container').classList.remove('hidden');
+    }
+    
+    function addSurveyQuestion() {
+      const container = document.getElementById('survey-questions');
+      const index = container.children.length + 1;
+      const questionHtml = `
+        <div class="flex items-center gap-2 mb-2">
+          <input type="text" placeholder="问题${index}：请输入问题内容..." class="flex-1 px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+          <select class="px-3 py-2 border border-slate-200 rounded-lg">
+            <option value="single">单选</option>
+            <option value="multiple">多选</option>
+            <option value="text">填空</option>
+          </select>
+          <button type="button" onclick="removeSurveyQuestion(this)" class="px-2 py-2 text-red-500 hover:text-red-700">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `;
+      container.innerHTML += questionHtml;
+    }
+    
+    function removeSurveyQuestion(el) {
+      el.parentElement.remove();
+    }
+    
+    function saveSurvey(event) {
+      event.preventDefault();
+      const data = {
+        title: document.getElementById('survey-title').value,
+        description: document.getElementById('survey-desc').value,
+        startDate: document.getElementById('survey-start').value,
+        endDate: document.getElementById('survey-end').value,
+        questions: []
+      };
+      
+      fetch('/api/surveys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          showToast('调研创建成功');
+          closeModal();
+        } else {
+          showToast('创建失败', 'error');
+        }
+      }).catch(() => showToast('创建失败', 'error'));
+    }
+    
+    function editSurvey(id) {
+      const surveys = [
+        { id: 1, title: '2024年度培训满意度调研', description: '本次调研旨在了解员工对公司培训体系的满意程度，收集改进建议。', startDate: '2024-01-15', endDate: '2024-02-15' },
+        { id: 2, title: '新员工入职反馈调研', description: '收集新员工入职两周后的感受和建议，帮助优化入职流程。', startDate: '2024-01-10', endDate: '2024-01-20' },
+        { id: 3, title: '课程质量评估调研', description: '针对近期开设的技术课程进行质量评估，收集学员反馈。', startDate: '2024-01-08', endDate: '2024-01-25' },
+        { id: 4, title: '培训需求调研', description: '了解员工培训需求，为制定年度培训计划提供参考。', startDate: '', endDate: '' }
+      ];
+      const survey = surveys.find(s => s.id === id);
+      if (survey) {
+        openSurveyModal('edit', survey);
+      }
+    }
+    
+    function saveEditSurvey(event, id) {
+      event.preventDefault();
+      const data = {
+        title: document.getElementById('survey-title').value,
+        description: document.getElementById('survey-desc').value,
+        startDate: document.getElementById('survey-start').value,
+        endDate: document.getElementById('survey-end').value
+      };
+      
+      fetch(`/api/surveys/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          showToast('调研修改成功');
+          closeModal();
+        } else {
+          showToast('修改失败', 'error');
+        }
+      }).catch(() => showToast('修改失败', 'error'));
+    }
+    
+    function deleteSurvey(id) {
+      const surveyNames = { 1: '2024年度培训满意度调研', 2: '新员工入职反馈调研', 3: '课程质量评估调研', 4: '培训需求调研' };
+      const name = surveyNames[id] || '该调研';
+      
+      if (confirm(`确定要删除调研「${name}」吗？删除后所有调研数据将丢失。`)) {
+        fetch(`/api/surveys/${id}`, {
+          method: 'DELETE'
+        }).then(res => res.json()).then(data => {
+          if (data.success) {
+            showToast('调研删除成功');
+          } else {
+            showToast('删除失败', 'error');
+          }
+        }).catch(() => showToast('删除失败', 'error'));
+      }
+    }
+    
+    function openUserModal(type = 'add', user = null) {
+      const isEdit = type === 'edit';
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+          <!-- 头部 - 固定 -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑用户' : '添加用户'}</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          
+          <!-- 表单内容 - 可滚动 -->
+          <form id="user-form" onsubmit="${isEdit ? `saveEditUser(event, ${user.id})` : 'saveUser(event)'}" class="flex-1 overflow-y-auto p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">用户名 <span class="text-red-500">*</span></label>
+                <input type="text" id="user-name" value="${isEdit ? user.name : ''}" required placeholder="请输入用户名" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">邮箱 <span class="text-red-500">*</span></label>
+                <input type="email" id="user-email" value="${isEdit ? user.email : ''}" required placeholder="请输入邮箱" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">手机号</label>
+                <input type="tel" id="user-phone" value="${isEdit ? user.phone : ''}" placeholder="请输入手机号" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">角色 <span class="text-red-500">*</span></label>
+                <select id="user-role" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                  <option value="">请选择角色</option>
+                  <option value="admin">管理员</option>
+                  <option value="teacher">讲师</option>
+                  <option value="student">学员</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">部门</label>
+              <input type="text" id="user-department" value="${isEdit ? user.department : ''}" placeholder="请输入部门" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            ${!isEdit ? `
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">密码 <span class="text-red-500">*</span></label>
+              <input type="password" id="user-password" required placeholder="请输入密码" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            ` : ''}
+          </form>
+          
+          <!-- 底部按钮 - 固定 -->
+          <div class="px-6 py-4 border-t border-slate-100 flex gap-3 flex-shrink-0">
+            <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">
+              取消
+            </button>
+            <button type="button" onclick="document.getElementById('user-form').requestSubmit()" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition">
+              ${isEdit ? '保存修改' : '添加用户'}
+            </button>
+          </div>
+        </div>
+      `);
+    }
+    
+    function saveUser(event) {
+      event.preventDefault();
+      const data = {
+        name: document.getElementById('user-name').value,
+        email: document.getElementById('user-email').value,
+        phone: document.getElementById('user-phone').value,
+        role: document.getElementById('user-role').value,
+        department: document.getElementById('user-department').value,
+        password: document.getElementById('user-password').value
+      };
+      
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          showToast('用户添加成功');
+          closeModal();
+        } else {
+          showToast('添加失败', 'error');
+        }
+      }).catch(() => showToast('添加失败', 'error'));
+    }
+    
+    function editUser(id) {
+      const users = [
+        { id: 1, name: '张三', email: 'zhangsan@company.com', phone: '138****8888', role: 'admin', department: '技术部' },
+        { id: 2, name: '李四', email: 'lisi@company.com', phone: '139****6666', role: 'teacher', department: '产品部' },
+        { id: 3, name: '王五', email: 'wangwu@company.com', phone: '137****5555', role: 'student', department: '市场部' },
+        { id: 4, name: '赵六', email: 'zhaoliu@company.com', phone: '136****4444', role: 'student', department: '人力资源' }
+      ];
+      const user = users.find(u => u.id === id);
+      if (user) {
+        openUserModal('edit', user);
+      }
+    }
+    
+    function saveEditUser(event, id) {
+      event.preventDefault();
+      const data = {
+        name: document.getElementById('user-name').value,
+        email: document.getElementById('user-email').value,
+        phone: document.getElementById('user-phone').value,
+        role: document.getElementById('user-role').value,
+        department: document.getElementById('user-department').value
+      };
+      
+      fetch(`/api/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          showToast('用户修改成功');
+          closeModal();
+        } else {
+          showToast('修改失败', 'error');
+        }
+      }).catch(() => showToast('修改失败', 'error'));
+    }
+    
+    function viewUserDetail(id) {
+      const users = [
+        { id: 1, name: '张三', email: 'zhangsan@company.com', phone: '13800138888', role: '管理员', department: '技术部', status: '正常', registerTime: '2024-01-10', courses: 15, exams: 8 },
+        { id: 2, name: '李四', email: 'lisi@company.com', phone: '13900139666', role: '讲师', department: '产品部', status: '正常', registerTime: '2024-01-12', courses: 8, exams: 5 },
+        { id: 3, name: '王五', email: 'wangwu@company.com', phone: '13700137555', role: '学员', department: '市场部', status: '正常', registerTime: '2024-01-15', courses: 20, exams: 12 },
+        { id: 4, name: '赵六', email: 'zhaoliu@company.com', phone: '13600136444', role: '学员', department: '人力资源', status: '禁用', registerTime: '2024-01-08', courses: 5, exams: 3 }
+      ];
+      const user = users.find(u => u.id === id);
+      if (!user) return;
+      
+      let modalContent = `
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">用户详情</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6">
+            <div class="flex items-center gap-4 mb-6">
+              <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=professional%20avatar%20business&image_size=square" alt="用户头像" class="w-16 h-16 rounded-full object-cover">
+              <div>
+                <h4 class="text-lg font-semibold text-slate-800">${user.name}</h4>
+                <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs">${user.role}</span>
+              </div>
+            </div>
+            
+            <div class="space-y-3">
+              <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                <span class="text-slate-500">邮箱</span>
+                <span class="text-slate-800">${user.email}</span>
+              </div>
+              <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                <span class="text-slate-500">手机号</span>
+                <span class="text-slate-800">${user.phone}</span>
+              </div>
+              <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                <span class="text-slate-500">部门</span>
+                <span class="text-slate-800">${user.department}</span>
+              </div>
+              <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                <span class="text-slate-500">状态</span>
+                <span class="px-2 py-1 ${user.status === '正常' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'} rounded-full text-xs">${user.status}</span>
+              </div>
+              <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                <span class="text-slate-500">注册时间</span>
+                <span class="text-slate-800">${user.registerTime}</span>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mt-6">
+              <div class="bg-slate-50 rounded-xl p-4 text-center">
+                <p class="text-2xl font-bold text-indigo-600">${user.courses}</p>
+                <p class="text-sm text-slate-500">学习课程</p>
+              </div>
+              <div class="bg-slate-50 rounded-xl p-4 text-center">
+                <p class="text-2xl font-bold text-purple-600">${user.exams}</p>
+                <p class="text-sm text-slate-500">参加考试</p>
+              </div>
+            </div>
+            
+            <button onclick="closeModal()" class="w-full mt-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition">
+              关闭
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('modal-container').innerHTML = modalContent;
+      document.getElementById('modal-container').classList.add('flex');
+      document.getElementById('modal-container').classList.remove('hidden');
+    }
+    
+    function resetUserPassword(id) {
+      const userNames = { 1: '张三', 2: '李四', 3: '王五', 4: '赵六' };
+      const name = userNames[id] || '该用户';
+      
+      if (confirm(`确定要重置「${name}」的密码吗？新密码将发送到用户邮箱。`)) {
+        fetch(`/api/users/${id}/reset-password`, {
+          method: 'POST'
+        }).then(res => res.json()).then(data => {
+          if (data.success) {
+            showToast('密码重置成功，新密码已发送至邮箱');
+          } else {
+            showToast('密码重置失败', 'error');
+          }
+        }).catch(() => showToast('密码重置失败', 'error'));
+      }
+    }
+    
+    function toggleUserStatus(id) {
+      const userNames = { 1: '张三', 2: '李四', 3: '王五', 4: '赵六' };
+      const statusMap = { 1: '正常', 2: '正常', 3: '正常', 4: '禁用' };
+      const name = userNames[id] || '该用户';
+      const currentStatus = statusMap[id] || '正常';
+      const newStatus = currentStatus === '正常' ? '禁用' : '正常';
+      
+      if (confirm(`确定要将「${name}」的状态设置为「${newStatus}」吗？`)) {
+        fetch(`/api/users/${id}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        }).then(res => res.json()).then(data => {
+          if (data.success) {
+            showToast(`用户状态已${newStatus === '正常' ? '启用' : '禁用'}`);
+          } else {
+            showToast('操作失败', 'error');
+          }
+        }).catch(() => showToast('操作失败', 'error'));
+      }
+    }
+    
+    function viewSurveyResults(id) {
+      const surveyNames = { 1: '2024年度培训满意度调研', 2: '新员工入职反馈调研', 3: '课程质量评估调研', 4: '培训需求调研' };
+      const name = surveyNames[id] || '调研';
+      
+      let modalContent = `
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">${name} - 调研结果</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div class="bg-blue-50 rounded-xl p-4">
+                <p class="text-2xl font-bold text-blue-600">128</p>
+                <p class="text-sm text-blue-700">参与人数</p>
+              </div>
+              <div class="bg-green-50 rounded-xl p-4">
+                <p class="text-2xl font-bold text-green-600">98%</p>
+                <p class="text-sm text-green-700">完成率</p>
+              </div>
+              <div class="bg-purple-50 rounded-xl p-4">
+                <p class="text-2xl font-bold text-purple-600">15分钟</p>
+                <p class="text-sm text-purple-700">平均用时</p>
+              </div>
+            </div>
+            
+            <h4 class="font-semibold text-slate-800 mb-4">满意度分布</h4>
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm text-slate-600">非常满意</span>
+                  <span class="text-sm font-medium text-slate-700">45%</span>
+                </div>
+                <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-green-500 rounded-full" style="width: 45%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm text-slate-600">满意</span>
+                  <span class="text-sm font-medium text-slate-700">35%</span>
+                </div>
+                <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-blue-500 rounded-full" style="width: 35%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm text-slate-600">一般</span>
+                  <span class="text-sm font-medium text-slate-700">15%</span>
+                </div>
+                <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-yellow-500 rounded-full" style="width: 15%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm text-slate-600">不满意</span>
+                  <span class="text-sm font-medium text-slate-700">5%</span>
+                </div>
+                <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-red-500 rounded-full" style="width: 5%"></div>
+                </div>
+              </div>
+            </div>
+            
+            <h4 class="font-semibold text-slate-800 mt-6 mb-4">主要建议</h4>
+            <div class="space-y-2">
+              <div class="bg-slate-50 rounded-lg p-3 text-sm text-slate-600">• 希望增加更多技术类课程</div>
+              <div class="bg-slate-50 rounded-lg p-3 text-sm text-slate-600">• 建议延长培训时间</div>
+              <div class="bg-slate-50 rounded-lg p-3 text-sm text-slate-600">• 希望有更多线上课程选择</div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('modal-container').innerHTML = modalContent;
+      document.getElementById('modal-container').classList.add('flex');
+      document.getElementById('modal-container').classList.remove('hidden');
+    }
+    
+    function deleteBook(id) {
+      const bookNames = { 1: 'JavaScript高级程序设计', 2: '百年孤独', 3: '精益创业', 4: '设计心理学', 5: '高效能人士的七个习惯' };
+      const name = bookNames[id] || '该书籍';
+      
+      if (confirm(`确定要删除书籍「${name}」吗？`)) {
+        fetch(`/api/books/${id}`, {
+          method: 'DELETE'
+        }).then(res => res.json()).then(data => {
+          if (data.success) {
+            showToast('书籍删除成功');
+          } else {
+            showToast('删除失败', 'error');
+          }
+        }).catch(() => showToast('删除失败', 'error'));
+      }
+    }
+    
+    function openSubCategoryModal(parentId) {
+      const parentNames = ['', '策划', '美术', '技术', '市场', '软技能'];
+      const parentName = parentNames[parentId] || '未知分类';
+      
+      let modalContent = `
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">添加二级分类</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveSubCategory(event, ${parentId})" class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm text-slate-500 mb-1">父分类</label>
+              <p class="font-medium text-indigo-600">${parentName}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">二级分类名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="subcat-name" required placeholder="请输入二级分类名称" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">标识(key)</label>
+              <input type="text" id="subcat-key" placeholder="如: frontend" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="flex gap-3 pt-4">
+              <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">
+                取消
+              </button>
+              <button type="submit" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition">
+                确认添加
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+      
+      document.getElementById('modal-container').innerHTML = modalContent;
+      document.getElementById('modal-container').classList.add('flex');
+      document.getElementById('modal-container').classList.remove('hidden');
+    }
+    
+    function saveSubCategory(event, parentId) {
+      event.preventDefault();
+      const name = document.getElementById('subcat-name').value;
+      const key = document.getElementById('subcat-key').value || name.toLowerCase().replace(/\s+/g, '-');
+      
+      fetch(`/api/categories/${parentId}/children`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, key })
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          showToast('二级分类添加成功');
+          closeModal();
+        } else {
+          showToast('添加失败', 'error');
+        }
+      }).catch(() => showToast('添加失败', 'error'));
+    }
+    
     function openCategoryModal(type, parentId = null, child = null) {
       const isChild = type === 'child';
       const parentCat = parentId ? data.categories.find(c => c.id === parentId) : null;
@@ -1357,68 +3784,134 @@
     
     // ========== 讲师管理 ==========
     function renderLecturers() {
-      document.getElementById('lect-total').textContent = data.lecturers.length;
-      document.getElementById('lect-enabled').textContent = data.lecturers.filter(l => l.status === 'enabled').length;
-      document.getElementById('lect-chief').textContent = data.lecturers.filter(l => l.level === 'chief').length;
-      document.getElementById('lect-courses').textContent = data.courses.length;
-      
-      if (data.lecturers.length === 0) {
-        document.getElementById('lecturer-list').innerHTML = `
-          <div class="col-span-3 bg-white rounded-2xl p-12 text-center text-slate-400">
-            <i class="fas fa-chalkboard-teacher text-4xl mb-4"></i>
-            <p>暂无讲师数据</p>
-          </div>`;
-        return;
-      }
+      try {
+        console.log('开始渲染讲师列表，讲师数量:', data.lecturers.length);
+        
+        document.getElementById('lect-total').textContent = data.lecturers.length;
+        document.getElementById('lect-enabled').textContent = data.lecturers.filter(l => l.status === 'enabled').length;
+        document.getElementById('lect-chief').textContent = data.lecturers.filter(l => l.level === 'chief').length;
+        document.getElementById('lect-courses').textContent = data.courses.length;
+        
+        const tbody = document.getElementById('lecturer-list');
+        const countEl = document.getElementById('lecturer-count');
+        
+        if (!tbody) {
+          console.error('讲师列表tbody元素不存在');
+          return;
+        }
+        
+        if (data.lecturers.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="10" class="px-6 py-12 text-center text-slate-400">
+                <i class="fas fa-chalkboard-teacher text-4xl mb-4"></i>
+                <p>暂无讲师数据</p>
+              </td>
+            </tr>`;
+          countEl.textContent = '0';
+          console.log('讲师列表为空');
+          return;
+        }
       
       const levelMap = {
-        chief: { class: 'bg-purple-100 text-purple-700', text: '首席' },
-        senior: { class: 'bg-blue-100 text-blue-700', text: '高级' },
-        intermediate: { class: 'bg-emerald-100 text-emerald-700', text: '中级' },
-        junior: { class: 'bg-slate-100 text-slate-600', text: '初级' }
+        chief: { class: 'bg-purple-100 text-purple-700', text: '首席讲师' },
+        senior: { class: 'bg-blue-100 text-blue-700', text: '高级讲师' },
+        intermediate: { class: 'bg-emerald-100 text-emerald-700', text: '中级讲师' },
+        junior: { class: 'bg-slate-100 text-slate-600', text: '初级讲师' },
+        intern: { class: 'bg-orange-100 text-orange-700', text: '实习讲师' }
       };
       
-      document.getElementById('lecturer-list').innerHTML = data.lecturers.map(lect => {
+      tbody.innerHTML = data.lecturers.map(lect => {
         const lv = levelMap[lect.level] || levelMap.junior;
         const courseCount = data.courses.filter(c => c.lecturerId === lect.id).length;
+        const paymentRate = lect.paymentRate || 0;
+        const totalPayment = courseCount * paymentRate;
+        const skills = lect.skills || [];
+        const skillsHtml = skills.length > 0 ? 
+          skills.map(skill => `<span class="inline-block px-2 py-0.5 rounded text-xs bg-indigo-50 text-indigo-600 mr-1 mb-1">${skill}</span>`).join('') :
+          '<span class="text-xs text-slate-400">-</span>';
+        
         return `
-          <div class="bg-white rounded-2xl shadow-sm p-6 card-hover transition-all duration-300">
-            <div class="flex items-start space-x-4 mb-4">
-              <img src="${lect.avatar || 'https://via.placeholder.com/60'}" class="w-16 h-16 rounded-full object-cover border-2 border-slate-100">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between">
-                  <h4 class="font-semibold text-slate-800 truncate">${lect.name}</h4>
-                  <span class="px-2 py-0.5 rounded-full text-xs font-medium ${lv.class}">${lv.text}</span>
-                </div>
-                <p class="text-sm text-slate-500">${lect.department || '暂无部门'}</p>
-                <p class="text-xs text-slate-400">${lect.title || '暂无职称'}</p>
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-3 cursor-pointer" onclick="showLecturerDetail(${lect.id})">
+                <img src="${lect.avatar || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover border border-slate-200">
+                <span class="font-medium text-slate-800 hover:text-indigo-600">${lect.name}</span>
               </div>
-            </div>
-            <p class="text-sm text-slate-600 line-clamp-2 mb-4">${lect.intro || '暂无简介'}</p>
-            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-              <span class="text-sm text-slate-500"><i class="fas fa-book mr-1"></i>${courseCount} 个课程</span>
-              <div class="flex items-center space-x-2">
-                <button onclick="editLecturer(${lect.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑">
+            </td>
+            <td class="px-4 py-4 text-sm text-slate-600">
+              ${lect.department || '-'}
+            </td>
+            <td class="px-4 py-4 text-sm text-slate-600">
+              ${lect.title || '-'}
+            </td>
+            <td class="px-4 py-4 text-center">
+              <span class="px-3 py-1 rounded-full text-xs font-medium ${lv.class}">${lv.text}</span>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex flex-wrap gap-1 max-w-[200px]">
+                ${skillsHtml}
+              </div>
+            </td>
+            <td class="px-4 py-4 text-center text-sm text-slate-600">
+              <span class="font-medium">${courseCount}</span>
+            </td>
+            <td class="px-4 py-4 text-center text-sm">
+              <span class="font-medium text-emerald-600">¥${totalPayment.toLocaleString()}</span>
+            </td>
+            <td class="px-4 py-4 text-center text-sm text-slate-600">
+              ${lect.regDate || '-'}
+            </td>
+            <td class="px-4 py-4 text-center">
+              <span class="px-3 py-1 rounded-full text-xs font-medium ${
+                lect.status === 'enabled' 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-red-100 text-red-700'
+              }">
+                ${lect.status === 'enabled' ? '启用' : '禁用'}
+              </span>
+            </td>
+            <td class="px-4 py-4 text-center">
+              <div class="flex items-center justify-center gap-2">
+                <button onclick="editLecturer(${lect.id})" 
+                  class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑">
                   <i class="fas fa-edit"></i>
                 </button>
-                <button onclick="toggleLecturerStatus(${lect.id})" class="p-2 ${lect.status === 'enabled' ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'} rounded-lg transition" title="${lect.status === 'enabled' ? '禁用' : '启用'}">
+                <button onclick="toggleLecturerStatus(${lect.id})" 
+                  class="p-2 ${lect.status === 'enabled' ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'} rounded-lg transition" 
+                  title="${lect.status === 'enabled' ? '禁用' : '启用'}">
                   <i class="fas ${lect.status === 'enabled' ? 'fa-ban' : 'fa-check'}"></i>
                 </button>
-                <button onclick="deleteLecturer(${lect.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除">
+                <button onclick="deleteLecturer(${lect.id})" 
+                  class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除">
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
-            </div>
-          </div>`;
+            </td>
+          </tr>`;
       }).join('');
+      
+      countEl.textContent = data.lecturers.length;
+      console.log('讲师列表渲染完成');
+    } catch (error) {
+      console.error('渲染讲师列表失败:', error);
+      toast('讲师列表渲染失败: ' + error.message, 'error');
+    }
     }
     
     function openLecturerModal(lecturer = null) {
       const isEdit = !!lecturer;
-      const levelOptions = ['chief', 'senior', 'intermediate', 'junior'].map(l => 
-        `<option value="${l}" ${lecturer?.level === l ? 'selected' : ''}>${l === 'chief' ? '首席' : l === 'senior' ? '高级' : l === 'intermediate' ? '中级' : '初级'}</option>`
+      const levelOptions = ['chief', 'senior', 'intermediate', 'junior', 'intern'].map(l => 
+        `<option value="${l}" ${lecturer?.level === l ? 'selected' : ''}>${l === 'chief' ? '首席讲师' : l === 'senior' ? '高级讲师' : l === 'intermediate' ? '中级讲师' : l === 'junior' ? '初级讲师' : '实习讲师'}</option>`
       ).join('');
       const avatarUrl = lecturer?.avatar || '';
+      const skills = lecturer?.skills || [];
+      const skillsHtml = skills.map(skill => 
+        `<span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-100 text-indigo-700 mr-2 mb-2 skill-tag">
+          ${skill}
+          <button type="button" onclick="removeSkillTag(this)" class="ml-1 text-indigo-500 hover:text-indigo-900"><i class="fas fa-times"></i></button>
+        </span>`
+      ).join('');
       
       showModal(`
         <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
@@ -1441,24 +3934,45 @@
                 <input type="text" id="l-avatar" value="${avatarUrl}" class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm" placeholder="或输入头像URL">
               </div>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">姓名 <span class="text-red-500">*</span></label>
-              <input type="text" id="l-name" value="${lecturer?.name || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            <!-- 姓名和等级 -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">姓名 <span class="text-red-500">*</span></label>
+                <input type="text" id="l-name" value="${lecturer?.name || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">等级</label>
+                <select id="l-level" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">${levelOptions}</select>
+              </div>
             </div>
+            <!-- 部门和岗位 -->
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">部门</label>
                 <input type="text" id="l-dept" value="${lecturer?.department || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="技术部">
               </div>
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">职称</label>
-                <input type="text" id="l-title" value="${lecturer?.title || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="高级工程师">
+                <label class="block text-sm font-medium text-slate-700 mb-1">岗位</label>
+                <input type="text" id="l-title" value="${lecturer?.title || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="前端工程师">
               </div>
             </div>
+            <!-- 课酬 -->
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">等级</label>
-              <select id="l-level" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">${levelOptions}</select>
+              <label class="block text-sm font-medium text-slate-700 mb-1">课酬（元/课）</label>
+              <input type="number" id="l-payment" value="${lecturer?.paymentRate || 0}" min="0" step="100" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="每节课的课酬">
             </div>
+            <!-- 标签 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">标签 <span class="text-xs text-slate-400">（最多5个，按回车添加）</span></label>
+              <div class="border border-slate-200 rounded-xl p-3 bg-white">
+                <div id="skills-container" class="flex flex-wrap gap-2 mb-2 min-h-[32px]">
+                  ${skillsHtml}
+                </div>
+                <input type="text" id="l-skill-input" class="w-full px-2 py-1.5 border-0 outline-none text-sm" placeholder="输入标签后按回车..." onkeydown="handleSkillInput(event)">
+              </div>
+              <input type="hidden" id="l-skills" value='${JSON.stringify(skills)}'>
+            </div>
+            <!-- 简介 -->
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">简介</label>
               <textarea id="l-intro" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none" placeholder="讲师简介">${lecturer?.intro || ''}</textarea>
@@ -1502,9 +4016,66 @@
       }
     }
     
+    // 处理标签输入
+    function handleSkillInput(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const input = document.getElementById('l-skill-input');
+        const skill = input.value.trim();
+        
+        if (!skill) return;
+        
+        const container = document.getElementById('skills-container');
+        const currentSkills = Array.from(container.querySelectorAll('.skill-tag')).map(tag => 
+          tag.textContent.trim().replace('×', '').trim()
+        );
+        
+        // 检查是否超过5个
+        if (currentSkills.length >= 5) {
+          toast('最多只能添加5个标签', 'error');
+          return;
+        }
+        
+        // 检查是否重复
+        if (currentSkills.includes(skill)) {
+          toast('该标签已存在', 'error');
+          return;
+        }
+        
+        // 添加标签
+        const tagHtml = `
+          <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-100 text-indigo-700 mr-2 mb-2 skill-tag">
+            ${skill}
+            <button type="button" onclick="removeSkillTag(this)" class="ml-1 text-indigo-500 hover:text-indigo-900"><i class="fas fa-times"></i></button>
+          </span>
+        `;
+        container.insertAdjacentHTML('beforeend', tagHtml);
+        input.value = '';
+        
+        // 更新隐藏字段
+        updateSkillsHiddenField();
+      }
+    }
+    
+    // 删除标签
+    function removeSkillTag(button) {
+      button.parentElement.remove();
+      updateSkillsHiddenField();
+    }
+    
+    // 更新隐藏字段的值
+    function updateSkillsHiddenField() {
+      const container = document.getElementById('skills-container');
+      const skills = Array.from(container.querySelectorAll('.skill-tag')).map(tag => 
+        tag.childNodes[0].textContent.trim()
+      );
+      document.getElementById('l-skills').value = JSON.stringify(skills);
+    }
+    
     async function saveLecturer(e, id) {
       e.preventDefault();
-      const levelNames = { chief: '首席', senior: '高级', intermediate: '中级', junior: '初级' };
+      const levelNames = { chief: '首席讲师', senior: '高级讲师', intermediate: '中级讲师', junior: '初级讲师', intern: '实习讲师' };
+      const skills = JSON.parse(document.getElementById('l-skills').value || '[]');
       const formData = {
         name: document.getElementById('l-name').value.trim(),
         department: document.getElementById('l-dept').value.trim(),
@@ -1513,9 +4084,10 @@
         levelName: levelNames[document.getElementById('l-level').value],
         avatar: document.getElementById('l-avatar').value.trim() || 'https://via.placeholder.com/60',
         intro: document.getElementById('l-intro').value.trim(),
+        paymentRate: parseInt(document.getElementById('l-payment').value) || 0,
         status: 'enabled',
         type: 'internal',
-        skills: [],
+        skills: skills,
         courseCount: 0,
         regDate: new Date().toISOString().split('T')[0]
       };
@@ -1583,6 +4155,75 @@
       } catch (err) {
         toast('删除失败', 'error');
       }
+    }
+    
+    // 显示讲师详情弹窗
+    function showLecturerDetail(id) {
+      const lect = data.lecturers.find(l => l.id === id);
+      if (!lect) return;
+      
+      const lv = levelMap[lect.level] || levelMap.junior;
+      const courseCount = data.courses.filter(c => c.lecturerId === lect.id).length;
+      const studentCount = 0;
+      const rating = '--';
+      
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-[400px]">
+          <div class="relative h-24 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-t-2xl flex items-center justify-center">
+            <button onclick="closeModal()" class="absolute top-3 right-3 text-white/80 hover:text-white transition">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <div class="flex justify-center -mt-14">
+            <img src="${lect.avatar || 'https://via.placeholder.com/80'}" 
+              class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg">
+          </div>
+          
+          <div class="px-6 pt-3 pb-6 text-center">
+            <h3 class="text-lg font-bold text-slate-800 mb-2">${lect.name}</h3>
+            <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${lv.class} mb-4">${lv.text}</span>
+            
+            <div class="flex items-center justify-center gap-8 mt-4 mb-5">
+              <div class="text-center">
+                <p class="text-2xl font-bold text-slate-800">${courseCount}</p>
+                <p class="text-xs text-slate-500">门课程</p>
+              </div>
+              <div class="text-center">
+                <p class="text-2xl font-bold text-slate-800">${studentCount}</p>
+                <p class="text-xs text-slate-500">学员数</p>
+              </div>
+              <div class="text-center">
+                <p class="text-2xl font-bold text-slate-800">${rating}</p>
+                <p class="text-xs text-slate-500">评分</p>
+              </div>
+            </div>
+            
+            <div class="text-left border-t border-slate-100 pt-4">
+              <h4 class="text-sm font-semibold text-slate-700 mb-2">
+                <i class="fas fa-user mr-1 text-indigo-500"></i>个人简介
+              </h4>
+              <p class="text-sm text-slate-600 leading-relaxed line-clamp-3">${lect.intro || '暂无简介'}</p>
+            </div>
+            
+            <div class="text-left border-t border-slate-100 pt-4 mt-4">
+              <h4 class="text-sm font-semibold text-slate-700 mb-2">
+                <i class="fas fa-book mr-1 text-indigo-500"></i>授课课程
+              </h4>
+              ${courseCount > 0 ? 
+                `<p class="text-sm text-slate-600">共 ${courseCount} 门课程</p>` : 
+                '<p class="text-sm text-slate-400">暂无课程</p>'
+              }
+            </div>
+          </div>
+          
+          <div class="px-6 pb-5">
+            <button onclick="closeModal()" class="w-full py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-medium transition">
+              关闭
+            </button>
+          </div>
+        </div>
+      `);
     }
     
     // ========== 培训管理 ==========
@@ -1736,66 +4377,227 @@
     
     // ========== 公告管理 ==========
     function renderNotices() {
+      const tbody = document.getElementById('notice-list');
+      if (!tbody) return;
+      
       if (data.notices.length === 0) {
-        document.getElementById('notice-list').innerHTML = `
-          <div class="bg-white rounded-2xl p-12 text-center text-slate-400">
-            <i class="fas fa-bullhorn text-4xl mb-4"></i>
-            <p>暂无公告</p>
-            <button onclick="openNoticeModal()" class="mt-4 btn-primary px-6 py-2.5 text-white rounded-xl font-medium">发布公告</button>
-          </div>`;
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+              <i class="fas fa-bullhorn text-4xl mb-3 block"></i>
+              <p>暂无公告</p>
+              <button onclick="openNoticeModal()" class="mt-4 btn-primary px-6 py-2.5 text-white rounded-xl font-medium">发布公告</button>
+            </td>
+          </tr>`;
         return;
       }
       
-      document.getElementById('notice-list').innerHTML = data.notices.map(n => `
-        <div class="bg-white rounded-2xl shadow-sm p-6 card-hover transition-all duration-300">
-          <div class="flex items-start justify-between mb-4">
-            <div>
-              <h4 class="font-semibold text-slate-800">${n.title}</h4>
-              <p class="text-sm text-slate-400 mt-1">发布于 ${n.publishedAt || n.createdAt}</p>
+      // 按置顶和发布时间排序
+      const sortedNotices = [...data.notices].sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(b.publishedAt || b.createdAt) - new Date(a.publishedAt || a.createdAt);
+      });
+      
+      tbody.innerHTML = sortedNotices.map(n => `
+        <tr class="hover:bg-slate-50 transition">
+          <!-- 封面图 -->
+          <td class="px-6 py-4">
+            ${n.cover ? `
+              <div class="w-24 h-16 rounded-lg overflow-hidden bg-slate-100">
+                <img src="${n.cover}" class="w-full h-full object-cover">
+              </div>
+            ` : '<span class="text-slate-400 text-sm">无封面</span>'}
+          </td>
+          
+          <!-- 标题 -->
+          <td class="px-6 py-4">
+            <div class="text-sm font-medium text-slate-800">${n.title}</div>
+            <div class="text-xs text-slate-400 mt-1 line-clamp-1">
+              ${n.content ? n.content.replace(/<[^>]+>/g, '').substring(0, 80) + '...' : '无内容'}
             </div>
-            <div class="flex items-center space-x-2">
-              <span class="px-2.5 py-1 rounded-full text-xs font-medium ${n.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${n.status === 'published' ? '已发布' : '草稿'}</span>
-              <button onclick="editNotice(${n.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><i class="fas fa-edit"></i></button>
-              <button onclick="deleteNotice(${n.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><i class="fas fa-trash"></i></button>
-            </div>
-          </div>
-          <div class="text-sm text-slate-600">${n.content?.replace(/<\/?p>/g, '') || ''}</div>
-        </div>`).join('');
+          </td>
+          
+          <!-- 置顶 -->
+          <td class="px-6 py-4 text-center">
+            ${n.pinned 
+              ? '<span class="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-medium"><i class="fas fa-thumbtack mr-1"></i>是</span>'
+              : '<span class="text-slate-400 text-xs">否</span>'
+            }
+          </td>
+          
+          <!-- 状态 -->
+          <td class="px-6 py-4 text-center">
+            <span class="px-2 py-1 rounded text-xs font-medium ${n.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
+              ${n.status === 'published' ? '已发布' : '草稿'}
+            </span>
+          </td>
+          
+          <!-- 发布时间 -->
+          <td class="px-6 py-4 text-center text-sm text-slate-600">
+            ${n.publishedAt || n.createdAt || '-'}
+          </td>
+          
+          <!-- 操作 -->
+          <td class="px-6 py-4 text-center">
+            <button onclick="viewNotice(${n.id})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs hover:bg-indigo-100 transition mr-2">
+              <i class="fas fa-eye mr-1"></i>查看
+            </button>
+            <button onclick="editNotice(${n.id})" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs hover:bg-blue-100 transition mr-2">
+              <i class="fas fa-edit mr-1"></i>编辑
+            </button>
+            <button onclick="deleteNotice(${n.id})" class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs hover:bg-red-100 transition">
+              <i class="fas fa-trash mr-1"></i>删除
+            </button>
+          </td>
+        </tr>
+      `).join('');
     }
     
     function openNoticeModal(notice = null) {
       const isEdit = !!notice;
+      const coverUrl = notice?.cover || '';
+      const content = notice?.content || '';
+      
       showModal(`
-        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+          <!-- 头部 - 固定 -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
             <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑' : '发布'}公告</h3>
             <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
           </div>
-          <form onsubmit="saveNotice(event, ${notice?.id || 'null'})" class="p-6 space-y-4">
+          
+          <!-- 表单内容 - 可滚动 -->
+          <form id="notice-form" onsubmit="saveNotice(event, ${notice?.id || 'null'})" class="flex-1 overflow-y-auto p-6 space-y-4">
+            <!-- 标题 -->
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">标题 <span class="text-red-500">*</span></label>
-              <input type="text" id="n-title" value="${notice?.title || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              <input type="text" id="n-title" value="${notice?.title || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入公告标题">
             </div>
+            
+            <!-- 封面图 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">封面图</label>
+              <div class="flex items-start gap-4">
+                <div class="flex-1">
+                  <div class="relative">
+                    <input type="text" id="n-cover" value="${coverUrl}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 pr-24" placeholder="输入图片URL或点击下方上传">
+                    <button type="button" onclick="uploadNoticeCover()" class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs hover:bg-indigo-100 transition">
+                      <i class="fas fa-upload mr-1"></i>上传
+                    </button>
+                  </div>
+                  <input type="file" id="n-cover-file" accept="image/*" class="hidden" onchange="handleNoticeCoverUpload(event)">
+                  <p class="text-xs text-slate-400 mt-1">支持 JPG、PNG 格式，建议尺寸 800x400</p>
+                </div>
+                <div id="n-cover-preview" class="w-32 h-20 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  ${coverUrl ? `<img src="${coverUrl}" class="w-full h-full object-cover">` : '<i class="fas fa-image text-slate-300 text-2xl"></i>'}
+                </div>
+              </div>
+            </div>
+            
+            <!-- 富文本编辑器 -->
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">内容 <span class="text-red-500">*</span></label>
-              <textarea id="n-content" rows="4" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none">${notice?.content?.replace(/<\/?p>/g, '') || ''}</textarea>
+              <div class="border border-slate-200 rounded-xl overflow-hidden" style="height: 400px; display: flex; flex-direction: column;">
+                <div id="n-editor" class="bg-white flex-1" style="overflow-y: auto;"></div>
+              </div>
+              <input type="hidden" id="n-content" value="${content.replace(/"/g, '&quot;')}">
+              <p class="text-xs text-slate-400 mt-1">支持文字、图片、标题、列表等格式（编辑器固定高度400px，内容过多时可滚动）</p>
             </div>
-            <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
-              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">发布</button>
+            
+            <!-- 状态选择 -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">发布状态</label>
+                <select id="n-status" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="draft" ${notice?.status === 'draft' ? 'selected' : ''}>草稿</option>
+                  <option value="published" ${!notice || notice?.status === 'published' ? 'selected' : ''}>立即发布</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">置顶</label>
+                <select id="n-pinned" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="0" ${!notice?.pinned ? 'selected' : ''}>否</option>
+                  <option value="1" ${notice?.pinned ? 'selected' : ''}>是</option>
+                </select>
+              </div>
             </div>
           </form>
+          
+          <!-- 底部按钮 - 固定 -->
+          <div class="px-6 py-4 border-t border-slate-100 flex justify-end space-x-3 flex-shrink-0 bg-white">
+            <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+            <button type="button" onclick="document.getElementById('notice-form').requestSubmit()" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition">
+              <i class="fas fa-paper-plane mr-2"></i>${notice?.status === 'draft' ? '发布' : (isEdit ? '保存' : '发布')}
+            </button>
+          </div>
         </div>
       `);
+      
+      // 初始化 Quill 编辑器
+      setTimeout(() => {
+        const quill = new Quill('#n-editor', {
+          theme: 'snow',
+          placeholder: '请输入公告内容...',
+          modules: {
+            toolbar: [
+              [{ 'header': [1, 2, 3, false] }],
+              ['bold', 'italic', 'underline', 'strike'],
+              [{ 'color': [] }, { 'background': [] }],
+              [{ 'font': [] }],
+              [{ 'size': ['small', false, 'large', 'huge'] }],
+              [{ 'align': [] }],
+              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+              ['blockquote', 'code-block'],
+              ['link', 'image', 'video'],
+              ['clean']
+            ]
+          }
+        });
+        
+        // 设置初始内容
+        if (content) {
+          quill.clipboard.dangerouslyPasteHTML(content);
+        }
+        
+        // 监听内容变化，同步到隐藏字段
+        quill.on('text-change', () => {
+          const html = quill.root.innerHTML;
+          document.getElementById('n-content').value = html;
+        });
+        
+        // 将 quill 实例保存到全局变量
+        window.noticeQuill = quill;
+      }, 100);
+      
+      // 封面图预览
+      setTimeout(() => {
+        const coverInput = document.getElementById('n-cover');
+        if (coverInput) {
+          coverInput.addEventListener('input', (e) => {
+            updateCoverPreview(e.target.value);
+          });
+        }
+      }, 100);
     }
     
     async function saveNotice(e, id) {
       e.preventDefault();
+      
+      // 从 Quill 编辑器获取内容
+      const content = document.getElementById('n-content').value;
+      if (!content || content === '<p><br></p>') {
+        toast('请输入公告内容', 'error');
+        return;
+      }
+      
       const formData = {
         title: document.getElementById('n-title').value.trim(),
-        content: `<p>${document.getElementById('n-content').value.trim()}</p>`,
-        status: 'published',
-        publishedAt: new Date().toLocaleString('zh-CN')
+        cover: document.getElementById('n-cover').value.trim(),
+        content: content,
+        status: document.getElementById('n-status').value,
+        pinned: parseInt(document.getElementById('n-pinned').value) || 0,
+        publishedAt: new Date().toISOString().split('T')[0]
       };
       
       try {
@@ -1822,6 +4624,109 @@
       } catch (err) {
         toast('操作失败', 'error');
       }
+    }
+    
+    // 封面图上传
+    function uploadNoticeCover() {
+      document.getElementById('n-cover-file').click();
+    }
+    
+    async function handleNoticeCoverUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      // 验证文件类型
+      if (!file.type.startsWith('image/')) {
+        toast('请上传图片文件', 'error');
+        return;
+      }
+      
+      // 验证文件大小（5MB）
+      if (file.size > 5 * 1024 * 1024) {
+        toast('图片大小不能超过5MB', 'error');
+        return;
+      }
+      
+      try {
+        const formData = new FormData();
+        formData.append('cover', file);
+        
+        const res = await fetch(API + '/upload/notice-cover', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('n-cover').value = data.url;
+          updateCoverPreview(data.url);
+          toast('封面图上传成功');
+        } else {
+          toast('上传失败', 'error');
+        }
+      } catch (err) {
+        toast('上传失败', 'error');
+      }
+    }
+    
+    // 更新封面图预览
+    function updateCoverPreview(url) {
+      const preview = document.getElementById('n-cover-preview');
+      if (!preview) return;
+      
+      if (url) {
+        preview.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+      } else {
+        preview.innerHTML = '<i class="fas fa-image text-slate-300 text-2xl"></i>';
+      }
+    }
+    
+    function viewNotice(id) {
+      const n = data.notices.find(x => x.id === id);
+      if (!n) return;
+      
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+          <!-- 头部 - 固定 -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800">${n.title}</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          
+          <!-- 内容区 - 可滚动 -->
+          <div class="flex-1 overflow-y-auto p-6">
+            <!-- 封面图 -->
+            ${n.cover ? `
+              <div class="mb-6 rounded-xl overflow-hidden">
+                <img src="${n.cover}" class="w-full h-64 object-cover">
+              </div>
+            ` : ''}
+            
+            <!-- 元信息 -->
+            <div class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+              ${n.pinned ? '<span class="px-3 py-1 bg-red-100 text-red-600 rounded-full text-sm font-medium"><i class="fas fa-thumbtack mr-1"></i>置顶</span>' : ''}
+              <span class="px-3 py-1 rounded-full text-sm font-medium ${n.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
+                ${n.status === 'published' ? '已发布' : '草稿'}
+              </span>
+              <span class="text-sm text-slate-400">
+                <i class="far fa-clock mr-1"></i>${n.publishedAt || n.createdAt}
+              </span>
+            </div>
+            
+            <!-- 内容 -->
+            <div class="prose max-w-none">
+              <div class="text-slate-700 leading-relaxed">
+                ${n.content || '<p class="text-slate-400">暂无内容</p>'}
+              </div>
+            </div>
+          </div>
+          
+          <!-- 底部按钮 - 固定 -->
+          <div class="px-6 py-4 border-t border-slate-100 flex justify-end flex-shrink-0">
+            <button onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+          </div>
+        </div>
+      `);
     }
     
     function editNotice(id) {
@@ -1873,6 +4778,392 @@
     
     function closeModal() {
       document.getElementById('modal-container').innerHTML = '';
+    }
+
+    // ========== 考试管理 ==========
+    let editingExamId = null;
+    let selectedExamQuestions = [];
+
+    async function loadExams() {
+      const tbody = document.getElementById('examList');
+      if (!tbody) {
+        console.warn('examList 元素不存在，跳过加载');
+        return;
+      }
+      
+      tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+      try {
+        const res = await fetch('/api/exams');
+        const exams = await res.json();
+
+        // 更新统计（仅在元素存在时）
+        const statExamTotal = document.getElementById('statExamTotal');
+        const statExamPublished = document.getElementById('statExamPublished');
+        const statExamDraft = document.getElementById('statExamDraft');
+        const statExamAttempts = document.getElementById('statExamAttempts');
+        
+        if (statExamTotal) statExamTotal.textContent = exams.length;
+        if (statExamPublished) statExamPublished.textContent = exams.filter(e => e.status === 'published').length;
+        if (statExamDraft) statExamDraft.textContent = exams.filter(e => e.status === 'draft').length;
+        if (statExamAttempts) statExamAttempts.textContent = exams.reduce((s, e) => s + (e.attemptCount || 0), 0);
+
+        if (!exams.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-file-alt text-3xl mb-3 block"></i><p>暂无考试，点击右上角"创建考试"开始</p></td></tr>';
+          return;
+        }
+        const statusMap = {
+          draft: { cls: 'bg-slate-100 text-slate-600', text: '草稿' },
+          published: { cls: 'bg-emerald-100 text-emerald-700', text: '已发布' },
+          closed: { cls: 'bg-red-100 text-red-600', text: '已结束' }
+        };
+        tbody.innerHTML = exams.map(exam => {
+          const st = statusMap[exam.status] || statusMap.draft;
+          return `<tr class="hover:bg-slate-50 transition">
+            <td class="px-6 py-4">
+              <div class="font-medium text-slate-800">${escHtml(exam.title)}</div>
+              <div class="text-xs text-slate-400 mt-0.5">${exam.description ? escHtml(exam.description.substring(0, 30)) : ''}</div>
+            </td>
+            <td class="px-6 py-4 text-slate-600">${exam.duration}分钟</td>
+            <td class="px-6 py-4"><span class="font-semibold">${exam.questionCount || 0}</span> 题</td>
+            <td class="px-6 py-4 text-slate-600">${exam.passingScore}/${exam.totalScore}</td>
+            <td class="px-6 py-4 text-slate-600">${exam.attemptCount || 0}</td>
+            <td class="px-6 py-4">
+              <span class="px-2.5 py-1 text-xs rounded-full font-medium ${st.cls}">${st.text}</span>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex items-center justify-center space-x-1">
+                <button onclick="editExam(${exam.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit"></i></button>
+                ${exam.status === 'draft' ? `<button onclick="publishExam(${exam.id})" class="p-2 text-green-500 hover:bg-green-50 rounded-lg transition" title="发布"><i class="fas fa-paper-plane"></i></button>` : ''}
+                ${exam.status === 'published' ? `<button onclick="closeExam(${exam.id})" class="p-2 text-yellow-500 hover:bg-yellow-50 rounded-lg transition" title="结束"><i class="fas fa-stop-circle"></i></button>` : ''}
+                <button onclick="viewExamResults(${exam.id}, '${escHtml(exam.title)}')" class="p-2 text-purple-500 hover:bg-purple-50 rounded-lg transition" title="成绩"><i class="fas fa-chart-bar"></i></button>
+                <button onclick="deleteExam(${exam.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-red-500">加载失败</td></tr>';
+      }
+    }
+
+    function openExamModal(id = null) {
+      editingExamId = id;
+      selectedExamQuestions = [];
+      document.getElementById('examId').value = id || '';
+      document.getElementById('examModalTitle').textContent = id ? '编辑考试' : '创建考试';
+      // 重置表单
+      document.getElementById('examTitle').value = '';
+      document.getElementById('examDesc').value = '';
+      document.getElementById('examDuration').value = '60';
+      document.getElementById('examTotalScore').value = '100';
+      document.getElementById('examPassingScore').value = '60';
+      document.getElementById('examStatus').value = 'draft';
+      document.getElementById('examShuffle').checked = false;
+      document.getElementById('examShowAnswer').checked = true;
+      renderSelectedQuestions();
+      // 显示弹窗
+      const modal = document.getElementById('examModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (id) loadExamForEdit(id);
+    }
+
+    function closeExamModal() {
+      const modal = document.getElementById('examModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      editingExamId = null;
+      selectedExamQuestions = [];
+    }
+
+    async function loadExamForEdit(id) {
+      try {
+        const res = await fetch('/api/exams/' + id + '/questions');
+        const data = await res.json();
+        selectedExamQuestions = (data.questions || []).map(q => ({
+          questionId: q.questionId,
+          score: q.score || 1,
+          order: q.order || 0,
+          content: q.questionDetail ? q.questionDetail.content : '(题目未找到)'
+        }));
+        const examRes = await fetch('/api/exams');
+        const allExams = await examRes.json();
+        const exam = allExams.find(e => e.id === id);
+        if (exam) {
+          document.getElementById('examTitle').value = exam.title || '';
+          document.getElementById('examDesc').value = exam.description || '';
+          document.getElementById('examDuration').value = exam.duration || 60;
+          document.getElementById('examTotalScore').value = exam.totalScore || 100;
+          document.getElementById('examPassingScore').value = exam.passingScore || 60;
+          document.getElementById('examStatus').value = exam.status || 'draft';
+          document.getElementById('examShuffle').checked = !!exam.shuffleQuestions;
+          document.getElementById('examShowAnswer').checked = !!exam.showAnswer;
+        }
+        renderSelectedQuestions();
+      } catch (e) { console.error(e); }
+    }
+
+    function renderSelectedQuestions() {
+      const container = document.getElementById('examSelectedQuestions');
+      const hint = document.getElementById('examQuestionCountHint');
+      hint.textContent = `已选 ${selectedExamQuestions.length} 题`;
+      if (!selectedExamQuestions.length) {
+        container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">暂未选择题目，请从题库中选取</p>';
+        return;
+      }
+      container.innerHTML = selectedExamQuestions.map((q, i) => `
+        <div class="flex items-start gap-3 p-2 bg-white rounded-xl border border-slate-200 text-sm">
+          <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">${i + 1}</span>
+          <span class="flex-1 line-clamp-2">${escHtml(q.content)}</span>
+          <input type="number" value="${q.score}" min="1" max="100" onchange="updateQuestionScore(${i}, this.value)"
+            class="w-14 px-1 border border-slate-200 rounded text-center text-xs" title="分值">
+          <button type="button" onclick="removeSelectedQuestion(${i})" class="text-red-400 hover:text-red-600 transition" title="移除"><i class="fas fa-times"></i></button>
+        </div>`).join('');
+    }
+
+    function updateQuestionScore(idx, val) {
+      if (selectedExamQuestions[idx]) selectedExamQuestions[idx].score = parseInt(val) || 1;
+    }
+
+    function removeSelectedQuestion(idx) {
+      selectedExamQuestions.splice(idx, 1);
+      selectedExamQuestions.forEach((q, i) => q.order = i);
+      renderSelectedQuestions();
+    }
+
+    async function saveExam(e) {
+      e.preventDefault();
+      const payload = {
+        title: document.getElementById('examTitle').value.trim(),
+        description: document.getElementById('examDesc').value.trim(),
+        duration: parseInt(document.getElementById('examDuration').value),
+        totalScore: parseInt(document.getElementById('examTotalScore').value),
+        passingScore: parseInt(document.getElementById('examPassingScore').value),
+        status: document.getElementById('examStatus').value,
+        shuffleQuestions: document.getElementById('examShuffle').checked,
+        showAnswer: document.getElementById('examShowAnswer').checked,
+        questions: selectedExamQuestions
+      };
+      try {
+        let res;
+        if (editingExamId) {
+          res = await fetch('/api/exams/' + editingExamId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } else {
+          res = await fetch('/api/exams', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
+        const data = await res.json();
+        if (data.success) {
+          closeExamModal();
+          loadExams();
+          toast(editingExamId ? '考试已更新' : '考试创建成功');
+        } else {
+          toast(data.error || '保存失败', 'error');
+        }
+      } catch (err) {
+        toast('网络错误: ' + err.message, 'error');
+      }
+    }
+
+    async function editExam(id) { openExamModal(id); }
+
+    async function deleteExam(id) {
+      if (!confirm('确定要删除这个考试吗？相关成绩记录也将被清除。')) return;
+      try {
+        const res = await fetch('/api/exams/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) { loadExams(); toast('考试已删除'); }
+        else toast(data.error || '删除失败', 'error');
+      } catch (e) { toast('删除失败', 'error'); }
+    }
+
+    async function publishExam(id) {
+      try {
+        const res = await fetch('/api/exams/' + id + '/status', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'published' })
+        });
+        const data = await res.json();
+        if (data.success) { loadExams(); toast('考试已发布'); }
+        else toast(data.error, 'error');
+      } catch (e) { toast('发布失败', 'error'); }
+    }
+
+    async function closeExam(id) {
+      try {
+        const res = await fetch('/api/exams/' + id + '/status', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'closed' })
+        });
+        const data = await res.json();
+        if (data.success) { loadExams(); toast('考试已结束'); }
+        else toast(data.error, 'error');
+      } catch (e) { toast('操作失败', 'error'); }
+    }
+
+    async function viewExamResults(id, title) {
+      document.getElementById('resultsExamTitle').textContent = title;
+      const tbody = document.getElementById('examResultsBody');
+      tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+      const modal = document.getElementById('examResultsModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      try {
+        const res = await fetch('/api/exams/' + id + '/results');
+        const data = await res.json();
+        const results = data.results || [];
+        if (!results.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">暂无成绩记录</td></tr>';
+          return;
+        }
+        tbody.innerHTML = results.map(r => `
+          <tr class="${r.passed ? '' : 'bg-red-50'}">
+            <td class="px-3 py-3 font-medium text-slate-800">${escHtml(r.userName)}</td>
+            <td class="px-3 py-3 font-bold ${r.passed ? 'text-green-600' : 'text-red-600'}">${r.score}分</td>
+            <td class="px-3 py-3 text-slate-600">${r.correctCount || '-'}/${r.totalQuestions || '-'}</td>
+            <td class="px-3 py-3">
+              <span class="px-2 py-0.5 text-xs rounded-full font-medium ${r.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}">
+                ${r.passed ? '通过' : '未通过'}
+              </span>
+            </td>
+            <td class="px-3 py-3 text-slate-500 text-xs">${r.completedAt ? new Date(r.completedAt).toLocaleString() : '-'}</td>
+          </tr>`).join('');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-red-500">加载失败</td></tr>';
+      }
+    }
+
+    function closeExamResults() {
+      const modal = document.getElementById('examResultsModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // ========== 题目选择器 ==========
+    let qpAllQuestions = [];
+
+    function openQuestionPicker() {
+      const modal = document.getElementById('questionPickerModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      loadQuestionPoolBanks().then(() => loadQuestionPool());
+    }
+
+    function closeQuestionPicker() {
+      const modal = document.getElementById('questionPickerModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function loadQuestionPoolBanks() {
+      try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
+        const banks = data.question_banks || [];
+        const sel = document.getElementById('qpBankFilter');
+        sel.innerHTML = '<option value="">全部题库</option>' +
+          banks.map(b => `<option value="${b.id}">${escHtml(b.name)}</option>`).join('');
+      } catch (e) {}
+    }
+
+    async function loadQuestionPool() {
+      const tbody = document.getElementById('questionPoolBody');
+      tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">加载中...</td></tr>';
+      try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
+        let questions = data.questions || [];
+        const bankFilter = document.getElementById('qpBankFilter').value;
+        const typeFilter = document.getElementById('qpTypeFilter').value;
+        const diffFilter = document.getElementById('qpDiffFilter').value;
+        const search = document.getElementById('qpSearch').value.trim();
+        if (bankFilter) questions = questions.filter(q => q.bank_id == bankFilter);
+        if (typeFilter) questions = questions.filter(q => q.type === typeFilter);
+        if (diffFilter) questions = questions.filter(q => q.difficulty === diffFilter);
+        if (search) questions = questions.filter(q => q.content.includes(search));
+        qpAllQuestions = questions;
+        updateQpCheckState();
+        if (!questions.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">没有符合条件的题目</td></tr>';
+          return;
+        }
+        const typeName = t => ({ single:'单选', multiple:'多选', judge:'判断' })[t] || t;
+        const diffName = d => ({ easy:'简单', medium:'中等', hard:'困难' })[d] || d;
+        tbody.innerHTML = questions.map((q, i) => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2"><input type="checkbox" class="qp-cb" data-idx="${i}" onchange="updateQpCheckedCount()" ${isQpSelected(q.id) ? 'checked disabled' : ''}></td>
+            <td class="py-2 pr-4"><span class="line-clamp-2">${escHtml(q.content)}</span></td>
+            <td class="py-2"><span class="px-1.5 py-0.5 bg-slate-100 rounded text-xs">${typeName(q.type)}</span></td>
+            <td class="py-2"><span class="px-1.5 py-0.5 rounded text-xs ${q.difficulty==='hard'?'bg-red-100 text-red-600':q.difficulty==='easy'?'bg-green-100 text-green-600':'bg-yellow-100 text-yellow-700'}">${diffName(q.difficulty)}</span></td>
+            <td class="py-2"><input type="number" value="${getQpScore(q.id)}" min="1" max="100" class="w-12 px-1 border border-slate-200 rounded text-center text-xs qp-score" data-qid="${q.id}" ${!isQpSelected(q.id)?'disabled':''}></td>
+          </tr>`).join('');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-red-500">加载失败</td></tr>';
+      }
+    }
+
+    function isQpSelected(questionId) {
+      return selectedExamQuestions.some(sq => sq.questionId === questionId);
+    }
+
+    function getQpScore(questionId) {
+      const found = selectedExamQuestions.find(sq => sq.questionId === questionId);
+      return found ? found.score : 1;
+    }
+
+    function toggleQpSelectAll() {
+      const checked = document.getElementById('qpSelectAll').checked;
+      document.querySelectorAll('.qp-cb:not(:disabled)').forEach(cb => { cb.checked = checked; });
+      updateQpCheckedCount();
+    }
+
+    function updateQpCheckState() {
+      const cbs = Array.from(document.querySelectorAll('.qp-cb:not(:disabled)'));
+      const allChecked = cbs.length > 0 && cbs.every(cb => cb.checked);
+      document.getElementById('qpSelectAll').checked = allChecked;
+      document.getElementById('qpSelectAll').indeterminate = !allChecked && cbs.some(cb => cb.checked);
+      updateQpCheckedCount();
+    }
+
+    function updateQpCheckedCount() {
+      const count = Array.from(document.querySelectorAll('.qp-cb:checked')).length;
+      document.getElementById('qpCheckedCount').textContent = count;
+    }
+
+    function confirmQuestionPick() {
+      const checkedCbs = document.querySelectorAll('.qp-cb:checked');
+      if (!checkedCbs.length) { toast('请先勾选要添加的题目', 'warning'); return; }
+      checkedCbs.forEach(cb => {
+        const idx = parseInt(cb.dataset.idx);
+        const q = qpAllQuestions[idx];
+        if (q && !isQpSelected(q.id)) {
+          const scoreInput = document.querySelector(`.qp-score[data-qid="${q.id}"]`);
+          selectedExamQuestions.push({
+            questionId: q.id,
+            score: scoreInput ? parseInt(scoreInput.value) || 1 : 1,
+            order: selectedExamQuestions.length,
+            content: q.content
+          });
+        }
+      });
+      renderSelectedQuestions();
+      closeQuestionPicker();
+      toast(`已添加 ${checkedCbs.length} 道题目到考试`);
+    }
+
+    // ========== 工具函数 ==========
+    function escHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
     }
   </script>
 </body>

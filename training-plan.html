@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>培训计划 - 游雁学院</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#667eea',
+                        secondary: '#764ba2',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style>
+        body { opacity: 0; animation: pageLoad 0.5s ease forwards; }
+        @keyframes pageLoad { to { opacity: 1; } }
+        .container-responsive { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .bg-gradient-primary {
+            background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-modal-in { animation: modalIn 0.3s ease-out; }
+        .animate-slide-in { animation: slideIn 0.3s ease-out; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .btn-primary:hover { background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="day-modal" style="display: none; position: fixed; inset: 0; z-index: 50; align-items: center; justify-content: center; padding: 1rem;">
+        <div onclick="closeDayModal()" style="position: absolute; inset: 0; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(8px);"></div>
+        <div style="position: relative; background-color: white; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); width: 100%; max-width: 520px; max-height: 80vh; overflow: hidden; animation: modalIn 0.3s ease-out;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; color: white;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div id="modal-date" style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.25rem;">2026年1月1日 周五</div>
+                        <div id="modal-title" style="font-size: 1.5rem; font-weight: bold;">当天日程安排</div>
+                    </div>
+                    <button onclick="closeDayModal()" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background-color: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; hover:bg-white/30;">
+                        <i class="fa fa-times" style="font-size: 1.25rem;"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="modal-content" style="padding: 1.5rem; max-height: 50vh; overflow-y: auto;">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 0; color: #9ca3af;">
+                    <div style="width: 6rem; height: 6rem; border-radius: 50%; background-color: #f3f4f6; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                        <i class="fa fa-calendar-o" style="font-size: 4rem; color: #d1d5db;"></i>
+                    </div>
+                    <p style="color: #9ca3af; font-size: 1rem;">当天暂无课程安排</p>
+                    <p style="color: #cbd5e1; font-size: 0.875rem; margin-top: 0.5rem;">您可以查看其他日期的课程</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="course-detail-modal" style="display: none; position: fixed; inset: 0; z-index: 50; align-items: center; justify-content: center; padding: 1rem;">
+        <div onclick="closeCourseDetailModal()" style="position: absolute; inset: 0; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(8px);"></div>
+        <div style="position: relative; background-color: white; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); width: 100%; max-width: 520px; overflow: hidden; animation: modalIn 0.3s ease-out;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; color: white;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div id="detail-category" style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.25rem;">新雁计划</div>
+                        <div id="detail-title" style="font-size: 1.5rem; font-weight: bold;">课程详情</div>
+                    </div>
+                    <button onclick="closeCourseDetailModal()" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background-color: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                        <i class="fa fa-times" style="font-size: 1.25rem;"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="detail-content" style="padding: 1.5rem;">
+            </div>
+        </div>
+    </div>
+
+    <header class="bg-white/95 backdrop-blur-md shadow-sm fixed w-full top-0 z-50 transition-all duration-300">
+        <div class="container-responsive">
+            <div class="flex justify-between items-center py-3">
+                <a href="index.html" class="flex items-center space-x-2 group">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                        <i class="fa fa-graduation-cap text-white text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gradient hidden sm:block">游雁学院</span>
+                </a>
+                
+                <nav class="hidden md:flex space-x-1">
+                    <a href="index.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">首页</a>
+                    <a href="training-plan.html" class="nav-item active px-4 py-2 rounded-lg text-primary font-medium hover:bg-primary/5 transition-colors">培训</a>
+                    <a href="course.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">课程</a>
+                    <a href="teacher.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">讲师</a>
+                    <a href="library.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">书吧</a>
+                    <a href="center.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">我的</a>
+                </nav>
+                
+                <div class="flex items-center space-x-3">
+                    <div id="user-info" class="hidden md:flex items-center space-x-3">
+                        <div class="w-7 h-7 rounded-full bg-gradient-primary flex items-center justify-center">
+                            <i class="fa fa-user text-white text-xs" id="user-avatar-icon"></i>
+                        </div>
+                        <span class="text-sm font-medium text-primary" id="user-display-name">用户</span>
+                        <div class="relative">
+                            <button onclick="window.location.href='messages.html'" class="relative p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary cursor-pointer" title="消息通知">
+                                <i class="fa fa-bell text-lg"></i>
+                                <span id="notification-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1">0</span>
+                            </button>
+                        </div>
+                        <button onclick="handleLogout()" id="logout-btn-desktop" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors" title="退出登录">
+                            <i class="fa fa-sign-out text-lg"></i>
+                        </button>
+                    </div>
+                    <button class="md:hidden text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors" id="mobile-menu-button" aria-label="菜单">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="md:hidden hidden bg-white border-t border-gray-100" id="mobile-menu">
+            <nav class="container-responsive py-3 flex flex-col space-y-1">
+                <a href="index.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">首页</a>
+                <a href="training-plan.html" class="flex items-center px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium">培训</a>
+                <a href="course.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">课程</a>
+                <a href="teacher.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">讲师</a>
+                <a href="library.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">书吧</a>
+                <a href="center.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">我的</a>
+                    <div class="border-t border-gray-100 mt-2 pt-3 flex items-center justify-between px-4">
+                        <div id="mobile-user-info" class="hidden flex items-center space-x-2">
+                            <div class="w-7 h-7 rounded-full bg-gradient-primary flex items-center justify-center">
+                                <i class="fa fa-user text-white text-xs"></i>
+                            </div>
+                            <span class="text-sm font-medium text-primary" id="mobile-user-name">用户</span>
+                        </div>
+                        <button onclick="handleLogout()" class="text-sm text-gray-500 hover:text-red-500 transition-colors">退出</button>
+                    </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="pt-20 pb-10">
+        <div class="container-responsive">
+            <div class="max-w-6xl mx-auto">
+                <div class="mb-8">
+                    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">培训计划</h1>
+                            <p class="text-gray-500">查看和报名公司组织的各类培训课程</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="relative">
+                                <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="search-input" placeholder="搜索课程..." class="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 w-full sm:w-64">
+                            </div>
+                            <select id="category-filter" class="appearance-none px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 bg-white pr-10 cursor-pointer">
+                                <option value="all">全部分类</option>
+                                <option value="新雁计划">新雁计划</option>
+                                <option value="游雁学堂">游雁学堂</option>
+                                <option value="鸿雁计划">鸿雁计划</option>
+                                <option value="AI实践分享">AI实践分享</option>
+                                <option value="雏雁训练营">雏雁训练营</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="filterByCategory('all')" id="cat-all" class="filter-tag active flex items-center gap-2 px-4 py-2 bg-gradient-primary text-white rounded-full text-sm font-medium shadow-lg shadow-purple-500/30">
+                            <i class="fa fa-calendar"></i> 全部课程
+                        </button>
+                        <button onclick="filterByCategory('新雁计划')" id="cat-新雁计划" class="filter-tag flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-600 rounded-full text-sm font-medium hover:bg-orange-200 transition-colors">
+                            <i class="fa fa-rocket"></i> 新雁计划
+                        </button>
+                        <button onclick="filterByCategory('游雁学堂')" id="cat-游雁学堂" class="filter-tag flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors">
+                            <i class="fa fa-graduation-cap"></i> 游雁学堂
+                        </button>
+                        <button onclick="filterByCategory('鸿雁计划')" id="cat-鸿雁计划" class="filter-tag flex items-center gap-2 px-4 py-2 bg-green-100 text-green-600 rounded-full text-sm font-medium hover:bg-green-200 transition-colors">
+                            <i class="fa fa-users"></i> 鸿雁计划
+                        </button>
+                        <button onclick="filterByCategory('AI实践分享')" id="cat-AI实践分享" class="filter-tag flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-600 rounded-full text-sm font-medium hover:bg-amber-200 transition-colors">
+                            <i class="fa fa-laptop"></i> AI实践分享
+                        </button>
+                        <button onclick="filterByCategory('雏雁训练营')" id="cat-雏雁训练营" class="filter-tag flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-full text-sm font-medium hover:bg-red-200 transition-colors">
+                            <i class="fa fa-building"></i> 雏雁训练营
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-lg shadow-purple-500/10 p-6 border border-gray-100 mb-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <button onclick="prevMonth()" class="p-2.5 rounded-xl bg-white border border-gray-100 hover:bg-gray-50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 text-gray-500 hover:text-primary">
+                            <i class="fa fa-chevron-left text-lg"></i>
+                        </button>
+                        <div class="flex items-center gap-4">
+                            <h2 class="text-xl font-semibold text-gray-800" id="current-month">2026年1月</h2>
+                            <button onclick="goToToday()" class="px-3 py-1.5 text-sm bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors">
+                                <i class="fa fa-calendar-check-o mr-1"></i>今天
+                            </button>
+                        </div>
+                        <button onclick="nextMonth()" class="p-2.5 rounded-xl bg-white border border-gray-100 hover:bg-gray-50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 text-gray-500 hover:text-primary">
+                            <i class="fa fa-chevron-right text-lg"></i>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-2 mb-2">
+                        <div class="text-center text-sm font-medium text-gray-500 py-2">周日</div>
+                        <div class="text-center text-sm font-medium text-gray-500 py-2">周一</div>
+                        <div class="text-center text-sm font-medium text-gray-500 py-2">周二</div>
+                        <div class="text-center text-sm font-medium text-gray-500 py-2">周三</div>
+                        <div class="text-center text-sm font-medium text-gray-500 py-2">周四</div>
+                        <div class="text-center text-sm font-medium text-gray-500 py-2">周五</div>
+                        <div class="text-center text-sm font-medium text-gray-500 py-2">周六</div>
+                    </div>
+                    <div class="grid grid-cols-7 gap-2" id="calendar-grid">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                                <i class="fa fa-calendar-check-o mr-2 text-primary"></i>当月课程列表
+                            </h3>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-400">共 <span id="course-count" class="text-primary font-semibold">0</span> 门课程</span>
+                            </div>
+                        </div>
+                        <div id="monthly-courses" class="space-y-3">
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fa fa-clock-o mr-2 text-primary"></i>我的培训进度
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">已完成培训</span>
+                                        <span class="font-semibold text-primary">8/12</span>
+                                    </div>
+                                    <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-primary rounded-full" style="width: 66.67%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">本月已报名</span>
+                                        <span class="font-semibold text-primary">3</span>
+                                    </div>
+                                    <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-green-500 rounded-full" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fa fa-star mr-2 text-primary"></i>热门培训
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" onclick="showCourseDetail(1)">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center flex-shrink-0">
+                                        <i class="fa fa-rocket text-white"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-medium text-gray-800 truncate">新员工入职培训</div>
+                                        <div class="text-xs text-gray-400">128人已报名</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" onclick="showCourseDetail(2)">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0">
+                                        <i class="fa fa-code text-white"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-medium text-gray-800 truncate">Python进阶培训</div>
+                                        <div class="text-xs text-gray-400">89人已报名</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" onclick="showCourseDetail(3)">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0">
+                                        <i class="fa fa-laptop text-white"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-medium text-gray-800 truncate">AI应用实践分享</div>
+                                        <div class="text-xs text-gray-400">67人已报名</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-gray-100 mt-10">
+        <div class="container-responsive py-6">
+            <div class="text-center text-gray-500 text-sm">游雁学院 - 企业在线学习平台</div>
+        </div>
+    </footer>
+
+    <script src="js/auth-modal.js"></script>
+    <script src="js/auth-guard.js"></script>
+    <script>
+        // 退出登录（使用统一认证模块）
+        function handleLogout() {
+            AuthGuard.logout();
+        }
+        
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+        let currentCategoryFilter = 'all';
+        let currentSearchTerm = '';
+
+        let courses = [];
+        let enrolledCourses = JSON.parse(localStorage.getItem('enrolledCourses') || '[]');
+
+        async function loadTrainingSchedule() {
+            try {
+                const res = await fetch('/api/training/schedule');
+                const json = await res.json();
+                if (json.success && json.data && json.data.length > 0) {
+                    courses = json.data;
+                    const firstDate = new Date(json.data[0].date);
+                    if (!isNaN(firstDate.getTime())) {
+                        currentYear = firstDate.getFullYear();
+                        currentMonth = firstDate.getMonth();
+                    }
+                }
+            } catch (e) {
+                console.log('培训日历加载失败:', e.message);
+                courses = [
+                    { id: 1, name: '新员工入职培训', category: '新雁计划', instructor: '黄明芳', date: '2026-01-15', time: '09:00-11:30', duration: '2.5小时', location: '会议室A', projectName: 'Q1培训计划' },
+                    { id: 2, name: 'Python进阶培训', category: '游雁学堂', instructor: '曹贺军', date: '2026-01-18', time: '14:00-17:00', duration: '3小时', location: '培训室B', projectName: '技术提升计划' },
+                    { id: 3, name: 'AI应用实践分享', category: 'AI实践分享', instructor: '沈家成', date: '2026-01-20', time: '10:00-12:00', duration: '2小时', location: '大会议室', projectName: 'AI学习周' },
+                    { id: 4, name: '团队协作软技能', category: '鸿雁计划', instructor: '吴佳宝', date: '2026-01-22', time: '14:00-16:00', duration: '2小时', location: '培训室A', projectName: '软技能培训' },
+                    { id: 5, name: '产品设计思维', category: '雏雁训练营', instructor: '黄明芳', date: '2026-01-25', time: '09:00-12:00', duration: '3小时', location: '创新实验室', projectName: '设计培训' },
+                    { id: 6, name: '数据可视化实战', category: '游雁学堂', instructor: '曹贺军', date: '2026-01-28', time: '14:00-17:00', duration: '3小时', location: '培训室B', projectName: '技术提升计划' },
+                    { id: 7, name: '沟通技巧培训', category: '鸿雁计划', instructor: '吴佳宝', date: '2026-02-01', time: '10:00-12:00', duration: '2小时', location: '会议室A', projectName: '软技能培训' },
+                    { id: 8, name: '机器学习入门', category: 'AI实践分享', instructor: '沈家成', date: '2026-02-05', time: '09:00-12:00', duration: '3小时', location: '大会议室', projectName: 'AI学习周' },
+                ];
+            }
+        }
+
+        function toggleEnroll(courseId) {
+            const index = enrolledCourses.indexOf(courseId);
+            if (index > -1) {
+                enrolledCourses.splice(index, 1);
+                showToast('取消报名成功');
+            } else {
+                enrolledCourses.push(courseId);
+                showToast('报名成功');
+            }
+            localStorage.setItem('enrolledCourses', JSON.stringify(enrolledCourses));
+            renderCalendar();
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 bg-gray-800 text-white rounded-full shadow-lg text-sm z-50 animate-fade-in';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 2000);
+        }
+
+        const instructors = {
+            '沈家成': { avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShenJiaCheng', title: '高级游戏策划' },
+            '曹贺军': { avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CaoHeJun', title: '高级工程师' },
+            '黄明芳': { avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=HuangMingFang', title: '培训总监' },
+            '吴佳宝': { avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=WuJiaBao', title: '市场经理' },
+        };
+
+        const holidays = {
+            '2026-01-01': '元旦',
+            '2026-01-28': '春节',
+            '2026-01-29': '春节',
+            '2026-01-30': '春节',
+            '2026-01-31': '春节',
+            '2026-02-01': '春节',
+            '2026-02-02': '春节',
+            '2026-02-03': '春节',
+            '2026-04-04': '清明',
+            '2026-04-05': '清明',
+            '2026-05-01': '劳动节',
+            '2026-05-02': '劳动节',
+            '2026-05-03': '劳动节',
+            '2026-06-19': '端午',
+            '2026-06-20': '端午',
+            '2026-09-25': '中秋',
+            '2026-10-01': '国庆',
+            '2026-10-02': '国庆',
+            '2026-10-03': '国庆',
+            '2026-10-04': '国庆',
+            '2026-10-05': '国庆',
+            '2026-10-06': '国庆',
+            '2026-10-07': '国庆',
+        };
+
+        function getDayTypeName(category) {
+            const names = {
+                '策划': '新雁计划',
+                '技术': '游雁学堂',
+                '软技能': '鸿雁计划',
+                '市场': 'AI实践分享',
+                '美术': '雏雁训练营',
+                '新雁计划': '新雁计划',
+                '游雁学堂': '游雁学堂',
+                '鸿雁计划': '鸿雁计划',
+                'AI实践分享': 'AI实践分享',
+                '雏雁训练营': '雏雁训练营'
+            };
+            return names[category] || category;
+        }
+
+        function getDayTypeClass(category) {
+            const classes = {
+                '策划': 'bg-orange-100 text-orange-600',
+                '技术': 'bg-blue-100 text-blue-600',
+                '软技能': 'bg-green-100 text-green-600',
+                '市场': 'bg-pink-100 text-pink-600',
+                '美术': 'bg-purple-100 text-purple-600',
+                '新雁计划': 'bg-orange-100 text-orange-600',
+                '游雁学堂': 'bg-blue-100 text-blue-600',
+                '鸿雁计划': 'bg-green-100 text-green-600',
+                'AI实践分享': 'bg-amber-100 text-amber-600',
+                '雏雁训练营': 'bg-red-100 text-red-600'
+            };
+            return classes[category] || 'bg-gray-100 text-gray-600';
+        }
+
+        function getGradientClass(category) {
+            const classes = {
+                '新雁计划': 'from-orange-400 to-orange-600',
+                '游雁学堂': 'from-blue-400 to-blue-600',
+                '鸿雁计划': 'from-green-400 to-green-600',
+                'AI实践分享': 'from-amber-400 to-amber-600',
+                '雏雁训练营': 'from-red-400 to-red-600',
+                '策划': 'from-orange-400 to-orange-600',
+                '技术': 'from-blue-400 to-blue-600',
+                '软技能': 'from-green-400 to-green-600',
+                '市场': 'from-amber-400 to-amber-600',
+                '美术': 'from-red-400 to-red-600'
+            };
+            return classes[category] || 'from-gray-400 to-gray-600';
+        }
+
+        function getCategoryIcon(category) {
+            const icons = {
+                '新雁计划': 'fa-rocket',
+                '游雁学堂': 'fa-code',
+                '鸿雁计划': 'fa-users',
+                'AI实践分享': 'fa-laptop',
+                '雏雁训练营': 'fa-building',
+                '策划': 'fa-lightbulb-o',
+                '技术': 'fa-code',
+                '软技能': 'fa-users',
+                '市场': 'fa-line-chart',
+                '美术': 'fa-paint-brush'
+            };
+            return icons[category] || 'fa-book';
+        }
+
+        function getFilteredCourses() {
+            let filtered = [...courses];
+            
+            if (currentCategoryFilter !== 'all') {
+                filtered = filtered.filter(c => getDayTypeName(c.category) === currentCategoryFilter);
+            }
+            
+            if (currentSearchTerm) {
+                const searchLower = currentSearchTerm.toLowerCase();
+                filtered = filtered.filter(c => 
+                    c.name.toLowerCase().includes(searchLower) ||
+                    c.instructor.toLowerCase().includes(searchLower)
+                );
+            }
+            
+            return filtered;
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const startDay = firstDay.getDay();
+
+            const filteredCourses = getFilteredCourses();
+            const monthCourses = filteredCourses.filter(c => {
+                const d = new Date(c.date);
+                return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+            });
+
+            for (let i = 0; i < startDay; i++) {
+                grid.innerHTML += '<div class="aspect-square"></div>';
+            }
+
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayCourses = monthCourses.filter(c => c.date === dateStr);
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                const holidayName = holidays[dateStr];
+                const weekDay = new Date(currentYear, currentMonth, day).getDay();
+                const isWeekend = weekDay === 0 || weekDay === 6;
+
+                let cellClass = 'aspect-square rounded-lg p-2 cursor-pointer transition-all duration-300 border border-gray-100';
+                if (holidayName) {
+                    cellClass += ' bg-gradient-to-br from-red-50 to-red-100 hover:shadow-md hover:-translate-y-0.5';
+                } else if (isWeekend) {
+                    cellClass += ' bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-md hover:-translate-y-0.5';
+                } else {
+                    cellClass += ' bg-gradient-to-br from-white to-gray-50 hover:shadow-md hover:-translate-y-0.5';
+                }
+
+                if (isToday) {
+                    cellClass += ' ring-2 ring-primary/40 ring-offset-2';
+                }
+
+                let coursesHtml = '';
+                if (dayCourses.length > 0) {
+                    coursesHtml = dayCourses.slice(0, 2).map((c, idx) => {
+                        return `
+                            <div class="mt-1.5">
+                                <span class="${getDayTypeClass(c.category)} inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                    ${getDayTypeName(c.category)}
+                                </span>
+                                <div class="mt-0.5 text-gray-800 text-xs font-medium truncate">${c.name}</div>
+                                <div class="mt-0.5 text-gray-400 text-[10px]">${c.instructor}</div>
+                            </div>
+                        `;
+                    }).join('');
+                    if (dayCourses.length > 2) {
+                        coursesHtml += `<div class="mt-1 text-gray-400 text-[10px] text-center">+${dayCourses.length - 2}</div>`;
+                    }
+                } else if (holidayName) {
+                    coursesHtml = `<div class="mt-1 text-red-500 text-xs font-medium text-center">${holidayName}</div>`;
+                }
+
+                grid.innerHTML += `
+                    <div class="${cellClass}" onclick="showDayCourses('${dateStr}')">
+                        <div class="h-full flex flex-col relative min-h-[100px]">
+                            ${holidayName ? '<span class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded flex items-center justify-center">节</span>' : ''}
+                            <div class="flex justify-between items-start">
+                                <span class="${isToday ? 'bg-primary text-white' : 'bg-purple-100 text-purple-600'} rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium">${day}</span>
+                                <span class="text-gray-400 text-[10px]">${dayCourses.length > 0 ? dayCourses[0].duration.replace('小时', 'h') : ''}</span>
+                            </div>
+                            ${coursesHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('current-month').textContent = `${currentYear}年${currentMonth + 1}月`;
+            renderMonthlyCourses();
+        }
+
+        function renderMonthlyCourses() {
+            const container = document.getElementById('monthly-courses');
+            const filteredCourses = getFilteredCourses();
+            const monthCourses = filteredCourses.filter(c => {
+                const d = new Date(c.date);
+                return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+            });
+
+            document.getElementById('course-count').textContent = monthCourses.length;
+
+            if (monthCourses.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                            <i class="fa fa-calendar-times text-gray-400 text-3xl"></i>
+                        </div>
+                        <p class="text-gray-500">暂无课程安排</p>
+                        <p class="text-sm text-gray-400 mt-1">试试调整筛选条件</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = monthCourses.map((c, index) => {
+                const d = new Date(c.date);
+                const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                const instructor = instructors[c.instructor] || { avatar: '', title: '' };
+                const isEnrolled = enrolledCourses.includes(c.id);
+                const isFromTraining = !!c.projectName;
+
+                return `
+                    <div class="flex gap-4 p-4 bg-gray-50 rounded-xl hover:shadow-md transition-all cursor-pointer card-hover" style="animation-delay: ${index * 0.05}s" onclick="showCourseDetail(${c.id})">
+                        <div class="w-14 h-14 rounded-xl bg-gradient-to-br ${getGradientClass(c.category)} flex items-center justify-center flex-shrink-0">
+                            <i class="fa ${getCategoryIcon(c.category)} text-white text-lg"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="${getDayTypeClass(c.category)} px-2 py-0.5 rounded-full text-xs font-medium">${getDayTypeName(c.category)}</span>
+                                ${isFromTraining ? '<span class="text-[10px] px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded">培训项目</span>' : ''}
+                            </div>
+                            <h4 class="font-semibold text-gray-800 truncate">${c.name}</h4>
+                            <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                                <div class="flex items-center gap-1.5">
+                                    <img src="${instructor.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Default'}" alt="${c.instructor}" class="w-6 h-6 rounded-full object-cover" />
+                                    <span>${c.instructor}</span>
+                                </div>
+                                <span class="flex items-center gap-1">
+                                    <i class="fa fa-calendar-o text-gray-400"></i>
+                                    ${d.getMonth() + 1}月${d.getDate()}日 ${weekDays[d.getDay()]}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <i class="fa fa-clock-o text-gray-400"></i>
+                                    ${c.time}
+                                </span>
+                                ${c.location ? `<span class="flex items-center gap-1"><i class="fa fa-map-marker-alt text-gray-400"></i>${c.location}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex flex-col justify-center items-end">
+                            <span class="text-xs text-gray-400 mb-2">${c.duration}</span>
+                            <button onclick="event.stopPropagation(); toggleEnroll(${c.id})" 
+                                    class="${isEnrolled ? 'bg-gray-200 text-gray-600 hover:bg-gray-300' : 'btn-primary text-white hover:opacity-90'} px-4 py-2 rounded-lg font-medium text-sm transition-all">
+                                ${isEnrolled ? '已报名' : '我要报名'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showDayCourses(dateStr) {
+            const filteredCourses = getFilteredCourses();
+            const dayCourses = filteredCourses.filter(c => c.date === dateStr);
+            const d = new Date(dateStr);
+            const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            
+            document.getElementById('modal-date').textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${weekDays[d.getDay()]}`;
+            
+            if (dayCourses.length === 0) {
+                document.getElementById('modal-content').innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                            <i class="fa fa-calendar-o text-3xl text-gray-300"></i>
+                        </div>
+                        <p class="text-gray-400">当天暂无课程安排</p>
+                        <p class="text-sm text-gray-400 mt-1">您可以查看其他日期</p>
+                    </div>
+                `;
+            } else {
+                let content = '<div class="space-y-4">';
+                dayCourses.forEach((c, index) => {
+                    const instructor = instructors[c.instructor] || { avatar: '', title: '' };
+                    const isFromTraining = !!c.projectName;
+                    content += `
+                        <div class="flex gap-4 p-4 bg-gray-50 rounded-xl animate-slide-in" style="animation-delay: ${index * 0.1}s">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${getGradientClass(c.category)} flex-shrink-0 flex items-center justify-center">
+                                <i class="fa ${getCategoryIcon(c.category)} text-white"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="${getDayTypeClass(c.category)} text-xs px-2 py-0.5 rounded-full">${getDayTypeName(c.category)}</span>
+                                    <span class="text-gray-400 text-xs">${c.time}</span>
+                                    ${isFromTraining ? '<span class="text-xs px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded">培训</span>' : ''}
+                                </div>
+                                <h4 class="font-semibold text-gray-800 truncate">${c.name}</h4>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <img src="${instructor.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Default'}"
+                                         alt="${c.instructor}" class="w-6 h-6 rounded-full object-cover" />
+                                    <span class="text-sm text-gray-500">${c.instructor}</span>
+                                    <span class="text-xs text-gray-400">${instructor.title}</span>
+                                </div>
+                                <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+                                    ${c.location ? `<span><i class="fa fa-map-marker-alt mr-1"></i>${c.location}</span>` : ''}
+                                    ${isFromTraining ? `<span><i class="fa fa-folder mr-1"></i>${c.projectName}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="flex flex-col justify-center">
+                                <span class="text-xs text-gray-400">${c.duration}</span>
+                                <button onclick="handleModalEnroll(${c.id})" 
+                                        class="${enrolledCourses.includes(c.id) ? 'bg-gray-200 text-gray-500' : 'btn-primary text-white'} mt-1 px-4 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-all">
+                                    ${enrolledCourses.includes(c.id) ? '已报名' : '报名'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                content += '</div>';
+                document.getElementById('modal-content').innerHTML = content;
+            }
+            
+            document.getElementById('day-modal').style.display = 'flex';
+        }
+
+        function closeDayModal() {
+            document.getElementById('day-modal').style.display = 'none';
+        }
+
+        function handleModalEnroll(courseId) {
+            toggleEnroll(courseId);
+            const d = document.getElementById('day-modal').querySelector('#modal-date').textContent;
+            const dateParts = d.match(/(\d+)年(\d+)月(\d+)日/);
+            if (dateParts) {
+                const dateStr = `${dateParts[1]}-${String(dateParts[2]).padStart(2, '0')}-${String(dateParts[3]).padStart(2, '0')}`;
+                showDayCourses(dateStr);
+            }
+        }
+
+        function showCourseDetail(courseId) {
+            const course = courses.find(c => c.id === courseId);
+            if (!course) return;
+
+            const d = new Date(course.date);
+            const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            const instructor = instructors[course.instructor] || { avatar: '', title: '' };
+            const isEnrolled = enrolledCourses.includes(courseId);
+
+            document.getElementById('detail-category').textContent = getDayTypeName(course.category);
+            document.getElementById('detail-title').textContent = course.name;
+
+            document.getElementById('detail-content').innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                        <div class="w-16 h-16 rounded-xl bg-gradient-to-br ${getGradientClass(course.category)} flex items-center justify-center">
+                            <i class="fa ${getCategoryIcon(course.category)} text-white text-2xl"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="${getDayTypeClass(course.category)} px-2 py-0.5 rounded-full text-xs font-medium">${getDayTypeName(course.category)}</span>
+                                ${course.projectName ? '<span class="text-xs px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded">培训项目</span>' : ''}
+                            </div>
+                            <h3 class="font-bold text-gray-800 mt-1">${course.name}</h3>
+                            <p class="text-sm text-gray-500">${course.duration}</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <img src="${instructor.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Default'}" 
+                                 alt="${course.instructor}" class="w-10 h-10 rounded-full object-cover" />
+                            <div>
+                                <div class="font-medium text-gray-800">${course.instructor}</div>
+                                <div class="text-sm text-gray-400">${instructor.title}</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                                <i class="fa fa-calendar-o text-gray-400 w-5"></i>
+                                <div>
+                                    <div class="text-xs text-gray-400">日期</div>
+                                    <div class="text-sm font-medium text-gray-800">${d.getMonth() + 1}月${d.getDate()}日 ${weekDays[d.getDay()]}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                                <i class="fa fa-clock-o text-gray-400 w-5"></i>
+                                <div>
+                                    <div class="text-xs text-gray-400">时间</div>
+                                    <div class="text-sm font-medium text-gray-800">${course.time}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg col-span-2">
+                                <i class="fa fa-map-marker-alt text-gray-400 w-5"></i>
+                                <div>
+                                    <div class="text-xs text-gray-400">地点</div>
+                                    <div class="text-sm font-medium text-gray-800">${course.location || '待定'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-blue-50 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa fa-info-circle text-blue-500"></i>
+                            <span class="font-medium text-blue-800">课程介绍</span>
+                        </div>
+                        <p class="text-sm text-blue-700">
+                            本课程将深入讲解${course.name}相关知识，帮助学员掌握核心技能。课程内容丰富，注重实践操作，适合有一定基础的学员参加。
+                        </p>
+                    </div>
+
+                    <button onclick="event.stopPropagation(); toggleEnroll(${courseId}); closeCourseDetailModal()" 
+                            class="${isEnrolled ? 'bg-gray-200 text-gray-600 hover:bg-gray-300' : 'btn-primary text-white hover:opacity-90'} w-full py-3 rounded-xl font-medium transition-all">
+                        ${isEnrolled ? '取消报名' : '立即报名'}
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('course-detail-modal').style.display = 'flex';
+        }
+
+        function closeCourseDetailModal() {
+            document.getElementById('course-detail-modal').style.display = 'none';
+        }
+
+        function prevMonth() {
+            if (currentMonth === 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else {
+                currentMonth--;
+            }
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            if (currentMonth === 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else {
+                currentMonth++;
+            }
+            renderCalendar();
+        }
+
+        function goToToday() {
+            const today = new Date();
+            currentYear = today.getFullYear();
+            currentMonth = today.getMonth();
+            renderCalendar();
+        }
+
+        function filterByCategory(category) {
+            currentCategoryFilter = category;
+            
+            document.querySelectorAll('.filter-tag').forEach(tag => {
+                tag.classList.remove('active', 'bg-gradient-primary', 'text-white', 'shadow-lg', 'shadow-purple-500/30');
+                tag.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            
+            const activeTag = document.getElementById(`cat-${category}`);
+            if (activeTag) {
+                activeTag.classList.add('active', 'bg-gradient-primary', 'text-white', 'shadow-lg', 'shadow-purple-500/30');
+                activeTag.classList.remove('bg-gray-100', 'text-gray-600');
+            }
+            
+            renderCalendar();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadTrainingSchedule();
+            renderCalendar();
+
+            document.getElementById('mobile-menu-button').addEventListener('click', () => {
+                document.getElementById('mobile-menu').classList.toggle('hidden');
+            });
+
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                currentSearchTerm = e.target.value;
+                renderCalendar();
+            });
+
+            document.getElementById('category-filter').addEventListener('change', (e) => {
+                filterByCategory(e.target.value);
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeDayModal();
+                    closeCourseDetailModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

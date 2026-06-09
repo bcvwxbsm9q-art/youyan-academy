@@ -86,13 +86,13 @@
       "children": [
         {
           "id": 11,
-          "name": "游戏策划",
-          "key": "game-planning"
+          "name": "系统策划",
+          "key": "system-planning"
         },
         {
           "id": 12,
-          "name": "活动策划",
-          "key": "event-planning"
+          "name": "数值策划",
+          "key": "numeric-planning"
         }
       ]
     },
@@ -104,18 +104,28 @@
       "children": [
         {
           "id": 21,
-          "name": "平面设计",
-          "key": "graphic"
+          "name": "原画",
+          "key": "concept-art"
         },
         {
           "id": 22,
-          "name": "UI设计",
+          "name": "UI",
           "key": "ui"
         },
         {
           "id": 23,
-          "name": "3D建模",
-          "key": "3d"
+          "name": "模型",
+          "key": "model"
+        },
+        {
+          "id": 24,
+          "name": "场景",
+          "key": "scene"
+        },
+        {
+          "id": 25,
+          "name": "动效",
+          "key": "motion"
         }
       ]
     },
@@ -127,36 +137,51 @@
       "children": [
         {
           "id": 31,
-          "name": "前端开发",
-          "key": "frontend"
+          "name": "客户端",
+          "key": "client"
         },
         {
           "id": 32,
-          "name": "后端开发",
-          "key": "backend"
+          "name": "服务端",
+          "key": "server"
         },
         {
           "id": 33,
-          "name": "移动开发",
-          "key": "mobile"
+          "name": "运维",
+          "key": "ops"
+        },
+        {
+          "id": 34,
+          "name": "PHP",
+          "key": "php"
         }
       ]
     },
     {
       "id": 4,
-      "name": "运营",
-      "key": "operation",
+      "name": "市场",
+      "key": "marketing",
       "icon": "fa-line-chart",
       "children": [
         {
           "id": 41,
-          "name": "新媒体运营",
-          "key": "social"
+          "name": "运营",
+          "key": "operation"
         },
         {
           "id": 42,
-          "name": "数据分析",
-          "key": "data"
+          "name": "投放",
+          "key": "advertising"
+        },
+        {
+          "id": 43,
+          "name": "设计",
+          "key": "design"
+        },
+        {
+          "id": 44,
+          "name": "客服",
+          "key": "support"
         }
       ]
     },
@@ -168,13 +193,23 @@
       "children": [
         {
           "id": 51,
-          "name": "职场沟通",
+          "name": "沟通",
           "key": "communication"
         },
         {
           "id": 52,
-          "name": "团队管理",
+          "name": "思维",
+          "key": "thinking"
+        },
+        {
+          "id": 53,
+          "name": "管理",
           "key": "management"
+        },
+        {
+          "id": 54,
+          "name": "领导力",
+          "key": "leadership"
         }
       ]
     }

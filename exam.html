@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>参加考试 - 游雁学院</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: '#667eea', secondary: '#764ba2' } } }
+    }
+  </script>
+  <style>
+    body { opacity: 0; animation: pageLoad .4s ease forwards; }
+    @keyframes pageLoad { to { opacity: 1; } }
+    @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .slide-up { animation: slideUp .4s ease-out; }
+    .text-gradient { background-clip:text; -webkit-background-clip:text; color:transparent; background-image:linear-gradient(135deg,#667eea,#764ba2); }
+    .bg-gradient-primary { background-image:linear-gradient(135deg,#667eea,#764ba2); }
+
+    /* 选项样式 */
+    .opt-item { transition:all .15s; cursor:pointer; }
+    .opt-item:hover { background:#f5f3ff; }
+    .opt-item.selected { background:#ede9fe; border-color:#a78bfa; }
+    .opt-item.selected .opt-radio { background:#7c3aed; border-color:#7c3aed; }
+    .opt-item.selected .opt-checkbox { background:#7c3aed; border-color:#7c3aed; }
+
+    /* 题号导航 */
+    .q-nav-btn { transition:all .15s; width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid transparent; }
+    .q-nav-btn.default { background:#f1f5f9;color:#64748b;border-color:#e2e8f0; }
+    .q-nav-btn.answered { background:#ede9fe;color:#7c3aed;border-color:#c4b5fd; }
+    .q-nav-btn.current { background:#667eea;color:white;border-color:#667eea;box-shadow:0 2px 8px rgba(102,126,234,.4); }
+    .q-nav-btn.flagged { background:#fef3c7;color:#d97706;border-color:#fcd34d; }
+
+    /* 倒计时 */
+    .timer-warning { color:#ef4444; animation:pulse 1s infinite; }
+    @keyframes pulse { 50%{opacity:.6;} }
+
+    /* Toast */
+    .toast { position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:9999;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,.12); animation:toastIn .3s ease; }
+    @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(-20px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+    .toast.success{background:#10b981;color:#fff;}
+    .toast.error{background:#ef4444;color:#fff;}
+    .toast.warn{background:#f59e0b;color:#fff;}
+
+    /* 结果卡片 */
+    .result-ring { position:relative;width:160px;height:160px; }
+    .result-ring svg { transform:rotate(-90deg); }
+    .result-ring circle { fill:none;stroke-width:10;stroke-linecap:round; }
+
+    /* 答题详情增强样式 */
+    .detail-card { transition:all .2s ease; }
+    .detail-card:hover { transform:translateX(4px); box-shadow:0 4px 12px rgba(0,0,0,.06); }
+    .type-badge { display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.5px; }
+    .type-badge.single { background:#ede9fe;color:#7c3aed; }
+    .type-badge.multiple { background:#dbeafe;color:#2563eb; }
+    .type-badge.judge { background:#fef3c7;color:#d97706; }
+    .opt-tag { display:inline-block;padding:1px 8px;border-radius:6px;font-size:12px;font-weight:600;margin-right:4px; }
+    .opt-tag.user-ans { border:1.5px solid #94a3b8;color:#475569; }
+    .opt-tag.user-correct { border:1.5px solid #34d399;background:#ecfdf5;color:#059669; }
+    .opt-tag.user-wrong { border:1.5px solid #f87171;background:#fef2f2;color:#dc2626; }
+    .opt-tag.correct-ans { border:1.5px solid #34d399;background:#ecfdf5;color:#059669; }
+    .analysis-box { background:linear-gradient(135deg,#fffbeb,#fef3c7); border-left:3px solid #f59e0b; border-radius:0 10px 10px 0; }
+    @keyframes fadeInUp { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+    .fade-in-up { animation:fadeInUp .35s ease-out forwards; opacity:0; }
+    .score-circle { width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+  <!-- 顶部导航栏 -->
+  <header id="exam-header" class="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button onclick="confirmExit()" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-500" title="退出考试">
+          <i class="fa fa-arrow-left"></i>
+        </button>
+        <div>
+          <h1 id="header-title" class="text-base font-semibold text-slate-800">加载中...</h1>
+          <p id="header-sub" class="text-xs text-slate-400 hidden"></p>
+        </div>
+      </div>
+      <!-- 倒计时 -->
+      <div id="timer-area" class="hidden items-center gap-2 bg-red-50 px-4 py-1.5 rounded-full">
+        <i class="fa fa-clock-o text-red-500 text-sm"></i>
+        <span id="timer-display" class="text-sm font-bold text-red-600 tabular-nums">--:--</span>
+      </div>
+    </div>
+    <!-- 进度条 -->
+    <div id="progress-bar-wrap" class="hidden h-1 bg-slate-100">
+      <div id="progress-bar" class="h-full bg-gradient-primary transition-all duration-300" style="width:0%"></div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <!-- 加载状态 -->
+    <div id="state-loading" class="flex flex-col items-center justify-center py-24">
+      <i class="fa fa-spinner fa-spin text-4xl text-primary mb-4"></i>
+      <p class="text-slate-400">正在加载考试...</p>
+    </div>
+
+    <!-- 错误状态 -->
+    <div id="state-error" class="hidden flex-col items-center justify-center py-24">
+      <div class="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-4">
+        <i class="fa fa-exclamation-circle text-3xl text-red-400"></i>
+      </div>
+      <p id="error-msg" class="text-lg font-medium text-slate-700 mb-2">加载失败</p>
+      <p id="error-detail" class="text-sm text-slate-400 mb-6"></p>
+      <button onclick="history.back()" class="px-6 py-2.5 bg-gradient-primary text-white rounded-xl text-sm font-medium hover:opacity-90 transition">返回</button>
+    </div>
+
+    <!-- 答题界面 -->
+    <div id="state-exam" class="hidden">
+      <div class="flex gap-6">
+        <!-- 左侧：试题区域 -->
+        <div class="flex-1 min-w-0 space-y-4" id="questions-area"></div>
+
+        <!-- 右侧：答题卡 -->
+        <aside class="w-64 flex-shrink-0 hidden xl:block">
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sticky top-24">
+            <h3 class="font-semibold text-slate-800 text-sm mb-3"><i class="fa fa-list-alt text-primary mr-2"></i>答题卡</h3>
+            <div id="answer-sheet" class="grid grid-cols-5 gap-2 mb-4"></div>
+            <div class="space-y-1.5 text-xs text-slate-500 border-t border-slate-100 pt-3">
+              <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-[#ede9fe] border border-[#c4b5fd]"></span> 已答</div>
+              <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-slate-200 border border-slate-300"></span> 未答</div>
+              <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded bg-[#fef3c7] border border-[#fcd34d]"></span> 标记</div>
+            </div>
+            <button onclick="submitExam()" id="btn-submit" class="w-full mt-4 py-2.5 bg-gradient-primary text-white rounded-xl text-sm font-semibold hover:opacity-90 transition">
+              <i class="fa fa-paper-plane mr-1"></i>交卷
+            </button>
+          </div>
+        </aside>
+      </div>
+
+      <!-- 移动端底部操作栏 -->
+      <div class="xl:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 flex items-center justify-between z-40">
+        <button onclick="openAnswerSheetMobile()" class="px-4 py-2 bg-slate-100 rounded-xl text-sm text-slate-600 font-medium">
+          <i class="fa fa-list-alt mr-1"></i>答题卡 <span id="mobile-progress-text" class="text-primary">0/0</span>
+        </button>
+        <button onclick="submitExam()" id="btn-submit-mobile" class="px-6 py-2.5 bg-gradient-primary text-white rounded-xl text-sm font-semibold">
+          <i class="fa fa-paper-plane mr-1"></i>交卷
+        </button>
+      </div>
+    </div>
+
+    <!-- 成绩结果 -->
+    <div id="state-result" class="hidden max-w-3xl mx-auto">
+      <!-- 结果概览卡片 -->
+      <div class="bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden slide-up mb-5">
+        <!-- 结果头部 -->
+        <div id="result-header-bg" class="px-8 pt-10 pb-8 text-center">
+          <div id="result-icon-wrap" class="w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center">
+            <i id="result-icon" class="text-5xl"></i>
+          </div>
+          <h2 id="result-title" class="text-2xl font-bold mb-1"></h2>
+          <p id="result-subtitle" class="text-sm opacity-80"></p>
+        </div>
+        <!-- 详细成绩 -->
+        <div class="px-8 pb-8">
+          <div class="grid grid-cols-4 gap-3 mb-6">
+            <div class="text-center p-3 bg-slate-50 rounded-xl">
+              <p id="res-score" class="text-2xl font-bold text-primary">-</p>
+              <p class="text-xs text-slate-400 mt-1">得分</p>
+            </div>
+            <div class="text-center p-3 bg-slate-50 rounded-xl">
+              <p id="res-total" class="text-2xl font-bold text-slate-700">-</p>
+              <p class="text-xs text-slate-400 mt-1">满分</p>
+            </div>
+            <div class="text-center p-3 bg-slate-50 rounded-xl">
+              <p id="res-percent" class="text-2xl font-bold text-slate-700">-</p>
+              <p class="text-xs text-slate-400 mt-1">正确率</p>
+            </div>
+            <div class="text-center p-3 bg-slate-50 rounded-xl">
+              <p id="res-time" class="text-lg font-bold text-slate-700">-</p>
+              <p class="text-xs text-slate-400 mt-1">用时</p>
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-sm text-slate-500 mb-6 px-2 bg-slate-50 rounded-xl py-3">
+            <span><i class="fa fa-check-circle text-emerald-500 mr-1"></i>正确：<strong id="res-correct" class="text-emerald-600">0</strong> 题</span>
+            <span><i class="fa fa-times-circle text-red-500 mr-1"></i>错误：<strong id="res-wrong" class="text-red-500">0</strong> 题</span>
+            <span><i class="fa fa-line-chart text-amber-500 mr-1"></i>及格线：<strong id="res-passline" class="text-amber-600">60%</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 答题详情区域 -->
+      <div id="result-detail-section">
+        <div class="flex items-center justify-between mb-4 px-1">
+          <h3 class="font-bold text-slate-800"><i class="fa fa-list-alt text-primary mr-2"></i>答题详情</h3>
+          <div class="flex gap-2 text-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-600"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>正确</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-50 text-red-500"><span class="w-2 h-2 rounded-full bg-red-500"></span>错误</span>
+          </div>
+        </div>
+        <div id="result-detail-list" class="space-y-3"></div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="mt-6 flex gap-3">
+        <button onclick="location.href='center.html'" class="flex-1 py-3 bg-gradient-primary text-white rounded-xl font-semibold text-sm hover:opacity-90 transition shadow-md shadow-primary/20">
+          <i class="fa fa-home mr-1"></i>返回个人中心
+        </button>
+        <button onclick="location.reload()" class="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-50 transition">
+          <i class="fa fa-refresh mr-1"></i>重新考试
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- 移动端答题卡弹窗 -->
+  <div id="sheet-modal" class="hidden fixed inset-0 bg-black/50 z-50" onclick="if(event.target===this)closeSheetModal()">
+    <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-5 max-h-[70vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-slate-800">答题卡</h3>
+        <button onclick="closeSheetModal()" class="p-2 text-slate-400 hover:text-slate-600"><i class="fa fa-times"></i></button>
+      </div>
+      <div id="answer-sheet-mobile" class="grid grid-cols-7 gap-2"></div>
+    </div>
+  </div>
+
+  <!-- 确认弹窗 -->
+  <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeConfirm()">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 scale-in">
+      <div id="confirm-icon" class="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center">
+        <i class="text-2xl"></i>
+      </div>
+      <h3 id="confirm-title" class="text-lg font-bold text-slate-800 text-center mb-2"></h3>
+      <p id="confirm-msg" class="text-sm text-slate-500 text-center mb-6"></p>
+      <div class="flex gap-3">
+        <button onclick="closeConfirm()" id="confirm-cancel" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition">取消</button>
+        <button onclick="onConfirmOk()" id="confirm-ok" class="flex-1 py-2.5 bg-gradient-primary text-white rounded-xl text-sm font-medium hover:opacity-90 transition">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/auth-guard.js?v=20260526c"></script>
+  <script>
+    // ========== 全局状态 ==========
+    const params = new URLSearchParams(location.search);
+    const examId = params.get('id');
+    let examData = null;
+    let questions = [];
+    let userAnswers = {};
+    let currentQ = 0;
+    let flaggedSet = new Set();
+    let timerSeconds = 0;
+    let timerHandle = null;
+    let examStartTime = null;
+    let examDeadline = null;       // 服务端返回的截止时间戳（持久化关键）
+    let confirmCallback = null;
+
+    // ========== 工具函数 ==========
+    function getUser() {
+      const s = localStorage.getItem('user') || sessionStorage.getItem('user');
+      try { return s ? JSON.parse(s) : null; } catch(e) { return null; }
+    }
+    function escapeHtml(s){ if(!s)return''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+    function toast(msg,type){
+      const el=document.createElement('div'); el.className='toast '+(type||'success'); el.textContent=msg;
+      document.body.appendChild(el); setTimeout(()=>el.remove(),3500);
+    }
+
+    // ========== 页面切换 ==========
+    function showState(name){ ['loading','error','exam','result'].forEach(n=>{
+      const el=document.getElementById('state-'+n);
+      if(el) el.classList.toggle('hidden',n!==name);
+    });}
+    function showError(msg,detail){
+      showState('error');
+      document.getElementById('error-msg').textContent=msg||'加载失败';
+      document.getElementById('error-detail').textContent=detail||'';
+    }
+    function showConfirm(title,msg,iconClass,okText,cancelText,callback){
+      document.getElementById('confirm-modal').classList.remove('hidden');
+      document.getElementById('confirm-title').textContent=title;
+      document.getElementById('confirm-msg').textContent=msg;
+      const iconWrap=document.getElementById('confirm-icon');
+      iconWrap.className='w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center '+iconClass;
+      iconWrap.querySelector('i').className='text-2xl '+iconClass.split(' ').find(c=>c.startsWith('fa-'))||'';
+      document.getElementById('confirm-ok').textContent=okText||'确定';
+      document.getElementById('confirm-cancel').textContent=cancelText||'取消';
+      confirmCallback=callback;
+    }
+    function closeConfirm(){ document.getElementById('confirm-modal').classList.add('hidden'); confirmCallback=null; }
+    function onConfirmOk(){ if(confirmCallback){const cb=confirmCallback;closeConfirm();cb();} }
+
+    // ========== 加载考试 ==========
+    async function loadExam(){
+      const user=getUser();
+      if(!user){showError('请先登录','请登录后参加考试');return;}
+      if(!examId){showError('参数错误','缺少考试ID');return;}
+
+      try {
+        const res=await fetch('/api/exams/'+examId+'/take?userId='+user.id);
+        const result=await res.json();
+
+        if(!result.success){
+          showError(result.error||'加载失败',result.error||'');
+          return;
+        }
+
+        examData=result.exam;
+        questions=result.questions||[];
+
+        if(questions.length===0){
+          showError('暂无题目','该试卷还没有添加试题');
+          return;
+        }
+
+        // ===== 持久化计时：调用 enter 接口建立/恢复会话 =====
+        const sessRes=await fetch('/api/exams/'+examId+'/enter',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({userId:String(user.id)})
+        });
+        const sessData=await sessRes.json();
+        if(sessData.success&&sessData.session){
+          examDeadline=new Date(sessData.session.deadline).getTime();
+          timerSeconds=sessData.session.remainingSeconds;
+          if(sessData.session.expired){
+            showError('考试时间已结束','您的作答时间已用尽，请联系管理员');
+            return;
+          }
+        }else{
+          // 降级：使用本地计时（enter接口异常时）
+          examDeadline=null;
+          timerSeconds=(examData.duration||60)*60;
+        }
+
+        renderExam();
+      }catch(e){
+        console.error('[loadExam]',e);
+        showError('网络错误','无法连接到服务器，请检查网络后重试');
+      }
+    }
+
+    // ========== 渲染考试界面 ==========
+    function renderExam(){
+      showState('exam');
+
+      // 头部
+      document.getElementById('header-title').textContent=examData.name;
+      const sub=document.getElementById('header-sub');
+      sub.textContent=`共 ${questions.length} 题 · 满分 ${examData.totalScore}分 · 及格线 ${examData.passScore}%`;
+      sub.classList.remove('hidden');
+
+      // 倒计时（使用服务端计算的剩余时间，不再重置）
+      // timerSeconds 已在 loadExam 中通过 enter 接口获取/计算
+      if(timerSeconds<=0){
+        // 计时器已到期 → 不自动提交，显示"时间到"提示，让用户主动选择是否重新进入
+        showError('考试时间已结束','您的作答时间已用尽。本次作废，不占用考试次数。可返回重新进入考试。');
+        return;
+      }
+      document.getElementById('timer-area').classList.remove('hidden');
+      document.getElementById('timer-area').classList.add('flex');
+      updateTimerDisplay();
+      startTimer();
+
+      // 进度条
+      document.getElementById('progress-bar-wrap').classList.remove('hidden');
+
+      // 初始化答案
+      questions.forEach(q=>{
+        if(q.type==='multiple') userAnswers[q.id]=[];
+        else if(q.type==='judge') userAnswers[q.id]='';
+        else userAnswers[q.id]='';
+      });
+
+      // 渲染试题
+      renderQuestions();
+      renderAnswerSheet();
+      updateProgress();
+      examStartTime=Date.now();
+    }
+
+    // ========== 渲染试题列表 ==========
+    function renderQuestions(){
+      const area=document.getElementById('questions-area');
+      area.innerHTML=questions.map((q,idx)=>renderQuestionCard(q,idx)).join('');
+    }
+
+    function renderQuestionCard(q,idx){
+      const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let body='';
+      const isCurrent=idx===currentQ;
+
+      if(q.type==='single'){
+        body=`<div class="space-y-2 mt-3">${(q.options||[]).map((opt,oi)=>`
+          <div class="opt-item flex items-center gap-3 p-3 border border-slate-200 rounded-xl" onclick="selectSingle(${q.id},${oi},this)">
+            <div class="opt-radio w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center flex-shrink-0">
+              <div class="w-2 h-2 rounded-full bg-white"></div>
+            </div>
+            <span class="flex-1 text-sm text-slate-700">${letters[oi]}. ${escapeHtml(opt)}</span>
+          </div>`).join('')}</div>`;
+      }else if(q.type==='multiple'){
+        body=`<div class="space-y-2 mt-3">${(q.options||[]).map((opt,oi)=>`
+          <div class="opt-item flex items-center gap-3 p-3 border border-slate-200 rounded-xl" onclick="toggleMultiple(${q.id},${oi},this)">
+            <div class="opt-checkbox w-5 h-5 rounded border-2 border-slate-300 flex items-center justify-center flex-shrink-0">
+              <i class="fa fa-check text-white text-xs opacity-0"></i>
+            </div>
+            <span class="flex-1 text-sm text-slate-700">${letters[oi]}. ${escapeHtml(opt)}</span>
+          </div>`).join('')}</div>`;
+      }else if(q.type==='judge'){
+        body=`<div class="flex gap-3 mt-3">
+          <div class="opt-item flex-1 flex items-center justify-center gap-2 p-3 border border-slate-200 rounded-xl" onclick="selectJudge(${q.id},'A',this)">
+            <div class="opt-radio w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-white"></div></div>
+            <span class="text-sm text-slate-700"><i class="fa fa-check text-emerald-500 mr-1"></i>正确</span>
+          </div>
+          <div class="opt-item flex-1 flex items-center justify-center gap-2 p-3 border border-slate-200 rounded-xl" onclick="selectJudge(${q.id},'B',this)">
+            <div class="opt-radio w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-white"></div></div>
+            <span class="text-sm text-slate-700"><i class="fa fa-times text-red-500 mr-1"></i>错误</span>
+          </div>
+        </div>`;
+      }
+
+      return `
+        <div class="bg-white rounded-2xl shadow-sm border ${isCurrent?'border-primary ring-2 ring-primary/20':'border-slate-200'} p-5 transition-all slide-up qcard-${q.id} cursor-pointer" id="qcard-${q.id}" data-idx="${idx}" onclick="activateQuestion(${q.id})">
+          <div class="flex items-start gap-3">
+            <span class="flex-shrink-0 w-8 h-8 rounded-xl ${isCurrent?'bg-gradient-primary':'bg-slate-100'} text-white text-xs font-bold flex items-center justify-center">${idx+1}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-2">
+                <p class="text-sm font-semibold text-slate-800 leading-relaxed">${escapeHtml(q.content)}</p>
+                <span class="flex-shrink-0 text-xs text-slate-400">(${q.score||0}分)</span>
+              </div>
+              ${body}
+            </div>
+            <button onclick="toggleFlag(${idx})" class="flex-shrink-0 p-2 rounded-lg hover:bg-slate-100 transition ${flaggedSet.has(idx)?'text-amber-500':'text-slate-300'}" title="${flaggedSet.has(idx)?'取消标记':'标记此题'}">
+              <i class="fa ${flaggedSet.has(idx)?'fa-star':'fa-star-o'}"></i>
+            </button>
+          </div>
+        </div>`;
+    }
+
+    // ========== 选择答案 ==========
+    // 激活某题为当前题（只切紫色边框+答题卡，不重绘HTML避免清空已选状态）
+    function activateQuestion(qId){
+      const newIdx=questions.findIndex(q=>q.id===qId);
+      if(newIdx<0||newIdx===currentQ) return;
+      const oldIdx=currentQ;
+      currentQ=newIdx;
+      // 只更新两道题的边框样式，不调用renderQuestions()
+      if(questions[oldIdx]){
+        const oldCard=document.getElementById('qcard-'+questions[oldIdx].id);
+        if(oldCard){ oldCard.classList.remove('border-primary','ring-2','ring-primary/20'); oldCard.classList.add('border-slate-200'); }
+        const oldNum=oldCard.querySelector('.w-8');
+        if(oldNum){ oldNum.classList.remove('bg-gradient-primary'); oldNum.classList.add('bg-slate-100'); }
+      }
+      const newCard=document.getElementById('qcard-'+qId);
+      if(newCard){ newCard.classList.remove('border-slate-200'); newCard.classList.add('border-primary','ring-2','ring-primary/20'); }
+      const newNum=newCard?.querySelector('.w-8');
+      if(newNum){ newNum.classList.remove('bg-slate-100'); newNum.classList.add('bg-gradient-primary'); }
+      renderAnswerSheet();
+    }
+
+    function selectSingle(qId,optIdx,el){
+      event.stopPropagation(); // 阻止冒泡到卡片onclick
+      userAnswers[qId]=String.fromCharCode(65+optIdx);
+      const card=document.getElementById('qcard-'+qId);
+      card.querySelectorAll('.opt-item').forEach((item,i)=>{
+        item.classList.toggle('selected',i===optIdx);
+        const radio=item.querySelector('.opt-radio div');
+        if(radio) radio.style.display=i===optIdx?'block':'none';
+        item.querySelector('.opt-radio')?.classList.toggle('bg-purple-600',i===optIdx);
+      });
+      markAnswered(qId);
+      renderAnswerSheet();
+    }
+
+    function toggleMultiple(qId,optIdx,el){
+      event.stopPropagation(); // 阻止冒泡到卡片onclick
+      if(!Array.isArray(userAnswers[qId])) userAnswers[qId]=[];
+      const letter=String.fromCharCode(65+optIdx);
+      const idx=userAnswers[qId].indexOf(letter);
+      if(idx>=0){
+        userAnswers[qId].splice(idx,1);
+        el.classList.remove('selected');
+        el.querySelector('.opt-checkbox i').style.opacity='0';
+      }else{
+        userAnswers[qId].push(letter);
+        el.classList.add('selected');
+        el.querySelector('.opt-checkbox i').style.opacity='1';
+      }
+      markAnswered(qId);
+      renderAnswerSheet();
+    }
+
+    function selectJudge(qId,ans,el){
+      event.stopPropagation(); // 阻止冒泡到卡片onclick
+      userAnswers[qId]=ans;
+      const card=document.getElementById('qcard-'+qId);
+      card.querySelectorAll('.opt-item').forEach(item=>{
+        const isSel=item.textContent.includes(ans==='A'?'正确':'错误');
+        item.classList.toggle('selected',isSel);
+      });
+      markAnswered(qId);
+      renderAnswerSheet();
+    }
+
+    function markAnswered(qId){
+      const card=document.getElementById('qcard-'+qId);
+      if(card) card.classList.add('answered-style');
+      updateProgress();
+    }
+
+    function toggleFlag(idx){
+      if(flaggedSet.has(idx)) flaggedSet.delete(idx);
+      else flaggedSet.add(idx);
+      renderQuestions();
+      renderAnswerSheet();
+    }
+
+    // ========== 答题卡 ==========
+    function renderAnswerSheet(){
+      const html=questions.map((_,idx)=>{
+        const val=userAnswers[questions[idx].id];
+        let cls='default';
+        if(idx===currentQ) cls='current';
+        else if(flaggedSet.has(idx)) cls='flagged';
+        else if(isAnswered(val)) cls='answered';
+        return `<div class="q-nav-btn ${cls}" onclick="goQuestion(${idx})">${idx+1}</div>`;
+      }).join('');
+      const sheet=document.getElementById('answer-sheet');
+      const sheetM=document.getElementById('answer-sheet-mobile');
+      if(sheet) sheet.innerHTML=html;
+      if(sheetM) sheetM.innerHTML=html;
+    }
+
+    function isAnswered(val){
+      if(Array.isArray(val)) return val.length>0;
+      return val!==''&&val!==null&&val!==undefined;
+    }
+
+    function goQuestion(idx){
+      currentQ=idx;
+      renderQuestions();
+      renderAnswerSheet();
+      // 滚动到对应题目
+      const q=questions[idx];
+      if(q){
+        const el=document.getElementById('qcard-'+q.id);
+        if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+      }
+    }
+
+    function openAnswerSheetMobile(){
+      document.getElementById('sheet-modal').classList.remove('hidden');
+    }
+    function closeSheetModal(){
+      document.getElementById('sheet-modal').classList.add('hidden');
+    }
+
+    // ========== 进度更新 ==========
+    function updateProgress(){
+      const answered=questions.filter(q=>isAnswered(userAnswers[q.id])).length;
+      const total=questions.length;
+      const pct=total>0?Math.round(answered/total*100):0;
+      const bar=document.getElementById('progress-bar');
+      if(bar) bar.style.width=pct+'%';
+
+      const mobileTxt=document.getElementById('mobile-progress-text');
+      if(mobileTxt) mobileTxt.textContent=answered+'/'+total;
+    }
+
+    // ========== 倒计时 ==========
+    function startTimer(){
+      // 每秒更新：优先使用服务端截止时间计算（更准确，消除 setInterval 漂移）
+      timerHandle=setInterval(()=>{
+        if(examDeadline){
+          // 基于服务端截止时间实时计算剩余秒数（防刷新、防漂移）
+          timerSeconds=Math.max(0,Math.round((examDeadline-Date.now())/1000));
+        }else{
+          // 降级：本地递减
+          timerSeconds--;
+        }
+        updateTimerDisplay();
+        if(timerSeconds<=0){
+          clearInterval(timerHandle);
+          timerHandle=null;
+          // 计时器归零 → 不自动提交，显示时间到提示（作废处理，不计入次数）
+          toast('考试时间到！本次作答作废，不占用考试次数','warn');
+          // 禁用所有交互，只保留"返回"选项
+          document.getElementById('btn-submit')?.setAttribute('disabled','true');
+          document.getElementById('btn-submit-mobile')?.setAttribute('disabled','true');
+          // 通知服务端标记本次为超时作废（不创建 result 记录）
+          fetch(`/api/exams/${examId}/abandon`,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({userId:String(getUser().id)})
+          }).catch(()=>{});
+        }
+      },1000);
+
+      // 切屏检测（如果配置了）
+      if(examData.switchLimit!=='unlimited'&&examData.switchLimit!=='deny'){
+        document.addEventListener('visibilitychange',handleVisibilityChange);
+      }
+    }
+
+    function updateTimerDisplay(){
+      const el=document.getElementById('timer-display');
+      if(!el) return;
+      const m=Math.floor(Math.max(0,timerSeconds)/60);
+      const s=Math.max(0,timerSeconds)%60;
+      el.textContent=(m<10?'0'+m:m)+':'+(s<10?'0'+s:s);
+      if(timerSeconds<=300) el.classList.add('timer-warning');
+      else el.classList.remove('timer-warning');
+    }
+
+    let switchCount=0;
+    function handleVisibilityChange(){
+      if(document.hidden){
+        switchCount++;
+        const limit=parseInt(examData.switchLimit)||3;
+        if(switchCount>=limit){
+          toast(`已切屏${switchCount}次，达到限制，即将自动提交！`,'error');
+          clearInterval(timerHandle);
+          setTimeout(()=>doSubmit(),2000);
+        }else{
+          toast(`警告：已切屏${switchCount}次（限制${limit}次）`,'warn');
+        }
+      }
+    }
+
+    // ========== 退出确认 ==========
+    function confirmExit(){
+      const answered=questions.filter(q=>isAnswered(userAnswers[q.id])).length;
+      showConfirm(
+        '确认退出？',
+        `当前已完成 ${answered}/${questions.length} 题，退出后进度不会保存。`,
+        'bg-amber-50',
+        '仍要退出',
+        '继续答题',
+        ()=>{clearInterval(timerHandle);history.back();}
+      );
+    }
+
+    // ========== 交卷 ==========
+    function submitExam(){
+      const unanswered=questions.filter(q=>!isAnswered(userAnswers[q.id])).length;
+      let msg='';
+      if(unanswered>0){
+        msg=`还有 ${unanswered} 道题目未作答，确定要交卷吗？`;
+      }else{
+        msg='确定要提交试卷吗？';
+      }
+      showConfirm(
+        '确认交卷',
+        msg,
+        'bg-blue-50',
+        '确认交卷',
+        '再检查一下',
+        doSubmit
+      );
+    }
+
+    async function doSubmit(){
+      closeConfirm();
+      clearInterval(timerHandle);
+      document.removeEventListener('visibilitychange',handleVisibilityChange);
+
+      const btn=document.getElementById('btn-submit');
+      const btnM=document.getElementById('btn-submit-mobile');
+      if(btn){btn.disabled=true;btn.innerHTML='<i class="fa fa-spinner fa-spin mr-1"></i>提交中...';}
+      if(btnM){btnM.disabled=true;btnM.innerHTML='<i class="fa fa-spinner fa-spin mr-1"></i>提交...';}
+
+      const user=getUser();
+      const durationUsed=Math.round((Date.now()-examStartTime)/1000);
+
+      // 构造答案对象：questionId -> 选中的字母
+      const answers={};
+      questions.forEach(q=>{
+        const val=userAnswers[q.id];
+        if(Array.isArray(val)){
+          answers[q.id]=val.sort().join('');
+        }else{
+          answers[q.id]=val||'';
+        }
+      });
+
+      try{
+        const res=await fetch('/api/exams/'+examId+'/submit',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({userId:String(user.id),answers,durationUsed})
+        });
+        const result=await res.json();
+
+        if(result.success){
+          showResult(result.result);
+        }else{
+          toast(result.error||'提交失败','error');
+          if(btn){btn.disabled=false;btn.innerHTML='<i class="fa fa-paper-plane mr-1"></i>交卷';}
+          if(btnM){btnM.disabled=false;btnM.innerHTML='<i class="fa fa-paper-plane mr-1"></i>交卷';}
+        }
+      }catch(e){
+        console.error('[doSubmit]',e);
+        toast('网络错误，提交失败','error');
+        if(btn){btn.disabled=false;btn.innerHTML='<i class="fa fa-paper-plane mr-1"></i>交卷';}
+        if(btnM){btnM.disabled=false;btnM.innerHTML='<i class="fa fa-paper-plane mr-1"></i>交卷';}
+      }
+    }
+
+    // ========== 显示成绩（增强版：完整答题详情） ==========
+    function showResult(result){
+      showState('result');
+      document.getElementById('timer-area').classList.add('hidden');
+      document.getElementById('progress-bar-wrap').classList.add('hidden');
+
+      const passed=result.passed;
+      const headerBg=document.getElementById('result-header-bg');
+      const iconWrap=document.getElementById('result-icon-wrap');
+      const icon=document.getElementById('result-icon');
+      const title=document.getElementById('result-title');
+      const subtitle=document.getElementById('result-subtitle');
+
+      if(passed){
+        headerBg.className='px-8 pt-10 pb-8 text-center bg-gradient-to-br from-emerald-500 to-teal-500';
+        iconWrap.className='w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center bg-white/20';
+        icon.innerHTML='<i class="fa fa-trophy text-5xl text-white"></i>';
+        title.textContent='🎉 恭喜通过！';
+        subtitle.textContent=`你的成绩超过了及格线 ${examData.passScore}%`;
+      }else{
+        headerBg.className='px-8 pt-10 pb-8 text-center bg-gradient-to-br from-orange-400 to-red-500';
+        iconWrap.className='w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center bg-white/20';
+        icon.innerHTML='<i class="fa fa-times-circle text-5xl text-white"></i>';
+        title.textContent='未通过';
+        subtitle.textContent=`距离及格还差 ${(examData.passScore||60)-(result.percent||0)} 分，继续加油！`;
+      }
+
+      document.getElementById('res-score').textContent=result.score;
+      document.getElementById('res-total').textContent=result.fullScore;
+      document.getElementById('res-percent').textContent=(result.percent||0)+'%';
+      document.getElementById('res-correct').textContent=result.correctCount||0;
+      document.getElementById('res-wrong').textContent=(result.totalCount||0)-(result.correctCount||0);
+      document.getElementById('res-passline').textContent=(examData.passScore||60)+'%';
+      // 用时显示
+      const durSec=result.durationUsed||0;
+      const durMin=Math.floor(durSec/60);
+      const durS=durSec%60;
+      document.getElementById('res-time').textContent=durMin>0?durMin+'分'+durS+'秒':durS+'秒';
+
+      // ====== 始终展示完整答题详情 ======
+      const detailSec=document.getElementById('result-detail-section');
+      detailSec.classList.remove('hidden');
+      const list=document.getElementById('result-detail-list');
+
+      const typeMap={ single:'单选题', multiple:'多选题', judge:'判断题' };
+      const typeIcon={ single:'fa-dot-circle-o', multiple:'fa-check-square-o', judge:'fa-exchange' };
+
+      list.innerHTML=(result.detail||[]).map((d,di)=>{
+        const qIdx=questions.findIndex(q=>q.id===d.questionId);
+        const qNum=qIdx>=0?qIdx+1:'?';
+        const origQ=questions[qIdx];
+        const opts=origQ?origQ.options:[];
+
+        // 用户答案格式化
+        let userAnsHtml='';
+        if(d.type==='judge'){
+          const jMap={A:'正确',B:'错误'};
+          userAnsHtml=`<span class="opt-tag ${d.isCorrect?'user-correct':'user-wrong'}"><i class="fa ${d.userAnswer==='A'?'fa-check text-emerald-500':'fa-times text-red-500'} mr-1"></i>${jMap[d.userAnswer]||'未答'}</span>`;
+        } else {
+          const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+          if(d.userAnswer){
+            (d.userAnswer||'').split('').forEach(ch=>{
+              const oi=letters.indexOf(ch.toUpperCase());
+              userAnsHtml+=`<span class="opt-tag ${d.isCorrect?'user-correct':'user-wrong'}">${ch}</span>`;
+            });
+          } else {
+            userAnsHtml='<span class="opt-tag user-ans">未作答</span>';
+          }
+        }
+
+        // 正确答案格式化
+        let correctAnsHtml='';
+        if(d.type==='judge'){
+          const jMap={A:'正确',B:'错误'};
+          correctAnsHtml=`<span class="opt-tag correct-ans"><i class="fa ${d.correctAnswer==='A'?'fa-check text-emerald-500':'fa-times text-red-500'} mr-1"></i>${jMap[d.correctAnswer]||'-'}</span>`;
+        } else {
+          (d.correctAnswer||'').split('').forEach(ch=>{
+            correctAnsHtml+=`<span class="opt-tag correct-ans">${ch}</span>`;
+          });
+        }
+
+        // 选项列表（显示每个选项的内容）
+        let optionsHtml='';
+        if(opts&&opts.length>0){
+          const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+          optionsHtml=`<div class="mt-2 pt-2 border-t border-slate-100">
+            <p class="text-[11px] text-slate-400 mb-1.5 font-medium">选项</p>
+            <div class="flex flex-wrap gap-1.5">${opts.map((opt,oi)=>{
+              const ch=letters[oi];
+              const isUserAns=d.type==='judge'?false:(d.userAnswer||'').includes(ch);
+              const isCorrectAns=d.type==='judge'?false:(d.correctAnswer||'').includes(ch);
+              let optCls='bg-slate-50 text-slate-500 border border-slate-200';
+              if(isCorrectAns) optCls='bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold';
+              else if(isUserAns&&!d.isCorrect) optCls='bg-red-50 text-red-600 border border-red-200 line-through';
+              else if(isUserAns&&d.isCorrect) optCls='bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold';
+              return `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${optCls}">
+                ${isCorrectAns?'<i class="fa fa-check text-[10px]"></i>':''}
+                ${isUserAns&&!d.isCorrect?'<i class="fa fa-close text-[10px]"></i>':''}
+                ${ch}. ${escapeHtml(opt)}
+              </span>`}).join('')}</div></div>`;
+        }
+
+        return `
+          <div class="detail-card bg-white rounded-2xl shadow-sm border ${d.isCorrect?'border-emerald-100':'border-red-100'} p-5 fade-in-up" style="animation-delay:${di*60}ms">
+            <!-- 题目头部 -->
+            <div class="flex items-start gap-3 mb-3">
+              <div class="score-circle ${d.isCorrect?'bg-emerald-100 text-emerald-600':'bg-red-100 text-red-500'}">
+                ${d.isCorrect?'<i class="fa fa-check"></i>':'<i class="fa fa-times"></i>'}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                  <span class="type-badge ${d.type}"><i class="fa ${typeIcon[d.type]||'fa-question'}"></i>${typeMap[d.type]||'未知'}</span>
+                  <span class="text-xs text-slate-400 font-medium">第 ${qNum} 题</span>
+                  <span class="text-xs font-bold ${d.isCorrect?'text-emerald-500':'text-red-500'}">+${d.isCorrect?d.score:0}/${d.fullScore}分</span>
+                </div>
+                <p class="text-sm text-slate-700 leading-relaxed font-medium">${escapeHtml(d.content)}</p>
+              </div>
+            </div>
+
+            ${optionsHtml}
+
+            <!-- 答案对比 -->
+            <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-x-6 gap-y-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium">你的答案：</span>
+                ${userAnsHtml}
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium">正确答案：</span>
+                ${correctAnsHtml}
+              </div>
+            </div>
+
+            <!-- 解析 -->
+            ${d.analysis?`<div class="analysis-box mt-3 px-4 py-3 rounded-r-xl">
+              <p class="text-xs font-semibold text-amber-700 mb-1"><i class="fa fa-lightbulb-o mr-1"></i>解析</p>
+              <p class="text-xs text-amber-800/80 leading-relaxed">${escapeHtml(d.analysis)}</p>
+            </div>`:''}
+          </div>`;
+      }).join('');
+
+      // 如果没有详情数据
+      if(!result.detail||result.detail.length===0){
+        list.innerHTML='<div class="text-center py-12 text-slate-400"><i class="fa fa-inbox text-3xl mb-3 block opacity-50"></i><p>暂无答题详情</p></div>';
+      }
+    }
+
+    // ========== 启动 ==========
+    window.onload=function(){loadExam();};
+  </script>
+</body>
+</html>

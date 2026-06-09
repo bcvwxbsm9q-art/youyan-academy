@@ -167,8 +167,10 @@
     async function refreshData() {
         const api = window.DataAPI;
         
-        // 重新从后端同步分类数据
-        if (api && api.syncCategoriesFromServer) {
+        // 从服务器重新加载所有数据（保证与后台管理联动）
+        if (api && api.reloadFromServer) {
+            await api.reloadFromServer();
+        } else if (api && api.syncCategoriesFromServer) {
             await api.syncCategoriesFromServer();
         }
         

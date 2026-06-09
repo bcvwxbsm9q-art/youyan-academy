@@ -140,7 +140,7 @@ npm test
 | 个人中心 | /center.html | 返回 HTML 页面 | 待验证 |
 | 学习仪表盘 | /dashboard.html | 返回 HTML 页面 | 待验证 |
 | 视频播放器 | /player.html | 返回 HTML 页面 | 待验证 |
-| 管理后台 | /admin.html | 返回 HTML 页面 | 待验证 |
+| 管理后台 | /dashboard.html | 返回 HTML 页面 | 待验证 |
 
 ---
 
@@ -198,7 +198,7 @@ npm test
 | center.html | 个人中心 | ✅ 已实现 |
 | dashboard.html | 学习仪表盘 | ✅ 已实现 |
 | player.html | 视频播放器 | ✅ 已实现 |
-| admin.html | 管理后台主页 | ✅ 已实现 |
+| dashboard.html | 管理后台主页（含考试管理） | ✅ 已实现 |
 
 ---
 
