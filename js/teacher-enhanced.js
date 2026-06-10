@@ -173,6 +173,12 @@
 
         container.innerHTML = filteredLecturers.map(l => {
             const levelInfo = LEVEL_STYLES[l.level] || LEVEL_STYLES['intern'];
+            const skillsHtml = l.skills && l.skills.length > 0 ? `
+                <div class="lecturer-tags mt-2">
+                    ${l.skills.slice(0, 3).map(skill => `<span class="lecturer-tag">${skill}</span>`).join('')}
+                    ${l.skills.length > 3 ? `<span class="lecturer-tag text-gray-300">+${l.skills.length - 3}</span>` : ''}
+                </div>
+            ` : '';
             
             return `
             <div class="card-enhanced lecturer-card cursor-pointer fade-in" onclick="showTeacherDetail(${l.id})">
@@ -184,8 +190,9 @@
                 </div>
                 <h3 class="text-sm md:text-base font-bold mb-1 text-gray-800 dark:text-white">${l.name}</h3>
                 <div class="text-xs ${levelInfo.class} text-white px-2 py-1 rounded-full inline-block mb-2">${levelInfo.name}</div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 px-2 h-8">${l.intro || ''}</p>
-                <div class="flex items-center justify-center gap-3 text-xs text-gray-600 dark:text-gray-400">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-2 px-2 h-8">${l.intro || ''}</p>
+                ${skillsHtml}
+                <div class="flex items-center justify-center gap-3 text-xs text-gray-600 dark:text-gray-400 mt-2">
                     <span><i class="fa fa-book mr-1"></i>${l.courseCount || 0}课程</span>
                     <span><i class="fa fa-users mr-1"></i>${(l.students || 0) > 1000 ? ((l.students / 1000).toFixed(1) + 'k') : (l.students || 0)}</span>
                 </div>

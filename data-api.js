@@ -430,7 +430,28 @@
          * 获取首页公告
          */
         getNotices() {
-            return this.get('notices') || [];
+            // 优先读取 'notices'，兼容 'index_notices'
+            const notices = this.get('notices') || this.get('index_notices') || [];
+            console.log('[DataAPI] getNotices 返回:', notices, '来源:', this.get('notices') ? 'notices' : (this.get('index_notices') ? 'index_notices' : 'default'));
+            return notices;
+        },
+
+        /**
+         * 同步公告数据（保证与管理后台联动）
+         */
+        async syncNoticesFromServer() {
+            try {
+                const data = await this.fetchFromServer(API.NOTICES);
+                if (data && Array.isArray(data)) {
+                    memoryCache.notices = data;
+                    this._saveToLocalStorage();
+                    console.log('[DataAPI] 公告数据已从服务器同步');
+                    return true;
+                }
+            } catch (e) {
+                console.error('[DataAPI] 同步公告数据失败:', e);
+            }
+            return false;
         },
 
         /**
@@ -655,9 +676,9 @@
         async reload() {
             return await this.init();
         }
-    };
 
-    // 暴露到全局
+        // 暴露到全局
+    };
     window.DataAPI = DataAPI;
     
     console.log('[DataAPI] 数据访问层已加载');

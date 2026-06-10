@@ -429,7 +429,7 @@
             if (fcIds && fcIds.length > 0) {
                 courses = fcIds.map(id => allCourses.find(c => String(c.id) === String(id))).filter(Boolean);
             } else {
-                courses = allCourses.slice(0, 4);
+                courses = allCourses.slice(0, 8);
             }
         }
 
@@ -444,44 +444,69 @@
             return;
         }
 
-        container.innerHTML = courses.map(c => {
-            const catName = window.DataAPI ? window.DataAPI.getCategoryName(c.categoryId) : '通用';
-            const lecName = window.DataAPI ? window.DataAPI.getLecturerName(c.lecturerId) : '待定讲师';
-            const lecAvatar = window.DataAPI ? window.DataAPI.getLecturerAvatar(c.lecturerId) : '';
-            const learners = (c.views || 0) > 10000 ? (c.views / 10000).toFixed(1) + '万' : (c.views || 0);
-            const rating = (c.rating || 0).toFixed(1);
-            const duration = Math.floor((c.duration || 0) / 60);
+        container.innerHTML = courses.map(c => renderNewCourseCard(c, window.DataAPI)).join('');
+    }
 
-            return `
-            <div class="card-enhanced course-card cursor-pointer fade-in" onclick="location.href='player.html?courseId=${c.id}'">
-                <div class="course-card-image-wrapper relative">
-                    <img src="${c.cover || ''}" alt="${c.title || ''}" class="course-card-image w-full h-40 md:h-44 object-cover" onerror="this.src='https://placehold.co/400x225/667eea/white?text=${encodeURIComponent((c.title || '').substring(0, 8))}'">
-                    <div class="course-card-badge">
-                        <i class="fa fa-play-circle mr-1"></i>${duration}分钟
-                    </div>
+    /**
+     * 新版课程卡片 - 参考图设计
+     */
+    function renderNewCourseCard(c, api) {
+        const lecName = (api && api.getLecturerName(c.lecturerId)) || '待定讲师';
+        const lecAvatar = (api && api.getLecturerAvatar(c.lecturerId)) || '';
+        const learners = (c.views || 0) > 10000 ? (c.views / 10000).toFixed(1) + '万' : (c.views || 0);
+        const rating = (c.rating || 0).toFixed(1);
+        const coverUrl = c.cover && c.cover.trim() ? c.cover : '';
+        // 确定性伪数据（保持每次渲染一致）
+        const seed = parseInt(c.id) || 1;
+        const comments = c.comments || (seed * 7 + 3) % 20;
+        const likes = c.likes || (seed * 13 + 5) % 50;
+
+        return `
+        <div class="card-enhanced course-card cursor-pointer fade-in group overflow-hidden" onclick="location.href='player.html?courseId=${c.id}'">
+            <!-- Cover Area -->
+            <div class="relative overflow-hidden" style="aspect-ratio: 16/10;">
+                ${coverUrl ? `<img src="${coverUrl}" alt="" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.style.display='none'">` : ''}
+                <div class="absolute inset-0 bg-gradient-to-r from-[#3d3188]/95 via-[#4c3db2]/85 to-[#5d4ec7]/50">
+                    <div class="absolute inset-0 opacity-20" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.05) 20px, rgba(255,255,255,0.05) 40px);"></div>
                 </div>
-                <div class="p-4">
-                    <div class="flex items-center mb-2">
-                        <span class="text-xs ${TAG_STYLES[catName]||'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'} px-2 py-1 rounded">${catName}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto">
-                            <i class="fa fa-user mr-1"></i>${learners}
-                        </span>
+                <!-- Green badge -->
+                <div class="absolute top-2 right-2 z-20">
+                    <span class="inline-block px-1.5 py-0.5 bg-green-500 text-white text-[10px] font-medium rounded-sm">创新课</span>
+                </div>
+                <!-- Text content -->
+                <div class="absolute inset-0 z-10 flex flex-col justify-between p-3">
+                    <div class="pr-8">
+                        <h3 class="text-white font-bold text-sm leading-snug line-clamp-3" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${c.title || ''}</h3>
+                        <p class="text-white/80 text-[10px] mt-1">讲师：${lecName}</p>
                     </div>
-                    <h3 class="font-bold mb-2 line-clamp-2 h-12 text-gray-800 dark:text-white">${c.title || ''}</h3>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2">
-                            ${lecAvatar ? `<img src="${lecAvatar}" alt="${lecName}" class="w-6 h-6 rounded-full" onerror="this.style.display='none'">` : ''}
-                            <span class="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[100px]">${lecName}</span>
-                        </div>
-                        <div class="flex items-center text-yellow-500">
-                            <i class="fa fa-star text-xs"></i>
-                            <span class="text-xs ml-1">${rating}</span>
-                        </div>
+                    <div class="flex items-center text-white/60 text-[10px]">
+                        <i class="fa fa-graduation-cap mr-1"></i>
+                        <span>游雁学院</span>
                     </div>
                 </div>
             </div>
-            `;
-        }).join('');
+            <!-- Info Area -->
+            <div class="p-3 bg-white dark:bg-white">
+                <h4 class="font-bold text-gray-800 text-sm mb-2 line-clamp-1">${c.title || ''}</h4>
+                <div class="flex items-center mb-2">
+                    <div class="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center overflow-hidden mr-2 flex-shrink-0">
+                        ${lecAvatar ? `<img src="${lecAvatar}" alt="${lecName}" class="w-full h-full object-cover" onerror="this.style.display='none';this.parentNode.innerHTML='<i class=\\'fa fa-user text-white text-[8px]\\'></i>'">` : `<i class="fa fa-user text-white text-[8px]"></i>`}
+                    </div>
+                    <span class="text-xs text-gray-600 truncate">${lecName}</span>
+                </div>
+                <div class="flex items-center justify-between text-xs text-gray-500">
+                    <div class="flex items-center space-x-2">
+                        <span class="flex items-center"><i class="fa fa-eye mr-0.5 text-gray-400 text-[10px]"></i>${learners}</span>
+                        <span class="flex items-center"><i class="fa fa-comment-o mr-0.5 text-gray-400 text-[10px]"></i>${comments}</span>
+                        <span class="flex items-center"><i class="fa fa-thumbs-o-up mr-0.5 text-gray-400 text-[10px]"></i>${likes}</span>
+                    </div>
+                    <div class="flex items-center text-yellow-500 font-medium">
+                        <i class="fa fa-star mr-0.5 text-[10px]"></i>${rating}
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
     }
 
     /**

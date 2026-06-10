@@ -21,7 +21,6 @@
         'teacher.html',
         'center.html',
         'player.html',
-        'library.html',
         'messages.html',
         'survey.html'
     ];
