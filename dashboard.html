@@ -59,6 +59,86 @@
       display: block;
       margin: 10px auto;
     }
+
+    /* 培训管理日历视图样式 */
+    .training-calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+    }
+    .training-calendar-day {
+      aspect-ratio: 1;
+      min-height: 100px;
+      border-radius: 0.75rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid #f1f5f9;
+      background: linear-gradient(to bottom right, #ffffff, #f8fafc);
+    }
+    .training-calendar-day:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-color: #e2e8f0;
+    }
+    .training-calendar-day.empty {
+      background: transparent;
+      border: none;
+      cursor: default;
+      pointer-events: none;
+    }
+    .training-calendar-day.empty:hover {
+      transform: none;
+      box-shadow: none;
+    }
+    .training-calendar-day.today {
+      ring: 2px solid #667eea;
+      ring-offset: 2px;
+    }
+    .training-calendar-day.weekend {
+      background: linear-gradient(to bottom right, #f5f3ff, #faf5ff);
+    }
+    .training-calendar-day.holiday {
+      background: linear-gradient(to bottom right, #fef2f2, #fff1f2);
+    }
+    .training-day-number {
+      width: 1.75rem;
+      height: 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .training-day-number.today-badge {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .training-day-number.default-badge {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    .training-event-badge {
+      font-size: 0.65rem;
+      padding: 0.125rem 0.375rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .view-toggle-btn {
+      transition: all 0.2s ease;
+    }
+    .view-toggle-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    .view-toggle-btn:not(.active):hover {
+      background: #f1f5f9;
+    }
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -449,12 +529,77 @@
           <h2 class="text-2xl font-bold text-slate-800">
             <i class="fas fa-calendar-alt text-orange-500 mr-2"></i>培训管理
           </h2>
-          <button onclick="openTrainingModal()" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition">
-            <i class="fas fa-plus mr-2"></i>添加培训
-          </button>
+          <div class="flex items-center gap-3">
+            <!-- 视图切换 -->
+            <div class="flex items-center bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+              <button onclick="switchTrainingView('calendar')" id="view-btn-calendar" class="view-toggle-btn active px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                <i class="fas fa-calendar-alt"></i>日历视图
+              </button>
+              <button onclick="switchTrainingView('list')" id="view-btn-list" class="view-toggle-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-slate-600">
+                <i class="fas fa-list"></i>列表视图
+              </button>
+            </div>
+            <button onclick="openTrainingModal()" id="training-add-btn" class="btn-primary px-5 py-2.5 text-white rounded-xl font-medium shadow-lg transition flex items-center gap-2">
+              <i class="fas fa-plus"></i>添加培训
+            </button>
+          </div>
         </div>
-        
-        <div id="training-list" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- 日历视图 -->
+        <div id="training-calendar-view" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <button onclick="prevTrainingMonth()" class="p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 hover:shadow-md transition-all duration-300 text-slate-500 hover:text-primary">
+              <i class="fas fa-chevron-left text-lg"></i>
+            </button>
+            <div class="flex items-center gap-4">
+              <h3 class="text-xl font-semibold text-slate-800" id="training-current-month">2026年6月</h3>
+              <button onclick="goToTrainingToday()" class="px-3 py-1.5 text-sm bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors">
+                <i class="fas fa-calendar-check mr-1"></i>今天
+              </button>
+            </div>
+            <button onclick="nextTrainingMonth()" class="p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 hover:shadow-md transition-all duration-300 text-slate-500 hover:text-primary">
+              <i class="fas fa-chevron-right text-lg"></i>
+            </button>
+          </div>
+
+          <div class="training-calendar-grid mb-2">
+            <div class="text-center text-sm font-medium text-slate-500 py-2">周日</div>
+            <div class="text-center text-sm font-medium text-slate-500 py-2">周一</div>
+            <div class="text-center text-sm font-medium text-slate-500 py-2">周二</div>
+            <div class="text-center text-sm font-medium text-slate-500 py-2">周三</div>
+            <div class="text-center text-sm font-medium text-slate-500 py-2">周四</div>
+            <div class="text-center text-sm font-medium text-slate-500 py-2">周五</div>
+            <div class="text-center text-sm font-medium text-slate-500 py-2">周六</div>
+          </div>
+          <div class="training-calendar-grid" id="training-calendar-grid">
+          </div>
+        </div>
+
+        <!-- 列表视图 -->
+        <div id="training-list-view" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">培训项目</th>
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">培训课题</th>
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">培训讲师</th>
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">培训地点</th>
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">开始时间</th>
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">结束时间</th>
+                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
+                  <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody id="training-table-body" class="divide-y divide-slate-100">
+              </tbody>
+            </table>
+          </div>
+          <div id="training-list-empty" class="hidden text-center py-12 text-slate-400">
+            <i class="fas fa-calendar-alt text-4xl mb-4"></i>
+            <p>暂无培训计划</p>
+            <button onclick="openTrainingModal()" class="mt-4 btn-primary px-6 py-2.5 text-white rounded-xl font-medium">新建培训</button>
+          </div>
         </div>
       </div>
 
@@ -3545,116 +3690,366 @@
     }
     
     // ========== 培训管理 ==========
+    let trainingViewMode = 'calendar';
+    let trainingCurrentYear = new Date().getFullYear();
+    let trainingCurrentMonth = new Date().getMonth();
+
+    const trainingCategories = {
+      '新雁计划': { color: 'bg-orange-100 text-orange-700', icon: 'fa-rocket' },
+      '游雁学堂': { color: 'bg-blue-100 text-blue-700', icon: 'fa-graduation-cap' },
+      '鸿雁计划': { color: 'bg-green-100 text-green-700', icon: 'fa-users' },
+      'AI实践分享': { color: 'bg-amber-100 text-amber-700', icon: 'fa-laptop' },
+      '雏雁训练营': { color: 'bg-red-100 text-red-700', icon: 'fa-building' }
+    };
+
+    // 2026年国家法定节假日
+    const trainingHolidays = {
+      '2026-01-01': '元旦',
+      '2026-01-28': '春节',
+      '2026-01-29': '春节',
+      '2026-01-30': '春节',
+      '2026-01-31': '春节',
+      '2026-02-01': '春节',
+      '2026-02-02': '春节',
+      '2026-02-03': '春节',
+      '2026-04-04': '清明',
+      '2026-04-05': '清明',
+      '2026-05-01': '劳动节',
+      '2026-05-02': '劳动节',
+      '2026-05-03': '劳动节',
+      '2026-06-19': '端午',
+      '2026-06-20': '端午',
+      '2026-09-25': '中秋',
+      '2026-10-01': '国庆',
+      '2026-10-02': '国庆',
+      '2026-10-03': '国庆',
+      '2026-10-04': '国庆',
+      '2026-10-05': '国庆',
+      '2026-10-06': '国庆',
+      '2026-10-07': '国庆',
+    };
+
+    function switchTrainingView(mode) {
+      trainingViewMode = mode;
+      document.getElementById('view-btn-calendar').classList.toggle('active', mode === 'calendar');
+      document.getElementById('view-btn-list').classList.toggle('active', mode === 'list');
+      document.getElementById('training-calendar-view').classList.toggle('hidden', mode !== 'calendar');
+      document.getElementById('training-list-view').classList.toggle('hidden', mode !== 'list');
+      document.getElementById('training-add-btn').style.display = mode === 'list' ? 'flex' : 'none';
+      renderTraining();
+    }
+
     function renderTraining() {
-      if (data.training.length === 0) {
-        document.getElementById('training-list').innerHTML = `
-          <div class="col-span-2 bg-white rounded-2xl p-12 text-center text-slate-400">
-            <i class="fas fa-calendar-alt text-4xl mb-4"></i>
-            <p>暂无培训计划</p>
-            <button onclick="openTrainingModal()" class="mt-4 btn-primary px-6 py-2.5 text-white rounded-xl font-medium">新建培训</button>
-          </div>`;
+      if (trainingViewMode === 'calendar') {
+        renderTrainingCalendar();
+      } else {
+        renderTrainingList();
+      }
+    }
+
+    function renderTrainingCalendar() {
+      const grid = document.getElementById('training-calendar-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const firstDay = new Date(trainingCurrentYear, trainingCurrentMonth, 1);
+      const lastDay = new Date(trainingCurrentYear, trainingCurrentMonth + 1, 0);
+      const startDay = firstDay.getDay();
+      const events = data.training || [];
+
+      for (let i = 0; i < startDay; i++) {
+        grid.innerHTML += '<div class="training-calendar-day empty"></div>';
+      }
+
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const dateStr = `${trainingCurrentYear}-${String(trainingCurrentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEvents = events.filter(e => e.date === dateStr);
+        const todayLocal = new Date();
+        const todayStr = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth()+1).padStart(2,'0')}-${String(todayLocal.getDate()).padStart(2,'0')}`;
+        const isToday = dateStr === todayStr;
+        const holidayName = trainingHolidays[dateStr];
+        const weekDay = new Date(trainingCurrentYear, trainingCurrentMonth, day).getDay();
+        const isWeekend = weekDay === 0 || weekDay === 6;
+
+        let cellClass = 'training-calendar-day';
+        if (holidayName) {
+          cellClass += ' holiday';
+        } else if (isWeekend) {
+          cellClass += ' weekend';
+        }
+        if (isToday) cellClass += ' today';
+
+        let eventsHtml = '';
+        if (dayEvents.length > 0) {
+          eventsHtml = dayEvents.slice(0, 2).map(e => {
+            const cat = trainingCategories[e.project] || { color: 'bg-slate-100 text-slate-600' };
+            return `<div class="mt-1"><span class="training-event-badge ${cat.color}">${e.project}</span><div class="mt-0.5 text-slate-700 text-[11px] font-medium truncate">${e.name}</div></div>`;
+          }).join('');
+          if (dayEvents.length > 2) {
+            eventsHtml += `<div class="mt-1 text-slate-400 text-[10px] text-center">+${dayEvents.length - 2}</div>`;
+          }
+        } else if (holidayName) {
+          eventsHtml = `<div class="mt-1 text-red-500 text-xs font-medium text-center">${holidayName}</div>`;
+        }
+
+        grid.innerHTML += `
+          <div class="${cellClass}" onclick="handleTrainingDayClick('${dateStr}')">
+            <div class="h-full flex flex-col relative min-h-[90px]">
+              ${holidayName ? '<span class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded flex items-center justify-center">节</span>' : ''}
+              <div class="flex justify-between items-start">
+                <span class="training-day-number ${isToday ? 'today-badge' : 'default-badge'}">${day}</span>
+                <span class="text-slate-400 text-[10px]">${dayEvents.length > 0 ? dayEvents.length + '场' : ''}</span>
+              </div>
+              ${eventsHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('training-current-month').textContent = `${trainingCurrentYear}年${trainingCurrentMonth + 1}月`;
+    }
+
+    function renderTrainingList() {
+      const tbody = document.getElementById('training-table-body');
+      const emptyState = document.getElementById('training-list-empty');
+      const events = data.training || [];
+
+      if (events.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
         return;
       }
-      
+      emptyState.classList.add('hidden');
+
       const statusMap = {
         active: { class: 'bg-emerald-100 text-emerald-700', text: '进行中' },
         completed: { class: 'bg-slate-100 text-slate-600', text: '已完成' },
         pending: { class: 'bg-amber-100 text-amber-700', text: '待开始' }
       };
-      
-      document.getElementById('training-list').innerHTML = data.training.map(t => {
-        const st = statusMap[t.status] || statusMap.pending;
-        const courseCount = (t.courses || []).length;
+
+      tbody.innerHTML = events.map(e => {
+        const st = statusMap[e.status] || statusMap.pending;
+        const cat = trainingCategories[e.project] || { color: 'bg-slate-100 text-slate-600' };
+        const start = e.startTime ? (e.startTime.includes('T') ? e.startTime.replace('T', ' ') : e.startTime) : '-';
+        const end = e.endTime ? (e.endTime.includes('T') ? e.endTime.replace('T', ' ') : e.endTime) : '-';
         return `
-          <div class="bg-white rounded-2xl shadow-sm p-6 card-hover transition-all duration-300">
-            <div class="flex items-start justify-between mb-4">
-              <div>
-                <h4 class="font-semibold text-slate-800">${t.name}</h4>
-                <p class="text-sm text-slate-500 mt-1">${t.manager || t.leader || '暂无负责人'}</p>
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-6 py-4"><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${cat.color}"><i class="fas ${cat.icon || 'fa-tag'} text-[10px]"></i>${e.project}</span></td>
+            <td class="px-6 py-4 text-sm font-medium text-slate-800">${e.name}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${e.instructor || '-'}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${e.location || '-'}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${start}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${end}</td>
+            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium ${st.class}">${st.text}</span></td>
+            <td class="px-6 py-4 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <button onclick="editTraining(${e.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit"></i></button>
+                <button onclick="deleteTraining(${e.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash"></i></button>
               </div>
-              <span class="px-2.5 py-1 rounded-full text-xs font-medium ${st.class}">${st.text}</span>
-            </div>
-            <p class="text-sm text-slate-600 mb-4">${t.desc || ''}</p>
-            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-              <div class="flex items-center gap-3">
-                <span class="text-sm text-slate-400"><i class="fas fa-calendar mr-1"></i>${t.startDate} ~ ${t.endDate}</span>
-                <span class="text-sm text-slate-500"><i class="fas fa-book mr-1"></i>${courseCount} 门课程</span>
-              </div>
-              <div class="flex items-center space-x-2">
-                <button onclick="manageCourses(${t.id})" class="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-sm hover:bg-indigo-200 transition" title="管理课程">
-                  <i class="fas fa-list mr-1"></i>课程
-                </button>
-                <button onclick="editTraining(${t.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" title="编辑项目"><i class="fas fa-edit"></i></button>
-                <button onclick="deleteTraining(${t.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="删除项目"><i class="fas fa-trash"></i></button>
-              </div>
-            </div>
-          </div>`;
+            </td>
+          </tr>
+        `;
       }).join('');
     }
-    
-    function openTrainingModal(training = null) {
-      const isEdit = !!training;
+
+    function handleTrainingDayClick(dateStr) {
+      const events = (data.training || []).filter(e => e.date === dateStr);
+      if (events.length === 0) {
+        // 无培训时直接打开添加弹窗，并预填日期
+        openTrainingModal(null, dateStr);
+      } else {
+        // 有培训时显示详情弹窗
+        showTrainingDayModal(dateStr, events);
+      }
+    }
+
+    function showTrainingDayModal(dateStr, events) {
+      const d = new Date(dateStr);
+      const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+      const dateText = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${weekDays[d.getDay()]}`;
+
+      const eventsHtml = events.map(e => {
+        const cat = trainingCategories[e.project] || { color: 'bg-slate-100 text-slate-600', icon: 'fa-tag' };
+        const start = e.startTime ? (e.startTime.includes('T') ? e.startTime.split('T')[1].slice(0, 5) : e.startTime) : '-';
+        const end = e.endTime ? (e.endTime.includes('T') ? e.endTime.split('T')[1].slice(0, 5) : e.endTime) : '-';
+        return `
+          <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
+              <i class="fas ${cat.icon} text-white text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-medium px-2 py-0.5 rounded-full ${cat.color}">${e.project}</span>
+              </div>
+              <h4 class="font-semibold text-slate-800 text-sm">${e.name}</h4>
+              <p class="text-xs text-slate-500 mt-1 line-clamp-2">${e.content || ''}</p>
+              <div class="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                <span><i class="fas fa-user mr-1"></i>${e.instructor || '-'}</span>
+                <span><i class="fas fa-map-marker-alt mr-1"></i>${e.location || '-'}</span>
+                <span><i class="fas fa-clock mr-1"></i>${start}-${end}</span>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1">
+              <button onclick="closeModal(); editTraining(${e.id})" class="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit text-xs"></i></button>
+              <button onclick="closeModal(); deleteTraining(${e.id})" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash text-xs"></i></button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
       showModal(`
-        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
           <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑' : '添加'}培训计划</h3>
+            <div>
+              <h3 class="text-lg font-semibold text-slate-800">当天培训安排</h3>
+              <p class="text-sm text-slate-500">${dateText}</p>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6 space-y-3 max-h-[60vh] overflow-y-auto">
+            ${eventsHtml}
+          </div>
+          <div class="px-6 pb-6 pt-2 border-t border-slate-100">
+            <button onclick="closeModal(); openTrainingModal(null, '${dateStr}')" class="w-full py-2.5 btn-primary text-white rounded-xl font-medium transition">
+              <i class="fas fa-plus mr-2"></i>添加新培训
+            </button>
+          </div>
+        </div>
+      `);
+    }
+
+    function prevTrainingMonth() {
+      if (trainingCurrentMonth === 0) {
+        trainingCurrentMonth = 11;
+        trainingCurrentYear--;
+      } else {
+        trainingCurrentMonth--;
+      }
+      renderTrainingCalendar();
+    }
+
+    function nextTrainingMonth() {
+      if (trainingCurrentMonth === 11) {
+        trainingCurrentMonth = 0;
+        trainingCurrentYear++;
+      } else {
+        trainingCurrentMonth++;
+      }
+      renderTrainingCalendar();
+    }
+
+    function goToTrainingToday() {
+      const today = new Date();
+      trainingCurrentYear = today.getFullYear();
+      trainingCurrentMonth = today.getMonth();
+      renderTrainingCalendar();
+    }
+
+    function openTrainingModal(training = null, prefillDate = null) {
+      const isEdit = !!training;
+      const dateValue = prefillDate || training?.date || '';
+      const startTimeValue = training?.startTime || '';
+      const endTimeValue = training?.endTime || '';
+
+      // 处理 datetime-local 格式
+      const toDatetimeLocal = (val) => {
+        if (!val) return '';
+        if (val.includes('T')) return val;
+        return val + 'T09:00';
+      };
+
+      const categoryOptions = Object.keys(trainingCategories).map(cat =>
+        `<option value="${cat}" ${(training?.project || '') === cat ? 'selected' : ''}>${cat}</option>`
+      ).join('');
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑' : '添加'}培训</h3>
             <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
           </div>
           <form onsubmit="saveTraining(event, ${training?.id || 'null'})" class="p-6 space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">培训名称 <span class="text-red-500">*</span></label>
-              <input type="text" id="t-name" value="${training?.name || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">负责人</label>
-                <input type="text" id="t-manager" value="${training?.manager || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <label class="block text-sm font-medium text-slate-700 mb-1">培训项目 <span class="text-red-500">*</span></label>
+                <select id="t-project" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                  <option value="">请选择</option>
+                  ${categoryOptions}
+                </select>
               </div>
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">状态</label>
-                <select id="t-status" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option value="pending" ${training?.status === 'pending' ? 'selected' : ''}>待开始</option>
-                  <option value="active" ${(training?.status || 'active') === 'active' ? 'selected' : ''}>进行中</option>
+                <select id="t-status" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                  <option value="pending" ${(training?.status || 'pending') === 'pending' ? 'selected' : ''}>待开始</option>
+                  <option value="active" ${training?.status === 'active' ? 'selected' : ''}>进行中</option>
                   <option value="completed" ${training?.status === 'completed' ? 'selected' : ''}>已完成</option>
                 </select>
               </div>
             </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">培训课题 <span class="text-red-500">*</span></label>
+              <input type="text" id="t-name" value="${training?.name || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">培训内容</label>
+              <textarea id="t-content" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none">${training?.content || ''}</textarea>
+            </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">开始日期</label>
-                <input type="date" id="t-start" value="${training?.startDate || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <label class="block text-sm font-medium text-slate-700 mb-1">培训讲师 <span class="text-red-500">*</span></label>
+                <input type="text" id="t-instructor" value="${training?.instructor || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
               </div>
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">结束日期</label>
-                <input type="date" id="t-end" value="${training?.endDate || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <label class="block text-sm font-medium text-slate-700 mb-1">培训地点 <span class="text-red-500">*</span></label>
+                <input type="text" id="t-location" value="${training?.location || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">描述</label>
-              <textarea id="t-desc" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none">${training?.desc || ''}</textarea>
+              <label class="block text-sm font-medium text-slate-700 mb-1">培训日期 <span class="text-red-500">*</span></label>
+              <input type="date" id="t-date" value="${dateValue}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">开始时间 <span class="text-red-500">*</span></label>
+                <input type="datetime-local" id="t-start" value="${toDatetimeLocal(startTimeValue)}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">结束时间 <span class="text-red-500">*</span></label>
+                <input type="datetime-local" id="t-end" value="${toDatetimeLocal(endTimeValue)}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
             </div>
             <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
-              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">保存</button>
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium transition">保存</button>
             </div>
           </form>
         </div>
       `);
     }
-    
+
     async function saveTraining(e, id) {
       e.preventDefault();
+      const dateVal = document.getElementById('t-date').value;
+      const startVal = document.getElementById('t-start').value;
+      const endVal = document.getElementById('t-end').value;
+
+      if (new Date(startVal) >= new Date(endVal)) {
+        toast('结束时间必须晚于开始时间', 'error');
+        return;
+      }
+
       const formData = {
+        project: document.getElementById('t-project').value,
         name: document.getElementById('t-name').value.trim(),
-        manager: document.getElementById('t-manager').value.trim(),
-        leader: document.getElementById('t-manager').value.trim(),
-        status: document.getElementById('t-status').value,
-        startDate: document.getElementById('t-start').value,
-        endDate: document.getElementById('t-end').value,
-        desc: document.getElementById('t-desc').value.trim(),
-        stages: []
+        content: document.getElementById('t-content').value.trim(),
+        instructor: document.getElementById('t-instructor').value.trim(),
+        location: document.getElementById('t-location').value.trim(),
+        date: dateVal,
+        startTime: startVal,
+        endTime: endVal,
+        status: document.getElementById('t-status').value
       };
-      
+
       try {
         let res;
         if (id) {
@@ -3675,19 +4070,22 @@
           closeModal();
           await loadAllData();
           renderTraining();
+        } else {
+          const err = await res.json();
+          toast(err.error || '操作失败', 'error');
         }
       } catch (err) {
-        toast('操作失败', 'error');
+        toast('操作失败: ' + err.message, 'error');
       }
     }
-    
+
     function editTraining(id) {
       const t = data.training.find(x => x.id === id);
       if (t) openTrainingModal(t);
     }
-    
+
     async function deleteTraining(id) {
-      if (!confirm('确定要删除这个培训计划吗？')) return;
+      if (!confirm('确定要删除这个培训吗？')) return;
       try {
         const res = await fetch(API + '/training/' + id, { method: 'DELETE' });
         if (res.ok) {
@@ -3699,7 +4097,7 @@
         toast('删除失败', 'error');
       }
     }
-    
+
     // ========== 用户管理 ==========
     let allUsers = [];
     let filteredUsers = [];

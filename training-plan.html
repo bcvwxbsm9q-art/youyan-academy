@@ -533,7 +533,9 @@
             for (let day = 1; day <= lastDay.getDate(); day++) {
                 const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayCourses = monthCourses.filter(c => c.date === dateStr);
-                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                const todayLocal = new Date();
+                const todayStr = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth()+1).padStart(2,'0')}-${String(todayLocal.getDate()).padStart(2,'0')}`;
+                const isToday = dateStr === todayStr;
                 const holidayName = holidays[dateStr];
                 const weekDay = new Date(currentYear, currentMonth, day).getDay();
                 const isWeekend = weekDay === 0 || weekDay === 6;

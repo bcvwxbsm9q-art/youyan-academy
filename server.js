@@ -825,98 +825,114 @@ app.delete('/api/lecturers/:id', (req, res) => {
 });
 
 // ============================================================
-// 培训项目管理 API
+// 培训项目管理 API (新版 - 扁平化培训事件)
 // ============================================================
 
-// GET /api/training - 获取所有培训项目
+// GET /api/training - 获取所有培训事件
 app.get('/api/training', (req, res) => {
   const data = readData();
-  res.json(data.training_projects || []);
+  res.json(data.training_events || []);
 });
 
-// GET /api/training/:id - 获取单个培训项目
+// GET /api/training/schedule - 获取所有培训课程日程（用于用户端培训页面）
+app.get('/api/training/schedule', (req, res) => {
+  const data = readData();
+  const events = data.training_events || [];
+
+  // 转换为前端需要的格式
+  const schedule = events.map(event => {
+    const startDate = event.startTime ? new Date(event.startTime) : null;
+    const endDate = event.endTime ? new Date(event.endTime) : null;
+    const dateStr = event.date || (startDate && !isNaN(startDate) ? startDate.toISOString().split('T')[0] : '');
+    const startTimeStr = event.startTime?.includes('T')
+      ? event.startTime.split('T')[1].slice(0, 5)
+      : (event.startTime || '');
+    const endTimeStr = event.endTime?.includes('T')
+      ? event.endTime.split('T')[1].slice(0, 5)
+      : (event.endTime || '');
+    const durationMs = (startDate && endDate && !isNaN(startDate) && !isNaN(endDate)) ? (endDate - startDate) : 0;
+    const durationHours = durationMs > 0 ? (durationMs / (1000 * 60 * 60)).toFixed(1) : '0.0';
+
+    return {
+      id: event.id,
+      name: event.name,
+      category: event.project,
+      projectName: event.project,
+      instructor: event.instructor,
+      date: dateStr,
+      time: `${startTimeStr}-${endTimeStr}`,
+      duration: `${durationHours}小时`,
+      location: event.location,
+      content: event.content,
+      startTime: event.startTime,
+      endTime: event.endTime
+    };
+  });
+
+  // 按日期排序
+  schedule.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+
+  res.json({ success: true, data: schedule });
+});
+
+// GET /api/training/:id - 获取单个培训事件
 app.get('/api/training/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
-  const project = data.training_projects?.find(p => p.id === id);
-  if (project) {
-    res.json(project);
+  const event = data.training_events?.find(e => e.id === id);
+  if (event) {
+    res.json(event);
   } else {
-    res.status(404).json({ success: false, error: '培训项目不存在' });
+    res.status(404).json({ success: false, error: '培训事件不存在' });
   }
 });
 
-// POST /api/training - 添加培训项目
+// POST /api/training - 添加培训事件
 app.post('/api/training', (req, res) => {
-  const project = req.body;
+  const event = req.body;
   const data = readData();
-  if (!data.training_projects) data.training_projects = [];
-  project.id = Date.now();
-  data.training_projects.push(project);
+  if (!data.training_events) data.training_events = [];
+  event.id = Date.now();
+  data.training_events.push(event);
   if (writeData(data)) {
-    res.json({ success: true, project });
+    res.json({ success: true, event });
   } else {
     res.status(500).json({ success: false, error: '写入失败' });
   }
 });
 
-// PUT /api/training/:id - 更新培训项目
+// PUT /api/training/:id - 更新培训事件
 app.put('/api/training/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const updates = req.body;
   const data = readData();
-  const index = data.training_projects?.findIndex(p => p.id === id);
+  const index = data.training_events?.findIndex(e => e.id === id);
   if (index !== -1) {
-    data.training_projects[index] = { ...data.training_projects[index], ...updates };
+    data.training_events[index] = { ...data.training_events[index], ...updates };
     if (writeData(data)) {
-      res.json({ success: true, project: data.training_projects[index] });
+      res.json({ success: true, event: data.training_events[index] });
     } else {
       res.status(500).json({ success: false, error: '写入失败' });
     }
   } else {
-    res.status(404).json({ success: false, error: '培训项目不存在' });
+    res.status(404).json({ success: false, error: '培训事件不存在' });
   }
 });
 
-// DELETE /api/training/:id - 删除培训项目
+// DELETE /api/training/:id - 删除培训事件
 app.delete('/api/training/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
-  if (data.training_projects) {
-    data.training_projects = data.training_projects.filter(p => p.id !== id);
+  if (data.training_events) {
+    data.training_events = data.training_events.filter(e => e.id !== id);
     if (writeData(data)) {
       res.json({ success: true });
     } else {
       res.status(500).json({ success: false, error: '写入失败' });
     }
   } else {
-    res.status(404).json({ success: false, error: '培训项目列表不存在' });
+    res.status(404).json({ success: false, error: '培训事件列表不存在' });
   }
-});
-
-// GET /api/training/schedule - 获取所有培训课程日程（用于用户端培训页面）
-app.get('/api/training/schedule', (req, res) => {
-  const data = readData();
-  const projects = data.training_projects || [];
-  
-  // 从所有培训项目中提取课程日程
-  let schedule = [];
-  projects.forEach(project => {
-    if (project.courses && project.courses.length > 0) {
-      project.courses.forEach(course => {
-        schedule.push({
-          ...course,
-          projectName: project.name,
-          projectId: project.id
-        });
-      });
-    }
-  });
-  
-  // 按日期排序
-  schedule.sort((a, b) => new Date(a.date) - new Date(b.date));
-  
-  res.json({ success: true, data: schedule });
 });
 
 // POST /api/training/:projectId/courses - 为培训项目添加课程

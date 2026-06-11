@@ -475,7 +475,8 @@
       ],
       "courseCount": 0,
       "regDate": "2026-06-08",
-      "id": 1780911271132
+      "id": 1780911271132,
+      "rating": 4.5
     },
     {
       "name": "王国栋",
@@ -494,7 +495,8 @@
       ],
       "courseCount": 0,
       "regDate": "2026-06-08",
-      "id": 1780915354634
+      "id": 1780915354634,
+      "rating": 4.2
     },
     {
       "name": "吴佰桐",
@@ -513,7 +515,8 @@
       ],
       "courseCount": 0,
       "regDate": "2026-06-09",
-      "id": 1780973279917
+      "id": 1780973279917,
+      "rating": 4.8
     },
     {
       "name": "黄明芳",
@@ -532,7 +535,8 @@
       ],
       "courseCount": 0,
       "regDate": "2026-06-09",
-      "id": 1780986326119
+      "id": 1780986326119,
+      "rating": 4.7
     },
     {
       "name": "李岸",
@@ -551,7 +555,8 @@
       ],
       "courseCount": 0,
       "regDate": "2026-06-10",
-      "id": 1781063989679
+      "id": 1781063989679,
+      "rating": 4.6
     },
     {
       "name": "吴佳宝",
@@ -570,7 +575,8 @@
       ],
       "courseCount": 0,
       "regDate": "2026-06-10",
-      "id": 1781064033425
+      "id": 1781064033425,
+      "rating": 4.9
     },
     {
       "name": "陈剑锋",
@@ -589,7 +595,8 @@
       ],
       "courseCount": 0,
       "regDate": "2026-06-10",
-      "id": 1781064071833
+      "id": 1781064071833,
+      "rating": 4.8
     },
     {
       "name": "曹贺钧",
@@ -608,7 +615,8 @@
       ],
       "courseCount": 0,
       "regDate": "2026-06-10",
-      "id": 1781064123970
+      "id": 1781064123970,
+      "rating": 4.6
     },
     {
       "name": "古海峰",
@@ -627,7 +635,8 @@
       ],
       "courseCount": 0,
       "regDate": "2026-06-10",
-      "id": 1781064213921
+      "id": 1781064213921,
+      "rating": 4.9
     }
   ],
   "index_banners": [
@@ -864,7 +873,7 @@
       ],
       "attachments": [],
       "duration": 1909,
-      "views": 4,
+      "views": 6,
       "rating": 0,
       "id": 1781065281803,
       "createdAt": "2026/6/10 12:21:21"
@@ -888,7 +897,7 @@
       ],
       "attachments": [],
       "duration": 2415,
-      "views": 8,
+      "views": 9,
       "rating": 0,
       "id": 1781065453648,
       "createdAt": "2026/6/10 12:24:13"
@@ -1000,7 +1009,7 @@
       ],
       "attachments": [],
       "duration": 1044,
-      "views": 1,
+      "views": 2,
       "rating": 0,
       "id": 1781087427858,
       "createdAt": "2026/6/10 18:30:27",
@@ -1025,14 +1034,89 @@
       ],
       "attachments": [],
       "duration": 2360,
-      "views": 2,
+      "views": 3,
       "rating": 0,
       "id": 1781087462994,
       "createdAt": "2026/6/10 18:31:02",
       "updatedAt": "2026/6/10 18:31:02"
     }
   ],
-  "training_projects": [],
+  "training_projects": [
+    {
+      "project": "AI实践分享",
+      "name": "AI小白的日常",
+      "content": "",
+      "instructor": "马凡",
+      "location": "B区培训室",
+      "date": "2026-06-12",
+      "startTime": "2026-06-12T17:30",
+      "endTime": "2026-06-12T18:38",
+      "status": "pending",
+      "id": 1781144750268
+    }
+  ],
+  "training_events": [
+    {
+      "id": 1,
+      "project": "新雁计划",
+      "name": "新员工入职培训",
+      "content": "帮助新员工快速了解公司文化、规章制度及业务流程，包含企业文化介绍、组织架构说明、基本办公技能培训。",
+      "instructor": "黄明芳",
+      "location": "会议室A",
+      "date": "2026-06-15",
+      "startTime": "2026-06-15T09:00",
+      "endTime": "2026-06-15T11:30",
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "project": "游雁学堂",
+      "name": "Python进阶培训",
+      "content": "深入学习Python高级特性，包括装饰器、生成器、异步编程及常用框架实战。",
+      "instructor": "曹贺军",
+      "location": "培训室B",
+      "date": "2026-06-18",
+      "startTime": "2026-06-18T14:00",
+      "endTime": "2026-06-18T17:00",
+      "status": "pending"
+    },
+    {
+      "id": 3,
+      "project": "AI实践分享",
+      "name": "AI应用实践分享",
+      "content": "分享AI在日常工作中的应用案例，包括ChatGPT、Midjourney等工具的使用技巧。",
+      "instructor": "沈家成",
+      "location": "大会议室",
+      "date": "2026-06-20",
+      "startTime": "2026-06-20T10:00",
+      "endTime": "2026-06-20T12:00",
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "project": "鸿雁计划",
+      "name": "团队协作软技能",
+      "content": "提升团队协作能力的软技能培训，包括沟通技巧、冲突处理、跨部门协作等。",
+      "instructor": "吴佳宝",
+      "location": "培训室A",
+      "date": "2026-06-22",
+      "startTime": "2026-06-22T14:00",
+      "endTime": "2026-06-22T16:00",
+      "status": "pending"
+    },
+    {
+      "id": 5,
+      "project": "雏雁训练营",
+      "name": "产品设计思维",
+      "content": "培养产品设计思维，学习用户研究、需求分析、原型设计等核心技能。",
+      "instructor": "黄明芳",
+      "location": "创新实验室",
+      "date": "2026-06-25",
+      "startTime": "2026-06-25T09:00",
+      "endTime": "2026-06-25T12:00",
+      "status": "pending"
+    }
+  ],
   "user_learning_1": {
     "totalHours": 0,
     "completedCourses": [],
@@ -1254,9 +1338,35 @@
   "user_learning_1781087021554": {
     "totalHours": 0,
     "completedCourses": [],
-    "videoProgress": {},
-    "lastStudyTime": null,
-    "studyDates": []
+    "videoProgress": {
+      "1781065453648_0": 0,
+      "1781087462994_0": 0
+    },
+    "lastStudyTime": "2026-06-11T02:30:25.319Z",
+    "studyDates": [
+      "2026-06-11"
+    ],
+    "totalSeconds": 6,
+    "studyRecords": [
+      {
+        "courseId": 1781065453648,
+        "courseTitle": "成就系统设计：从理论到实践",
+        "videoIndex": 0,
+        "videoTitle": "成就系统设计：从理论到实践.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-11T02:18:19.024Z",
+        "date": "2026-06-11"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 5,
+        "timestamp": "2026-06-11T02:30:25.319Z",
+        "date": "2026-06-11"
+      }
+    ]
   },
   "video_pos_1781087021554_1781064630171_0": {
     "position": 2,
@@ -1264,11 +1374,11 @@
   },
   "video_pos_1781087021554_1781065281803_0": {
     "position": 2,
-    "savedAt": "2026-06-10T10:45:20.499Z"
+    "savedAt": "2026-06-11T02:01:54.753Z"
   },
   "video_pos_1781087021554_1781087427858_0": {
-    "position": 12,
-    "savedAt": "2026-06-10T10:45:39.739Z"
+    "position": 26,
+    "savedAt": "2026-06-11T02:02:15.795Z"
   },
   "course_interaction_1781087427858": {
     "likes": 1,
@@ -1282,16 +1392,16 @@
     "ratingCount": 1
   },
   "video_pos_1781087021554_1781087462994_0": {
-    "position": 13,
-    "savedAt": "2026-06-11T01:23:21.946Z"
+    "position": 18,
+    "savedAt": "2026-06-11T02:30:25.277Z"
   },
   "course_interaction_1781087462994": {
     "likes": 0,
     "userLikes": {},
     "userRatings": {
-      "1781087021554": 5
+      "1781087021554": 1
     },
-    "ratingSum": 5,
+    "ratingSum": 1,
     "ratingCount": 1
   },
   "video_pos_1781087021554_1781080411545_0": {
@@ -1300,7 +1410,7 @@
   },
   "video_pos_1781087021554_1781065453648_0": {
     "position": 1,
-    "savedAt": "2026-06-11T01:23:02.471Z"
+    "savedAt": "2026-06-11T02:18:18.985Z"
   },
   "video_pos_1781087021554_1781065485355_0": {
     "position": 4,
