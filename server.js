@@ -163,9 +163,16 @@ function writeData(data) {
 // API 路由
 // ============================================================
 
-// GET /api/data      - 获取所有数据
+// GET /api/data      - 获取所有数据（动态计算lecturers的courseCount）
 app.get('/api/data', (req, res) => {
   const data = readData();
+  // 动态计算每个讲师的课程数
+  if (data.lecturers && data.management_courses) {
+    data.lecturers = data.lecturers.map(l => ({
+      ...l,
+      courseCount: (data.management_courses || []).filter(c => String(c.lecturerId) === String(l.id)).length
+    }));
+  }
   res.json(data);
 });
 
@@ -770,10 +777,15 @@ app.delete('/api/courses/:id', (req, res) => {
 // 讲师管理 API
 // ============================================================
 
-// GET /api/lecturers - 获取所有讲师
+// GET /api/lecturers - 获取所有讲师（动态计算courseCount）
 app.get('/api/lecturers', (req, res) => {
   const data = readData();
-  res.json(data.lecturers || []);
+  const courses = data.management_courses || [];
+  const lecturers = (data.lecturers || []).map(l => ({
+    ...l,
+    courseCount: courses.filter(c => String(c.lecturerId) === String(l.id)).length
+  }));
+  res.json({ success: true, data: lecturers });
 });
 
 // POST /api/lecturers - 添加讲师
@@ -1519,6 +1531,400 @@ app.delete('/api/notices/:id', (req, res) => {
     }
   } else {
     res.status(404).json({ success: false, error: '公告不存在' });
+  }
+});
+
+// ============================================================
+// 调研管理 API
+// ============================================================
+
+// GET /api/surveys - 获取所有调研
+app.get('/api/surveys', (req, res) => {
+  const data = readData();
+  if (!data.surveys) data.surveys = [];
+  res.json({ success: true, data: data.surveys });
+});
+
+// GET /api/surveys/:id - 获取单个调研（含题目）
+app.get('/api/surveys/:id', (req, res) => {
+  const data = readData();
+  const id = parseInt(req.params.id);
+  const survey = (data.surveys || []).find(s => s.id === id);
+  if (!survey) return res.status(404).json({ success: false, error: '调研不存在' });
+  res.json({ success: true, data: survey });
+});
+
+// POST /api/surveys - 创建调研（含题目）
+app.post('/api/surveys', (req, res) => {
+  const data = readData();
+  if (!data.surveys) data.surveys = [];
+  const survey = {
+    id: Date.now(),
+    title: req.body.title || '',
+    description: req.body.description || '',
+    status: req.body.status || 'draft',
+    questions: req.body.questions || [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  data.surveys.push(survey);
+  if (writeData(data)) {
+    res.json({ success: true, data: survey });
+  } else {
+    res.status(500).json({ success: false, error: '创建失败' });
+  }
+});
+
+// PUT /api/surveys/:id - 更新调研（含题目）
+app.put('/api/surveys/:id', (req, res) => {
+  const data = readData();
+  const id = parseInt(req.params.id);
+  const index = (data.surveys || []).findIndex(s => s.id === id);
+  if (index === -1) return res.status(404).json({ success: false, error: '调研不存在' });
+  data.surveys[index] = { ...data.surveys[index], ...req.body, id, updatedAt: new Date().toISOString() };
+  if (writeData(data)) {
+    res.json({ success: true, data: data.surveys[index] });
+  } else {
+    res.status(500).json({ success: false, error: '更新失败' });
+  }
+});
+
+// DELETE /api/surveys/:id - 删除调研
+app.delete('/api/surveys/:id', (req, res) => {
+  const data = readData();
+  const id = parseInt(req.params.id);
+  if (data.surveys) {
+    data.surveys = data.surveys.filter(s => s.id !== id);
+    if (writeData(data)) {
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ success: false, error: '删除失败' });
+    }
+  } else {
+    res.status(404).json({ success: false, error: '调研不存在' });
+  }
+});
+
+// GET /api/surveys/:id/responses - 获取调研作答记录
+app.get('/api/surveys/:id/responses', (req, res) => {
+  const data = readData();
+  const id = parseInt(req.params.id);
+  if (!data.survey_responses) data.survey_responses = [];
+  const responses = data.survey_responses.filter(r => r.surveyId === id);
+  res.json({ success: true, data: responses });
+});
+
+// GET /api/surveys/:id/check-responded - 检查用户是否已填写
+app.get('/api/surveys/:id/check-responded', (req, res) => {
+  const data = readData();
+  const id = parseInt(req.params.id);
+  const userId = req.query.userId;
+  const trainingId = req.query.trainingId;
+  const stageIdx = req.query.stageIdx;
+  if (!data.survey_responses) data.survey_responses = [];
+  const responded = data.survey_responses.some(r => {
+    if (r.surveyId !== id) return false;
+    if (r.userId != userId) return false;
+    if (trainingId !== undefined && trainingId !== null && trainingId !== '') {
+      if (r.trainingId != trainingId) return false;
+    }
+    if (stageIdx !== undefined && stageIdx !== null && stageIdx !== '') {
+      if (r.stageIdx != stageIdx) return false;
+    }
+    return true;
+  });
+  res.json({ success: true, responded });
+});
+
+// POST /api/surveys/:id/responses - 提交调研作答
+app.post('/api/surveys/:id/responses', (req, res) => {
+  const data = readData();
+  const id = parseInt(req.params.id);
+  const survey = (data.surveys || []).find(s => s.id === id);
+  if (!survey) return res.status(404).json({ success: false, error: '调研不存在' });
+  if (!data.survey_responses) data.survey_responses = [];
+  const response = {
+    id: Date.now(),
+    surveyId: id,
+    userId: req.body.userId || null,
+    userName: req.body.userName || '匿名用户',
+    answers: req.body.answers || {},
+    trainingId: req.body.trainingId || null,
+    stageIdx: req.body.stageIdx != null ? req.body.stageIdx : null,
+    submittedAt: new Date().toISOString()
+  };
+  data.survey_responses.push(response);
+  if (writeData(data)) {
+    res.json({ success: true, data: response });
+  } else {
+    res.status(500).json({ success: false, error: '提交失败' });
+  }
+});
+
+// POST /api/surveys/:id/respond - 提交调研作答（别名）
+app.post('/api/surveys/:id/respond', (req, res) => {
+  const data = readData();
+  const id = parseInt(req.params.id);
+  const survey = (data.surveys || []).find(s => s.id === id);
+  if (!survey) return res.status(404).json({ success: false, error: '调研不存在' });
+  if (!data.survey_responses) data.survey_responses = [];
+  const response = {
+    id: Date.now(),
+    surveyId: id,
+    userId: req.body.userId || null,
+    userName: req.body.userName || '匿名用户',
+    answers: req.body.answers || {},
+    trainingId: req.body.trainingId || null,
+    stageIdx: req.body.stageIdx != null ? req.body.stageIdx : null,
+    submittedAt: new Date().toISOString()
+  };
+  data.survey_responses.push(response);
+  if (writeData(data)) {
+    res.json({ success: true, data: response });
+  } else {
+    res.status(500).json({ success: false, error: '提交失败' });
+  }
+});
+
+// GET /api/surveys/stats - 获取调研统计概览（轻量接口）
+app.get('/api/surveys/stats', (req, res) => {
+  const data = readData();
+  const surveys = data.surveys || [];
+  const responses = data.survey_responses || [];
+  res.json({
+    success: true,
+    data: {
+      totalSurveys: surveys.length,
+      activeSurveys: surveys.filter(s => s.status === 'active' || s.status === 'published').length,
+      draftSurveys: surveys.filter(s => s.status === 'draft').length,
+      endedSurveys: surveys.filter(s => s.status === 'ended').length,
+      totalResponses: responses.length,
+      responsesBySurvey: surveys.reduce((acc, s) => {
+        acc[s.id] = responses.filter(r => r.surveyId === s.id).length;
+        return acc;
+      }, {})
+    }
+  });
+});
+
+// ============================================================
+// 通知管理 API// ============================================================
+// 通知管理 API
+// ============================================================
+
+// 获取当前登录用户
+function getCurrentUser(req) {
+  const token = req.headers['authorization']?.replace('Bearer ', '');
+  if (!token) return null;
+  return verifyToken(token);
+}
+
+// 初始化通知相关数据结构
+function initNotificationsData(data) {
+  if (!data.notifications) data.notifications = [];  // 个人通知
+  if (!data.notification_reads) data.notification_reads = [];  // 已读记录
+  return data;
+}
+
+// GET /api/notifications - 获取当前用户的通知（公告 + 个人通知）
+app.get('/api/notifications', (req, res) => {
+  const currentUser = getCurrentUser(req);
+  if (!currentUser) {
+    return res.status(401).json({ success: false, error: '未登录' });
+  }
+  
+  const data = readData();
+  initNotificationsData(data);
+  
+  const notifications = [];
+  
+  // 1. 将已发布的公告转换为通知
+  if (data.notices && Array.isArray(data.notices)) {
+    const publishedNotices = data.notices.filter(n => n.status === 'published');
+    publishedNotices.forEach(notice => {
+      // 检查用户是否已读
+      const readRecord = data.notification_reads.find(
+        r => r.userId === currentUser.id && r.noticeId === notice.id
+      );
+      
+      notifications.push({
+        id: 'notice_' + notice.id,  // 前缀避免ID冲突
+        originalId: notice.id,
+        title: notice.title,
+        content: notice.content,
+        type: 'announcement',
+        isHtml: true,
+        read: !!readRecord,
+        readAt: readRecord ? readRecord.readAt : null,
+        createdAt: notice.publishedAt || notice.createdAt,
+        pinned: notice.pinned || false
+      });
+    });
+  }
+  
+  // 2. 添加用户的个人通知
+  const userNotifications = data.notifications.filter(
+    n => n.userId === currentUser.id
+  );
+  userNotifications.forEach(n => {
+    notifications.push({
+      ...n,
+      id: 'notification_' + n.id
+    });
+  });
+  
+  // 3. 按时间倒序排序（置顶的排最前）
+  notifications.sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+  
+  res.json({ success: true, data: notifications });
+});
+
+// PUT /api/notifications/:id/read - 标记通知已读
+app.put('/api/notifications/:id/read', (req, res) => {
+  const currentUser = getCurrentUser(req);
+  if (!currentUser) {
+    return res.status(401).json({ success: false, error: '未登录' });
+  }
+  
+  const notificationId = req.params.id;
+  const data = readData();
+  initNotificationsData(data);
+  
+  // 处理公告类型的通知
+  if (notificationId.startsWith('notice_')) {
+    const noticeId = parseInt(notificationId.replace('notice_', ''));
+    
+    // 检查是否已有已读记录
+    const existingRead = data.notification_reads.find(
+      r => r.userId === currentUser.id && r.noticeId === noticeId
+    );
+    
+    if (!existingRead) {
+      data.notification_reads.push({
+        userId: currentUser.id,
+        noticeId: noticeId,
+        readAt: new Date().toISOString()
+      });
+      writeData(data);
+    }
+    
+    res.json({ success: true });
+  } else {
+    // 处理个人通知
+    const notifId = parseInt(notificationId.replace('notification_', ''));
+    const notification = data.notifications.find(n => n.id === notifId);
+    
+    if (notification && notification.userId === currentUser.id) {
+      notification.read = true;
+      notification.readAt = new Date().toISOString();
+      writeData(data);
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ success: false, error: '通知不存在' });
+    }
+  }
+});
+
+// POST /api/notifications/batch-read - 批量标记已读
+app.post('/api/notifications/batch-read', (req, res) => {
+  const currentUser = getCurrentUser(req);
+  if (!currentUser) {
+    return res.status(401).json({ success: false, error: '未登录' });
+  }
+  
+  const { ids } = req.body;  // ['notice_123', 'notification_456', ...]
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, error: '无效的ID列表' });
+  }
+  
+  const data = readData();
+  initNotificationsData(data);
+  
+  ids.forEach(id => {
+    if (id.startsWith('notice_')) {
+      const noticeId = parseInt(id.replace('notice_', ''));
+      const existingRead = data.notification_reads.find(
+        r => r.userId === currentUser.id && r.noticeId === noticeId
+      );
+      if (!existingRead) {
+        data.notification_reads.push({
+          userId: currentUser.id,
+          noticeId: noticeId,
+          readAt: new Date().toISOString()
+        });
+      }
+    } else {
+      const notifId = parseInt(id.replace('notification_', ''));
+      const notification = data.notifications.find(
+        n => n.id === notifId && n.userId === currentUser.id
+      );
+      if (notification) {
+        notification.read = true;
+        notification.readAt = new Date().toISOString();
+      }
+    }
+  });
+  
+  writeData(data);
+  res.json({ success: true, count: ids.length });
+});
+
+// POST /api/notifications/batch-delete - 批量删除通知（仅限个人通知）
+app.post('/api/notifications/batch-delete', (req, res) => {
+  const currentUser = getCurrentUser(req);
+  if (!currentUser) {
+    return res.status(401).json({ success: false, error: '未登录' });
+  }
+  
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, error: '无效的ID列表' });
+  }
+  
+  const data = readData();
+  initNotificationsData(data);
+  
+  // 只能删除个人通知，不能删除公告
+  const personalIds = ids
+    .filter(id => id.startsWith('notification_'))
+    .map(id => parseInt(id.replace('notification_', '')));
+  
+  data.notifications = data.notifications.filter(n => {
+    if (n.userId !== currentUser.id) return true;  // 保留其他用户的
+    return !personalIds.includes(n.id);  // 删除当前用户的指定通知
+  });
+  
+  writeData(data);
+  res.json({ success: true, count: personalIds.length });
+});
+
+// POST /api/notifications - 创建个人通知（系统内部调用）
+app.post('/api/notifications', (req, res) => {
+  const notification = req.body;
+  
+  // 验证必填字段
+  if (!notification.userId || !notification.title || !notification.content) {
+    return res.status(400).json({ success: false, error: '用户ID、标题和内容不能为空' });
+  }
+  
+  const data = readData();
+  initNotificationsData(data);
+  
+  notification.id = Date.now();
+  notification.type = notification.type || 'system';
+  notification.read = false;
+  notification.createdAt = new Date().toISOString();
+  
+  data.notifications.push(notification);
+  
+  if (writeData(data)) {
+    res.json({ success: true, notification });
+  } else {
+    res.status(500).json({ success: false, error: '写入失败' });
   }
 });
 

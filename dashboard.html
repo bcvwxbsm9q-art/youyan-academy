@@ -66,62 +66,9 @@
       grid-template-columns: repeat(7, 1fr);
       gap: 0.5rem;
     }
-    .training-calendar-day {
-      aspect-ratio: 1;
-      min-height: 100px;
-      border-radius: 0.75rem;
-      padding: 0.5rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border: 1px solid #f1f5f9;
-      background: linear-gradient(to bottom right, #ffffff, #f8fafc);
-    }
-    .training-calendar-day:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      border-color: #e2e8f0;
-    }
-    .training-calendar-day.empty {
-      background: transparent;
-      border: none;
-      cursor: default;
-      pointer-events: none;
-    }
-    .training-calendar-day.empty:hover {
-      transform: none;
-      box-shadow: none;
-    }
-    .training-calendar-day.today {
-      ring: 2px solid #667eea;
-      ring-offset: 2px;
-    }
-    .training-calendar-day.weekend {
-      background: linear-gradient(to bottom right, #f5f3ff, #faf5ff);
-    }
-    .training-calendar-day.holiday {
-      background: linear-gradient(to bottom right, #fef2f2, #fff1f2);
-    }
-    .training-day-number {
-      width: 1.75rem;
-      height: 1.75rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .training-day-number.today-badge {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-    .training-day-number.default-badge {
-      background: #f1f5f9;
-      color: #64748b;
-    }
     .training-event-badge {
-      font-size: 0.65rem;
-      padding: 0.125rem 0.375rem;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
       border-radius: 9999px;
       font-weight: 600;
       white-space: nowrap;
@@ -235,7 +182,7 @@
     <!-- 左侧边栏 -->
     <aside class="w-64 bg-slate-800 min-h-[calc(100vh-73px)] fixed left-0 top-[73px] overflow-y-auto">
       <nav class="p-4 space-y-1">
-        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium">学习发展</div>
+        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium">内容管理</div>
         <button onclick="switchTab('dashboard')" data-tab="dashboard" class="sidebar-item active w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
           <i class="fas fa-home w-5"></i><span>工作台</span>
         </button>
@@ -248,24 +195,22 @@
         <button onclick="switchTab('lecturers')" data-tab="lecturers" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
           <i class="fas fa-chalkboard-teacher w-5"></i><span>讲师管理</span>
         </button>
+        <button onclick="switchTab('survey')" data-tab="survey" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-poll w-5"></i><span>调研管理</span>
+        </button>
         <button onclick="switchTab('exams')" data-tab="exams" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
-          <i class="fas fa-file-alt w-5"></i><span>问卷管理</span>
+          <i class="fas fa-file-alt w-5"></i><span>考试管理</span>
         </button>
         
-        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium mt-6">平台管理</div>
+        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium mt-6">数据管理</div>
         <button onclick="switchTab('users')" data-tab="users" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
           <i class="fas fa-users w-5"></i><span>用户管理</span>
         </button>
         <button onclick="switchTab('portal')" data-tab="portal" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
-          <i class="fas fa-globe w-5"></i><span>门户运营</span>
+          <i class="fas fa-cog w-5"></i><span>运营管理</span>
         </button>
-        
-        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium mt-6">数据中心</div>
-        <button onclick="switchTab('dashboard')" data-tab="dashboard" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
-          <i class="fas fa-chart-pie w-5"></i><span>数据概览</span>
-        </button>
-        <button onclick="switchTab('export')" data-tab="export" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
-          <i class="fas fa-download w-5"></i><span>数据导出</span>
+        <button onclick="switchTab('reports')" data-tab="reports" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-chart-bar w-5"></i><span>报表管理</span>
         </button>
       </nav>
     </aside>
@@ -587,7 +532,6 @@
                   <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">培训地点</th>
                   <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">开始时间</th>
                   <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">结束时间</th>
-                  <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
                   <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
@@ -638,232 +582,62 @@
         </div>
       </div>
 
-      <!-- 数据导出 -->
-      <div id="tab-export" class="tab-content hidden">
+      <!-- 报表管理 -->
+      <div id="tab-reports" class="tab-content hidden">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-2xl font-bold text-slate-800">
-            <i class="fas fa-download text-indigo-500 mr-2"></i>数据导出
+            <i class="fas fa-chart-bar text-indigo-500 mr-2"></i>报表管理
           </h2>
         </div>
         
-        <!-- 子标签页 -->
         <div class="bg-white rounded-xl shadow-sm p-1 mb-6 inline-flex gap-1">
-          <button onclick="switchSubTab('export', 'course-report')" class="subtab-btn active px-4 py-2 rounded-lg text-sm font-medium">课程报表</button>
-          <button onclick="switchSubTab('export', 'training-report')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">培训报表</button>
-          <button onclick="switchSubTab('export', 'exam-report')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">考试报表</button>
-          <button onclick="switchSubTab('export', 'student-archive')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">学员档案</button>
+          <button onclick="switchSubTab('reports', 'overview')" class="subtab-btn active px-4 py-2 rounded-lg text-sm font-medium">数据概览</button>
+          <button onclick="switchSubTab('reports', 'export')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">数据导出</button>
         </div>
         
-        <!-- 课程报表 -->
-        <div id="export-course-report" class="subtab-content">
-          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table class="w-full">
-              <thead class="bg-slate-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">课程名称</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">讲师</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">播放量</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-200">
-                <tr class="hover:bg-slate-50 transition">
-                  <td class="px-6 py-4 text-sm text-slate-700">JavaScript基础入门</td>
-                  <td class="px-6 py-4 text-sm text-slate-600">朱子墨</td>
-                  <td class="px-6 py-4 text-sm text-slate-600">1,234</td>
-                  <td class="px-6 py-4">
-                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-50 transition">
-                  <td class="px-6 py-4 text-sm text-slate-700">Vue.js实战</td>
-                  <td class="px-6 py-4 text-sm text-slate-600">柯博文</td>
-                  <td class="px-6 py-4 text-sm text-slate-600">856</td>
-                  <td class="px-6 py-4">
-                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <div id="reports-overview" class="subtab-content">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300"><div class="flex items-center justify-between"><div><p class="text-sm text-slate-500 mb-1">课程总数</p><p class="text-3xl font-bold text-slate-800" id="rpt-stat-courses">0</p></div><div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg"><i class="fas fa-book text-white text-xl"></i></div></div></div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300"><div class="flex items-center justify-between"><div><p class="text-sm text-slate-500 mb-1">讲师总数</p><p class="text-3xl font-bold text-slate-800" id="rpt-stat-lecturers">0</p></div><div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg"><i class="fas fa-chalkboard-teacher text-white text-xl"></i></div></div></div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300"><div class="flex items-center justify-between"><div><p class="text-sm text-slate-500 mb-1">学员总数</p><p class="text-3xl font-bold text-slate-800" id="rpt-stat-users">0</p></div><div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg"><i class="fas fa-users text-white text-xl"></i></div></div></div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300"><div class="flex items-center justify-between"><div><p class="text-sm text-slate-500 mb-1">培训场次</p><p class="text-3xl font-bold text-slate-800" id="rpt-stat-trainings">0</p></div><div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg"><i class="fas fa-calendar-alt text-white text-xl"></i></div></div></div>
           </div>
         </div>
         
-        <!-- 培训报表 -->
-        <div id="export-training-report" class="subtab-content hidden">
-          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table class="w-full">
-              <thead class="bg-slate-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">培训名称</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">参与人数</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">完成率</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-200">
-                <tr class="hover:bg-slate-50 transition">
-                  <td class="px-6 py-4 text-sm text-slate-700">新员工入职培训</td>
-                  <td class="px-6 py-4 text-sm text-slate-600">50</td>
-                  <td class="px-6 py-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">98%</span></td>
-                  <td class="px-6 py-4">
-                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-50 transition">
-                  <td class="px-6 py-4 text-sm text-slate-700">技术能力提升培训</td>
-                  <td class="px-6 py-4 text-sm text-slate-600">30</td>
-                  <td class="px-6 py-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">85%</span></td>
-                  <td class="px-6 py-4">
-                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <div id="reports-export" class="subtab-content hidden">
+          <div class="bg-white rounded-xl shadow-sm p-1 mb-6 inline-flex gap-1">
+            <button onclick="switchReportExportTab('course-report')" class="report-export-tab active px-4 py-2 rounded-lg text-sm font-medium">课程报表</button>
+            <button onclick="switchReportExportTab('training-report')" class="report-export-tab px-4 py-2 rounded-lg text-sm font-medium">培训报表</button>
+            <button onclick="switchReportExportTab('exam-report')" class="report-export-tab px-4 py-2 rounded-lg text-sm font-medium">考试报表</button>
+            <button onclick="switchReportExportTab('student-archive')" class="report-export-tab px-4 py-2 rounded-lg text-sm font-medium">学员档案</button>
           </div>
-        </div>
-        
-        <!-- 考试报表 -->
-        <div id="export-exam-report" class="subtab-content hidden">
-          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table class="w-full">
-              <thead class="bg-slate-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">考试名称</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">参考人数</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">平均分</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-200">
-                <tr class="hover:bg-slate-50 transition">
-                  <td class="px-6 py-4 text-sm text-slate-700">JavaScript基础知识测试</td>
-                  <td class="px-6 py-4 text-sm text-slate-600">45</td>
-                  <td class="px-6 py-4 text-sm text-slate-600">85</td>
-                  <td class="px-6 py-4">
-                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-        <!-- 学员档案 -->
-        <div id="export-student-archive" class="subtab-content hidden">
-          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table class="w-full">
-              <thead class="bg-slate-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">姓名</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">部门</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">完成课程</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-200">
-                <tr class="hover:bg-slate-50 transition">
-                  <td class="px-6 py-4 text-sm text-slate-700">张三</td>
-                  <td class="px-6 py-4 text-sm text-slate-600">研发部</td>
-                  <td class="px-6 py-4 text-sm text-slate-600">12</td>
-                  <td class="px-6 py-4">
-                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-50 transition">
-                  <td class="px-6 py-4 text-sm text-slate-700">李四</td>
-                  <td class="px-6 py-4 text-sm text-slate-600">产品部</td>
-                  <td class="px-6 py-4 text-sm text-slate-600">8</td>
-                  <td class="px-6 py-4">
-                    <button class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-download"></i></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
-            <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mb-4">
-              <i class="fas fa-book text-blue-500 text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-slate-800 mb-2">课程数据</h3>
-            <p class="text-sm text-slate-500 mb-4">导出所有课程信息，包含分类、讲师、状态等</p>
-            <button onclick="exportData('courses')" class="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition">
-              <i class="fas fa-download mr-2"></i>导出 CSV
-            </button>
-          </div>
-          
-          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
-            <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mb-4">
-              <i class="fas fa-chalkboard-teacher text-emerald-500 text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-slate-800 mb-2">讲师数据</h3>
-            <p class="text-sm text-slate-500 mb-4">导出所有讲师信息，包含等级、部门、课程数等</p>
-            <button onclick="exportData('lecturers')" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium transition">
-              <i class="fas fa-download mr-2"></i>导出 CSV
-            </button>
-          </div>
-          
-          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
-            <div class="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-4">
-              <i class="fas fa-users text-purple-500 text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-slate-800 mb-2">用户数据</h3>
-            <p class="text-sm text-slate-500 mb-4">导出所有用户信息，包含注册时间、状态等</p>
-            <button onclick="exportData('users')" class="w-full py-2.5 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-medium transition">
-              <i class="fas fa-download mr-2"></i>导出 CSV
-            </button>
-          </div>
-          
-          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
-            <div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mb-4">
-              <i class="fas fa-folder text-orange-500 text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-slate-800 mb-2">分类数据</h3>
-            <p class="text-sm text-slate-500 mb-4">导出一级和二级分类的层级结构</p>
-            <button onclick="exportData('categories')" class="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-medium transition">
-              <i class="fas fa-download mr-2"></i>导出 CSV
-            </button>
-          </div>
-          
-          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
-            <div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mb-4">
-              <i class="fas fa-history text-red-500 text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-slate-800 mb-2">学习记录</h3>
-            <p class="text-sm text-slate-500 mb-4">导出台账学习记录</p>
-            <button onclick="exportData('learning')" class="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition">
-              <i class="fas fa-download mr-2"></i>导出 CSV
-            </button>
-          </div>
-          
-          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
-            <div class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
-              <i class="fas fa-database text-slate-500 text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-slate-800 mb-2">全部数据</h3>
-            <p class="text-sm text-slate-500 mb-4">导出完整的 JSON 数据文件，可用于数据备份</p>
-            <button onclick="exportData('all')" class="w-full py-2.5 bg-slate-600 hover:bg-slate-700 text-white rounded-xl font-medium transition">
-              <i class="fas fa-download mr-2"></i>导出 JSON
-            </button>
+          <div id="report-export-course-report" class="report-export-content"><div class="bg-white rounded-xl shadow-sm overflow-hidden"><table class="w-full"><thead class="bg-slate-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">课程名称</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">讲师</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">播放量</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th></tr></thead><tbody id="report-course-list" class="divide-y divide-slate-200"></tbody></table></div></div>
+          <div id="report-export-training-report" class="report-export-content hidden"><div class="bg-white rounded-xl shadow-sm overflow-hidden"><table class="w-full"><thead class="bg-slate-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">培训项目</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">课题</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">讲师</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th></tr></thead><tbody id="report-training-list" class="divide-y divide-slate-200"></tbody></table></div></div>
+          <div id="report-export-exam-report" class="report-export-content hidden"><div class="bg-white rounded-xl shadow-sm overflow-hidden"><table class="w-full"><thead class="bg-slate-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">考试名称</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">参与人数</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">平均分</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th></tr></thead><tbody id="report-exam-list" class="divide-y divide-slate-200"></tbody></table></div></div>
+          <div id="report-export-student-archive" class="report-export-content hidden"><div class="bg-white rounded-xl shadow-sm overflow-hidden"><table class="w-full"><thead class="bg-slate-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">学员姓名</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">学习课时</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">完成课程</th><th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th></tr></thead><tbody id="report-student-list" class="divide-y divide-slate-200"></tbody></table></div></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+            <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300"><div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mb-4"><i class="fas fa-book text-blue-500 text-2xl"></i></div><h3 class="text-lg font-semibold text-slate-800 mb-2">课程数据</h3><p class="text-sm text-slate-500 mb-4">导出所有课程详细数据</p><button onclick="exportData('courses')" class="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition"><i class="fas fa-download mr-2"></i>导出 CSV</button></div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300"><div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mb-4"><i class="fas fa-chalkboard-teacher text-emerald-500 text-2xl"></i></div><h3 class="text-lg font-semibold text-slate-800 mb-2">讲师数据</h3><p class="text-sm text-slate-500 mb-4">导出所有讲师详细数据</p><button onclick="exportData('lecturers')" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium transition"><i class="fas fa-download mr-2"></i>导出 CSV</button></div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300"><div class="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-4"><i class="fas fa-users text-purple-500 text-2xl"></i></div><h3 class="text-lg font-semibold text-slate-800 mb-2">用户数据</h3><p class="text-sm text-slate-500 mb-4">导出所有用户信息</p><button onclick="exportData('users')" class="w-full py-2.5 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-medium transition"><i class="fas fa-download mr-2"></i>导出 CSV</button></div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300"><div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mb-4"><i class="fas fa-folder text-orange-500 text-2xl"></i></div><h3 class="text-lg font-semibold text-slate-800 mb-2">分类数据</h3><p class="text-sm text-slate-500 mb-4">导出一级二级分类</p><button onclick="exportData('categories')" class="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-medium transition"><i class="fas fa-download mr-2"></i>导出 CSV</button></div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300"><div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mb-4"><i class="fas fa-history text-red-500 text-2xl"></i></div><h3 class="text-lg font-semibold text-slate-800 mb-2">学习记录</h3><p class="text-sm text-slate-500 mb-4">导出台账学习记录</p><button onclick="exportData('learning')" class="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition"><i class="fas fa-download mr-2"></i>导出 CSV</button></div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300"><div class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4"><i class="fas fa-database text-slate-500 text-2xl"></i></div><h3 class="text-lg font-semibold text-slate-800 mb-2">全部数据</h3><p class="text-sm text-slate-500 mb-4">导出完整 JSON 数据文件</p><button onclick="exportData('all')" class="w-full py-2.5 bg-slate-600 hover:bg-slate-700 text-white rounded-xl font-medium transition"><i class="fas fa-download mr-2"></i>导出 JSON</button></div>
           </div>
         </div>
       </div>
-
-      <!-- 问卷管理 -->
+      
+      <!-- 考试管理 -->
       <div id="tab-exams" class="tab-content hidden">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-2xl font-bold text-slate-800">
-            <i class="fas fa-file-alt text-indigo-500 mr-2"></i>问卷管理
+            <i class="fas fa-file-alt text-indigo-500 mr-2"></i>考试管理
           </h2>
         </div>
         
         <!-- 子标签页 -->
         <div class="bg-white rounded-xl shadow-sm p-1 mb-6 inline-flex gap-1">
           <button onclick="switchSubTab('exams', 'question-bank')" class="subtab-btn active px-4 py-2 rounded-lg text-sm font-medium">题库管理</button>
-          <button onclick="switchSubTab('exams', 'exam-papers')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">试卷管理</button>
-          <button onclick="switchSubTab('exams', 'survey')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">调研管理</button>
+          <button onclick="switchSubTab('exams', 'exam-papers')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">考试管理</button>
         </div>
         
         <!-- 题库管理内容 -->
@@ -917,10 +691,10 @@
           </div>
         </div>
         
-        <!-- 试卷管理内容 -->
+        <!-- 考试管理内容 -->
         <div id="exams-exam-papers" class="subtab-content hidden">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-slate-700">试卷管理</h3>
+            <h3 class="text-lg font-semibold text-slate-700">考试管理</h3>
             <button onclick="openExamModal()" class="btn-primary px-4 py-2 text-white rounded-lg font-medium shadow transition text-sm">
               <i class="fas fa-plus mr-1"></i>创建试卷
             </button>
@@ -978,62 +752,29 @@
           </div>
         </div>
         
-        <!-- 调研管理内容 -->
-        <div id="exams-survey" class="subtab-content hidden">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-slate-700">调研管理</h3>
-            <button onclick="openSurveyModal()" class="btn-primary px-4 py-2 text-white rounded-lg font-medium shadow transition text-sm">
-              <i class="fas fa-plus mr-1"></i>创建调研
-            </button>
-          </div>
-          
-          <!-- 搜索和筛选 -->
-          <div class="flex items-center gap-4 mb-6">
-            <div class="flex-1 relative">
-              <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-              <input type="text" id="survey-search-input" placeholder="搜索调研标题..." class="w-full pl-12 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <select id="survey-status-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-              <option value="all">全部状态</option>
-              <option value="draft">草稿</option>
-              <option value="active">进行中</option>
-              <option value="ended">已结束</option>
-            </select>
-          </div>
-          
-          <!-- 调研统计卡片 -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white">
-              <p class="text-sm opacity-80">调研总数</p>
-              <p class="text-3xl font-bold mt-1" id="stat-total-surveys">12</p>
-            </div>
-            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white">
-              <p class="text-sm opacity-80">进行中</p>
-              <p class="text-3xl font-bold mt-1" id="stat-active-surveys">5</p>
-            </div>
-            <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-4 text-white">
-              <p class="text-sm opacity-80">总参与人数</p>
-              <p class="text-3xl font-bold mt-1" id="stat-total-responses">328</p>
-            </div>
-            <div class="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl p-4 text-white">
-              <p class="text-sm opacity-80">平均完成率</p>
-              <p class="text-3xl font-bold mt-1" id="stat-completion-rate">94.5%</p>
-            </div>
-          </div>
-          
-          <!-- 调研列表 -->
-          <div id="survey-list-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- 调研卡片将通过JavaScript动态渲染 -->
-          </div>
+      </div>
+
+      <!-- 调研管理 -->
+      <div id="tab-survey" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-poll text-indigo-500 mr-2"></i>调研管理
+          </h2>
+          <button onclick="openSurveyModal()" class="btn-primary px-4 py-2 text-white rounded-lg font-medium shadow transition text-sm">
+            <i class="fas fa-plus mr-1"></i>创建调研
+          </button>
         </div>
         
+        <div id="survey-list-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- 调研卡片将通过JavaScript动态渲染 -->
+        </div>
       </div>
       
-      <!-- 门户运营 -->
+      <!-- 运营管理 -->
       <div id="tab-portal" class="tab-content hidden">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-2xl font-bold text-slate-800">
-            <i class="fas fa-globe text-indigo-500 mr-2"></i>门户运营
+            <i class="fas fa-cog text-indigo-500 mr-2"></i>运营管理
           </h2>
         </div>
         
@@ -1641,7 +1382,8 @@
         ]);
         data.courses = await coursesRes.json();
         data.categories = await catsRes.json();
-        data.lecturers = await lectRes.json();
+        const lectJson = await lectRes.json();
+        data.lecturers = lectJson.data || lectJson;
         data.training = await trainRes.json();
         data.notices = await noticesRes.json();
 
@@ -1739,10 +1481,6 @@
         renderPortalCategories();
       }
       
-      // 切换到调研管理时加载数据
-      if (tabName === 'exams' && subTabName === 'survey') {
-        loadSurveyList();
-      }
     }
 
     // ========== 轮播管理 ==========
@@ -1999,7 +1737,9 @@
         notices: renderNotices,
         users: loadUsers,
         portal: () => loadCarousels(),
-        exams: loadExams
+        exams: loadExams,
+        survey: loadSurveyList,
+        reports: loadReports
       };
       if (loaders[name]) loaders[name]();
     }
@@ -3336,6 +3076,11 @@
             </td>
             <td class="px-4 py-4 text-center">
               <div class="flex items-center justify-center gap-2">
+                <button onclick="toggleFeaturedLecturer(${lect.id})" 
+                  class="p-2 ${data.index_featured_lecturers?.includes(lect.id) ? 'text-yellow-500 hover:bg-yellow-50' : 'text-slate-400 hover:bg-slate-100'} rounded-lg transition" 
+                  title="${data.index_featured_lecturers?.includes(lect.id) ? '取消明星' : '设为明星讲师'}">
+                  <i class="fas fa-star ${data.index_featured_lecturers?.includes(lect.id) ? '' : 'far'}"></i>
+                </button>
                 <button onclick="editLecturer(${lect.id})" 
                   class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑">
                   <i class="fas fa-edit"></i>
@@ -3539,8 +3284,14 @@
       e.preventDefault();
       const levelNames = { chief: '首席讲师', senior: '高级讲师', intermediate: '中级讲师', junior: '初级讲师', intern: '实习讲师' };
       const skills = JSON.parse(document.getElementById('l-skills').value || '[]');
+      // 动态计算该讲师的课程数
+      const tempName = document.getElementById('l-name').value.trim();
+      const existingLecturer = id ? (data.lecturers || []).find(l => l.id === id) : null;
+      const lecturerIdForCount = id || (existingLecturer ? existingLecturer.id : Date.now());
+      const dynamicCourseCount = (data.management_courses || []).filter(c => String(c.lecturerId) === String(existingLecturer ? existingLecturer.id : lecturerIdForCount)).length;
+
       const formData = {
-        name: document.getElementById('l-name').value.trim(),
+        name: tempName,
         department: document.getElementById('l-dept').value.trim(),
         title: document.getElementById('l-title').value.trim(),
         level: document.getElementById('l-level').value,
@@ -3551,8 +3302,8 @@
         status: 'enabled',
         type: 'internal',
         skills: skills,
-        courseCount: 0,
-        regDate: new Date().toISOString().split('T')[0]
+        courseCount: dynamicCourseCount,
+        regDate: existingLecturer ? (existingLecturer.regDate || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0]
       };
       
       try {
@@ -3586,6 +3337,36 @@
       if (lect) openLecturerModal(lect);
     }
     
+    // 切换明星讲师状态
+    async function toggleFeaturedLecturer(id) {
+      if (!data.index_featured_lecturers) data.index_featured_lecturers = [];
+      const idx = data.index_featured_lecturers.indexOf(id);
+      let msg = '';
+      if (idx >= 0) {
+        data.index_featured_lecturers.splice(idx, 1);
+        msg = '已取消明星讲师';
+      } else {
+        data.index_featured_lecturers.push(id);
+        msg = '已设为明星讲师';
+      }
+      try {
+        const res = await fetch(API + '/sync/index_featured_lecturers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data.index_featured_lecturers)
+        });
+        if (res.ok) {
+          toast(msg);
+          await loadAllData();
+          renderLecturers();
+        } else {
+          toast('同步失败', 'error');
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+
     async function toggleLecturerStatus(id) {
       const lect = data.lecturers.find(l => l.id === id);
       if (!lect) return;
@@ -3699,7 +3480,7 @@
       '游雁学堂': { color: 'bg-blue-100 text-blue-700', icon: 'fa-graduation-cap' },
       '鸿雁计划': { color: 'bg-green-100 text-green-700', icon: 'fa-users' },
       'AI实践分享': { color: 'bg-amber-100 text-amber-700', icon: 'fa-laptop' },
-      '雏雁训练营': { color: 'bg-red-100 text-red-700', icon: 'fa-building' }
+      '雏雁训练营': { color: 'bg-pink-100 text-pink-700', icon: 'fa-building' }
     };
 
     // 2026年国家法定节假日
@@ -3747,6 +3528,21 @@
       }
     }
 
+    function getTrainingTypeClass(project) {
+      const classes = {
+        '新雁计划': 'from-orange-400 to-orange-600',
+        '游雁学堂': 'from-blue-400 to-blue-600',
+        '鸿雁计划': 'from-green-400 to-green-600',
+        'AI实践分享': 'from-amber-400 to-amber-600',
+        '雏雁训练营': 'from-red-400 to-red-600'
+      };
+      return classes[project] || 'from-gray-400 to-gray-600';
+    }
+
+    function getTrainingTypeName(project) {
+      return project;
+    }
+
     function renderTrainingCalendar() {
       const grid = document.getElementById('training-calendar-grid');
       if (!grid) return;
@@ -3758,7 +3554,7 @@
       const events = data.training || [];
 
       for (let i = 0; i < startDay; i++) {
-        grid.innerHTML += '<div class="training-calendar-day empty"></div>';
+        grid.innerHTML += '<div class="aspect-square"></div>';
       }
 
       for (let day = 1; day <= lastDay.getDate(); day++) {
@@ -3771,22 +3567,34 @@
         const weekDay = new Date(trainingCurrentYear, trainingCurrentMonth, day).getDay();
         const isWeekend = weekDay === 0 || weekDay === 6;
 
-        let cellClass = 'training-calendar-day';
+        let cellClass = 'aspect-square rounded-lg p-2 cursor-pointer transition-all duration-300 border border-gray-100 overflow-hidden';
         if (holidayName) {
-          cellClass += ' holiday';
+          cellClass += ' bg-gradient-to-br from-red-50 to-red-100 hover:shadow-md hover:-translate-y-0.5';
         } else if (isWeekend) {
-          cellClass += ' weekend';
+          cellClass += ' bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-md hover:-translate-y-0.5';
+        } else {
+          cellClass += ' bg-gradient-to-br from-white to-gray-50 hover:shadow-md hover:-translate-y-0.5';
         }
-        if (isToday) cellClass += ' today';
+        if (isToday) {
+          cellClass += ' ring-2 ring-primary/40 ring-offset-2';
+        }
 
         let eventsHtml = '';
         if (dayEvents.length > 0) {
           eventsHtml = dayEvents.slice(0, 2).map(e => {
-            const cat = trainingCategories[e.project] || { color: 'bg-slate-100 text-slate-600' };
-            return `<div class="mt-1"><span class="training-event-badge ${cat.color}">${e.project}</span><div class="mt-0.5 text-slate-700 text-[11px] font-medium truncate">${e.name}</div></div>`;
+            const cat = trainingCategories[e.project] || { color: 'bg-gray-100 text-gray-600' };
+            return `
+              <div class="mt-1 truncate">
+                <span class="${cat.color} inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-semibold">
+                  ${e.project}
+                </span>
+                <div class="mt-0.5 text-gray-800 text-sm font-medium truncate leading-tight">${e.name}</div>
+                <div class="text-gray-400 text-xs truncate leading-tight">${e.instructor || ''}</div>
+              </div>
+            `;
           }).join('');
           if (dayEvents.length > 2) {
-            eventsHtml += `<div class="mt-1 text-slate-400 text-[10px] text-center">+${dayEvents.length - 2}</div>`;
+            eventsHtml += `<div class="mt-0.5 text-gray-400 text-[10px] text-center">+${dayEvents.length - 2}</div>`;
           }
         } else if (holidayName) {
           eventsHtml = `<div class="mt-1 text-red-500 text-xs font-medium text-center">${holidayName}</div>`;
@@ -3794,11 +3602,11 @@
 
         grid.innerHTML += `
           <div class="${cellClass}" onclick="handleTrainingDayClick('${dateStr}')">
-            <div class="h-full flex flex-col relative min-h-[90px]">
-              ${holidayName ? '<span class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded flex items-center justify-center">节</span>' : ''}
+            <div class="flex flex-col h-full relative overflow-hidden">
+              ${holidayName ? '<span class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded flex items-center justify-center shadow-sm">休</span>' : ''}
               <div class="flex justify-between items-start">
-                <span class="training-day-number ${isToday ? 'today-badge' : 'default-badge'}">${day}</span>
-                <span class="text-slate-400 text-[10px]">${dayEvents.length > 0 ? dayEvents.length + '场' : ''}</span>
+                <span class="${isToday ? 'bg-primary text-white' : 'bg-purple-100 text-purple-600'} rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium shadow-sm">${day}</span>
+                <span class="text-gray-400 text-[10px]">${dayEvents.length > 0 ? dayEvents.length + '场' : ''}</span>
               </div>
               ${eventsHtml}
             </div>
@@ -3821,14 +3629,7 @@
       }
       emptyState.classList.add('hidden');
 
-      const statusMap = {
-        active: { class: 'bg-emerald-100 text-emerald-700', text: '进行中' },
-        completed: { class: 'bg-slate-100 text-slate-600', text: '已完成' },
-        pending: { class: 'bg-amber-100 text-amber-700', text: '待开始' }
-      };
-
       tbody.innerHTML = events.map(e => {
-        const st = statusMap[e.status] || statusMap.pending;
         const cat = trainingCategories[e.project] || { color: 'bg-slate-100 text-slate-600' };
         const start = e.startTime ? (e.startTime.includes('T') ? e.startTime.replace('T', ' ') : e.startTime) : '-';
         const end = e.endTime ? (e.endTime.includes('T') ? e.endTime.replace('T', ' ') : e.endTime) : '-';
@@ -3840,7 +3641,6 @@
             <td class="px-6 py-4 text-sm text-slate-600">${e.location || '-'}</td>
             <td class="px-6 py-4 text-sm text-slate-600">${start}</td>
             <td class="px-6 py-4 text-sm text-slate-600">${end}</td>
-            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium ${st.class}">${st.text}</span></td>
             <td class="px-6 py-4 text-right">
               <div class="flex items-center justify-end gap-2">
                 <button onclick="editTraining(${e.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit"></i></button>
@@ -3945,17 +3745,67 @@
       renderTrainingCalendar();
     }
 
+    // ========== 讲师下拉选择 ==========
+    function showLecturerDropdown() {
+      const dropdown = document.getElementById('t-instructor-dropdown');
+      if (!dropdown) return;
+      const list = data.lecturers || [];
+      const html = list.map(l => `
+        <div onclick="selectLecturer('${l.name.replace(/'/g, "\\'")}')" class="px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm text-slate-700 border-b border-slate-50 last:border-0">
+          <div class="font-medium">${l.name}</div>
+          <div class="text-xs text-slate-400">${l.department || ''} ${l.levelName || ''}</div>
+        </div>
+      `).join('');
+      dropdown.innerHTML = html || '<div class="px-4 py-3 text-sm text-slate-400 text-center">暂无讲师数据</div>';
+      dropdown.classList.remove('hidden');
+    }
+
+    function filterLecturerDropdown(val) {
+      const dropdown = document.getElementById('t-instructor-dropdown');
+      if (!dropdown) return;
+      const list = data.lecturers || [];
+      const keyword = val.trim().toLowerCase();
+      const filtered = keyword ? list.filter(l => l.name.toLowerCase().includes(keyword) || (l.department || '').toLowerCase().includes(keyword)) : list;
+      const html = filtered.map(l => `
+        <div onclick="selectLecturer('${l.name.replace(/'/g, "\\'")}')" class="px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm text-slate-700 border-b border-slate-50 last:border-0">
+          <div class="font-medium">${l.name}</div>
+          <div class="text-xs text-slate-400">${l.department || ''} ${l.levelName || ''}</div>
+        </div>
+      `).join('');
+      dropdown.innerHTML = html || '<div class="px-4 py-3 text-sm text-slate-400 text-center">无匹配讲师</div>';
+      dropdown.classList.remove('hidden');
+    }
+
+    function selectLecturer(name) {
+      const input = document.getElementById('t-instructor');
+      const dropdown = document.getElementById('t-instructor-dropdown');
+      if (input) input.value = name;
+      if (dropdown) dropdown.classList.add('hidden');
+    }
+
+    // 点击外部关闭讲师下拉
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('t-instructor-dropdown');
+      const input = document.getElementById('t-instructor');
+      if (dropdown && !dropdown.contains(e.target) && e.target !== input) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
     function openTrainingModal(training = null, prefillDate = null) {
       const isEdit = !!training;
-      const dateValue = prefillDate || training?.date || '';
       const startTimeValue = training?.startTime || '';
       const endTimeValue = training?.endTime || '';
 
-      // 处理 datetime-local 格式
-      const toDatetimeLocal = (val) => {
-        if (!val) return '';
-        if (val.includes('T')) return val;
-        return val + 'T09:00';
+      // 处理 datetime-local 格式，支持手动输入
+      const toDatetimeLocal = (val, fallbackDate, fallbackTime) => {
+        if (!val) {
+          if (fallbackDate) return `${fallbackDate}T${fallbackTime || '09:00'}`;
+          return '';
+        }
+        const normalized = val.trim().replace(' ', 'T');
+        if (normalized.includes('T')) return normalized;
+        return normalized + 'T09:00';
       };
 
       const categoryOptions = Object.keys(trainingCategories).map(cat =>
@@ -3969,22 +3819,12 @@
             <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
           </div>
           <form onsubmit="saveTraining(event, ${training?.id || 'null'})" class="p-6 space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">培训项目 <span class="text-red-500">*</span></label>
-                <select id="t-project" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                  <option value="">请选择</option>
-                  ${categoryOptions}
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">状态</label>
-                <select id="t-status" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                  <option value="pending" ${(training?.status || 'pending') === 'pending' ? 'selected' : ''}>待开始</option>
-                  <option value="active" ${training?.status === 'active' ? 'selected' : ''}>进行中</option>
-                  <option value="completed" ${training?.status === 'completed' ? 'selected' : ''}>已完成</option>
-                </select>
-              </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">培训项目 <span class="text-red-500">*</span></label>
+              <select id="t-project" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                <option value="">请选择</option>
+                ${categoryOptions}
+              </select>
             </div>
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">培训课题 <span class="text-red-500">*</span></label>
@@ -3995,27 +3835,30 @@
               <textarea id="t-content" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none">${training?.content || ''}</textarea>
             </div>
             <div class="grid grid-cols-2 gap-4">
-              <div>
+              <div class="relative">
                 <label class="block text-sm font-medium text-slate-700 mb-1">培训讲师 <span class="text-red-500">*</span></label>
-                <input type="text" id="t-instructor" value="${training?.instructor || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="text" id="t-instructor" value="${training?.instructor || ''}" required
+                       onfocus="showLecturerDropdown()" oninput="filterLecturerDropdown(this.value)"
+                       class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                       placeholder="输入或选择讲师" autocomplete="off">
+                <div id="t-instructor-dropdown" class="absolute left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto hidden z-50"></div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">培训地点 <span class="text-red-500">*</span></label>
                 <input type="text" id="t-location" value="${training?.location || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
               </div>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">培训日期 <span class="text-red-500">*</span></label>
-              <input type="date" id="t-date" value="${dateValue}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">开始时间 <span class="text-red-500">*</span></label>
-                <input type="datetime-local" id="t-start" value="${toDatetimeLocal(startTimeValue)}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="datetime-local" id="t-start" value="${toDatetimeLocal(startTimeValue, prefillDate, '09:00')}" required
+                       class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <p class="text-xs text-slate-400 mt-1">支持手动输入，如 2026-06-11 09:00</p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">结束时间 <span class="text-red-500">*</span></label>
-                <input type="datetime-local" id="t-end" value="${toDatetimeLocal(endTimeValue)}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="datetime-local" id="t-end" value="${toDatetimeLocal(endTimeValue, prefillDate, '17:00')}" required
+                       class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
               </div>
             </div>
             <div class="flex justify-end space-x-3 pt-4">
@@ -4029,14 +3872,21 @@
 
     async function saveTraining(e, id) {
       e.preventDefault();
-      const dateVal = document.getElementById('t-date').value;
-      const startVal = document.getElementById('t-start').value;
-      const endVal = document.getElementById('t-end').value;
+      // 规范化 id：字符串 'null' 或空值都转为 null，确保新增时走 POST 路径
+      id = (id === 'null' || id === null || id === undefined || id === '') ? null : Number(id);
+      let startVal = document.getElementById('t-start').value.trim().replace(' ', 'T');
+      let endVal = document.getElementById('t-end').value.trim().replace(' ', 'T');
 
+      if (!startVal || !endVal) {
+        toast('请填写开始时间和结束时间', 'error');
+        return;
+      }
       if (new Date(startVal) >= new Date(endVal)) {
         toast('结束时间必须晚于开始时间', 'error');
         return;
       }
+
+      const dateVal = startVal.split('T')[0];
 
       const formData = {
         project: document.getElementById('t-project').value,
@@ -4046,8 +3896,7 @@
         location: document.getElementById('t-location').value.trim(),
         date: dateVal,
         startTime: startVal,
-        endTime: endVal,
-        status: document.getElementById('t-status').value
+        endTime: endVal
       };
 
       try {
@@ -5524,7 +5373,333 @@
       }
     });
 
-    // ========== 工具函数 ==========
+    // ========== 报表管理 ==========
+    function loadReports() {
+      // 先加载数据概览（默认子标签）
+      switchSubTab('reports', 'overview');
+      updateReportStats();
+    }
+    
+    async function updateReportStats() {
+      try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
+        const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+        el('rpt-stat-courses', (data.management_courses || []).length);
+        el('rpt-stat-lecturers', (data.lecturers || []).filter(l => l.status === 'enabled').length);
+        el('rpt-stat-users', (data.users || []).length);
+        el('rpt-stat-trainings', (data.training_events || []).length);
+      } catch (e) { console.log('报表数据加载失败'); }
+    }
+    
+    function switchReportExportTab(name) {
+      document.querySelectorAll('.report-export-tab').forEach(btn => {
+        btn.classList.remove('active', 'bg-indigo-600', 'text-white');
+        btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+      });
+      const target = Array.from(document.querySelectorAll('.report-export-tab')).find(
+        btn => btn.onclick && btn.onclick.toString().includes(name)
+      );
+      if (target) {
+        target.classList.add('active', 'bg-indigo-600', 'text-white');
+        target.classList.remove('text-slate-600', 'hover:bg-slate-100');
+      }
+      document.querySelectorAll('.report-export-content').forEach(c => c.classList.add('hidden'));
+      const content = document.getElementById('report-export-' + name);
+      if (content) content.classList.remove('hidden');
+    }
+
+    // ========== 调研管理 ==========
+    let surveyQuestions = []; // 当前编辑中的题目列表
+    let currentSurveyId = null; // 当前编辑的调研ID
+    
+    async function loadSurveyList() {
+      const container = document.getElementById('survey-list-container');
+      if (!container) return;
+      
+      try {
+        const res = await fetch('/api/surveys');
+        const json = await res.json();
+        const surveys = (json.success && json.data) ? json.data : (Array.isArray(json) ? json : []);
+        
+        const totalEl = document.getElementById('stat-total-surveys');
+        const activeEl = document.getElementById('stat-active-surveys');
+        if (totalEl) totalEl.textContent = surveys.length;
+        if (activeEl) activeEl.textContent = surveys.filter(s => s.status === 'active').length;
+        
+        // 统计参与人数
+        try {
+          const allRes = await fetch('/api/data');
+          const allData = await allRes.json();
+          const responses = allData.survey_responses || [];
+          const totalResponsesEl = document.getElementById('stat-total-responses');
+          if (totalResponsesEl) totalResponsesEl.textContent = responses.length;
+        } catch(e) {}
+        
+        if (!surveys.length) {
+          container.innerHTML = `
+            <div class="col-span-full text-center py-12 text-slate-400">
+              <i class="fas fa-poll text-4xl mb-3 block"></i>
+              <p>暂未创建调研问卷</p>
+              <button onclick="openSurveyModal()" class="mt-4 btn-primary px-6 py-2.5 text-white rounded-xl font-medium">创建第一个调研</button>
+            </div>`;
+          return;
+        }
+        
+        container.innerHTML = surveys.map(s => {
+          const statusMap = { draft: '草稿', active: '进行中', ended: '已结束' };
+          const statusColor = { draft: 'bg-yellow-100 text-yellow-700', active: 'bg-green-100 text-green-700', ended: 'bg-gray-100 text-gray-600' };
+          const qCount = s.questions ? s.questions.length : 0;
+          return `
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition">
+              <div class="flex items-start justify-between mb-3">
+                <h4 class="font-semibold text-slate-800 truncate pr-2">${escHtml(s.title || '未命名调研')}</h4>
+                <span class="px-2 py-1 ${statusColor[s.status] || 'bg-gray-100 text-gray-600'} rounded text-xs whitespace-nowrap">${statusMap[s.status] || s.status}</span>
+              </div>
+              <p class="text-sm text-slate-500 mb-4 line-clamp-2">${escHtml(s.description || '暂无描述')}</p>
+              <div class="flex items-center gap-3 text-xs text-slate-400 mb-4">
+                <span><i class="far fa-question-circle mr-1"></i>${qCount} 题</span>
+                <span><i class="far fa-clock mr-1"></i>${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '未知'}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="editSurvey(${s.id})" class="btn-primary text-white px-3 py-1.5 rounded-lg text-xs font-medium"><i class="fas fa-edit mr-1"></i>编辑</button>
+                <button onclick="viewSurveyResponses(${s.id})" class="bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-indigo-200"><i class="fas fa-chart-bar mr-1"></i>统计</button>
+                <button onclick="deleteSurvey(${s.id})" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-100"><i class="fas fa-trash mr-1"></i>删除</button>
+              </div>
+            </div>`;
+        }).join('');
+      } catch (e) {
+        console.error('加载调研列表失败:', e);
+        container.innerHTML = '<div class="col-span-full text-center py-12 text-slate-400"><i class="fas fa-exclamation-triangle text-2xl mb-2 block"></i>加载失败</div>';
+      }
+    }
+    
+    function openSurveyModal(id = null) {
+      surveyQuestions = [];
+      const isEdit = id !== null;
+      
+      if (isEdit) {
+        // 异步加载已有数据
+        editSurvey(id);
+        return;
+      }
+      
+      renderSurveyModal(null, isEdit);
+    }
+    
+    function renderSurveyModal(survey, isEdit) {
+      if (survey) {
+        surveyQuestions = survey.questions || [];
+      } else {
+        surveyQuestions = [];
+      }
+      
+      // 移除旧modal
+      document.querySelectorAll('.modal-overlay').forEach(el => el.remove());
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center pt-12 pb-8';
+      modal.onclick = function(e) { if (e.target === this) this.remove(); };
+      
+      const questionsHtml = surveyQuestions.map((q, idx) => `
+        <div class="bg-slate-50 rounded-xl p-4 mb-3 question-item" data-idx="${idx}">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs font-bold text-slate-400 bg-slate-200 px-2 py-0.5 rounded">${idx + 1}</span>
+            <select onchange="surveyQuestions[${idx}].type = this.value; renderSurveyQuestionItem(${idx})" class="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white">
+              <option value="radio" ${q.type === 'radio' ? 'selected' : ''}>单选题</option>
+              <option value="checkbox" ${q.type === 'checkbox' ? 'selected' : ''}>多选题</option>
+              <option value="text" ${q.type === 'text' ? 'selected' : ''}>填空题</option>
+              <option value="rating" ${q.type === 'rating' ? 'selected' : ''}>评分题</option>
+            </select>
+            <label class="flex items-center gap-1 text-xs ml-auto">
+              <input type="checkbox" ${q.required ? 'checked' : ''} onchange="surveyQuestions[${idx}].required = this.checked" class="rounded">
+              必答
+            </label>
+            <button onclick="removeSurveyQuestion(${idx})" class="text-red-400 hover:text-red-600 text-xs ml-2"><i class="fas fa-times"></i></button>
+          </div>
+          <input type="text" value="${escHtml(q.title || '')}" placeholder="请输入题目" onchange="surveyQuestions[${idx}].title = this.value" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <div id="q-options-${idx}">${renderQuestionOptions(idx, q)}</div>
+        </div>
+      `).join('');
+      
+      modal.innerHTML = `
+        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[calc(100vh-6rem)] flex flex-col shadow-xl relative overflow-hidden" onclick="event.stopPropagation()">
+          <div class="bg-gradient-primary px-6 py-4 flex-shrink-0 flex items-center justify-between">
+            <h2 class="text-xl font-bold text-white">${isEdit ? '编辑调研' : '创建调研'}</h2>
+            <button onclick="this.closest('.modal-overlay').remove()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white"><i class="fa fa-times"></i></button>
+          </div>
+          <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">调研标题 <span class="text-red-500">*</span></label>
+                <input type="text" id="survey-title" value="${escHtml(survey ? survey.title || '' : '')}" class="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入调研标题">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">状态</label>
+                <select id="survey-status" class="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                  <option value="draft" ${survey && survey.status === 'draft' ? 'selected' : ''}>草稿</option>
+                  <option value="active" ${survey && survey.status === 'active' ? 'selected' : ''}>进行中</option>
+                  <option value="ended" ${survey && survey.status === 'ended' ? 'selected' : ''}>已结束</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">调研描述</label>
+              <textarea id="survey-desc" rows="2" class="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入调研描述">${escHtml(survey ? survey.description || '' : '')}</textarea>
+            </div>
+            
+            <div class="border-t pt-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-slate-700">题目列表 <span class="text-sm font-normal text-slate-400">(${surveyQuestions.length} 题)</span></h3>
+                <button onclick="addSurveyQuestion()" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium"><i class="fas fa-plus mr-1"></i>添加题目</button>
+              </div>
+              <div id="questions-container">${questionsHtml || '<p class="text-sm text-slate-400 text-center py-6">暂无题目，点击上方按钮添加</p>'}</div>
+            </div>
+          </div>
+          <div class="px-6 pb-5 pt-2 flex gap-3 border-t">
+            <button onclick="this.closest('.modal-overlay').remove()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition">取消</button>
+            <button onclick="saveSurvey(${survey ? survey.id : 'null'})" class="flex-1 py-3 rounded-xl bg-gradient-primary text-white font-medium hover:opacity-90 transition"><i class="fas fa-save mr-1"></i>保存</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    function renderQuestionOptions(idx, q) {
+      if (q.type === 'radio' || q.type === 'checkbox') {
+        const options = q.options || [''];
+        return options.map((opt, oi) => `
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs text-slate-400 w-4">${String.fromCharCode(65 + oi)}.</span>
+            <input type="text" value="${escHtml(opt)}" placeholder="选项 ${String.fromCharCode(65 + oi)}" onchange="surveyQuestions[${idx}].options[${oi}] = this.value" class="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            ${options.length > 1 ? `<button onclick="surveyQuestions[${idx}].options.splice(${oi},1); renderSurveyModal(getCurrentSurveyData(), true)" class="text-red-400 hover:text-red-600 text-xs"><i class="fas fa-times"></i></button>` : ''}
+          </div>
+        `).join('') + `
+          <button onclick="surveyQuestions[${idx}].options.push(''); renderSurveyModal(getCurrentSurveyData(), true)" class="text-xs text-indigo-600 hover:text-indigo-800 mt-1"><i class="fas fa-plus mr-1"></i>添加选项</button>`;
+      } else if (q.type === 'rating') {
+        const max = q.maxRating || 5;
+        return `<div class="flex items-center gap-1 text-yellow-500 text-lg">${Array.from({length: max}, (_, i) => `<i class="fa fa-star${i < (q.maxRating||5) ? '' : '-o'}"></i>`).join('')} <span class="text-xs text-slate-400 ml-2">(${max} 分制)</span></div>`;
+      } else {
+        return '<p class="text-xs text-slate-400">填空文本输入框</p>';
+      }
+    }
+    
+    function renderSurveyQuestionItem(idx) {
+      // 按需刷新单个题目选项区域
+      const container = document.getElementById('q-options-' + idx);
+      if (container && surveyQuestions[idx]) {
+        container.innerHTML = renderQuestionOptions(idx, surveyQuestions[idx]);
+      }
+    }
+    
+    function getCurrentSurveyData() {
+      return {
+        title: document.getElementById('survey-title')?.value || '',
+        description: document.getElementById('survey-desc')?.value || '',
+        status: document.getElementById('survey-status')?.value || 'draft',
+        questions: surveyQuestions
+      };
+    }
+    
+    function addSurveyQuestion() {
+      surveyQuestions.push({
+        type: 'radio',
+        title: '',
+        required: false,
+        options: ['']
+      });
+      // 重新渲染整个modal以刷新题目列表
+      const survey = getCurrentSurveyData();
+      const id = document.getElementById('survey-title')?.dataset?.id;
+      renderSurveyModal({...survey, id: id ? parseInt(id) : undefined}, !!id);
+    }
+    
+    function removeSurveyQuestion(idx) {
+      surveyQuestions.splice(idx, 1);
+      const survey = getCurrentSurveyData();
+      const id = document.getElementById('survey-title')?.dataset?.id;
+      renderSurveyModal({...survey, id: id ? parseInt(id) : undefined}, !!id);
+    }
+    
+    async function saveSurvey(id) {
+      const title = document.getElementById('survey-title').value.trim();
+      const description = document.getElementById('survey-desc').value.trim();
+      const status = document.getElementById('survey-status').value;
+      
+      if (!title) { toast('请输入调研标题', 'warning'); return; }
+      if (surveyQuestions.length === 0) { toast('请至少添加一个题目', 'warning'); return; }
+      
+      const body = { title, description, status, questions: surveyQuestions };
+      const isEdit = id !== 'null';
+      const url = isEdit ? '/api/surveys/' + id : '/api/surveys';
+      const method = isEdit ? 'PUT' : 'POST';
+      
+      try {
+        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (res.ok) {
+          toast(isEdit ? '调研已更新' : '调研已创建');
+          document.querySelectorAll('.modal-overlay').forEach(el => el.remove());
+          loadSurveyList();
+        } else {
+          toast('保存失败', 'error');
+        }
+      } catch (e) {
+        toast('保存失败: ' + e.message, 'error');
+      }
+    }
+    
+    async function editSurvey(id) {
+      try {
+        const res = await fetch('/api/surveys/' + id);
+        const json = await res.json();
+        const survey = json.success ? json.data : json;
+        renderSurveyModal(survey, true);
+      } catch (e) {
+        toast('获取调研信息失败', 'error');
+      }
+    }
+    
+    async function deleteSurvey(id) {
+      if (!confirm('确定要删除这个调研吗？')) return;
+      try {
+        const res = await fetch('/api/surveys/' + id, { method: 'DELETE' });
+        if (res.ok) { toast('调研已删除'); loadSurveyList(); }
+        else { toast('删除失败', 'error'); }
+      } catch (e) { toast('删除失败: ' + e.message, 'error'); }
+    }
+    
+    async function viewSurveyResponses(surveyId) {
+      try {
+        const res = await fetch('/api/surveys/' + surveyId + '/responses');
+        const json = await res.json();
+        const responses = json.data || [];
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center pt-12 pb-8';
+        modal.onclick = function(e) { if (e.target === this) this.remove(); };
+        
+        modal.innerHTML = `
+          <div class="bg-white rounded-2xl w-full max-w-lg max-h-[calc(100vh-6rem)] flex flex-col shadow-xl relative overflow-hidden" onclick="event.stopPropagation()">
+            <div class="bg-gradient-primary px-6 py-4 flex-shrink-0 flex items-center justify-between">
+              <h2 class="text-xl font-bold text-white">作答统计</h2>
+              <button onclick="this.closest('.modal-overlay').remove()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white"><i class="fa fa-times"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-5">
+              <p class="text-sm text-slate-500 mb-4">共 <span class="font-bold text-slate-700">${responses.length}</span> 人提交</p>
+              ${responses.length === 0 ? '<p class="text-center text-slate-400 py-8">暂无作答记录</p>' : responses.map((r, i) => `
+                <div class="bg-slate-50 rounded-lg p-3 mb-2">
+                  <p class="text-xs text-slate-400">作答 #${i + 1} · ${new Date(r.submittedAt).toLocaleString()}</p>
+                </div>
+              `).join('')}
+            </div>
+            <div class="px-6 pb-5"><button onclick="this.closest('.modal-overlay').remove()" class="w-full py-3 rounded-xl bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition">关闭</button></div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      } catch (e) { toast('获取统计失败', 'error'); }
+    }
+
+    // ========== 工具函数 ==========    // ========== 工具函数 ==========
     function escHtml(str) {
       if (!str) return '';
       const div = document.createElement('div');

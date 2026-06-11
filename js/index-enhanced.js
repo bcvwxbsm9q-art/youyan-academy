@@ -135,12 +135,12 @@
      */
     function renderAll() {
         if (_renderDebounceTimer) clearTimeout(_renderDebounceTimer);
-        _renderDebounceTimer = setTimeout(function() {
+        _renderDebounceTimer = setTimeout(async function() {
             _renderDebounceTimer = null;
             renderBanners();
             renderNotice();
             renderFeaturedCourses();
-            renderFeaturedLecturers();
+            await renderFeaturedLecturers();
             renderStats();
         }, 150);
     }
@@ -420,13 +420,6 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- 底部 -->
-                <div class="px-6 py-4 border-t border-gray-100 flex justify-end flex-shrink-0">
-                    <button onclick="closeNoticeModal()" class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition font-medium">
-                        关闭
-                    </button>
-                </div>
             </div>
         `;
         document.body.appendChild(modal);
@@ -543,21 +536,45 @@
     }
 
     /**
-     * 渲染明星讲师
+     * 渲染明星讲师（实时从API获取数据）
      */
-    function renderFeaturedLecturers() {
+    async function renderFeaturedLecturers() {
         const container = document.getElementById('featured-lecturers-grid');
         if (!container) return;
 
         let featured = [];
-        if (window.DataAPI) {
-            const flIds = window.DataAPI.getFeaturedLecturerIds();
-            const allLecturers = window.DataAPI.getEnabledLecturers();
-            
-            if (flIds && flIds.length > 0) {
-                featured = flIds.map(id => allLecturers.find(l => String(l.id) === String(id))).filter(Boolean);
-            } else {
-                featured = allLecturers.slice(0, 6);
+
+        // 优先从API实时获取讲师数据（带动态courseCount）
+        try {
+            const res = await fetch(`${API_SERVER}/lecturers`);
+            if (res.ok) {
+                const result = await res.json();
+                const allLecturers = (result.data || []).filter(l => l.status === 'enabled');
+                
+                // 尝试获取明星讲师ID配置
+                let flIds = [];
+                if (window.DataAPI) {
+                    flIds = window.DataAPI.getFeaturedLecturerIds() || [];
+                }
+                
+                if (flIds && flIds.length > 0) {
+                    featured = flIds.map(id => allLecturers.find(l => String(l.id) === String(id))).filter(Boolean);
+                } else {
+                    featured = allLecturers.slice(0, 6);
+                }
+            }
+        } catch (e) {
+            console.warn('[Index] 获取讲师数据失败，回退到缓存:', e);
+            // 回退到DataAPI缓存
+            if (window.DataAPI) {
+                const flIds = window.DataAPI.getFeaturedLecturerIds();
+                const allLecturers = window.DataAPI.getEnabledLecturers();
+                
+                if (flIds && flIds.length > 0) {
+                    featured = flIds.map(id => allLecturers.find(l => String(l.id) === String(id))).filter(Boolean);
+                } else {
+                    featured = allLecturers.slice(0, 6);
+                }
             }
         }
 

@@ -55,6 +55,39 @@
         return total;
     }
 
+    /**
+     * 获取讲师平均评分（基于该讲师所有课程的评分计算）
+     * @param {number} lecturerId 讲师ID
+     * @returns {number|null} 平均评分，如果没有课程或课程没有评分则返回 null
+     */
+    function getLecturerAverageRating(lecturerId) {
+        const api = window.DataAPI;
+        if (!api) return null;
+        const courses = getLecturerCourses(lecturerId);
+        if (!courses || courses.length === 0) {
+            return null;
+        }
+        
+        // 从课程互动数据中读取真实评分（ratingSum / ratingCount）
+        let totalRatingSum = 0;
+        let totalRatingCount = 0;
+        
+        courses.forEach(course => {
+            const ik = 'course_interaction_' + course.id;
+            const idata = api.get(ik);
+            if (idata && idata.ratingCount && idata.ratingCount > 0 && idata.ratingSum != null) {
+                totalRatingSum += idata.ratingSum;
+                totalRatingCount += idata.ratingCount;
+            }
+        });
+        
+        if (totalRatingCount === 0) {
+            return null;
+        }
+        
+        return totalRatingSum / totalRatingCount;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // 初始化数据 API
         if (window.DataAPI) {
@@ -287,9 +320,11 @@
         const levelInfo = LEVEL_STYLES[lecturer.level] || LEVEL_STYLES['intern'];
         const catName = (api && api.getCategoryName(lecturer.categoryId)) || '';
 
-        // 动态计算该讲师的课程数和总点赞量
+        // 动态计算该讲师的课程数、总点赞量和平均评分
         const courseCount = getLecturerCourseCount(lecturer.id);
         const totalLikes = getLecturerTotalLikes(lecturer.id);
+        const avgRating = getLecturerAverageRating(lecturer.id);
+        const ratingDisplay = avgRating !== null ? avgRating.toFixed(1) : '--';
 
         const modalHtml = `
             <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center pt-20 pb-8" onclick="closeTeacherModal()">
@@ -321,7 +356,7 @@
                                     <div class="flex items-center gap-3 text-xs text-gray-500 mt-1">
                                         <span><i class="fa fa-book mr-1"></i>${courseCount}门课程</span>
                                         <span><i class="fa fa-thumbs-o-up mr-1"></i>${totalLikes}点赞</span>
-                                        <span><i class="fa fa-star mr-1 text-yellow-500"></i>${lecturer.rating ? lecturer.rating.toFixed(1) : '--'}</span>
+                                        <span><i class="fa fa-star mr-1 text-yellow-500"></i>${ratingDisplay}</span>
                                     </div>
                                 </div>
                             </div>

@@ -63,7 +63,7 @@
                 <div style="display: flex; align-items: center; justify-content: space-between;">
                     <div>
                         <div id="modal-date" style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.25rem;">2026年1月1日 周五</div>
-                        <div id="modal-title" style="font-size: 1.5rem; font-weight: bold;">当天日程安排</div>
+                        <div id="modal-title" style="font-size: 1.5rem; font-weight: bold;">课程安排</div>
                     </div>
                     <button onclick="closeDayModal()" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background-color: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; hover:bg-white/30;">
                         <i class="fa fa-times" style="font-size: 1.25rem;"></i>
@@ -338,10 +338,40 @@
         let currentSearchTerm = '';
 
         let courses = [];
+        let instructorsMap = {};
         let enrolledCourses = JSON.parse(localStorage.getItem('enrolledCourses') || '[]');
+
+        async function loadLecturers() {
+            try {
+                const res = await fetch('/api/lecturers');
+                const json = await res.json();
+                if (json.success && json.data) {
+                    json.data.forEach(l => {
+                        instructorsMap[l.name] = {
+                            avatar: l.avatar && l.avatar.startsWith('/uploads/') ? l.avatar : '',
+                            title: l.title || l.levelName || '',
+                            department: l.department || ''
+                        };
+                    });
+                }
+            } catch (e) {
+                console.log('讲师数据加载失败:', e.message);
+            }
+        }
+
+        function getInstructorInfo(name) {
+            if (instructorsMap[name]) return instructorsMap[name];
+            // 兜底：用 DiceBear 生成头像（修正 URL 拼写）
+            const seed = encodeURIComponent(name);
+            return {
+                avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`,
+                title: ''
+            };
+        }
 
         async function loadTrainingSchedule() {
             try {
+                await loadLecturers();
                 const res = await fetch('/api/training/schedule');
                 const json = await res.json();
                 if (json.success && json.data && json.data.length > 0) {
@@ -397,13 +427,6 @@
             }, 2000);
         }
 
-        const instructors = {
-            '沈家成': { avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ShenJiaCheng', title: '高级游戏策划' },
-            '曹贺军': { avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CaoHeJun', title: '高级工程师' },
-            '黄明芳': { avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=HuangMingFang', title: '培训总监' },
-            '吴佳宝': { avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=WuJiaBao', title: '市场经理' },
-        };
-
         const holidays = {
             '2026-01-01': '元旦',
             '2026-01-28': '春节',
@@ -448,16 +471,16 @@
 
         function getDayTypeClass(category) {
             const classes = {
-                '策划': 'bg-orange-100 text-orange-600',
-                '技术': 'bg-blue-100 text-blue-600',
-                '软技能': 'bg-green-100 text-green-600',
-                '市场': 'bg-pink-100 text-pink-600',
-                '美术': 'bg-purple-100 text-purple-600',
-                '新雁计划': 'bg-orange-100 text-orange-600',
-                '游雁学堂': 'bg-blue-100 text-blue-600',
-                '鸿雁计划': 'bg-green-100 text-green-600',
-                'AI实践分享': 'bg-amber-100 text-amber-600',
-                '雏雁训练营': 'bg-red-100 text-red-600'
+                '策划': 'bg-orange-100 text-orange-700',
+                '技术': 'bg-blue-100 text-blue-700',
+                '软技能': 'bg-green-100 text-green-700',
+                '市场': 'bg-amber-100 text-amber-700',
+                '美术': 'bg-pink-100 text-pink-700',
+                '新雁计划': 'bg-orange-100 text-orange-700',
+                '游雁学堂': 'bg-blue-100 text-blue-700',
+                '鸿雁计划': 'bg-green-100 text-green-700',
+                'AI实践分享': 'bg-amber-100 text-amber-700',
+                '雏雁训练营': 'bg-pink-100 text-pink-700'
             };
             return classes[category] || 'bg-gray-100 text-gray-600';
         }
@@ -540,7 +563,7 @@
                 const weekDay = new Date(currentYear, currentMonth, day).getDay();
                 const isWeekend = weekDay === 0 || weekDay === 6;
 
-                let cellClass = 'aspect-square rounded-lg p-2 cursor-pointer transition-all duration-300 border border-gray-100';
+                let cellClass = 'aspect-square rounded-lg p-2 cursor-pointer transition-all duration-300 border border-gray-100 overflow-hidden';
                 if (holidayName) {
                     cellClass += ' bg-gradient-to-br from-red-50 to-red-100 hover:shadow-md hover:-translate-y-0.5';
                 } else if (isWeekend) {
@@ -557,17 +580,17 @@
                 if (dayCourses.length > 0) {
                     coursesHtml = dayCourses.slice(0, 2).map((c, idx) => {
                         return `
-                            <div class="mt-1.5">
-                                <span class="${getDayTypeClass(c.category)} inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold">
-                                    ${getDayTypeName(c.category)}
+                            <div class="mt-1 truncate">
+                                <span class="${getDayTypeClass(c.category)} inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold">
+                                    <i class="fa ${getCategoryIcon(c.category)}"></i>${getDayTypeName(c.category)}
                                 </span>
-                                <div class="mt-0.5 text-gray-800 text-xs font-medium truncate">${c.name}</div>
-                                <div class="mt-0.5 text-gray-400 text-[10px]">${c.instructor}</div>
+                                <div class="mt-0.5 text-gray-800 text-[11px] font-medium truncate leading-tight">${c.name}</div>
+                                <div class="text-gray-400 text-[10px] truncate leading-tight">${c.instructor || ''}</div>
                             </div>
                         `;
                     }).join('');
                     if (dayCourses.length > 2) {
-                        coursesHtml += `<div class="mt-1 text-gray-400 text-[10px] text-center">+${dayCourses.length - 2}</div>`;
+                        coursesHtml += `<div class="mt-0.5 text-gray-400 text-[10px] text-center">+${dayCourses.length - 2}</div>`;
                     }
                 } else if (holidayName) {
                     coursesHtml = `<div class="mt-1 text-red-500 text-xs font-medium text-center">${holidayName}</div>`;
@@ -575,11 +598,11 @@
 
                 grid.innerHTML += `
                     <div class="${cellClass}" onclick="showDayCourses('${dateStr}')">
-                        <div class="h-full flex flex-col relative min-h-[100px]">
-                            ${holidayName ? '<span class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded flex items-center justify-center">节</span>' : ''}
+                        <div class="flex flex-col h-full relative overflow-hidden">
+                            ${holidayName ? '<span class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded flex items-center justify-center shadow-sm">休</span>' : ''}
                             <div class="flex justify-between items-start">
-                                <span class="${isToday ? 'bg-primary text-white' : 'bg-purple-100 text-purple-600'} rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium">${day}</span>
-                                <span class="text-gray-400 text-[10px]">${dayCourses.length > 0 ? dayCourses[0].duration.replace('小时', 'h') : ''}</span>
+                                <span class="${isToday ? 'bg-primary text-white' : 'bg-purple-100 text-purple-600'} rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium shadow-sm">${day}</span>
+                                <span class="text-gray-400 text-[10px]">${dayCourses.length > 0 ? dayCourses.length + '场' : ''}</span>
                             </div>
                             ${coursesHtml}
                         </div>
@@ -617,7 +640,7 @@
             container.innerHTML = monthCourses.map((c, index) => {
                 const d = new Date(c.date);
                 const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-                const instructor = instructors[c.instructor] || { avatar: '', title: '' };
+                const instructor = getInstructorInfo(c.instructor);
                 const isEnrolled = enrolledCourses.includes(c.id);
                 const isFromTraining = !!c.projectName;
 
@@ -681,7 +704,7 @@
             } else {
                 let content = '<div class="space-y-4">';
                 dayCourses.forEach((c, index) => {
-                    const instructor = instructors[c.instructor] || { avatar: '', title: '' };
+                    const instructor = getInstructorInfo(c.instructor);
                     const isFromTraining = !!c.projectName;
                     content += `
                         <div class="flex gap-4 p-4 bg-gray-50 rounded-xl animate-slide-in" style="animation-delay: ${index * 0.1}s">
@@ -743,7 +766,7 @@
 
             const d = new Date(course.date);
             const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-            const instructor = instructors[course.instructor] || { avatar: '', title: '' };
+            const instructor = getInstructorInfo(course.instructor);
             const isEnrolled = enrolledCourses.includes(courseId);
 
             document.getElementById('detail-category').textContent = getDayTypeName(course.category);
