@@ -7,7 +7,7 @@
 
 ## 核心页面
 - 前台：index.html (首页), course.html (课程中心), teacher.html (讲师风采), center.html (个人中心), player.html (课程播放)
-- 后台：dashboard.html (管理后台，含考试管理等全部功能), admin-login.html (管理员登录)
+- 后台：dashboard.html (管理后台，内置登录弹窗，含考试管理等全部功能)
 
 ## 关键修复记录
 - 创建 data-api.js 和 js/data-sync.js 解决 DataAPI 缺失问题

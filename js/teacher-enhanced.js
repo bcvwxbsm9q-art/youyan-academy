@@ -20,6 +20,41 @@
         'intern': { class: 'level-intern', name: '实习讲师', icon: 'fa-user-o' }
     };
 
+    // 防抖定时器
+    let _renderDebounceTimer = null;
+
+    /**
+     * 获取讲师的所有课程（动态计算）
+     */
+    function getLecturerCourses(lecturerId) {
+        const api = window.DataAPI;
+        if (!api) return [];
+        return api.getCourses().filter(c => String(c.lecturerId) === String(lecturerId));
+    }
+
+    /**
+     * 获取讲师课程数（动态计算，不依赖静态 courseCount）
+     */
+    function getLecturerCourseCount(lecturerId) {
+        return getLecturerCourses(lecturerId).length;
+    }
+
+    /**
+     * 获取讲师总点赞量（汇总该讲师所有课程的 likes）
+     */
+    function getLecturerTotalLikes(lecturerId) {
+        const api = window.DataAPI;
+        if (!api) return 0;
+        const courses = getLecturerCourses(lecturerId);
+        let total = 0;
+        courses.forEach(c => {
+            const ik = 'course_interaction_' + c.id;
+            const idata = api.get(ik);
+            if (idata && idata.likes) total += idata.likes;
+        });
+        return total;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // 初始化数据 API
         if (window.DataAPI) {
@@ -93,6 +128,27 @@
                 loadLecturers();
             });
         }
+
+        // 跨页面数据同步：监听 localStorage 变化（播放页点赞/评分后刷新点赞数）
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'course_interaction_sync' || e.key === 'learning_platform_data') {
+                console.log('[Teacher] 检测到课程互动数据变化，刷新讲师列表');
+                if (window.DataAPI && window.DataAPI.refreshFromLocalStorage) {
+                    window.DataAPI.refreshFromLocalStorage();
+                }
+                refreshLecturerCards();
+            }
+        });
+
+        // 页面重新可见时刷新数据
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                if (window.DataAPI && window.DataAPI.refreshFromLocalStorage) {
+                    window.DataAPI.refreshFromLocalStorage();
+                }
+                refreshLecturerCards();
+            }
+        });
     });
 
     /**
@@ -133,7 +189,7 @@
         filteredLecturers.sort((a, b) => {
             switch(sortBy) {
                 case 'courses':
-                    return (b.courseCount || 0) - (a.courseCount || 0);
+                    return getLecturerCourseCount(b.id) - getLecturerCourseCount(a.id);
                 case 'name':
                     return a.name.localeCompare(b.name, 'zh-CN');
                 case 'default':
@@ -145,6 +201,17 @@
         });
 
         renderLecturers();
+    }
+
+    /**
+     * 防抖刷新讲师卡片（防止闪烁）
+     */
+    function refreshLecturerCards() {
+        if (_renderDebounceTimer) clearTimeout(_renderDebounceTimer);
+        _renderDebounceTimer = setTimeout(function() {
+            _renderDebounceTimer = null;
+            renderLecturers();
+        }, 150);
     }
 
     /**
@@ -173,7 +240,20 @@
 
         container.innerHTML = filteredLecturers.map(l => {
             const levelInfo = LEVEL_STYLES[l.level] || LEVEL_STYLES['intern'];
-            
+            const skillsHtml = l.skills && l.skills.length > 0 ? `
+                <div class="lecturer-tags">
+                    ${l.skills.slice(0, 3).map(skill => `<span class="lecturer-tag">${skill}</span>`).join('')}
+                    ${l.skills.length > 3 ? `<span class="lecturer-tag more">+${l.skills.length - 3}</span>` : ''}
+                </div>
+            ` : '<div class="lecturer-tags"></div>';
+
+            // 动态计算课程数和总点赞量
+            const courseCount = getLecturerCourseCount(l.id);
+            const totalLikes = getLecturerTotalLikes(l.id);
+
+            // 简介只在有内容时渲染，避免空占高度
+            const introHtml = l.intro ? `<p class="text-xs text-gray-500 dark:text-gray-400 mb-1 line-clamp-2 px-2">${l.intro}</p>` : '';
+
             return `
             <div class="card-enhanced lecturer-card cursor-pointer fade-in" onclick="showTeacherDetail(${l.id})">
                 <div class="lecturer-avatar-wrapper">
@@ -183,11 +263,12 @@
                     </div>
                 </div>
                 <h3 class="text-sm md:text-base font-bold mb-1 text-gray-800 dark:text-white">${l.name}</h3>
-                <div class="text-xs ${levelInfo.class} text-white px-2 py-1 rounded-full inline-block mb-2">${levelInfo.name}</div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 px-2 h-8">${l.intro || ''}</p>
-                <div class="flex items-center justify-center gap-3 text-xs text-gray-600 dark:text-gray-400">
-                    <span><i class="fa fa-book mr-1"></i>${l.courseCount || 0}课程</span>
-                    <span><i class="fa fa-users mr-1"></i>${(l.students || 0) > 1000 ? ((l.students / 1000).toFixed(1) + 'k') : (l.students || 0)}</span>
+                <div class="text-xs ${levelInfo.class} text-white px-2 py-1 rounded-full inline-block mb-1">${levelInfo.name}</div>
+                ${introHtml}
+                ${skillsHtml}
+                <div class="flex items-center justify-center gap-3 text-xs text-gray-600 dark:text-gray-400 mt-auto pt-2">
+                    <span><i class="fa fa-book mr-1"></i>${courseCount}课程</span>
+                    <span><i class="fa fa-thumbs-o-up mr-1"></i>${totalLikes}</span>
                 </div>
             </div>
             `;
@@ -205,6 +286,10 @@
 
         const levelInfo = LEVEL_STYLES[lecturer.level] || LEVEL_STYLES['intern'];
         const catName = (api && api.getCategoryName(lecturer.categoryId)) || '';
+
+        // 动态计算该讲师的课程数和总点赞量
+        const courseCount = getLecturerCourseCount(lecturer.id);
+        const totalLikes = getLecturerTotalLikes(lecturer.id);
 
         const modalHtml = `
             <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="closeTeacherModal()">
@@ -233,11 +318,11 @@
                                 <div class="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
                                     <div class="flex items-center gap-2">
                                         <i class="fa fa-book text-primary"></i>
-                                        <span><strong class="text-gray-800 dark:text-white">${lecturer.courseCount || 0}</strong> 门课程</span>
+                                        <span><strong class="text-gray-800 dark:text-white">${courseCount}</strong> 门课程</span>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <i class="fa fa-users text-primary"></i>
-                                        <span><strong class="text-gray-800 dark:text-white">${(lecturer.students || 0) > 1000 ? ((lecturer.students / 1000).toFixed(1) + 'k') : (lecturer.students || 0)}</strong> 学员</span>
+                                        <i class="fa fa-thumbs-o-up text-primary"></i>
+                                        <span><strong class="text-gray-800 dark:text-white">${totalLikes}</strong> 点赞</span>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <i class="fa fa-star text-yellow-500"></i>
@@ -274,7 +359,9 @@
                             <i class="fa fa-book mr-2 text-primary"></i>授课课程
                         </h3>
                         <div class="space-y-3">
-                            ${(api && api.getCourses().filter(c => c.lecturerId === lecturer.id).slice(0, 3).map(c => `
+                            ${(api && getLecturerCourses(lecturer.id).slice(0, 3).map(c => {
+                                const catTag = api.getCategoryName(c.categoryId) || '';
+                                return `
                                 <div class="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors group" onclick="location.href='player.html?courseId=${c.id}'">
                                     <img src="${c.cover || ''}" class="w-20 h-14 rounded-lg object-cover flex-shrink-0 group-hover:scale-105 transition-transform" onerror="this.src='https://placehold.co/80x56/667eea/white?text=Course'">
                                     <div class="flex-1 min-w-0">
@@ -282,10 +369,12 @@
                                         <div class="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-center gap-3">
                                             <span><i class="fa fa-clock-o mr-1"></i>${Math.floor((c.duration || 0) / 60)}分钟</span>
                                             <span><i class="fa fa-eye mr-1"></i>${(c.views || 0) > 10000 ? ((c.views / 10000).toFixed(1) + '万') : (c.views || 0)}人学习</span>
+                                            ${catTag ? `<span class="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded text-[10px] font-medium">${catTag}</span>` : ''}
                                         </div>
                                     </div>
                                 </div>
-                            `).join('')) || '<p class="text-sm text-gray-500 italic">暂无课程</p>'}
+                                `;
+                            }).join('')) || '<p class="text-sm text-gray-500 italic">暂无课程</p>'}
                         </div>
                     </div>
 

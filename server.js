@@ -7,15 +7,19 @@ const multer = require('multer');
 const app = express();
 const port = 3003;
 
-// 中间件配置
-app.use(express.json({ limit: '50mb' }));  // 解析 JSON 请求体
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));  // 解析 URL 编码的请求体
-
 // 创建 uploads 目录
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
+
+// 中间件配置
+app.use(express.json({ limit: '50mb' }));  // 解析 JSON 请求体
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));  // 解析 URL 编码的请求体
+
+// 静态文件服务 - 必须放在其他路由之前
+app.use('/uploads', express.static(uploadsDir));  // 上传的文件
+app.use(express.static(path.join(__dirname)));     // 前端页面和资源
 
 // 配置文件上传
 const storage = multer.diskStorage({
@@ -317,6 +321,12 @@ app.get('/api/health', (req, res) => {
 // 用户认证 API
 // ============================================================
 
+// 获取所有数据（用于首页初始化）
+app.get('/api/data', (req, res) => {
+  const data = readData();
+  res.json(data);
+});
+
 // 用户注册
 app.post('/api/auth/register', (req, res) => {
   const { username, password, email, phone, realName, department } = req.body;
@@ -602,6 +612,96 @@ app.delete('/api/auth/users/:id', (req, res) => {
   }
 });
 
+// 管理员 - 更新用户资料
+app.put('/api/auth/users/:id', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: '未提供认证令牌' });
+  }
+  
+  const token = authHeader.slice(7);
+  const payload = verifyToken(token);
+  
+  if (!payload || payload.role !== 'admin') {
+    return res.status(403).json({ success: false, error: '需要管理员权限' });
+  }
+  
+  const userId = parseInt(req.params.id);
+  const updates = req.body;
+  
+  const data = readData();
+  if (!data.registered_users) data.registered_users = [];
+  
+  const userIndex = data.registered_users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, error: '用户不存在' });
+  }
+  
+  // 更新允许的字段
+  const allowedFields = ['realName', 'email', 'phone', 'department', 'role'];
+  allowedFields.forEach(field => {
+    if (updates[field] !== undefined) {
+      data.registered_users[userIndex][field] = updates[field];
+    }
+  });
+  
+  if (writeData(data)) {
+    const user = { ...data.registered_users[userIndex] };
+    delete user.passwordHash;
+    res.json({ success: true, data: { user } });
+  } else {
+    res.status(500).json({ success: false, error: '更新失败' });
+  }
+});
+
+// 管理员 - 重置用户密码
+app.post('/api/auth/users/:id/reset-password', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: '未提供认证令牌' });
+  }
+  
+  const token = authHeader.slice(7);
+  const payload = verifyToken(token);
+  
+  if (!payload || payload.role !== 'admin') {
+    return res.status(403).json({ success: false, error: '需要管理员权限' });
+  }
+  
+  const userId = parseInt(req.params.id);
+  
+  const data = readData();
+  if (!data.registered_users) data.registered_users = [];
+  
+  const userIndex = data.registered_users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, error: '用户不存在' });
+  }
+  
+  // 生成随机密码（8位字母数字组合）
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let newPassword = '';
+  for (let i = 0; i < 8; i++) {
+    newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  
+  // 更新密码
+  data.registered_users[userIndex].passwordHash = hashPassword(newPassword);
+  
+  if (writeData(data)) {
+    res.json({ 
+      success: true, 
+      message: '密码重置成功',
+      data: { 
+        username: data.registered_users[userIndex].username,
+        newPassword: newPassword 
+      } 
+    });
+  } else {
+    res.status(500).json({ success: false, error: '重置失败' });
+  }
+});
+
 // 注册题库管理路由
 app.use('/api', questionRoutes);
 
@@ -622,6 +722,7 @@ app.post('/api/courses', (req, res) => {
   if (!data.management_courses) data.management_courses = [];
   course.id = Date.now();
   course.createdAt = new Date().toLocaleString('zh-CN');
+  course.updatedAt = course.createdAt;
   data.management_courses.push(course);
   if (writeData(data)) {
     res.json({ success: true, course });
@@ -637,6 +738,7 @@ app.put('/api/courses/:id', (req, res) => {
   const data = readData();
   const index = data.management_courses?.findIndex(c => c.id === id);
   if (index !== -1) {
+    updates.updatedAt = new Date().toLocaleString('zh-CN');
     data.management_courses[index] = { ...data.management_courses[index], ...updates };
     if (writeData(data)) {
       res.json({ success: true, course: data.management_courses[index] });
@@ -732,6 +834,18 @@ app.get('/api/training', (req, res) => {
   res.json(data.training_projects || []);
 });
 
+// GET /api/training/:id - 获取单个培训项目
+app.get('/api/training/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const project = data.training_projects?.find(p => p.id === id);
+  if (project) {
+    res.json(project);
+  } else {
+    res.status(404).json({ success: false, error: '培训项目不存在' });
+  }
+});
+
 // POST /api/training - 添加培训项目
 app.post('/api/training', (req, res) => {
   const project = req.body;
@@ -777,6 +891,104 @@ app.delete('/api/training/:id', (req, res) => {
     }
   } else {
     res.status(404).json({ success: false, error: '培训项目列表不存在' });
+  }
+});
+
+// GET /api/training/schedule - 获取所有培训课程日程（用于用户端培训页面）
+app.get('/api/training/schedule', (req, res) => {
+  const data = readData();
+  const projects = data.training_projects || [];
+  
+  // 从所有培训项目中提取课程日程
+  let schedule = [];
+  projects.forEach(project => {
+    if (project.courses && project.courses.length > 0) {
+      project.courses.forEach(course => {
+        schedule.push({
+          ...course,
+          projectName: project.name,
+          projectId: project.id
+        });
+      });
+    }
+  });
+  
+  // 按日期排序
+  schedule.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  res.json({ success: true, data: schedule });
+});
+
+// POST /api/training/:projectId/courses - 为培训项目添加课程
+app.post('/api/training/:projectId/courses', (req, res) => {
+  const projectId = parseInt(req.params.projectId);
+  const course = req.body;
+  const data = readData();
+  
+  const projectIndex = data.training_projects?.findIndex(p => p.id === projectId);
+  if (projectIndex === -1) {
+    return res.status(404).json({ success: false, error: '培训项目不存在' });
+  }
+  
+  if (!data.training_projects[projectIndex].courses) {
+    data.training_projects[projectIndex].courses = [];
+  }
+  
+  course.id = Date.now();
+  course.projectId = projectId;
+  data.training_projects[projectIndex].courses.push(course);
+  
+  if (writeData(data)) {
+    res.json({ success: true, course });
+  } else {
+    res.status(500).json({ success: false, error: '写入失败' });
+  }
+});
+
+// PUT /api/training/courses/:courseId - 更新培训课程
+app.put('/api/training/courses/:courseId', (req, res) => {
+  const courseId = parseInt(req.params.courseId);
+  const updates = req.body;
+  const data = readData();
+  
+  let updated = false;
+  for (const project of data.training_projects || []) {
+    const courseIndex = project.courses?.findIndex(c => c.id === courseId);
+    if (courseIndex !== -1) {
+      project.courses[courseIndex] = { ...project.courses[courseIndex], ...updates };
+      updated = true;
+      break;
+    }
+  }
+  
+  if (updated && writeData(data)) {
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ success: false, error: '课程不存在' });
+  }
+});
+
+// DELETE /api/training/courses/:courseId - 删除培训课程
+app.delete('/api/training/courses/:courseId', (req, res) => {
+  const courseId = parseInt(req.params.courseId);
+  const data = readData();
+  
+  let deleted = false;
+  for (const project of data.training_projects || []) {
+    if (project.courses) {
+      const initialLength = project.courses.length;
+      project.courses = project.courses.filter(c => c.id !== courseId);
+      if (project.courses.length < initialLength) {
+        deleted = true;
+        break;
+      }
+    }
+  }
+  
+  if (deleted && writeData(data)) {
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ success: false, error: '课程不存在' });
   }
 });
 
@@ -1625,8 +1837,6 @@ app.post('/api/upload/multiple', upload.array('files', 10), (req, res) => {
   });
 });
 
-// GET /uploads/* - 静态文件服务（上传的文件）
-app.use('/uploads', express.static(uploadsDir));
 
 // DELETE /api/upload/:type/:filename - 删除上传的文件
 app.delete('/api/upload/:type/:filename', (req, res) => {
@@ -1761,3 +1971,4 @@ process.on('SIGINT', () => {
     process.exit(0);
   });
 });
+

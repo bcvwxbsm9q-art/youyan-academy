@@ -148,17 +148,6 @@
                 transform: translateY(-50%) scale(1);
             }
             
-            /* 缓冲进度条 */
-            .progress-buffered {
-                position: absolute;
-                top: 0;
-                left: 0;
-                height: 100%;
-                background: rgba(255,255,255,0.3);
-                border-radius: 2px;
-                pointer-events: none;
-            }
-            
             /* 章节时间提示 */
             .chapter-tooltip {
                 position: absolute;
@@ -208,27 +197,6 @@
                 transform-origin: 50% 50%;
             }
             
-            /* 快捷键提示 */
-            .shortcut-key {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                min-width: 24px;
-                height: 24px;
-                padding: 0 6px;
-                background: rgba(255,255,255,0.15);
-                border: 1px solid rgba(255,255,255,0.3);
-                border-radius: 4px;
-                font-size: 11px;
-                font-weight: 600;
-            }
-            
-            /* 笔记浮层 */
-            .note-overlay {
-                background: rgba(0,0,0,0.8);
-                backdrop-filter: blur(4px);
-            }
-            
             /* 滚动条美化 */
             .custom-scrollbar::-webkit-scrollbar {
                 width: 6px;
@@ -248,6 +216,72 @@
             .shortcuts-popup {
                 background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(31, 41, 55, 0.95));
                 backdrop-filter: blur(12px);
+            }
+
+            /* ========== 讲师信息区域 ========== */
+            .lecturer-card {
+                display: flex;
+                align-items: flex-start;
+                gap: 20px;
+            }
+            .lecturer-avatar {
+                width: 72px;
+                height: 72px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 3px solid #e5e7eb;
+                flex-shrink: 0;
+                background: linear-gradient(135deg, #667eea20, #764ba220);
+            }
+            .lecturer-avatar-placeholder {
+                width: 72px;
+                height: 72px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 28px;
+                font-weight: bold;
+                flex-shrink: 0;
+            }
+
+            /* 点赞按钮激活状态（大拇指） */
+            #btn-like.btn-like-active {
+                border-color: #60a5fa !important; /* blue-400 */
+                background-color: #eff6ff !important; /* blue-50 */
+                color: #3b82f6 !important; /* blue-500 */
+            }
+            #btn-like.btn-like-active i {
+                font-weight: 900;
+                animation: likeThumbsUp 0.4s ease-in-out;
+            }
+            @keyframes likeThumbsUp {
+                0% { transform: scale(1); }
+                25% { transform: scale(1.3) rotate(-10deg); }
+                50% { transform: scale(1) rotate(5deg); }
+                75% { transform: scale(1.15); }
+                100% { transform: scale(1) rotate(0); }
+            }
+
+            /* 评分弹窗星星交互 */
+            .star-btn.active,
+            .star-btn.active ~ .star-btn {
+                color: #fbbf24; /* amber-400 */
+            }
+            .star-btn.active i,
+            .star-btn.active ~ .star-btn i {
+                font-weight: 900;
+            }
+            .star-btn:hover,
+            .star-btn:hover ~ .star-btn {
+                color: #fcd34d;
+            }
+            #rating-stars {
+                display: flex;
+                flex-direction: row-reverse;
+                justify-content: center;
             }
         }
     </style>
@@ -269,7 +303,6 @@
                     <a href="training-plan.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/5 transition-colors">培训</a>
                     <a href="course.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/5 transition-colors">课程</a>
                     <a href="teacher.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/5 transition-colors">讲师</a>
-                    <a href="library.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/5 transition-colors">书吧</a>
                     <a href="center.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/5 transition-colors">我的</a>
                 </nav>
                 
@@ -313,7 +346,6 @@
                     <a href="training-plan.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">培训</a>
                     <a href="course.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">课程</a>
                     <a href="teacher.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">讲师</a>
-                    <a href="library.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">书吧</a>
                     <a href="center.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">我的</a>
                     <a href="dashboard.html" id="mobile-admin-link" class="hidden flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
                         <i class="fa fa-cog w-6"></i><span>管理端</span>
@@ -352,7 +384,7 @@
                         <!-- 视频播放器 -->
                         <div class="bg-gray-900 rounded-2xl shadow-2xl overflow-hidden mb-6">
                             <div class="relative video-container" id="video-container">
-                                <video id="course-video" class="w-full aspect-video bg-black" poster="">
+                                <video id="course-video" class="w-full aspect-video bg-black" poster="" playsinline muted>
                                     <source id="video-source" src="" type="video/mp4">
                                     您的浏览器不支持视频播放。
                                 </video>
@@ -368,20 +400,6 @@
                                     </button>
                                 </div>
                                 
-                                <!-- 键盘快捷键提示 -->
-                                <div class="absolute top-4 right-4 z-30">
-                                    <button id="shortcuts-btn" class="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-black/70 transition-all" title="键盘快捷键">
-                                        <i class="fa fa-keyboard-o text-lg"></i>
-                                    </button>
-                                </div>
-                                
-                                <!-- 学习时长显示 -->
-                                <div class="absolute top-4 left-4 z-30">
-                                    <div class="px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-sm flex items-center gap-2">
-                                        <i class="fa fa-clock-o text-primary"></i>
-                                        <span id="player-study-time">已学习：0分0秒</span>
-                                    </div>
-                                </div>
                                 
                                 <!-- 视频底部控制栏 -->
                                 <div class="absolute bottom-0 left-0 right-0 video-controls">
@@ -393,7 +411,6 @@
                                     <!-- 进度条 -->
                                     <div class="px-4 mb-3">
                                         <div class="relative progress-track" id="progress-container">
-                                            <div class="progress-buffered" id="progress-buffered" style="width: 0%"></div>
                                             <div class="progress-fill" id="progress-bar" style="width: 0%">
                                                 <div class="chapter-tooltip" id="chapter-tooltip">00:00</div>
                                             </div>
@@ -420,12 +437,26 @@
                                         </div>
                                         
                                         <div class="flex items-center space-x-3">
-                                            <button id="note-btn" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all" title="记笔记">
-                                                <i class="fa fa-pencil-square-o"></i>
-                                            </button>
-                                            <button class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all" title="字幕">
-                                                <i class="fa fa-cc"></i>
-                                            </button>
+                                            <div class="relative flex items-center group" id="volume-control">
+                                                <button id="volume-btn" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all" title="音量">
+                                                    <i class="fa fa-volume-up"></i>
+                                                </button>
+                                                <!-- 音量滑块 -->
+                                                <div class="absolute left-full ml-2 bottom-1/2 translate-y-1/2 hidden group-hover:block">
+                                                    <div class="bg-black/80 backdrop-blur-sm rounded-lg p-3 w-32 shadow-xl">
+                                                        <input type="range" id="volume-slider" min="0" max="100" value="100"
+                                                            class="w-full h-1 rounded-full appearance-none bg-white/30 cursor-pointer
+                                                            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3
+                                                            [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-lg
+                                                            [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-transform
+                                                            [&::-webkit-slider-thumb]:hover:scale-125">
+                                                        <div class="flex justify-between text-xs text-white/50 mt-1">
+                                                            <span>音量</span>
+                                                            <span id="volume-value">100%</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <div class="relative">
                                                 <button id="speed-button" class="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 flex items-center space-x-1 text-white text-sm font-medium transition-all">
                                                     <span id="speed-text">1.0x</span>
@@ -440,8 +471,8 @@
                                                     <button class="w-full text-left px-4 py-2 hover:bg-white/10 text-white/80 hover:text-white speed-option transition-colors" data-speed="2.0">2.0x 倍速</button>
                                                 </div>
                                             </div>
-                                            <button id="volume-btn" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all">
-                                                <i class="fa fa-volume-up"></i>
+                                            <button id="pip-button" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all" title="画中画模式">
+                                                <i class="fa fa-window-restore"></i>
                                             </button>
                                             <button id="fullscreen-button" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all">
                                                 <i class="fa fa-expand"></i>
@@ -457,7 +488,7 @@
                             <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
                                 <div>
                                     <h1 class="text-2xl font-bold text-gray-900 mb-3" id="player-course-title">加载中...</h1>
-                                    <div class="flex flex-wrap items-center gap-4">
+                                    <div class="flex flex-wrap items-center gap-3">
                                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary" id="player-category-tag">未分类</span>
                                         <span class="inline-flex items-center text-sm text-gray-500">
                                             <i class="fa fa-eye mr-1.5"></i>
@@ -467,10 +498,24 @@
                                             <i class="fa fa-star text-yellow-400 mr-1.5"></i>
                                             <span id="player-rating">0.0</span>
                                         </span>
-                                        <span class="inline-flex items-center text-sm text-gray-500">
+                                        <!-- 点赞按钮（大拇指） -->
+                                        <button id="btn-like" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 text-sm text-gray-500 hover:text-blue-500 font-medium transition-all duration-300 group" title="点赞">
+                                            <i class="fa fa-thumbs-o-up group-hover:scale-110 transition-transform" id="like-icon"></i>
+                                            <span id="interaction-likes">0</span>
+                                        </button>
+                                        <!-- 评分按钮 -->
+                                        <button id="btn-rate" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-primary text-white text-sm font-medium hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300" title="评分">
+                                            <i class="fa fa-star"></i>
+                                            <span>评分</span>
+                                        </button>
+                                        <span class="inline-flex items-center text-sm text-gray-400">
                                             <i class="fa fa-clock-o mr-1.5"></i>
                                             <span id="player-duration">总时长：0分钟</span>
                                         </span>
+                                    </div>
+                                    <!-- 我的评分状态提示（内联显示） -->
+                                    <div id="my-rating-hint" class="hidden mt-2">
+                                        <span id="my-rating-display" class="text-xs font-medium text-amber-500 bg-amber-50 px-2 py-1 rounded-md inline-block"></span>
                                     </div>
                                 </div>
                                 
@@ -498,21 +543,6 @@
                                 </div>
                             </div>
                             
-                            <!-- 操作按钮 -->
-                            <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-100">
-                                <button id="like-btn" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-gray-100 hover:bg-primary/10 text-gray-700 hover:text-primary transition-all">
-                                    <i class="fa fa-thumbs-o-up" id="like-icon"></i>
-                                    <span id="like-count">点赞</span>
-                                </button>
-                                <button class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all">
-                                    <i class="fa fa-share-alt"></i>
-                                    <span>分享</span>
-                                </button>
-                                <button id="favorite-btn" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-gray-100 hover:bg-orange-50 text-gray-700 hover:text-orange-500 transition-all">
-                                    <i class="fa fa-star-o" id="favorite-icon"></i>
-                                    <span id="favorite-count">收藏</span>
-                                </button>
-                            </div>
                         </div>
                         
                         <!-- 课程简介 -->
@@ -528,25 +558,23 @@
                                 暂无课程简介
                             </div>
                         </div>
-                        
-                        <!-- 讲师信息 -->
-                        <div class="bg-white rounded-2xl shadow-sm p-6">
-                            <h2 class="text-lg font-bold text-gray-900 mb-4">授课讲师</h2>
-                            <div class="flex items-start gap-4">
-                                <img id="player-lecturer-avatar" src="https://placehold.co/80x80/667eea/ffffff?text=L" 
-                                     alt="讲师头像" 
-                                     class="w-20 h-20 rounded-2xl object-cover ring-4 ring-primary/10">
-                                <div class="flex-1">
-                                    <h3 class="text-xl font-bold text-gray-900 mb-1" id="player-lecturer-name">未知讲师</h3>
-                                    <p class="text-primary font-medium mb-2" id="player-lecturer-title">-</p>
-                                    <p class="text-gray-500 text-sm mb-3" id="player-lecturer-bio">暂无简介</p>
-                                    <button onclick="location.href='teacher.html'" class="inline-flex items-center px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary text-primary hover:text-white transition-all text-sm font-medium">
-                                        <i class="fa fa-user-circle mr-2"></i>
-                                        查看讲师主页
-                                    </button>
+
+                        <!-- 讲师信息区域 -->
+                        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6" id="lecturer-info-section">
+                            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center">
+                                <i class="fa fa-user-circle text-primary mr-2 text-xl"></i>讲师介绍
+                            </h2>
+                            <div id="lecturer-info-content">
+                                <div class="flex items-center animate-pulse">
+                                    <div class="w-16 h-16 rounded-full bg-gray-200 mr-4"></div>
+                                    <div class="flex-1">
+                                        <div class="h-5 bg-gray-200 rounded w-32 mb-2"></div>
+                                        <div class="h-4 bg-gray-200 rounded w-24"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                     
                     <!-- 右侧课程大纲 -->
@@ -575,83 +603,44 @@
             </div>
         </section>
     </main>
-    
-    <!-- 笔记弹窗 -->
-    <div id="note-modal" class="fixed inset-0 z-50 hidden">
-        <div class="note-overlay absolute inset-0" id="note-overlay"></div>
-        <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
-                <div class="flex items-center justify-between p-4 border-b border-gray-100">
-                    <h3 class="text-lg font-bold text-gray-900">记笔记 - <span id="note-chapter-title">课时 1</span></h3>
-                    <button id="close-note-modal" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </div>
-                <div class="p-4">
-                    <textarea id="note-content" class="w-full h-48 p-4 border border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="在这里记录你的学习笔记..."></textarea>
-                    <div class="flex justify-end gap-3 mt-4">
-                        <button id="save-note-btn" class="px-6 py-2 rounded-xl bg-primary text-white font-medium hover:bg-primary/90 transition-all">
-                            保存笔记
-                        </button>
-                    </div>
-                </div>
+
+    <!-- 评分弹窗 -->
+    <div id="rating-modal" class="fixed inset-0 z-[200] hidden items-center justify-center">
+        <!-- 遮罩层 -->
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" id="rating-modal-overlay"></div>
+        <!-- 弹窗主体 -->
+        <div class="relative bg-white rounded-2xl shadow-2xl w-[380px] max-w-[90vw] animate-scale-in overflow-hidden">
+            <!-- 标题栏 -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <h3 class="text-lg font-bold text-gray-800">提示</h3>
+                <button id="rating-modal-close" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
             </div>
-        </div>
-    </div>
-    
-    <!-- 快捷键提示弹窗 -->
-    <div id="shortcuts-modal" class="fixed inset-0 z-50 hidden">
-        <div class="note-overlay absolute inset-0" id="shortcuts-overlay"></div>
-        <div class="relative z-10 flex items-center justify-center min-h-screen p-4">
-            <div class="shortcuts-popup rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-                <div class="flex items-center justify-between p-4 border-b border-white/10">
-                    <h3 class="text-lg font-bold text-white">键盘快捷键</h3>
-                    <button id="close-shortcuts-modal" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white">
-                        <i class="fa fa-times"></i>
-                    </button>
+            <!-- 内容区 -->
+            <div class="px-6 py-8 text-center">
+                <p class="text-gray-600 text-base mb-4">我的评分</p>
+                <!-- 分数大字 -->
+                <div class="mb-4">
+                    <span id="rating-score-number" class="text-5xl font-bold text-amber-400">5</span>
+                    <span class="text-2xl font-medium text-amber-400">分</span>
                 </div>
-                <div class="p-4 space-y-3">
-                    <div class="flex items-center justify-between py-2">
-                        <span class="text-white/80">播放/暂停</span>
-                        <span class="shortcut-key">Space</span>
-                    </div>
-                    <div class="flex items-center justify-between py-2">
-                        <span class="text-white/80">快退 10秒</span>
-                        <span class="shortcut-key">←</span>
-                    </div>
-                    <div class="flex items-center justify-between py-2">
-                        <span class="text-white/80">快进 10秒</span>
-                        <span class="shortcut-key">→</span>
-                    </div>
-                    <div class="flex items-center justify-between py-2">
-                        <span class="text-white/80">上一个课时</span>
-                        <span class="shortcut-key">↑</span>
-                    </div>
-                    <div class="flex items-center justify-between py-2">
-                        <span class="text-white/80">下一个课时</span>
-                        <span class="shortcut-key">↓</span>
-                    </div>
-                    <div class="flex items-center justify-between py-2">
-                        <span class="text-white/80">增加音量</span>
-                        <span class="shortcut-key">↑</span>
-                    </div>
-                    <div class="flex items-center justify-between py-2">
-                        <span class="text-white/80">减少音量</span>
-                        <span class="shortcut-key">↓</span>
-                    </div>
-                    <div class="flex items-center justify-between py-2">
-                        <span class="text-white/80">全屏切换</span>
-                        <span class="shortcut-key">F</span>
-                    </div>
-                    <div class="flex items-center justify-between py-2">
-                        <span class="text-white/80">记笔记</span>
-                        <span class="shortcut-key">N</span>
-                    </div>
-                    <div class="flex items-center justify-between py-2">
-                        <span class="text-white/80">静音</span>
-                        <span class="shortcut-key">M</span>
-                    </div>
+                <!-- 星星 -->
+                <div class="flex items-center justify-center gap-2 mb-4" id="rating-stars">
+                    <button class="star-btn text-4xl text-gray-300 hover:text-amber-400 transition-colors cursor-pointer" data-score="5"><i class="fa fa-star"></i></button>
+                    <button class="star-btn text-4xl text-gray-300 hover:text-amber-400 transition-colors cursor-pointer" data-score="4"><i class="fa fa-star"></i></button>
+                    <button class="star-btn text-4xl text-gray-300 hover:text-amber-400 transition-colors cursor-pointer" data-score="3"><i class="fa fa-star"></i></button>
+                    <button class="star-btn text-4xl text-gray-300 hover:text-amber-400 transition-colors cursor-pointer" data-score="2"><i class="fa fa-star"></i></button>
+                    <button class="star-btn text-4xl text-gray-300 hover:text-amber-400 transition-colors cursor-pointer" data-score="1"><i class="fa fa-star"></i></button>
                 </div>
+                <!-- 评语 -->
+                <p id="rating-label" class="text-xl font-bold text-amber-400 mb-6">干货满满！</p>
+            </div>
+            <!-- 提交按钮 -->
+            <div class="px-6 pb-6">
+                <button id="rating-submit-btn" class="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium text-base transition-colors shadow-md hover:shadow-lg">
+                    提交
+                </button>
             </div>
         </div>
     </div>
@@ -670,10 +659,6 @@
         let courseId = null;
         let currentCourseData = null;
         let currentVideoDuration = 0;
-        let isLiked = false;
-        let isFavorited = false;
-        let likeCount = 0;
-        let favoriteCount = 0;
         let controlsTimeout = null;
         let isMuted = false;
         let previousVolume = 1;
@@ -683,7 +668,21 @@
             const user = getCurrentUser();
             return user ? (user.id || 1) : 1;
         }
-        
+
+        // 保存/读取视频播放位置（秒级精度，支持断点续播）
+        function getSavedVideoPosition(videoKey) {
+            const key = `video_pos_${getUserId()}_${videoKey}`;
+            const data = window.DataAPI ? window.DataAPI.get(key) : null;
+            return data ? data.position : 0;
+        }
+
+        function saveVideoPosition(videoKey, position) {
+            if (window.DataAPI) {
+                const key = `video_pos_${getUserId()}_${videoKey}`;
+                window.DataAPI.set(key, { position: Math.floor(position), savedAt: new Date().toISOString() });
+            }
+        }
+
         function loadCurrentSessionStudyTime() {
             const userId = getUserId();
             const sessionKey = `study_session_${userId}_${courseId}`;
@@ -728,37 +727,68 @@
             studyTimer = setInterval(() => {
                 currentStudySeconds++;
                 updateStudyTimeDisplay();
+                // 每60秒持久化一次（只保存增量，避免重复计数）
                 if (currentStudySeconds % 60 === 0) {
-                    saveStudyTime();
+                    saveStudyTimeIncrement(currentStudySeconds);
+                    currentStudySeconds = 0; // 重置计数器
                 }
             }, 1000);
+        }
+
+        // 保存增量时长
+        function saveStudyTimeIncrement(increment) {
+            if (increment <= 0 || !courseId) return;
+            const userId = getUserId();
+            const key = `user_learning_${userId}`;
+            let data = window.DataAPI ? window.DataAPI.get(key) : null;
+            if (!data) {
+                data = { totalHours: 0, totalSeconds: 0, completedCourses: [], videoProgress: {}, lastStudyTime: null, studyDates: [], studyRecords: [] };
+            }
+            data.totalSeconds = (data.totalSeconds || 0) + increment;
+            data.totalHours = Math.floor(data.totalSeconds / 3600);
+            data.lastStudyTime = new Date().toISOString();
+
+            const api = window.DataAPI;
+            const course = api.getCourse(courseId);
+            const videoTitle = (course?.videos?.[lastVideoIndex])?.title || ('课时 ' + (lastVideoIndex + 1));
+            const today = new Date().toISOString().split('T')[0];
+
+            if (!data.studyRecords) data.studyRecords = [];
+            data.studyRecords.push({
+                courseId, courseTitle: course?.title || '', videoIndex: lastVideoIndex,
+                videoTitle, duration: increment, timestamp: new Date().toISOString(), date: today
+            });
+            if (data.studyRecords.length > 200) data.studyRecords = data.studyRecords.slice(-200);
+
+            if (!data.studyDates || !data.studyDates.includes(today)) {
+                if (!data.studyDates) data.studyDates = [];
+                data.studyDates.push(today);
+            }
+
+            if (window.DataAPI) window.DataAPI.set(key, data);
         }
         
         function stopStudyTimer() {
             if (studyTimer) {
                 clearInterval(studyTimer);
                 studyTimer = null;
-                saveStudyTime();
-            }
-        }
-        
-        function saveStudyTime() {
-            if (currentStudySeconds > 0 && courseId) {
-                const userId = getUserId();
-                const key = `user_learning_${userId}`;
-                let data = window.DataAPI ? window.DataAPI.get(key) : null;
-                if (!data) {
-                    data = { totalHours: 0, totalSeconds: 0, completedCourses: [], videoProgress: {}, lastStudyTime: null, studyDates: [] };
+                // 停止时保存剩余未保存的时长
+                if (currentStudySeconds > 0) {
+                    saveStudyTimeIncrement(currentStudySeconds);
+                    currentStudySeconds = 0;
                 }
-                data.totalSeconds = (data.totalSeconds || 0) + currentStudySeconds;
-                data.totalHours = Math.floor(data.totalSeconds / 3600);
-                data.lastStudyTime = new Date().toISOString();
-                if (window.DataAPI) window.DataAPI.set(key, data);
-                saveCurrentSessionStudyTime();
                 syncStudyDataToServer();
             }
         }
         
+        function saveStudyTime() {
+            // 兼容接口：保存当前累计的 session 时长
+            if (currentStudySeconds > 0 && courseId) {
+                saveStudyTimeIncrement(currentStudySeconds);
+                currentStudySeconds = 0;
+            }
+        }
+
         async function syncStudyDataToServer() {
             try {
                 const userId = getUserId();
@@ -767,9 +797,19 @@
                 await fetch('/api/study-progress', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: userId, courseId: courseId, totalSeconds: learningData.totalSeconds || 0, totalHours: learningData.totalHours || 0, completedCourses: learningData.completedCourses || [], videoProgress: learningData.videoProgress || {} })
+                    body: JSON.stringify({
+                        userId: userId,
+                        courseId: courseId,
+                        totalSeconds: learningData.totalSeconds || 0,
+                        totalHours: learningData.totalHours || 0,
+                        completedCourses: learningData.completedCourses || [],
+                        videoProgress: learningData.videoProgress || {},
+                        studyRecords: learningData.studyRecords || [],
+                        studyDates: learningData.studyDates || [],
+                        lastStudyTime: learningData.lastStudyTime
+                    })
                 });
-            } catch (e) { /* 忽略同步错误 */ }
+            } catch (e) { /* 离线模式下静默失败 */ }
         }
         
         function updateVideoProgress(videoIndex, progress) {
@@ -781,8 +821,7 @@
         }
         
         function showCourseCompletedNotification() {
-            const course = window.DataAPI ? window.DataAPI.getCourse(courseId) : null;
-            if (course) showToast(`恭喜！您已完成《${course.title}》全部课程！`, 'success');
+            // 已移除完成提示弹窗，避免重复打扰
         }
         
         // 更新课程进度UI
@@ -813,157 +852,6 @@
             document.getElementById('course-progress-percent').textContent = percent + '%';
             document.getElementById('completed-chapters').textContent = completedCount;
             document.getElementById('total-chapters').textContent = total;
-        }
-        
-        // ==================== 点赞和收藏 ====================
-        function loadLikeAndFavorite() {
-            if (!courseId) return;
-            const key = `course_stats_${courseId}`;
-            const stats = window.DataAPI ? window.DataAPI.get(key) : null;
-            
-            if (stats) {
-                likeCount = stats.likes || 0;
-                favoriteCount = stats.favorites || 0;
-                isLiked = stats.isLiked || false;
-                isFavorited = stats.isFavorited || false;
-            } else {
-                const course = window.DataAPI ? window.DataAPI.getCourse(courseId) : null;
-                likeCount = course ? (course.likes || Math.floor(Math.random() * 1000) + 100) : Math.floor(Math.random() * 1000) + 100;
-                favoriteCount = course ? (course.favorites || Math.floor(Math.random() * 500) + 50) : Math.floor(Math.random() * 500) + 50;
-                isLiked = false;
-                isFavorited = false;
-            }
-            updateLikeUI();
-            updateFavoriteUI();
-        }
-        
-        function updateLikeUI() {
-            const likeBtn = document.getElementById('like-btn');
-            const likeIcon = document.getElementById('like-icon');
-            const likeCountEl = document.getElementById('like-count');
-            
-            if (isLiked) {
-                likeBtn?.classList.add('bg-primary', 'text-white');
-                likeBtn?.classList.remove('bg-gray-100', 'text-gray-700');
-                likeIcon?.classList.replace('fa-thumbs-o-up', 'fa-thumbs-up');
-            } else {
-                likeBtn?.classList.remove('bg-primary', 'text-white');
-                likeBtn?.classList.add('bg-gray-100', 'text-gray-700');
-                likeIcon?.classList.replace('fa-thumbs-up', 'fa-thumbs-o-up');
-            }
-            if (likeCountEl) likeCountEl.textContent = `点赞 ${likeCount.toLocaleString()}`;
-        }
-        
-        function updateFavoriteUI() {
-            const favoriteBtn = document.getElementById('favorite-btn');
-            const favoriteIcon = document.getElementById('favorite-icon');
-            const favoriteCountEl = document.getElementById('favorite-count');
-            
-            if (isFavorited) {
-                favoriteBtn?.classList.add('bg-orange-500', 'text-white');
-                favoriteBtn?.classList.remove('bg-gray-100', 'text-gray-700');
-                favoriteIcon?.className = 'fa fa-star';
-            } else {
-                favoriteBtn?.classList.remove('bg-orange-500', 'text-white');
-                favoriteBtn?.classList.add('bg-gray-100', 'text-gray-700');
-                favoriteIcon?.className = 'fa fa-star-o';
-            }
-            if (favoriteCountEl) favoriteCountEl.textContent = isFavorited ? '已收藏' : '收藏';
-        }
-        
-        function handleLike() {
-            const user = getCurrentUser();
-            if (!user) {
-                showToast('请先登录后再点赞');
-                setTimeout(() => { AuthModal.show({ tab: 'login' }); }, 500);
-                return;
-            }
-            isLiked = !isLiked;
-            likeCount = Math.max(0, isLiked ? likeCount + 1 : likeCount - 1);
-            const key = `course_stats_${courseId}`;
-            if (window.DataAPI) window.DataAPI.set(key, { likes: likeCount, favorites: favoriteCount, isLiked, isFavorited });
-            updateLikeUI();
-            showToast(isLiked ? '点赞成功！' : '已取消点赞');
-        }
-        
-        function handleFavorite() {
-            const user = getCurrentUser();
-            if (!user) {
-                showToast('请先登录后再收藏');
-                setTimeout(() => { AuthModal.show({ tab: 'login' }); }, 500);
-                return;
-            }
-            isFavorited = !isFavorited;
-            const userId = getUserId();
-            const favKey = `user_favorites_${userId}`;
-            let favorites = window.DataAPI ? window.DataAPI.get(favKey) : null;
-            if (!favorites) favorites = [];
-            if (isFavorited) {
-                if (!favorites.includes(courseId)) favorites.push(courseId);
-            } else {
-                favorites = favorites.filter(id => id !== courseId);
-            }
-            if (window.DataAPI) window.DataAPI.set(favKey, favorites);
-            const statsKey = `course_stats_${courseId}`;
-            if (window.DataAPI) window.DataAPI.set(statsKey, { likes: likeCount, favorites: favoriteCount + (isFavorited ? 1 : 0), isLiked, isFavorited });
-            updateFavoriteUI();
-            showToast(isFavorited ? '收藏成功！' : '已取消收藏');
-        }
-        
-        function initLikeAndFavoriteButtons() {
-            document.getElementById('like-btn')?.addEventListener('click', handleLike);
-            document.getElementById('favorite-btn')?.addEventListener('click', handleFavorite);
-        }
-        
-        // ==================== 笔记功能 ====================
-        function initNoteModal() {
-            const noteBtn = document.getElementById('note-btn');
-            const noteModal = document.getElementById('note-modal');
-            const closeBtn = document.getElementById('close-note-modal');
-            const saveBtn = document.getElementById('save-note-btn');
-            const overlay = document.getElementById('note-overlay');
-            
-            noteBtn?.addEventListener('click', () => {
-                const api = window.DataAPI;
-                const videos = api.getCourse(courseId)?.videos || [];
-                const currentVideo = videos[lastVideoIndex];
-                document.getElementById('note-chapter-title').textContent = currentVideo?.title || `课时 ${lastVideoIndex + 1}`;
-                
-                // 加载已有笔记
-                const userId = getUserId();
-                const noteKey = `note_${userId}_${courseId}_${lastVideoIndex}`;
-                const savedNote = window.DataAPI ? window.DataAPI.get(noteKey) : null;
-                document.getElementById('note-content').value = savedNote?.content || '';
-                
-                noteModal.classList.remove('hidden');
-            });
-            
-            const closeNoteModal = () => noteModal.classList.add('hidden');
-            closeBtn?.addEventListener('click', closeNoteModal);
-            overlay?.addEventListener('click', closeNoteModal);
-            
-            saveBtn?.addEventListener('click', () => {
-                const content = document.getElementById('note-content').value;
-                const userId = getUserId();
-                const noteKey = `note_${userId}_${courseId}_${lastVideoIndex}`;
-                if (window.DataAPI) window.DataAPI.set(noteKey, { content, timestamp: new Date().toISOString() });
-                closeNoteModal();
-                showToast('笔记已保存');
-            });
-        }
-        
-        // ==================== 快捷键弹窗 ====================
-        function initShortcutsModal() {
-            const shortcutsBtn = document.getElementById('shortcuts-btn');
-            const shortcutsModal = document.getElementById('shortcuts-modal');
-            const closeBtn = document.getElementById('close-shortcuts-modal');
-            const overlay = document.getElementById('shortcuts-overlay');
-            
-            shortcutsBtn?.addEventListener('click', () => shortcutsModal.classList.remove('hidden'));
-            
-            const closeModal = () => shortcutsModal.classList.add('hidden');
-            closeBtn?.addEventListener('click', closeModal);
-            overlay?.addEventListener('click', closeModal);
         }
         
         // ==================== 键盘快捷键 ====================
@@ -1008,17 +896,9 @@
                         e.preventDefault();
                         toggleFullscreen();
                         break;
-                    case 'KeyN':
-                        e.preventDefault();
-                        document.getElementById('note-btn')?.click();
-                        break;
                     case 'KeyM':
                         e.preventDefault();
                         toggleMute();
-                        break;
-                    case 'Escape':
-                        document.getElementById('note-modal')?.classList.add('hidden');
-                        document.getElementById('shortcuts-modal')?.classList.add('hidden');
                         break;
                 }
             });
@@ -1090,16 +970,54 @@
         async function loadCourseData() {
             const api = window.DataAPI;
             const courseId = getCourseIdFromUrl();
+            
+            console.log('[Player] ===== 开始加载课程数据 =====');
+            console.log('[Player] URL中的courseId:', courseId);
+            console.log('[Player] 当前URL:', window.location.href);
+            console.log('[Player] DataAPI是否存在:', !!api);
+            
+            if (!courseId) {
+                console.error('[Player]  未找到courseId参数');
+                return null;
+            }
+            
+            // 优先从服务器获取
             try {
+                console.log('[Player] 正在从服务器获取课程数据...');
                 const response = await fetch('/api/courses');
                 if (response.ok) {
                     const serverCourses = await response.json();
+                    console.log('[Player] 服务器返回课程数量:', serverCourses.length);
+                    if (serverCourses.length > 0) {
+                        console.log('[Player] 第一个课程ID:', serverCourses[0].id);
+                    }
                     const found = serverCourses.find(c => String(c.id) === String(courseId));
-                    if (found) return found;
+                    if (found) {
+                        console.log('[Player] ✅ 从服务器找到课程:', found.title);
+                        console.log('[Player] 课程videos数量:', found.videos?.length || 0);
+                        return found;
+                    }
+                    console.log('[Player] ❌ 服务器未找到匹配的课程');
                 }
-            } catch (e) { /* 服务器不可用时降级 */ }
+            } catch (e) {
+                console.error('[Player] ❌ 从服务器获取课程失败:', e);
+            }
+            
+            // 降级到本地缓存
+            console.log('[Player] 尝试从本地缓存获取...');
             const courses = api.getCourses();
-            return courses.find(c => String(c.id) === String(courseId)) || null;
+            console.log('[Player] 本地缓存课程数量:', courses.length);
+            const found = courses.find(c => String(c.id) === String(courseId));
+            
+            if (found) {
+                console.log('[Player] ✅ 从本地缓存找到课程:', found.title);
+            } else {
+                console.error('[Player] ❌ 本地缓存也未找到课程, courseId:', courseId);
+                console.log('[Player] 本地缓存中的所有课程IDs:', courses.map(c => c.id));
+            }
+            
+            console.log('[Player] ===== 结束加载课程数据 =====');
+            return found || null;
         }
 
         function populatePlayerPage(course) {
@@ -1109,19 +1027,28 @@
             currentCourseData = course;
 
             const videoEl = document.getElementById('course-video');
-            const sourceEl = document.getElementById('video-source');
             videoEl.poster = course.cover || `https://placehold.co/1280x720/667eea/ffffff?text=${encodeURIComponent(course.title || '课程')}`;
-            const firstVideo = (course.videos && course.videos.length > 0) ? course.videos[0] : null;
-            const videoUrl = (firstVideo && firstVideo.url) || course.video || 'https://www.w3schools.com/html/mov_bbb.mp4';
-            sourceEl.src = videoUrl;
-            if (firstVideo) videoEl.load();
+
+            // 处理视频URL：优先使用 videos 数组，其次使用 course.video 字段
+            let videos = course.videos || [];
+
+            // 兼容 course.videos 为空但 course.video 存在的情况
+            if (!Array.isArray(videos) || videos.length === 0) {
+                if (course.video) {
+                    videos = [{ url: course.video, title: '课程视频', duration: 0 }];
+                } else {
+                    videos = [];
+                }
+            }
+
+            // 更新课程对象的 videos 属性（用于后续渲染）
+            course.videos = videos;
 
             const catInfo = getCategoryInfo(course.categoryId);
             document.getElementById('breadcrumb-category').textContent = catInfo.name || '未分类';
             document.getElementById('breadcrumb-title').textContent = course.title || '未知课程';
             document.title = (course.title || '课程播放') + ' - 游雁学院';
 
-            const videos = course.videos || [];
             let totalDuration = 0;
             videos.forEach(v => { totalDuration += (v.duration || 0); });
             currentVideoDuration = totalDuration;
@@ -1134,17 +1061,21 @@
 
             document.getElementById('player-course-description').textContent = course.description || '暂无课程简介';
 
-            const lecturer = api.getLecturer(course.lecturerId);
-            if (lecturer) {
-                document.getElementById('player-lecturer-avatar').src = lecturer.avatar || `https://placehold.co/80x80/667eea/ffffff?text=${encodeURIComponent(lecturer.name || 'L')}`;
-                document.getElementById('player-lecturer-avatar').alt = lecturer.name;
-                document.getElementById('player-lecturer-name').textContent = lecturer.name || '未知讲师';
-                document.getElementById('player-lecturer-title').textContent = lecturer.title || lecturer.department || '-';
-                document.getElementById('player-lecturer-bio').textContent = lecturer.bio || lecturer.intro || '暂无简介';
+            // 渲染讲师信息区域
+            renderLecturerInfo(course);
+
+            // 初始化点赞/评分交互区
+            initInteractionBar(course);
+
+            // 分类层级显示（父级 > 子级）— 使用已有的 catInfo，尝试获取更详细的层级信息
+            const detailedCatInfo = api.getCategoryInfo(course.categoryId);
+            if (detailedCatInfo && detailedCatInfo.parent) {
+                const catTag = document.getElementById('player-category-tag');
+                if (catTag) catTag.textContent = `${detailedCatInfo.parent.name} / ${detailedCatInfo.child.name}`;
+                document.getElementById('breadcrumb-category').textContent = `${detailedCatInfo.parent.name} / ${detailedCatInfo.child.name}`;
             }
 
             renderChapterList(videos);
-            loadLikeAndFavorite();
             updateCourseProgressUI();
         }
         
@@ -1163,8 +1094,19 @@
             const container = document.getElementById('chapter-list');
             const chapterCountEl = document.getElementById('chapter-count');
             if (!container) return;
-            if (!videos || videos.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm px-3 py-4 text-center">暂无课程章节</p>';
+            
+            // 确保 videos 是数组
+            if (!videos || !Array.isArray(videos) || videos.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                            <i class="fa fa-video-camera text-gray-400 text-2xl"></i>
+                        </div>
+                        <p class="text-gray-500 text-sm mb-2">暂无课程章节</p>
+                        <p class="text-gray-400 text-xs">管理员尚未添加视频内容</p>
+                    </div>
+                `;
+                if (chapterCountEl) chapterCountEl.textContent = '0课时';
                 return;
             }
             
@@ -1177,7 +1119,7 @@
                 const savedProgress = learningData.videoProgress[vKey] || 0;
                 const isCompleted = savedProgress >= 100;
                 const isCurrent = lastVideoIndex === i;
-                const progress = savedProgress > 0 ? `<div class="w-full bg-gray-200 rounded-full h-1 mt-1"><div class="bg-primary h-1 rounded-full transition-all" style="width: ${savedProgress}%"></div></div>` : '';
+                const progress = ''; // 进度条已隐藏，仅保留完成状态图标
                 
                 return `
                 <div class="flex items-center justify-between px-3 py-3 rounded-xl hover:bg-gray-50 cursor-pointer chapter-lesson-item transition-all ${isCompleted ? 'completed' : ''} ${isCurrent ? 'chapter-active' : ''}" data-src="${v.url || ''}" data-index="${i}">
@@ -1193,7 +1135,7 @@
                             ${progress}
                         </div>
                     </div>
-                    <span class="text-xs text-gray-400 ml-3 flex-shrink-0 lesson-duration">${api.formatDuration(v.duration || 0)}</span>
+                    <span class="text-xs text-gray-400 ml-3 flex-shrink-0 lesson-duration">${v.duration > 0 ? api.formatDuration(v.duration) : '待检测'}</span>
                 </div>
                 `;
             }).join('');
@@ -1222,40 +1164,179 @@
                 showToast('无法播放该视频，请刷新页面重试');
                 return;
             }
-            
-            // 保存上一个视频的进度
-            if (video.duration && video.currentTime) {
+
+            // 保存上一个视频的进度（百分比 + 播放位置）
+            if (video.duration && video.currentTime && video.duration > 0) {
                 updateVideoProgress(lastVideoIndex, Math.floor((video.currentTime / video.duration) * 100) || 0);
+                saveVideoPosition(`${courseId}_${lastVideoIndex}`, video.currentTime);
+            }
+
+            lastVideoIndex = videoIdx;
+            // 处理视频URL：优先用当前章节的url，其次用课程的video字段
+            let src = v.url || courseData?.video || '';
+            if (src && !src.startsWith('http://') && !src.startsWith('https://') && !src.startsWith('data:')) {
+                // 相对路径，添加当前域名
+                src = window.location.origin + src;
             }
             
-            lastVideoIndex = videoIdx;
-            const src = v.url || '';
             const sourceEl = document.getElementById('video-source');
             const videoEl = document.getElementById('course-video');
-            
+
             // 更新章节标题
             document.getElementById('current-chapter-title').textContent = '正在播放：' + (v.title || `课时 ${videoIdx + 1}`);
-            
+
             if (src && src.trim() !== '') {
+                console.log('[Player] 加载视频:', src);
                 sourceEl.src = src;
                 videoEl.load();
-                videoEl.play();
-                startStudyTimer();
+                
+                // 添加视频错误处理
+                videoEl.onerror = function() {
+                    console.error('[Player] 视频加载失败:', src);
+                    showVideoErrorTip(v.title || `课时 ${videoIdx + 1}`);
+                };
+
+                // 记录需要恢复的播放位置
+                const savedPosition = getSavedVideoPosition(`${courseId}_${videoIdx}`);
+                const shouldRestore = savedPosition > 2;
+
+                // ========== 渐进式自动播放策略 ==========
+                // 第一步：尝试取消静音播放（用户已交互过的页面可能允许）
+                // 第二步：失败则静音播放 → 短暂延迟后尝试取消静音
+                // 第三步：全部失败则显示手动播放按钮
+
+                function updatePlayingUI() {
+                    startStudyTimer();
+                    playButton.innerHTML = '<i class="fa fa-pause"></i>';
+                    playPauseButton.innerHTML = '<i class="fa fa-pause"></i>';
+                    document.getElementById('center-play-overlay').style.opacity = '0';
+                    document.getElementById('center-play-overlay').style.pointerEvents = 'none';
+                }
+
+                function showManualPlayUI() {
+                    document.getElementById('center-play-overlay').style.opacity = '1';
+                    document.getElementById('center-play-overlay').style.pointerEvents = 'auto';
+                    showAutoPlayBlockedTip();
+                }
+
+                // 尝试带声音播放
+                function attemptUnmutedPlay() {
+                    videoEl.muted = false;
+                    const p = videoEl.play();
+                    if (p === undefined) return Promise.resolve(true); // 旧浏览器直接成功
+                    return p.then(() => {
+                        updatePlayingUI();
+                        if (shouldRestore) {
+                            videoEl.currentTime = savedPosition;
+                            showToast(`已恢复到上次位置 ${formatTime(savedPosition)}`);
+                        }
+                        return true;
+                    }).catch(() => false);
+                }
+
+                // 尝试静音播放 → 延迟后取消静音
+                function attemptMutedPlay() {
+                    videoEl.muted = true;
+                    const p = videoEl.play();
+                    if (p === undefined) {
+                        // 旧浏览器
+                        updatePlayingUI();
+                        if (shouldRestore) videoEl.currentTime = savedPosition;
+                        setTimeout(() => tryUnmuteAfterMutedPlay(), 1500);
+                        return;
+                    }
+                    p.then(() => {
+                        updatePlayingUI();
+                        if (shouldRestore) {
+                            videoEl.currentTime = savedPosition;
+                            showToast(`已恢复到上次位置 ${formatTime(savedPosition)}`);
+                        }
+                        // 静音播放成功，1.5秒后尝试取消静音
+                        setTimeout(() => tryUnmuteAfterMutedPlay(), 1500);
+                    }).catch(() => {
+                        // 静音播放也被阻止，显示手动播放按钮
+                        console.warn('[Player] 静音自动播放也被阻止');
+                        showManualPlayUI();
+                    });
+                }
+
+                // 静音播放成功后，尝试取消静音
+                function tryUnmuteAfterMutedPlay() {
+                    if (videoEl.paused) return;
+                    videoEl.muted = false;
+                    const p = videoEl.play();
+                    if (p === undefined) return;
+                    p.then(() => {
+                        showToast('已开启声音');
+                    }).catch(() => {
+                        // 取消静音被阻止，保持静音播放
+                        videoEl.muted = true;
+                        // 确保静音状态下继续播放
+                        videoEl.play().catch(() => {});
+                        showToast('视频静音自动播放中，点击取消静音');
+                    });
+                }
+
+                // 等待视频数据就绪后再尝试播放
+                function attemptAutoplay() {
+                    // 先尝试带声音播放（某些场景下浏览器允许）
+                    attemptUnmutedPlay().then(success => {
+                        if (success) return; // 带声音播放成功
+                        // 带声音播放失败，尝试静音播放
+                        attemptMutedPlay();
+                    }).catch(() => {
+                        attemptMutedPlay();
+                    });
+                }
+
+                // 关键修复：等待视频数据就绪后再播放，避免竞态条件
+                if (videoEl.readyState >= 3) {
+                    // HAVE_FUTURE_DATA，数据已就绪
+                    attemptAutoplay();
+                } else {
+                    // 等待 canplay 事件
+                    const onCanPlay = () => {
+                        attemptAutoplay();
+                    };
+                    videoEl.addEventListener('canplay', onCanPlay, { once: true });
+                    // 超时兜底：5秒后如果还没 canplay，强制尝试
+                    const fallbackTimer = setTimeout(() => {
+                        videoEl.removeEventListener('canplay', onCanPlay);
+                        if (videoEl.readyState < 3) {
+                            console.warn('[Player] canplay 超时，强制尝试播放');
+                            attemptAutoplay();
+                        }
+                    }, 5000);
+                    // 如果 canplay 正常触发，清除超时
+                    videoEl.addEventListener('canplay', () => clearTimeout(fallbackTimer), { once: true });
+                }
             } else {
-                sourceEl.src = 'https://www.w3schools.com/html/mov_bbb.mp4';
+                // 视频URL为空时显示提示
+                sourceEl.src = '';
                 videoEl.load();
-                videoEl.play();
-                showToast('正在播放演示视频');
-                startStudyTimer();
+                showNoVideoTip(v.title || `课时 ${videoIdx + 1}`);
             }
-            
+
             // 更新章节列表样式
+            updateChapterListActiveState(videoIdx);
+
+            updateContinueButtonText();
+        }
+
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return '00:00';
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function updateChapterListActiveState(videoIdx) {
             const container = document.getElementById('chapter-list');
             container.querySelectorAll('.chapter-lesson-item').forEach(el => {
-                el.classList.remove('chapter-active', 'bg-primary/10');
+                el.classList.remove('chapter-active', 'bg-primary/5');
                 const icon = el.querySelector('.chapter-status-icon');
                 const title = el.querySelector('.lesson-title');
-                const playBtn = el.querySelector('.play-btn');
+                const playBtnIcon = el.querySelector('.play-btn i');
                 if (icon && !el.classList.contains('completed')) {
                     icon.className = 'fa fa-circle text-gray-300 mr-2 text-xs chapter-status-icon';
                 }
@@ -1263,28 +1344,69 @@
                     title.classList.remove('text-primary', 'font-semibold');
                     title.classList.add('text-gray-700');
                 }
+                if (playBtnIcon && !el.classList.contains('completed')) {
+                    playBtnIcon.className = 'fa fa-play';
+                }
             });
-            
+
             const currentItem = container.querySelector(`.chapter-lesson-item[data-index="${videoIdx}"]`);
             if (currentItem) {
                 currentItem.classList.add('chapter-active', 'bg-primary/5');
                 const icon = currentItem.querySelector('.chapter-status-icon');
                 const title = currentItem.querySelector('.lesson-title');
-                const playBtn = currentItem.querySelector('.play-btn');
+                const playBtnIcon = currentItem.querySelector('.play-btn i');
                 if (icon && !currentItem.classList.contains('completed')) {
                     icon.className = 'fa fa-play-circle text-primary mr-2 text-xs chapter-status-icon';
                 }
                 if (title) {
                     title.classList.add('text-primary', 'font-semibold');
+                    title.classList.remove('text-gray-700');
                 }
-                if (playBtn) playBtn.querySelector('i').className = 'fa fa-pause';
-                
+                if (playBtnIcon) playBtnIcon.className = 'fa fa-pause';
+
                 // 滚动到当前项
                 currentItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
-            
-            updateContinueButtonText();
-            showToast(`正在播放：${v.title || '课时 ' + (videoIdx + 1)}`);
+        }
+
+        function showAutoPlayBlockedTip() {
+            let tip = document.getElementById('autoplay-blocked-tip');
+            if (!tip) {
+                tip = document.createElement('div');
+                tip.id = 'autoplay-blocked-tip';
+                tip.className = 'absolute inset-0 flex items-center justify-center bg-black/60 z-20 rounded-2xl';
+                tip.innerHTML = '<div class="text-center text-white"><i class="fa fa-info-circle text-3xl mb-3 block"></i><p class="text-lg font-medium">点击播放按钮开始学习</p><p class="text-sm text-white/60 mt-1">浏览器已禁止自动播放</p></div>';
+                document.getElementById('video-container').appendChild(tip);
+            }
+            tip.style.display = 'flex';
+            // 5秒后自动隐藏
+            setTimeout(() => { tip.style.display = 'none'; }, 5000);
+        }
+
+        function showNoVideoTip(title) {
+            let tip = document.getElementById('no-video-tip');
+            if (!tip) {
+                tip = document.createElement('div');
+                tip.id = 'no-video-tip';
+                tip.className = 'absolute inset-0 flex items-center justify-center bg-black/80 z-20 rounded-2xl';
+                document.getElementById('video-container').appendChild(tip);
+            }
+            tip.innerHTML = `<div class="text-center text-white p-8"><i class="fa fa-video-camera text-5xl mb-4 block text-white/40"></i><p class="text-xl font-medium mb-2">「${title}」暂无视频</p><p class="text-sm text-white/50">管理员尚未上传视频文件</p><p class="text-xs text-white/30 mt-3">请联系管理员添加视频资源</p></div>`;
+            tip.style.display = 'flex';
+            stopStudyTimer();
+        }
+        
+        function showVideoErrorTip(title) {
+            let tip = document.getElementById('video-error-tip');
+            if (!tip) {
+                tip = document.createElement('div');
+                tip.id = 'video-error-tip';
+                tip.className = 'absolute inset-0 flex items-center justify-center bg-black/80 z-20 rounded-2xl';
+                document.getElementById('video-container').appendChild(tip);
+            }
+            tip.innerHTML = `<div class="text-center text-white p-8"><i class="fa fa-exclamation-triangle text-5xl mb-4 block text-yellow-500"></i><p class="text-xl font-medium mb-2">视频加载失败</p><p class="text-sm text-white/50">「${title}」无法播放</p><p class="text-xs text-white/30 mt-3">请检查网络连接或联系管理员</p><button onclick="location.reload()" class="mt-4 px-6 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition">刷新重试</button></div>`;
+            tip.style.display = 'flex';
+            stopStudyTimer();
         }
         
         function updateContinueButtonText() {
@@ -1367,6 +1489,334 @@
             }
         });
         
+        // ==================== 讲师信息渲染 ====================
+        const RATING_LABELS = {
+            5: '干货满满！',
+            4: '养分充足！',
+            3: '养分很多！',
+            2: '有点营养！',
+            1: '营养不足！'
+        };
+
+        function renderLecturerInfo(course) {
+            const container = document.getElementById('lecturer-info-content');
+            if (!container) return;
+            
+            const api = window.DataAPI;
+            let lecturerId = course.lecturerId;
+            
+            if (!lecturerId) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-gray-400">
+                        <i class="fa fa-user-circle text-3xl mb-2 block"></i>
+                        <p>暂无讲师信息</p>
+                    </div>`;
+                return;
+            }
+
+            const lecturer = api.getLecturer(lecturerId);
+            
+            if (!lecturer) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-gray-400">
+                        <i class="fa fa-user-circle text-3xl mb-2 block"></i>
+                        <p>讲师信息未找到</p>
+                    </div>`;
+                return;
+            }
+
+            // 渲染讲师卡片
+            const skillsHtml = (lecturer.skills || []).map(s => 
+                `<span class="px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">${s}</span>`
+            ).join('');
+
+            const avatarHtml = lecturer.avatar 
+                ? `<img src="${lecturer.avatar}" alt="${lecturer.name}" class="lecturer-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                   <div class="lecturer-avatar-placeholder" style="display:none;">${(lecturer.name||'').charAt(0)}</div>`
+                : `<div class="lecturer-avatar-placeholder">${(lecturer.name||'').charAt(0)}</div>`;
+
+            container.innerHTML = `
+                <div class="lecturer-card">
+                    <div class="relative">
+                        ${avatarHtml}
+                        ${lecturer.levelName ? `<span class="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-gradient-primary text-white text-[10px] font-medium whitespace-nowrap">${lecturer.levelName}</span>` : ''}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-lg font-bold text-gray-900 mb-1">${lecturer.name || '未知讲师'}</h3>
+                        <p class="text-sm text-gray-500 mb-1">
+                            <span class="mr-3"><i class="fa fa-briefcase mr-1"></i>${lecturer.title || lecturer.department || ''}</span>
+                            <span><i class="fa fa-building mr-1"></i>${lecturer.department || ''}</span>
+                        </p>
+                        ${lecturer.intro ? `<p class="text-sm text-gray-600 mt-2 line-clamp-2 leading-relaxed">${lecturer.intro}</p>` : ''}
+                        ${skillsHtml ? `<div class="flex flex-wrap gap-2 mt-3">${skillsHtml}</div>` : ''}
+                        <a href="teacher.html" class="inline-flex items-center mt-3 text-sm text-primary hover:text-primary/80 transition-colors group">
+                            <span>查看讲师详情</span>
+                            <i class="fa fa-angle-right ml-1 group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+                </div>`;
+        }
+
+        // ==================== 点赞 & 评分交互区 ====================
+        let currentRatingScore = 5; // 当前选中的评分（弹窗内）
+        
+        function getCourseInteractionKey() {
+            return `course_interaction_${courseId}`;
+        }
+
+        /**
+         * 获取课程互动数据（点赞、评分）
+         * 结构：{ likes, userLikes: {userId: bool}, userRatings: {userId: score}, ratingSum, ratingCount }
+         */
+        function getCourseInteractionData() {
+            const key = getCourseInteractionKey();
+            let data = window.DataAPI?.get(key);
+            if (!data) {
+                data = {
+                    likes: 0,
+                    userLikes: {},
+                    userRatings: {},
+                    ratingSum: 0,
+                    ratingCount: 0
+                };
+            }
+            return data;
+        }
+
+        async function saveCourseInteractionData(data) {
+            const key = getCourseInteractionKey();
+            if (window.DataAPI) await window.DataAPI.set(key, data);
+        }
+
+        // 防止浏览量重复计数的标记（每次页面加载只+1）
+        let _viewsIncremented = false;
+
+        function initInteractionBar(course) {
+            if (!course) return;
+
+            const api = window.DataAPI;
+            const userId = getUserId();
+            const interactionData = getCourseInteractionData();
+
+            // 更新浏览量（课程信息区，仅显示不计数）
+            const playerViewsEl = document.getElementById('player-views');
+            if (playerViewsEl) playerViewsEl.textContent = (course.views || 0) + '人学习';
+
+            // 更新点赞数（按钮内嵌数字）
+            const likesEl = document.getElementById('interaction-likes');
+            if (likesEl) likesEl.textContent = interactionData.likes || 0;
+
+            // 更新评分平均分（课程信息区）
+            const playerRatingEl = document.getElementById('player-rating');
+            if (playerRatingEl) {
+                const avg = interactionData.ratingCount > 0
+                    ? (interactionData.ratingSum / interactionData.ratingCount).toFixed(1)
+                    : (course.rating || 0).toFixed(1);
+                playerRatingEl.textContent = avg;
+            }
+
+            // 恢复用户之前的点赞状态
+            updateLikeButtonState(interactionData.userLikes[userId]);
+
+            // 恢复用户之前的评分状态
+            if (interactionData.userRatings[userId]) {
+                showMyRatingHint(interactionData.userRatings[userId]);
+            }
+
+            // 绑定点赞按钮事件
+            bindLikeButton(userId);
+
+            // 绑定评分按钮事件
+            bindRateButton(userId, interactionData);
+
+            // 增加浏览量（仅首次初始化时执行，storage事件触发的re-init不再重复计数）
+            if (!_viewsIncremented) {
+                _viewsIncremented = true;
+                incrementViews(api, course);
+            }
+        }
+
+        // 增加浏览量（每次进入页面+1）
+        function incrementViews(api, course) {
+            course.views = (course.views || 0) + 1;
+
+            const courses = api.getCourses();
+            const idx = courses.findIndex(c => String(c.id) === String(courseId));
+            if (idx >= 0) {
+                courses[idx].views = course.views;
+                api.set('management_courses', courses);
+            }
+
+            // 更新播放页浏览量显示
+            const playerViewsEl = document.getElementById('player-views');
+            if (playerViewsEl) playerViewsEl.textContent = course.views + '人学习';
+        }
+
+        function updateLikeButtonState(isLiked) {
+            const btn = document.getElementById('btn-like');
+            const icon = document.getElementById('like-icon');
+
+            if (!btn || !icon) return;
+
+            if (isLiked) {
+                btn.classList.add('btn-like-active');
+                icon.className = 'fa fa-thumbs-up';
+                btn.title = '取消点赞';
+            } else {
+                btn.classList.remove('btn-like-active');
+                icon.className = 'fa fa-thumbs-o-up';
+                btn.title = '点赞';
+            }
+        }
+
+        function bindLikeButton(userId) {
+            const btn = document.getElementById('btn-like');
+            if (!btn) return;
+
+            btn.addEventListener('click', async () => {
+                const data = getCourseInteractionData();
+                const wasLiked = data.userLikes[userId];
+
+                if (wasLiked) {
+                    delete data.userLikes[userId];
+                    data.likes = Math.max(0, (data.likes || 0) - 1);
+                    updateLikeButtonState(false);
+                    showToast('已取消点赞');
+                } else {
+                    data.userLikes[userId] = true;
+                    data.likes = (data.likes || 0) + 1;
+                    updateLikeButtonState(true);
+                    showToast('点赞成功！');
+                }
+
+                const likesEl = document.getElementById('interaction-likes');
+                if (likesEl) likesEl.textContent = data.likes;
+
+                await saveCourseInteractionData(data);
+                broadcastInteractionSync();
+            });
+        }
+
+        function bindRateButton(userId, currentData) {
+            const btn = document.getElementById('btn-rate');
+            const modal = document.getElementById('rating-modal');
+            const overlay = document.getElementById('rating-modal-overlay');
+            const closeBtn = document.getElementById('rating-modal-close');
+            const submitBtn = document.getElementById('rating-submit-btn');
+
+            if (!btn || !modal) return;
+
+            btn.addEventListener('click', () => {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                const prevScore = currentData.userRatings[userId] || 5;
+                currentRatingScore = prevScore;
+                updateRatingUI(prevScore);
+            });
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            overlay?.addEventListener('click', closeModal);
+            closeBtn?.addEventListener('click', closeModal);
+
+            const starBtns = modal.querySelectorAll('.star-btn');
+            starBtns.forEach(star => {
+                star.addEventListener('click', () => {
+                    currentRatingScore = parseInt(star.dataset.score);
+                    updateRatingUI(currentRatingScore);
+                });
+            });
+
+            submitBtn?.addEventListener('click', async () => {
+                const data = getCourseInteractionData();
+                const oldScore = data.userRatings[userId];
+
+                if (oldScore) {
+                    data.ratingSum -= oldScore;
+                    data.ratingCount--;
+                }
+                data.userRatings[userId] = currentRatingScore;
+                data.ratingSum += currentRatingScore;
+                data.ratingCount++;
+
+                await saveCourseInteractionData(data);
+
+                showMyRatingHint(currentRatingScore);
+                
+                // 更新课程信息区的评分显示
+                const newAvg = (data.ratingSum / data.ratingCount).toFixed(1);
+                const playerRatingEl = document.getElementById('player-rating');
+                if (playerRatingEl) playerRatingEl.textContent = newAvg;
+
+                // 同时更新课程对象的rating字段
+                const api = window.DataAPI;
+                const c = api.getCourse(courseId);
+                if (c) c.rating = parseFloat(newAvg);
+
+                closeModal();
+                showToast(`评分成功：${currentRatingScore}分 ${RATING_LABELS[currentRatingScore]}`);
+
+                broadcastInteractionSync();
+
+                Object.assign(currentData, data);
+            });
+        }
+
+        function updateRatingUI(score) {
+            const numEl = document.getElementById('rating-score-number');
+            const labelEl = document.getElementById('rating-label');
+            const stars = document.querySelectorAll('#rating-stars .star-btn');
+
+            if (numEl) numEl.textContent = score;
+            if (labelEl) labelEl.textContent = RATING_LABELS[score] || '';
+
+            stars.forEach(star => {
+                const s = parseInt(star.dataset.score);
+                if (s <= score) {
+                    star.classList.add('active');
+                    star.querySelector('i').style.color = '#fbbf24';
+                } else {
+                    star.classList.remove('active');
+                    star.querySelector('i').style.color = '';
+                }
+            });
+        }
+
+        function showMyRatingHint(score) {
+            const hintEl = document.getElementById('my-rating-hint');
+            const displayEl = document.getElementById('my-rating-display');
+            if (!hintEl || !displayEl) return;
+            hintEl.classList.remove('hidden');
+            displayEl.innerHTML = `<span class="text-amber-400 mr-1">${'★'.repeat(score)}</span> ${score}分 — ${RATING_LABELS[score]}`;
+        }
+
+        function broadcastInteractionSync() {
+            // 方式1：原生 storage 事件（供直接监听者使用）
+            try {
+                localStorage.setItem('course_interaction_sync', JSON.stringify({
+                    courseId: courseId,
+                    timestamp: Date.now()
+                }));
+                localStorage.removeItem('course_interaction_sync');
+            } catch(e) { /* ignore */ }
+            // 方式2：DataSync 广播（供 index/course 页面 DataSync.listen 使用）
+            if (window.DataSync) {
+                window.DataSync.broadcast(window.DataSync.EventTypes.ALL, {
+                    type: 'interaction',
+                    courseId: courseId
+                });
+            }
+        }
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'course_interaction_sync' && currentCourseData) {
+                initInteractionBar(currentCourseData);
+            }
+        });
+
         // ==================== 播放器核心 ====================
         const video = document.getElementById('course-video');
         const playButton = document.getElementById('play-button');
@@ -1385,13 +1835,28 @@
         // 播放/暂停
         function togglePlay() {
             if (video.paused) {
-                video.play();
-                playButton.innerHTML = '<i class="fa fa-pause"></i>';
-                playPauseButton.innerHTML = '<i class="fa fa-pause"></i>';
-                document.getElementById('center-play-overlay').style.opacity = '0';
-                document.getElementById('center-play-overlay').style.pointerEvents = 'none';
-                document.getElementById('video-container').classList.add('controls-visible');
-                startStudyTimer();
+                const p = video.play();
+                if (p !== undefined) {
+                    p.then(() => {
+                        playButton.innerHTML = '<i class="fa fa-pause"></i>';
+                        playPauseButton.innerHTML = '<i class="fa fa-pause"></i>';
+                        document.getElementById('center-play-overlay').style.opacity = '0';
+                        document.getElementById('center-play-overlay').style.pointerEvents = 'none';
+                        document.getElementById('video-container').classList.add('controls-visible');
+                        startStudyTimer();
+                    }).catch(err => {
+                        console.warn('[Player] 手动播放失败:', err);
+                        // 用户点击仍可能被阻止（如浏览器策略），提示用户
+                        showToast('播放被浏览器阻止，请点击视频区域重试');
+                    });
+                } else {
+                    playButton.innerHTML = '<i class="fa fa-pause"></i>';
+                    playPauseButton.innerHTML = '<i class="fa fa-pause"></i>';
+                    document.getElementById('center-play-overlay').style.opacity = '0';
+                    document.getElementById('center-play-overlay').style.pointerEvents = 'none';
+                    document.getElementById('video-container').classList.add('controls-visible');
+                    startStudyTimer();
+                }
             } else {
                 video.pause();
                 playButton.innerHTML = '<i class="fa fa-play"></i>';
@@ -1431,7 +1896,6 @@
                 showToast('即将播放下一个视频...');
                 setTimeout(() => playChapterVideo(lastVideoIndex + 1), 1500);
             } else {
-                showToast('恭喜！您已完成本课程全部视频！');
                 updateContinueButtonText();
             }
         });
@@ -1471,20 +1935,17 @@
             if (!video.duration) return;
             const percent = (video.currentTime / video.duration) * 100;
             progressBar.style.width = `${percent}%`;
-            
+
             const currentMinutes = Math.floor(video.currentTime / 60);
             const currentSeconds = Math.floor(video.currentTime % 60);
             currentTimeElement.textContent = `${currentMinutes.toString().padStart(2, '0')}:${currentSeconds.toString().padStart(2, '0')}`;
-            
-            // 缓冲进度
-            if (video.buffered.length > 0) {
-                const bufferedEnd = video.buffered.end(video.buffered.length - 1);
-                const bufferedPercent = (bufferedEnd / video.duration) * 100;
-                document.getElementById('progress-buffered').style.width = `${bufferedPercent}%`;
-            }
-            
+
+            // 每5%保存一次百分比进度 + 每10秒保存一次精确位置（用于断点续播）
             if (percent > 0 && percent % 5 < 1) {
                 updateVideoProgress(lastVideoIndex, Math.floor(percent));
+            }
+            if (Math.floor(video.currentTime) % 10 === 0 && video.currentTime > 0) {
+                saveVideoPosition(`${courseId}_${lastVideoIndex}`, video.currentTime);
             }
         }
         
@@ -1507,16 +1968,35 @@
             const seconds = Math.floor(time % 60);
             document.getElementById('chapter-tooltip').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         });
-        
-        // 时长
+
+        // 时长（增强：自动检测并回写数据模型 + 更新章节列表）
         function updateDuration() {
-            if (video.duration && !isNaN(video.duration)) {
+            if (video.duration && !isNaN(video.duration) && video.duration > 0) {
                 currentVideoDuration = video.duration;
                 const durationMinutes = Math.floor(video.duration / 60);
                 const durationSeconds = Math.floor(video.duration % 60);
                 durationElement.textContent = `${durationMinutes.toString().padStart(2, '0')}:${durationSeconds.toString().padStart(2, '0')}`;
                 updateDurationDisplay();
                 updateCurrentChapterDuration();
+                syncVideoDurationToData();
+            }
+        }
+
+        // 将检测到的时长同步到数据模型
+        function syncVideoDurationToData() {
+            if (!courseId || lastVideoIndex < 0 || !video.duration) return;
+            const api = window.DataAPI;
+            const course = api.getCourse(courseId);
+            if (course && course.videos && course.videos[lastVideoIndex]) {
+                const oldDuration = course.videos[lastVideoIndex].duration;
+                const newDuration = Math.floor(video.duration);
+                if (!oldDuration || oldDuration === 0 || Math.abs(oldDuration - newDuration) > 5) {
+                    course.videos[lastVideoIndex].duration = newDuration;
+                    // 重新计算课程总时长
+                    let total = 0;
+                    course.videos.forEach(v => { if (v.duration) total += v.duration; });
+                    course.duration = total;
+                }
             }
         }
         
@@ -1524,12 +2004,26 @@
             const container = document.getElementById('chapter-list');
             const api = window.DataAPI;
             const videos = api.getCourse(courseId)?.videos || [];
-            const currentItem = container.querySelector(`.chapter-lesson-item[data-index="${lastVideoIndex}"]`);
+            const currentItem = container?.querySelector(`.chapter-lesson-item[data-index="${lastVideoIndex}"]`);
             if (currentItem && video.duration && !isNaN(video.duration)) {
                 const durationEl = currentItem.querySelector('.lesson-duration');
                 if (durationEl) durationEl.textContent = api.formatDuration(Math.floor(video.duration));
                 if (videos[lastVideoIndex]) videos[lastVideoIndex].duration = Math.floor(video.duration);
             }
+        }
+
+        // 批量更新所有章节的时长显示
+        function refreshAllChapterDurations() {
+            const container = document.getElementById('chapter-list');
+            const api = window.DataAPI;
+            const videos = api.getCourse(courseId)?.videos || [];
+            container?.querySelectorAll('.chapter-lesson-item').forEach((item, idx) => {
+                const durationEl = item.querySelector('.lesson-duration');
+                if (durationEl && videos[idx]) {
+                    const dur = videos[idx].duration;
+                    durationEl.textContent = dur > 0 ? api.formatDuration(dur) : '待检测';
+                }
+            });
         }
         
         function updateDurationDisplay() {
@@ -1539,6 +2033,8 @@
             if (totalDuration === 0 && currentVideoDuration > 0) totalDuration = currentVideoDuration;
             const durationEl = document.getElementById('player-duration');
             if (durationEl && totalDuration > 0) durationEl.textContent = '总时长：' + window.DataAPI.formatDuration(totalDuration);
+            // 同步刷新章节列表中的时长
+            refreshAllChapterDurations();
         }
         
         video.addEventListener('loadedmetadata', updateDuration);
@@ -1554,17 +2050,83 @@
                 fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
             }
         }
-        
+
         fullscreenButton.addEventListener('click', toggleFullscreen);
-        
-        // 音量
+
+        // 画中画模式
+        const pipButton = document.getElementById('pip-button');
+        async function togglePiP() {
+            try {
+                if (document.pictureInPictureElement) {
+                    await document.exitPictureInPicture();
+                    showToast('已退出画中画');
+                    pipButton.querySelector('i').className = 'fa fa-window-restore';
+                } else {
+                    await video.requestPictureInPicture();
+                    showToast('已开启画中画模式');
+                    pipButton.querySelector('i').className = 'fa fa-window-maximize';
+                }
+            } catch (err) {
+                showToast('当前浏览器不支持画中画功能');
+                console.warn('[Player] PiP not supported:', err);
+            }
+        }
+
+        pipButton?.addEventListener('click', togglePiP);
+
+        // 音量控制（增强版：支持滑块 + 静音切换）
+        function initVolumeSlider() {
+            const volumeSlider = document.getElementById('volume-slider');
+            const volumeValue = document.getElementById('volume-value');
+
+            if (volumeSlider) {
+                volumeSlider.addEventListener('input', (e) => {
+                    const vol = e.target.value / 100;
+                    video.volume = vol;
+                    if (vol > 0 && isMuted) {
+                        isMuted = false;
+                        video.muted = false;
+                    }
+                    previousVolume = vol;
+                    updateVolumeIcon(vol);
+                    if (volumeValue) volumeValue.textContent = `${e.target.value}%`;
+                });
+            }
+        }
+
+        function updateVolumeIcon(vol) {
+            const icon = document.getElementById('volume-btn')?.querySelector('i');
+            if (!icon) return;
+            if (vol === 0 || isMuted) {
+                icon.className = 'fa fa-volume-off';
+            } else if (vol < 0.5) {
+                icon.className = 'fa fa-volume-down';
+            } else {
+                icon.className = 'fa fa-volume-up';
+            }
+        }
+
         function toggleMute() {
             isMuted = !isMuted;
             video.muted = isMuted;
-            volumeBtn.innerHTML = isMuted ? '<i class="fa fa-volume-off"></i>' : '<i class="fa fa-volume-up"></i>';
-            showToast(isMuted ? '已静音' : '已开启声音');
+            const slider = document.getElementById('volume-slider');
+            const valueEl = document.getElementById('volume-value');
+
+            if (isMuted) {
+                previousVolume = video.volume || 1;
+                if (slider) slider.value = 0;
+                if (valueEl) valueEl.textContent = '0%';
+                document.getElementById('volume-btn').querySelector('i').className = 'fa fa-volume-off';
+                showToast('已静音');
+            } else {
+                video.volume = previousVolume;
+                if (slider) slider.value = Math.round(previousVolume * 100);
+                if (valueEl) valueEl.textContent = `${Math.round(previousVolume * 100)}%`;
+                updateVolumeIcon(previousVolume);
+                showToast('已开启声音');
+            }
         }
-        
+
         volumeBtn?.addEventListener('click', toggleMute);
         
         // 速度
@@ -1653,35 +2215,47 @@
 
         // ==================== 初始化 ====================
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('[Player] 页面开始初始化...');
             checkAuthAndUpdateUI();
             loadLearningSettings();
-            initLikeAndFavoriteButtons();
-            initNoteModal();
-            initShortcutsModal();
             initKeyboardShortcuts();
-            
+
+            console.log('[Player] 正在初始化DataAPI...');
             if (window.DataAPI?.init) await window.DataAPI.init();
-            
+            console.log('[Player] DataAPI初始化完成');
+
+            console.log('[Player] 正在加载课程数据...');
             const course = await loadCourseData();
+            
             if (course) {
+                console.log('[Player] 课程加载成功，开始渲染页面...');
                 populatePlayerPage(course);
                 loadCurrentSessionStudyTime();
                 bindContinueButton();
                 updateContinueButtonText();
-                
+                initVolumeSlider();
+
+                // 自动播放第一个视频（或从进度恢复）
                 setTimeout(() => {
-                    const firstVideoItem = document.querySelector('.chapter-lesson-item[data-index="0"]');
-                    firstVideoItem?.querySelector('.play-btn')?.click();
-                }, 500);
+                    playChapterVideo(0);
+                }, 300);
             } else {
                 document.getElementById('player-course-title').textContent = '未找到课程';
+                document.getElementById('chapter-list').innerHTML =
+                    '<div class="text-center py-8 text-gray-400"><i class="fa fa-exclamation-triangle text-3xl mb-2 block"></i><p>未找到该课程，可能已被删除</p><a href="course.html" class="text-primary hover:underline">返回课程中心</a></div>';
             }
-            
+
             applyLearningSettings();
             updateStudyTimeDisplay();
         });
         
         window.addEventListener('beforeunload', () => {
+            // 保存当前视频的精确播放位置（断点续播）
+            if (video && video.currentTime > 0 && video.duration > 0) {
+                const pct = Math.floor((video.currentTime / video.duration) * 100);
+                updateVideoProgress(lastVideoIndex, pct);
+                saveVideoPosition(`${courseId}_${lastVideoIndex}`, video.currentTime);
+            }
             saveStudyTime();
             stopStudyTimer();
         });

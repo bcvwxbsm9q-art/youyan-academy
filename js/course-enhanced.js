@@ -7,6 +7,9 @@
 (function() {
     'use strict';
 
+    // 防抖定时器：防止短时间内多次渲染导致卡片闪烁
+    let _renderDebounceTimer = null;
+
     let allCourses = [];
     let filteredCourses = [];
     let categories = [];
@@ -82,10 +85,13 @@
             });
         }
 
-        // 监听页面可见性变化，页面重新显示时刷新分类数据
+        // 监听页面可见性变化，页面重新显示时刷新数据
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
-                console.log('[Course] 页面重新可见，刷新数据');
+                console.log('[Course] 页面重新可见，刷新缓存和数据');
+                if (window.DataAPI && window.DataAPI.refreshFromLocalStorage) {
+                    window.DataAPI.refreshFromLocalStorage();
+                }
                 refreshData();
             }
         });
@@ -97,12 +103,23 @@
                 console.log('[Course] 检测到分类变更，刷新数据');
                 refreshData();
             }
+            // 监听播放页的数据变化（浏览量/点赞/评分）
+            if (e.key === 'course_interaction_sync' || e.key === 'learning_platform_data') {
+                console.log('[Course] 检测到互动数据变化，刷新缓存并重新渲染');
+                if (window.DataAPI && window.DataAPI.refreshFromLocalStorage) {
+                    window.DataAPI.refreshFromLocalStorage();
+                }
+                filterAndRender();
+            }
         });
 
         // 监听 DataSync 模块的数据更新
         if (window.DataSync) {
             window.DataSync.listen(DataSync.EventTypes.ALL, function(event) {
                 console.log('[Course] DataSync收到事件:', event.type, event);
+                if (window.DataAPI && window.DataAPI.refreshFromLocalStorage) {
+                    window.DataAPI.refreshFromLocalStorage();
+                }
                 refreshData();
             });
         }
@@ -269,9 +286,17 @@
     }
 
     /**
-     * 筛选并渲染课程
+     * 筛选并渲染课程（带防抖，防止短时间内多次调用导致闪烁）
      */
     function filterAndRender() {
+        if (_renderDebounceTimer) clearTimeout(_renderDebounceTimer);
+        _renderDebounceTimer = setTimeout(function() {
+            _renderDebounceTimer = null;
+            _doFilterAndRender();
+        }, 150);
+    }
+
+    function _doFilterAndRender() {
         // 筛选
         filteredCourses = allCourses.filter(course => {
             // 搜索匹配
@@ -283,7 +308,8 @@
             let matchCategory = currentCategoryId === 'all';
             
             if (!matchCategory) {
-                const catId = course.categoryId;
+                const courseCategoryId = course.categoryId;
+                const courseSubcategoryId = course.subcategoryId;
                 
                 // 检查是否选中了一级分类
                 const parentCat = categories.find(c => String(c.id) === String(currentCategoryId));
@@ -292,19 +318,20 @@
                     const parentId = parentCat.id;
                     
                     // 直接匹配一级分类ID
-                    if (catId === parentId || catId === String(parentId)) {
+                    if (courseCategoryId === parentId || String(courseCategoryId) === String(parentId)) {
                         matchCategory = true;
                     } else {
                         // 检查是否是该一级分类下的二级分类
                         if (parentCat.children) {
                             matchCategory = parentCat.children.some(sub => 
-                                sub.id === catId || String(sub.id) === String(catId)
+                                sub.id === courseCategoryId || String(sub.id) === String(courseCategoryId)
                             );
                         }
                     }
                 } else {
-                    // 选中二级分类
-                    matchCategory = catId === parseInt(currentCategoryId) || String(catId) === String(currentCategoryId);
+                    // 选中二级分类，匹配二级分类ID
+                    matchCategory = courseSubcategoryId === parseInt(currentCategoryId) || 
+                                   String(courseSubcategoryId) === String(currentCategoryId);
                 }
             }
 
@@ -363,7 +390,7 @@
         if (currentCategoryId === 'all') {
             // 全部课程：直接显示所有课程卡片，不分组
             html = `
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     ${filteredCourses.map(c => renderCourseCard(c, api)).join('')}
                 </div>
             `;
@@ -414,7 +441,7 @@
                     </span>
                     <span class="text-gray-500 dark:text-gray-400 text-sm">共 ${courses.length} 门课程</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     ${courses.map(c => renderCourseCard(c, api)).join('')}
                 </div>
             </div>
@@ -422,45 +449,72 @@
     }
 
     /**
-     * 渲染单个课程卡片
+     * 渲染单个课程卡片 - 与首页统一样式
      */
     function renderCourseCard(c, api) {
-        const catName = (api && api.getCategoryName(c.categoryId)) || '通用';
         const lecName = (api && api.getLecturerName(c.lecturerId)) || '待定讲师';
         const lecAvatar = (api && api.getLecturerAvatar(c.lecturerId)) || '';
         const learners = (c.views || 0) > 10000 ? (c.views / 10000).toFixed(1) + '万' : (c.views || 0);
-        const rating = (c.rating || 0).toFixed(1);
-        const duration = Math.floor((c.duration || 0) / 60);
-        const tagStyle = TAG_STYLES[catName] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+        const coverUrl = c.cover && c.cover.trim() ? c.cover : '';
+
+        // 从互动数据中读取真实点赞数和评分
+        let likes = 0;
+        let realRating = null;
+        if (api) {
+            const interactionKey = `course_interaction_${c.id}`;
+            const interactionData = api.get(interactionKey);
+            if (interactionData) {
+                likes = interactionData.likes || 0;
+                // 优先使用互动数据中的平均分（更实时准确）
+                if (interactionData.ratingCount > 0) {
+                    realRating = (interactionData.ratingSum / interactionData.ratingCount).toFixed(1);
+                }
+            } else {
+                // 如果内存缓存中没有，尝试从 localStorage 直接读取
+                try {
+                    const stored = localStorage.getItem('learning_platform_data');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        if (parsed[interactionKey]) {
+                            const data = parsed[interactionKey];
+                            likes = data.likes || 0;
+                            if (data.ratingCount > 0) {
+                                realRating = (data.ratingSum / data.ratingCount).toFixed(1);
+                            }
+                        }
+                    }
+                } catch(e) {
+                    console.warn('[Course] 从 localStorage 读取互动数据失败:', e);
+                }
+            }
+        }
+        if (!likes) likes = c.likes || 0;
+        const rating = realRating || (c.rating || 0).toFixed(1);
 
         return `
-            <div class="card-enhanced course-card cursor-pointer fade-in group" onclick="location.href='player.html?courseId=${c.id}'">
-                <div class="course-card-image-wrapper relative overflow-hidden" style="aspect-ratio: 16 / 9;">
-                    <img src="${c.cover || ''}" alt="${c.title || ''}" class="course-card-image w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='https://placehold.co/400x225/667eea/white?text=${encodeURIComponent((c.title || '').substring(0, 8))}'">
-                    <div class="course-card-badge absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <i class="fa fa-play-circle mr-1"></i>${duration}分钟
+        <div class="card-enhanced course-card cursor-pointer fade-in group overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-all duration-300" onclick="location.href='player.html?courseId=${c.id}'">
+            <!-- Cover Area - Clean and simple -->
+            <div class="relative h-40 overflow-hidden rounded-t-xl bg-gray-100">
+                ${coverUrl ? `<img src="${coverUrl}" alt="" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">` : '<div class="absolute inset-0 flex items-center justify-center text-gray-300"><i class="fa fa-image text-5xl"></i></div>'}
+            </div>
+            <!-- Info Area -->
+            <div class="p-4 bg-white rounded-b-xl">
+                <h4 class="font-bold text-gray-800 text-base mb-3 line-clamp-1">${c.title || ''}</h4>
+                <div class="flex items-center mb-3">
+                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center overflow-hidden mr-2 flex-shrink-0">
+                        ${lecAvatar ? `<img src="${lecAvatar}" alt="${lecName}" class="w-full h-full object-cover" onerror="this.style.display='none';this.parentNode.innerHTML='<i class=\\'fa fa-user text-white text-xs\\'></i>'">` : `<i class="fa fa-user text-white text-xs"></i>`}
                     </div>
+                    <span class="text-xs text-gray-500">${lecName}</span>
                 </div>
-                <div class="p-3">
-                    <div class="flex items-center mb-1.5">
-                        <span class="text-xs ${tagStyle} px-2 py-0.5 rounded">${catName}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto">
-                            <i class="fa fa-user mr-1"></i>${learners}
-                        </span>
+                <div class="flex items-center justify-between text-xs text-gray-400">
+                    <div class="flex items-center space-x-4">
+                        <span class="flex items-center"><i class="fa fa-eye mr-1"></i>${learners}</span>
+                        <span class="flex items-center"><i class="fa fa-thumbs-o-up mr-1"></i>${likes}</span>
                     </div>
-                    <h3 class="font-bold mb-1.5 line-clamp-2 text-gray-800 dark:text-white" style="min-height: 2.5rem; font-size: 0.875rem; line-height: 1.25rem;">${c.title || ''}</h3>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2">
-                            <img src="${lecAvatar}" alt="${lecName}" class="w-5 h-5 rounded-full" onerror="this.style.display='none'">
-                            <span class="text-xs text-gray-600 dark:text-gray-400 truncate" style="max-width: 80px;">${lecName}</span>
-                        </div>
-                        <div class="flex items-center text-yellow-500">
-                            <i class="fa fa-star text-xs"></i>
-                            <span class="text-xs ml-1">${rating}</span>
-                        </div>
-                    </div>
+                    <span class="flex items-center text-yellow-500"><i class="fa fa-star mr-1"></i>${rating}</span>
                 </div>
             </div>
+        </div>
         `;
     }
 

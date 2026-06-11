@@ -116,7 +116,6 @@
                     <a href="training-plan.html" class="nav-item active px-4 py-2 rounded-lg text-primary font-medium hover:bg-primary/5 transition-colors">培训</a>
                     <a href="course.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">课程</a>
                     <a href="teacher.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">讲师</a>
-                    <a href="library.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">书吧</a>
                     <a href="center.html" class="nav-item px-4 py-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary/5 transition-colors">我的</a>
                 </nav>
                 
@@ -148,7 +147,6 @@
                 <a href="training-plan.html" class="flex items-center px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium">培训</a>
                 <a href="course.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">课程</a>
                 <a href="teacher.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">讲师</a>
-                <a href="library.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">书吧</a>
                 <a href="center.html" class="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">我的</a>
                     <div class="border-t border-gray-100 mt-2 pt-3 flex items-center justify-between px-4">
                         <div id="mobile-user-info" class="hidden flex items-center space-x-2">
@@ -353,18 +351,25 @@
                         currentYear = firstDate.getFullYear();
                         currentMonth = firstDate.getMonth();
                     }
+                } else {
+                    // 如果API返回空数据，使用默认测试数据
+                    courses = [
+                        { id: 1, name: '新员工入职培训', category: '新雁计划', instructor: '黄明芳', date: '2026-01-15', time: '09:00-11:30', duration: '2.5小时', location: '会议室A', projectName: 'Q1培训计划' },
+                        { id: 2, name: 'Python进阶培训', category: '游雁学堂', instructor: '曹贺军', date: '2026-01-18', time: '14:00-17:00', duration: '3小时', location: '培训室B', projectName: '技术提升计划' },
+                        { id: 3, name: 'AI应用实践分享', category: 'AI实践分享', instructor: '沈家成', date: '2026-01-20', time: '10:00-12:00', duration: '2小时', location: '大会议室', projectName: 'AI学习周' },
+                        { id: 4, name: '团队协作软技能', category: '鸿雁计划', instructor: '吴佳宝', date: '2026-01-22', time: '14:00-16:00', duration: '2小时', location: '培训室A', projectName: '软技能培训' },
+                        { id: 5, name: '产品设计思维', category: '雏雁训练营', instructor: '黄明芳', date: '2026-01-25', time: '09:00-12:00', duration: '3小时', location: '创新实验室', projectName: '设计培训' },
+                        { id: 6, name: '数据可视化实战', category: '游雁学堂', instructor: '曹贺军', date: '2026-01-28', time: '14:00-17:00', duration: '3小时', location: '培训室B', projectName: '技术提升计划' },
+                        { id: 7, name: '沟通技巧培训', category: '鸿雁计划', instructor: '吴佳宝', date: '2026-02-01', time: '10:00-12:00', duration: '2小时', location: '会议室A', projectName: '软技能培训' },
+                        { id: 8, name: '机器学习入门', category: 'AI实践分享', instructor: '沈家成', date: '2026-02-05', time: '09:00-12:00', duration: '3小时', location: '大会议室', projectName: 'AI学习周' },
+                    ];
                 }
             } catch (e) {
                 console.log('培训日历加载失败:', e.message);
+                // 网络错误时使用默认测试数据
                 courses = [
                     { id: 1, name: '新员工入职培训', category: '新雁计划', instructor: '黄明芳', date: '2026-01-15', time: '09:00-11:30', duration: '2.5小时', location: '会议室A', projectName: 'Q1培训计划' },
                     { id: 2, name: 'Python进阶培训', category: '游雁学堂', instructor: '曹贺军', date: '2026-01-18', time: '14:00-17:00', duration: '3小时', location: '培训室B', projectName: '技术提升计划' },
-                    { id: 3, name: 'AI应用实践分享', category: 'AI实践分享', instructor: '沈家成', date: '2026-01-20', time: '10:00-12:00', duration: '2小时', location: '大会议室', projectName: 'AI学习周' },
-                    { id: 4, name: '团队协作软技能', category: '鸿雁计划', instructor: '吴佳宝', date: '2026-01-22', time: '14:00-16:00', duration: '2小时', location: '培训室A', projectName: '软技能培训' },
-                    { id: 5, name: '产品设计思维', category: '雏雁训练营', instructor: '黄明芳', date: '2026-01-25', time: '09:00-12:00', duration: '3小时', location: '创新实验室', projectName: '设计培训' },
-                    { id: 6, name: '数据可视化实战', category: '游雁学堂', instructor: '曹贺军', date: '2026-01-28', time: '14:00-17:00', duration: '3小时', location: '培训室B', projectName: '技术提升计划' },
-                    { id: 7, name: '沟通技巧培训', category: '鸿雁计划', instructor: '吴佳宝', date: '2026-02-01', time: '10:00-12:00', duration: '2小时', location: '会议室A', projectName: '软技能培训' },
-                    { id: 8, name: '机器学习入门', category: 'AI实践分享', instructor: '沈家成', date: '2026-02-05', time: '09:00-12:00', duration: '3小时', location: '大会议室', projectName: 'AI学习周' },
                 ];
             }
         }
