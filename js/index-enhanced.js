@@ -8,6 +8,9 @@
 (function() {
     'use strict';
 
+    // 防抖定时器：防止短时间内多次渲染导致卡片闪烁
+    let _renderDebounceTimer = null;
+
     // API 配置
     const API_BASE = window.location.origin;
     const API_SERVER = `${API_BASE}/api`;
@@ -76,6 +79,10 @@
                     if (window.DataAPI && window.DataAPI.reloadFromServer) {
                         await window.DataAPI.reloadFromServer();
                     }
+                    // 同时刷新 localStorage 缓存（确保播放页的本地更新也能同步）
+                    if (window.DataAPI && window.DataAPI.refreshFromLocalStorage) {
+                        window.DataAPI.refreshFromLocalStorage();
+                    }
                     renderAll();
                 });
             }
@@ -99,17 +106,54 @@
         } else {
             renderAll();
         }
+
+        // 监听播放页的数据变化（浏览量/点赞/评分），实时刷新课程卡片（带防抖）
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'course_interaction_sync' || e.key === 'learning_platform_data') {
+                console.log('[Index] 检测到数据变化，刷新缓存并重新渲染');
+                if (window.DataAPI && window.DataAPI.refreshFromLocalStorage) {
+                    window.DataAPI.refreshFromLocalStorage();
+                }
+                refreshCourseCards();
+            }
+        });
+
+        // 页面重新可见时刷新数据（带防抖）
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                console.log('[Index] 页面重新可见，刷新缓存');
+                if (window.DataAPI && window.DataAPI.refreshFromLocalStorage) {
+                    window.DataAPI.refreshFromLocalStorage();
+                }
+                renderAll();
+            }
+        });
     }
 
     /**
-     * 渲染所有内容
+     * 渲染所有内容（带防抖，防止短时间内多次调用导致闪烁）
      */
     function renderAll() {
-        renderBanners();
-        renderNotice();
-        renderFeaturedCourses();
-        renderFeaturedLecturers();
-        renderStats();
+        if (_renderDebounceTimer) clearTimeout(_renderDebounceTimer);
+        _renderDebounceTimer = setTimeout(function() {
+            _renderDebounceTimer = null;
+            renderBanners();
+            renderNotice();
+            renderFeaturedCourses();
+            renderFeaturedLecturers();
+            renderStats();
+        }, 150);
+    }
+
+    /**
+     * 仅刷新课程卡片（带防抖）
+     */
+    function refreshCourseCards() {
+        if (_renderDebounceTimer) clearTimeout(_renderDebounceTimer);
+        _renderDebounceTimer = setTimeout(function() {
+            _renderDebounceTimer = null;
+            renderFeaturedCourses();
+        }, 150);
     }
 
     /**
@@ -184,13 +228,11 @@
                 // 第一张 relative，撑开容器高度（用 style 强制覆盖任何外部 CSS）
                 return `<div class="carousel-slide cursor-pointer" data-idx="0" ${clickHandler} style="position:relative;width:100%;">
                     ${imgTag}
-                    ${b.courseId ? `<div style="position:absolute;bottom:24px;right:24px;z-index:10;"><span class="inline-block px-4 py-2 bg-white/20 backdrop-blur rounded-full text-white text-sm">点击查看课程 →</span></div>` : ''}
                 </div>`;
             } else {
                 // 其余绝对定位叠放，初始透明
                 return `<div class="carousel-slide cursor-pointer" data-idx="${i}" ${clickHandler} style="position:absolute;top:0;left:0;right:0;bottom:0;opacity:0;transition:opacity 0.5s;z-index:${i+1};">
                     ${imgTag}
-                    ${b.courseId ? `<div style="position:absolute;bottom:24px;right:24px;z-index:10;"><span class="inline-block px-4 py-2 bg-white/20 backdrop-blur rounded-full text-white text-sm">点击查看课程 →</span></div>` : ''}
                 </div>`;
             }
         }).join('');
@@ -201,8 +243,8 @@
 
         // 注入 slides 和控制按钮
         container.innerHTML = slidesHtml +
-            `<button id="prev-slide" class="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm text-gray-800 flex items-center justify-center hover:bg-white transition-all shadow-lg hover:shadow-xl active:scale-95" style="z-index:30" aria-label="上一张"><i class="fa fa-chevron-left"></i></button>` +
-            `<button id="next-slide" class="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm text-gray-800 flex items-center justify-center hover:bg-white transition-all shadow-lg hover:shadow-xl active:scale-95" style="z-index:30" aria-label="下一张"><i class="fa fa-chevron-right"></i></button>`;
+            `<button id="prev-slide" class="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/40 backdrop-blur-sm text-gray-600 flex items-center justify-center hover:bg-white/80 hover:text-gray-800 transition-all shadow-md hover:shadow-lg active:scale-95" style="z-index:30" aria-label="上一张"><i class="fa fa-chevron-left"></i></button>` +
+            `<button id="next-slide" class="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/40 backdrop-blur-sm text-gray-600 flex items-center justify-center hover:bg-white/80 hover:text-gray-800 transition-all shadow-md hover:shadow-lg active:scale-95" style="z-index:30" aria-label="下一张"><i class="fa fa-chevron-right"></i></button>`;
 
         indicators.innerHTML = dotsHtml;
 
@@ -347,18 +389,18 @@
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
                     <div class="flex items-center space-x-3 flex-1 min-w-0">
                         <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-bullhorn text-white"></i>
+                            <i class="fa fa-bullhorn text-white"></i>
                         </div>
                         <div class="min-w-0">
                             <h3 class="font-semibold text-gray-800 text-lg truncate">${notice.title || '公告详情'}</h3>
                             <p class="text-xs text-gray-500 mt-0.5">
-                                ${notice.pinned ? '<span class="text-red-500 mr-1"><i class="fas fa-thumbtack"></i>置顶</span>' : ''}
+                                ${notice.pinned ? '<span class="text-red-500 mr-1"><i class="fa fa-thumb-tack"></i>置顶</span>' : ''}
                                 ${notice.publishedAt || notice.createdAt || ''}
                             </p>
                         </div>
                     </div>
                     <button onclick="closeNoticeModal()" class="text-gray-400 hover:text-gray-600 transition ml-2 flex-shrink-0">
-                        <i class="fas fa-times text-xl"></i>
+                        <i class="fa fa-times text-xl"></i>
                     </button>
                 </div>
                 
@@ -454,55 +496,46 @@
         const lecName = (api && api.getLecturerName(c.lecturerId)) || '待定讲师';
         const lecAvatar = (api && api.getLecturerAvatar(c.lecturerId)) || '';
         const learners = (c.views || 0) > 10000 ? (c.views / 10000).toFixed(1) + '万' : (c.views || 0);
-        const rating = (c.rating || 0).toFixed(1);
         const coverUrl = c.cover && c.cover.trim() ? c.cover : '';
-        // 确定性伪数据（保持每次渲染一致）
-        const seed = parseInt(c.id) || 1;
-        const comments = c.comments || (seed * 7 + 3) % 20;
-        const likes = c.likes || (seed * 13 + 5) % 50;
+
+        // 从互动数据中读取真实点赞数和评分
+        let likes = 0;
+        let realRating = null;
+        if (api) {
+            const interactionKey = `course_interaction_${c.id}`;
+            const interactionData = api.get(interactionKey);
+            if (interactionData) {
+                likes = interactionData.likes || 0;
+                // 优先使用互动数据中的平均分（更实时准确）
+                if (interactionData.ratingCount > 0) {
+                    realRating = (interactionData.ratingSum / interactionData.ratingCount).toFixed(1);
+                }
+            }
+        }
+        if (!likes) likes = c.likes || 0;
+        const rating = realRating || (c.rating || 0).toFixed(1);
 
         return `
-        <div class="card-enhanced course-card cursor-pointer fade-in group overflow-hidden" onclick="location.href='player.html?courseId=${c.id}'">
-            <!-- Cover Area -->
-            <div class="relative overflow-hidden" style="aspect-ratio: 16/10;">
-                ${coverUrl ? `<img src="${coverUrl}" alt="" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.style.display='none'">` : ''}
-                <div class="absolute inset-0 bg-gradient-to-r from-[#3d3188]/95 via-[#4c3db2]/85 to-[#5d4ec7]/50">
-                    <div class="absolute inset-0 opacity-20" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.05) 20px, rgba(255,255,255,0.05) 40px);"></div>
-                </div>
-                <!-- Green badge -->
-                <div class="absolute top-2 right-2 z-20">
-                    <span class="inline-block px-1.5 py-0.5 bg-green-500 text-white text-[10px] font-medium rounded-sm">创新课</span>
-                </div>
-                <!-- Text content -->
-                <div class="absolute inset-0 z-10 flex flex-col justify-between p-3">
-                    <div class="pr-8">
-                        <h3 class="text-white font-bold text-sm leading-snug line-clamp-3" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${c.title || ''}</h3>
-                        <p class="text-white/80 text-[10px] mt-1">讲师：${lecName}</p>
-                    </div>
-                    <div class="flex items-center text-white/60 text-[10px]">
-                        <i class="fa fa-graduation-cap mr-1"></i>
-                        <span>游雁学院</span>
-                    </div>
-                </div>
+        <div class="card-enhanced course-card cursor-pointer fade-in group overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-all duration-300" onclick="location.href='player.html?courseId=${c.id}'">
+            <!-- Cover Area - Clean and simple -->
+            <div class="relative h-40 overflow-hidden rounded-t-xl bg-gray-100">
+                ${coverUrl ? `<img src="${coverUrl}" alt="" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">` : '<div class="absolute inset-0 flex items-center justify-center text-gray-300"><i class="fa fa-image text-5xl"></i></div>'}
             </div>
             <!-- Info Area -->
-            <div class="p-3 bg-white dark:bg-white">
-                <h4 class="font-bold text-gray-800 text-sm mb-2 line-clamp-1">${c.title || ''}</h4>
-                <div class="flex items-center mb-2">
-                    <div class="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center overflow-hidden mr-2 flex-shrink-0">
-                        ${lecAvatar ? `<img src="${lecAvatar}" alt="${lecName}" class="w-full h-full object-cover" onerror="this.style.display='none';this.parentNode.innerHTML='<i class=\\'fa fa-user text-white text-[8px]\\'></i>'">` : `<i class="fa fa-user text-white text-[8px]"></i>`}
+            <div class="p-4 bg-white rounded-b-xl">
+                <h4 class="font-bold text-gray-800 text-base mb-3 line-clamp-1">${c.title || ''}</h4>
+                <div class="flex items-center mb-3">
+                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center overflow-hidden mr-2 flex-shrink-0">
+                        ${lecAvatar ? `<img src="${lecAvatar}" alt="${lecName}" class="w-full h-full object-cover" onerror="this.style.display='none';this.parentNode.innerHTML='<i class=\\'fa fa-user text-white text-xs\\'></i>'">` : `<i class="fa fa-user text-white text-xs"></i>`}
                     </div>
-                    <span class="text-xs text-gray-600 truncate">${lecName}</span>
+                    <span class="text-xs text-gray-500">${lecName}</span>
                 </div>
-                <div class="flex items-center justify-between text-xs text-gray-500">
-                    <div class="flex items-center space-x-2">
-                        <span class="flex items-center"><i class="fa fa-eye mr-0.5 text-gray-400 text-[10px]"></i>${learners}</span>
-                        <span class="flex items-center"><i class="fa fa-comment-o mr-0.5 text-gray-400 text-[10px]"></i>${comments}</span>
-                        <span class="flex items-center"><i class="fa fa-thumbs-o-up mr-0.5 text-gray-400 text-[10px]"></i>${likes}</span>
+                <div class="flex items-center justify-between text-xs text-gray-400">
+                    <div class="flex items-center space-x-4">
+                        <span class="flex items-center"><i class="fa fa-eye mr-1"></i>${learners}</span>
+                        <span class="flex items-center"><i class="fa fa-thumbs-o-up mr-1"></i>${likes}</span>
                     </div>
-                    <div class="flex items-center text-yellow-500 font-medium">
-                        <i class="fa fa-star mr-0.5 text-[10px]"></i>${rating}
-                    </div>
+                    <span class="flex items-center text-yellow-500"><i class="fa fa-star mr-1"></i>${rating}</span>
                 </div>
             </div>
         </div>

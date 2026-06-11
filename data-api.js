@@ -207,6 +207,26 @@
         },
 
         /**
+         * 从 localStorage 刷新内存缓存（供跨页面同步使用）
+         * 当其他页面通过 DataSync 广播变更后，本页面调用此方法刷新本地缓存
+         */
+        refreshFromLocalStorage() {
+            try {
+                const stored = localStorage.getItem('learning_platform_data');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    // 合并到内存缓存，保留当前页面可能有的临时数据
+                    Object.keys(parsed).forEach(key => {
+                        memoryCache[key] = parsed[key];
+                    });
+                    console.log('[DataAPI] 内存缓存已从 localStorage 刷新');
+                }
+            } catch (e) {
+                console.error('[DataAPI] 从 localStorage 刷新缓存失败:', e);
+            }
+        },
+
+        /**
          * 从后端 API 获取数据
          */
         async fetchFromServer(endpoint) {

@@ -26,13 +26,10 @@
     ];
 
     // 公开页面（不需要登录）
-    const PUBLIC_PAGES = [
-        'admin-login.html'
-    ];
+    const PUBLIC_PAGES = [];
 
-    // 管理后台页面（独立认证逻辑）
+    // 管理后台页面（独立认证逻辑，dashboard.html内置登录弹窗）
     const ADMIN_PAGES = [
-        'admin-login.html',
         'dashboard.html'
     ];
 

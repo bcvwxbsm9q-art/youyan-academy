@@ -217,6 +217,72 @@
                 background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(31, 41, 55, 0.95));
                 backdrop-filter: blur(12px);
             }
+
+            /* ========== 讲师信息区域 ========== */
+            .lecturer-card {
+                display: flex;
+                align-items: flex-start;
+                gap: 20px;
+            }
+            .lecturer-avatar {
+                width: 72px;
+                height: 72px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 3px solid #e5e7eb;
+                flex-shrink: 0;
+                background: linear-gradient(135deg, #667eea20, #764ba220);
+            }
+            .lecturer-avatar-placeholder {
+                width: 72px;
+                height: 72px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 28px;
+                font-weight: bold;
+                flex-shrink: 0;
+            }
+
+            /* 点赞按钮激活状态（大拇指） */
+            #btn-like.btn-like-active {
+                border-color: #60a5fa !important; /* blue-400 */
+                background-color: #eff6ff !important; /* blue-50 */
+                color: #3b82f6 !important; /* blue-500 */
+            }
+            #btn-like.btn-like-active i {
+                font-weight: 900;
+                animation: likeThumbsUp 0.4s ease-in-out;
+            }
+            @keyframes likeThumbsUp {
+                0% { transform: scale(1); }
+                25% { transform: scale(1.3) rotate(-10deg); }
+                50% { transform: scale(1) rotate(5deg); }
+                75% { transform: scale(1.15); }
+                100% { transform: scale(1) rotate(0); }
+            }
+
+            /* 评分弹窗星星交互 */
+            .star-btn.active,
+            .star-btn.active ~ .star-btn {
+                color: #fbbf24; /* amber-400 */
+            }
+            .star-btn.active i,
+            .star-btn.active ~ .star-btn i {
+                font-weight: 900;
+            }
+            .star-btn:hover,
+            .star-btn:hover ~ .star-btn {
+                color: #fcd34d;
+            }
+            #rating-stars {
+                display: flex;
+                flex-direction: row-reverse;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -334,13 +400,6 @@
                                     </button>
                                 </div>
                                 
-                                <!-- 学习时长显示 -->
-                                <div class="absolute top-4 left-4 z-30">
-                                    <div class="px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-sm flex items-center gap-2">
-                                        <i class="fa fa-clock-o text-primary"></i>
-                                        <span id="player-study-time">已学习：0分0秒</span>
-                                    </div>
-                                </div>
                                 
                                 <!-- 视频底部控制栏 -->
                                 <div class="absolute bottom-0 left-0 right-0 video-controls">
@@ -429,7 +488,7 @@
                             <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
                                 <div>
                                     <h1 class="text-2xl font-bold text-gray-900 mb-3" id="player-course-title">加载中...</h1>
-                                    <div class="flex flex-wrap items-center gap-4">
+                                    <div class="flex flex-wrap items-center gap-3">
                                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary" id="player-category-tag">未分类</span>
                                         <span class="inline-flex items-center text-sm text-gray-500">
                                             <i class="fa fa-eye mr-1.5"></i>
@@ -439,10 +498,24 @@
                                             <i class="fa fa-star text-yellow-400 mr-1.5"></i>
                                             <span id="player-rating">0.0</span>
                                         </span>
-                                        <span class="inline-flex items-center text-sm text-gray-500">
+                                        <!-- 点赞按钮（大拇指） -->
+                                        <button id="btn-like" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 text-sm text-gray-500 hover:text-blue-500 font-medium transition-all duration-300 group" title="点赞">
+                                            <i class="fa fa-thumbs-o-up group-hover:scale-110 transition-transform" id="like-icon"></i>
+                                            <span id="interaction-likes">0</span>
+                                        </button>
+                                        <!-- 评分按钮 -->
+                                        <button id="btn-rate" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-primary text-white text-sm font-medium hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300" title="评分">
+                                            <i class="fa fa-star"></i>
+                                            <span>评分</span>
+                                        </button>
+                                        <span class="inline-flex items-center text-sm text-gray-400">
                                             <i class="fa fa-clock-o mr-1.5"></i>
                                             <span id="player-duration">总时长：0分钟</span>
                                         </span>
+                                    </div>
+                                    <!-- 我的评分状态提示（内联显示） -->
+                                    <div id="my-rating-hint" class="hidden mt-2">
+                                        <span id="my-rating-display" class="text-xs font-medium text-amber-500 bg-amber-50 px-2 py-1 rounded-md inline-block"></span>
                                     </div>
                                 </div>
                                 
@@ -485,7 +558,23 @@
                                 暂无课程简介
                             </div>
                         </div>
-                        
+
+                        <!-- 讲师信息区域 -->
+                        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6" id="lecturer-info-section">
+                            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center">
+                                <i class="fa fa-user-circle text-primary mr-2 text-xl"></i>讲师介绍
+                            </h2>
+                            <div id="lecturer-info-content">
+                                <div class="flex items-center animate-pulse">
+                                    <div class="w-16 h-16 rounded-full bg-gray-200 mr-4"></div>
+                                    <div class="flex-1">
+                                        <div class="h-5 bg-gray-200 rounded w-32 mb-2"></div>
+                                        <div class="h-4 bg-gray-200 rounded w-24"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                     
                     <!-- 右侧课程大纲 -->
@@ -514,7 +603,48 @@
             </div>
         </section>
     </main>
-    
+
+    <!-- 评分弹窗 -->
+    <div id="rating-modal" class="fixed inset-0 z-[200] hidden items-center justify-center">
+        <!-- 遮罩层 -->
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" id="rating-modal-overlay"></div>
+        <!-- 弹窗主体 -->
+        <div class="relative bg-white rounded-2xl shadow-2xl w-[380px] max-w-[90vw] animate-scale-in overflow-hidden">
+            <!-- 标题栏 -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <h3 class="text-lg font-bold text-gray-800">提示</h3>
+                <button id="rating-modal-close" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <!-- 内容区 -->
+            <div class="px-6 py-8 text-center">
+                <p class="text-gray-600 text-base mb-4">我的评分</p>
+                <!-- 分数大字 -->
+                <div class="mb-4">
+                    <span id="rating-score-number" class="text-5xl font-bold text-amber-400">5</span>
+                    <span class="text-2xl font-medium text-amber-400">分</span>
+                </div>
+                <!-- 星星 -->
+                <div class="flex items-center justify-center gap-2 mb-4" id="rating-stars">
+                    <button class="star-btn text-4xl text-gray-300 hover:text-amber-400 transition-colors cursor-pointer" data-score="5"><i class="fa fa-star"></i></button>
+                    <button class="star-btn text-4xl text-gray-300 hover:text-amber-400 transition-colors cursor-pointer" data-score="4"><i class="fa fa-star"></i></button>
+                    <button class="star-btn text-4xl text-gray-300 hover:text-amber-400 transition-colors cursor-pointer" data-score="3"><i class="fa fa-star"></i></button>
+                    <button class="star-btn text-4xl text-gray-300 hover:text-amber-400 transition-colors cursor-pointer" data-score="2"><i class="fa fa-star"></i></button>
+                    <button class="star-btn text-4xl text-gray-300 hover:text-amber-400 transition-colors cursor-pointer" data-score="1"><i class="fa fa-star"></i></button>
+                </div>
+                <!-- 评语 -->
+                <p id="rating-label" class="text-xl font-bold text-amber-400 mb-6">干货满满！</p>
+            </div>
+            <!-- 提交按钮 -->
+            <div class="px-6 pb-6">
+                <button id="rating-submit-btn" class="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium text-base transition-colors shadow-md hover:shadow-lg">
+                    提交
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 统一数据访问层 -->
     <script src="js/data-sync.js"></script>
     <script src="data-api.js"></script>
@@ -691,8 +821,7 @@
         }
         
         function showCourseCompletedNotification() {
-            const course = window.DataAPI ? window.DataAPI.getCourse(courseId) : null;
-            if (course) showToast(`恭喜！您已完成《${course.title}》全部课程！`, 'success');
+            // 已移除完成提示弹窗，避免重复打扰
         }
         
         // 更新课程进度UI
@@ -932,6 +1061,12 @@
 
             document.getElementById('player-course-description').textContent = course.description || '暂无课程简介';
 
+            // 渲染讲师信息区域
+            renderLecturerInfo(course);
+
+            // 初始化点赞/评分交互区
+            initInteractionBar(course);
+
             // 分类层级显示（父级 > 子级）— 使用已有的 catInfo，尝试获取更详细的层级信息
             const detailedCatInfo = api.getCategoryInfo(course.categoryId);
             if (detailedCatInfo && detailedCatInfo.parent) {
@@ -984,7 +1119,7 @@
                 const savedProgress = learningData.videoProgress[vKey] || 0;
                 const isCompleted = savedProgress >= 100;
                 const isCurrent = lastVideoIndex === i;
-                const progress = savedProgress > 0 ? `<div class="w-full bg-gray-200 rounded-full h-1 mt-1"><div class="bg-primary h-1 rounded-full transition-all" style="width: ${savedProgress}%"></div></div>` : '';
+                const progress = ''; // 进度条已隐藏，仅保留完成状态图标
                 
                 return `
                 <div class="flex items-center justify-between px-3 py-3 rounded-xl hover:bg-gray-50 cursor-pointer chapter-lesson-item transition-all ${isCompleted ? 'completed' : ''} ${isCurrent ? 'chapter-active' : ''}" data-src="${v.url || ''}" data-index="${i}">
@@ -1354,6 +1489,334 @@
             }
         });
         
+        // ==================== 讲师信息渲染 ====================
+        const RATING_LABELS = {
+            5: '干货满满！',
+            4: '养分充足！',
+            3: '养分很多！',
+            2: '有点营养！',
+            1: '营养不足！'
+        };
+
+        function renderLecturerInfo(course) {
+            const container = document.getElementById('lecturer-info-content');
+            if (!container) return;
+            
+            const api = window.DataAPI;
+            let lecturerId = course.lecturerId;
+            
+            if (!lecturerId) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-gray-400">
+                        <i class="fa fa-user-circle text-3xl mb-2 block"></i>
+                        <p>暂无讲师信息</p>
+                    </div>`;
+                return;
+            }
+
+            const lecturer = api.getLecturer(lecturerId);
+            
+            if (!lecturer) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-gray-400">
+                        <i class="fa fa-user-circle text-3xl mb-2 block"></i>
+                        <p>讲师信息未找到</p>
+                    </div>`;
+                return;
+            }
+
+            // 渲染讲师卡片
+            const skillsHtml = (lecturer.skills || []).map(s => 
+                `<span class="px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">${s}</span>`
+            ).join('');
+
+            const avatarHtml = lecturer.avatar 
+                ? `<img src="${lecturer.avatar}" alt="${lecturer.name}" class="lecturer-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                   <div class="lecturer-avatar-placeholder" style="display:none;">${(lecturer.name||'').charAt(0)}</div>`
+                : `<div class="lecturer-avatar-placeholder">${(lecturer.name||'').charAt(0)}</div>`;
+
+            container.innerHTML = `
+                <div class="lecturer-card">
+                    <div class="relative">
+                        ${avatarHtml}
+                        ${lecturer.levelName ? `<span class="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-gradient-primary text-white text-[10px] font-medium whitespace-nowrap">${lecturer.levelName}</span>` : ''}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-lg font-bold text-gray-900 mb-1">${lecturer.name || '未知讲师'}</h3>
+                        <p class="text-sm text-gray-500 mb-1">
+                            <span class="mr-3"><i class="fa fa-briefcase mr-1"></i>${lecturer.title || lecturer.department || ''}</span>
+                            <span><i class="fa fa-building mr-1"></i>${lecturer.department || ''}</span>
+                        </p>
+                        ${lecturer.intro ? `<p class="text-sm text-gray-600 mt-2 line-clamp-2 leading-relaxed">${lecturer.intro}</p>` : ''}
+                        ${skillsHtml ? `<div class="flex flex-wrap gap-2 mt-3">${skillsHtml}</div>` : ''}
+                        <a href="teacher.html" class="inline-flex items-center mt-3 text-sm text-primary hover:text-primary/80 transition-colors group">
+                            <span>查看讲师详情</span>
+                            <i class="fa fa-angle-right ml-1 group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+                </div>`;
+        }
+
+        // ==================== 点赞 & 评分交互区 ====================
+        let currentRatingScore = 5; // 当前选中的评分（弹窗内）
+        
+        function getCourseInteractionKey() {
+            return `course_interaction_${courseId}`;
+        }
+
+        /**
+         * 获取课程互动数据（点赞、评分）
+         * 结构：{ likes, userLikes: {userId: bool}, userRatings: {userId: score}, ratingSum, ratingCount }
+         */
+        function getCourseInteractionData() {
+            const key = getCourseInteractionKey();
+            let data = window.DataAPI?.get(key);
+            if (!data) {
+                data = {
+                    likes: 0,
+                    userLikes: {},
+                    userRatings: {},
+                    ratingSum: 0,
+                    ratingCount: 0
+                };
+            }
+            return data;
+        }
+
+        async function saveCourseInteractionData(data) {
+            const key = getCourseInteractionKey();
+            if (window.DataAPI) await window.DataAPI.set(key, data);
+        }
+
+        // 防止浏览量重复计数的标记（每次页面加载只+1）
+        let _viewsIncremented = false;
+
+        function initInteractionBar(course) {
+            if (!course) return;
+
+            const api = window.DataAPI;
+            const userId = getUserId();
+            const interactionData = getCourseInteractionData();
+
+            // 更新浏览量（课程信息区，仅显示不计数）
+            const playerViewsEl = document.getElementById('player-views');
+            if (playerViewsEl) playerViewsEl.textContent = (course.views || 0) + '人学习';
+
+            // 更新点赞数（按钮内嵌数字）
+            const likesEl = document.getElementById('interaction-likes');
+            if (likesEl) likesEl.textContent = interactionData.likes || 0;
+
+            // 更新评分平均分（课程信息区）
+            const playerRatingEl = document.getElementById('player-rating');
+            if (playerRatingEl) {
+                const avg = interactionData.ratingCount > 0
+                    ? (interactionData.ratingSum / interactionData.ratingCount).toFixed(1)
+                    : (course.rating || 0).toFixed(1);
+                playerRatingEl.textContent = avg;
+            }
+
+            // 恢复用户之前的点赞状态
+            updateLikeButtonState(interactionData.userLikes[userId]);
+
+            // 恢复用户之前的评分状态
+            if (interactionData.userRatings[userId]) {
+                showMyRatingHint(interactionData.userRatings[userId]);
+            }
+
+            // 绑定点赞按钮事件
+            bindLikeButton(userId);
+
+            // 绑定评分按钮事件
+            bindRateButton(userId, interactionData);
+
+            // 增加浏览量（仅首次初始化时执行，storage事件触发的re-init不再重复计数）
+            if (!_viewsIncremented) {
+                _viewsIncremented = true;
+                incrementViews(api, course);
+            }
+        }
+
+        // 增加浏览量（每次进入页面+1）
+        function incrementViews(api, course) {
+            course.views = (course.views || 0) + 1;
+
+            const courses = api.getCourses();
+            const idx = courses.findIndex(c => String(c.id) === String(courseId));
+            if (idx >= 0) {
+                courses[idx].views = course.views;
+                api.set('management_courses', courses);
+            }
+
+            // 更新播放页浏览量显示
+            const playerViewsEl = document.getElementById('player-views');
+            if (playerViewsEl) playerViewsEl.textContent = course.views + '人学习';
+        }
+
+        function updateLikeButtonState(isLiked) {
+            const btn = document.getElementById('btn-like');
+            const icon = document.getElementById('like-icon');
+
+            if (!btn || !icon) return;
+
+            if (isLiked) {
+                btn.classList.add('btn-like-active');
+                icon.className = 'fa fa-thumbs-up';
+                btn.title = '取消点赞';
+            } else {
+                btn.classList.remove('btn-like-active');
+                icon.className = 'fa fa-thumbs-o-up';
+                btn.title = '点赞';
+            }
+        }
+
+        function bindLikeButton(userId) {
+            const btn = document.getElementById('btn-like');
+            if (!btn) return;
+
+            btn.addEventListener('click', async () => {
+                const data = getCourseInteractionData();
+                const wasLiked = data.userLikes[userId];
+
+                if (wasLiked) {
+                    delete data.userLikes[userId];
+                    data.likes = Math.max(0, (data.likes || 0) - 1);
+                    updateLikeButtonState(false);
+                    showToast('已取消点赞');
+                } else {
+                    data.userLikes[userId] = true;
+                    data.likes = (data.likes || 0) + 1;
+                    updateLikeButtonState(true);
+                    showToast('点赞成功！');
+                }
+
+                const likesEl = document.getElementById('interaction-likes');
+                if (likesEl) likesEl.textContent = data.likes;
+
+                await saveCourseInteractionData(data);
+                broadcastInteractionSync();
+            });
+        }
+
+        function bindRateButton(userId, currentData) {
+            const btn = document.getElementById('btn-rate');
+            const modal = document.getElementById('rating-modal');
+            const overlay = document.getElementById('rating-modal-overlay');
+            const closeBtn = document.getElementById('rating-modal-close');
+            const submitBtn = document.getElementById('rating-submit-btn');
+
+            if (!btn || !modal) return;
+
+            btn.addEventListener('click', () => {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                const prevScore = currentData.userRatings[userId] || 5;
+                currentRatingScore = prevScore;
+                updateRatingUI(prevScore);
+            });
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            overlay?.addEventListener('click', closeModal);
+            closeBtn?.addEventListener('click', closeModal);
+
+            const starBtns = modal.querySelectorAll('.star-btn');
+            starBtns.forEach(star => {
+                star.addEventListener('click', () => {
+                    currentRatingScore = parseInt(star.dataset.score);
+                    updateRatingUI(currentRatingScore);
+                });
+            });
+
+            submitBtn?.addEventListener('click', async () => {
+                const data = getCourseInteractionData();
+                const oldScore = data.userRatings[userId];
+
+                if (oldScore) {
+                    data.ratingSum -= oldScore;
+                    data.ratingCount--;
+                }
+                data.userRatings[userId] = currentRatingScore;
+                data.ratingSum += currentRatingScore;
+                data.ratingCount++;
+
+                await saveCourseInteractionData(data);
+
+                showMyRatingHint(currentRatingScore);
+                
+                // 更新课程信息区的评分显示
+                const newAvg = (data.ratingSum / data.ratingCount).toFixed(1);
+                const playerRatingEl = document.getElementById('player-rating');
+                if (playerRatingEl) playerRatingEl.textContent = newAvg;
+
+                // 同时更新课程对象的rating字段
+                const api = window.DataAPI;
+                const c = api.getCourse(courseId);
+                if (c) c.rating = parseFloat(newAvg);
+
+                closeModal();
+                showToast(`评分成功：${currentRatingScore}分 ${RATING_LABELS[currentRatingScore]}`);
+
+                broadcastInteractionSync();
+
+                Object.assign(currentData, data);
+            });
+        }
+
+        function updateRatingUI(score) {
+            const numEl = document.getElementById('rating-score-number');
+            const labelEl = document.getElementById('rating-label');
+            const stars = document.querySelectorAll('#rating-stars .star-btn');
+
+            if (numEl) numEl.textContent = score;
+            if (labelEl) labelEl.textContent = RATING_LABELS[score] || '';
+
+            stars.forEach(star => {
+                const s = parseInt(star.dataset.score);
+                if (s <= score) {
+                    star.classList.add('active');
+                    star.querySelector('i').style.color = '#fbbf24';
+                } else {
+                    star.classList.remove('active');
+                    star.querySelector('i').style.color = '';
+                }
+            });
+        }
+
+        function showMyRatingHint(score) {
+            const hintEl = document.getElementById('my-rating-hint');
+            const displayEl = document.getElementById('my-rating-display');
+            if (!hintEl || !displayEl) return;
+            hintEl.classList.remove('hidden');
+            displayEl.innerHTML = `<span class="text-amber-400 mr-1">${'★'.repeat(score)}</span> ${score}分 — ${RATING_LABELS[score]}`;
+        }
+
+        function broadcastInteractionSync() {
+            // 方式1：原生 storage 事件（供直接监听者使用）
+            try {
+                localStorage.setItem('course_interaction_sync', JSON.stringify({
+                    courseId: courseId,
+                    timestamp: Date.now()
+                }));
+                localStorage.removeItem('course_interaction_sync');
+            } catch(e) { /* ignore */ }
+            // 方式2：DataSync 广播（供 index/course 页面 DataSync.listen 使用）
+            if (window.DataSync) {
+                window.DataSync.broadcast(window.DataSync.EventTypes.ALL, {
+                    type: 'interaction',
+                    courseId: courseId
+                });
+            }
+        }
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'course_interaction_sync' && currentCourseData) {
+                initInteractionBar(currentCourseData);
+            }
+        });
+
         // ==================== 播放器核心 ====================
         const video = document.getElementById('course-video');
         const playButton = document.getElementById('play-button');
@@ -1433,7 +1896,6 @@
                 showToast('即将播放下一个视频...');
                 setTimeout(() => playChapterVideo(lastVideoIndex + 1), 1500);
             } else {
-                showToast('恭喜！您已完成本课程全部视频！');
                 updateContinueButtonText();
             }
         });

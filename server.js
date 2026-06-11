@@ -612,6 +612,96 @@ app.delete('/api/auth/users/:id', (req, res) => {
   }
 });
 
+// 管理员 - 更新用户资料
+app.put('/api/auth/users/:id', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: '未提供认证令牌' });
+  }
+  
+  const token = authHeader.slice(7);
+  const payload = verifyToken(token);
+  
+  if (!payload || payload.role !== 'admin') {
+    return res.status(403).json({ success: false, error: '需要管理员权限' });
+  }
+  
+  const userId = parseInt(req.params.id);
+  const updates = req.body;
+  
+  const data = readData();
+  if (!data.registered_users) data.registered_users = [];
+  
+  const userIndex = data.registered_users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, error: '用户不存在' });
+  }
+  
+  // 更新允许的字段
+  const allowedFields = ['realName', 'email', 'phone', 'department', 'role'];
+  allowedFields.forEach(field => {
+    if (updates[field] !== undefined) {
+      data.registered_users[userIndex][field] = updates[field];
+    }
+  });
+  
+  if (writeData(data)) {
+    const user = { ...data.registered_users[userIndex] };
+    delete user.passwordHash;
+    res.json({ success: true, data: { user } });
+  } else {
+    res.status(500).json({ success: false, error: '更新失败' });
+  }
+});
+
+// 管理员 - 重置用户密码
+app.post('/api/auth/users/:id/reset-password', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: '未提供认证令牌' });
+  }
+  
+  const token = authHeader.slice(7);
+  const payload = verifyToken(token);
+  
+  if (!payload || payload.role !== 'admin') {
+    return res.status(403).json({ success: false, error: '需要管理员权限' });
+  }
+  
+  const userId = parseInt(req.params.id);
+  
+  const data = readData();
+  if (!data.registered_users) data.registered_users = [];
+  
+  const userIndex = data.registered_users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, error: '用户不存在' });
+  }
+  
+  // 生成随机密码（8位字母数字组合）
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let newPassword = '';
+  for (let i = 0; i < 8; i++) {
+    newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  
+  // 更新密码
+  data.registered_users[userIndex].passwordHash = hashPassword(newPassword);
+  
+  if (writeData(data)) {
+    res.json({ 
+      success: true, 
+      message: '密码重置成功',
+      data: { 
+        username: data.registered_users[userIndex].username,
+        newPassword: newPassword 
+      } 
+    });
+  } else {
+    res.status(500).json({ success: false, error: '重置失败' });
+  }
+});
+
 // 注册题库管理路由
 app.use('/api', questionRoutes);
 

@@ -63,6 +63,56 @@
 </head>
 <body class="bg-slate-50 min-h-screen">
 
+  <!-- 登录模态框 -->
+  <div id="login-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 modal">
+      <!-- Logo和标题 -->
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 btn-primary rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4">
+          <i class="fas fa-graduation-cap text-white text-2xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800">游雁学院</h2>
+        <p class="text-sm text-slate-500 mt-1">管理后台登录</p>
+      </div>
+      
+      <!-- 登录表单 -->
+      <form onsubmit="handleLogin(event)" class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">
+            <i class="fas fa-user mr-1 text-slate-400"></i>用户名
+          </label>
+          <input type="text" id="login-username" required 
+            placeholder="请输入管理员账号" 
+            class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+            value="admin">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">
+            <i class="fas fa-lock mr-1 text-slate-400"></i>密码
+          </label>
+          <input type="password" id="login-password" required 
+            placeholder="请输入密码" 
+            class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+            value="admin2026">
+        </div>
+        
+        <button type="submit" 
+          class="w-full btn-primary text-white py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
+          <i class="fas fa-sign-in-alt mr-2"></i>登录
+        </button>
+      </form>
+      
+      <!-- 提示信息 -->
+      <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+        <p class="text-xs text-blue-700">
+          <i class="fas fa-info-circle mr-1"></i>
+          默认账号：<strong>admin</strong> / <strong>admin2026</strong>
+        </p>
+      </div>
+    </div>
+  </div>
+
   <!-- 顶部导航 -->
   <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-100">
     <div class="flex items-center justify-between px-6 py-4">
@@ -80,6 +130,20 @@
           <i class="fas fa-clock mr-1"></i>
           <span id="current-time"></span>
         </span>
+        
+        <!-- 用户信息 -->
+        <div id="user-info" class="hidden flex items-center space-x-3">
+          <div class="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 rounded-lg">
+            <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+              <i class="fas fa-user text-white text-sm"></i>
+            </div>
+            <span class="text-sm font-medium text-slate-700" id="admin-username">管理员</span>
+          </div>
+          <button onclick="handleLogout()" class="text-slate-500 hover:text-red-600 transition" title="退出登录">
+            <i class="fas fa-sign-out-alt text-lg"></i>
+          </button>
+        </div>
+        
         <a href="index.html" class="text-slate-500 hover:text-slate-700 transition" title="返回首页">
           <i class="fas fa-home text-lg"></i>
         </a>
@@ -269,6 +333,8 @@
                   <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">讲师</th>
                   <th class="px-5 py-4 text-center text-sm font-semibold text-slate-600">时长</th>
                   <th class="px-5 py-4 text-center text-sm font-semibold text-slate-600">观看</th>
+                  <th class="px-5 py-4 text-center text-sm font-semibold text-slate-600">点赞</th>
+                  <th class="px-5 py-4 text-center text-sm font-semibold text-slate-600">评分</th>
                   <th class="px-5 py-4 text-center text-sm font-semibold text-slate-600">状态</th>
                   <th class="px-5 py-4 text-center text-sm font-semibold text-slate-600">创建时间</th>
                   <th class="px-5 py-4 text-center text-sm font-semibold text-slate-600">更新时间</th>
@@ -978,20 +1044,20 @@
         <!-- 统计卡片 -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div class="bg-white rounded-xl p-4 shadow-sm">
-            <p class="text-2xl font-bold text-slate-800">256</p>
+            <p class="text-2xl font-bold text-slate-800" id="user-stat-total">0</p>
             <p class="text-sm text-slate-500">用户总数</p>
           </div>
           <div class="bg-white rounded-xl p-4 shadow-sm">
-            <p class="text-2xl font-bold text-green-500">8</p>
-            <p class="text-sm text-slate-500">管理员</p>
+            <p class="text-2xl font-bold text-green-500" id="user-stat-active">0</p>
+            <p class="text-sm text-slate-500">正常用户</p>
           </div>
           <div class="bg-white rounded-xl p-4 shadow-sm">
-            <p class="text-2xl font-bold text-blue-500">24</p>
-            <p class="text-sm text-slate-500">讲师</p>
+            <p class="text-2xl font-bold text-yellow-500" id="user-stat-disabled">0</p>
+            <p class="text-sm text-slate-500">禁用用户</p>
           </div>
           <div class="bg-white rounded-xl p-4 shadow-sm">
-            <p class="text-2xl font-bold text-purple-500">224</p>
-            <p class="text-sm text-slate-500">学员</p>
+            <p class="text-2xl font-bold text-blue-500" id="user-stat-today">0</p>
+            <p class="text-sm text-slate-500">今日新增</p>
           </div>
         </div>
         
@@ -1000,122 +1066,25 @@
           <table class="w-full">
             <thead class="bg-slate-50">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">头像</th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">基本信息</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">角色</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">手机号</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">姓名</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">部门</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">岗位</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">角色</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">注册时间</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">最后登录</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100" id="user-list">
-              <tr class="hover:bg-slate-50 transition">
-                <td class="px-6 py-4">
-                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=professional%20avatar%20male%20business&image_size=square" alt="用户头像" class="w-10 h-10 rounded-full object-cover">
-                </td>
-                <td class="px-6 py-4">
-                  <p class="font-medium text-slate-800">张三</p>
-                  <p class="text-sm text-slate-500">zhangsan@company.com</p>
-                  <p class="text-xs text-slate-400">138****8888</p>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">管理员</span>
-                </td>
-                <td class="px-6 py-4 text-center text-sm text-slate-600">技术部</td>
-                <td class="px-6 py-4 text-center">
-                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">正常</span>
-                </td>
-                <td class="px-6 py-4 text-center text-sm text-slate-500">2024-01-10</td>
-                <td class="px-6 py-4 text-center">
-                  <button onclick="viewUserDetail(1)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-eye"></i></button>
-                  <button onclick="editUser(1)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-edit"></i></button>
-                  <button onclick="resetUserPassword(1)" class="text-orange-600 hover:text-orange-800 mr-2"><i class="fas fa-key"></i></button>
-                  <button onclick="toggleUserStatus(1)" class="text-red-600 hover:text-red-800"><i class="fas fa-ban"></i></button>
-                </td>
-              </tr>
-              <tr class="hover:bg-slate-50 transition">
-                <td class="px-6 py-4">
-                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=professional%20avatar%20female%20business&image_size=square" alt="用户头像" class="w-10 h-10 rounded-full object-cover">
-                </td>
-                <td class="px-6 py-4">
-                  <p class="font-medium text-slate-800">李四</p>
-                  <p class="text-sm text-slate-500">lisi@company.com</p>
-                  <p class="text-xs text-slate-400">139****6666</p>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">讲师</span>
-                </td>
-                <td class="px-6 py-4 text-center text-sm text-slate-600">产品部</td>
-                <td class="px-6 py-4 text-center">
-                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">正常</span>
-                </td>
-                <td class="px-6 py-4 text-center text-sm text-slate-500">2024-01-12</td>
-                <td class="px-6 py-4 text-center">
-                  <button onclick="viewUserDetail(2)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-eye"></i></button>
-                  <button onclick="editUser(2)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-edit"></i></button>
-                  <button onclick="resetUserPassword(2)" class="text-orange-600 hover:text-orange-800 mr-2"><i class="fas fa-key"></i></button>
-                  <button onclick="toggleUserStatus(2)" class="text-red-600 hover:text-red-800"><i class="fas fa-ban"></i></button>
-                </td>
-              </tr>
-              <tr class="hover:bg-slate-50 transition">
-                <td class="px-6 py-4">
-                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=professional%20avatar%20male%20young&image_size=square" alt="用户头像" class="w-10 h-10 rounded-full object-cover">
-                </td>
-                <td class="px-6 py-4">
-                  <p class="font-medium text-slate-800">王五</p>
-                  <p class="text-sm text-slate-500">wangwu@company.com</p>
-                  <p class="text-xs text-slate-400">137****5555</p>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">学员</span>
-                </td>
-                <td class="px-6 py-4 text-center text-sm text-slate-600">市场部</td>
-                <td class="px-6 py-4 text-center">
-                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">正常</span>
-                </td>
-                <td class="px-6 py-4 text-center text-sm text-slate-500">2024-01-15</td>
-                <td class="px-6 py-4 text-center">
-                  <button onclick="viewUserDetail(3)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-eye"></i></button>
-                  <button onclick="editUser(3)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-edit"></i></button>
-                  <button onclick="resetUserPassword(3)" class="text-orange-600 hover:text-orange-800 mr-2"><i class="fas fa-key"></i></button>
-                  <button onclick="toggleUserStatus(3)" class="text-red-600 hover:text-red-800"><i class="fas fa-ban"></i></button>
-                </td>
-              </tr>
-              <tr class="hover:bg-slate-50 transition">
-                <td class="px-6 py-4">
-                  <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=professional%20avatar%20female%20young&image_size=square" alt="用户头像" class="w-10 h-10 rounded-full object-cover">
-                </td>
-                <td class="px-6 py-4">
-                  <p class="font-medium text-slate-800">赵六</p>
-                  <p class="text-sm text-slate-500">zhaoliu@company.com</p>
-                  <p class="text-xs text-slate-400">136****4444</p>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">学员</span>
-                </td>
-                <td class="px-6 py-4 text-center text-sm text-slate-600">人力资源</td>
-                <td class="px-6 py-4 text-center">
-                  <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">禁用</span>
-                </td>
-                <td class="px-6 py-4 text-center text-sm text-slate-500">2024-01-08</td>
-                <td class="px-6 py-4 text-center">
-                  <button onclick="viewUserDetail(4)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-eye"></i></button>
-                  <button onclick="editUser(4)" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-edit"></i></button>
-                  <button onclick="resetUserPassword(4)" class="text-orange-600 hover:text-orange-800 mr-2"><i class="fas fa-key"></i></button>
-                  <button onclick="toggleUserStatus(4)" class="text-green-600 hover:text-green-800"><i class="fas fa-check"></i></button>
-                </td>
-              </tr>
+              <!-- 动态渲染用户列表 -->
             </tbody>
           </table>
           <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-            <p class="text-sm text-slate-500">共 256 条记录</p>
-            <div class="flex items-center gap-2">
-              <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm">上一页</button>
-              <span class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm">1</span>
-              <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm">2</button>
-              <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm">3</button>
-              <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm">下一页</button>
+            <p class="text-sm text-slate-500" id="user-pagination-info">共 0 条记录</p>
+            <div class="flex items-center gap-2" id="user-pagination-buttons">
+              <!-- 动态生成分页按钮 -->
             </div>
           </div>
         </div>
@@ -1351,9 +1320,122 @@
     </div>
   </div>
 
+  <script src="js/data-api.js"></script>
+  <script src="js/data-sync.js"></script>
   <script>
     // ========== 全局配置 ==========
     const API = window.location.origin + '/api';
+    
+    // ========== 登录功能 ==========
+    
+    // 检查是否已登录
+    function checkLogin() {
+      const token = localStorage.getItem('adminToken');
+      const loginModal = document.getElementById('login-modal');
+      const userInfo = document.getElementById('user-info');
+      
+      if (token) {
+        // 已登录，隐藏登录框，显示用户信息
+        if (loginModal) {
+          loginModal.style.display = 'none';
+        }
+        if (userInfo) {
+          userInfo.classList.remove('hidden');
+          userInfo.classList.add('flex');
+          
+          // 显示用户名
+          const userStr = localStorage.getItem('adminUser');
+          if (userStr) {
+            try {
+              const user = JSON.parse(userStr);
+              const usernameEl = document.getElementById('admin-username');
+              if (usernameEl && user.realName) {
+                usernameEl.textContent = user.realName;
+              }
+            } catch(e) {
+              console.error('解析用户信息失败:', e);
+            }
+          }
+        }
+        return true;
+      } else {
+        // 未登录，显示登录框，隐藏用户信息
+        if (loginModal) {
+          loginModal.style.display = 'flex';
+        }
+        if (userInfo) {
+          userInfo.classList.add('hidden');
+          userInfo.classList.remove('flex');
+        }
+        return false;
+      }
+    }
+    
+    // 处理登录
+    async function handleLogin(event) {
+      event.preventDefault();
+      
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      
+      if (!username || !password) {
+        toast('请输入用户名和密码', 'error');
+        return;
+      }
+      
+      try {
+        const res = await fetch(API + '/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password })
+        });
+        
+        const result = await res.json();
+        
+        if (res.ok && result.success) {
+          // 保存token
+          localStorage.setItem('adminToken', result.data.token);
+          localStorage.setItem('adminUser', JSON.stringify(result.data.user));
+          
+          toast('登录成功！');
+          
+          // 隐藏登录框，显示用户信息
+          checkLogin();
+          
+          // 加载数据
+          await loadAllData();
+          switchTab('dashboard');
+          initUserFilters();
+        } else {
+          toast(result.error || '登录失败', 'error');
+        }
+      } catch (err) {
+        console.error('登录错误:', err);
+        toast('网络错误，请检查服务器是否运行', 'error');
+      }
+    }
+    
+    // 退出登录
+    function handleLogout() {
+      if (confirm('确定要退出登录吗？')) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUser');
+        toast('已退出登录');
+        
+        // 显示登录框
+        const loginModal = document.getElementById('login-modal');
+        if (loginModal) {
+          loginModal.style.display = 'flex';
+        }
+      }
+    }
+    
+    // 页面加载时检查登录状态
+    document.addEventListener('DOMContentLoaded', () => {
+      checkLogin();
+    });
     
     // 数据存储
     let data = {
@@ -1371,10 +1453,13 @@
     document.addEventListener('DOMContentLoaded', async () => {
       if (isInitialized) return;
       isInitialized = true;
-      
+
       updateTime();
       setInterval(updateTime, 1000);
-      
+
+      // 初始化 DataAPI（读取 localStorage 中的互动数据）
+      if (window.DataAPI?.init) await window.DataAPI.init();
+
       try {
         await loadAllData();
       } catch (error) {
@@ -1387,6 +1472,9 @@
       } catch (error) {
         console.error('切换标签页失败:', error);
       }
+      
+      // 初始化用户管理筛选器
+      initUserFilters();
     });
     
     function updateTime() {
@@ -1411,6 +1499,20 @@
         data.lecturers = await lectRes.json();
         data.training = await trainRes.json();
         data.notices = await noticesRes.json();
+
+        // 从 localStorage 同步最新的课程数据（浏览量等由播放页写入本地）
+        if (window.DataAPI) {
+          const localCourses = window.DataAPI.getCourses();
+          if (localCourses && localCourses.length > 0) {
+            // 用本地的浏览量覆盖服务器数据（因为浏览量只存本地）
+            data.courses.forEach(serverCourse => {
+              const localCourse = localCourses.find(c => String(c.id) === String(serverCourse.id));
+              if (localCourse && localCourse.views !== undefined) {
+                serverCourse.views = localCourse.views;
+              }
+            });
+          }
+        }
         
         // 确保分类是数组格式
         if (!Array.isArray(data.categories)) {
@@ -1750,6 +1852,7 @@
         lecturers: renderLecturers,
         training: renderTraining,
         notices: renderNotices,
+        users: loadUsers,
         portal: () => loadCarousels(),
         exams: loadExams
       };
@@ -1791,6 +1894,11 @@
     
     // ========== 课程管理 ==========
     function renderCourses() {
+      // 刷新缓存以获取最新的互动数据（浏览量、点赞、评分）
+      if (window.DataAPI && typeof window.DataAPI.refreshFromLocalStorage === 'function') {
+        window.DataAPI.refreshFromLocalStorage();
+      }
+
       const search = document.getElementById('course-search').value.toLowerCase();
       const status = document.getElementById('course-status-filter').value;
       const categoryId = document.getElementById('course-category-filter').value;
@@ -1861,6 +1969,47 @@
             </td>
             <!-- 观看 -->
             <td class="px-5 py-4 text-center text-sm text-slate-700">${(c.views || 0).toLocaleString()}</td>
+            <!-- 点赞 -->
+            <td class="px-5 py-4 text-center text-sm text-slate-700">${(function(){
+                var ik = 'course_interaction_' + c.id;
+                var id = window.DataAPI ? window.DataAPI.get(ik) : null;
+                
+                // 如果内存缓存中没有，尝试从 localStorage 直接读取
+                if (!id) {
+                    try {
+                        var stored = localStorage.getItem('learning_platform_data');
+                        if (stored) {
+                            var parsed = JSON.parse(stored);
+                            if (parsed[ik]) {
+                                id = parsed[ik];
+                            }
+                        }
+                    } catch(e) {}
+                }
+                
+                return (id && id.likes) ? id.likes : (c.likes || 0);
+            })()}</td>
+            <!-- 评分 -->
+            <td class="px-5 py-4 text-center text-sm text-slate-700">${(function(){
+                var ik = 'course_interaction_' + c.id;
+                var id = window.DataAPI ? window.DataAPI.get(ik) : null;
+                
+                // 如果内存缓存中没有，尝试从 localStorage 直接读取
+                if (!id) {
+                    try {
+                        var stored = localStorage.getItem('learning_platform_data');
+                        if (stored) {
+                            var parsed = JSON.parse(stored);
+                            if (parsed[ik]) {
+                                id = parsed[ik];
+                            }
+                        }
+                    } catch(e) {}
+                }
+                
+                if (id && id.ratingCount > 0) return (id.ratingSum / id.ratingCount).toFixed(1);
+                return (c.rating || 0).toFixed(1);
+            })()}</td>
             <!-- 状态 -->
             <td class="px-5 py-4 text-center">
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${st.class}">${st.text}</span>
@@ -3551,6 +3700,436 @@
       }
     }
     
+    // ========== 用户管理 ==========
+    let allUsers = [];
+    let filteredUsers = [];
+    let userCurrentPage = 1;
+    const userPageSize = 10;
+    
+    // 加载用户列表
+    async function loadUsers() {
+      console.log('[User Management] 开始加载用户列表...');
+      try {
+        const token = localStorage.getItem('adminToken');
+        console.log('[User Management] Token:', token ? '存在' : '不存在');
+        
+        if (!token) {
+          toast('请先登录', 'error');
+          return;
+        }
+        
+        console.log('[User Management] 请求API:', API + '/auth/users');
+        const res = await fetch(API + '/auth/users', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        console.log('[User Management] 响应状态:', res.status);
+        
+        if (res.ok) {
+          const result = await res.json();
+          console.log('[User Management] 获取到的用户数据:', result);
+          allUsers = result.data.users || [];
+          console.log('[User Management] 用户数量:', allUsers.length);
+          filterAndRenderUsers();
+        } else {
+          const errorText = await res.text();
+          console.error('[User Management] 加载失败:', res.status, errorText);
+          toast('加载用户失败: ' + res.status, 'error');
+        }
+      } catch (err) {
+        console.error('[User Management] 网络错误:', err);
+        toast('网络错误', 'error');
+      }
+    }
+    
+    // 过滤并渲染用户
+    function filterAndRenderUsers() {
+      const searchTerm = document.getElementById('user-search-input')?.value.toLowerCase() || '';
+      const roleFilter = document.getElementById('user-role-filter')?.value || 'all';
+      const statusFilter = document.getElementById('user-status-filter')?.value || 'all';
+      
+      filteredUsers = allUsers.filter(user => {
+        // 搜索过滤
+        const matchSearch = !searchTerm || 
+          (user.username && user.username.toLowerCase().includes(searchTerm)) ||
+          (user.realName && user.realName.toLowerCase().includes(searchTerm)) ||
+          (user.email && user.email.toLowerCase().includes(searchTerm)) ||
+          (user.phone && user.phone.includes(searchTerm));
+        
+        // 角色过滤
+        const matchRole = roleFilter === 'all' || user.role === roleFilter;
+        
+        // 状态过滤
+        const matchStatus = statusFilter === 'all' || user.status === statusFilter;
+        
+        return matchSearch && matchRole && matchStatus;
+      });
+      
+      // 更新统计
+      updateUserStats();
+      
+      // 渲染列表
+      userCurrentPage = 1;
+      renderUserList();
+    }
+    
+    // 更新用户统计
+    function updateUserStats() {
+      const total = allUsers.length;
+      const active = allUsers.filter(u => u.status === 'active').length;
+      const disabled = allUsers.filter(u => u.status === 'disabled').length;
+      
+      const today = new Date().toLocaleDateString('zh-CN');
+      const todayCount = allUsers.filter(u => {
+        if (!u.createdAt) return false;
+        const createDate = new Date(u.createdAt.replace(/\//g, '-'));
+        return createDate.toLocaleDateString('zh-CN') === today;
+      }).length;
+      
+      document.getElementById('user-stat-total').textContent = total;
+      document.getElementById('user-stat-active').textContent = active;
+      document.getElementById('user-stat-disabled').textContent = disabled;
+      document.getElementById('user-stat-today').textContent = todayCount;
+    }
+    
+    // 渲染用户列表
+    function renderUserList() {
+      const tbody = document.getElementById('user-list');
+      if (!tbody) return;
+      
+      const totalPages = Math.ceil(filteredUsers.length / userPageSize);
+      const start = (userCurrentPage - 1) * userPageSize;
+      const end = start + userPageSize;
+      const pageUsers = filteredUsers.slice(start, end);
+      
+      if (pageUsers.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="px-6 py-12 text-center text-slate-400">
+              <i class="fas fa-inbox text-4xl mb-3 block"></i>
+              <p>暂无用户数据</p>
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = pageUsers.map(user => {
+          const roleMap = {
+            admin: { text: '管理员', class: 'bg-red-100 text-red-700' },
+            teacher: { text: '讲师', class: 'bg-blue-100 text-blue-700' },
+            user: { text: '学员', class: 'bg-gray-100 text-gray-700' }
+          };
+          const roleInfo = roleMap[user.role] || roleMap.user;
+          
+          const statusInfo = user.status === 'active' 
+            ? { text: '正常', class: 'bg-green-100 text-green-700' }
+            : { text: '禁用', class: 'bg-yellow-100 text-yellow-700' };
+          
+          // 完整显示手机号（管理员可见）
+          const phone = user.phone || '-';
+          
+          return `
+            <tr class="hover:bg-slate-50 transition">
+              <!-- 手机号 -->
+              <td class="px-6 py-4 text-sm text-slate-700">${phone}</td>
+              <!-- 姓名 -->
+              <td class="px-6 py-4">
+                <p class="font-medium text-slate-800">${user.realName || user.username}</p>
+              </td>
+              <!-- 部门 -->
+              <td class="px-6 py-4 text-center text-sm text-slate-600">${user.department || '-'}</td>
+              <!-- 岗位 -->
+              <td class="px-6 py-4 text-center text-sm text-slate-600">${user.position || '-'}</td>
+              <!-- 角色 -->
+              <td class="px-6 py-4 text-center">
+                <span class="px-2 py-1 ${roleInfo.class} rounded-full text-xs">${roleInfo.text}</span>
+              </td>
+              <!-- 状态 -->
+              <td class="px-6 py-4 text-center">
+                <span class="px-2 py-1 ${statusInfo.class} rounded-full text-xs">${statusInfo.text}</span>
+              </td>
+              <!-- 注册时间 -->
+              <td class="px-6 py-4 text-center text-sm text-slate-500">${user.createdAt ? user.createdAt.split(' ')[0] : '-'}</td>
+              <!-- 最后登录时间 -->
+              <td class="px-6 py-4 text-center text-sm text-slate-500">${user.lastLogin || '-'}</td>
+              <!-- 操作 -->
+              <td class="px-6 py-4 text-center">
+                <button onclick="editUser(${user.id})" class="text-indigo-600 hover:text-indigo-800 mr-2" title="编辑资料"><i class="fas fa-edit"></i></button>
+                <button onclick="resetUserPassword(${user.id})" class="text-orange-600 hover:text-orange-800 mr-2" title="重置密码"><i class="fas fa-key"></i></button>
+                <button onclick="toggleUserStatus(${user.id})" class="${user.status === 'active' ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'} mr-2" title="${user.status === 'active' ? '禁用' : '启用'}">
+                  <i class="fas fa-${user.status === 'active' ? 'ban' : 'check'}"></i>
+                </button>
+                <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-800" title="删除用户"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+      
+      // 更新分页
+      renderUserPagination(totalPages);
+    }
+    
+    // 渲染分页
+    function renderUserPagination(totalPages) {
+      const infoEl = document.getElementById('user-pagination-info');
+      const buttonsEl = document.getElementById('user-pagination-buttons');
+      
+      if (infoEl) {
+        infoEl.textContent = `共 ${filteredUsers.length} 条记录`;
+      }
+      
+      if (buttonsEl) {
+        if (totalPages <= 1) {
+          buttonsEl.innerHTML = '';
+          return;
+        }
+        
+        let html = '';
+        
+        // 上一页
+        html += `<button onclick="changeUserPage(${userCurrentPage - 1})" class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm ${userCurrentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}" ${userCurrentPage === 1 ? 'disabled' : ''}>上一页</button>`;
+        
+        // 页码
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= userCurrentPage - 1 && i <= userCurrentPage + 1)) {
+            html += `<button onclick="changeUserPage(${i})" class="px-3 py-1.5 ${i === userCurrentPage ? 'bg-indigo-600 text-white' : 'border border-slate-200 hover:bg-slate-50'} rounded-lg transition text-sm">${i}</button>`;
+          } else if (i === userCurrentPage - 2 || i === userCurrentPage + 2) {
+            html += `<span class="px-2 text-slate-400">...</span>`;
+          }
+        }
+        
+        // 下一页
+        html += `<button onclick="changeUserPage(${userCurrentPage + 1})" class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm ${userCurrentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}" ${userCurrentPage === totalPages ? 'disabled' : ''}>下一页</button>`;
+        
+        buttonsEl.innerHTML = html;
+      }
+    }
+    
+    // 切换页码
+    function changeUserPage(page) {
+      const totalPages = Math.ceil(filteredUsers.length / userPageSize);
+      if (page < 1 || page > totalPages) return;
+      userCurrentPage = page;
+      renderUserList();
+    }
+    
+    // 编辑用户
+    async function editUser(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) {
+        toast('用户不存在', 'error');
+        return;
+      }
+      
+      const content = `
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">编辑用户资料</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveUserEdit(event, ${userId})" class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">真实姓名</label>
+              <input type="text" id="edit-user-realname" value="${user.realName || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">邮箱</label>
+              <input type="email" id="edit-user-email" value="${user.email || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">手机号</label>
+              <input type="tel" id="edit-user-phone" value="${user.phone || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">部门</label>
+              <input type="text" id="edit-user-department" value="${user.department || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">角色</label>
+              <select id="edit-user-role" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="user" ${user.role === 'user' ? 'selected' : ''}>学员</option>
+                <option value="teacher" ${user.role === 'teacher' ? 'selected' : ''}>讲师</option>
+                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>管理员</option>
+              </select>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">保存</button>
+            </div>
+          </form>
+        </div>
+      `;
+      showModal(content);
+    }
+    
+    // 保存用户编辑
+    async function saveUserEdit(event, userId) {
+      event.preventDefault();
+      
+      const updateData = {
+        realName: document.getElementById('edit-user-realname').value.trim(),
+        email: document.getElementById('edit-user-email').value.trim(),
+        phone: document.getElementById('edit-user-phone').value.trim(),
+        department: document.getElementById('edit-user-department').value.trim(),
+        role: document.getElementById('edit-user-role').value
+      };
+      
+      try {
+        const token = localStorage.getItem('adminToken');
+        const res = await fetch(`${API}/auth/users/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(updateData)
+        });
+        
+        if (res.ok) {
+          toast('用户资料已更新');
+          closeModal();
+          await loadUsers();
+        } else {
+          const error = await res.json();
+          toast(error.error || '更新失败', 'error');
+        }
+      } catch (err) {
+        toast('网络错误', 'error');
+      }
+    }
+    
+    // 重置密码
+    async function resetUserPassword(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) {
+        toast('用户不存在', 'error');
+        return;
+      }
+      
+      const newPassword = prompt(`确定要重置用户 "${user.realName || user.username}" 的密码吗？\n\n新密码将随机生成。`);
+      if (newPassword === null) return;
+      
+      try {
+        const token = localStorage.getItem('adminToken');
+        const res = await fetch(`${API}/auth/users/${userId}/reset-password`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (res.ok) {
+          const result = await res.json();
+          alert(`密码重置成功！\n\n新密码：${result.data.newPassword}\n\n请妥善保管并告知用户。`);
+          toast('密码已重置');
+        } else {
+          const error = await res.json();
+          toast(error.error || '重置失败', 'error');
+        }
+      } catch (err) {
+        toast('网络错误', 'error');
+      }
+    }
+    
+    // 切换用户状态（禁用/启用）
+    async function toggleUserStatus(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) {
+        toast('用户不存在', 'error');
+        return;
+      }
+      
+      const newStatus = user.status === 'active' ? 'disabled' : 'active';
+      const actionText = newStatus === 'active' ? '启用' : '禁用';
+      
+      if (!confirm(`确定要${actionText}用户 "${user.realName || user.username}" 吗？`)) {
+        return;
+      }
+      
+      try {
+        const token = localStorage.getItem('adminToken');
+        const res = await fetch(`${API}/auth/users/${userId}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+        
+        if (res.ok) {
+          toast(`用户已${actionText}`);
+          await loadUsers();
+        } else {
+          const error = await res.json();
+          toast(error.error || '操作失败', 'error');
+        }
+      } catch (err) {
+        toast('网络错误', 'error');
+      }
+    }
+    
+    // 删除用户
+    async function deleteUser(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) {
+        toast('用户不存在', 'error');
+        return;
+      }
+      
+      if (!confirm(`确定要删除用户 "${user.realName || user.username}" 吗？\n\n此操作不可恢复！`)) {
+        return;
+      }
+      
+      try {
+        const token = localStorage.getItem('adminToken');
+        const res = await fetch(`${API}/auth/users/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (res.ok) {
+          toast('用户已删除');
+          await loadUsers();
+        } else {
+          const error = await res.json();
+          toast(error.error || '删除失败', 'error');
+        }
+      } catch (err) {
+        console.error('删除用户失败:', err);
+        toast('网络错误', 'error');
+      }
+    }
+    
+    // 搜索和筛选事件绑定
+    function initUserFilters() {
+      const searchInput = document.getElementById('user-search-input');
+      const roleFilter = document.getElementById('user-role-filter');
+      const statusFilter = document.getElementById('user-status-filter');
+      
+      if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', () => {
+          clearTimeout(searchTimeout);
+          searchTimeout = setTimeout(() => {
+            filterAndRenderUsers();
+          }, 300);
+        });
+      }
+      
+      if (roleFilter) {
+        roleFilter.addEventListener('change', filterAndRenderUsers);
+      }
+      
+      if (statusFilter) {
+        statusFilter.addEventListener('change', filterAndRenderUsers);
+      }
+    }
+    
     // ========== 培训课程管理 ==========
     let currentManageProjectId = null;
     
@@ -4532,6 +5111,20 @@
       closeQuestionPicker();
       toast(`已添加 ${checkedCbs.length} 道题目到考试`);
     }
+
+    // ========== 跨页面数据同步 ==========
+    // 页面可见性变化时刷新课程列表（用户从播放页切换回来时）
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden && typeof renderCourses === 'function') {
+        renderCourses();
+      }
+    });
+    // 监听 localStorage 变化（其他标签页写入数据时：浏览量/点赞/评分）
+    window.addEventListener('storage', function(e) {
+      if ((e.key && e.key.indexOf('course_interaction') === 0) || e.key === 'learning_platform_data') {
+        if (typeof renderCourses === 'function') renderCourses();
+      }
+    });
 
     // ========== 工具函数 ==========
     function escHtml(str) {
