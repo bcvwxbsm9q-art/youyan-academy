@@ -136,7 +136,7 @@
         }
         surveyData = result.data;
         // 检查问卷状态
-        if (surveyData.status !== 'published') {
+        if (surveyData.status !== 'published' && surveyData.status !== 'active') {
           document.getElementById('loading-state').classList.add('hidden');
           document.getElementById('error-state').classList.remove('hidden');
           return;
@@ -168,6 +168,18 @@
       document.getElementById('loading-state').classList.add('hidden');
       document.getElementById('survey-form').classList.remove('hidden');
 
+      // 数据规范化：确保问题有ID，选项格式统一
+      const questions = surveyData.questions || [];
+      questions.forEach((q, idx) => {
+        if (!q.id) q.id = idx + 1;
+        if (Array.isArray(q.options)) {
+          q.options = q.options.map(opt => {
+            if (typeof opt === 'string') return { label: opt };
+            return opt;
+          });
+        }
+      });
+
       // 头部
       const header = document.getElementById('survey-header');
       header.innerHTML = `
@@ -181,7 +193,6 @@
 
       // 题目
       const container = document.getElementById('questions-container');
-      const questions = surveyData.questions || [];
       userAnswers = {};
       questions.forEach(q => { userAnswers[q.id] = q.type === 'checkbox' ? [] : (q.type === 'rating' ? 0 : ''); });
 
@@ -212,12 +223,13 @@
       } else if (q.type === 'text') {
         body = `<textarea class="w-full mt-3 p-3 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-300 resize-none" rows="3" placeholder="请输入您的回答" oninput="userAnswers[${q.id}]=this.value;updateProgress();markAnswered(${q.id})"></textarea>`;
       } else if (q.type === 'rating') {
-        const maxScore = Math.max(...(q.options || []).map(o => o.score || 0), 5);
-        body = `<div class="flex items-center gap-2 mt-3" id="rating-${q.id}">
-          ${Array.from({length: maxScore}, (_, i) => `
-            <span class="rating-star" onclick="selectRating(${q.id}, ${i+1})" data-score="${i+1}"><i class="fa fa-star"></i></span>
-          `).join('')}
-          <span class="text-sm text-slate-400 ml-2" id="rating-label-${q.id}">请评分</span>
+        body = `<div class="mt-3" id="rating-${q.id}">
+          <div class="flex items-center gap-2">
+            ${Array.from({length: 5}, (_, i) => `
+              <span class="rating-star" onclick="selectRating(${q.id}, ${i+1})" data-score="${i+1}"><i class="fa fa-star"></i></span>
+            `).join('')}
+            <span class="text-sm text-slate-400 ml-1" id="rating-text-${q.id}">请评分</span>
+          </div>
         </div>`;
       }
 
@@ -268,10 +280,12 @@
       stars.forEach((star, i) => {
         star.classList.toggle('active', i < score);
       });
-      const q = surveyData.questions.find(x => x.id == qId);
-      const opt = (q.options || []).find(o => o.score == score);
-      const labelEl = document.getElementById('rating-label-' + qId);
-      if (labelEl) labelEl.textContent = opt ? opt.label : score + '分';
+      const ratingLabels = {1:'很不满意',2:'不满意',3:'一般',4:'满意',5:'很满意'};
+      const textEl = document.getElementById('rating-text-' + qId);
+      if (textEl) {
+        textEl.textContent = ratingLabels[score] || '';
+        textEl.className = 'text-sm text-indigo-500 font-medium ml-1';
+      }
       markAnswered(qId);
       updateProgress();
     }
@@ -341,6 +355,7 @@
           body: JSON.stringify({
             userId: user.id,
             userName: user.real_name || user.realName || user.username || '未知用户',
+            department: user.department || '',
             answers,
             trainingId: trainingId || null,
             stageIdx: stageIdx !== null ? stageIdx : null

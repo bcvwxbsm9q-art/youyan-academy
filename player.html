@@ -513,10 +513,6 @@
                                             <span id="player-duration">总时长：0分钟</span>
                                         </span>
                                     </div>
-                                    <!-- 我的评分状态提示（内联显示） -->
-                                    <div id="my-rating-hint" class="hidden mt-2">
-                                        <span id="my-rating-display" class="text-xs font-medium text-amber-500 bg-amber-50 px-2 py-1 rounded-md inline-block"></span>
-                                    </div>
                                 </div>
                                 
                                 <!-- 学习进度环 -->
@@ -813,9 +809,11 @@
         }
         
         function updateVideoProgress(videoIndex, progress) {
-            if (!courseId) return;
+            if (!courseId) { console.warn('[Player] updateVideoProgress 跳过：courseId 为空'); return; }
             const userId = getUserId();
+            console.log(`[Player] updateVideoProgress userId=${userId} courseId=${courseId} idx=${videoIndex} progress=${progress}`);
             const result = window.DataAPI.updateVideoProgress(userId, courseId, videoIndex, progress);
+            console.log(`[Player] updateVideoProgress 结果:`, result);
             if (result && result.isCourseCompleted) showCourseCompletedNotification();
             updateCourseProgressUI();
         }
@@ -1468,7 +1466,12 @@
         }
 
         window.addEventListener('storage', async (e) => {
+            // 忽略本页面自己发出的广播（避免评分/交互更新触发全页重渲染的死循环）
             if (e.key === 'youyan_academy_sync' || e.key === 'course_center_sync') {
+                try {
+                    const evt = e.newValue ? JSON.parse(e.newValue) : null;
+                    if (evt && evt.source === window.location.pathname) return;
+                } catch (_) { /* ignore */ }
                 const course = await loadCourseData();
                 if (course) populatePlayerPage(course);
             }
@@ -1606,7 +1609,7 @@
             const likesEl = document.getElementById('interaction-likes');
             if (likesEl) likesEl.textContent = interactionData.likes || 0;
 
-            // 更新评分平均分（课程信息区）
+            // 更新评分平均分（课程信息区）——先用本地数据快速渲染
             const playerRatingEl = document.getElementById('player-rating');
             if (playerRatingEl) {
                 const avg = interactionData.ratingCount > 0
@@ -1615,13 +1618,35 @@
                 playerRatingEl.textContent = avg;
             }
 
+            // ====== 异步拉取后端全局评分（覆盖本地数据，实现跨用户同步）======
+            (async () => {
+                try {
+                    const resp = await fetch(`/api/courses/${courseId}/ratings?userId=${encodeURIComponent(userId)}`);
+                    const backendData = await resp.json();
+                    if (backendData.success && playerRatingEl) {
+                        playerRatingEl.textContent = backendData.avgRating.toFixed(1);
+                    }
+                    // 同步后端评分到本地 interactionData（跨用户同步）
+                    if (backendData.success && backendData.myRating) {
+                        if (!interactionData.userRatings[userId]) {
+                            interactionData.userRatings[userId] = backendData.myRating;
+                            interactionData.ratingSum += backendData.myRating;
+                            interactionData.ratingCount++;
+                            await saveCourseInteractionData(interactionData);
+                        }
+                        // 如果后端返回了用户评分，锁定评分按钮
+                        const rateBtn = document.getElementById('btn-rate');
+                        if (rateBtn && interactionData.userRatings[userId]) {
+                            setRateButtonRated(rateBtn, interactionData.userRatings[userId]);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('获取后端评分失败，使用本地数据:', e.message);
+                }
+            })();
+
             // 恢复用户之前的点赞状态
             updateLikeButtonState(interactionData.userLikes[userId]);
-
-            // 恢复用户之前的评分状态
-            if (interactionData.userRatings[userId]) {
-                showMyRatingHint(interactionData.userRatings[userId]);
-            }
 
             // 绑定点赞按钮事件
             bindLikeButton(userId);
@@ -1697,6 +1722,15 @@
             });
         }
 
+        let _rateBtnBound = false; // 防止重复绑定
+
+        function setRateButtonRated(btn, score) {
+            btn.classList.add('opacity-75', 'cursor-not-allowed', 'pointer-events-none', 'bg-gray-300', 'text-gray-600');
+            btn.classList.remove('bg-gradient-primary', 'text-white', 'hover:shadow-lg', 'hover:shadow-primary/30', 'hover:-translate-y-0.5');
+            btn.innerHTML = `<i class="fa fa-check-circle"></i><span>已评 ${score}分</span>`;
+            btn.title = '您已评价过此课程';
+        }
+
         function bindRateButton(userId, currentData) {
             const btn = document.getElementById('btn-rate');
             const modal = document.getElementById('rating-modal');
@@ -1706,13 +1740,31 @@
 
             if (!btn || !modal) return;
 
+            // 如果用户已评过 → 锁定按钮
+            const alreadyRated = currentData.userRatings[userId];
+            if (alreadyRated) {
+                setRateButtonRated(btn, alreadyRated);
+                // 首次加载也标记已绑定（不需要再绑弹窗事件）
+                if (!_rateBtnBound) _rateBtnBound = true;
+                return;
+            }
+
+            // 防止重复绑定事件
+            if (_rateBtnBound) return;
+            _rateBtnBound = true;
+
             btn.addEventListener('click', () => {
+                // 二次校验：绑定时未评分，但点开弹窗时可能已被其他途径标记
+                const data = getCourseInteractionData();
+                if (data.userRatings[userId]) {
+                    setRateButtonRated(btn, data.userRatings[userId]);
+                    showToast('您已评价过此课程，无法重复评分');
+                    return;
+                }
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
-                
-                const prevScore = currentData.userRatings[userId] || 5;
-                currentRatingScore = prevScore;
-                updateRatingUI(prevScore);
+                currentRatingScore = 5;
+                updateRatingUI(5);
             });
 
             function closeModal() {
@@ -1732,32 +1784,49 @@
 
             submitBtn?.addEventListener('click', async () => {
                 const data = getCourseInteractionData();
-                const oldScore = data.userRatings[userId];
-
-                if (oldScore) {
-                    data.ratingSum -= oldScore;
-                    data.ratingCount--;
+                // 最终防线：已评过则拒绝
+                if (data.userRatings[userId]) {
+                    closeModal();
+                    setRateButtonRated(btn, data.userRatings[userId]);
+                    showToast('您已评价过此课程，无法重复评分');
+                    return;
                 }
+
                 data.userRatings[userId] = currentRatingScore;
                 data.ratingSum += currentRatingScore;
                 data.ratingCount++;
 
                 await saveCourseInteractionData(data);
 
-                showMyRatingHint(currentRatingScore);
-                
-                // 更新课程信息区的评分显示
-                const newAvg = (data.ratingSum / data.ratingCount).toFixed(1);
-                const playerRatingEl = document.getElementById('player-rating');
-                if (playerRatingEl) playerRatingEl.textContent = newAvg;
+                // ====== 同步到后端 ======
+                try {
+                    const resp = await fetch(`/api/courses/${courseId}/ratings`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId, score: currentRatingScore })
+                    });
+                    const backendData = await resp.json();
+                    if (backendData.success) {
+                        const playerRatingEl = document.getElementById('player-rating');
+                        if (playerRatingEl) playerRatingEl.textContent = backendData.avgRating.toFixed(1);
+                    }
+                } catch (e) {
+                    console.warn('评分同步到后端失败，使用本地数据:', e.message);
+                    const newAvg = (data.ratingSum / data.ratingCount).toFixed(1);
+                    const playerRatingEl = document.getElementById('player-rating');
+                    if (playerRatingEl) playerRatingEl.textContent = newAvg;
+                }
 
-                // 同时更新课程对象的rating字段
+                // 更新课程对象的rating字段
                 const api = window.DataAPI;
                 const c = api.getCourse(courseId);
-                if (c) c.rating = parseFloat(newAvg);
+                if (c) c.rating = parseFloat(backendData?.avgRating?.toFixed?.(1) ?? (data.ratingSum / data.ratingCount).toFixed(1));
 
                 closeModal();
                 showToast(`评分成功：${currentRatingScore}分 ${RATING_LABELS[currentRatingScore]}`);
+
+                // 锁定按钮
+                setRateButtonRated(btn, currentRatingScore);
 
                 broadcastInteractionSync();
 
@@ -1785,14 +1854,6 @@
             });
         }
 
-        function showMyRatingHint(score) {
-            const hintEl = document.getElementById('my-rating-hint');
-            const displayEl = document.getElementById('my-rating-display');
-            if (!hintEl || !displayEl) return;
-            hintEl.classList.remove('hidden');
-            displayEl.innerHTML = `<span class="text-amber-400 mr-1">${'★'.repeat(score)}</span> ${score}分 — ${RATING_LABELS[score]}`;
-        }
-
         function broadcastInteractionSync() {
             // 方式1：原生 storage 事件（供直接监听者使用）
             try {
@@ -1812,7 +1873,12 @@
         }
 
         window.addEventListener('storage', (e) => {
+            // 忽略本页面自己发出的广播（避免评分更新触发 initInteractionBar 死循环）
             if (e.key === 'course_interaction_sync' && currentCourseData) {
+                try {
+                    const evt = e.newValue ? JSON.parse(e.newValue) : null;
+                    if (evt && evt.source === window.location.pathname) return;
+                } catch (_) { /* ignore */ }
                 initInteractionBar(currentCourseData);
             }
         });

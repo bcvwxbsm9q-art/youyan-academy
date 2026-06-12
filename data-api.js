@@ -8,6 +8,31 @@
 (function() {
     'use strict';
 
+    /**
+     * 深度合并对象：target 优先（localStorage 数据）
+     * - 普通值：target 覆盖 source
+     * - 对象：递归合并，target 中的非空值保留
+     * - 数组：target 优先
+     */
+    function deepMerge(source, target) {
+        const result = { ...source };
+        for (const key of Object.keys(target)) {
+            if (!(key in source)) {
+                result[key] = target[key];
+            } else if (typeof target[key] === 'object' && target[key] !== null
+                && !Array.isArray(target[key])
+                && typeof source[key] === 'object' && source[key] !== null
+                && !Array.isArray(source[key])) {
+                result[key] = deepMerge(source[key], target[key]);
+            } else if (Array.isArray(target[key]) || Array.isArray(source[key])) {
+                // 数组：target（localStorage）优先
+                result[key] = target[key];
+            }
+            // 其他情况：source 优先（已通过 ...source 包含）
+        }
+        return result;
+    }
+
     // API 配置
     const API_BASE = window.location.origin;  // 使用当前域名
     const API_SERVER = `${API_BASE}/api`;     // 后端API服务器地址
@@ -56,7 +81,8 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    memoryCache = { ...memoryCache, ...data };
+                    // 深度合并：保留 localStorage 中的嵌套数据（如 videoProgress），不被服务器空对象覆盖
+                    memoryCache = deepMerge(data, memoryCache);
                     isServerConnected = true;
                     console.log('[DataAPI] 已从服务器加载数据');
                     

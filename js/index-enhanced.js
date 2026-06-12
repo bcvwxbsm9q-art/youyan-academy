@@ -558,7 +558,7 @@
                 }
                 
                 if (flIds && flIds.length > 0) {
-                    featured = flIds.map(id => allLecturers.find(l => String(l.id) === String(id))).filter(Boolean);
+                    featured = flIds.map(id => allLecturers.find(l => String(l.id) === String(id))).filter(Boolean).slice(0, 6);
                 } else {
                     featured = allLecturers.slice(0, 6);
                 }
@@ -571,7 +571,7 @@
                 const allLecturers = window.DataAPI.getEnabledLecturers();
                 
                 if (flIds && flIds.length > 0) {
-                    featured = flIds.map(id => allLecturers.find(l => String(l.id) === String(id))).filter(Boolean);
+                    featured = flIds.map(id => allLecturers.find(l => String(l.id) === String(id))).filter(Boolean).slice(0, 6);
                 } else {
                     featured = allLecturers.slice(0, 6);
                 }

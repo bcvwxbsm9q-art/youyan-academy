@@ -30,6 +30,8 @@
             .card-hover { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
             .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.15); }
             .nav-active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+            .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+            .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         }
         body { opacity: 0; animation: pageLoad 0.5s ease forwards; }
         @keyframes pageLoad { to { opacity: 1; } }
@@ -263,7 +265,7 @@
                                         <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                                             <i class="fa fa-clock-o text-blue-500"></i>
                                         </div>
-                                        <div class="text-3xl font-bold" id="course-stat-hours">24.5</div>
+                                        <div class="text-3xl font-bold" id="course-stat-hours">0</div>
                                     </div>
                                     <p class="text-sm text-gray-500">学习时长 (小时)</p>
                                 </div>
@@ -272,18 +274,9 @@
                                         <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
                                             <i class="fa fa-check-circle text-green-500"></i>
                                         </div>
-                                        <div class="text-3xl font-bold" id="course-stat-completed">8</div>
+                                        <div class="text-3xl font-bold" id="course-stat-completed">0</div>
                                     </div>
                                     <p class="text-sm text-gray-500">已完成课程</p>
-                                </div>
-                                <div class="bg-white rounded-xl shadow-md p-4">
-                                    <div class="flex items-center gap-3 mb-2">
-                                        <div class="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
-                                            <i class="fa fa-line-chart text-yellow-500"></i>
-                                        </div>
-                                        <div class="text-3xl font-bold" id="course-stat-progress">68%</div>
-                                    </div>
-                                    <p class="text-sm text-gray-500">学习进度</p>
                                 </div>
                             </div>
 
@@ -297,16 +290,36 @@
 
                             <!-- 未完成课程 -->
                             <div class="mb-6">
-                                <h3 class="font-bold text-lg mb-4">未完成课程</h3>
-                                <div class="space-y-4" id="in-progress-courses">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fa fa-spinner text-amber-500"></i>未完成课程
+                                    <span class="text-sm font-normal text-gray-400">(进入过但未学完)</span>
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="in-progress-courses">
                                     <!-- 动态加载 -->
                                 </div>
                             </div>
 
                             <!-- 已完成课程 -->
+                            <div class="mb-6">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fa fa-check-circle text-green-500"></i>已完成课程
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="completed-courses">
+                                    <!-- 动态渲染 -->
+                                </div>
+                            </div>
+
+                            <!-- 发现新课程 -->
                             <div>
-                                <h3 class="font-bold text-lg mb-4">已完成课程</h3>
-                                <div class="space-y-4" id="completed-courses">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="font-bold text-lg flex items-center gap-2">
+                                        <i class="fa fa-compass text-primary"></i>发现新课程
+                                    </h3>
+                                    <a href="course.html" class="text-sm text-primary hover:underline flex items-center gap-1">
+                                        查看全部 <i class="fa fa-angle-right"></i>
+                                    </a>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="not-started-courses">
                                     <!-- 动态渲染 -->
                                 </div>
                             </div>
@@ -577,13 +590,25 @@
             const userId = currentUser.id;
             const learningData = api.getUserLearningData(userId);
             
-            // 学习时长（秒转小时）
-            const totalHours = Math.round(learningData.totalHours / 3600 * 10) / 10;
+            // 学习时长：优先用 totalSeconds 计算
+            const totalSec = learningData.totalSeconds || 0;
+            const totalHours = totalSec > 0 ? (Math.round(totalSec / 3600 * 10) / 10) : (learningData.totalHours || 0);
             document.getElementById('stat-hours').textContent = totalHours;
             document.getElementById('stats-total-hours').textContent = totalHours;
             
-            // 已完成课程数
-            const completedCount = learningData.completedCourses.length;
+            // 已完成课程数（基于 videoProgress 动态计算，而非 completedCourses 数组）
+            const allCourses = api.getCourses();
+            let completedCount = 0;
+            allCourses.forEach(c => {
+                const vids = c.videos || [];
+                if (vids.length === 0) return;
+                const allWatched = vids.every((v, i) => {
+                    const vKey = `${c.id}_${i}`;
+                    const p = learningData.videoProgress[vKey] || 0;
+                    return (typeof p === 'number' && !isNaN(p) && p >= 100);
+                });
+                if (allWatched) completedCount++;
+            });
             document.getElementById('course-stat-completed').textContent = completedCount;
             document.getElementById('stats-completed-courses').textContent = completedCount;
             
@@ -662,79 +687,59 @@
             const userId = currentUser.id;
             const learningData = api.getUserLearningData(userId);
             
-            // 更新统计数据
-            const totalHours = Math.round(learningData.totalHours / 3600 * 10) / 10;
+            // 学习时长（优先用 totalSeconds）
+            const totalSec = learningData.totalSeconds || 0;
+            const totalHours = totalSec > 0 ? (Math.round(totalSec / 3600 * 10) / 10) : (learningData.totalHours || 0);
             document.getElementById('stats-total-hours').textContent = totalHours;
             
-            // 已完成课程数
-            const completedCount = learningData.completedCourses.length;
+            // 已完成课程数（基于 videoProgress 动态计算）
+            const allCourses = api.getCourses();
+            let completedCount = 0;
+            allCourses.forEach(c => {
+                const vids = c.videos || [];
+                if (vids.length === 0) return;
+                const allWatched = vids.every((v, i) => {
+                    const vKey = `${c.id}_${i}`;
+                    const p = learningData.videoProgress[vKey] || 0;
+                    return (typeof p === 'number' && !isNaN(p) && p >= 100);
+                });
+                if (allWatched) completedCount++;
+            });
             document.getElementById('stats-completed-courses').textContent = completedCount;
             
             // 注册天数
             const registerDays = api.getRegisterDays(currentUser.createdAt);
             document.getElementById('stats-register-days').textContent = registerDays;
-            
-            // 渲染已完成课程明细
-            renderCompletedCoursesList(learningData.completedCourses);
         }
         
-        // 渲染已完成课程列表
-        function renderCompletedCoursesList(completedCourseIds) {
-            const container = document.getElementById('completed-courses-list');
-            if (!container) return;
-            
-            if (completedCourseIds.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-8 text-gray-400">
-                        <i class="fa fa-inbox text-4xl mb-2"></i>
-                        <p>暂无已完成的课程</p>
-                        <p class="text-sm mt-1">开始学习视频课程，完成后将显示在这里</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            const allCourses = api.getCourses();
-            const completedCourses = completedCourseIds.map(id => allCourses.find(c => String(c.id) === String(id))).filter(Boolean);
-            
-            container.innerHTML = completedCourses.map(course => `
-                <div class="bg-white rounded-lg p-4 border border-green-200 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                            <i class="fa fa-check-circle text-green-500"></i>
-                        </div>
-                        <div>
-                            <h5 class="font-medium text-gray-800">${course.title}</h5>
-                            <p class="text-xs text-gray-500">${course.videos ? course.videos.length : 0}个视频 · 全部完成</p>
-                        </div>
-                    </div>
-                    <button onclick="viewCourse(${course.id})" class="px-3 py-1 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                        查看课程
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        // 初始化学习统计图表
+        // 初始化学习统计图表（使用真实学习记录）
         function initStatsChart() {
             const ctx = document.getElementById('stats-learning-chart');
             if (!ctx) return;
             
-            // 如果已有图表，先销毁
             if (statsChart) {
                 statsChart.destroy();
             }
             
-            // 生成最近7天的数据
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            const records = learningData.studyRecords || [];
+            
+            // 生成最近7天的真实数据
             const labels = [];
             const data = [];
             const today = new Date();
             for (let i = 6; i >= 0; i--) {
                 const date = new Date(today);
                 date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
                 labels.push(`${date.getMonth() + 1}/${date.getDate()}`);
-                // 模拟每天学习时长（0.5-3小时随机）
-                data.push((Math.random() * 2.5 + 0.5).toFixed(1));
+                
+                // 汇总当天所有记录的时长
+                const daySeconds = records
+                    .filter(r => r.date === dateStr)
+                    .reduce((sum, r) => sum + (r.duration || 0), 0);
+                data.push(Math.round(daySeconds / 3600 * 10) / 10);
             }
             
             statsChart = new Chart(ctx, {
@@ -751,7 +756,8 @@
                         pointBackgroundColor: '#667eea',
                         pointBorderColor: '#fff',
                         pointBorderWidth: 2,
-                        pointRadius: 4
+                        pointRadius: data.some(d => d > 0) ? 4 : 0,
+                        borderWidth: 2
                     }]
                 },
                 options: {
@@ -805,132 +811,316 @@
             const userId = currentUser.id;
             const learningData = api.getUserLearningData(userId);
             
-            // 计算每个课程的进度
-            myCourses = allCourses.map(c => {
-                let progress = 0;
-                let totalVideos = c.videos ? c.videos.length : 0;
-                
-                if (totalVideos > 0) {
-                    let watchedCount = 0;
-                    c.videos.forEach((v, i) => {
-                        const vKey = `${c.id}_${i}`;
-                        const videoProgress = learningData.videoProgress[vKey] || 0;
-                        if (videoProgress >= 100) {
-                            watchedCount++;
-                        }
-                    });
-                    progress = Math.round((watchedCount / totalVideos) * 100);
-                }
-                
-                const isCompleted = learningData.completedCourses.includes(c.id);
-                
+            // ===== 判断课程是否"进入过"：videoProgress 中有该课程任一视频的进度>=1% =====
+            function hasEnteredCourse(courseId) {
+                if (!learningData.videoProgress) return false;
+                return Object.keys(learningData.videoProgress).some(k => {
+                    const parts = k.split('_');
+                    // key 格式: courseId_videoIndex (可能有多个 _)
+                    const cid = parts.slice(0, -1).join('_');
+                    return String(cid) === String(courseId) && (learningData.videoProgress[k] || 0) >= 1;
+                });
+            }
+
+            // 计算每个课程的进度（%）、已看视频数、总视频数
+            function calcCourseProgress(c) {
+                const vids = c.videos || [];
+                let watchedCount = 0;
+                let partialCount = 0;
+                vids.forEach((v, i) => {
+                    const vKey = `${c.id}_${i}`;
+                    const p = learningData.videoProgress[vKey] || 0;
+                    // 过滤掉非数字值（旧格式迁移污染）
+                    const numP = (typeof p === 'number' && !isNaN(p)) ? p : 0;
+                    if (numP >= 100) watchedCount++;
+                    else if (numP > 0) partialCount++;
+                });
                 return {
-                    ...c,
-                    progress: progress,
-                    isCompleted: isCompleted,
-                    lastLearnTime: learningData.lastStudyTime ? new Date(learningData.lastStudyTime).toLocaleDateString('zh-CN') : '未开始'
+                    total: vids.length,
+                    watched: watchedCount,
+                    partial: partialCount,
+                    pct: vids.length > 0 ? Math.round((watchedCount / vids.length) * 100) : 0
                 };
+            }
+
+            // 获取课程最近学习时间
+            function getLastStudyTime(courseId) {
+                const records = learningData.studyRecords || [];
+                const courseRecords = records.filter(r => String(r.courseId) === String(courseId));
+                if (courseRecords.length === 0) return null;
+                return courseRecords[courseRecords.length - 1].timestamp;
+            }
+
+            let inProgress = [];
+            let completed = [];
+            let notStarted = [];
+
+            allCourses.forEach(c => {
+                // 只显示已发布的课程
+                if (c.status && c.status !== 'published') return;
+                
+                const { total, watched, partial, pct } = calcCourseProgress(c);
+                const isCompleted = pct === 100 && total > 0;
+                const entered = hasEnteredCourse(c.id);
+                const lastStudy = getLastStudyTime(c.id);
+
+                if (isCompleted) {
+                    completed.push({ ...c, progress: pct, watched, total, isCompleted: true, lastStudyTime: lastStudy });
+                }
+                else if (entered) {
+                    // 进入过但未完成（即使 partial=0，只要 entered 就算进行中）
+                    const effectivePct = partial > 0 ? pct : 1; // 至少显示1%避免显示0%
+                    inProgress.push({ ...c, progress: effectivePct, watched, total, isCompleted: false, lastStudyTime: lastStudy });
+                }
+                else {
+                    notStarted.push({ ...c, progress: 0, watched: 0, total: c.videos?.length || 0, isCompleted: false, lastStudyTime: null });
+                }
             });
 
-            const inProgress = myCourses.filter(c => !c.isCompleted);
-            const completed = myCourses.filter(c => c.isCompleted);
+            // 排序：进行中按最近学习时间倒序，已完成按完成时间倒序
+            inProgress.sort((a, b) => (b.lastStudyTime || '').localeCompare(a.lastStudyTime || ''));
+            completed.sort((a, b) => (b.lastStudyTime || '').localeCompare(a.lastStudyTime || ''));
 
-            // 渲染未完成课程
+            // ===== 渲染未完成课程 =====
             const inProgressContainer = document.getElementById('in-progress-courses');
             if (inProgress.length === 0) {
                 inProgressContainer.innerHTML = `
-                    <div class="text-center py-8 text-gray-400">
-                        <i class="fa fa-book text-4xl mb-2"></i>
-                        <p>暂无进行中的课程</p>
-                        <p class="text-sm mt-1">快去课程中心开始学习吧</p>
+                    <div class="col-span-full text-center py-12 text-gray-400">
+                        <i class="fa fa-play-circle text-5xl mb-3"></i>
+                        <p class="text-lg">暂无进行中的课程</p>
+                        <p class="text-sm mt-1">快去<a href="course.html" class="text-primary hover:underline">课程中心</a>挑选感兴趣的课程开始学习吧</p>
                     </div>
                 `;
             } else {
-                inProgressContainer.innerHTML = inProgress.map(c => `
-                    <div class="bg-white rounded-xl shadow-md p-4 flex gap-4">
-                        <img src="${c.cover || 'https://via.placeholder.com/160x90?text=课程'}" class="w-40 h-24 rounded-lg object-cover">
-                        <div class="flex-1">
-                            <h4 class="font-bold text-gray-800 mb-1">${c.title}</h4>
-                            <p class="text-sm text-gray-500 mb-2">${c.videos ? c.videos.length + '个视频' : '暂无介绍'}</p>
-                            <div class="flex items-center gap-3">
-                                <div class="flex-1 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-gradient-primary h-2 rounded-full transition-all" style="width: ${c.progress}%"></div>
-                                </div>
-                                <span class="text-sm text-primary font-medium">${c.progress}%</span>
-                            </div>
-                        </div>
-                        <button onclick="continueLearn(${c.id})" class="px-4 py-2 bg-gradient-primary text-white rounded-lg h-fit hover:opacity-90">
-                            <i class="fa fa-play mr-1"></i>继续
-                        </button>
-                    </div>
-                `).join('');
+                inProgressContainer.innerHTML = inProgress.map(c => renderCourseCard(c, 'in-progress')).join('');
             }
 
-            // 渲染已完成课程
+            // ===== 渲染已完成课程 =====
             const completedContainer = document.getElementById('completed-courses');
             if (completed.length === 0) {
                 completedContainer.innerHTML = `
-                    <div class="text-center py-8 text-gray-400">
-                        <i class="fa fa-check-circle text-4xl mb-2"></i>
-                        <p>暂无已完成课程</p>
-                        <p class="text-sm mt-1">完成课程后在这里查看记录</p>
+                    <div class="col-span-full text-center py-12 text-gray-400">
+                        <i class="fa fa-check-circle text-5xl mb-3"></i>
+                        <p class="text-lg">暂无已完成课程</p>
+                        <p class="text-sm mt-1">完成全部章节后课程将显示在这里</p>
                     </div>
                 `;
             } else {
-                completedContainer.innerHTML = completed.map(c => `
-                    <div class="bg-white rounded-xl shadow-md p-4 flex gap-4">
-                        <img src="${c.cover || 'https://via.placeholder.com/160x90?text=课程'}" class="w-40 h-24 rounded-lg object-cover">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <h4 class="font-bold text-gray-800">${c.title}</h4>
-                                <span class="badge badge-success">已完成</span>
-                            </div>
-                            <p class="text-sm text-gray-500">${c.videos ? c.videos.length + '个视频全部完成' : ''}</p>
-                        </div>
-                        <button onclick="viewCourse(${c.id})" class="px-4 py-2 border border-gray-300 rounded-lg h-fit hover:bg-gray-50">
-                            <i class="fa fa-eye mr-1"></i>查看
-                        </button>
-                    </div>
-                `).join('');
+                completedContainer.innerHTML = completed.map(c => renderCourseCard(c, 'completed')).join('');
             }
 
-            // 更新头部统计
-            const totalHours = Math.round(learningData.totalHours / 3600 * 10) / 10;
+            // ===== 渲染未开始课程（推荐发现） =====
+            const notStartedContainer = document.getElementById('not-started-courses');
+            if (notStartedContainer) {
+                if (notStarted.length === 0) {
+                    notStartedContainer.innerHTML = `
+                        <div class="col-span-full text-center py-8 text-gray-400">
+                            <i class="fa fa-trophy text-4xl mb-2"></i>
+                            <p class="text-base">所有课程都已开始学习，太棒了！</p>
+                        </div>
+                    `;
+                } else {
+                    // 最多显示6个推荐
+                    const shown = notStarted.slice(0, 6);
+                    notStartedContainer.innerHTML = shown.map(c => renderCourseCard(c, 'discover')).join('');
+                }
+            }
+
+            // ===== 更新统计卡片 =====
+            // 学习时长：优先用 totalSeconds 计算
+            const totalSec = learningData.totalSeconds || 0;
+            const totalHours = totalSec > 0 ? (Math.round(totalSec / 3600 * 10) / 10) : (learningData.totalHours || 0);
             document.getElementById('course-stat-hours').textContent = totalHours;
             document.getElementById('course-stat-completed').textContent = completed.length;
-            const avgProgress = myCourses.length > 0 ? Math.round(myCourses.reduce((sum, c) => sum + c.progress, 0) / myCourses.length) : 0;
-            document.getElementById('course-stat-progress').textContent = avgProgress + '%';
+
+            // 同步更新顶部个人信息卡和统计页
+            document.getElementById('stat-hours').textContent = totalHours;
+            document.getElementById('stats-total-hours').textContent = totalHours;
+            document.getElementById('stats-completed-courses').textContent = completed.length;
         }
 
-        // 初始化学习图表（我的课程页面的图表）
+        // ===== 课程卡片渲染函数 =====
+        function renderCourseCard(c, type) {
+            const lecturerName = (typeof api.getLecturerName === 'function') ? api.getLecturerName(c.lecturerId) : '';
+            const totalSec = c.duration || 0;
+            const durH = Math.floor(totalSec / 3600);
+            const durM = Math.floor((totalSec % 3600) / 60);
+            const durStr = durH > 0 ? `${durH}h${durM}m` : `${durM}分钟`;
+            const coverUrl = c.cover || 'https://via.placeholder.com/360x200?text=课程封面';
+            const videoCount = c.total || c.videos?.length || 0;
+
+            // 格式化最近学习时间
+            function formatLastStudy(ts) {
+                if (!ts) return '';
+                const d = new Date(ts);
+                const now = new Date();
+                const diffMs = now - d;
+                const diffMin = Math.floor(diffMs / 60000);
+                if (diffMin < 1) return '刚刚';
+                if (diffMin < 60) return `${diffMin}分钟前`;
+                const diffHr = Math.floor(diffMin / 60);
+                if (diffHr < 24) return `${diffHr}小时前`;
+                const diffDay = Math.floor(diffHr / 24);
+                if (diffDay < 7) return `${diffDay}天前`;
+                return `${d.getMonth()+1}/${d.getDate()}`;
+            }
+
+            if (type === 'completed') {
+                return `
+                <div class="bg-white rounded-2xl shadow-md overflow-hidden card-hover group">
+                    <div class="relative">
+                        <img src="${coverUrl}" class="w-full h-40 object-cover" alt="${c.title}" onerror="this.src='https://via.placeholder.com/360x200?text=课程封面'">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                        <div class="absolute top-3 right-3 px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
+                            <i class="fa fa-check"></i>已完成
+                        </div>
+                        <div class="absolute bottom-3 left-3 right-3">
+                            <p class="text-white text-xs">${durStr} · ${videoCount}个视频</p>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-bold text-gray-800 text-base mb-2 line-clamp-2 group-hover:text-primary transition-colors">${c.title}</h4>
+                        ${lecturerName ? `<p class="text-xs text-gray-500 mb-3"><i class="fa fa-user-circle mr-1"></i>${lecturerName}</p>` : ''}
+                        <div class="flex gap-2">
+                            <button onclick="viewCourse(${c.id})" class="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-sm transition-colors flex items-center justify-center gap-1">
+                                <i class="fa fa-eye"></i>查看
+                            </button>
+                            <button onclick="continueLearn(${c.id})" class="flex-1 py-2.5 rounded-xl bg-green-500 hover:bg-green-600 text-white font-medium text-sm transition-colors flex items-center justify-center gap-1">
+                                <i class="fa fa-redo"></i>复习
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            if (type === 'discover') {
+                return `
+                <div class="bg-white rounded-2xl shadow-md overflow-hidden card-hover group">
+                    <div class="relative">
+                        <img src="${coverUrl}" class="w-full h-40 object-cover" alt="${c.title}" onerror="this.src='https://via.placeholder.com/360x200?text=课程封面'">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                        <div class="absolute top-3 right-3 px-3 py-1 bg-primary/90 text-white text-xs font-bold rounded-full flex items-center gap-1">
+                            <i class="fa fa-compass"></i>新课程
+                        </div>
+                        <div class="absolute bottom-3 left-3 right-3">
+                            <p class="text-white text-xs">${durStr} · ${videoCount}个视频</p>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-bold text-gray-800 text-base mb-2 line-clamp-2 group-hover:text-primary transition-colors">${c.title}</h4>
+                        ${lecturerName ? `<p class="text-xs text-gray-500 mb-3"><i class="fa fa-user-circle mr-1"></i>${lecturerName}</p>` : ''}
+                        <button onclick="continueLearn(${c.id})" class="w-full py-2.5 rounded-xl bg-gradient-primary text-white font-medium text-sm transition-all hover:opacity-90 hover:shadow-lg flex items-center justify-center gap-2">
+                            <i class="fa fa-arrow-right"></i>开始学习
+                        </button>
+                    </div>
+                </div>`;
+            }
+
+            // 未完成卡片
+            const continueText = c.progress > 0 ? '继续学习' : '开始学习';
+            const lastStudyStr = formatLastStudy(c.lastStudyTime);
+            return `
+            <div class="bg-white rounded-2xl shadow-md overflow-hidden card-hover group">
+                <div class="relative">
+                    <img src="${coverUrl}" class="w-full h-40 object-cover" alt="${c.title}" onerror="this.src='https://via.placeholder.com/360x200?text=课程封面'">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                    <div class="absolute bottom-3 left-3 right-3">
+                        <p class="text-white text-xs">${durStr} · ${videoCount}个视频</p>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h4 class="font-bold text-gray-800 text-base mb-2 line-clamp-2 group-hover:text-primary transition-colors">${c.title}</h4>
+                    ${lecturerName ? `<p class="text-xs text-gray-500 mb-2"><i class="fa fa-user-circle mr-1"></i>${lecturerName}</p>` : ''}
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-xs text-gray-400">已学${c.watched}/${c.total}个视频</p>
+                        ${lastStudyStr ? `<p class="text-xs text-gray-400"><i class="fa fa-clock-o mr-1"></i>${lastStudyStr}</p>` : ''}
+                    </div>
+                    <button onclick="continueLearn(${c.id})" class="w-full py-2.5 rounded-xl bg-gradient-primary text-white font-medium text-sm transition-all hover:opacity-90 hover:shadow-lg flex items-center justify-center gap-2">
+                        <i class="fa fa-arrow-right"></i>${continueText}
+                    </button>
+                </div>
+            </div>`;
+        }
+
+        // 初始化学习图表（使用真实学习记录数据）
         function initLearningChart() {
             const ctx = document.getElementById('learning-chart');
             if (!ctx) return;
 
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            const records = learningData.studyRecords || [];
+
+            // 获取最近7天的学习时长
+            const days = [];
+            const hours = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                const dayLabel = i === 0 ? '今天' : i === 1 ? '昨天' : ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+                days.push(dayLabel);
+                
+                // 汇总当天所有记录的时长
+                const daySeconds = records
+                    .filter(r => r.date === dateStr)
+                    .reduce((sum, r) => sum + (r.duration || 0), 0);
+                hours.push(Math.round(daySeconds / 3600 * 10) / 10); // 转为小时，保留1位小数
+            }
+
+            const hasData = hours.some(h => h > 0);
+
             new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                    labels: days,
                     datasets: [{
                         label: '学习时长(小时)',
-                        data: [2.5, 3.0, 1.5, 4.0, 2.0, 3.5, 1.0],
+                        data: hasData ? hours : [0, 0, 0, 0, 0, 0, 0],
                         borderColor: '#667eea',
                         backgroundColor: 'rgba(102, 126, 234, 0.1)',
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        pointRadius: hasData ? 4 : 0,
+                        pointBackgroundColor: '#667eea',
+                        borderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.parsed.y > 0 ? `${ctx.parsed.y}小时` : '无记录';
+                                }
+                            }
+                        }
                     },
                     scales: {
-                        y: { beginAtZero: true }
+                        y: { 
+                            beginAtZero: true,
+                            ticks: {
+                                callback: v => v + 'h'
+                            }
+                        }
                     }
                 }
             });
+
+            // 如果没有数据，显示提示
+            if (!hasData) {
+                const parent = ctx.parentElement;
+                if (parent && !parent.querySelector('.no-data-hint')) {
+                    const hint = document.createElement('div');
+                    hint.className = 'no-data-hint absolute inset-0 flex items-center justify-center text-gray-400 text-sm pointer-events-none';
+                    hint.innerHTML = '<i class="fa fa-line-chart mr-2"></i>暂无学习记录，开始学习后这里会展示趋势';
+                    parent.style.position = 'relative';
+                    parent.appendChild(hint);
+                }
+            }
         }
 
         // 继续学习
