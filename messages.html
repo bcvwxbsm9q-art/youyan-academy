@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -335,10 +335,11 @@
                                     <th>消息名称</th>
                                     <th style="width:120px">消息类型</th>
                                     <th style="width:160px">时间</th>
+                                    <th style="width:80px;text-align:center">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="message-tbody">
-                                <tr class="skeleton-row"><td colspan="4">
+                                <tr class="skeleton-row"><td colspan="5">
                                     <div class="space-y-3 px-4 py-2">
                                         <div class="flex items-center gap-3"><div class="skeleton" style="width:20px;height:20px;border-radius:4px"></div><div class="skeleton flex-1" style="height:40px"></div><div class="skeleton" style="width:80px;height:24px;border-radius:20px"></div><div class="skeleton" style="width:120px;height:16px"></div></div>
                                         <div class="flex items-center gap-3"><div class="skeleton" style="width:20px;height:20px;border-radius:4px"></div><div class="skeleton flex-1" style="height:40px"></div><div class="skeleton" style="width:70px;height:24px;border-radius:20px"></div><div class="skeleton" style="width:100px;height:16px"></div></div>
@@ -477,6 +478,11 @@
                     '</td>' +
                     '<td style="vertical-align:middle" onclick="event.stopPropagation()">' + getTypeBadge(msg.type) + '</td>' +
                     '<td class="text-gray-500 text-sm" style="vertical-align:middle" onclick="event.stopPropagation()">' + formatTime(msg.createdAt) + '</td>' +
+                    '<td style="vertical-align:middle;text-align:center" onclick="event.stopPropagation()">' +
+                        '<button onclick="deleteSingleMessage(' + msg.id + ', event)" class="text-gray-400 hover:text-red-500 transition p-1.5 rounded-lg hover:bg-red-50" title="删除">' +
+                            '<i class="fas fa-trash-alt text-sm"></i>' +
+                        '</button>' +
+                    '</td>' +
                 '</tr>';
             }).join('');
 
@@ -574,6 +580,26 @@
                     await loadMessages();
                 } else {
                     showToast(result.error || '操作失败', 'error');
+                }
+            } catch (e) {
+                showToast('网络错误，请重试', 'error');
+            }
+        };
+
+        window.deleteSingleMessage = async function (msgId, event) {
+            event.stopPropagation();
+            if (!confirm('确定要删除这条消息吗？此操作不可恢复。')) return;
+            try {
+                const res = await authFetch('/api/notifications/' + msgId, {
+                    method: 'DELETE'
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('已删除该消息', 'success');
+                    selectedIds.delete(msgId);
+                    await loadMessages();
+                } else {
+                    showToast(result.error || '删除失败', 'error');
                 }
             } catch (e) {
                 showToast('网络错误，请重试', 'error');

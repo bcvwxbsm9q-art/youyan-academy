@@ -32,6 +32,13 @@
             .nav-active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
             .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
             .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+            .badge-glow { box-shadow: 0 0 15px rgba(255, 193, 7, 0.4); }
+            .progress-shine { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); background-size: 200% 100%; animation: shine 2s infinite; }
+            @keyframes shine { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+            .float-animation { animation: float 3s ease-in-out infinite; }
+            @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+            .pulse-ring { animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+            @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(1.3); opacity: 0; } }
         }
         body { opacity: 0; animation: pageLoad 0.5s ease forwards; }
         @keyframes pageLoad { to { opacity: 1; } }
@@ -50,6 +57,62 @@
         .badge-warning { background: #fef3c7; color: #d97706; }
         .badge-danger { background: #fee2e2; color: #dc2626; }
         .badge-info { background: #e0e7ff; color: #4f46e5; }
+        
+        /* 日历热力图 */
+        .calendar-grid { display: grid; grid-template-columns: repeat(53, 1fr); gap: 2px; }
+        .calendar-day { width: 10px; height: 10px; border-radius: 2px; }
+        
+        /* 骨架屏 */
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
+        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        
+        /* 徽章解锁动画 */
+        @keyframes badgeUnlock {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(10deg); }
+            70% { transform: scale(0.95) rotate(-5deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .badge-unlock-animation { animation: badgeUnlock 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards; }
+        
+        /* 徽章解锁庆祝效果 */
+        @keyframes celebrate {
+            0%, 100% { transform: translateY(0); }
+            25% { transform: translateY(-20px) scale(1.1); }
+            50% { transform: translateY(0) scale(1); }
+            75% { transform: translateY(-10px) scale(1.05); }
+        }
+        .badge-celebrate { animation: celebrate 0.6s ease-in-out; }
+        
+        /* 光晕扩散效果 */
+        @keyframes glowExpand {
+            0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+            100% { box-shadow: 0 0 0 20px rgba(255, 193, 7, 0); }
+        }
+        .badge-glow-effect { animation: glowExpand 1s ease-out; }
+        
+        /* 徽章详情弹窗 */
+        .badge-detail-modal {
+            backdrop-filter: blur(8px);
+        }
+        .badge-detail-content {
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .badge-detail-modal.active .badge-detail-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        /* 新徽章提示条 */
+        @keyframes slideDown {
+            0% { transform: translateY(-100%); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .new-badge-toast {
+            animation: slideDown 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -122,41 +185,123 @@
     </header>
 
     <main class="pt-16 pb-24">
-        <!-- 个人信息卡片 -->
-        <section class="py-6 md:py-10 bg-gradient-primary text-white">
-            <div class="w-[1200px] mx-auto px-4">
-                <div class="flex items-center gap-4">
-                    <div id="profile-avatar-container" class="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm overflow-hidden">
-                        <img id="profile-avatar" src="" class="hidden w-full h-full object-cover">
-                        <i class="fa fa-user text-white text-4xl" id="profile-avatar-default"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h1 class="text-2xl font-bold mb-1" id="profile-user-name">用户</h1>
-                        <div class="flex items-center gap-2 mt-2">
-                            <span class="px-2 py-1 bg-white/20 rounded text-xs">学号: <span id="profile-user-id">U00001</span></span>
-                            <span class="px-2 py-1 bg-white/20 rounded text-xs">部门: <span id="profile-department">未设置部门</span></span>
+        <!-- 个人信息卡片 - 升级版 -->
+        <section class="py-6 md:py-10 bg-gradient-primary text-white relative overflow-hidden">
+            <!-- 装饰背景 -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-10 left-10 w-32 h-32 bg-white rounded-full blur-3xl"></div>
+                <div class="absolute bottom-10 right-10 w-40 h-40 bg-yellow-300 rounded-full blur-3xl"></div>
+            </div>
+            
+            <div class="w-[1200px] mx-auto px-4 relative z-10">
+                <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
+                    <!-- 头像区域 -->
+                    <div class="relative">
+                        <div class="relative">
+                            <div id="profile-avatar-container" class="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm overflow-hidden border-3 border-white/40 shadow-xl">
+                                <img id="profile-avatar" src="" class="hidden w-full h-full object-cover">
+                                <i class="fa fa-user text-white text-5xl" id="profile-avatar-default"></i>
+                            </div>
+                            <!-- 在线状态 -->
+                            <div class="absolute bottom-1 right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white flex items-center justify-center">
+                                <div class="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                        </div>
+                        <!-- 等级徽章 -->
+                        <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full border-2 border-white shadow-lg flex items-center gap-1">
+                            <i class="fa fa-star text-[10px]"></i>
+                            Lv.<span id="user-level">3</span>
                         </div>
                     </div>
-                    <button onclick="showEditProfileModal()" class="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-sm font-medium">
-                        <i class="fa fa-edit mr-1"></i>编辑资料
-                    </button>
+                    
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <h1 class="text-2xl md:text-3xl font-bold" id="profile-user-name">用户</h1>
+                            <span class="px-3 py-1 bg-white/20 rounded-full text-xs font-medium backdrop-blur-sm" id="user-role-badge">学员</span>
+                            <span class="px-3 py-1 bg-yellow-400/90 text-yellow-900 rounded-full text-xs font-bold" id="vip-badge">VIP</span>
+                        </div>
+                        
+                        <!-- 经验条 -->
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="flex-1 max-w-xs">
+                                <div class="flex justify-between text-xs text-white/70 mb-1">
+                                    <span>经验值</span>
+                                    <span id="exp-text">650 / 1000</span>
+                                </div>
+                                <div class="w-full h-2.5 bg-white/20 rounded-full overflow-hidden">
+                                    <div id="exp-bar" class="h-full bg-yellow-300 rounded-full transition-all duration-1000 progress-shine relative" style="width: 65%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 text-sm text-white/80">
+                            <span class="px-2 py-1 bg-white/10 rounded text-xs">学号: <span id="profile-user-id">U00001</span></span>
+                            <span class="px-2 py-1 bg-white/10 rounded text-xs">部门: <span id="profile-department">未设置部门</span></span>
+                            <span class="px-2 py-1 bg-white/10 rounded text-xs">职位: <span id="profile-position">未设置</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col gap-3">
+                        <button onclick="showEditProfileModal()" class="px-5 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 transition-all text-sm font-medium backdrop-blur-sm flex items-center gap-2">
+                            <i class="fa fa-edit"></i>编辑资料
+                        </button>
+                        <!-- 连续学习天数 -->
+                        <div class="flex items-center gap-2 bg-white/10 rounded-xl px-4 py-2.5 backdrop-blur-sm">
+                            <i class="fa fa-fire text-orange-400 text-lg float-animation"></i>
+                            <div>
+                                <span class="text-xs text-white/70">连续学习</span>
+                                <span class="font-bold text-orange-300 text-lg ml-1" id="streak-days">12</span>
+                                <span class="text-xs text-white/70">天</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <!-- 学习数据 -->
-                <div class="grid grid-cols-2 gap-4 mt-6">
-                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                <!-- 统计卡片 - 带趋势 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all">
                         <div class="flex items-center gap-2 mb-2">
-                            <i class="fa fa-star text-yellow-300"></i>
-                            <span class="text-white/80 text-sm">学习积分</span>
+                            <i class="fa fa-trophy text-yellow-300"></i>
+                            <span class="text-white/80 text-sm">成就徽章</span>
                         </div>
-                        <div class="text-3xl font-bold" id="stat-points">0</div>
+                        <div class="text-3xl font-bold"><span id="stat-badges">0</span> <span class="text-lg font-normal">枚</span></div>
+                        <div class="mt-2 text-xs text-yellow-300 flex items-center gap-1">
+                            <i class="fa fa-star"></i>
+                            <span>共 <span id="stat-total-badges">12</span> 种可解锁</span>
+                        </div>
                     </div>
-                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all">
                         <div class="flex items-center gap-2 mb-2">
                             <i class="fa fa-clock-o text-green-300"></i>
                             <span class="text-white/80 text-sm">学习时长</span>
                         </div>
-                        <div class="text-3xl font-bold"><span id="stat-hours">0</span> 小时</div>
+                        <div class="text-3xl font-bold"><span id="stat-hours">0</span> <span class="text-lg font-normal">小时</span></div>
+                        <div class="mt-2 text-xs text-green-300 flex items-center gap-1">
+                            <i class="fa fa-arrow-up"></i>
+                            <span>+2.5h 本周</span>
+                        </div>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa fa-book text-blue-300"></i>
+                            <span class="text-white/80 text-sm">完成课程</span>
+                        </div>
+                        <div class="text-3xl font-bold" id="stat-completed">0</div>
+                        <div class="mt-2 text-xs text-blue-300 flex items-center gap-1">
+                            <i class="fa fa-check"></i>
+                            <span>全部100%进度</span>
+                        </div>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa fa-trophy text-orange-300"></i>
+                            <span class="text-white/80 text-sm">获得证书</span>
+                        </div>
+                        <div class="text-3xl font-bold" id="stat-certificates">0</div>
+                        <div class="mt-2 text-xs text-orange-300 flex items-center gap-1">
+                            <i class="fa fa-certificate"></i>
+                            <span>专业认证</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -178,6 +323,14 @@
                                     <i class="fa fa-book w-6"></i>
                                     <span>我的课程</span>
                                 </button>
+                                <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center" data-tab="achievements">
+                                    <i class="fa fa-trophy w-6"></i>
+                                    <span>成就徽章</span>
+                                </button>
+                                <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center" data-tab="certificates">
+                                    <i class="fa fa-certificate w-6"></i>
+                                    <span>我的证书</span>
+                                </button>
                                 <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center" data-tab="settings">
                                     <i class="fa fa-cog w-6"></i>
                                     <span>账户设置</span>
@@ -190,77 +343,126 @@
                     <div class="flex-1">
                         <!-- 学习统计 -->
                         <div class="tab-content active" id="learning-stats-content">
+                            <!-- 成就徽章墙 -->
+                            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="font-bold text-gray-700 flex items-center gap-2">
+                                        <i class="fa fa-trophy text-yellow-500"></i>
+                                        最近获得
+                                    </h4>
+                                    <button onclick="switchTab('achievements')" class="text-sm text-primary hover:underline flex items-center gap-1">
+                                        查看全部 <i class="fa fa-angle-right"></i>
+                                    </button>
+                                </div>
+                                <div class="flex gap-4" id="recent-badges">
+                                    <!-- 动态渲染 -->
+                                </div>
+                            </div>
+                            
                             <div class="bg-white rounded-xl shadow-md p-6 mb-6">
                                 <h3 class="font-bold text-lg mb-6 flex items-center">
                                     <i class="fa fa-bar-chart text-primary mr-2"></i>
                                     我的学习统计
                                 </h3>
                                 
-                                <!-- 统计卡片 -->
+                                <!-- 统计卡片 - 升级版 -->
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                                     <!-- 学习时长 -->
-                                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200 hover:shadow-lg transition-all group">
                                         <div class="flex items-center justify-between mb-4">
-                                            <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+                                            <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                                                 <i class="fa fa-clock-o text-white text-xl"></i>
                                             </div>
                                             <span class="text-blue-600 text-sm font-medium">累计学习</span>
                                         </div>
                                         <div class="text-3xl font-bold text-blue-700 mb-1" id="stats-total-hours">0</div>
                                         <div class="text-sm text-blue-600">小时</div>
-                                        <div class="mt-3 text-xs text-blue-500">
-                                            <i class="fa fa-refresh mr-1"></i>实时更新
+                                        <div class="mt-3 flex items-center text-xs text-green-600 bg-green-50 rounded-lg px-2 py-1 w-fit">
+                                            <i class="fa fa-arrow-up mr-1"></i>
+                                            <span>较上周 +2.5h</span>
                                         </div>
                                     </div>
                                     
                                     <!-- 已完成课程 -->
-                                    <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                                    <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200 hover:shadow-lg transition-all group">
                                         <div class="flex items-center justify-between mb-4">
-                                            <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
+                                            <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                                                 <i class="fa fa-check-circle text-white text-xl"></i>
                                             </div>
                                             <span class="text-green-600 text-sm font-medium">课程完成</span>
                                         </div>
                                         <div class="text-3xl font-bold text-green-700 mb-1" id="stats-completed-courses">0</div>
                                         <div class="text-sm text-green-600">门课程</div>
-                                        <div class="mt-3 text-xs text-green-500">
-                                            <i class="fa fa-star mr-1"></i>全部视频100%进度
+                                        <div class="mt-3 flex items-center text-xs text-green-600 bg-green-50 rounded-lg px-2 py-1 w-fit">
+                                            <i class="fa fa-star mr-1"></i>
+                                            <span>全部视频100%进度</span>
                                         </div>
                                     </div>
                                     
                                     <!-- 注册天数 -->
-                                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+                                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200 hover:shadow-lg transition-all group">
                                         <div class="flex items-center justify-between mb-4">
-                                            <div class="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center">
+                                            <div class="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                                                 <i class="fa fa-calendar text-white text-xl"></i>
                                             </div>
                                             <span class="text-purple-600 text-sm font-medium">平台会员</span>
                                         </div>
                                         <div class="text-3xl font-bold text-purple-700 mb-1" id="stats-register-days">0</div>
                                         <div class="text-sm text-purple-600">天</div>
-                                        <div class="mt-3 text-xs text-purple-500">
-                                            <i class="fa fa-calendar-check-o mr-1"></i>自注册之日起
+                                        <div class="mt-3 flex items-center text-xs text-purple-600 bg-purple-50 rounded-lg px-2 py-1 w-fit">
+                                            <i class="fa fa-calendar-check-o mr-1"></i>
+                                            <span>自注册之日起</span>
                                         </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 学习日历热力图 -->
+                                <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                                    <h4 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                                        <i class="fa fa-calendar text-gray-500"></i>学习日历
+                                    </h4>
+                                    <div class="overflow-x-auto">
+                                        <div class="calendar-grid" id="learning-calendar">
+                                            <!-- JS生成 -->
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-end gap-2 mt-3 text-xs text-gray-400">
+                                        <span>少</span>
+                                        <div class="w-3 h-3 bg-gray-100 rounded-sm"></div>
+                                        <div class="w-3 h-3 bg-green-200 rounded-sm"></div>
+                                        <div class="w-3 h-3 bg-green-400 rounded-sm"></div>
+                                        <div class="w-3 h-3 bg-green-600 rounded-sm"></div>
+                                        <span>多</span>
                                     </div>
                                 </div>
                                 
                                 <!-- 学习进度图表 -->
                                 <div class="bg-gray-50 rounded-xl p-6 mb-6">
-                                    <h4 class="font-bold text-gray-700 mb-4">
-                                        <i class="fa fa-line-chart mr-2 text-gray-500"></i>学习趋势
+                                    <h4 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                                        <i class="fa fa-line-chart text-gray-500"></i>学习趋势
                                     </h4>
-                                    <div class="h-48">
+                                    <div class="h-48 relative">
                                         <canvas id="stats-learning-chart"></canvas>
+                                    </div>
+                                </div>
+                                
+                                <!-- 最近活动时间线 -->
+                                <div class="bg-gray-50 rounded-xl p-6">
+                                    <h4 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                                        <i class="fa fa-history text-gray-500"></i>最近活动
+                                    </h4>
+                                    <div class="space-y-4" id="activity-timeline">
+                                        <!-- 动态渲染 -->
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- 我的课程 -->
-                        <div class="tab-content active" id="my-courses-content">
+                        <div class="tab-content hidden" id="my-courses-content">
                             <!-- 学习统计 -->
                             <div class="grid grid-cols-3 gap-6 mb-6">
-                                <div class="bg-white rounded-xl shadow-md p-4">
+                                <div class="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all">
                                     <div class="flex items-center gap-3 mb-2">
                                         <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                                             <i class="fa fa-clock-o text-blue-500"></i>
@@ -269,7 +471,7 @@
                                     </div>
                                     <p class="text-sm text-gray-500">学习时长 (小时)</p>
                                 </div>
-                                <div class="bg-white rounded-xl shadow-md p-4">
+                                <div class="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all">
                                     <div class="flex items-center gap-3 mb-2">
                                         <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
                                             <i class="fa fa-check-circle text-green-500"></i>
@@ -277,6 +479,15 @@
                                         <div class="text-3xl font-bold" id="course-stat-completed">0</div>
                                     </div>
                                     <p class="text-sm text-gray-500">已完成课程</p>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                                            <i class="fa fa-spinner text-orange-500"></i>
+                                        </div>
+                                        <div class="text-3xl font-bold" id="course-stat-inprogress">0</div>
+                                    </div>
+                                    <p class="text-sm text-gray-500">进行中</p>
                                 </div>
                             </div>
 
@@ -320,6 +531,79 @@
                                     </a>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="not-started-courses">
+                                    <!-- 动态渲染 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 成就徽章 -->
+                        <div class="tab-content hidden" id="achievements-content">
+                            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                                <div class="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h3 class="font-bold text-lg flex items-center gap-2">
+                                            <i class="fa fa-trophy text-yellow-500"></i>
+                                            我的成就
+                                        </h3>
+                                        <p class="text-sm text-gray-500 mt-1">完成学习目标，解锁更多徽章</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-2xl font-bold text-primary" id="badge-count">0/12</div>
+                                        <div class="text-xs text-gray-400">已解锁</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6" id="all-badges">
+                                    <!-- 动态渲染 -->
+                                </div>
+                            </div>
+                            
+                            <!-- 等级进度 -->
+                            <div class="bg-white rounded-xl shadow-md p-6">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fa fa-star text-primary"></i>
+                                    等级进度
+                                </h3>
+                                <div class="space-y-6" id="level-progress">
+                                    <!-- 动态渲染 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 徽章详情弹窗 -->
+                        <div id="badge-detail-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 badge-detail-modal">
+                            <div class="bg-white rounded-2xl w-full max-w-sm badge-detail-content shadow-2xl">
+                                <div class="p-6 text-center">
+                                    <div id="badge-detail-icon" class="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl shadow-lg"></div>
+                                    <h3 id="badge-detail-name" class="text-xl font-bold mb-2"></h3>
+                                    <p id="badge-detail-desc" class="text-gray-500 text-sm mb-4"></p>
+                                    <div id="badge-detail-status" class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4"></div>
+                                    <p id="badge-detail-time" class="text-xs text-gray-400"></p>
+                                </div>
+                                <div class="p-4 border-t text-center">
+                                    <button onclick="closeBadgeDetailModal()" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium transition-colors">关闭</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 我的证书 -->
+                        <div class="tab-content hidden" id="certificates-content">
+                            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                                <div class="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h3 class="font-bold text-lg flex items-center gap-2">
+                                            <i class="fa fa-certificate text-primary"></i>
+                                            获得证书
+                                        </h3>
+                                        <p class="text-sm text-gray-500 mt-1">完成课程考核后自动颁发</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-2xl font-bold text-primary" id="certificate-count">0</div>
+                                        <div class="text-xs text-gray-400">张证书</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="certificates-list">
                                     <!-- 动态渲染 -->
                                 </div>
                             </div>
@@ -492,6 +776,22 @@
         let learningChart = null;
         let statsChart = null;
 
+        // 徽章定义
+        const BADGES = [
+            { id: 'first-step', name: '初出茅庐', icon: 'fa-star', color: 'yellow', desc: '完成第一门课程', condition: (u, d) => d.completed >= 1 },
+            { id: 'learner', name: '学习达人', icon: 'fa-fire', color: 'orange', desc: '累计学习10小时', condition: (u, d) => d.hours >= 10 },
+            { id: 'master', name: '学霸', icon: 'fa-graduation-cap', color: 'blue', desc: '完成5门课程', condition: (u, d) => d.completed >= 5 },
+            { id: 'streak-7', name: '坚持不懈', icon: 'fa-calendar-check-o', color: 'green', desc: '连续学习7天', condition: (u, d) => d.streak >= 7 },
+            { id: 'streak-30', name: '持之以恒', icon: 'fa-trophy', color: 'purple', desc: '连续学习30天', condition: (u, d) => d.streak >= 30 },
+            { id: 'night-owl', name: '夜猫子', icon: 'fa-moon-o', color: 'indigo', desc: '晚上10点后学习', condition: (u, d) => d.nightStudy },
+            { id: 'early-bird', name: '早起鸟', icon: 'fa-sun-o', color: 'yellow', desc: '早上6点前学习', condition: (u, d) => d.earlyStudy },
+            { id: 'speedster', name: '速学达人', icon: 'fa-bolt', color: 'red', desc: '一天完成3个视频', condition: (u, d) => d.speedStudy },
+            { id: 'collector', name: '收藏家', icon: 'fa-book', color: 'teal', desc: '收藏10门课程', condition: (u, d) => d.favorites >= 10 },
+            { id: 'commenter', name: '活跃分子', icon: 'fa-comments', color: 'pink', desc: '发表5条评论', condition: (u, d) => d.comments >= 5 },
+            { id: 'perfect', name: '满分学霸', icon: 'fa-check-circle', color: 'green', desc: '考试获得满分', condition: (u, d) => d.perfectScore },
+            { id: 'veteran', name: '资深学员', icon: 'fa-crown', color: 'yellow', desc: '注册满一年', condition: (u, d) => d.days >= 365 }
+        ];
+
         // 初始化
         document.addEventListener('DOMContentLoaded', async () => {
             await api.init();
@@ -500,6 +800,10 @@
             initTabNavigation();
             initLearningChart();
             loadAllData();
+            initCalendar();
+            loadActivityTimeline();
+            loadBadges();
+            loadCertificates();
             // 默认显示学习统计
             switchTab('learning-stats');
         });
@@ -566,6 +870,10 @@
             // 更新部门
             document.getElementById('profile-department').textContent = currentUser.department || '未设置部门';
             
+            // 更新职位
+            const positionEl = document.getElementById('profile-position');
+            if (positionEl) positionEl.textContent = currentUser.position || '未设置';
+            
             // 更新学习数据
             updateLearningStats();
             
@@ -583,6 +891,52 @@
             const mobileUserName = document.getElementById('mobile-user-name');
             if (userDisplayName) userDisplayName.textContent = displayName;
             if (mobileUserName) mobileUserName.textContent = displayName;
+            
+            // 更新角色标签
+            const roleBadge = document.getElementById('user-role-badge');
+            if (roleBadge) {
+                roleBadge.textContent = currentUser.role === 'admin' ? '管理员' : '学员';
+            }
+            
+            // 更新连续学习天数
+            updateStreakDays();
+        }
+        
+        // 更新连续学习天数
+        function updateStreakDays() {
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            const records = learningData.studyRecords || [];
+            
+            // 计算连续学习天数
+            let streak = 0;
+            const today = new Date().toISOString().split('T')[0];
+            const dates = [...new Set(records.map(r => r.date))].sort().reverse();
+            
+            if (dates.length > 0) {
+                // 检查今天或昨天是否有记录
+                const lastDate = dates[0];
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = yesterday.toISOString().split('T')[0];
+                
+                if (lastDate === today || lastDate === yesterdayStr) {
+                    streak = 1;
+                    for (let i = 1; i < dates.length; i++) {
+                        const curr = new Date(dates[i-1]);
+                        const prev = new Date(dates[i]);
+                        const diff = (curr - prev) / (1000 * 60 * 60 * 24);
+                        if (diff === 1) {
+                            streak++;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            const streakEl = document.getElementById('streak-days');
+            if (streakEl) streakEl.textContent = streak;
         }
         
         // 更新学习统计数据（实时）
@@ -595,6 +949,25 @@
             const totalHours = totalSec > 0 ? (Math.round(totalSec / 3600 * 10) / 10) : (learningData.totalHours || 0);
             document.getElementById('stat-hours').textContent = totalHours;
             document.getElementById('stats-total-hours').textContent = totalHours;
+            
+            // 成就徽章数量
+            const unlockedBadges = BADGES.filter(b => {
+                const stats = {
+                    completed: completedCount,
+                    hours: totalHours,
+                    streak: parseInt(document.getElementById('streak-days').textContent) || 0,
+                    days: registerDays,
+                    nightStudy: learningData.studyRecords?.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 22; }) || false,
+                    earlyStudy: learningData.studyRecords?.some(r => { const h = new Date(r.timestamp).getHours(); return h <= 6; }) || false,
+                    speedStudy: false,
+                    favorites: 0,
+                    comments: 0,
+                    perfectScore: false
+                };
+                return b.condition(currentUser, stats);
+            });
+            document.getElementById('stat-badges').textContent = unlockedBadges.length;
+            document.getElementById('stat-total-badges').textContent = BADGES.length;
             
             // 已完成课程数（基于 videoProgress 动态计算，而非 completedCourses 数组）
             const allCourses = api.getCourses();
@@ -611,10 +984,34 @@
             });
             document.getElementById('course-stat-completed').textContent = completedCount;
             document.getElementById('stats-completed-courses').textContent = completedCount;
+            document.getElementById('stat-completed').textContent = completedCount;
             
             // 注册天数
             const registerDays = api.getRegisterDays(currentUser.createdAt);
             document.getElementById('stats-register-days').textContent = registerDays;
+            
+            // 证书数量
+            const certs = learningData.certificates || [];
+            document.getElementById('stat-certificates').textContent = certs.length;
+            
+            // 进行中课程数
+            let inProgressCount = 0;
+            allCourses.forEach(c => {
+                if (c.status && c.status !== 'published') return;
+                const vids = c.videos || [];
+                let hasProgress = false;
+                let isCompleted = true;
+                vids.forEach((v, i) => {
+                    const vKey = `${c.id}_${i}`;
+                    const p = learningData.videoProgress[vKey] || 0;
+                    const numP = (typeof p === 'number' && !isNaN(p)) ? p : 0;
+                    if (numP > 0 && numP < 100) hasProgress = true;
+                    if (numP < 100) isCompleted = false;
+                });
+                if (hasProgress && !isCompleted) inProgressCount++;
+            });
+            const inProgressEl = document.getElementById('course-stat-inprogress');
+            if (inProgressEl) inProgressEl.textContent = inProgressCount;
         }
         
         // 更新头像显示
@@ -679,6 +1076,12 @@
             }
             if (tabId === 'my-courses') {
                 loadMyCourses();
+            }
+            if (tabId === 'achievements') {
+                loadAllBadges();
+            }
+            if (tabId === 'certificates') {
+                loadCertificatesList();
             }
         }
 
@@ -800,6 +1203,627 @@
             });
         }
 
+        // 初始化学习日历热力图
+        function initCalendar() {
+            const calendar = document.getElementById('learning-calendar');
+            if (!calendar) return;
+            
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            const records = learningData.studyRecords || [];
+            
+            // 生成最近365天的数据
+            const dayMap = {};
+            records.forEach(r => {
+                if (r.date) {
+                    dayMap[r.date] = (dayMap[r.date] || 0) + (r.duration || 0);
+                }
+            });
+            
+            let html = '';
+            for (let i = 364; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                const seconds = dayMap[dateStr] || 0;
+                let colorClass = 'bg-gray-100';
+                if (seconds > 3600) colorClass = 'bg-green-600';
+                else if (seconds > 1800) colorClass = 'bg-green-400';
+                else if (seconds > 0) colorClass = 'bg-green-200';
+                
+                html += `<div class="calendar-day ${colorClass}" title="${dateStr}: ${Math.round(seconds/60)}分钟"></div>`;
+            }
+            calendar.innerHTML = html;
+        }
+        
+        // 加载活动时间线
+        function loadActivityTimeline() {
+            const timeline = document.getElementById('activity-timeline');
+            if (!timeline) return;
+            
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            const records = learningData.studyRecords || [];
+            
+            // 获取最近5条记录
+            const recentRecords = records.slice(-5).reverse();
+            
+            if (recentRecords.length === 0) {
+                timeline.innerHTML = `
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fa fa-history text-3xl mb-2"></i>
+                        <p>暂无学习记录</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const activities = recentRecords.map(r => {
+                const course = api.getCourses().find(c => String(c.id) === String(r.courseId));
+                const courseName = course ? course.title : '未知课程';
+                const timeStr = formatTimeAgo(r.timestamp);
+                const isComplete = r.duration > 300; // 超过5分钟算完成
+                
+                return `
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full ${isComplete ? 'bg-green-100' : 'bg-blue-100'} flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fa ${isComplete ? 'fa-check text-green-500' : 'fa-play text-blue-500'} text-xs"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-800">${isComplete ? '完成学习' : '开始学习'} <span class="font-medium">${courseName}</span></p>
+                            <p class="text-xs text-gray-400">${timeStr} · ${Math.round((r.duration || 0)/60)}分钟</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            timeline.innerHTML = activities;
+        }
+        
+        // 格式化时间
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return '';
+            const d = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - d;
+            const diffMin = Math.floor(diffMs / 60000);
+            if (diffMin < 1) return '刚刚';
+            if (diffMin < 60) return `${diffMin}分钟前`;
+            const diffHr = Math.floor(diffMin / 60);
+            if (diffHr < 24) return `${diffHr}小时前`;
+            const diffDay = Math.floor(diffHr / 24);
+            if (diffDay < 7) return `${diffDay}天前`;
+            return `${d.getMonth()+1}/${d.getDate()}`;
+        }
+        
+        // 徽章状态管理（用于检测新解锁）
+        let previousUnlockedBadges = [];
+        let badgeUnlockHistory = {};
+        
+        // 检查是否有新徽章解锁
+        function checkNewBadges(currentUnlocked) {
+            const newBadges = currentUnlocked.filter(b => !previousUnlockedBadges.includes(b.id));
+            if (newBadges.length > 0 && previousUnlockedBadges.length > 0) {
+                // 有新徽章解锁，显示庆祝动画
+                newBadges.forEach((badge, index) => {
+                    setTimeout(() => {
+                        showBadgeUnlockToast(badge);
+                    }, index * 500);
+                });
+            }
+            previousUnlockedBadges = currentUnlocked.map(b => b.id);
+        }
+        
+        // 显示新徽章解锁提示
+        function showBadgeUnlockToast(badge) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 z-50 new-badge-toast';
+            toast.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-2xl p-4 flex items-center gap-4 border-2 border-yellow-400 min-w-[300px]">
+                    <div class="w-14 h-14 rounded-full bg-${badge.color}-100 flex items-center justify-center text-${badge.color}-600 text-2xl badge-glow-effect">
+                        <i class="fa ${badge.icon}"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">恭喜解锁新成就</p>
+                        <p class="font-bold text-gray-800">${badge.name}</p>
+                    </div>
+                    <div class="ml-auto">
+                        <i class="fa fa-star text-yellow-400 text-xl float-animation"></i>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.transition = 'all 0.5s ease';
+                toast.style.transform = 'translate(-50%, -100%)';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+        
+        // 显示徽章详情
+        function showBadgeDetail(badgeId) {
+            const badge = BADGES.find(b => b.id === badgeId);
+            if (!badge) return;
+            
+            const modal = document.getElementById('badge-detail-modal');
+            const iconEl = document.getElementById('badge-detail-icon');
+            const nameEl = document.getElementById('badge-detail-name');
+            const descEl = document.getElementById('badge-detail-desc');
+            const statusEl = document.getElementById('badge-detail-status');
+            const timeEl = document.getElementById('badge-detail-time');
+            
+            // 计算当前状态
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            const records = learningData.studyRecords || [];
+            const stats = {
+                completed: parseInt(document.getElementById('stats-completed-courses').textContent) || 0,
+                hours: parseFloat(document.getElementById('stat-hours').textContent) || 0,
+                streak: parseInt(document.getElementById('streak-days').textContent) || 0,
+                days: parseInt(document.getElementById('stats-register-days').textContent) || 0,
+                nightStudy: records.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 22; }),
+                earlyStudy: records.some(r => { const h = new Date(r.timestamp).getHours(); return h <= 6; }),
+                speedStudy: false,
+                favorites: 0,
+                comments: 0,
+                perfectScore: false
+            };
+            const unlocked = badge.condition(currentUser, stats);
+            
+            iconEl.className = `w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl shadow-lg ${unlocked ? `bg-${badge.color}-100 text-${badge.color}-600` : 'bg-gray-200 text-gray-400'}`;
+            iconEl.innerHTML = `<i class="fa ${badge.icon}"></i>`;
+            nameEl.textContent = badge.name;
+            descEl.textContent = badge.desc;
+            
+            if (unlocked) {
+                statusEl.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4 bg-green-100 text-green-700';
+                statusEl.innerHTML = '<i class="fa fa-check-circle"></i> 已解锁';
+                const unlockTime = badgeUnlockHistory[badge.id];
+                timeEl.textContent = unlockTime ? `解锁时间: ${new Date(unlockTime).toLocaleString()}` : '';
+            } else {
+                statusEl.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4 bg-gray-100 text-gray-500';
+                statusEl.innerHTML = '<i class="fa fa-lock"></i> 未解锁';
+                timeEl.textContent = '完成目标即可解锁';
+            }
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+        
+        function closeBadgeDetailModal() {
+            const modal = document.getElementById('badge-detail-modal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+        
+        // 加载徽章
+        function loadBadges() {
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            const records = learningData.studyRecords || [];
+            
+            // 计算统计数据
+            const stats = {
+                completed: parseInt(document.getElementById('stats-completed-courses').textContent) || 0,
+                hours: parseFloat(document.getElementById('stat-hours').textContent) || 0,
+                streak: parseInt(document.getElementById('streak-days').textContent) || 0,
+                days: parseInt(document.getElementById('stats-register-days').textContent) || 0,
+                nightStudy: records.some(r => {
+                    const h = new Date(r.timestamp).getHours();
+                    return h >= 22;
+                }),
+                earlyStudy: records.some(r => {
+                    const h = new Date(r.timestamp).getHours();
+                    return h <= 6;
+                }),
+                speedStudy: false, // 简化处理
+                favorites: 0,
+                comments: 0,
+                perfectScore: false
+            };
+            
+            // 检查每个徽章条件
+            const unlockedBadges = BADGES.filter(b => b.condition(currentUser, stats));
+            const recentBadges = unlockedBadges.slice(-3);
+            
+            // 检查新解锁徽章
+            checkNewBadges(unlockedBadges);
+            
+            // 记录解锁时间
+            unlockedBadges.forEach(b => {
+                if (!badgeUnlockHistory[b.id]) {
+                    badgeUnlockHistory[b.id] = new Date().toISOString();
+                }
+            });
+            
+            // 渲染最近徽章
+            const recentContainer = document.getElementById('recent-badges');
+            if (recentContainer) {
+                if (recentBadges.length === 0) {
+                    recentContainer.innerHTML = '<p class="text-sm text-gray-400">开始学习解锁徽章</p>';
+                } else {
+                    recentContainer.innerHTML = recentBadges.map((b, i) => `
+                        <div class="flex flex-col items-center p-3 bg-yellow-50 rounded-xl border border-yellow-200 cursor-pointer hover:shadow-lg transition-all ${i === recentBadges.length - 1 ? 'badge-unlock-animation' : ''}" onclick="showBadgeDetail('${b.id}')">
+                            <div class="w-12 h-12 rounded-full bg-${b.color}-100 flex items-center justify-center text-${b.color}-600 text-xl mb-1">
+                                <i class="fa ${b.icon}"></i>
+                            </div>
+                            <span class="text-xs font-medium text-gray-700">${b.name}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+            
+            // 更新徽章计数
+            const badgeCount = document.getElementById('badge-count');
+            if (badgeCount) badgeCount.textContent = `${unlockedBadges.length}/${BADGES.length}`;
+        }
+        
+        // 加载所有徽章
+        function loadAllBadges() {
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            const records = learningData.studyRecords || [];
+            
+            // 获取已解锁徽章记录（用于检测新解锁）
+            const unlockedKey = `badges_unlocked_${userId}`;
+            const previouslyUnlocked = JSON.parse(localStorage.getItem(unlockedKey) || '[]');
+            
+            const stats = {
+                completed: parseInt(document.getElementById('stats-completed-courses').textContent) || 0,
+                hours: parseFloat(document.getElementById('stat-hours').textContent) || 0,
+                streak: parseInt(document.getElementById('streak-days').textContent) || 0,
+                days: parseInt(document.getElementById('stats-register-days').textContent) || 0,
+                nightStudy: records.some(r => {
+                    const h = new Date(r.timestamp).getHours();
+                    return h >= 22;
+                }),
+                earlyStudy: records.some(r => {
+                    const h = new Date(r.timestamp).getHours();
+                    return h <= 6;
+                }),
+                speedStudy: false,
+                favorites: 0,
+                comments: 0,
+                perfectScore: false
+            };
+            
+            const container = document.getElementById('all-badges');
+            if (!container) return;
+            
+            // 检查哪些徽章是新解锁的
+            const newlyUnlocked = [];
+            
+            container.innerHTML = BADGES.map((b, index) => {
+                const unlocked = b.condition(currentUser, stats);
+                const isNewlyUnlocked = unlocked && !previouslyUnlocked.includes(b.id);
+                
+                if (isNewlyUnlocked) {
+                    newlyUnlocked.push(b);
+                }
+                
+                return `
+                    <div class="flex flex-col items-center p-4 rounded-xl border ${unlocked ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200 opacity-50'} hover:shadow-md transition-all cursor-pointer group ${isNewlyUnlocked ? 'badge-unlock-animation' : ''}" 
+                         onclick="showBadgeDetail('${b.id}', ${unlocked})"
+                         style="${isNewlyUnlocked ? `animation-delay: ${index * 0.1}s` : ''}">
+                        <div class="w-16 h-16 rounded-full ${unlocked ? `bg-${b.color}-100` : 'bg-gray-200'} flex items-center justify-center text-2xl mb-2 group-hover:scale-110 transition-transform ${unlocked ? `text-${b.color}-600` : 'text-gray-400'} ${unlocked ? 'badge-glow' : ''} ${isNewlyUnlocked ? 'badge-glow-effect' : ''}">
+                            <i class="fa ${b.icon}"></i>
+                        </div>
+                        <span class="text-sm font-medium ${unlocked ? 'text-gray-800' : 'text-gray-400'}">${b.name}</span>
+                        <span class="text-xs text-gray-500 mt-1 text-center">${b.desc}</span>
+                        ${unlocked ? '<span class="text-xs text-green-600 mt-1"><i class="fa fa-check"></i> 已解锁</span>' : '<span class="text-xs text-gray-400 mt-1">未解锁</span>'}
+                        ${isNewlyUnlocked ? '<span class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-bounce">!</span>' : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            // 保存已解锁状态
+            const currentUnlocked = BADGES.filter(b => b.condition(currentUser, stats)).map(b => b.id);
+            localStorage.setItem(unlockedKey, JSON.stringify(currentUnlocked));
+            
+            // 如果有新解锁的徽章，显示庆祝提示
+            if (newlyUnlocked.length > 0) {
+                showNewBadgeToast(newlyUnlocked);
+            }
+            
+            // 渲染等级进度（使用改进的经验值系统）
+            renderLevelProgress(stats);
+        }
+        
+        // 显示新徽章解锁提示
+        function showNewBadgeToast(badges) {
+            badges.forEach((badge, index) => {
+                setTimeout(() => {
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed top-20 right-4 z-50 bg-white rounded-xl shadow-2xl p-4 flex items-center gap-3 new-badge-toast border border-yellow-200';
+                    toast.innerHTML = `
+                        <div class="w-12 h-12 rounded-full bg-${badge.color}-100 flex items-center justify-center text-${badge.color}-600 text-xl badge-celebrate">
+                            <i class="fa ${badge.icon}"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-800">解锁新徽章！</p>
+                            <p class="text-sm text-gray-500">${badge.name} - ${badge.desc}</p>
+                        </div>
+                    `;
+                    document.body.appendChild(toast);
+                    
+                    // 3秒后自动移除
+                    setTimeout(() => {
+                        toast.style.opacity = '0';
+                        toast.style.transform = 'translateX(100%)';
+                        toast.style.transition = 'all 0.5s ease';
+                        setTimeout(() => toast.remove(), 500);
+                    }, 4000);
+                }, index * 500);
+            });
+        }
+        
+        // 显示徽章详情
+        function showBadgeDetail(badgeId, isUnlocked) {
+            const badge = BADGES.find(b => b.id === badgeId);
+            if (!badge) return;
+            
+            const modal = document.getElementById('badge-detail-modal');
+            const iconContainer = document.getElementById('badge-detail-icon');
+            const nameEl = document.getElementById('badge-detail-name');
+            const descEl = document.getElementById('badge-detail-desc');
+            const statusEl = document.getElementById('badge-detail-status');
+            const timeEl = document.getElementById('badge-detail-time');
+            
+            // 设置图标样式
+            iconContainer.className = `w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl shadow-lg ${isUnlocked ? `bg-${badge.color}-100 text-${badge.color}-600` : 'bg-gray-200 text-gray-400'}`;
+            iconContainer.innerHTML = `<i class="fa ${badge.icon}"></i>`;
+            
+            // 设置内容
+            nameEl.textContent = badge.name;
+            descEl.textContent = badge.desc;
+            
+            // 设置状态
+            if (isUnlocked) {
+                statusEl.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4 bg-green-100 text-green-700';
+                statusEl.innerHTML = '<i class="fa fa-check-circle"></i> 已解锁';
+                
+                // 获取解锁时间
+                const userId = currentUser.id;
+                const unlockTime = getBadgeUnlockTime(userId, badgeId);
+                timeEl.textContent = unlockTime ? `解锁时间: ${unlockTime}` : '';
+            } else {
+                statusEl.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4 bg-gray-100 text-gray-500';
+                statusEl.innerHTML = '<i class="fa fa-lock"></i> 未解锁';
+                timeEl.textContent = '完成对应学习目标即可解锁';
+            }
+            
+            // 显示弹窗
+            modal.classList.remove('hidden');
+            // 强制重绘以触发过渡动画
+            requestAnimationFrame(() => {
+                modal.classList.add('active');
+            });
+        }
+        
+        // 关闭徽章详情
+        function closeBadgeDetailModal() {
+            const modal = document.getElementById('badge-detail-modal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+        
+        // 获取徽章解锁时间
+        function getBadgeUnlockTime(userId, badgeId) {
+            const learningData = api.getUserLearningData(userId);
+            const records = learningData.studyRecords || [];
+            
+            // 根据徽章类型推断解锁时间
+            const badge = BADGES.find(b => b.id === badgeId);
+            if (!badge) return null;
+            
+            // 找到满足条件的最后一条记录
+            let unlockRecord = null;
+            
+            if (badge.id === 'first-step') {
+                // 找到第一个完成的课程记录
+                unlockRecord = records.find(r => r.completed);
+            } else if (badge.id === 'learner') {
+                // 累计10小时的记录
+                let totalSec = 0;
+                for (const r of records) {
+                    totalSec += r.duration || 0;
+                    if (totalSec >= 36000) {
+                        unlockRecord = r;
+                        break;
+                    }
+                }
+            } else if (badge.id === 'streak-7' || badge.id === 'streak-30') {
+                // 连续学习记录
+                const requiredDays = badge.id === 'streak-7' ? 7 : 30;
+                const dates = [...new Set(records.map(r => r.date))].sort();
+                if (dates.length >= requiredDays) {
+                    unlockRecord = { date: dates[requiredDays - 1] };
+                }
+            }
+            
+            if (unlockRecord) {
+                const date = unlockRecord.timestamp ? new Date(unlockRecord.timestamp) : new Date(unlockRecord.date);
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            }
+            
+            return null;
+        }
+        
+        // 渲染等级进度（改进版）
+        function renderLevelProgress(stats) {
+            const levelContainer = document.getElementById('level-progress');
+            if (!levelContainer) return;
+            
+            // 计算经验值
+            const totalExp = calculateTotalExp(stats);
+            const levelInfo = getLevelInfo(totalExp);
+            const expPercent = (levelInfo.currentExp / levelInfo.requiredExp) * 100;
+            
+            levelContainer.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg relative">
+                        ${levelInfo.level}
+                        <div class="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center text-xs shadow">
+                            <i class="fa fa-crown text-yellow-500"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between mb-2">
+                            <div>
+                                <span class="font-medium">Lv.${levelInfo.level} ${levelInfo.name}</span>
+                                <span class="text-xs text-gray-400 ml-2">${totalExp} XP</span>
+                            </div>
+                            <span class="text-sm text-gray-500">${levelInfo.currentExp}/${levelInfo.requiredExp} XP</span>
+                        </div>
+                        <div class="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-1000 relative" style="width: ${expPercent}%">
+                                <div class="absolute inset-0 bg-white/30 animate-pulse"></div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">还需 ${levelInfo.remainingExp} XP 升级到 Lv.${levelInfo.level + 1}</p>
+                    </div>
+                </div>
+                
+                <!-- 经验值明细 -->
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <p class="text-xs text-gray-400 mb-2">经验值来源</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">学习时长</span>
+                            <span class="font-medium">+${Math.floor(stats.hours * 10)} XP</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">完成课程</span>
+                            <span class="font-medium">+${stats.completed * 50} XP</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">连续学习</span>
+                            <span class="font-medium">+${stats.streak >= 30 ? 300 : stats.streak >= 7 ? 100 : 0} XP</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">其他奖励</span>
+                            <span class="font-medium">+0 XP</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 计算总经验值
+        function calculateTotalExp(stats) {
+            let exp = 0;
+            exp += Math.floor(stats.hours * 10);        // 学习时长：1小时=10XP
+            exp += stats.completed * 50;                 // 完成课程：每门50XP
+            exp += stats.streak >= 30 ? 300 : stats.streak >= 7 ? 100 : 0;  // 连续学习奖励
+            return exp;
+        }
+        
+        // 等级配置
+        const LEVEL_CONFIG = [
+            { level: 1, name: '新手学员', expRequired: 0 },
+            { level: 2, name: '初级学员', expRequired: 100 },
+            { level: 3, name: '中级学员', expRequired: 300 },
+            { level: 4, name: '高级学员', expRequired: 600 },
+            { level: 5, name: '资深学员', expRequired: 1000 },
+            { level: 6, name: '学习达人', expRequired: 1500 },
+            { level: 7, name: '知识探索者', expRequired: 2200 },
+            { level: 8, name: '学术先锋', expRequired: 3000 },
+            { level: 9, name: '大师', expRequired: 4000 },
+            { level: 10, name: '传奇学者', expRequired: 5500 }
+        ];
+        
+        // 获取等级信息
+        function getLevelInfo(totalExp) {
+            let currentLevel = LEVEL_CONFIG[0];
+            let nextLevel = LEVEL_CONFIG[1];
+            
+            for (let i = 0; i < LEVEL_CONFIG.length; i++) {
+                if (totalExp >= LEVEL_CONFIG[i].expRequired) {
+                    currentLevel = LEVEL_CONFIG[i];
+                    nextLevel = LEVEL_CONFIG[i + 1] || LEVEL_CONFIG[i];
+                } else {
+                    break;
+                }
+            }
+            
+            const requiredExp = nextLevel.expRequired - currentLevel.expRequired;
+            const currentExp = totalExp - currentLevel.expRequired;
+            const remainingExp = nextLevel.expRequired - totalExp;
+            
+            return {
+                level: currentLevel.level,
+                name: currentLevel.name,
+                currentExp: Math.max(0, currentExp),
+                requiredExp: Math.max(1, requiredExp),
+                remainingExp: Math.max(0, remainingExp),
+                totalExp: totalExp
+            };
+        }
+        
+        // 加载证书
+        function loadCertificates() {
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            const certs = learningData.certificates || [];
+            
+            const countEl = document.getElementById('certificate-count');
+            if (countEl) countEl.textContent = certs.length;
+        }
+        
+        // 加载证书列表
+        function loadCertificatesList() {
+            const userId = currentUser.id;
+            const learningData = api.getUserLearningData(userId);
+            const certs = learningData.certificates || [];
+            
+            const container = document.getElementById('certificates-list');
+            if (!container) return;
+            
+            if (certs.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-400">
+                        <div class="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                            <i class="fa fa-certificate text-gray-300 text-3xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-600 mb-2">暂无证书</h3>
+                        <p class="text-sm text-gray-400 mb-4">完成课程考核后将获得证书</p>
+                        <a href="course.html" class="inline-flex items-center px-6 py-3 bg-gradient-primary text-white rounded-xl hover:opacity-90 transition-opacity">
+                            <i class="fa fa-book mr-2"></i>去学习
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = certs.map(cert => {
+                const course = api.getCourses().find(c => String(c.id) === String(cert.courseId));
+                const courseName = course ? course.title : '未知课程';
+                const grade = cert.grade || '合格';
+                const gradeColor = grade === '优秀' ? 'bg-green-100 text-green-700' : grade === '良好' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700';
+                
+                return `
+                    <div class="border border-gray-200 rounded-xl p-4 flex items-center gap-4 hover:shadow-md transition-all group">
+                        <div class="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center text-white text-2xl shadow-lg group-hover:scale-110 transition-transform">
+                            <i class="fa fa-graduation-cap"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800">${courseName}</h4>
+                            <p class="text-sm text-gray-500">完成时间: ${cert.date || '未知'}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-xs ${gradeColor} px-2 py-0.5 rounded">${grade}</span>
+                            </div>
+                        </div>
+                        <button class="px-3 py-1.5 border border-primary text-primary rounded-lg text-sm hover:bg-primary hover:text-white transition-colors">
+                            查看
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
         // 加载所有数据
         function loadAllData() {
             loadMyCourses();
@@ -885,10 +1909,15 @@
             const inProgressContainer = document.getElementById('in-progress-courses');
             if (inProgress.length === 0) {
                 inProgressContainer.innerHTML = `
-                    <div class="col-span-full text-center py-12 text-gray-400">
-                        <i class="fa fa-play-circle text-5xl mb-3"></i>
-                        <p class="text-lg">暂无进行中的课程</p>
-                        <p class="text-sm mt-1">快去<a href="course.html" class="text-primary hover:underline">课程中心</a>挑选感兴趣的课程开始学习吧</p>
+                    <div class="col-span-full text-center py-16">
+                        <div class="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                            <i class="fa fa-play-circle text-gray-300 text-4xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-600 mb-2">暂无进行中的课程</h3>
+                        <p class="text-sm text-gray-400 mb-6">学习是进步的阶梯，开始你的第一节课吧</p>
+                        <a href="course.html" class="inline-flex items-center px-6 py-3 bg-gradient-primary text-white rounded-xl hover:opacity-90 transition-opacity">
+                            <i class="fa fa-compass mr-2"></i>浏览课程
+                        </a>
                     </div>
                 `;
             } else {
@@ -899,10 +1928,12 @@
             const completedContainer = document.getElementById('completed-courses');
             if (completed.length === 0) {
                 completedContainer.innerHTML = `
-                    <div class="col-span-full text-center py-12 text-gray-400">
-                        <i class="fa fa-check-circle text-5xl mb-3"></i>
-                        <p class="text-lg">暂无已完成课程</p>
-                        <p class="text-sm mt-1">完成全部章节后课程将显示在这里</p>
+                    <div class="col-span-full text-center py-16">
+                        <div class="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                            <i class="fa fa-check-circle text-gray-300 text-4xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-600 mb-2">暂无已完成课程</h3>
+                        <p class="text-sm text-gray-400 mb-6">完成全部章节后课程将显示在这里</p>
                     </div>
                 `;
             } else {
@@ -914,9 +1945,11 @@
             if (notStartedContainer) {
                 if (notStarted.length === 0) {
                     notStartedContainer.innerHTML = `
-                        <div class="col-span-full text-center py-8 text-gray-400">
-                            <i class="fa fa-trophy text-4xl mb-2"></i>
-                            <p class="text-base">所有课程都已开始学习，太棒了！</p>
+                        <div class="col-span-full text-center py-12 text-gray-400">
+                            <div class="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                                <i class="fa fa-trophy text-gray-300 text-3xl"></i>
+                            </div>
+                            <p class="text-base text-gray-600">所有课程都已开始学习，太棒了！</p>
                         </div>
                     `;
                 } else {
@@ -1196,6 +2229,8 @@
             // 更新页面显示（实时生效）
             document.getElementById('profile-user-name').textContent = name;
             document.getElementById('profile-department').textContent = department || '未设置部门';
+            const positionEl = document.getElementById('profile-position');
+            if (positionEl) positionEl.textContent = position || '未设置';
             updateProfileAvatar(avatarUrl);
             
             // 更新导航栏
@@ -1344,12 +2379,7 @@
             }
         }
 
-        // 退出登录
-        function logout() {
-            if (confirm('确定要退出登录吗？')) {
-                window.location.href = 'index.html';
-            }
-        }
+        // 退出登录功能已统一为 handleLogout()
 
         // 用户菜单
         document.getElementById('user-menu-button')?.addEventListener('click', function() {
@@ -1420,9 +2450,7 @@
             AuthGuard.logout();
         }
         
-        function logout() {
-            handleLogout();
-        }
+        // logout 函数已统一为 handleLogout，避免重复定义
         
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
@@ -1432,9 +2460,7 @@
             setTimeout(() => toast.remove(), 3000);
         }
         
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuthAndUpdateUI();
-        });
+        // DOMContentLoaded 事件已在页面顶部统一处理
         
         // 监听页面可见性变化，定时刷新学习数据
         document.addEventListener('visibilitychange', () => {

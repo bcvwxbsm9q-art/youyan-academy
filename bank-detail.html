@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>题库详情 - 游雁学院</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <!-- 顶部导航 -->
+  <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-100">
+    <div class="flex items-center justify-between px-6 py-4">
+      <div class="flex items-center space-x-4">
+        <div class="w-10 h-10 btn-primary rounded-xl flex items-center justify-center shadow-lg">
+          <i class="fas fa-graduation-cap text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-800">游雁学院</h1>
+          <p class="text-xs text-slate-400">题库详情</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-6">
+        <span class="text-sm text-slate-500">
+          <i class="fas fa-clock mr-1"></i>
+          <span id="current-time"></span>
+        </span>
+        <button onclick="goBack()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition">
+          <i class="fas fa-arrow-left mr-1"></i>返回题库列表
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="p-6 max-w-7xl mx-auto">
+    <!-- 面包屑 -->
+    <nav class="flex items-center text-sm text-slate-500 mb-4">
+      <a href="dashboard.html" class="hover:text-indigo-600 transition">试题管理</a>
+      <span class="mx-2">/</span>
+      <span class="text-slate-800 font-medium">题库详情</span>
+    </nav>
+
+    <!-- 题库标题 -->
+    <div class="flex items-center gap-3 mb-6">
+      <h2 class="text-2xl font-bold text-slate-800" id="bankName">加载中...</h2>
+      <span class="px-2 py-0.5 bg-indigo-100 text-indigo-600 text-xs rounded" id="bankCategory"></span>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <select id="diffFilter" onchange="loadQuestions()" class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <option value="all">全部难度</option>
+          <option value="easy">简单</option>
+          <option value="medium">中等</option>
+          <option value="hard">困难</option>
+        </select>
+        <select id="typeFilter" onchange="loadQuestions()" class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <option value="all">全部题型</option>
+          <option value="single">单选题</option>
+          <option value="multiple">多选题</option>
+          <option value="judge">判断题</option>
+          <option value="fill">填空题</option>
+          <option value="essay">简答题</option>
+        </select>
+        <label class="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+          <input type="checkbox" id="myOnly" onchange="loadQuestions()" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+          <span>只看我创建的</span>
+        </label>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input type="text" id="searchInput" placeholder="根据试题名称搜索" onkeyup="if(event.key==='Enter')loadQuestions()"
+            class="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm w-64 focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <button onclick="openImportModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm hover:bg-slate-50 transition">
+          <i class="fas fa-file-import mr-1"></i>模版导入
+        </button>
+        <button onclick="openAIModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm hover:bg-slate-50 transition">
+          <i class="fas fa-robot mr-1"></i>AI导入
+        </button>
+        <button onclick="toggleQuestionForm()" class="btn-primary px-4 py-2 text-white rounded-lg text-sm font-medium shadow transition">
+          <i class="fas fa-plus mr-1"></i>新建试题
+        </button>
+      </div>
+    </div>
+
+    <!-- 内嵌试题编辑表单 -->
+    <div id="questionFormPanel" class="hidden bg-white rounded-xl shadow-sm p-6 mb-4 border border-indigo-200">
+      <h4 class="text-base font-semibold text-slate-800 mb-4" id="formTitle">新建试题</h4>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">题型 <span class="text-red-500">*</span></label>
+          <select id="qType" onchange="onTypeChange()" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="single">单选题</option><option value="multiple">多选题</option>
+            <option value="judge">判断题</option><option value="fill">填空题</option><option value="essay">简答题</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">难度</label>
+          <select id="qDifficulty" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="easy">简单</option><option value="medium" selected>中等</option><option value="hard">困难</option>
+          </select>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-slate-700 mb-1">题目内容 <span class="text-red-500">*</span></label>
+        <textarea id="qTitle" rows="2" placeholder="请输入题目内容" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-slate-700 mb-1">知识点</label>
+        <input type="text" id="qKnowledge" placeholder="多个知识点用|分隔" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+      </div>
+      <!-- 选项区域 -->
+      <div id="optionsArea" class="mb-4">
+        <div class="flex items-center gap-4 mb-2">
+          <label class="block text-sm font-medium text-slate-700">选项</label>
+          <span class="text-xs text-slate-400" id="answerHint">（点击右侧按钮标记正确答案）</span>
+        </div>
+        <div id="optionsList" class="space-y-2 mb-2"></div>
+        <button type="button" onclick="addOption()" id="addOptionBtn" class="text-sm text-indigo-600 hover:text-indigo-800"><i class="fas fa-plus mr-1"></i>添加选项</button>
+      </div>
+      <!-- 填空/简答答案 -->
+      <div id="textAnswerArea" class="hidden mb-4">
+        <label class="block text-sm font-medium text-slate-700 mb-1">参考答案</label>
+        <textarea id="answerText" rows="2" placeholder="请输入参考答案" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-slate-700 mb-1">答案解析</label>
+        <textarea id="qAnalysis" rows="2" placeholder="考后展示的答案解析（可选）" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+      </div>
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-200">
+        <button onclick="cancelQuestionForm()" class="px-6 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition">取消</button>
+        <button onclick="saveQuestion()" class="btn-primary px-6 py-2 text-white rounded-lg text-sm font-medium transition">保存试题</button>
+      </div>
+    </div>
+
+    <!-- 试题表格 -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <table class="w-full">
+        <thead class="bg-slate-50">
+          <tr>
+            <th class="px-5 py-3 w-10"><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+            <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">题目</th>
+            <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase w-24">知识点</th>
+            <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase w-16">难度</th>
+            <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase w-20">题型</th>
+            <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase w-32">创建时间</th>
+            <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase w-20">创建人</th>
+            <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase w-32">操作</th>
+          </tr>
+        </thead>
+        <tbody id="questionBody" class="divide-y divide-slate-100">
+          <tr><td colspan="8" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>
+        </tbody>
+      </table>
+      <!-- 分页 -->
+      <div id="pagination" class="px-6 py-3 border-t border-slate-100 flex justify-between items-center text-sm text-slate-500">
+        <span id="pageInfo"></span>
+        <div class="flex gap-1" id="pageBtns"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- AI导入弹窗 -->
+  <div id="aiModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+  <div id="aiModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-lg m-4 shadow-2xl p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-robot text-indigo-500 mr-2"></i>AI智能导入</h3>
+        <button onclick="closeAIModal()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+      </div>
+      <p class="text-sm text-slate-600 mb-4">粘贴题目文本，AI将自动解析并导入</p>
+      <textarea id="aiInput" rows="8" placeholder="请粘贴题目内容，支持批量导入..." class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none mb-4"></textarea>
+      <button onclick="doAIImport()" class="w-full btn-primary py-2.5 text-white rounded-xl font-medium transition">开始导入</button>
+    </div>
+  </div>
+
+  <script>
+    const API = window.location.origin + '/api';
+    let bankId = null;
+    let currentPage = 1;
+    let totalPages = 1;
+    let options = [];
+    let answerSingle = '';
+    let answerMultiple = [];
+
+    // 获取URL参数
+    function getParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      bankId = getParam('id');
+      if (!bankId) {
+        alert('题库ID不存在');
+        goBack();
+        return;
+      }
+      loadBankInfo();
+      loadQuestions();
+      updateTime();
+      setInterval(updateTime, 1000);
+    });
+
+    function updateTime() {
+      document.getElementById('current-time').textContent = new Date().toLocaleString('zh-CN');
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html#exams';
+    }
+
+    // 加载题库信息
+    async function loadBankInfo() {
+      try {
+        const res = await fetch(`${API}/question-banks/${bankId}`);
+        const result = await res.json();
+        const bank = result.data;
+        if (bank) {
+          document.getElementById('bankName').textContent = `《${bank.name}》`;
+          document.getElementById('bankCategory').textContent = getCategoryName(bank.categoryId);
+        }
+      } catch (e) { console.error('加载题库信息失败', e); }
+    }
+
+    function getCategoryName(catId) {
+      const cats = JSON.parse(localStorage.getItem('learning_platform_data') || '{}').course_categories || [];
+      for (const p of cats) {
+        if (p.id === catId) return p.name;
+        if (p.children) { const c = p.children.find(x => x.id === catId); if (c) return c.name; }
+      }
+      return '未分类';
+    }
+
+    // 加载试题列表
+    async function loadQuestions(page = 1) {
+      currentPage = page;
+      const tbody = document.getElementById('questionBody');
+      tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+      
+      try {
+        const params = new URLSearchParams({ bankId, page, pageSize: 20 });
+        const kw = document.getElementById('searchInput')?.value?.trim();
+        const type = document.getElementById('typeFilter')?.value;
+        const diff = document.getElementById('diffFilter')?.value;
+        if (kw) params.set('keyword', kw);
+        if (type && type !== 'all') params.set('type', type);
+        if (diff && diff !== 'all') params.set('difficulty', diff);
+
+        const res = await fetch(`${API}/questions?${params}`);
+        const result = await res.json();
+        const questions = result.data || [];
+        totalPages = result.totalPages || 1;
+
+        document.getElementById('pageInfo').textContent = `共 ${result.total || 0} 题，第 ${page}/${totalPages} 页`;
+        let pageBtns = '';
+        for (let p = 1; p <= totalPages; p++) {
+          pageBtns += `<button onclick="loadQuestions(${p})" class="px-2.5 py-1 rounded text-xs ${p === currentPage ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${p}</button>`;
+        }
+        document.getElementById('pageBtns').innerHTML = pageBtns;
+
+        if (!questions.length) {
+          tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-16 text-center text-slate-400"><i class="fas fa-database text-4xl mb-3 block opacity-30"></i><p>暂无试题，点击"新建试题"开始添加</p></td></tr>';
+          return;
+        }
+
+        const typeName = t => ({ single:'单选题', multiple:'多选题', judge:'判断题', fill:'填空题', essay:'简答题' })[t] || t;
+        const diffName = d => ({ easy:'简单', medium:'中等', hard:'困难' })[d] || d;
+        const diffCls = d => ({ easy:'text-green-600', medium:'text-yellow-600', hard:'text-red-600' })[d] || 'text-slate-600';
+
+        tbody.innerHTML = questions.map(q => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-5 py-3"><input type="checkbox" class="q-cb" data-id="${q.id}"></td>
+            <td class="px-5 py-3 text-sm text-slate-700 max-w-md">
+              <div class="truncate" title="${escHtml(q.title || '')}">${escHtml((q.title || '').substring(0, 60))}</div>
+            </td>
+            <td class="px-5 py-3 text-center text-sm text-slate-500">${q.knowledge || '--'}</td>
+            <td class="px-5 py-3 text-center text-sm ${diffCls(q.difficulty)}">${diffName(q.difficulty)}</td>
+            <td class="px-5 py-3 text-center text-sm text-slate-600">${typeName(q.type)}</td>
+            <td class="px-5 py-3 text-center text-sm text-slate-500">${new Date(q.createdAt).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</td>
+            <td class="px-5 py-3 text-center text-sm text-slate-600">${q.createdBy || '管理员'}</td>
+            <td class="px-5 py-3 text-center">
+              <div class="flex items-center justify-center gap-2">
+                <button onclick="editQuestion(${q.id})" class="text-blue-500 hover:text-blue-700 text-sm" title="编辑">编辑</button>
+                <button onclick="deleteQuestion(${q.id})" class="text-red-500 hover:text-red-700 text-sm" title="删除">删除</button>
+                <button onclick="copyQuestion(${q.id})" class="text-green-500 hover:text-green-700 text-sm" title="复制">复制</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+        
+        document.getElementById('selectAll').checked = false;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-12 text-center text-red-500">加载失败: ' + e.message + '</td></tr>';
+      }
+    }
+
+    function toggleSelectAll() {
+      const checked = document.getElementById('selectAll').checked;
+      document.querySelectorAll('.q-cb').forEach(cb => cb.checked = checked);
+    }
+
+    function escHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ====== 试题编辑（内嵌表单） ======
+    let editingId = null;
+
+    function toggleQuestionForm(id = null) {
+      const panel = document.getElementById('questionFormPanel');
+      if (panel.classList.contains('hidden')) {
+        // 打开表单
+        options = [];
+        answerSingle = '';
+        answerMultiple = [];
+        editingId = id || null;
+        document.getElementById('formTitle').textContent = id ? '编辑试题' : '新建试题';
+        document.getElementById('qTitle').value = '';
+        document.getElementById('qType').value = 'single';
+        document.getElementById('qDifficulty').value = 'medium';
+        document.getElementById('qKnowledge').value = '';
+        document.getElementById('qAnalysis').value = '';
+        document.getElementById('answerText').value = '';
+        panel.classList.remove('hidden');
+        panel.scrollIntoView({ behavior: 'smooth' });
+        if (id) { loadQuestionForEdit(id); }
+        else { options = ['', '', '', '']; onTypeChange(); }
+      } else if (editingId === id) {
+        // 相同题目再次点击 = 关闭
+        cancelQuestionForm();
+      } else {
+        // 切换到编辑另一个题目
+        editingId = id || null;
+        document.getElementById('formTitle').textContent = id ? '编辑试题' : '新建试题';
+        document.getElementById('qTitle').value = '';
+        document.getElementById('qType').value = 'single';
+        document.getElementById('qDifficulty').value = 'medium';
+        document.getElementById('qKnowledge').value = '';
+        document.getElementById('qAnalysis').value = '';
+        document.getElementById('answerText').value = '';
+        if (id) loadQuestionForEdit(id);
+        else { options = ['', '', '', '']; onTypeChange(); }
+        panel.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    function cancelQuestionForm() {
+      document.getElementById('questionFormPanel').classList.add('hidden');
+      editingId = null;
+    }
+
+    async function loadQuestionForEdit(id) {
+      try {
+        const res = await fetch(`${API}/questions/${id}`);
+        const result = await res.json();
+        const q = result.data;
+        if (!q) return toast('试题不存在', 'error');
+        document.getElementById('qTitle').value = q.title || '';
+        document.getElementById('qType').value = q.type || 'single';
+        document.getElementById('qDifficulty').value = q.difficulty || 'medium';
+        document.getElementById('qKnowledge').value = q.knowledge || '';
+        document.getElementById('qAnalysis').value = q.explanation || q.analysis || '';
+        options = q.options?.length ? q.options : ['', '', '', ''];
+        if (q.type === 'multiple') {
+          answerMultiple = Array.isArray(q.answer) ? q.answer : (q.answer ? [q.answer] : []);
+        } else if (q.type === 'single' || q.type === 'judge') {
+          answerSingle = q.answer || '';
+        } else {
+          document.getElementById('answerText').value = Array.isArray(q.answer) ? q.answer.join('/') : q.answer;
+        }
+        onTypeChange();
+      } catch (e) { toast('加载试题失败', 'error'); }
+    }
+
+    function onTypeChange() {
+      const type = document.getElementById('qType').value;
+      const optionsArea = document.getElementById('optionsArea');
+      const textAnswerArea = document.getElementById('textAnswerArea');
+      const addBtn = document.getElementById('addOptionBtn');
+      optionsArea.classList.remove('hidden');
+      textAnswerArea.classList.add('hidden');
+      if (type === 'judge') {
+        options = ['正确', '错误'];
+        addBtn.classList.add('hidden');
+        document.getElementById('answerHint').textContent = '（单选正确答案）';
+        renderOptions('single');
+      } else if (type === 'single') {
+        addBtn.classList.remove('hidden');
+        document.getElementById('answerHint').textContent = '（单选正确答案）';
+        renderOptions('single');
+      } else if (type === 'multiple') {
+        addBtn.classList.remove('hidden');
+        document.getElementById('answerHint').textContent = '（多选正确答案）';
+        renderOptions('multiple');
+      } else {
+        optionsArea.classList.add('hidden');
+        textAnswerArea.classList.remove('hidden');
+      }
+    }
+
+    function addOption() { options.push(''); onTypeChange(); }
+
+    function renderOptions(mode) {
+      const list = document.getElementById('optionsList');
+      list.innerHTML = options.map((opt, i) => {
+        const letter = String.fromCharCode(65 + i);
+        const isAnswer = mode === 'multiple' ? answerMultiple.includes(letter) : (answerSingle === letter);
+        const toggleHtml = mode === 'multiple'
+          ? `<input type="checkbox" ${isAnswer?'checked':''} onclick="toggleMultiAns('${letter}',this.checked)" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">`
+          : `<input type="radio" name="ansRadio" ${isAnswer?'checked':''} onclick="answerSingle='${letter}'" class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">`;
+        return `<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 group">
+          <span class="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold flex-shrink-0">${letter}</span>
+          <input type="text" value="${escHtml(opt)}" onchange="options[${i}]=this.value" placeholder="选项${letter}" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <label class="flex items-center gap-1.5 cursor-pointer flex-shrink-0">
+            ${toggleHtml}
+            <span class="text-xs font-medium text-indigo-600 whitespace-nowrap">正确答案</span>
+          </label>
+          ${options.length>2?`<button onclick="options.splice(${i},1);onTypeChange()" class="p-1 text-slate-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100"><i class="fas fa-times"></i></button>`:'<span class="w-6"></span>'}
+        </div>`;
+      }).join('');
+    }
+
+    function toggleMultiAns(letter, checked) {
+      if (checked) { if (!answerMultiple.includes(letter)) answerMultiple.push(letter); }
+      else { answerMultiple = answerMultiple.filter(a => a !== letter); }
+    }
+
+    async function saveQuestion() {
+      const type = document.getElementById('qType').value;
+      let answer;
+      if (type === 'multiple') answer = answerMultiple;
+      else if (type === 'single' || type === 'judge') answer = answerSingle;
+      else answer = document.getElementById('answerText').value.trim();
+
+      if (!answer || (Array.isArray(answer) && answer.length === 0)) {
+        return toast('请设置正确答案', 'warning');
+      }
+
+      const title = document.getElementById('qTitle').value.trim();
+      if (!title) return toast('请输入题目内容', 'warning');
+
+      const payload = {
+        bankId: parseInt(bankId),
+        title,
+        type,
+        difficulty: document.getElementById('qDifficulty').value,
+        options: (type === 'fill' || type === 'essay') ? [] : options.filter(o => o.trim()),
+        answer,
+        knowledge: document.getElementById('qKnowledge').value.trim(),
+        explanation: document.getElementById('qAnalysis').value.trim()
+      };
+
+      try {
+        const res = await fetch(editingId ? `${API}/questions/${editingId}` : `${API}/questions`, {
+          method: editingId ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          cancelQuestionForm();
+          loadQuestions(currentPage);
+          toast(editingId ? '试题已更新' : '试题添加成功');
+        } else { toast(data.error || '保存失败', 'error'); }
+      } catch (e) { toast('网络错误', 'error'); }
+    }
+
+    async function editQuestion(id) { toggleQuestionForm(id); }
+
+    async function deleteQuestion(id) {
+      if (!confirm('确定要删除这道试题吗？')) return;
+      try {
+        await fetch(`${API}/questions/${id}`, { method: 'DELETE' });
+        toast('试题已删除');
+        loadQuestions(currentPage);
+      } catch (e) { toast('删除失败', 'error'); }
+    }
+
+    async function copyQuestion(id) {
+      try {
+        const res = await fetch(`${API}/questions/${id}`);
+        const result = await res.json();
+        const q = result.data;
+        if (!q) return;
+        const payload = {
+          bankId: parseInt(bankId),
+          title: q.title + '（复制）',
+          type: q.type,
+          difficulty: q.difficulty,
+          options: q.options || [],
+          answer: q.answer,
+          knowledge: q.knowledge,
+          explanation: q.explanation || q.analysis
+        };
+        await fetch(`${API}/questions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        toast('试题已复制');
+        loadQuestions(currentPage);
+      } catch (e) { toast('复制失败', 'error'); }
+    }
+
+    // AI导入
+    function openAIModal() {
+      document.getElementById('aiInput').value = '';
+      document.getElementById('aiModal').classList.remove('hidden');
+      document.getElementById('aiModal').classList.add('flex');
+    }
+    function closeAIModal() {
+      document.getElementById('aiModal').classList.add('hidden');
+      document.getElementById('aiModal').classList.remove('flex');
+    }
+    async function doAIImport() {
+      const text = document.getElementById('aiInput').value.trim();
+      if (!text) return toast('请输入题目内容');
+      toast('AI解析功能开发中...');
+      closeAIModal();
+    }
+    function openImportModal() { toast('模版导入功能开发中，请使用Excel导入'); }
+
+    function toast(msg, type = 'success') {
+      const div = document.createElement('div');
+      div.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 text-white ${type==='error'?'bg-red-500':type==='warning'?'bg-yellow-500':'bg-green-500'}`;
+      div.textContent = msg;
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 3000);
+    }
+  </script>
+</body>
+</html>

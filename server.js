@@ -1360,211 +1360,7 @@ app.post('/api/exams/:id/abandon', (req, res) => {
   res.json({ success: true });
 });
 
-// ============================================================
-// 题库管理 API (酷学院参考设计)
-// ============================================================
-
-// GET /api/questions - 获取所有题目（支持搜索和筛选）
-app.get('/api/questions', (req, res) => {
-  const data = readData();
-  let questions = data.questions || [];
-  
-  // 关键词搜索
-  const keyword = req.query.keyword;
-  if (keyword) {
-    const kw = keyword.toLowerCase();
-    questions = questions.filter(q => 
-      (q.title || '').toLowerCase().includes(kw) ||
-      (q.content || '').toLowerCase().includes(kw) ||
-      (q.tags || []).some(t => t.toLowerCase().includes(kw))
-    );
-  }
-  
-  // 按题型筛选
-  const type = req.query.type;
-  if (type && type !== 'all') {
-    questions = questions.filter(q => q.type === type);
-  }
-  
-  // 按难度筛选
-  const difficulty = req.query.difficulty;
-  if (difficulty && difficulty !== 'all') {
-    questions = questions.filter(q => q.difficulty === difficulty);
-  }
-  
-  // 分页
-  const page = parseInt(req.query.page) || 1;
-  const pageSize = parseInt(req.query.pageSize) || 20;
-  const total = questions.length;
-  const totalPages = Math.ceil(total / pageSize);
-  const start = (page - 1) * pageSize;
-  const paged = questions.slice(start, start + pageSize);
-  
-  res.json({ success: true, data: paged, total, totalPages, page, pageSize });
-});
-
-// GET /api/questions/stats - 题库统计
-app.get('/api/questions/stats', (req, res) => {
-  const data = readData();
-  const questions = data.questions || [];
-  const stats = {
-    total: questions.length,
-    byType: {},
-    byDifficulty: {}
-  };
-  questions.forEach(q => {
-    stats.byType[q.type] = (stats.byType[q.type] || 0) + 1;
-    stats.byDifficulty[q.difficulty] = (stats.byDifficulty[q.difficulty] || 0) + 1;
-  });
-  res.json({ success: true, data: stats });
-});
-
-// GET /api/questions/:id - 获取单个题目
-app.get('/api/questions/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const data = readData();
-  const question = (data.questions || []).find(q => q.id === id);
-  if (!question) {
-    return res.status(404).json({ success: false, error: '题目不存在' });
-  }
-  res.json({ success: true, data: question });
-});
-
-// POST /api/questions - 添加题目
-app.post('/api/questions', (req, res) => {
-  const { title, type, difficulty, options, answer, explanation, tags, score } = req.body;
-  if (!title || !type) {
-    return res.status(400).json({ success: false, error: '题目内容和题型不能为空' });
-  }
-  const data = readData();
-  if (!data.questions) data.questions = [];
-  const question = {
-    id: Date.now(),
-    title: title.trim(),
-    type,
-    difficulty: difficulty || 'medium',
-    options: options || [],
-    answer: answer || '',
-    explanation: explanation || '',
-    tags: tags || [],
-    score: score || 5,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  data.questions.push(question);
-  if (writeData(data)) {
-    res.json({ success: true, data: question });
-  } else {
-    res.status(500).json({ success: false, error: '创建失败' });
-  }
-});
-
-// POST /api/questions/batch - 批量导入题目
-app.post('/api/questions/batch', (req, res) => {
-  const { questions: batch } = req.body;
-  if (!batch || !Array.isArray(batch) || batch.length === 0) {
-    return res.status(400).json({ success: false, error: '题目列表不能为空' });
-  }
-  const data = readData();
-  if (!data.questions) data.questions = [];
-  let added = 0;
-  batch.forEach(q => {
-    data.questions.push({
-      id: Date.now() + added,
-      title: (q.title || '').trim(),
-      type: q.type || 'single',
-      difficulty: q.difficulty || 'medium',
-      options: q.options || [],
-      answer: q.answer || '',
-      explanation: q.explanation || '',
-      tags: q.tags || [],
-      score: q.score || 5,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    });
-    added++;
-  });
-  if (writeData(data)) {
-    res.json({ success: true, total: added });
-  } else {
-    res.status(500).json({ success: false, error: '导入失败' });
-  }
-});
-
-// PUT /api/questions/:id - 更新题目
-app.put('/api/questions/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const data = readData();
-  const questions = data.questions || [];
-  const index = questions.findIndex(q => q.id === id);
-  if (index === -1) {
-    return res.status(404).json({ success: false, error: '题目不存在' });
-  }
-  const updates = req.body;
-  delete updates.id;
-  delete updates.createdAt;
-  updates.updatedAt = new Date().toISOString();
-  data.questions[index] = { ...questions[index], ...updates };
-  if (writeData(data)) {
-    res.json({ success: true, data: data.questions[index] });
-  } else {
-    res.status(500).json({ success: false, error: '更新失败' });
-  }
-});
-
-// DELETE /api/questions/:id - 删除题目
-app.delete('/api/questions/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const data = readData();
-  if (!data.questions) {
-    return res.status(404).json({ success: false, error: '题目不存在' });
-  }
-  const index = data.questions.findIndex(q => q.id === id);
-  if (index === -1) {
-    return res.status(404).json({ success: false, error: '题目不存在' });
-  }
-  data.questions.splice(index, 1);
-  // 同时从所有考试中移除该题目
-  if (data.exams) {
-    data.exams.forEach(exam => {
-      if (exam.questions) {
-        exam.questions = exam.questions.filter(q => q.questionId !== id);
-      }
-    });
-  }
-  if (writeData(data)) {
-    res.json({ success: true });
-  } else {
-    res.status(500).json({ success: false, error: '删除失败' });
-  }
-});
-
-// DELETE /api/questions/batch - 批量删除题目
-app.delete('/api/questions/batch', (req, res) => {
-  const { ids } = req.body;
-  if (!ids || !Array.isArray(ids) || ids.length === 0) {
-    return res.status(400).json({ success: false, error: 'ID列表不能为空' });
-  }
-  const data = readData();
-  if (!data.questions) {
-    return res.status(404).json({ success: false, error: '题库为空' });
-  }
-  const idSet = new Set(ids);
-  data.questions = data.questions.filter(q => !idSet.has(q.id));
-  // 同时从所有考试中移除这些题目
-  if (data.exams) {
-    data.exams.forEach(exam => {
-      if (exam.questions) {
-        exam.questions = exam.questions.filter(q => !idSet.has(q.questionId));
-      }
-    });
-  }
-  if (writeData(data)) {
-    res.json({ success: true, deleted: ids.length });
-  } else {
-    res.status(500).json({ success: false, error: '删除失败' });
-  }
-});
+// 题库管理 API 已迁移至 routes/question-routes.js
 
 // 注册题库管理路由（question-banks 等，放在我们路由之后避免冲突）
 app.use('/api', questionRoutes);
@@ -2055,7 +1851,7 @@ app.put('/api/lecturer-applications/:id', (req, res) => {
         avatar: '',
         intro: app.intro || '',
         paymentRate: 0,
-        status: 'enabled',
+        status: 'disabled',  // 审批通过后默认禁用，等上传头像后再启用
         type: 'internal',
         skills: app.skills || [],
         courseCount: 0,
@@ -2067,7 +1863,15 @@ app.put('/api/lecturer-applications/:id', (req, res) => {
   // 发送消息通知（仅当状态发生变化时）
   if (oldStatus !== req.body.status && (req.body.status === 'approved' || req.body.status === 'rejected')) {
     const app = data.lecturer_applications[index];
-    const statusText = req.body.status === 'approved' ? '已通过' : '已拒绝';
+    
+    let title, content;
+    if (req.body.status === 'approved') {
+      title = '🎉 讲师申请已通过';
+      content = `恭喜您！您的讲师申请已审核通过。接下来请等待人力资源部与您联系，安排后续事宜。如有疑问，请联系人力资源部-许志坚。`;
+    } else {
+      title = '讲师申请结果通知';
+      content = `很遗憾，您的讲师申请未通过审核。感谢您的积极参与，期待下次合作！如有疑问，请联系人力资源部-许志坚。`;
+    }
     
     // 查找申请人对应的用户ID（注意：用户数据存储在 registered_users 中）
     let userId = null;
@@ -2094,8 +1898,8 @@ app.put('/api/lecturer-applications/:id', (req, res) => {
       const notification = {
         id: Date.now(),
         userId: userId,
-        title: '讲师申请结果通知',
-        content: `您的讲师申请${statusText}，请查看。`,
+        title: title,
+        content: content,
         type: 'system',
         read: false,
         createdAt: new Date().toISOString()
@@ -2258,10 +2062,19 @@ app.post('/api/notifications/batch-read', (req, res) => {
     return res.status(401).json({ success: false, error: '未登录' });
   }
   
-  const { ids } = req.body;  // ['notice_123', 'notification_456', ...]
+  let { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0) {
     return res.status(400).json({ success: false, error: '无效的ID列表' });
   }
+  
+  // 兼容纯数字ID和带前缀的ID格式
+  ids = ids.map(id => {
+    if (typeof id === 'number') return 'notification_' + id;
+    if (typeof id === 'string' && !id.startsWith('notice_') && !id.startsWith('notification_')) {
+      return 'notification_' + id;
+    }
+    return id;
+  });
   
   const data = readData();
   initNotificationsData(data);
@@ -2292,7 +2105,7 @@ app.post('/api/notifications/batch-read', (req, res) => {
   });
   
   writeData(data);
-  res.json({ success: true, count: ids.length });
+  res.json({ success: true, updated: ids.length });
 });
 
 // POST /api/notifications/batch-delete - 批量删除通知（仅限个人通知）
@@ -2302,10 +2115,19 @@ app.post('/api/notifications/batch-delete', (req, res) => {
     return res.status(401).json({ success: false, error: '未登录' });
   }
   
-  const { ids } = req.body;
+  let { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0) {
     return res.status(400).json({ success: false, error: '无效的ID列表' });
   }
+  
+  // 兼容纯数字ID和带前缀的ID格式
+  ids = ids.map(id => {
+    if (typeof id === 'number') return 'notification_' + id;
+    if (typeof id === 'string' && !id.startsWith('notice_') && !id.startsWith('notification_')) {
+      return 'notification_' + id;
+    }
+    return id;
+  });
   
   const data = readData();
   initNotificationsData(data);
@@ -2321,7 +2143,35 @@ app.post('/api/notifications/batch-delete', (req, res) => {
   });
   
   writeData(data);
-  res.json({ success: true, count: personalIds.length });
+  res.json({ success: true, deleted: personalIds.length });
+});
+
+// DELETE /api/notifications/:id - 删除单条通知（仅限个人通知）
+app.delete('/api/notifications/:id', (req, res) => {
+  const currentUser = getCurrentUser(req);
+  if (!currentUser) {
+    return res.status(401).json({ success: false, error: '未登录' });
+  }
+  
+  const notificationId = parseInt(req.params.id);
+  if (isNaN(notificationId)) {
+    return res.status(400).json({ success: false, error: '无效的通知ID' });
+  }
+  
+  const data = readData();
+  initNotificationsData(data);
+  
+  const index = data.notifications.findIndex(
+    n => n.id === notificationId && n.userId === currentUser.id
+  );
+  
+  if (index === -1) {
+    return res.status(404).json({ success: false, error: '通知不存在或无权限删除' });
+  }
+  
+  data.notifications.splice(index, 1);
+  writeData(data);
+  res.json({ success: true, message: '已删除该消息' });
 });
 
 // POST /api/notifications - 创建个人通知（系统内部调用）
