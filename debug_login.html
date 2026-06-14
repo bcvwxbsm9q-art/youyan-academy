@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>登录调试 - 游雁学院</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+    .section { border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    .success { color: green; }
+    .error { color: red; }
+    pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    input { padding: 8px; margin: 5px; width: 200px; }
+  </style>
+</head>
+<body>
+  <h1>🔧 登录调试工具</h1>
+  
+  <div class="section">
+    <h2>1. 测试登录API</h2>
+    <input type="text" id="username" value="admin" placeholder="用户名"><br>
+    <input type="password" id="password" value="admin2026" placeholder="密码"><br>
+    <button onclick="testLogin()">测试登录</button>
+    <div id="login-result"></div>
+  </div>
+
+  <div class="section">
+    <h2>2. 检查本地存储</h2>
+    <button onclick="checkStorage()">检查localStorage</button>
+    <pre id="storage-result"></pre>
+  </div>
+
+  <div class="section">
+    <h2>3. 清除缓存</h2>
+    <button onclick="clearCache()">清除所有缓存</button>
+    <div id="clear-result"></div>
+  </div>
+
+  <div class="section">
+    <h2>4. 跳转到管理后台</h2>
+    <button onclick="goToDashboard()">打开 dashboard.html</button>
+  </div>
+
+  <script>
+    const API = 'http://localhost:3003/api';
+
+    async function testLogin() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const resultDiv = document.getElementById('login-result');
+      
+      resultDiv.innerHTML = '<p>正在测试...</p>';
+      
+      try {
+        const res = await fetch(API + '/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+          resultDiv.innerHTML = `
+            <p class="success">✅ 登录成功!</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+          // 保存token
+          localStorage.setItem('adminToken', data.data.token);
+          localStorage.setItem('adminUser', JSON.stringify(data.data.user));
+        } else {
+          resultDiv.innerHTML = `
+            <p class="error">❌ 登录失败: ${data.error || '未知错误'}</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (err) {
+        resultDiv.innerHTML = `
+          <p class="error">❌ 网络错误: ${err.message}</p>
+          <p>请确认服务器是否运行在 http://localhost:3003</p>
+        `;
+      }
+    }
+
+    function checkStorage() {
+      const result = {
+        adminToken: localStorage.getItem('adminToken'),
+        adminUser: localStorage.getItem('adminUser')
+      };
+      document.getElementById('storage-result').textContent = JSON.stringify(result, null, 2);
+    }
+
+    function clearCache() {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      document.getElementById('clear-result').innerHTML = '<p class="success">✅ 已清除登录缓存</p>';
+      checkStorage();
+    }
+
+    function goToDashboard() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // 页面加载时自动检查
+    checkStorage();
+  </script>
+</body>
+</html>

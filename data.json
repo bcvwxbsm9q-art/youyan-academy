@@ -11,7 +11,7 @@
       "role": "user",
       "avatar": "",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/6/11 18:13:47",
+      "lastLogin": "2026/6/14 11:28:29",
       "status": "active"
     },
     {
@@ -31,10 +31,46 @@
   ],
   "user_learning_1780909174403": {
     "totalHours": 0,
-    "completedCourses": [],
-    "videoProgress": {},
-    "lastStudyTime": null,
-    "studyDates": []
+    "completedCourses": [
+      1781087462994
+    ],
+    "videoProgress": {
+      "1781087462994_0": 100
+    },
+    "lastStudyTime": "2026-06-14T07:44:50.844Z",
+    "studyDates": [
+      "2026-06-14"
+    ],
+    "totalSeconds": 22,
+    "studyRecords": [
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-14T03:29:56.918Z",
+        "date": "2026-06-14"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 20,
+        "timestamp": "2026-06-14T03:30:20.435Z",
+        "date": "2026-06-14"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-14T07:44:50.844Z",
+        "date": "2026-06-14"
+      }
+    ]
   },
   "lecturers": [
     {
@@ -630,7 +666,7 @@
       ],
       "attachments": [],
       "duration": 2360,
-      "views": 11,
+      "views": 13,
       "rating": 5,
       "id": 1781087462994,
       "createdAt": "2026/6/10 18:31:02",
@@ -1237,7 +1273,28 @@
       "updatedAt": "2026/6/12 11:45:58"
     }
   ],
-  "exams": [],
+  "exams": [
+    {
+      "id": 1781401477291,
+      "title": "LUA优化期末考核",
+      "description": "2026年度LUA优化技能考核",
+      "duration": 90,
+      "passingScore": 60,
+      "totalScore": 100,
+      "bankId": null,
+      "shuffleQuestions": true,
+      "showAnswer": true,
+      "status": "draft",
+      "questions": [],
+      "startTime": null,
+      "endTime": null,
+      "maxAttempts": 2,
+      "paperId": "1781401342152",
+      "paperName": "测试试卷A",
+      "createdAt": "2026-06-14T01:44:37.291Z",
+      "updatedAt": "2026-06-14T01:44:37.291Z"
+    }
+  ],
   "exam_attempts": [],
   "survey_responses": [
     {
@@ -1388,7 +1445,7 @@
   ],
   "video_pos_1780909174403_1781087462994_0": {
     "position": 2359,
-    "savedAt": "2026-06-11T14:32:45.675Z"
+    "savedAt": "2026-06-14T07:44:52.824Z"
   },
   "lecturer_applications": [
     {
@@ -1434,5 +1491,482 @@
       "createdAt": "2026/6/12 11:45:58",
       "updatedAt": "2026/6/12 11:45:58"
     }
-  ]
+  ],
+  "index_featured_courses": [
+    1781064630171,
+    1781065281803,
+    1781065453648,
+    1781065485355,
+    1781077900894,
+    1781080411545,
+    1781087427858,
+    1781087462994
+  ],
+  "index_featured_lecturers_v2": [
+    1,
+    2
+  ],
+  "index_notices": [
+    {
+      "id": 1,
+      "title": "关于线上学习平台积分系统功能关闭下线的公告",
+      "content": "<p>尊敬的用户：为优化平台服务，积分系统将于近期关闭下线，请知悉。</p>",
+      "status": "published",
+      "createdAt": "2024-04-15",
+      "publishedAt": "2024-04-15"
+    }
+  ],
+  "course_center_sync": [
+    {
+      "id": 1,
+      "title": "视频课程在线学习 - 从小白到专家的进阶之路",
+      "cover": "https://p26-doubao-search-sign.byteimg.com/labis/3e50046a89d633ced89e4d242d60f064~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 1,
+      "categoryId": 31,
+      "duration": 6300,
+      "description": "本课程从零基础开始，系统讲解前端开发的完整知识体系。",
+      "rating": 4.8,
+      "views": 12000,
+      "videos": [],
+      "status": "published",
+      "createdAt": "2024-04-01"
+    },
+    {
+      "id": 2,
+      "title": "新年回好课 - 2024年企业运营策略与实践",
+      "cover": "https://p11-doubao-search-sign.byteimg.com/labis/56e578a8ce507c83f91f47e08e2ec86d~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 3,
+      "categoryId": 41,
+      "duration": 3300,
+      "description": "系统讲解企业运营的核心策略与实践方法。",
+      "rating": 4.6,
+      "views": 5200,
+      "videos": [],
+      "status": "published",
+      "createdAt": "2024-03-15"
+    },
+    {
+      "id": 3,
+      "title": "平面设计进阶课程 - 14天在家安心学",
+      "cover": "https://p3-doubao-search-sign.byteimg.com/labis/7cf2d040059ee347d85e5b21237a98b7~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
+      "lecturerId": 2,
+      "categoryId": 21,
+      "duration": 4500,
+      "description": "平面设计进阶课程，涵盖设计基础理论、色彩搭配、排版技巧。",
+      "rating": 4.9,
+      "views": 8700,
+      "videos": [],
+      "status": "published",
+      "createdAt": "2024-02-20"
+    }
+  ],
+  "center_training_data": {
+    "trainings": [
+      {
+        "id": 1,
+        "name": "2024年度新员工入职培训",
+        "leader": "张华",
+        "desc": "针对新入职员工的全方位培训项目",
+        "startDate": "2024-03-01",
+        "endDate": "2024-03-31",
+        "status": "active",
+        "stages": [
+          {
+            "id": 1,
+            "name": "企业文化培训",
+            "type": "offline",
+            "location": "会议室A",
+            "schedule": "2024-03-01 09:00",
+            "lecturerId": 1
+          },
+          {
+            "id": 2,
+            "name": "产品知识培训",
+            "type": "online",
+            "lecturerId": 3
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "name": "技术能力提升培训班",
+        "leader": "李明",
+        "desc": "提升团队技术能力的专项培训",
+        "startDate": "2024-04-01",
+        "endDate": "2024-04-20",
+        "status": "active",
+        "stages": [
+          {
+            "id": 1,
+            "name": "前端框架深入",
+            "type": "online",
+            "lecturerId": 1
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "name": "管理层领导力培训",
+        "leader": "王芳",
+        "desc": "提升管理层的领导能力和团队管理能力",
+        "startDate": "2024-02-15",
+        "endDate": "2024-03-01",
+        "status": "completed",
+        "stages": [
+          {
+            "id": 1,
+            "name": "领导力基础",
+            "type": "offline",
+            "location": "大会议室",
+            "schedule": "2024-02-15 14:00",
+            "lecturerId": 4
+          }
+        ]
+      }
+    ]
+  },
+  "my_enrolled_trainings": [],
+  "my_courses": [
+    {
+      "id": 101,
+      "courseId": 1,
+      "status": "in_progress",
+      "progress": 75,
+      "learnedHours": 15,
+      "totalHours": 20,
+      "chapters": 15,
+      "totalChapters": 20,
+      "completedAt": null
+    },
+    {
+      "id": 102,
+      "courseId": 2,
+      "status": "in_progress",
+      "progress": 40,
+      "learnedHours": 8,
+      "totalHours": 20,
+      "chapters": 8,
+      "totalChapters": 20,
+      "completedAt": null
+    },
+    {
+      "id": 103,
+      "courseId": 3,
+      "status": "completed",
+      "progress": 100,
+      "learnedHours": 18,
+      "totalHours": 18,
+      "chapters": 18,
+      "totalChapters": 18,
+      "completedAt": "2024-03-15"
+    }
+  ],
+  "my_exams": [
+    {
+      "id": 1,
+      "examId": 1,
+      "name": "企业文化测试",
+      "score": 92,
+      "status": "passed",
+      "date": "2024-04-10"
+    },
+    {
+      "id": 2,
+      "examId": 2,
+      "name": "产品知识测试",
+      "score": 85,
+      "status": "passed",
+      "date": "2024-04-05"
+    },
+    {
+      "id": 3,
+      "examId": 3,
+      "name": "前端技术测评",
+      "score": 78,
+      "status": "passed",
+      "date": "2024-03-28"
+    },
+    {
+      "id": 4,
+      "examId": 4,
+      "name": "领导力测试",
+      "score": 65,
+      "status": "failed",
+      "date": "2024-03-20"
+    }
+  ],
+  "training_attendances": [],
+  "training_exams": [
+    {
+      "id": 1,
+      "stageId": 1,
+      "name": "企业文化测试",
+      "passingScore": 60,
+      "duration": 30
+    },
+    {
+      "id": 2,
+      "stageId": 2,
+      "name": "产品知识测试",
+      "passingScore": 70,
+      "duration": 45
+    },
+    {
+      "id": 3,
+      "stageId": 3,
+      "name": "前端技术测评",
+      "passingScore": 65,
+      "duration": 60
+    },
+    {
+      "id": 4,
+      "stageId": 4,
+      "name": "领导力测试",
+      "passingScore": 60,
+      "duration": 30
+    }
+  ],
+  "training_surveys": [],
+  "learning_history": [
+    {
+      "courseId": 1,
+      "courseName": "视频课程在线学习",
+      "date": "2024-04-14",
+      "duration": 45
+    },
+    {
+      "courseId": 2,
+      "courseName": "新年回好课",
+      "date": "2024-04-13",
+      "duration": 30
+    },
+    {
+      "courseId": 1,
+      "courseName": "视频课程在线学习",
+      "date": "2024-04-12",
+      "duration": 60
+    },
+    {
+      "courseId": 3,
+      "courseName": "平面设计进阶课程",
+      "date": "2024-04-10",
+      "duration": 90
+    }
+  ],
+  "certificates": [
+    {
+      "id": 1,
+      "courseId": 3,
+      "title": "平面设计进阶课程证书",
+      "issuedDate": "2024-03-15",
+      "certNo": "CERT-2024-0315-001"
+    }
+  ],
+  "current_user": {
+    "id": 1,
+    "name": "张小明",
+    "username": "zhangxiaoming",
+    "email": "zhangxiaoming@example.com",
+    "phone": "138****1234",
+    "department": "技术部",
+    "role": "员工",
+    "avatar": ""
+  },
+  "user_learning_1777372952831": {
+    "totalHours": 0,
+    "completedCourses": [],
+    "videoProgress": {},
+    "lastStudyTime": null,
+    "studyDates": []
+  },
+  "study_session_1777372952831_1778151200269": {
+    "seconds": 580,
+    "lastSaveTime": "2026-05-08T02:43:11.732Z"
+  },
+  "course_stats_1778151200269": {
+    "likes": 423,
+    "favorites": 52,
+    "isLiked": false,
+    "isFavorited": false
+  },
+  "user_learning_1778208244936": {
+    "totalHours": 0,
+    "completedCourses": [],
+    "videoProgress": {},
+    "lastStudyTime": null,
+    "studyDates": []
+  },
+  "study_session_1_1778151200269": {
+    "seconds": 149,
+    "lastSaveTime": "2026-05-08T07:04:07.693Z"
+  },
+  "study_session_1778208244936_1778151200269": {
+    "seconds": 328,
+    "lastSaveTime": "2026-05-08T06:31:08.917Z"
+  },
+  "course_stats_1779327523598": {
+    "likes": 1,
+    "isLiked": true
+  },
+  "user_learning_1779170734294": {
+    "videoProgress": {
+      "1779098231611_0": 0,
+      "1779098265203_0": 100,
+      "1779098190483_0": 0,
+      "1779088409769_0": 0,
+      "1779328221100_0": 100,
+      "1779327523598_0": 0,
+      "1779269978533_0": 60,
+      "1779327336678_0": 0
+    },
+    "completedCourses": [
+      "1779098265203",
+      "1779328221100"
+    ],
+    "totalSeconds": 11053,
+    "totalHours": 3,
+    "studyTime": 11053,
+    "lastStudyTime": "2026-05-25T01:44:23.546Z",
+    "studyDates": [
+      "2026-05-19",
+      "2026-05-20",
+      "2026-05-22",
+      "2026-05-25"
+    ],
+    "dailyData": [
+      {
+        "date": "2026-05-20",
+        "seconds": 4254
+      },
+      {
+        "date": "2026-05-22",
+        "seconds": 5552
+      },
+      {
+        "date": "2026-05-25",
+        "seconds": 636
+      }
+    ]
+  },
+  "note_1778580745210_1779088409769_0": {
+    "content": "dsf ",
+    "timestamp": "2026-05-18T07:15:05.670Z"
+  },
+  "user_learning_1779269749493": {
+    "videoProgress": {
+      "1779269978533_0": 100,
+      "1779327523598_0": 72,
+      "1779328221100_0": 0,
+      "1779327336678_0": 20
+    },
+    "completedCourses": [
+      "1779269978533"
+    ],
+    "totalSeconds": 6838,
+    "totalHours": 1,
+    "studyTime": 6838,
+    "lastStudyTime": "2026-06-08T03:09:01.559Z",
+    "studyDates": [
+      "2026-05-21",
+      "2026-05-26",
+      "2026-05-28",
+      "2026-06-02",
+      "2026-06-03",
+      "2026-06-05",
+      "2026-06-08"
+    ],
+    "dailyData": [
+      {
+        "date": "2026-05-21",
+        "seconds": 2935
+      },
+      {
+        "date": "2026-05-26",
+        "seconds": 165
+      },
+      {
+        "date": "2026-05-28",
+        "seconds": 1968
+      },
+      {
+        "date": "2026-06-02",
+        "seconds": 96
+      },
+      {
+        "date": "2026-06-03",
+        "seconds": 1059
+      },
+      {
+        "date": "2026-06-05",
+        "seconds": 408
+      },
+      {
+        "date": "2026-06-08",
+        "seconds": 207
+      }
+    ]
+  },
+  "course_stats_1779327336678": {
+    "likes": 1,
+    "isLiked": true
+  },
+  "user_learning_1779183739731": {
+    "videoProgress": {
+      "1779098265203_0": 0
+    },
+    "completedCourses": [],
+    "totalSeconds": 21,
+    "totalHours": 0,
+    "studyTime": 21,
+    "lastStudyTime": "2026-05-19T10:40:09.655Z",
+    "studyDates": [],
+    "dailyData": []
+  },
+  "course_stats_1779328221100": {
+    "likes": 1,
+    "isLiked": true
+  },
+  "course_stats_1779098190483": {
+    "likes": 1,
+    "isLiked": true
+  },
+  "course_stats_1779098265203": {
+    "likes": 959,
+    "isLiked": true
+  },
+  "note_1779170734294_1779098265203_0": {
+    "content": "10326",
+    "timestamp": "2026-05-20T03:51:56.730Z"
+  },
+  "course_stats_1779098100373": {
+    "likes": 411,
+    "favorites": 70,
+    "isLiked": false,
+    "isFavorited": false
+  },
+  "user_learning_1778580745210": {
+    "totalHours": 0,
+    "completedCourses": [],
+    "videoProgress": {},
+    "lastStudyTime": null,
+    "studyDates": []
+  },
+  "course_stats_1779098231611": {
+    "likes": 1,
+    "isLiked": true
+  },
+  "user_learning_1780898438217": {
+    "totalHours": 0,
+    "completedCourses": [],
+    "videoProgress": {},
+    "lastStudyTime": null,
+    "studyDates": []
+  },
+  "user_learning_1780901734477": {
+    "totalHours": 0,
+    "completedCourses": [],
+    "videoProgress": {},
+    "lastStudyTime": null,
+    "studyDates": []
+  }
 }

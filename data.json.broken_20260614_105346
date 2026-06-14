@@ -1,0 +1,24 @@
+{
+  "exams": [
+    {
+      "id": 1781401477291,
+      "title": "LUA优化期末考核",
+      "description": "2026年度LUA优化技能考核",
+      "duration": 90,
+      "passingScore": 60,
+      "totalScore": 100,
+      "bankId": null,
+      "shuffleQuestions": true,
+      "showAnswer": true,
+      "status": "draft",
+      "questions": [],
+      "startTime": null,
+      "endTime": null,
+      "maxAttempts": 2,
+      "paperId": "1781401342152",
+      "paperName": "测试试卷A",
+      "createdAt": "2026-06-14T01:44:37.291Z",
+      "updatedAt": "2026-06-14T01:44:37.291Z"
+    }
+  ]
+}

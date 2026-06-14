@@ -17,6 +17,16 @@ if (!fs.existsSync(uploadsDir)) {
 app.use(express.json({ limit: '50mb' }));  // 解析 JSON 请求体
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));  // 解析 URL 编码的请求体
 
+// 禁止 HTML 页面缓存（确保浏览器始终获取最新版本）
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html') || req.path === '/') {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+  next();
+});
+
 // 静态文件服务 - 必须放在其他路由之前
 app.use('/uploads', express.static(uploadsDir));  // 上传的文件
 app.use(express.static(path.join(__dirname)));     // 前端页面和资源
@@ -169,6 +179,12 @@ function getCourseAvgRating(data, courseId) {
 // ============================================================
 // API 路由
 // ============================================================
+
+// API 响应禁止缓存
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  next();
+});
 
 // GET /api/data      - 获取所有数据（动态计算lecturers的courseCount）
 app.get('/api/data', (req, res) => {
@@ -895,6 +911,143 @@ app.get('/api/training/schedule', (req, res) => {
   res.json({ success: true, data: schedule });
 });
 
+// ============================================================
+// 培训集成服务 API (签到 + 满意度调研 + 考试)
+// 注意：这些路由必须在 /api/training/:id 之前定义，避免被通用路由捕获
+// ============================================================
+
+// GET /api/training/:id/signins - 获取某培训事件的签到列表
+app.get('/api/training/:id/signins', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const signins = (data.training_signins || []).filter(s => s.trainingId === trainingId);
+  res.json({ success: true, data: signins });
+});
+
+// POST /api/training/:id/signin - 员工签到
+app.post('/api/training/:id/signin', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const { userId, code } = req.body;
+  
+  if (!userId || !code) {
+    return res.status(400).json({ success: false, error: '缺少用户ID或签到码' });
+  }
+  
+  const event = (data.training_events || []).find(e => e.id === trainingId);
+  if (!event) {
+    return res.status(404).json({ success: false, error: '培训事件不存在' });
+  }
+  
+  if (!event.signinEnabled) {
+    return res.status(400).json({ success: false, error: '该培训未开启签到' });
+  }
+  
+  if (event.signinCode && event.signinCode !== code) {
+    return res.status(400).json({ success: false, error: '签到码错误' });
+  }
+  
+  if (!data.training_signins) data.training_signins = [];
+  
+  // 检查是否已签到
+  const alreadySigned = data.training_signins.some(s => s.trainingId === trainingId && s.userId == userId);
+  if (alreadySigned) {
+    return res.status(400).json({ success: false, error: '您已签到，无需重复签到' });
+  }
+  
+  const user = (data.registered_users || []).find(u => u.id == userId);
+  const signin = {
+    id: Date.now(),
+    trainingId,
+    userId: user ? user.id : userId,
+    userName: user ? (user.realName || user.username) : '未知用户',
+    department: user ? (user.department || '') : '',
+    signedAt: new Date().toISOString(),
+    method: 'code'
+  };
+  data.training_signins.push(signin);
+  
+  if (writeData(data)) {
+    res.json({ success: true, data: signin });
+  } else {
+    res.status(500).json({ success: false, error: '签到失败' });
+  }
+});
+
+// DELETE /api/training/signins/:signinId - 删除签到记录（管理员）
+app.delete('/api/training/signins/:signinId', (req, res) => {
+  const data = readData();
+  const signinId = parseInt(req.params.signinId);
+  if (!data.training_signins) data.training_signins = [];
+  const idx = data.training_signins.findIndex(s => s.id === signinId);
+  if (idx === -1) return res.status(404).json({ success: false, error: '签到记录不存在' });
+  data.training_signins.splice(idx, 1);
+  if (writeData(data)) {
+    res.json({ success: true });
+  } else {
+    res.status(500).json({ success: false, error: '删除失败' });
+  }
+});
+
+// GET /api/training/:id/survey-responses - 获取某培训事件的调研结果
+app.get('/api/training/:id/survey-responses', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const event = (data.training_events || []).find(e => e.id === trainingId);
+  if (!event) return res.status(404).json({ success: false, error: '培训事件不存在' });
+  
+  const surveyId = event.linkedSurveyId;
+  if (!surveyId) {
+    return res.json({ success: true, data: [], survey: null, total: 0 });
+  }
+  
+  const survey = (data.surveys || []).find(s => s.id === surveyId);
+  const responses = (data.survey_responses || []).filter(r => r.surveyId === surveyId && r.trainingId == trainingId);
+  
+  res.json({ success: true, data: responses, survey, total: responses.length });
+});
+
+// GET /api/training/:id/exam-results - 获取某培训事件的考试结果
+app.get('/api/training/:id/exam-results', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const event = (data.training_events || []).find(e => e.id === trainingId);
+  if (!event) return res.status(404).json({ success: false, error: '培训事件不存在' });
+  
+  const examId = event.linkedExamId;
+  if (!examId) {
+    return res.json({ success: true, data: [], exam: null, total: 0 });
+  }
+  
+  const exam = (data.exams || []).find(e => e.id === examId);
+  const attempts = (data.exam_attempts || []).filter(a => a.examId === examId);
+  
+  res.json({ success: true, data: attempts, exam, total: attempts.length });
+});
+
+// GET /api/training/:id/service-status - 获取培训集成服务状态概览
+app.get('/api/training/:id/service-status', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const event = (data.training_events || []).find(e => e.id === trainingId);
+  if (!event) return res.status(404).json({ success: false, error: '培训事件不存在' });
+  
+  const signinCount = (data.training_signins || []).filter(s => s.trainingId === trainingId).length;
+  const surveyCount = event.linkedSurveyId 
+    ? (data.survey_responses || []).filter(r => r.surveyId === event.linkedSurveyId && r.trainingId == trainingId).length 
+    : 0;
+  const examCount = event.linkedExamId 
+    ? (data.exam_attempts || []).filter(a => a.examId === event.linkedExamId).length 
+    : 0;
+  
+  res.json({
+    success: true,
+    signin: { enabled: event.signinEnabled || false, count: signinCount },
+    survey: { linkedId: event.linkedSurveyId || null, count: surveyCount },
+    exam: { linkedId: event.linkedExamId || null, count: examCount }
+  });
+});
+
 // GET /api/training/:id - 获取单个培训事件
 app.get('/api/training/:id', (req, res) => {
   const id = parseInt(req.params.id);
@@ -1028,6 +1181,7 @@ app.delete('/api/training/courses/:courseId', (req, res) => {
   }
 });
 
+
 // ============================================================
 // 课程评分 API
 // ============================================================
@@ -1100,7 +1254,7 @@ app.get('/api/exams', (req, res) => {
 
 // POST /api/exams - 创建考试
 app.post('/api/exams', (req, res) => {
-  const { title, description, duration, passingScore, totalScore, bankId, shuffleQuestions, showAnswer, status, questions, startTime, endTime, maxAttempts } = req.body;
+  const { title, description, duration, passingScore, totalScore, bankId, shuffleQuestions, showAnswer, status, questions, startTime, endTime, maxAttempts, paperId, paperName } = req.body;
   if (!title) {
     return res.status(400).json({ success: false, error: '考试名称不能为空' });
   }
@@ -1121,6 +1275,8 @@ app.post('/api/exams', (req, res) => {
     startTime: startTime || null,
     endTime: endTime || null,
     maxAttempts: parseInt(maxAttempts) || 0,
+    paperId: paperId || null,
+    paperName: paperName || '',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
