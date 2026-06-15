@@ -40,14 +40,16 @@
       "1781065453648_0": 100,
       "1781087427858_0": 4,
       "1781080411545_0": 100,
-      "1781080411545_1": 48
+      "1781080411545_1": 48,
+      "1781064630171_0": 52,
+      "1781506198054_0": 3
     },
-    "lastStudyTime": "2026-06-15T06:35:15.659Z",
+    "lastStudyTime": "2026-06-15T06:50:35.086Z",
     "studyDates": [
       "2026-06-14",
       "2026-06-15"
     ],
-    "totalSeconds": 50,
+    "totalSeconds": 83,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -146,6 +148,42 @@
         "videoTitle": "KMP算法.mp4",
         "duration": 2,
         "timestamp": "2026-06-15T06:35:15.659Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-15T06:45:27.559Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-15T06:45:29.585Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781064630171,
+        "courseTitle": "KMP算法",
+        "videoIndex": 0,
+        "videoTitle": "KMP算法.mp4",
+        "duration": 4,
+        "timestamp": "2026-06-15T06:49:05.112Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 27,
+        "timestamp": "2026-06-15T06:50:35.086Z",
         "date": "2026-06-15"
       }
     ],
@@ -561,7 +599,7 @@
       ],
       "attachments": [],
       "duration": 1644,
-      "views": 78,
+      "views": 79,
       "rating": 3.7,
       "id": 1781064630171,
       "createdAt": "2026/6/10 12:10:30",
@@ -752,6 +790,31 @@
       "id": 1781087462994,
       "createdAt": "2026/6/10 18:31:02",
       "updatedAt": "2026/6/10 18:31:02"
+    },
+    {
+      "title": "粒子系统",
+      "cover": "/uploads/covers/1781506177615-626304979.png",
+      "categoryId": 1780974142620,
+      "subcategoryId": 1780974147097,
+      "lecturerId": 1780973279917,
+      "description": "",
+      "status": "published",
+      "videos": [
+        {
+          "url": "/uploads/videos/1781506189662-278866776.mp4",
+          "title": "粒子系统（钟飞跃）.mp4",
+          "size": 74042744,
+          "type": "video/mp4",
+          "duration": 2249
+        }
+      ],
+      "attachments": [],
+      "duration": 2249,
+      "views": 1,
+      "rating": 5,
+      "id": 1781506198054,
+      "createdAt": "2026/6/15 14:49:58",
+      "updatedAt": "2026/6/15 14:49:58"
     }
   ],
   "training_projects": [
@@ -842,8 +905,8 @@
     "savedAt": "2026-06-11T14:16:25.911Z"
   },
   "video_pos_1780909174403_1781064630171_0": {
-    "position": 865,
-    "savedAt": "2026-06-12T01:20:18.832Z"
+    "position": 868,
+    "savedAt": "2026-06-15T06:49:05.078Z"
   },
   "video_pos_1780909174403_1781065485355_0": {
     "position": 1,
@@ -1526,6 +1589,14 @@
       "score": 4,
       "createdAt": "2026-06-12T02:27:36.263Z",
       "updatedAt": "2026-06-12T02:27:36.263Z"
+    },
+    {
+      "id": 1781506211616,
+      "userId": 1780909174403,
+      "courseId": 1781506198054,
+      "score": 5,
+      "createdAt": "2026-06-15T06:50:11.616Z",
+      "updatedAt": "2026-06-15T06:50:11.616Z"
     }
   ],
   "video_pos_1780909174403_1781087462994_0": {
@@ -2053,5 +2124,18 @@
     "videoProgress": {},
     "lastStudyTime": null,
     "studyDates": []
+  },
+  "video_pos_1780909174403_1781506198054_0": {
+    "position": 72,
+    "savedAt": "2026-06-15T06:51:19.782Z"
+  },
+  "course_interaction_1781506198054": {
+    "likes": 0,
+    "userLikes": {},
+    "userRatings": {
+      "1780909174403": 5
+    },
+    "ratingSum": 5,
+    "ratingCount": 1
   }
 }
