@@ -508,6 +508,11 @@
                                             <i class="fa fa-star"></i>
                                             <span>评分</span>
                                         </button>
+                                        <!-- 分享按钮 -->
+                                        <button id="btn-share" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-gray-200 hover:border-green-300 hover:bg-green-50 text-sm text-gray-500 hover:text-green-500 font-medium transition-all duration-300 group" title="分享">
+                                            <i class="fa fa-share-alt group-hover:scale-110 transition-transform" id="share-icon"></i>
+                                            <span id="interaction-shares">0</span>
+                                        </button>
                                         <span class="inline-flex items-center text-sm text-gray-400">
                                             <i class="fa fa-clock-o mr-1.5"></i>
                                             <span id="player-duration">总时长：0分钟</span>
@@ -975,11 +980,11 @@
             console.log('[Player] DataAPI是否存在:', !!api);
             
             if (!courseId) {
-                console.error('[Player]  未找到courseId参数');
+                console.error('[Player] 未找到courseId参数');
                 return null;
             }
             
-            // 优先从服务器获取
+            // 优先从服务器获取（management_courses）
             try {
                 console.log('[Player] 正在从服务器获取课程数据...');
                 const response = await fetch('/api/courses');
@@ -991,14 +996,14 @@
                     }
                     const found = serverCourses.find(c => String(c.id) === String(courseId));
                     if (found) {
-                        console.log('[Player] ✅ 从服务器找到课程:', found.title);
+                        console.log('[Player] 从服务器找到课程:', found.title);
                         console.log('[Player] 课程videos数量:', found.videos?.length || 0);
                         return found;
                     }
-                    console.log('[Player] ❌ 服务器未找到匹配的课程');
+                    console.log('[Player] 服务器未找到匹配的课程');
                 }
             } catch (e) {
-                console.error('[Player] ❌ 从服务器获取课程失败:', e);
+                console.error('[Player] 从服务器获取课程失败:', e);
             }
             
             // 降级到本地缓存
@@ -1008,14 +1013,35 @@
             const found = courses.find(c => String(c.id) === String(courseId));
             
             if (found) {
-                console.log('[Player] ✅ 从本地缓存找到课程:', found.title);
-            } else {
-                console.error('[Player] ❌ 本地缓存也未找到课程, courseId:', courseId);
+                console.log('[Player] 从本地缓存找到课程:', found.title);
+                console.log('[Player] ===== 结束加载课程数据 =====');
+                return found;
+            }
+            
+            // 尝试从 course_center_sync 获取（独立的数据同步表）
+            console.log('[Player] 尝试从 course_center_sync 获取...');
+            try {
+                const syncCourses = api.get('course_center_sync') || [];
+                console.log('[Player] course_center_sync 课程数量:', syncCourses.length);
+                const syncFound = syncCourses.find(c => String(c.id) === String(courseId));
+                if (syncFound) {
+                    console.log('[Player] 从 course_center_sync 找到课程:', syncFound.title);
+                    // 确保课程有 videos 数组（即使为空）
+                    if (!syncFound.videos) syncFound.videos = [];
+                    console.log('[Player] ===== 结束加载课程数据 =====');
+                    return syncFound;
+                }
+            } catch (e) {
+                console.error('[Player] course_center_sync 查询失败:', e);
+            }
+            
+            console.error('[Player] 所有数据源均未找到课程, courseId:', courseId);
+            if (courses.length > 0) {
                 console.log('[Player] 本地缓存中的所有课程IDs:', courses.map(c => c.id));
             }
             
             console.log('[Player] ===== 结束加载课程数据 =====');
-            return found || null;
+            return null;
         }
 
         function populatePlayerPage(course) {
@@ -1568,8 +1594,8 @@
         }
 
         /**
-         * 获取课程互动数据（点赞、评分）
-         * 结构：{ likes, userLikes: {userId: bool}, userRatings: {userId: score}, ratingSum, ratingCount }
+         * 获取课程互动数据（点赞、评分、分享）
+         * 结构：{ likes, userLikes: {userId: bool}, userRatings: {userId: score}, ratingSum, ratingCount, shares, userShares: {userId: count} }
          */
         function getCourseInteractionData() {
             const key = getCourseInteractionKey();
@@ -1580,9 +1606,14 @@
                     userLikes: {},
                     userRatings: {},
                     ratingSum: 0,
-                    ratingCount: 0
+                    ratingCount: 0,
+                    shares: 0,
+                    userShares: {}
                 };
             }
+            // 兼容旧数据（没有shares字段）
+            if (data.shares === undefined) data.shares = 0;
+            if (data.userShares === undefined) data.userShares = {};
             return data;
         }
 
@@ -1608,6 +1639,10 @@
             // 更新点赞数（按钮内嵌数字）
             const likesEl = document.getElementById('interaction-likes');
             if (likesEl) likesEl.textContent = interactionData.likes || 0;
+
+            // 更新分享数（按钮内嵌数字）
+            const sharesEl = document.getElementById('interaction-shares');
+            if (sharesEl) sharesEl.textContent = interactionData.shares || 0;
 
             // 更新评分平均分（课程信息区）——先用本地数据快速渲染
             const playerRatingEl = document.getElementById('player-rating');
@@ -1650,6 +1685,9 @@
 
             // 绑定点赞按钮事件
             bindLikeButton(userId);
+
+            // 绑定分享按钮事件
+            bindShareButton(userId);
 
             // 绑定评分按钮事件
             bindRateButton(userId, interactionData);
@@ -1712,6 +1750,8 @@
                     data.likes = (data.likes || 0) + 1;
                     updateLikeButtonState(true);
                     showToast('点赞成功！');
+                    // 记录用户点赞次数（用于徽章统计）
+                    recordUserLike(userId);
                 }
 
                 const likesEl = document.getElementById('interaction-likes');
@@ -1722,7 +1762,103 @@
             });
         }
 
-        let _rateBtnBound = false; // 防止重复绑定
+        let _shareBtnBound = false; // 防止重复绑定
+
+        function bindShareButton(userId) {
+            const btn = document.getElementById('btn-share');
+            if (!btn) return;
+            if (_shareBtnBound) return;
+            _shareBtnBound = true;
+
+            btn.addEventListener('click', async () => {
+                const data = getCourseInteractionData();
+                
+                // 增加分享计数
+                data.shares = (data.shares || 0) + 1;
+                
+                // 记录用户分享次数
+                if (!data.userShares[userId]) data.userShares[userId] = 0;
+                data.userShares[userId]++;
+
+                // 更新分享数显示
+                const sharesEl = document.getElementById('interaction-shares');
+                if (sharesEl) sharesEl.textContent = data.shares;
+
+                await saveCourseInteractionData(data);
+                
+                // 记录分享到用户学习数据（用于徽章统计）
+                recordUserShare(userId);
+                
+                showToast('分享成功！');
+                broadcastInteractionSync();
+            });
+        }
+
+        // 记录用户分享次数到学习数据（用于徽章统计）
+        function recordUserShare(userId) {
+            const key = `user_learning_${userId}`;
+            let learningData = window.DataAPI?.get(key);
+            if (!learningData) {
+                learningData = {
+                    totalHours: 0, totalSeconds: 0, completedCourses: [],
+                    videoProgress: {}, lastStudyTime: null, studyDates: [], studyRecords: [],
+                    shares: 0, ratings: 0, likes: 0
+                };
+            }
+            
+            // 兼容旧数据
+            if (learningData.shares === undefined) learningData.shares = 0;
+            if (learningData.ratings === undefined) learningData.ratings = 0;
+            if (learningData.likes === undefined) learningData.likes = 0;
+            
+            learningData.shares++;
+            
+            if (window.DataAPI) window.DataAPI.set(key, learningData);
+        }
+
+        // 记录用户评分次数到学习数据（用于徽章统计）
+        function recordUserRating(userId) {
+            const key = `user_learning_${userId}`;
+            let learningData = window.DataAPI?.get(key);
+            if (!learningData) {
+                learningData = {
+                    totalHours: 0, totalSeconds: 0, completedCourses: [],
+                    videoProgress: {}, lastStudyTime: null, studyDates: [], studyRecords: [],
+                    shares: 0, ratings: 0, likes: 0
+                };
+            }
+            
+            // 兼容旧数据
+            if (learningData.shares === undefined) learningData.shares = 0;
+            if (learningData.ratings === undefined) learningData.ratings = 0;
+            if (learningData.likes === undefined) learningData.likes = 0;
+            
+            learningData.ratings++;
+            
+            if (window.DataAPI) window.DataAPI.set(key, learningData);
+        }
+
+        // 记录用户点赞次数到学习数据（用于徽章统计）
+        function recordUserLike(userId) {
+            const key = `user_learning_${userId}`;
+            let learningData = window.DataAPI?.get(key);
+            if (!learningData) {
+                learningData = {
+                    totalHours: 0, totalSeconds: 0, completedCourses: [],
+                    videoProgress: {}, lastStudyTime: null, studyDates: [], studyRecords: [],
+                    shares: 0, ratings: 0, likes: 0
+                };
+            }
+            
+            // 兼容旧数据
+            if (learningData.shares === undefined) learningData.shares = 0;
+            if (learningData.ratings === undefined) learningData.ratings = 0;
+            if (learningData.likes === undefined) learningData.likes = 0;
+            
+            learningData.likes++;
+            
+            if (window.DataAPI) window.DataAPI.set(key, learningData);
+        }
 
         function setRateButtonRated(btn, score) {
             btn.classList.add('opacity-75', 'cursor-not-allowed', 'pointer-events-none', 'bg-gray-300', 'text-gray-600');
@@ -1827,6 +1963,9 @@
 
                 // 锁定按钮
                 setRateButtonRated(btn, currentRatingScore);
+
+                // 记录用户评分次数（用于徽章统计）
+                recordUserRating(userId);
 
                 broadcastInteractionSync();
 
@@ -2280,39 +2419,68 @@
         }
 
         // ==================== 初始化 ====================
+        function showPageError(title, message) {
+            const els = {
+                breadcrumbCat: document.getElementById('breadcrumb-category'),
+                breadcrumbTitle: document.getElementById('breadcrumb-title'),
+                courseTitle: document.getElementById('player-course-title'),
+                description: document.getElementById('player-course-description'),
+                chapterList: document.getElementById('chapter-list'),
+                chapterCount: document.getElementById('chapter-count'),
+                lecturerContent: document.getElementById('lecturer-info-content'),
+                duration: document.getElementById('player-duration'),
+                views: document.getElementById('player-views'),
+                rating: document.getElementById('player-rating')
+            };
+            if (els.breadcrumbCat) els.breadcrumbCat.textContent = '出错';
+            if (els.breadcrumbTitle) els.breadcrumbTitle.textContent = title || '无法加载';
+            if (els.courseTitle) els.courseTitle.textContent = title || '无法加载课程';
+            if (els.description) els.description.textContent = message || '请检查网络连接后刷新页面，或返回课程中心选择其他课程';
+            if (els.chapterList) els.chapterList.innerHTML = '<div class="text-center py-8 text-gray-400"><i class="fa fa-exclamation-triangle text-3xl mb-2 block"></i><p>' + (title || '加载失败') + '</p><p class="text-xs text-gray-400 mt-1">' + (message || '') + '</p><a href="course.html" class="inline-block mt-3 text-primary hover:underline">返回课程中心</a></div>';
+            if (els.chapterCount) els.chapterCount.textContent = '0课时';
+            if (els.lecturerContent) els.lecturerContent.innerHTML = '<div class="text-center py-4 text-gray-400"><i class="fa fa-user-circle text-3xl mb-2 block"></i><p>暂无讲师信息</p></div>';
+            if (els.duration) els.duration.textContent = '总时长：--';
+            if (els.views) els.views.textContent = '0人学习';
+            if (els.rating) els.rating.textContent = '0.0';
+            document.title = '课程播放 - 游雁学院';
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('[Player] 页面开始初始化...');
-            checkAuthAndUpdateUI();
-            loadLearningSettings();
-            initKeyboardShortcuts();
+            try {
+                console.log('[Player] 页面开始初始化...');
+                checkAuthAndUpdateUI();
+                loadLearningSettings();
+                initKeyboardShortcuts();
 
-            console.log('[Player] 正在初始化DataAPI...');
-            if (window.DataAPI?.init) await window.DataAPI.init();
-            console.log('[Player] DataAPI初始化完成');
+                console.log('[Player] 正在初始化DataAPI...');
+                if (window.DataAPI?.init) await window.DataAPI.init();
+                console.log('[Player] DataAPI初始化完成');
 
-            console.log('[Player] 正在加载课程数据...');
-            const course = await loadCourseData();
-            
-            if (course) {
-                console.log('[Player] 课程加载成功，开始渲染页面...');
-                populatePlayerPage(course);
-                loadCurrentSessionStudyTime();
-                bindContinueButton();
-                updateContinueButtonText();
-                initVolumeSlider();
+                console.log('[Player] 正在加载课程数据...');
+                const course = await loadCourseData();
+                
+                if (course) {
+                    console.log('[Player] 课程加载成功，开始渲染页面...');
+                    populatePlayerPage(course);
+                    loadCurrentSessionStudyTime();
+                    bindContinueButton();
+                    updateContinueButtonText();
+                    initVolumeSlider();
 
-                // 自动播放第一个视频（或从进度恢复）
-                setTimeout(() => {
-                    playChapterVideo(0);
-                }, 300);
-            } else {
-                document.getElementById('player-course-title').textContent = '未找到课程';
-                document.getElementById('chapter-list').innerHTML =
-                    '<div class="text-center py-8 text-gray-400"><i class="fa fa-exclamation-triangle text-3xl mb-2 block"></i><p>未找到该课程，可能已被删除</p><a href="course.html" class="text-primary hover:underline">返回课程中心</a></div>';
+                    // 自动播放第一个视频（或从进度恢复）
+                    setTimeout(() => {
+                        playChapterVideo(0);
+                    }, 300);
+                } else {
+                    showPageError('未找到课程', '该课程可能已被删除或课程ID不存在');
+                }
+
+                applyLearningSettings();
+                updateStudyTimeDisplay();
+            } catch (e) {
+                console.error('[Player] 页面初始化异常:', e);
+                showPageError('页面加载异常', '初始化时发生错误: ' + (e.message || '未知错误'));
             }
-
-            applyLearningSettings();
-            updateStudyTimeDisplay();
         });
         
         window.addEventListener('beforeunload', () => {

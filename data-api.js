@@ -654,10 +654,17 @@
                     completedCourses: [],
                     videoProgress: {},
                     lastStudyTime: null,
-                    studyDates: []
+                    studyDates: [],
+                    ratings: 0,
+                    shares: 0,
+                    likes: 0
                 };
                 this.set(key, data);
             }
+            // 兼容旧数据：如果没有新字段，初始化为0
+            if (data.ratings === undefined) data.ratings = 0;
+            if (data.shares === undefined) data.shares = 0;
+            if (data.likes === undefined) data.likes = 0;
             return data;
         },
 

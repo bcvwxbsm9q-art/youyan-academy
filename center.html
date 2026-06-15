@@ -202,10 +202,7 @@
                                 <img id="profile-avatar" src="" class="hidden w-full h-full object-cover">
                                 <i class="fa fa-user text-white text-5xl" id="profile-avatar-default"></i>
                             </div>
-                            <!-- 在线状态 -->
-                            <div class="absolute bottom-1 right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white flex items-center justify-center">
-                                <div class="w-2 h-2 bg-white rounded-full"></div>
-                            </div>
+
                         </div>
                         <!-- 等级徽章 -->
                         <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full border-2 border-white shadow-lg flex items-center gap-1">
@@ -779,49 +776,51 @@
         // 徽章定义
         // 徽章分类配置
 const BADGES = [
-            // 学习时长类 (6个)
+            // 学习时长类 (6个) - 一年内可达：每天1.4小时=500小时/年
+            { id: 'learner-1', name: '学习新手', icon: 'fa-hourglass-start', color: 'gray', desc: '累计学习1小时', condition: (u, d) => d.hours >= 1 },
             { id: 'learner-10', name: '学习达人', icon: 'fa-fire', color: 'orange', desc: '累计学习10小时', condition: (u, d) => d.hours >= 10 },
             { id: 'learner-50', name: '学习高手', icon: 'fa-rocket', color: 'red', desc: '累计学习50小时', condition: (u, d) => d.hours >= 50 },
-            { id: 'learner-100', name: '学习专家', icon: 'fa-user-graduate', color: 'blue', desc: '累计学习100小时', condition: (u, d) => d.hours >= 100 },
-            { id: 'learner-300', name: '学习大师', icon: 'fa-award', color: 'purple', desc: '累计学习300小时', condition: (u, d) => d.hours >= 300 },
-            { id: 'learner-500', name: '学习宗师', icon: 'fa-gem', color: 'indigo', desc: '累计学习500小时', condition: (u, d) => d.hours >= 500 },
-            { id: 'learner-1000', name: '学习传奇', icon: 'fa-crown', color: 'yellow', desc: '累计学习1000小时', condition: (u, d) => d.hours >= 1000 },
+            { id: 'learner-100', name: '学习专家', icon: 'fa-star', color: 'blue', desc: '累计学习100小时', condition: (u, d) => d.hours >= 100 },
+            { id: 'learner-300', name: '学习大师', icon: 'fa-trophy', color: 'purple', desc: '累计学习300小时', condition: (u, d) => d.hours >= 300 },
+            { id: 'learner-500', name: '学习宗师', icon: 'fa-diamond', color: 'indigo', desc: '累计学习500小时', condition: (u, d) => d.hours >= 500 },
             
-            // 课程完成类 (5个)
-            { id: 'course-1', name: '初出茅庐', icon: 'fa-star', color: 'yellow', desc: '完成第一门课程', condition: (u, d) => d.completed >= 1 },
-            { id: 'course-5', name: '学霸', icon: 'fa-graduation-cap', color: 'blue', desc: '完成5门课程', condition: (u, d) => d.completed >= 5 },
-            { id: 'course-10', name: '课程达人', icon: 'fa-book-open', color: 'teal', desc: '完成10门课程', condition: (u, d) => d.completed >= 10 },
+            // 课程完成类 (6个) - 一年内可达：每月2-3门
+            { id: 'course-1', name: '课程新手', icon: 'fa-star', color: 'yellow', desc: '完成第一门课程', condition: (u, d) => d.completed >= 1 },
+            { id: 'course-5', name: '课程达人', icon: 'fa-graduation-cap', color: 'blue', desc: '完成5门课程', condition: (u, d) => d.completed >= 5 },
+            { id: 'course-10', name: '课程高手', icon: 'fa-book', color: 'teal', desc: '完成10门课程', condition: (u, d) => d.completed >= 10 },
             { id: 'course-20', name: '课程专家', icon: 'fa-university', color: 'purple', desc: '完成20门课程', condition: (u, d) => d.completed >= 20 },
-            { id: 'course-50', name: '课程大师', icon: 'fa-trophy', color: 'yellow', desc: '完成50门课程', condition: (u, d) => d.completed >= 50 },
+            { id: 'course-30', name: '课程大师', icon: 'fa-trophy', color: 'yellow', desc: '完成30门课程', condition: (u, d) => d.completed >= 30 },
+            { id: 'course-50', name: '课程宗师', icon: 'fa-graduation-cap', color: 'red', desc: '完成50门课程', condition: (u, d) => d.completed >= 50 },
             
-            // 连续学习类 (4个)
-            { id: 'streak-3', name: '初露锋芒', icon: 'fa-seedling', color: 'green', desc: '连续学习3天', condition: (u, d) => d.streak >= 3 },
+            // 连续学习类 (6个) - 合理递进
+            { id: 'streak-3', name: '初露锋芒', icon: 'fa-leaf', color: 'green', desc: '连续学习3天', condition: (u, d) => d.streak >= 3 },
             { id: 'streak-7', name: '坚持不懈', icon: 'fa-calendar-check-o', color: 'green', desc: '连续学习7天', condition: (u, d) => d.streak >= 7 },
-            { id: 'streak-30', name: '持之以恒', icon: 'fa-medal', color: 'purple', desc: '连续学习30天', condition: (u, d) => d.streak >= 30 },
-            { id: 'streak-100', name: '百年树人', icon: 'fa-tree', color: 'green', desc: '连续学习100天', condition: (u, d) => d.streak >= 100 },
+            { id: 'streak-30', name: '持之以恒', icon: 'fa-flag-checkered', color: 'purple', desc: '连续学习30天', condition: (u, d) => d.streak >= 30 },
+            { id: 'streak-60', name: '两月达人', icon: 'fa-calendar', color: 'orange', desc: '连续学习60天', condition: (u, d) => d.streak >= 60 },
+            { id: 'streak-90', name: '季度学霸', icon: 'fa-trophy', color: 'blue', desc: '连续学习90天', condition: (u, d) => d.streak >= 90 },
+            { id: 'streak-100', name: '百日树人', icon: 'fa-tree', color: 'green', desc: '连续学习100天', condition: (u, d) => d.streak >= 100 },
             
-            // 特殊时段类 (4个)
+            // 特殊时段类 (3个) - 覆盖全天时段
             { id: 'early-bird', name: '早起鸟', icon: 'fa-sun-o', color: 'yellow', desc: '早上6点前学习', condition: (u, d) => d.earlyStudy },
             { id: 'night-owl', name: '夜猫子', icon: 'fa-moon-o', color: 'indigo', desc: '晚上10点后学习', condition: (u, d) => d.nightStudy },
-            { id: 'midnight-warrior', name: '深夜苦读', icon: 'fa-moon', color: 'blue', desc: '凌晨12点后学习', condition: (u, d) => d.midnightStudy },
             { id: 'weekend-warrior', name: '周末充电', icon: 'fa-coffee', color: 'orange', desc: '周末坚持学习', condition: (u, d) => d.weekendStudy },
             
-            // 考试类 (3个)
+            // 考试类 (3个) - 考试相关成就
             { id: 'first-exam', name: '初试锋芒', icon: 'fa-pencil', color: 'blue', desc: '首次参加考试', condition: (u, d) => d.examCount >= 1 },
-            { id: 'exam-pass', name: '金榜题名', icon: 'fa-certificate', color: 'green', desc: '通过一次考试', condition: (u, d) => d.examPassed >= 1 },
+            { id: 'exam-pass', name: '金榜题名', icon: 'fa-certificate', color: 'green', desc: '通过3场考试', condition: (u, d) => d.examPassed >= 3 },
             { id: 'perfect-score', name: '满分学霸', icon: 'fa-check-circle', color: 'green', desc: '考试获得满分', condition: (u, d) => d.perfectScore },
             
-            // 社交互动类 (3个)
-            { id: 'commenter', name: '活跃分子', icon: 'fa-comments', color: 'pink', desc: '发表5条评论', condition: (u, d) => d.comments >= 5 },
-            { id: 'sharer', name: '分享达人', icon: 'fa-share-alt', color: 'blue', desc: '分享10次课程', condition: (u, d) => d.shares >= 10 },
-            { id: 'liker', name: '点赞狂人', icon: 'fa-heart', color: 'red', desc: '点赞50次', condition: (u, d) => d.likes >= 50 },
+            // 社交互动类 (3个) - 评分、分享、点赞
+            { id: 'rater', name: '评分达人', icon: 'fa-star-half-o', color: 'blue', desc: '评分5次课程', condition: (u, d) => d.ratings >= 5 },
+            { id: 'sharer', name: '分享达人', icon: 'fa-share-alt', color: 'green', desc: '分享5次课程', condition: (u, d) => d.shares >= 5 },
+            { id: 'liker', name: '点赞达人', icon: 'fa-heart', color: 'red', desc: '点赞5次课程', condition: (u, d) => d.likes >= 5 },
             
-            // 里程碑类 (5个)
-            { id: 'day-7', name: '新人报到', icon: 'fa-hand-sparkles', color: 'green', desc: '注册满7天', condition: (u, d) => d.days >= 7 },
+            // 里程碑类 (4个) - 注册时间纪念
+            { id: 'day-7', name: '新人报到', icon: 'fa-hand-o-up', color: 'green', desc: '注册满7天', condition: (u, d) => d.days >= 7 },
             { id: 'day-30', name: '月度之星', icon: 'fa-star-half-o', color: 'orange', desc: '注册满30天', condition: (u, d) => d.days >= 30 },
             { id: 'day-100', name: '百日纪念', icon: 'fa-birthday-cake', color: 'pink', desc: '注册满100天', condition: (u, d) => d.days >= 100 },
-            { id: 'day-365', name: '资深学员', icon: 'fa-crown', color: 'yellow', desc: '注册满一年', condition: (u, d) => d.days >= 365 },
-            { id: 'day-1000', name: '千日老兵', icon: 'fa-shield', color: 'red', desc: '注册满1000天', condition: (u, d) => d.days >= 1000 }
+            { id: 'day-200', name: '半年纪念', icon: 'fa-calendar-check-o', color: 'purple', desc: '注册满200天', condition: (u, d) => d.days >= 200 },
+            { id: 'day-365', name: '资深学员', icon: 'fa-graduation-cap', color: 'yellow', desc: '注册满一年', condition: (u, d) => d.days >= 365 }
         ];
 
         // 初始化
@@ -1794,9 +1793,6 @@ const BADGES = [
                 <div class="flex items-center gap-4">
                     <div class="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg relative">
                         ${levelInfo.level}
-                        <div class="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center text-xs shadow">
-                            <i class="fa fa-crown text-yellow-500"></i>
-                        </div>
                     </div>
                     <div class="flex-1">
                         <div class="flex justify-between mb-2">

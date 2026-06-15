@@ -803,7 +803,7 @@
             <i class="fas fa-file-alt mr-1.5 opacity-70"></i>试卷管理
           </button>
           <button onclick="switchSubTab('exams', 'exam-mgmt')" class="subtab-btn px-5 py-2.5 rounded-lg text-sm font-medium transition-all">
-            <i class="fas fa-tasks mr-1.5 opacity-70"></i>考试管理
+            <i class="fas fa-tasks mr-1.5 opacity-70"></i>考试安排
           </button>
         </div>
 
@@ -1890,6 +1890,9 @@
       </div>
       <!-- 筛选栏 -->
       <div class="px-6 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0 flex gap-3 flex-wrap">
+        <select id="paperQpBankFilter" onchange="loadPaperQuestionPool()" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none min-w-[160px]">
+          <option value="">全部题库</option>
+        </select>
         <select id="paperQpTypeFilter" onchange="loadPaperQuestionPool()" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
           <option value="all">全部题型</option>
           <option value="single">单选题</option>
@@ -1930,6 +1933,50 @@
           <button type="button" onclick="closePaperQuestionPicker()" class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm transition">取消</button>
           <button type="button" onclick="confirmPaperQuestionPick()" class="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm transition">确认添加</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 分数设置弹窗 ========== -->
+  <div id="scoreSettingsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden m-4 flex flex-col shadow-2xl">
+      <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-sliders-h mr-2 text-indigo-500"></i>分数设置 (<span id="ssTotalScore">0</span> 分)</h3>
+        <button onclick="closeScoreSettingsModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <!-- Tab 切换 -->
+      <div class="flex border-b border-slate-200 px-6 flex-shrink-0">
+        <button id="ssTabType" onclick="switchScoreSettingsTab('type')" class="px-4 py-3 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600 transition">按题型设分</button>
+        <button id="ssTabQuestion" onclick="switchScoreSettingsTab('question')" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition">按试题设分</button>
+      </div>
+      <!-- 按题型设分 -->
+      <div id="ssTypePanel" class="flex-1 overflow-y-auto p-6">
+        <div class="space-y-4" id="ssTypeList"></div>
+        <p class="text-xs text-slate-400 mt-4">提示：若填空或简答题目设置为按题给分，则每空(或关键词)的分值为该题的平均值。</p>
+      </div>
+      <!-- 按试题设分 -->
+      <div id="ssQuestionPanel" class="flex-1 overflow-y-auto p-6 hidden">
+        <table class="w-full">
+          <thead class="sticky top-0 bg-white">
+            <tr class="text-left text-xs text-slate-500 border-b border-slate-200">
+              <th class="py-2 flex-1">题目</th>
+              <th class="py-2 w-16 text-center">题型</th>
+              <th class="py-2 w-20 text-center">分值</th>
+              <th class="py-2 w-24 text-center">分值设置</th>
+              <th class="py-2 w-28 text-center">漏选设置分值</th>
+            </tr>
+          </thead>
+          <tbody id="ssQuestionList" class="divide-y divide-slate-100 text-sm"></tbody>
+        </table>
+        <div id="ssQuestionEmpty" class="py-12 text-center text-slate-400">
+          <i class="fas fa-inbox text-4xl mb-3 block opacity-30"></i>
+          <p>暂无数据</p>
+        </div>
+      </div>
+      <!-- 底部按钮 -->
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex-shrink-0 flex justify-end gap-2">
+        <button onclick="closeScoreSettingsModal()" class="px-5 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm transition">取消</button>
+        <button onclick="applyScoreSettings()" class="px-5 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm transition font-medium">确定</button>
       </div>
     </div>
   </div>
@@ -7026,7 +7073,7 @@
                 <i class="fas fa-clipboard-check text-indigo-500 text-sm"></i>
               </div>
               <div>
-                <a href="javascript:;" onclick="openExamModal(${exam.id})" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700">${escHtml(exam.title)}</a>
+                <a href="javascript:;" onclick="openExamEditor(${exam.id})" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700">${escHtml(exam.title)}</a>
                 <p class="text-xs text-slate-400 mt-0.5">${exam.questionCount || 0} 道题</p>
               </div>
             </div>
@@ -7046,7 +7093,7 @@
           </td>
           <td class="pl-3 pr-5 py-4">
             <div class="flex items-center gap-2 text-sm">
-              <a href="javascript:;" onclick="openExamModal(${exam.id})" class="text-indigo-500 hover:text-indigo-600">编辑</a>
+              <a href="javascript:;" onclick="openExamEditor(${exam.id})" class="text-indigo-500 hover:text-indigo-600">编辑</a>
               <a href="javascript:;" onclick="viewExamResults(${exam.id}, '${escHtml(exam.title)}')" class="text-indigo-500 hover:text-indigo-600">成绩</a>
               ${exam.status === 'draft' ? `<a href="javascript:;" onclick="publishExam(${exam.id})" class="text-emerald-500 hover:text-emerald-600">发布</a>` : ''}
               ${exam.status === 'published' ? `<a href="javascript:;" onclick="closeExam(${exam.id})" class="text-amber-500 hover:text-amber-600">结束</a>` : ''}
@@ -7055,6 +7102,211 @@
           </td>
         </tr>`;
       }).join('');
+    }
+
+    // ========== 考试编辑页（全屏覆盖视图） ==========
+    let examEditorData = null;
+    let examEditorQuestions = [];
+    let examEditorCurrentIdx = 0;
+
+    async function openExamEditor(examId) {
+      console.log('[ExamEditor] openExamEditor called with id:', examId, typeof examId);
+      try {
+        const examRes = await fetch('/api/exams');
+        const allExams = await examRes.json();
+        console.log('[ExamEditor] fetched exams:', allExams.length);
+        examEditorData = allExams.find(e => e.id === examId || e.id === Number(examId) || String(e.id) === String(examId));
+        console.log('[ExamEditor] found exam:', examEditorData ? examEditorData.title : 'NOT FOUND');
+        if (!examEditorData) { toast('考试不存在', 'error'); return; }
+
+        const qRes = await fetch('/api/exams/' + examId + '/questions');
+        const qResult = await qRes.json();
+        console.log('[ExamEditor] fetched questions:', qResult);
+        examEditorQuestions = (qResult.questions || []).sort((a, b) => (a.order || 0) - (b.order || 0));
+        examEditorCurrentIdx = 0;
+
+        // 移除旧的编辑器（如果存在）
+        const old = document.getElementById('examEditorOverlay');
+        if (old) old.remove();
+
+        // 创建全屏覆盖层
+        const overlay = document.createElement('div');
+        overlay.id = 'examEditorOverlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#f1f5f9;overflow-y:auto;';
+        document.body.appendChild(overlay);
+        renderExamEditor();
+        console.log('[ExamEditor] editor rendered successfully');
+      } catch (e) {
+        console.error('[ExamEditor] 打开考试编辑页失败:', e);
+        toast('加载失败: ' + e.message, 'error');
+      }
+    }
+
+    function closeExamEditor() {
+      const overlay = document.getElementById('examEditorOverlay');
+      if (overlay) overlay.remove();
+      examEditorData = null;
+      examEditorQuestions = [];
+      loadExamMgmtList();
+    }
+
+    function renderExamEditor() {
+      const overlay = document.getElementById('examEditorOverlay');
+      if (!overlay || !examEditorData) return;
+      const totalScore = examEditorQuestions.reduce((s, q) => s + (q.score || q.questionDetail?.score || 1), 0);
+      const qCount = examEditorQuestions.length;
+      const typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
+
+      // 渲染当前题目
+      const currentQ = examEditorQuestions[examEditorCurrentIdx];
+      let questionHtml = '';
+      if (currentQ) {
+        const qd = currentQ.questionDetail || currentQ;
+        const options = qd.options || [];
+        const answer = qd.answer;
+        const score = currentQ.score || qd.score || 1;
+        const answerArr = Array.isArray(answer) ? answer : (answer != null ? [String(answer)] : []);
+
+        questionHtml = '<div class="mb-2 text-sm text-slate-500">' + '\u3010' + (typeNames[qd.type] || qd.type) + '\u3011</div>';
+        questionHtml += '<h3 class="text-base font-semibold text-slate-800 mb-4 leading-relaxed">' + escHtml(qd.title || qd.content || '(无标题)') + ' <span class="text-slate-400 font-normal">(' + score + ' \u5206)</span></h3>';
+        if (options.length > 0) {
+          questionHtml += '<div class="space-y-3">';
+          for (var oi = 0; oi < options.length; oi++) {
+            var letter = String.fromCharCode(65 + oi);
+            var isCorrect = answerArr.indexOf(letter) !== -1;
+            var cls = isCorrect ? 'text-indigo-600' : 'text-slate-600';
+            var bgCls = isCorrect ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200';
+            questionHtml += '<div class="flex items-center gap-3 p-3 rounded-lg border ' + bgCls + ' ' + cls + '">';
+            questionHtml += '<span class="font-bold flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ' + (isCorrect ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-600') + ' text-sm">' + letter + '</span>';
+            questionHtml += '<span class="flex-1">' + escHtml(options[oi]) + '</span>';
+            if (isCorrect) questionHtml += '<i class="fas fa-check-circle text-indigo-500"></i>';
+            questionHtml += '</div>';
+          }
+          questionHtml += '</div>';
+        } else if (qd.type === 'judge') {
+          var judgeAnswer = String(answer);
+          questionHtml += '<div class="space-y-2">';
+          questionHtml += '<div class="p-3 rounded-lg border ' + (judgeAnswer === 'true' || judgeAnswer === '1' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500') + '"><i class="fas fa-check mr-2"></i>\u6b63\u786e</div>';
+          questionHtml += '<div class="p-3 rounded-lg border ' + (judgeAnswer === 'false' || judgeAnswer === '0' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500') + '"><i class="fas fa-times mr-2"></i>\u9519\u8bef</div>';
+          questionHtml += '</div>';
+        } else if (qd.type === 'fill') {
+          questionHtml += '<div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800"><strong>\u53c2\u8003\u7b54\u6848\uff1a</strong>' + escHtml(Array.isArray(answer) ? answer.join(', ') : String(answer || '')) + '</div>';
+        } else if (qd.type === 'essay') {
+          questionHtml += '<div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800"><strong>\u53c2\u8003\u7b54\u6848\uff1a</strong><br>' + escHtml(String(answer || '')) + '</div>';
+        }
+      } else {
+        questionHtml = '<div class="text-center py-20 text-slate-400"><i class="fas fa-inbox text-5xl mb-4 block opacity-30"></i><p class="text-lg">\u6682\u65e0\u9898\u76ee</p><p class="text-sm mt-2">\u8bf7\u4ece\u5de6\u4fa7\u70b9\u51fb\u201c\u9898\u5e93\u9009\u9898\u201d\u6dfb\u52a0\u8bd5\u9898</p></div>';
+      }
+
+      // 构建题号按钮
+      var numButtons = '';
+      for (var i = 0; i < examEditorQuestions.length; i++) {
+        var activeCls = (i === examEditorCurrentIdx) ? 'background:#6366f1;color:#fff;box-shadow:0 2px 8px rgba(99,102,241,0.3);' : 'background:#f1f5f9;color:#64748b;';
+        numButtons += '<button onclick="switchExamQuestion(' + i + ')" style="' + activeCls + '" class="w-10 h-10 rounded-lg text-sm font-medium transition hover:opacity-80">' + (i + 1) + '</button>';
+      }
+
+      overlay.innerHTML = ''
+        + '<div style="min-height:100vh;display:flex;flex-direction:column;">'
+        + '  <div style="background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;">'
+        + '    <div style="display:flex;align-items:center;gap:16px;flex:1;">'
+        + '      <button onclick="closeExamEditor()" style="display:flex;align-items:center;gap:6px;font-size:14px;color:#64748b;background:none;border:none;cursor:pointer;padding:6px 12px;border-radius:8px;" onmouseover="this.style.background=\'#f1f5f9\'" onmouseout="this.style.background=\'none\'">'
+        + '        <i class="fas fa-arrow-left"></i> \u8fd4\u56de'
+        + '      </button>'
+        + '      <div style="width:1px;height:24px;background:#e2e8f0;"></div>'
+        + '      <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin:0;">' + escHtml(examEditorData.title) + '</h2>'
+        + '    </div>'
+        + '    <div style="display:flex;align-items:center;gap:16px;font-size:14px;color:#64748b;">'
+        + '      <span>\u603b\u5206\uff1a<strong style="color:#1e293b;">' + totalScore.toFixed(1) + '</strong></span>'
+        + '      <span>\u8bd5\u9898\uff1a<strong style="color:#1e293b;">' + qCount + '</strong></span>'
+        + '      <button onclick="openExamEditorScoreSettings()" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#64748b;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'">'
+        + '        <i class="fas fa-cog"></i> \u8bbe\u7f6e'
+        + '      </button>'
+        + '      <button onclick="saveExamEditorQuestions()" style="padding:6px 20px;background:#6366f1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;" onmouseover="this.style.background=\'#4f46e5\'" onmouseout="this.style.background=\'#6366f1\'">'
+        + '        <i class="fas fa-check" style="margin-right:4px;"></i>\u66f4\u65b0'
+        + '      </button>'
+        + '    </div>'
+        + '  </div>'
+        + '  <div style="display:flex;flex:1;padding:24px;gap:24px;max-width:1200px;width:100%;margin:0 auto;">'
+        + '    <div style="width:220px;flex-shrink:0;">'
+        + '      <div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:20px;position:sticky;top:80px;">'
+        + '        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
+        + '          <h4 style="font-size:14px;font-weight:600;color:#334155;margin:0;">\u8bd5\u9898\u5217\u8868 (' + qCount + ')</h4>'
+        + '          <button onclick="openExamEditorScoreSettings()" style="font-size:12px;color:#6366f1;background:none;border:none;cursor:pointer;" onmouseover="this.style.color=\'#4f46e5\'" onmouseout="this.style.color=\'#6366f1\'">'
+        + '            <i class="fas fa-sliders-h" style="margin-right:4px;"></i>\u5206\u6570\u8bbe\u7f6e'
+        + '          </button>'
+        + '        </div>'
+        + '        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;">' + numButtons + '</div>'
+        + '        <div style="display:flex;flex-direction:column;gap:8px;">'
+        + '          <button onclick="openExamEditorQuestionPicker()" style="width:100%;padding:10px;font-size:13px;border:1px solid #c7d2fe;color:#4f46e5;border-radius:8px;background:#fff;cursor:pointer;font-weight:600;" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'">'
+        + '            <i class="fas fa-plus" style="margin-right:6px;"></i>\u9898\u5e93\u9009\u9898'
+        + '          </button>'
+        + '          <button onclick="toast(\'\u5bfc\u5165\u529f\u80fd\u5f00\u53d1\u4e2d\', \'info\')" style="width:100%;padding:10px;font-size:13px;border:1px solid #e2e8f0;color:#64748b;border-radius:8px;background:#fff;cursor:pointer;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'">'
+        + '            <i class="fas fa-file-import" style="margin-right:6px;"></i>\u5bfc\u5165\u8bd5\u9898'
+        + '          </button>'
+        + '        </div>'
+        + '      </div>'
+        + '    </div>'
+        + '    <div style="flex:1;background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:32px;min-height:400px;">'
+        + questionHtml
+        + '    </div>'
+        + '  </div>'
+        + '</div>';
+    }
+
+    function switchExamQuestion(idx) {
+      examEditorCurrentIdx = idx;
+      renderExamEditor();
+    }
+
+    function openExamEditorQuestionPicker() {
+      paperQuestions = examEditorQuestions.map(function(q) {
+        return {
+          questionId: q.questionId || q.id,
+          score: q.score || (q.questionDetail && q.questionDetail.score) || 5,
+          partialScore: q.partialScore || 0,
+          content: (q.questionDetail && q.questionDetail.title) || (q.questionDetail && q.questionDetail.content) || q.content || '(无标题)',
+          type: (q.questionDetail && q.questionDetail.type) || q.type || 'single'
+        };
+      });
+      openPaperQuestionPicker();
+    }
+
+    function openExamEditorScoreSettings() {
+      if (!examEditorQuestions.length) {
+        toast('请先添加题目再设置分数', 'error');
+        return;
+      }
+      paperQuestions = examEditorQuestions.map(function(q) {
+        return {
+          questionId: q.questionId || q.id,
+          score: q.score || (q.questionDetail && q.questionDetail.score) || 5,
+          partialScore: q.partialScore || 0,
+          content: (q.questionDetail && q.questionDetail.title) || (q.questionDetail && q.questionDetail.content) || q.content || '(无标题)',
+          type: (q.questionDetail && q.questionDetail.type) || q.type || 'single'
+        };
+      });
+      openScoreSettingsModal();
+    }
+
+    async function saveExamEditorQuestions() {
+      if (!examEditorData) return;
+      try {
+        var questions = examEditorQuestions.map(function(q, i) {
+          return {
+            questionId: q.questionId || q.id,
+            score: q.score || (q.questionDetail && q.questionDetail.score) || 5,
+            order: i
+          };
+        });
+        await fetch('/api/exams/' + examEditorData.id + '/questions', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questions: questions })
+        });
+        toast('更新成功');
+      } catch (e) {
+        toast('更新失败', 'error');
+      }
     }
 
     function onExamSearch() {
@@ -7301,7 +7553,7 @@
       }
     }
 
-    async function editExam(id) { openExamModal(id); }
+    async function editExam(id) { openExamEditor(id); }
 
     async function deleteExam(id) {
       if (!confirm('确定要删除这个考试吗?相关成绩记录也将被清除。')) return;
@@ -7873,38 +8125,41 @@
       const paper = papersAllData.find(p => p.id === id);
       if (!paper) { toast('试卷不存在', 'error'); return; }
       editingPaperId = id;
-      // 加载题目详情
-      let allQuestions = [];
-      if (window.dataSync && window.dataSync.getData) {
-        allQuestions = window.dataSync.getData('questions') || [];
-      } else {
-        allQuestions = JSON.parse(localStorage.getItem('questions') || '[]');
-      }
-      paperQuestions = (paper.questions || []).map((pq, idx) => {
-        const q = allQuestions.find(qq => qq.id === pq.questionId);
-        return {
-          questionId: pq.questionId,
-          score: pq.score || 5,
-          order: idx,
-          content: q ? (q.title || q.content) : '(题目未找到)',
-          type: q ? q.type : 'single'
-        };
-      });
-      // 隐藏试卷列表，显示编辑页
-      document.getElementById('paperListView').classList.add('hidden');
-      const editorEl = document.getElementById('paperEditorView');
-      if (!editorEl) {
-        // 动态创建编辑页 DOM
-        createPaperEditorView();
-      }
-      document.getElementById('paperEditorView').classList.remove('hidden');
-      // 填充编辑页数据
-      document.getElementById('peTitle').textContent = paper.name;
-      document.getElementById('peCategory').textContent = paper.categoryName || paper.category || '未分类';
-      document.getElementById('peDesc').textContent = paper.description || '暂无说明';
-      document.getElementById('peDuration').value = paper.duration || 60;
-      document.getElementById('pePassScore').value = paper.passScore || 60;
-      renderPaperEditorQuestions();
+      // 从API加载题目详情
+      fetch('/api/questions?pageSize=9999')
+        .then(res => res.json())
+        .then(result => {
+          const allQuestions = result.data || [];
+          paperQuestions = (paper.questions || []).map((pq, idx) => {
+            const q = allQuestions.find(qq => qq.id === pq.questionId);
+            return {
+              questionId: pq.questionId,
+              score: pq.score || 5,
+              partialScore: pq.partialScore || 0,
+              order: idx,
+              content: q ? (q.title || q.content) : '(题目未找到)',
+              type: q ? q.type : 'single'
+            };
+          });
+          // 隐藏试卷列表，显示编辑页
+          document.getElementById('paperListView').classList.add('hidden');
+          const editorEl = document.getElementById('paperEditorView');
+          if (!editorEl) {
+            createPaperEditorView();
+          }
+          document.getElementById('paperEditorView').classList.remove('hidden');
+          // 填充编辑页数据
+          document.getElementById('peTitle').textContent = paper.name;
+          document.getElementById('peCategory').textContent = paper.categoryName || paper.category || '未分类';
+          document.getElementById('peDesc').textContent = paper.description || '暂无说明';
+          document.getElementById('peDuration').value = paper.duration || 60;
+          document.getElementById('pePassScore').value = paper.passScore || 60;
+          renderPaperEditorQuestions();
+        })
+        .catch(err => {
+          console.error('加载题库数据失败:', err);
+          toast('加载题库数据失败', 'error');
+        });
     }
 
     // 创建试卷编辑页 DOM
@@ -7965,6 +8220,9 @@
             </div>
             <button onclick="openPaperQuestionPicker()" class="btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition">
               <i class="fas fa-plus mr-1.5"></i>从题库选题
+            </button>
+            <button onclick="openScoreSettingsModal()" class="px-4 py-2 text-sm border border-indigo-200 text-indigo-600 rounded-lg font-medium hover:bg-indigo-50 transition">
+              <i class="fas fa-sliders-h mr-1.5"></i>分数设置
             </button>
           </div>
         </div>
@@ -8046,6 +8304,7 @@
       paper.questions = paperQuestions.map((q, i) => ({
         questionId: q.questionId,
         score: q.score || 5,
+        partialScore: q.partialScore || 0,
         order: i
       }));
       paper.totalScore = paperQuestions.reduce((s, q) => s + (q.score || 0), 0);
@@ -8074,6 +8333,7 @@
       paper.questions = paperQuestions.map((q, i) => ({
         questionId: q.questionId,
         score: q.score || 5,
+        partialScore: q.partialScore || 0,
         order: i
       }));
       paper.status = 'published';
@@ -8172,12 +8432,28 @@
       document.getElementById('paperQpSearch').value = '';
       document.getElementById('paperQpTypeFilter').value = 'all';
       document.getElementById('paperQpDiffFilter').value = '';
+      document.getElementById('paperQpBankFilter').value = '';
       paperQpSelectedIds.clear();
       
       const modal = document.getElementById('paperQuestionPickerModal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
+      // 加载题库列表到下拉框
+      loadBankFilterOptions();
       loadPaperQuestionPool();
+    }
+
+    async function loadBankFilterOptions() {
+      const sel = document.getElementById('paperQpBankFilter');
+      try {
+        const res = await fetch('/api/question-banks');
+        const result = await res.json();
+        const banks = result.data || [];
+        sel.innerHTML = '<option value="">全部题库</option>' + 
+          banks.map(b => `<option value="${b.id}">${escHtml(b.name)}${b.questionCount ? ' (' + b.questionCount + '题)' : ''}</option>`).join('');
+      } catch (e) {
+        console.warn('加载题库列表失败:', e);
+      }
     }
 
     function closePaperQuestionPicker() {
@@ -8191,27 +8467,28 @@
       const tbody = document.getElementById('paperQuestionPoolBody');
       tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-slate-400">加载中...</td></tr>';
       
+      const bankFilter = document.getElementById('paperQpBankFilter').value;
       const typeFilter = document.getElementById('paperQpTypeFilter').value;
       const diffFilter = document.getElementById('paperQpDiffFilter').value;
       const search = document.getElementById('paperQpSearch').value.trim().toLowerCase();
       
       try {
-        // 从题库获取题目
-        let questions = [];
-        if (window.dataSync && window.dataSync.getData) {
-          questions = window.dataSync.getData('questions') || [];
-        } else {
-          questions = JSON.parse(localStorage.getItem('questions') || '[]');
-        }
+        // 构建API查询参数
+        const params = new URLSearchParams({ pageSize: '9999' });
+        if (bankFilter) params.set('bankId', bankFilter);
+        if (typeFilter !== 'all') params.set('type', typeFilter);
+        if (diffFilter) params.set('difficulty', diffFilter);
+        if (search) params.set('keyword', search);
+
+        const res = await fetch('/api/questions?' + params);
+        const result = await res.json();
+        let questions = result.data || [];
         
         // 过滤已添加的题目
-        const existingIds = new Set(paperQuestions.map(q => q.questionId));
+        const existingIds = new Set(paperQuestions.map(q => Number(q.questionId)));
         
         paperQpAllQuestions = questions.filter(q => {
           if (existingIds.has(q.id)) return false;
-          if (typeFilter !== 'all' && q.type !== typeFilter) return false;
-          if (diffFilter && q.difficulty !== diffFilter) return false;
-          if (search && !(q.title || q.content || '').toLowerCase().includes(search)) return false;
           return true;
         });
         
@@ -8249,10 +8526,11 @@
     }
 
     function togglePaperQpSelection(id) {
-      if (paperQpSelectedIds.has(id)) {
-        paperQpSelectedIds.delete(id);
+      const numId = Number(id);
+      if (paperQpSelectedIds.has(numId)) {
+        paperQpSelectedIds.delete(numId);
       } else {
-        paperQpSelectedIds.add(id);
+        paperQpSelectedIds.add(numId);
       }
       updatePaperQpCheckedCount();
     }
@@ -8277,7 +8555,8 @@
         return;
       }
       
-      const defaultScore = parseInt(document.getElementById('paperUniformScore').value) || 5;
+      const uniformScoreEl = document.getElementById('peUniformScore');
+      const defaultScore = uniformScoreEl ? (parseInt(uniformScoreEl.value) || 5) : 5;
       
       paperQpAllQuestions.forEach(q => {
         if (paperQpSelectedIds.has(q.id)) {
@@ -8291,9 +8570,249 @@
         }
       });
       
-      renderPaperQuestions();
+      // 如果在考试编辑页模式下，同步回 examEditorQuestions
+      if (examEditorData && document.getElementById('examEditorOverlay')) {
+        paperQuestions.forEach((pq, i) => {
+          if (!examEditorQuestions[i]) {
+            examEditorQuestions.push({
+              questionId: pq.questionId,
+              score: pq.score,
+              order: i,
+              content: pq.content,
+              type: pq.type,
+              questionDetail: null
+            });
+          }
+        });
+        renderExamEditor();
+      } else {
+        renderPaperQuestions();
+      }
       closePaperQuestionPicker();
       toast(`已添加 ${paperQpSelectedIds.size} 道题目`);
+    }
+
+    // ========== 分数设置弹窗 ==========
+    let ssCurrentTab = 'type';
+    let ssTypeScores = {}; // { single: 5, multiple: 10, ... }
+
+    function openScoreSettingsModal() {
+      if (!paperQuestions.length) {
+        toast('请先添加题目再设置分数', 'error');
+        return;
+      }
+      ssCurrentTab = 'type';
+      switchScoreSettingsTab('type');
+      const modal = document.getElementById('scoreSettingsModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeScoreSettingsModal() {
+      const modal = document.getElementById('scoreSettingsModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function switchScoreSettingsTab(tab) {
+      ssCurrentTab = tab;
+      const typeTab = document.getElementById('ssTabType');
+      const qTab = document.getElementById('ssTabQuestion');
+      const typePanel = document.getElementById('ssTypePanel');
+      const qPanel = document.getElementById('ssQuestionPanel');
+
+      if (tab === 'type') {
+        typeTab.className = 'px-4 py-3 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600 transition';
+        qTab.className = 'px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition';
+        typePanel.classList.remove('hidden');
+        qPanel.classList.add('hidden');
+        renderScoreSettingsByType();
+      } else {
+        qTab.className = 'px-4 py-3 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600 transition';
+        typeTab.className = 'px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition';
+        qPanel.classList.remove('hidden');
+        typePanel.classList.add('hidden');
+        renderScoreSettingsByQuestion();
+      }
+      updateSsTotalScore();
+    }
+
+    function renderScoreSettingsByType() {
+      const typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
+      const typeCounts = {};
+      paperQuestions.forEach(q => {
+        typeCounts[q.type] = (typeCounts[q.type] || 0) + 1;
+      });
+
+      // 读取当前各题型的分值（从已有题目中取第一个该类型的分值）
+      const currentScores = {};
+      paperQuestions.forEach(q => {
+        if (!(q.type in currentScores)) currentScores[q.type] = q.score || 5;
+      });
+      ssTypeScores = { ...currentScores };
+
+      // 读取多选题漏选扣值
+      const multipleQ = paperQuestions.find(q => q.type === 'multiple');
+      const multiplePartial = multipleQ ? (multipleQ.partialScore || 0) : 0;
+
+      const container = document.getElementById('ssTypeList');
+      container.innerHTML = Object.keys(typeNames).map(type => {
+        const count = typeCounts[type] || 0;
+        const score = ssTypeScores[type] || 5;
+        const total = (count * score).toFixed(1);
+        
+        let extraField = '';
+        if (type === 'multiple') {
+          extraField = `
+            <span class="text-sm text-slate-500 ml-4">漏选扣值</span>
+            <input type="number" id="ssPartialScore_multiple" value="${multiplePartial}" min="0" max="100" step="0.5"
+              class="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="请输入">
+          `;
+        } else if (type === 'fill') {
+          extraField = `
+            <select class="px-2 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option>每空分值</option>
+            </select>
+          `;
+        } else if (type === 'essay') {
+          extraField = `
+            <select class="px-2 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option>每词分值</option>
+            </select>
+          `;
+        }
+        
+        return `
+          <div class="flex items-center gap-3 py-4 border-b border-slate-100">
+            <div class="w-24 text-sm font-semibold text-slate-700">[${typeNames[type]}]</div>
+            <div class="flex items-center gap-2 text-sm text-slate-600">
+              <span class="font-medium">${count}</span>
+              <span>题 ×</span>
+            </div>
+            ${type === 'fill' || type === 'essay' ? extraField : ''}
+            <input type="number" value="${count > 0 ? score : ''}" min="0" max="100" step="0.5"
+              onchange="onSsTypeScoreChange('${type}', this.value)"
+              class="w-24 px-2 py-1.5 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="请输入" ${count === 0 ? 'disabled' : ''}>
+            <span class="text-sm text-slate-400">分/题</span>
+            ${extraField && type === 'multiple' ? extraField : ''}
+            <span class="text-sm text-slate-500 ml-auto flex items-center gap-1">共<strong class="text-slate-700 font-semibold" id="ssTypeTotal_${type}">${total}</strong>分</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function onSsTypeScoreChange(type, value) {
+      ssTypeScores[type] = parseFloat(value) || 0;
+      const typeCounts = {};
+      paperQuestions.forEach(q => { typeCounts[q.type] = (typeCounts[q.type] || 0) + 1; });
+      const count = typeCounts[type] || 0;
+      const total = (count * ssTypeScores[type]).toFixed(1);
+      const el = document.getElementById('ssTypeTotal_' + type);
+      if (el) el.textContent = total;
+      updateSsTotalScore();
+    }
+
+    function renderScoreSettingsByQuestion() {
+      const typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
+      const tbody = document.getElementById('ssQuestionList');
+      const emptyEl = document.getElementById('ssQuestionEmpty');
+
+      if (!paperQuestions.length) {
+        tbody.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+
+      tbody.innerHTML = paperQuestions.map((q, i) => {
+        const partialScore = q.partialScore || 0;
+        const isMultiple = q.type === 'multiple';
+        return `
+        <tr class="hover:bg-slate-50">
+          <td class="py-3 pr-4">
+            <div class="text-sm text-slate-700 line-clamp-1">${escHtml(q.content || '(无标题)')}</div>
+          </td>
+          <td class="py-3 text-center">
+            <span class="text-xs text-slate-500">${typeNames[q.type] || q.type}</span>
+          </td>
+          <td class="py-3 text-center text-sm text-slate-600">${q.score || 5}</td>
+          <td class="py-3 text-center">
+            <input type="number" value="${q.score || 5}" min="0" max="100" step="0.5"
+              data-idx="${i}" onchange="onSsQuestionScoreChange(${i}, this.value)"
+              class="w-20 px-2 py-1 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </td>
+          <td class="py-3 text-center">
+            ${isMultiple ? `
+              <input type="number" value="${partialScore}" min="0" max="100" step="0.5"
+                data-idx="${i}" onchange="onSsPartialScoreChange(${i}, this.value)"
+                class="w-20 px-2 py-1 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            ` : '<span class="text-slate-400">/</span>'}
+          </td>
+        </tr>
+      `}).join('');
+    }
+
+    function onSsQuestionScoreChange(idx, value) {
+      if (paperQuestions[idx]) {
+        paperQuestions[idx].score = parseFloat(value) || 0;
+      }
+      updateSsTotalScore();
+    }
+
+    function onSsPartialScoreChange(idx, value) {
+      if (paperQuestions[idx]) {
+        paperQuestions[idx].partialScore = parseFloat(value) || 0;
+      }
+    }
+
+    function updateSsTotalScore() {
+      let total = 0;
+      if (ssCurrentTab === 'type') {
+        const typeCounts = {};
+        paperQuestions.forEach(q => { typeCounts[q.type] = (typeCounts[q.type] || 0) + 1; });
+        Object.keys(typeCounts).forEach(type => {
+          total += typeCounts[type] * (ssTypeScores[type] || 0);
+        });
+      } else {
+        total = paperQuestions.reduce((sum, q) => sum + (q.score || 0), 0);
+      }
+      document.getElementById('ssTotalScore').textContent = total.toFixed(1);
+    }
+
+    function applyScoreSettings() {
+      if (ssCurrentTab === 'type') {
+        // 按题型批量设置
+        paperQuestions.forEach(q => {
+          if (ssTypeScores[q.type] !== undefined) {
+            q.score = ssTypeScores[q.type];
+          }
+        });
+        // 保存多选题漏选扣值
+        const partialInput = document.getElementById('ssPartialScore_multiple');
+        if (partialInput) {
+          const partialVal = parseFloat(partialInput.value) || 0;
+          paperQuestions.forEach(q => {
+            if (q.type === 'multiple') q.partialScore = partialVal;
+          });
+        }
+      }
+      // 按试题设分已在 onchange 中实时更新
+      // 如果在考试编辑页模式下，同步回 examEditorQuestions
+      if (examEditorData && document.getElementById('examEditorOverlay')) {
+        paperQuestions.forEach((pq, i) => {
+          if (examEditorQuestions[i]) {
+            examEditorQuestions[i].score = pq.score;
+            examEditorQuestions[i].partialScore = pq.partialScore || 0;
+          }
+        });
+        renderExamEditor();
+      } else {
+        renderPaperEditorQuestions();
+      }
+      closeScoreSettingsModal();
+      toast('分数设置已应用');
     }
 
     // ========== 题目选择器 ==========

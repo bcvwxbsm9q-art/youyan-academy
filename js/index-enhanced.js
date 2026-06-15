@@ -37,6 +37,18 @@
     };
 
     let isIndexInitialized = false;
+
+    // 讲师等级样式映射
+    const LECTURER_LEVEL_STYLES = {
+        'chief': { class: 'level-chief', name: '首席讲师', icon: 'fa-star' },
+        'senior': { class: 'level-senior', name: '高级讲师', icon: 'fa-certificate' },
+        'intermediate': { class: 'level-intermediate', name: '中级讲师', icon: 'fa-graduation-cap' },
+        'junior': { class: 'level-junior', name: '初级讲师', icon: 'fa-user' },
+        'intern': { class: 'level-intern', name: '实习讲师', icon: 'fa-user-o' }
+    };
+
+    // 保存首页讲师数据供弹窗使用
+    let _featuredLecturers = [];
     
     // 等待 DOM 加载完成
     document.addEventListener('DOMContentLoaded', function() {
@@ -582,7 +594,7 @@
             container.innerHTML = `
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-bold text-gray-800 dark:text-white">明星讲师</h2>
-                    <a href="teacher.html" class="text-primary hover:underline flex items-center text-base">全部 <i class="fa fa-angle-right ml-1"></i></a>
+                    <a href="teacher.html" class="text-primary hover:underline flex items-center text-base">查看全部 <i class="fa fa-angle-right ml-1"></i></a>
                 </div>
                 <div class="empty-state col-span-full">
                     <div class="empty-state-icon"><i class="fa fa-users"></i></div>
@@ -593,10 +605,13 @@
             return;
         }
 
+        // 保存数据供弹窗使用
+        _featuredLecturers = featured;
+
         container.innerHTML = `
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-gray-800">明星讲师</h2>
-                <a href="teacher.html" class="text-indigo-600 hover:text-indigo-700 hover:underline flex items-center text-sm font-medium">全部 <i class="fa fa-angle-right ml-1"></i></a>
+                <a href="teacher.html" class="text-indigo-600 hover:text-indigo-700 hover:underline flex items-center text-sm font-medium">查看全部 <i class="fa fa-angle-right ml-1"></i></a>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 ${featured.map(l => {
@@ -606,7 +621,7 @@
                     const courseCount = l.courseCount || 0;
                     
                     return `
-                    <div class="group bg-white rounded-2xl border border-gray-100 p-5 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50/50 transition-all duration-300 cursor-pointer transform hover:-translate-y-0.5" onclick="location.href='teacher.html'">
+                    <div class="group bg-white rounded-2xl border border-gray-100 p-5 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50/50 transition-all duration-300 cursor-pointer transform hover:-translate-y-0.5" onclick="showLecturerDetail(${l.id})">
                         <div class="flex items-center space-x-4">
                             <div class="relative">
                                 <div class="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-indigo-50 to-purple-50 p-0.5">
@@ -678,5 +693,169 @@
             }
         }, 16);
     }
+
+    /**
+     * 获取讲师的所有课程
+     */
+    function getLecturerCourses(lecturerId) {
+        const api = window.DataAPI;
+        if (!api) return [];
+        return (api.getCourses() || []).filter(c => String(c.lecturerId) === String(lecturerId));
+    }
+
+    /**
+     * 获取讲师总点赞量
+     */
+    function getLecturerTotalLikes(lecturerId) {
+        const api = window.DataAPI;
+        if (!api) return 0;
+        const courses = getLecturerCourses(lecturerId);
+        let total = 0;
+        courses.forEach(c => {
+            const idata = api.get('course_interaction_' + c.id);
+            if (idata && idata.likes) total += idata.likes;
+        });
+        return total;
+    }
+
+    /**
+     * 获取讲师平均评分
+     */
+    function getLecturerAvgRating(lecturerId) {
+        const api = window.DataAPI;
+        if (!api) return null;
+        const courses = getLecturerCourses(lecturerId);
+        if (!courses.length) return null;
+        let sum = 0, count = 0;
+        courses.forEach(c => {
+            const idata = api.get('course_interaction_' + c.id);
+            if (idata && idata.ratingCount > 0 && idata.ratingSum != null) {
+                sum += idata.ratingSum;
+                count += idata.ratingCount;
+            }
+        });
+        return count > 0 ? sum / count : null;
+    }
+
+    /**
+     * 显示讲师详情弹窗（与讲师页一致）
+     */
+    window.showLecturerDetail = function(lecturerId) {
+        const api = window.DataAPI;
+        const lecturer = _featuredLecturers.find(l => l.id === lecturerId) ||
+                         (api && (api.getLecturers() || []).find(l => l.id === lecturerId));
+        if (!lecturer) return;
+
+        const levelInfo = LECTURER_LEVEL_STYLES[lecturer.level] || LECTURER_LEVEL_STYLES['intern'];
+        const courseCount = getLecturerCourses(lecturer.id).length;
+        const totalLikes = getLecturerTotalLikes(lecturer.id);
+        const avgRating = getLecturerAvgRating(lecturer.id);
+        const ratingDisplay = avgRating !== null ? avgRating.toFixed(1) : '--';
+
+        const skills = lecturer.skills || [];
+        const skillTags = Array.isArray(skills) ? skills : skills.split(',').map(s => s.trim());
+
+        const courses = getLecturerCourses(lecturer.id).slice(0, 3);
+
+        const modalHtml = `
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center pt-20 pb-8" onclick="closeLecturerModal()">
+                <div class="bg-white rounded-2xl w-full max-w-md max-h-[calc(100vh-8rem)] flex flex-col shadow-xl relative overflow-hidden" onclick="event.stopPropagation()">
+                    <div class="bg-gradient-primary px-6 py-4 flex-shrink-0">
+                        <h2 class="text-xl font-bold text-white">讲师简介</h2>
+                    </div>
+                    <button class="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/30 hover:bg-white/50 flex items-center justify-center text-white transition-all z-[20]" onclick="closeLecturerModal()">
+                        <i class="fa fa-times"></i>
+                    </button>
+                    <div class="flex-1 overflow-y-auto px-5 py-4">
+                        <!-- 基本信息 -->
+                        <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                            <div class="flex items-center gap-3">
+                                <img src="${lecturer.avatar || ''}" alt="${lecturer.name}" class="w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0" onerror="this.style.background='linear-gradient(135deg,#f97316,#ea580c)';this.innerHTML='<span class=\\'text-xl\\'>${lecturer.name.charAt(0)}</span>'">
+                                <div>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="font-semibold text-gray-800">${lecturer.name}</span>
+                                        <span class="inline-block ${levelInfo.class} text-white px-2 py-0.5 rounded text-xs">${levelInfo.name}</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-xs text-gray-500 mt-1">
+                                        <span><i class="fa fa-book mr-1"></i>${courseCount}门课程</span>
+                                        <span><i class="fa fa-thumbs-o-up mr-1"></i>${totalLikes}点赞</span>
+                                        <span><i class="fa fa-star mr-1 text-yellow-500"></i>${ratingDisplay}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 个人简介 -->
+                        <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                            <h3 class="font-semibold text-gray-800 mb-2 flex items-center text-sm">
+                                <i class="fa fa-info-circle mr-2 text-indigo-600"></i>个人简介
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">${lecturer.intro || '暂无简介'}</p>
+                        </div>
+                        <!-- 专长领域 -->
+                        ${skillTags.length ? `
+                        <div class="mb-4">
+                            <h3 class="font-semibold text-gray-800 mb-3 text-sm flex items-center">
+                                <i class="fa fa-tags mr-2 text-indigo-600"></i>专长领域
+                            </h3>
+                            <div class="flex flex-wrap gap-2">
+                                ${skillTags.map(skill => `<span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">${skill}</span>`).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                        <!-- 授课课程 -->
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3 text-sm flex items-center">
+                                <i class="fa fa-book mr-2 text-indigo-600"></i>授课课程
+                            </h3>
+                            <div class="space-y-2">
+                                ${courses.length ? courses.map(c => `
+                                    <div class="bg-gray-50 rounded-xl p-3 cursor-pointer hover:bg-gray-100 transition-colors" onclick="closeLecturerModal(); location.href='player.html?id=${c.id}'">
+                                        <div class="flex items-center gap-3">
+                                            <img src="${c.cover || ''}" class="w-16 h-12 rounded-lg object-cover flex-shrink-0" onerror="this.src='https://placehold.co/64x48/667eea/white?text=课'">
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-sm font-medium text-gray-800 truncate">${c.title}</div>
+                                                <div class="text-xs text-gray-500 mt-1">${Math.floor((c.duration || 0) / 60)}分钟 · ${(c.views || 0) > 10000 ? ((c.views / 10000).toFixed(1) + '万') : (c.views || 0)}人学习</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('') : '<p class="text-sm text-gray-400 text-center py-4">暂无课程</p>'}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-5 pb-4">
+                        <button class="w-full py-3 rounded-xl bg-gradient-primary text-white font-medium hover:opacity-90 transition-all" onclick="closeLecturerModal()">
+                            关闭
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // 移除已有弹窗
+        const existing = document.querySelector('.lecturer-detail-modal-container');
+        if (existing) existing.remove();
+
+        const modalDiv = document.createElement('div');
+        modalDiv.className = 'lecturer-detail-modal-container';
+        modalDiv.innerHTML = modalHtml;
+        document.body.appendChild(modalDiv);
+
+        // ESC 键关闭
+        const escHandler = function(e) {
+            if (e.key === 'Escape') {
+                closeLecturerModal();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    };
+
+    /**
+     * 关闭讲师详情弹窗
+     */
+    window.closeLecturerModal = function() {
+        const modal = document.querySelector('.lecturer-detail-modal-container');
+        if (modal) modal.remove();
+    };
 
 })();

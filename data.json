@@ -32,16 +32,22 @@
   "user_learning_1780909174403": {
     "totalHours": 0,
     "completedCourses": [
-      1781087462994
+      1781087462994,
+      1781065453648
     ],
     "videoProgress": {
-      "1781087462994_0": 100
+      "1781087462994_0": 100,
+      "1781065453648_0": 100,
+      "1781087427858_0": 4,
+      "1781080411545_0": 100,
+      "1781080411545_1": 48
     },
-    "lastStudyTime": "2026-06-14T07:44:50.844Z",
+    "lastStudyTime": "2026-06-15T06:35:15.659Z",
     "studyDates": [
-      "2026-06-14"
+      "2026-06-14",
+      "2026-06-15"
     ],
-    "totalSeconds": 22,
+    "totalSeconds": 50,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -69,8 +75,83 @@
         "duration": 1,
         "timestamp": "2026-06-14T07:44:50.844Z",
         "date": "2026-06-14"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-15T02:23:43.989Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781065453648,
+        "courseTitle": "成就系统设计：从理论到实践",
+        "videoIndex": 0,
+        "videoTitle": "成就系统设计：从理论到实践.mp4",
+        "duration": 11,
+        "timestamp": "2026-06-15T02:52:54.496Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-15T03:03:39.189Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781087427858,
+        "courseTitle": "Unity UI Draw Call基础指南",
+        "videoIndex": 0,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-15T03:26:07.918Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-15T03:30:44.562Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 10,
+        "timestamp": "2026-06-15T03:30:56.821Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-15T03:35:49.825Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781064630171,
+        "courseTitle": "KMP算法",
+        "videoIndex": 0,
+        "videoTitle": "KMP算法.mp4",
+        "duration": 2,
+        "timestamp": "2026-06-15T06:35:15.659Z",
+        "date": "2026-06-15"
       }
-    ]
+    ],
+    "shares": 2,
+    "ratings": 0,
+    "likes": 0
   },
   "lecturers": [
     {
@@ -529,7 +610,7 @@
       ],
       "attachments": [],
       "duration": 2415,
-      "views": 9,
+      "views": 11,
       "rating": 0,
       "id": 1781065453648,
       "createdAt": "2026/6/10 12:24:13"
@@ -616,7 +697,7 @@
       ],
       "attachments": [],
       "duration": 2054,
-      "views": 27,
+      "views": 28,
       "rating": 3,
       "id": 1781080411545,
       "createdAt": "2026/6/10 16:33:31",
@@ -641,7 +722,7 @@
       ],
       "attachments": [],
       "duration": 1044,
-      "views": 8,
+      "views": 9,
       "rating": 5,
       "id": 1781087427858,
       "createdAt": "2026/6/10 18:30:27",
@@ -666,7 +747,7 @@
       ],
       "attachments": [],
       "duration": 2360,
-      "views": 13,
+      "views": 17,
       "rating": 5,
       "id": 1781087462994,
       "createdAt": "2026/6/10 18:31:02",
@@ -781,11 +862,15 @@
       "1780909174403": 5
     },
     "ratingSum": 5,
-    "ratingCount": 1
+    "ratingCount": 1,
+    "shares": 2,
+    "userShares": {
+      "1780909174403": 2
+    }
   },
   "video_pos_1780909174403_1781080411545_0": {
     "position": 1009,
-    "savedAt": "2026-06-11T10:47:20.913Z"
+    "savedAt": "2026-06-15T03:30:46.182Z"
   },
   "course_interaction_1781080411545": {
     "likes": 2,
@@ -801,8 +886,8 @@
     "ratingCount": 2
   },
   "video_pos_1780909174403_1781080411545_1": {
-    "position": 496,
-    "savedAt": "2026-06-11T10:47:23.147Z"
+    "position": 505,
+    "savedAt": "2026-06-15T03:30:56.788Z"
   },
   "course_interaction_1781077900894": {
     "likes": 0,
@@ -826,8 +911,8 @@
     "ratingCount": 2
   },
   "video_pos_1780909174403_1781065453648_0": {
-    "position": 326,
-    "savedAt": "2026-06-10T09:23:54.876Z"
+    "position": 2415,
+    "savedAt": "2026-06-15T03:32:25.437Z"
   },
   "course_interaction_1781065453648": {
     "likes": 1,
@@ -1445,7 +1530,7 @@
   ],
   "video_pos_1780909174403_1781087462994_0": {
     "position": 2359,
-    "savedAt": "2026-06-14T07:44:52.824Z"
+    "savedAt": "2026-06-15T03:35:58.446Z"
   },
   "lecturer_applications": [
     {
@@ -1463,8 +1548,8 @@
     }
   ],
   "video_pos_1780909174403_1781087427858_0": {
-    "position": 44,
-    "savedAt": "2026-06-11T14:24:15.181Z"
+    "position": 45,
+    "savedAt": "2026-06-15T03:26:07.886Z"
   },
   "video_pos_1781087021554_1781080411545_1": {
     "position": 4,
