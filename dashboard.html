@@ -86,6 +86,18 @@
     .view-toggle-btn:not(.active):hover {
       background: #f1f5f9;
     }
+    /* 数据分析标签页按钮 */
+    .analytics-tab-btn {
+      transition: all 0.2s ease;
+    }
+    .analytics-tab-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    .analytics-tab-btn:not(.active):hover {
+      background: #f1f5f9;
+    }
     /* 报表管理 Tab 按钮 */
     .rpt-tab-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); }
     .rpt-tab-btn { color: #64748b; cursor: pointer; }
@@ -317,9 +329,9 @@
               <i class="fas fa-user-plus text-purple-500 text-2xl mb-2"></i>
               <p class="text-sm font-medium text-slate-700">添加讲师</p>
             </button>
-            <button onclick="switchTab('export')" class="p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition text-center">
-              <i class="fas fa-file-export text-orange-500 text-2xl mb-2"></i>
-              <p class="text-sm font-medium text-slate-700">导出数据</p>
+            <button onclick="switchTab('training'); setTimeout(openTrainingModal, 100)" class="p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition text-center">
+              <i class="fas fa-calendar-plus text-orange-500 text-2xl mb-2"></i>
+              <p class="text-sm font-medium text-slate-700">创建培训</p>
             </button>
           </div>
         </div>
@@ -486,11 +498,11 @@
           <div class="flex items-center gap-3">
             <!-- 视图切换 -->
             <div class="flex items-center bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
-              <button onclick="switchTrainingView('calendar')" id="view-btn-calendar" class="view-toggle-btn active px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-                <i class="fas fa-calendar-alt"></i>日历视图
-              </button>
-              <button onclick="switchTrainingView('list')" id="view-btn-list" class="view-toggle-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-slate-600">
+              <button onclick="switchTrainingView('list')" id="view-btn-list" class="view-toggle-btn active px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
                 <i class="fas fa-list"></i>列表视图
+              </button>
+              <button onclick="switchTrainingView('calendar')" id="view-btn-calendar" class="view-toggle-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-slate-600">
+                <i class="fas fa-calendar-alt"></i>日历视图
               </button>
             </div>
             <button onclick="openTrainingModal()" id="training-add-btn" class="btn-primary px-5 py-2.5 text-white rounded-xl font-medium shadow-lg transition flex items-center gap-2">
@@ -500,7 +512,7 @@
         </div>
 
         <!-- 日历视图 -->
-        <div id="training-calendar-view" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <div id="training-calendar-view" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
           <div class="flex items-center justify-between mb-6">
             <button onclick="prevTrainingMonth()" class="p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 hover:shadow-md transition-all duration-300 text-slate-500 hover:text-primary">
               <i class="fas fa-chevron-left text-lg"></i>
@@ -530,7 +542,7 @@
         </div>
 
         <!-- 列表视图 -->
-        <div id="training-list-view" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div id="training-list-view" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full">
               <thead class="bg-slate-50 border-b border-slate-100">
@@ -542,6 +554,7 @@
                   <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">开始时间</th>
                   <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">结束时间</th>
                   <th class="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">集成服务</th>
+                  <th class="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">报名人数</th>
                   <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
@@ -553,6 +566,41 @@
             <i class="fas fa-calendar-alt text-4xl mb-4"></i>
             <p>暂无培训计划</p>
             <button onclick="openTrainingModal()" class="mt-4 btn-primary px-6 py-2.5 text-white rounded-xl font-medium">新建培训</button>
+          </div>
+        </div>
+
+        <!-- 数据分析视图 -->
+        <div id="training-analytics-view" class="hidden">
+          <!-- 顶部导航 -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <button onclick="exitAnalytics()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition">
+                <i class="fas fa-arrow-left"></i>
+              </button>
+              <div>
+                <h3 class="text-lg font-bold text-slate-800" id="analytics-training-name">数据分析</h3>
+                <p class="text-xs text-slate-400" id="analytics-training-sub"></p>
+              </div>
+            </div>
+            <!-- 分析标签页导航 -->
+            <div class="flex items-center bg-slate-50 rounded-xl p-1 gap-1" id="analytics-tabs">
+              <button onclick="switchAnalyticsTab('enroll')" id="analytics-tab-enroll" class="analytics-tab-btn active px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+                <i class="fas fa-users"></i>报名分析
+              </button>
+              <button onclick="switchAnalyticsTab('survey')" id="analytics-tab-survey" class="analytics-tab-btn px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-slate-600 transition">
+                <i class="fas fa-poll"></i>调研分析
+              </button>
+              <button onclick="switchAnalyticsTab('exam')" id="analytics-tab-exam" class="analytics-tab-btn px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-slate-600 transition">
+                <i class="fas fa-file-alt"></i>考试分析
+              </button>
+              <button onclick="switchAnalyticsTab('attendance')" id="analytics-tab-attendance" class="analytics-tab-btn px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-slate-600 transition">
+                <i class="fas fa-check-circle"></i>考勤分析
+              </button>
+            </div>
+          </div>
+          <!-- 分析内容区域 -->
+          <div id="analytics-content" class="bg-white rounded-2xl shadow-sm border border-slate-100 min-h-[400px]">
+            <!-- 由JS动态填充 -->
           </div>
         </div>
       </div>
@@ -933,9 +981,6 @@
                   class="w-64 pl-4 pr-10 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
                 <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
               </div>
-              <button onclick="openPaperCollaborator()" class="px-4 py-2 text-sm border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition">
-                <i class="fas fa-user-friends mr-1.5 text-slate-400"></i>协同人
-              </button>
               <button onclick="openPaperModal()" class="btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition">
                 <i class="fas fa-plus mr-1.5"></i>新建试卷
               </button>
@@ -944,14 +989,6 @@
 
           <!-- 筛选器行 -->
           <div class="flex items-center gap-3 mb-4">
-            <select id="paperFilterDept" onchange="onPaperFilterChange()" class="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white hover:border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
-              <option value="">所属部门</option>
-            </select>
-            <select id="paperFilterManager" onchange="onPaperFilterChange()" class="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white hover:border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
-              <option value="all">我管理的</option>
-              <option value="all">全部</option>
-              <option value="mine">我管理的</option>
-            </select>
             <select id="paperFilterStatus" onchange="onPaperFilterChange()" class="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white hover:border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
               <option value="all">启用状态</option>
               <option value="enabled">启用</option>
@@ -1063,6 +1100,24 @@
             </button>
           </div>
 
+          <!-- 批量操作工具栏 -->
+          <div id="examBatchActionBar" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-3">
+            <span class="text-sm text-indigo-700 font-medium" id="examBatchCount">已选 0 项</span>
+            <div class="h-4 w-px bg-indigo-300"></div>
+            <button onclick="batchPublishExams()" class="text-sm text-indigo-700 hover:text-indigo-900 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition">
+              <i class="fas fa-paper-plane mr-1.5"></i>发布
+            </button>
+            <button onclick="batchCloseExams()" class="text-sm text-indigo-700 hover:text-indigo-900 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition">
+              <i class="fas fa-stop-circle mr-1.5"></i>结束
+            </button>
+            <button onclick="batchDeleteExams()" class="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1.5 rounded-md transition">
+              <i class="fas fa-trash-alt mr-1.5"></i>删除
+            </button>
+            <button onclick="clearExamSelection()" class="ml-auto text-sm text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-md transition">
+              取消选择
+            </button>
+          </div>
+
           <!-- 考试列表 -->
           <div class="bg-white rounded-lg border border-slate-200/60 shadow-sm overflow-hidden">
             <table class="w-full">
@@ -1071,13 +1126,13 @@
                   <th class="pl-5 pr-3 py-3.5 w-12">
                     <input type="checkbox" id="examSelectAll" onchange="toggleExamSelectAll()" class="rounded border-slate-300 text-indigo-500 focus:ring-indigo-500 cursor-pointer">
                   </th>
-                  <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider">考试名称</th>
+                  <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider cursor-pointer hover:text-indigo-600 transition" onclick="sortExamList('title')">考试名称 <i class="fas fa-sort text-slate-300"></i></th>
                   <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-28">关联试卷</th>
                   <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-24">考试时长</th>
                   <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-24">及格/总分</th>
-                  <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-20">参考人数</th>
-                  <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-24">通过率</th>
-                  <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-20">状态</th>
+                  <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-20 cursor-pointer hover:text-indigo-600 transition" onclick="sortExamList('attemptCount')">参考人数 <i class="fas fa-sort text-slate-300"></i></th>
+                  <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-24 cursor-pointer hover:text-indigo-600 transition" onclick="sortExamList('passRate')">通过率 <i class="fas fa-sort text-slate-300"></i></th>
+                  <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-20 cursor-pointer hover:text-indigo-600 transition" onclick="sortExamList('status')">状态 <i class="fas fa-sort text-slate-300"></i></th>
                   <th class="pl-3 pr-5 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-44">操作</th>
                 </tr>
               </thead>
@@ -1087,6 +1142,26 @@
                 </td></tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- 分页控件 -->
+          <div id="examPagination" class="flex items-center justify-between mt-4 hidden">
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-slate-500">每页</span>
+              <select id="examPageSize" onchange="onExamPageSizeChange()" class="px-2 py-1 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+              <span class="text-sm text-slate-500">条，共 <span id="examTotalCount">0</span> 条</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="goExamPage(1)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examFirstPage">首页</button>
+              <button onclick="goExamPage(examCurrentPage - 1)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examPrevPage">上一页</button>
+              <span class="px-3 py-1.5 text-sm text-slate-600"><span id="examCurrentPageNum">1</span> / <span id="examTotalPageNum">1</span></span>
+              <button onclick="goExamPage(examCurrentPage + 1)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examNextPage">下一页</button>
+              <button onclick="goExamPage(examTotalPages)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examLastPage">尾页</button>
+            </div>
           </div>
           <!-- 编辑页视图（动态创建） -->
         </div>
@@ -1163,6 +1238,10 @@
           <button onclick="switchSubTab('portal', 'notices')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">公告管理</button>
           <button onclick="switchSubTab('portal', 'categories')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">分类管理</button>
           <button onclick="switchSubTab('portal', 'lecturer-apply')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium">讲师报名</button>
+          <button onclick="switchSubTab('portal', 'training-requests')" class="subtab-btn px-4 py-2 rounded-lg text-sm font-medium relative">
+            培训需求
+            <span id="training-request-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1">0</span>
+          </button>
         </div>
 
         <!-- 轮播管理 -->
@@ -1261,6 +1340,75 @@
             </table>
           </div>
         </div>
+
+        <!-- 培训需求管理 -->
+        <div id="portal-training-requests" class="subtab-content hidden">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-slate-700">培训需求管理</h3>
+            <div class="flex items-center gap-3">
+              <select id="training-request-status-filter" onchange="loadTrainingRequests()" class="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="all">全部状态</option>
+                <option value="pending">待处理</option>
+                <option value="approved">已批准</option>
+                <option value="rejected">已拒绝</option>
+                <option value="completed">已完成</option>
+              </select>
+              <button onclick="exportTrainingRequests()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition">
+                <i class="fas fa-download mr-1"></i>导出
+              </button>
+            </div>
+          </div>
+
+          <!-- 统计卡片 -->
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+              <p class="text-2xl font-bold text-slate-800" id="req-stat-total">0</p>
+              <p class="text-sm text-slate-500">需求总数</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+              <p class="text-2xl font-bold text-yellow-500" id="req-stat-pending">0</p>
+              <p class="text-sm text-slate-500">待处理</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+              <p class="text-2xl font-bold text-green-500" id="req-stat-approved">0</p>
+              <p class="text-sm text-slate-500">已批准</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+              <p class="text-2xl font-bold text-red-500" id="req-stat-rejected">0</p>
+              <p class="text-sm text-slate-500">已拒绝</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+              <p class="text-2xl font-bold text-blue-500" id="req-stat-completed">0</p>
+              <p class="text-sm text-slate-500">已完成</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">提交人</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">部门</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">培训类型</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">培训主题</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">培训对象</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">期望时间</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">提交时间</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody id="training-request-list" class="divide-y divide-slate-200">
+                <tr>
+                  <td colspan="9" class="px-6 py-12 text-center text-slate-400">
+                    <i class="fas fa-inbox text-4xl mb-3 block"></i>
+                    <p>暂无培训需求</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 <!-- 用户管理 -->
       <div id="tab-users" class="tab-content hidden">
@@ -1344,15 +1492,7 @@
     </main>
   </div>
 
-  <!-- 调试面板（完成排查后可删除） -->
-  <div id="dbg-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f172a;color:#e2e8f0;z-index:99998;font-family:Consolas,monospace;font-size:12px;max-height:40vh;overflow-y:auto;padding:10px 16px;border-top:2px solid #38bdf8;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <b style="color:#38bdf8;">[调试]</b>
-      <button onclick="document.getElementById('dbg-panel').style.display='none'" style="background:#ef4444;color:#fff;border:none;padding:2px 10px;border-radius:4px;cursor:pointer;">关闭</button>
-    </div>
-    <div id="dbg-log"></div>
-  </div>
-  <button id="dbg-toggle" onclick="let p=document.getElementById('dbg-panel');let v=p.style.display==='none'?'block':'none';p.style.display=v;" style="position:fixed;bottom:8px;right:8px;z-index:99999;background:#38bdf8;color:#000;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:bold;">DBG</button>
+
 
   <!-- 模态框容器 -->
   <div id="modal-container" class="hidden"></div>
@@ -1608,138 +1748,179 @@
     </div>
   </div>
 
-  <!-- ========== 考试弹窗 ========== -->
-  <div id="examModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
-    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden m-4 shadow-2xl flex flex-col">
-      <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
-        <h3 class="text-lg font-bold text-slate-800" id="examModalTitle">创建考试</h3>
-        <button onclick="closeExamModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+  <!-- ========== 试卷导入试题弹窗 ========== -->
+  <div id="paperImportQuestionsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-md m-4 shadow-2xl">
+      <div class="flex justify-between items-center p-6 border-b border-slate-100">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-upload text-indigo-500 mr-2"></i>导入试题</h3>
+        <button onclick="closePaperImportQuestionsModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
       </div>
-      <div class="flex-1 overflow-y-auto p-6">
-        <form id="examForm" onsubmit="saveExam(event)" class="space-y-4">
-          <input type="hidden" id="examId">
-
-          <!-- 基本信息 -->
-          <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 mb-4">
-            <h4 class="text-sm font-bold text-indigo-800 mb-3"><i class="fas fa-info-circle mr-1.5"></i>基本信息</h4>
-            <div class="space-y-3">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">考试名称 <span class="text-red-500">*</span></label>
-                <input type="text" id="examTitle" required placeholder="请输入考试名称"
-                  class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">关联试卷 <span class="text-red-500">*</span></label>
-                <select id="examPaperId" onchange="onExamPaperChange()" required
-                  class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white transition">
-                  <option value=\"\">请选择试卷</option>
-                </select>
-                <p class="text-xs text-slate-400 mt-1">选择试卷后将自动加载题目和分数配置</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">考试描述</label>
-                <textarea id="examDesc" rows="2" placeholder="简要说明考试内容"
-                  class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none transition"></textarea>
-              </div>
-            </div>
+      <div class="p-6">
+        <p class="text-sm text-slate-600 mb-4">向当前试卷导入试题：</p>
+        <div class="space-y-4 mb-6">
+          <div class="p-4 bg-amber-50 rounded-xl text-sm text-amber-700">
+            <i class="fas fa-info-circle mr-1"></i>支持导入包含单选题、多选题、判断题、填空题、简答题的 Excel 文件
           </div>
-
-          <!-- 考试设置 -->
-          <div class="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-xl p-4 mb-4">
-            <h4 class="text-sm font-bold text-indigo-800 mb-3"><i class="fas fa-cog mr-1.5"></i>考试设置</h4>
-            <div class="space-y-3">
-              <div class="grid grid-cols-3 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">时长(分钟)</label>
-                  <input type="number" id="examDuration" value="60" min="5" max="300"
-                    class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">总分</label>
-                  <input type="number" id="examTotalScore" value="100" min="1"
-                    class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">及格分数</label>
-                  <input type="number" id="examPassingScore" value="60" min="0"
-                    class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                </div>
-              </div>
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">最多考试次数</label>
-                  <input type="number" id="examMaxAttempts" value="0" min="0" max="99"
-                    class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                  <p class="text-xs text-slate-400 mt-1">0=不限次数</p>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">考试状态</label>
-                  <select id="examStatus" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white transition">
-                    <option value="draft">草稿</option>
-                    <option value="published">已发布</option>
-                    <option value="closed">已结束</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">选择Excel文件 <span class="text-red-500">*</span></label>
+            <input type="file" id="paperImportQuestionsFile" accept=".xlsx,.xls" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
           </div>
-
-          <!-- 时间设置 -->
-          <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 mb-4">
-            <h4 class="text-sm font-bold text-indigo-800 mb-3"><i class="fas fa-clock mr-1.5"></i>时间设置</h4>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">考试开始时间</label>
-                <input type="datetime-local" id="examStartTime"
-                  class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                <p class="text-xs text-slate-400 mt-1">留空立即生效</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">考试截止时间</label>
-                <input type="datetime-local" id="examEndTime"
-                  class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                <p class="text-xs text-slate-400 mt-1">留空不限结束时间</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- 考试选项 -->
-          <div class="bg-slate-50 rounded-xl p-4 mb-4">
-            <h4 class="text-sm font-bold text-slate-700 mb-3"><i class="fas fa-sliders-h mr-1.5"></i>考试选项</h4>
-            <div class="grid grid-cols-2 gap-4">
-              <label class="flex items-center space-x-2">
-                <input type="checkbox" id="examShuffle" class="w-4 h-4 text-indigo-500 rounded border-slate-300 focus:ring-indigo-500">
-                <span class="text-sm text-slate-600">随机打乱题目顺序</span>
-              </label>
-              <label class="flex items-center space-x-2">
-                <input type="checkbox" id="examShowAnswer" checked class="w-4 h-4 text-indigo-500 rounded border-slate-300 focus:ring-indigo-500">
-                <span class="text-sm text-slate-600">考后显示答案解析</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- 题目预览 -->
-          <div class="border-t border-slate-200 pt-4">
-            <div class="flex justify-between items-center mb-3">
-              <label class="block text-sm font-bold text-slate-700"><i class="fas fa-list-ol mr-1.5 text-indigo-500"></i>考试题目</label>
-              <button type="button" onclick="openQuestionPicker()" class="text-sm px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
-                <i class="fas fa-plus mr-1"></i>从题库选题目
-              </button>
-            </div>
-            <div id="examSelectedQuestions" class="space-y-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
-              <p class="text-sm text-slate-400 text-center py-4">请选择关联试卷或手动添加题目</p>
-            </div>
-            <p class="text-xs text-slate-400 mt-1" id="examQuestionCountHint">已选 0 题</p>
-          </div>
-        </form>
+        </div>
+        <button onclick="doPaperImportQuestions()" class="w-full btn-primary py-2.5 text-white rounded-xl font-medium transition">开始导入</button>
       </div>
-      <!-- 底部按钮 -->
-      <div class="flex justify-end space-x-3 p-6 border-t border-slate-100 flex-shrink-0 bg-slate-50">
-        <button type="button" onclick="closeExamModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-white transition bg-white text-slate-600">取消</button>
-        <button type="submit" form="examForm" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition">
-          <i class="fas fa-check mr-1.5"></i>保存
-        </button>
-      </div>
+    </div>
+  </div>
+
+  <!-- ========== 考试抽屉 ========== -->
+  <div id="examDrawerOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden transition-opacity" onclick="closeExamModal()"></div>
+  <div id="examModal" class="fixed top-0 right-0 h-full w-full max-w-lg bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
+      <h3 class="text-lg font-bold text-slate-800" id="examModalTitle">创建考试</h3>
+      <button onclick="closeExamModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-6">
+      <form id="examForm" onsubmit="saveExam(event)" class="space-y-4">
+        <input type="hidden" id="examId">
+
+        <!-- 基本信息 -->
+        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 mb-4">
+          <h4 class="text-sm font-bold text-indigo-800 mb-3"><i class="fas fa-info-circle mr-1.5"></i>基本信息</h4>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">考试名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="examTitle" required placeholder="请输入考试名称"
+                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">关联试卷 <span class="text-red-500">*</span></label>
+              <select id="examPaperId" onchange="onExamPaperChange()" required
+                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white transition">
+                <option value="">请选择试卷</option>
+              </select>
+              <p class="text-xs text-slate-400 mt-1">选择试卷后将自动加载题目和分数配置</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">考试描述</label>
+              <textarea id="examDesc" rows="2" placeholder="简要说明考试内容"
+                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none transition"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 考试设置 -->
+        <div class="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-xl p-4 mb-4">
+          <h4 class="text-sm font-bold text-indigo-800 mb-3"><i class="fas fa-cog mr-1.5"></i>考试设置</h4>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">时长(分钟)</label>
+              <input type="number" id="examDuration" value="60" min="5" max="300"
+                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">总分</label>
+              <input type="number" id="examTotalScore" value="100" min="1"
+                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">及格分数</label>
+              <input type="number" id="examPassingScore" value="60" min="0"
+                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">最多考试次数</label>
+              <input type="number" id="examMaxAttempts" value="0" min="0" max="99"
+                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+              <p class="text-xs text-slate-400 mt-1">0=不限次数</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">考试状态</label>
+              <select id="examStatus" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white transition">
+                <option value="draft">草稿</option>
+                <option value="published">已发布</option>
+                <option value="closed">已结束</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 时间设置 -->
+        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 mb-4">
+          <h4 class="text-sm font-bold text-indigo-800 mb-3"><i class="fas fa-clock mr-1.5"></i>时间设置</h4>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">考试开始时间</label>
+            <input type="datetime-local" id="examStartTime"
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+            <p class="text-xs text-slate-400 mt-1">留空立即生效</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">考试截止时间</label>
+            <input type="datetime-local" id="examEndTime"
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+            <p class="text-xs text-slate-400 mt-1">留空不限结束时间</p>
+          </div>
+        </div>
+
+        <!-- 参考学员 -->
+        <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 mb-4">
+          <h4 class="text-sm font-bold text-emerald-800 mb-3"><i class="fas fa-users mr-1.5"></i>参考学员</h4>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-sm font-medium text-slate-700">考试权限</label>
+              <select id="examAccessType" onchange="onExamAccessTypeChange()" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="public">全员开放</option>
+                <option value="restricted">指定学员</option>
+              </select>
+            </div>
+            <div id="examAllowedUsersContainer" class="hidden">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-slate-600">已选 <span id="examAllowedUsersCount">0</span> 人</span>
+                <button type="button" onclick="openExamUserPicker()" class="text-sm px-3 py-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition">
+                  <i class="fas fa-plus mr-1"></i>选择学员
+                </button>
+              </div>
+              <div id="examAllowedUsersList" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                <p class="text-sm text-slate-400 w-full">未选择学员</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 考试选项 -->
+        <div class="bg-slate-50 rounded-xl p-4 mb-4">
+          <h4 class="text-sm font-bold text-slate-700 mb-3"><i class="fas fa-sliders-h mr-1.5"></i>考试选项</h4>
+          <div class="space-y-3">
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="examShuffle" class="w-4 h-4 text-indigo-500 rounded border-slate-300 focus:ring-indigo-500">
+              <span class="text-sm text-slate-600">随机打乱题目顺序</span>
+            </label>
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="examShowAnswer" checked class="w-4 h-4 text-indigo-500 rounded border-slate-300 focus:ring-indigo-500">
+              <span class="text-sm text-slate-600">考后显示答案解析</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 题目预览 -->
+        <div class="border-t border-slate-200 pt-4">
+          <div class="flex justify-between items-center mb-3">
+            <label class="block text-sm font-bold text-slate-700"><i class="fas fa-list-ol mr-1.5 text-indigo-500"></i>考试题目</label>
+            <button type="button" onclick="openQuestionPicker()" class="text-sm px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
+              <i class="fas fa-plus mr-1"></i>从题库选题目
+            </button>
+          </div>
+          <div id="examSelectedQuestions" class="space-y-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
+            <p class="text-sm text-slate-400 text-center py-4">请选择关联试卷或手动添加题目</p>
+          </div>
+          <p class="text-xs text-slate-400 mt-1" id="examQuestionCountHint">已选 0 题</p>
+        </div>
+      </form>
+    </div>
+    <!-- 底部按钮 -->
+    <div class="flex justify-end space-x-3 p-6 border-t border-slate-100 flex-shrink-0 bg-slate-50">
+      <button type="button" onclick="closeExamModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-white transition bg-white text-slate-600">取消</button>
+      <button type="submit" form="examForm" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition">
+        <i class="fas fa-check mr-1.5"></i>保存
+      </button>
     </div>
   </div>
 
@@ -1797,6 +1978,53 @@
     </div>
   </div>
 
+  <!-- ========== 学员选择弹窗 ========== -->
+  <div id="examUserPickerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-hidden m-4 flex flex-col shadow-2xl">
+      <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-user-check mr-2 text-emerald-500"></i>选择参考学员</h3>
+        <button onclick="closeExamUserPicker()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <div class="px-6 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
+        <div class="relative">
+          <input type="text" id="examUserPickerSearch" placeholder="搜索学员姓名..." oninput="renderExamUserPicker()"
+            class="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+        </div>
+      </div>
+      <div class="flex-1 overflow-y-auto p-6">
+        <div id="examUserPickerList" class="space-y-2">
+          <p class="text-sm text-slate-400 text-center py-4">加载中...</p>
+        </div>
+      </div>
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex-shrink-0 flex justify-between items-center">
+        <span class="text-sm text-slate-500">已选 <strong id="examUserPickerCount" class="text-emerald-600">0</strong> 人</span>
+        <div class="space-x-2">
+          <button type="button" onclick="closeExamUserPicker()" class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm transition">取消</button>
+          <button type="button" onclick="confirmExamUserPicker()" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-sm transition">确认</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 考试预览弹窗 ========== -->
+  <div id="examPreviewModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden m-4 flex flex-col shadow-2xl">
+      <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-eye mr-2 text-indigo-500"></i>考试预览 - <span id="previewExamTitle">考试</span></h3>
+        <button onclick="closeExamPreview()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-6">
+        <div id="examPreviewContent" class="space-y-6">
+          <p class="text-sm text-slate-400 text-center py-4">加载中...</p>
+        </div>
+      </div>
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex-shrink-0 text-right">
+        <button type="button" onclick="closeExamPreview()" class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm transition">关闭</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ========== 考试成绩弹窗 ========== -->
   <div id="examResultsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden m-4 flex flex-col shadow-2xl">
@@ -1820,7 +2048,10 @@
           </tbody>
         </table>
       </div>
-      <div class="p-4 border-t border-slate-100 flex-shrink-0 text-right">
+      <div class="p-4 border-t border-slate-100 flex-shrink-0 flex justify-between items-center">
+        <button type="button" onclick="exportExamResults()" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-sm transition">
+          <i class="fas fa-file-excel mr-1.5"></i>导出Excel
+        </button>
         <button type="button" onclick="closeExamResults()" class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm transition">关闭</button>
       </div>
     </div>
@@ -1855,6 +2086,27 @@
               <option value="">请选择分类</option>
             </select>
             <p class="text-xs text-slate-400 mt-1">分类与试题管理保持一致</p>
+          </div>
+          
+          <!-- 出卷方式 -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">出卷方式 <span class="text-red-500">*</span></label>
+            <div class="flex gap-3">
+              <label class="flex-1 flex items-center gap-2 p-3 border-2 border-indigo-200 rounded-xl cursor-pointer hover:bg-indigo-50 transition has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
+                <input type="radio" name="paperType" value="fixed" checked class="text-indigo-500 focus:ring-indigo-500">
+                <div>
+                  <p class="text-sm font-medium text-slate-700">固定试卷</p>
+                  <p class="text-xs text-slate-400">手动选题，题目固定</p>
+                </div>
+              </label>
+              <label class="flex-1 flex items-center gap-2 p-3 border-2 border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 transition has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
+                <input type="radio" name="paperType" value="random" class="text-indigo-500 focus:ring-indigo-500">
+                <div>
+                  <p class="text-sm font-medium text-slate-700">随机试卷</p>
+                  <p class="text-xs text-slate-400">从题库随机抽题</p>
+                </div>
+              </label>
+            </div>
           </div>
           
           <!-- 试卷说明 -->
@@ -2581,9 +2833,15 @@
       if (btnEl) { btnEl.classList.add('active'); dbg('侧边栏按钮已激活', '#94a3b8'); }
       else dbg('WARN: 找不到侧边栏按钮 data-tab=' + name, '#fbbf24');
 
+      // 对于有子标签页的标签，自动切换到第一个子标签页
+      if (name === 'portal') {
+        dbg('portal 标签页，自动切换到第一个子标签页', '#38bdf8');
+        switchSubTab('portal', 'carousel');
+      }
+
       // 加载对应标签页数据（带错误处理）
       var loaders = {
-        dashboard: loadDashboard,
+        dashboard: async function() { await loadAllData(); loadDashboard(); },
         courses: renderCourses,
         categories: renderCategories,
         lecturers: renderLecturers,
@@ -4364,7 +4622,7 @@
     }
 
     // ========== 培训管理 ==========
-    let trainingViewMode = 'calendar';
+    let trainingViewMode = 'list';
     let trainingCurrentYear = new Date().getFullYear();
     let trainingCurrentMonth = new Date().getMonth();
 
@@ -4403,21 +4661,781 @@
       '2026-10-07': '国庆',
     };
 
+    let analyticsTrainingId = null;
+    let analyticsCurrentTab = 'enroll';
+    let _analyticsEnrollData = null;
+    let _analyticsSurveyData = null;
+    let _analyticsExamData = null;
+    let _analyticsAttendanceData = null;
+
     function switchTrainingView(mode) {
       trainingViewMode = mode;
       document.getElementById('view-btn-calendar').classList.toggle('active', mode === 'calendar');
       document.getElementById('view-btn-list').classList.toggle('active', mode === 'list');
       document.getElementById('training-calendar-view').classList.toggle('hidden', mode !== 'calendar');
       document.getElementById('training-list-view').classList.toggle('hidden', mode !== 'list');
-      document.getElementById('training-add-btn').style.display = mode === 'list' ? 'flex' : 'none';
+      document.getElementById('training-analytics-view').classList.toggle('hidden', mode !== 'analytics');
+      document.getElementById('training-add-btn').style.display = (mode === 'list') ? 'flex' : 'none';
+      // 隐藏顶部切换按钮的高亮（analytics模式下两个都不active）
+      if (mode === 'analytics') {
+        document.getElementById('view-btn-calendar').classList.remove('active');
+        document.getElementById('view-btn-list').classList.remove('active');
+      }
       renderTraining();
     }
 
     function renderTraining() {
       if (trainingViewMode === 'calendar') {
         renderTrainingCalendar();
-      } else {
+      } else if (trainingViewMode === 'list') {
         renderTrainingList();
+      }
+      // analytics模式下不需要渲染列表/日历
+    }
+
+    function exitAnalytics() {
+      switchTrainingView('list');
+    }
+
+    function openTrainingAnalytics(trainingId) {
+      analyticsTrainingId = trainingId;
+      analyticsCurrentTab = 'enroll';
+      const event = data.training.find(x => x.id === trainingId);
+      const name = event ? event.name : '培训';
+      const project = event ? event.project : '';
+      const instructor = event ? (event.instructor || '') : '';
+      document.getElementById('analytics-training-name').textContent = name;
+      document.getElementById('analytics-training-sub').textContent = [project, instructor].filter(Boolean).join(' · ');
+      switchTrainingView('analytics');
+      switchAnalyticsTab('enroll');
+    }
+
+    function switchAnalyticsTab(tab) {
+      analyticsCurrentTab = tab;
+      // 更新标签按钮样式
+      document.querySelectorAll('.analytics-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.classList.add('text-slate-600');
+      });
+      const activeBtn = document.getElementById('analytics-tab-' + tab);
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.classList.remove('text-slate-600');
+      }
+      // 渲染对应内容
+      const tid = analyticsTrainingId;
+      if (tab === 'enroll') renderAnalyticsEnroll(tid);
+      else if (tab === 'survey') renderAnalyticsSurvey(tid);
+      else if (tab === 'exam') renderAnalyticsExam(tid);
+      else if (tab === 'attendance') renderAnalyticsAttendance(tid);
+    }
+
+    // ========== 数据分析 - 报名分析 ==========
+    async function renderAnalyticsEnroll(trainingId) {
+      const container = document.getElementById('analytics-content');
+      container.innerHTML = '<div class="flex items-center justify-center py-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div><span class="ml-3 text-slate-500">加载报名数据...</span></div>';
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/enrollments');
+        const result = await res.json();
+        const enrollments = result.data || [];
+        _analyticsEnrollData = { enrollments, trainingId };
+
+        // 部门统计
+        const deptStats = {};
+        enrollments.forEach(e => {
+          const dept = e.userDepartment || '未知部门';
+          deptStats[dept] = (deptStats[dept] || 0) + 1;
+        });
+        const sortedDepts = Object.entries(deptStats).sort((a, b) => b[1] - a[1]);
+        const maxDeptCount = sortedDepts.length > 0 ? sortedDepts[0][1] : 1;
+
+        const deptBars = sortedDepts.map(([dept, count]) => {
+          const pct = Math.round((count / maxDeptCount) * 100);
+          return `
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-slate-600 w-24 truncate text-right">${dept}</span>
+              <div class="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-indigo-400 to-indigo-600 rounded-full transition-all duration-500 flex items-center justify-end pr-2" style="width: ${pct}%">
+                  ${pct > 20 ? `<span class="text-[10px] text-white font-medium">${count}</span>` : ''}
+                </div>
+              </div>
+              ${pct <= 20 ? `<span class="text-xs text-slate-500 w-6">${count}</span>` : '<span class="w-6"></span>'}
+            </div>`;
+        }).join('') || '<p class="text-sm text-slate-400 text-center py-4">暂无报名数据</p>';
+
+        // 报名人员表格
+        const rows = enrollments.length > 0
+          ? enrollments.map((e, i) => {
+            const seed = encodeURIComponent(e.userName || e.userId);
+            const avatarUrl = e.userAvatar && e.userAvatar.startsWith('http') ? e.userAvatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+            return `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+              <td class="px-4 py-3 text-sm text-slate-500">${i + 1}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2.5">
+                  <img src="${avatarUrl}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm" />
+                  <span class="text-sm font-medium text-slate-800">${e.userName || '-'}</span>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-600">${e.userDepartment || '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${e.userPhone || '-'}</td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${e.source === 'assigned' ? 'bg-cyan-50 text-cyan-600' : 'bg-indigo-50 text-indigo-600'}">${e.source === 'assigned' ? '指派' : '自主报名'}</span>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-500">${e.enrolledAt ? new Date(e.enrolledAt).toLocaleString('zh-CN') : '-'}</td>
+              <td class="px-4 py-3 text-right">
+                <button onclick="removeEnrollmentAndRefresh(${e.id}, ${trainingId})" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="移除"><i class="fas fa-times text-xs"></i></button>
+              </td>
+            </tr>`;
+          }).join('')
+          : `<tr><td colspan="7" class="px-4 py-12 text-center text-slate-400">
+              <i class="fas fa-users text-3xl mb-3 block text-slate-300"></i>
+              <p>暂无报名人员</p>
+            </td></tr>`;
+
+        // 来源统计
+        const selfCount = enrollments.filter(e => e.source !== 'assigned').length;
+        const assignedCount = enrollments.filter(e => e.source === 'assigned').length;
+
+        container.innerHTML = `
+          <div class="p-6">
+            <!-- 概览卡片 -->
+            <div class="grid grid-cols-4 gap-4 mb-6">
+              <div class="bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center"><i class="fas fa-users text-indigo-500 text-sm"></i></div>
+                  <span class="text-xs text-indigo-600/70">报名总人数</span>
+                </div>
+                <p class="text-2xl font-bold text-indigo-700">${enrollments.length}</p>
+              </div>
+              <div class="bg-gradient-to-br from-cyan-50 to-cyan-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center"><i class="fas fa-user-plus text-cyan-500 text-sm"></i></div>
+                  <span class="text-xs text-cyan-600/70">指派人数</span>
+                </div>
+                <p class="text-2xl font-bold text-cyan-700">${assignedCount}</p>
+              </div>
+              <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i class="fas fa-hand-pointer text-emerald-500 text-sm"></i></div>
+                  <span class="text-xs text-emerald-600/70">自主报名</span>
+                </div>
+                <p class="text-2xl font-bold text-emerald-700">${selfCount}</p>
+              </div>
+              <div class="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><i class="fas fa-building text-amber-500 text-sm"></i></div>
+                  <span class="text-xs text-amber-600/70">涉及部门</span>
+                </div>
+                <p class="text-2xl font-bold text-amber-700">${sortedDepts.length}</p>
+              </div>
+            </div>
+            <!-- 部门分布 -->
+            <div class="mb-6">
+              <h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-chart-bar text-indigo-400 mr-2"></i>部门分布</h4>
+              <div class="space-y-2">${deptBars}</div>
+            </div>
+            <!-- 报名人员明细 -->
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-sm font-semibold text-slate-700"><i class="fas fa-list-ul text-indigo-400 mr-2"></i>报名人员明细</h4>
+                <div class="flex items-center gap-2">
+                  <button onclick="exportAnalyticsEnroll()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
+                    <i class="fas fa-file-excel mr-1"></i>导出
+                  </button>
+                  <button onclick="openAssignStudentsModal(${trainingId})" class="px-3 py-1.5 bg-cyan-50 text-cyan-600 rounded-lg text-xs font-medium hover:bg-cyan-100 transition">
+                    <i class="fas fa-user-plus mr-1"></i>指派学员
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full">
+                  <thead class="bg-slate-50"><tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">电话</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">来源</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">报名时间</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500">操作</th>
+                  </tr></thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      } catch (err) {
+        container.innerHTML = '<div class="text-center py-20 text-slate-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p>加载报名数据失败</p></div>';
+      }
+    }
+
+    // ========== 数据分析 - 导出Excel ==========
+    function exportAnalyticsEnroll() {
+      if (!_analyticsEnrollData || !_analyticsEnrollData.enrollments) { toast('暂无数据可导出', 'warning'); return; }
+      const event = data.training.find(x => x.id === _analyticsEnrollData.trainingId);
+      const name = event ? event.name : '培训';
+      const enrollments = _analyticsEnrollData.enrollments;
+
+      const headers = ['序号', '姓名', '部门', '电话', '来源', '报名时间'];
+      const rows = enrollments.map((e, i) => [
+        i + 1,
+        e.userName || '-',
+        e.userDepartment || '-',
+        e.userPhone || '-',
+        e.source === 'assigned' ? '指派' : '自主报名',
+        e.enrolledAt ? new Date(e.enrolledAt).toLocaleString('zh-CN') : '-'
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      // 设置列宽
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 10 }, { wch: 22 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '报名数据');
+      XLSX.writeFile(wb, name + '_报名分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('报名数据导出成功');
+    }
+
+    function exportAnalyticsSurvey() {
+      if (!_analyticsSurveyData || !_analyticsSurveyData.survey) { toast('暂无数据可导出', 'warning'); return; }
+      const event = data.training.find(x => x.id === _analyticsSurveyData.trainingId);
+      const name = event ? event.name : '培训';
+      const { survey, responses } = _analyticsSurveyData;
+
+      // 构建表头：序号 + 姓名 + 部门 + 提交时间 + 各题目
+      const questionTitles = (survey.questions || []).map(q => q.title || q.text || '题目');
+      const headers = ['序号', '填写人', '部门', '提交时间', ...questionTitles];
+      const rows = responses.map((r, i) => {
+        const answers = (survey.questions || []).map(q => {
+          const ans = r.answers ? r.answers.find(a => a.questionId === q.id) : null;
+          return ans ? (ans.value !== undefined ? String(ans.value) : (ans.text || '-')) : '-';
+        });
+        return [
+          i + 1,
+          r.userName || '匿名',
+          r.department || '-',
+          r.submittedAt ? new Date(r.submittedAt).toLocaleString('zh-CN') : '-',
+          ...answers
+        ];
+      });
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 22 }, ...questionTitles.map(() => ({ wch: 20 }))];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '调研数据');
+      XLSX.writeFile(wb, name + '_调研分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('调研数据导出成功');
+    }
+
+    function exportAnalyticsExam() {
+      if (!_analyticsExamData || !_analyticsExamData.exam) { toast('暂无数据可导出', 'warning'); return; }
+      const event = data.training.find(x => x.id === _analyticsExamData.trainingId);
+      const name = event ? event.name : '培训';
+      const { exam, attempts } = _analyticsExamData;
+
+      const headers = ['序号', '考生', '分数', '是否通过', '正确题数', '总题数', '提交时间'];
+      const rows = attempts.map((a, i) => [
+        i + 1,
+        a.userName || a.userId || '-',
+        a.score ?? '-',
+        a.passed ? '通过' : '未通过',
+        a.correctCount ?? '-',
+        a.totalQuestions ?? '-',
+        a.submittedAt ? new Date(a.submittedAt).toLocaleString('zh-CN') : '-'
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 22 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '考试数据');
+      XLSX.writeFile(wb, name + '_考试分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('考试数据导出成功');
+    }
+
+    function exportAnalyticsAttendance() {
+      if (!_analyticsAttendanceData || !_analyticsAttendanceData.signins) { toast('暂无数据可导出', 'warning'); return; }
+      const { signins, event, absentNames, expectedCount, actualCount } = _analyticsAttendanceData;
+      const name = event ? event.name : '培训';
+
+      // Sheet 1: 签到明细
+      const headers = ['序号', '姓名', '部门', '签到时间', '状态'];
+      const rows = signins.map((s, i) => [
+        i + 1,
+        s.userName || '-',
+        s.department || '-',
+        s.signedAt ? new Date(s.signedAt).toLocaleString('zh-CN') : '-',
+        '已签到'
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 22 }, { wch: 8 }];
+
+      // Sheet 2: 考勤汇总
+      const summaryHeaders = ['项目', '数值'];
+      const absentCount = Math.max(0, (expectedCount || 0) - (actualCount || 0));
+      const rate = expectedCount > 0 ? Math.round((actualCount / expectedCount) * 100) + '%' : '-';
+      const summaryRows = [
+        ['培训课题', name],
+        ['讲师', event ? (event.instructor || '-') : '-'],
+        ['应到人数', expectedCount || 0],
+        ['实到人数', actualCount || 0],
+        ['缺卡人数', absentCount],
+        ['签到率', rate],
+        ['缺卡人员', (absentNames || []).join('、') || '无']
+      ];
+      const ws2 = XLSX.utils.aoa_to_sheet([summaryHeaders, ...summaryRows]);
+      ws2['!cols'] = [{ wch: 12 }, { wch: 40 }];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '签到明细');
+      XLSX.utils.book_append_sheet(wb, ws2, '考勤汇总');
+      XLSX.writeFile(wb, name + '_考勤分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('考勤数据导出成功');
+    }
+
+    async function removeEnrollmentAndRefresh(enrollId, trainingId) {
+      if (!confirm('确定移除该学员的报名?')) return;
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/enrollments/' + enrollId, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) {
+          toast('已移除报名');
+          renderAnalyticsEnroll(trainingId);
+        } else {
+          toast(result.error || '移除失败', 'error');
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+
+    // ========== 数据分析 - 调研分析 ==========
+    async function renderAnalyticsSurvey(trainingId) {
+      const container = document.getElementById('analytics-content');
+      container.innerHTML = '<div class="flex items-center justify-center py-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div><span class="ml-3 text-slate-500">加载调研数据...</span></div>';
+      try {
+        const [statusRes, respRes] = await Promise.all([
+          fetch(API + '/training/' + trainingId + '/service-status'),
+          fetch(API + '/training/' + trainingId + '/survey-responses')
+        ]);
+        const status = await statusRes.json();
+        const respResult = await respRes.json();
+        const survey = respResult.survey;
+        const responses = respResult.data || [];
+        _analyticsSurveyData = { survey, responses, trainingId };
+
+        if (!survey) {
+          container.innerHTML = `
+            <div class="text-center py-20 text-slate-400">
+              <i class="fas fa-poll text-4xl mb-4 block text-slate-300"></i>
+              <p class="text-lg font-medium text-slate-600 mb-2">未关联满意度调研</p>
+              <p class="text-sm mb-4">请先为该培训配置关联的满意度调研</p>
+              <button onclick="openTrainingServiceModal(${trainingId})" class="px-5 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition text-sm font-medium">配置调研</button>
+            </div>`;
+          return;
+        }
+
+        // 评分统计
+        const ratingQuestions = (survey.questions || []).filter(q => q.type === 'rating');
+        const ratingStats = ratingQuestions.map(q => {
+          const values = responses.map(r => {
+            const ans = r.answers.find(a => a.questionId === q.id);
+            return ans ? ans.value : null;
+          }).filter(v => v !== null);
+          const avg = values.length > 0 ? (values.reduce((a, b) => a + b, 0) / values.length) : 0;
+          return { title: q.title, avg: avg.toFixed(1), count: values.length };
+        });
+
+        const overallAvg = ratingStats.length > 0
+          ? (ratingStats.reduce((s, r) => s + parseFloat(r.avg), 0) / ratingStats.length).toFixed(1)
+          : '-';
+
+        const ratingCards = ratingStats.map(r => `
+          <div class="bg-slate-50 rounded-xl p-4">
+            <p class="text-xs text-slate-500 mb-2 truncate" title="${r.title}">${r.title}</p>
+            <div class="flex items-end gap-2">
+              <p class="text-2xl font-bold text-slate-800">${r.avg}</p>
+              <span class="text-xs text-slate-400 pb-1">/ 5分</span>
+            </div>
+            <div class="mt-2 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full" style="width: ${(parseFloat(r.avg) / 5 * 100)}%"></div>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1">${r.count} 人评分</p>
+          </div>`).join('');
+
+        // 文本题统计
+        const textQuestions = (survey.questions || []).filter(q => q.type !== 'rating');
+        const textBlocks = textQuestions.map(q => {
+          const answers = responses.map(r => {
+            const ans = r.answers.find(a => a.questionId === q.id);
+            return ans ? ans.value : null;
+          }).filter(v => v !== null && v !== '');
+          const answerItems = answers.slice(0, 10).map(a => `<div class="p-2 bg-slate-50 rounded-lg text-xs text-slate-600">${a}</div>`).join('');
+          return `
+            <div class="mb-4">
+              <h5 class="text-sm font-medium text-slate-700 mb-2">${q.title} <span class="text-xs text-slate-400">(${answers.length}条回答)</span></h5>
+              <div class="space-y-1.5 max-h-40 overflow-y-auto">${answerItems || '<p class="text-xs text-slate-400">暂无回答</p>'}</div>
+            </div>`;
+        }).join('');
+
+        // 填写人列表
+        const responseRows = responses.length > 0
+          ? responses.map((r, i) => `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+              <td class="px-4 py-2.5 text-sm text-slate-500">${i + 1}</td>
+              <td class="px-4 py-2.5 text-sm font-medium text-slate-800">${r.userName || '匿名'}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-600">${r.department || '-'}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-500">${new Date(r.submittedAt).toLocaleString('zh-CN')}</td>
+            </tr>`).join('')
+          : `<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-sm">暂无人填写</td></tr>`;
+
+        container.innerHTML = `
+          <div class="p-6">
+            <div class="grid grid-cols-3 gap-4 mb-6">
+              <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><i class="fas fa-star text-blue-500 text-sm"></i></div>
+                  <span class="text-xs text-blue-600/70">综合评分</span>
+                </div>
+                <p class="text-2xl font-bold text-blue-700">${overallAvg}</p>
+              </div>
+              <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i class="fas fa-user-check text-emerald-500 text-sm"></i></div>
+                  <span class="text-xs text-emerald-600/70">填写人数</span>
+                </div>
+                <p class="text-2xl font-bold text-emerald-700">${responses.length}</p>
+              </div>
+              <div class="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center"><i class="fas fa-question-circle text-purple-500 text-sm"></i></div>
+                  <span class="text-xs text-purple-600/70">题目数量</span>
+                </div>
+                <p class="text-2xl font-bold text-purple-700">${(survey.questions || []).length}</p>
+              </div>
+            </div>
+            ${ratingCards ? `<div class="mb-6"><h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-chart-line text-blue-400 mr-2"></i>评分统计</h4><div class="grid grid-cols-2 md:grid-cols-3 gap-3">${ratingCards}</div></div>` : ''}
+            ${textBlocks ? `<div class="mb-6"><h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-comments text-blue-400 mr-2"></i>文字回答</h4>${textBlocks}</div>` : ''}
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-sm font-semibold text-slate-700"><i class="fas fa-list-ul text-blue-400 mr-2"></i>填写人员明细</h4>
+                <button onclick="exportAnalyticsSurvey()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
+                  <i class="fas fa-file-excel mr-1"></i>导出
+                </button>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full">
+                  <thead class="bg-slate-50"><tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">填写人</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">提交时间</th>
+                  </tr></thead>
+                  <tbody>${responseRows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      } catch (err) {
+        container.innerHTML = '<div class="text-center py-20 text-slate-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p>加载调研数据失败</p></div>';
+      }
+    }
+
+    // ========== 数据分析 - 考试分析 ==========
+    async function renderAnalyticsExam(trainingId) {
+      const container = document.getElementById('analytics-content');
+      container.innerHTML = '<div class="flex items-center justify-center py-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div><span class="ml-3 text-slate-500">加载考试数据...</span></div>';
+      try {
+        const [statusRes, resultRes] = await Promise.all([
+          fetch(API + '/training/' + trainingId + '/service-status'),
+          fetch(API + '/training/' + trainingId + '/exam-results')
+        ]);
+        const status = await statusRes.json();
+        const result = await resultRes.json();
+        const exam = result.exam;
+        const attempts = result.data || [];
+        _analyticsExamData = { exam, attempts, trainingId };
+
+        if (!exam) {
+          container.innerHTML = `
+            <div class="text-center py-20 text-slate-400">
+              <i class="fas fa-file-alt text-4xl mb-4 block text-slate-300"></i>
+              <p class="text-lg font-medium text-slate-600 mb-2">未关联考试</p>
+              <p class="text-sm mb-4">请先为该培训配置关联的考试</p>
+              <button onclick="openTrainingServiceModal(${trainingId})" class="px-5 py-2 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition text-sm font-medium">配置考试</button>
+            </div>`;
+          return;
+        }
+
+        const passedCount = attempts.filter(a => a.passed).length;
+        const failCount = attempts.length - passedCount;
+        const avgScore = attempts.length > 0
+          ? (attempts.reduce((s, a) => s + (a.score || 0), 0) / attempts.length).toFixed(1)
+          : '-';
+        const maxScore = attempts.length > 0 ? Math.max(...attempts.map(a => a.score || 0)) : '-';
+        const minScore = attempts.length > 0 ? Math.min(...attempts.map(a => a.score || 0)) : '-';
+        const passRate = attempts.length > 0 ? Math.round((passedCount / attempts.length) * 100) : 0;
+
+        // 分数段分布
+        const scoreRanges = { '90-100': 0, '80-89': 0, '70-79': 0, '60-69': 0, '60以下': 0 };
+        attempts.forEach(a => {
+          const s = a.score || 0;
+          if (s >= 90) scoreRanges['90-100']++;
+          else if (s >= 80) scoreRanges['80-89']++;
+          else if (s >= 70) scoreRanges['70-79']++;
+          else if (s >= 60) scoreRanges['60-69']++;
+          else scoreRanges['60以下']++;
+        });
+        const maxRange = Math.max(...Object.values(scoreRanges), 1);
+
+        const rangeBars = Object.entries(scoreRanges).map(([range, count]) => {
+          const pct = Math.round((count / maxRange) * 100);
+          const color = range === '60以下' ? 'from-red-400 to-red-500' : range.startsWith('6') ? 'from-amber-400 to-amber-500' : 'from-emerald-400 to-emerald-500';
+          return `
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-slate-600 w-16 text-right">${range}</span>
+              <div class="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                <div class="h-full bg-gradient-to-r ${color} rounded-full flex items-center justify-end pr-2" style="width: ${pct}%">
+                  ${pct > 20 ? `<span class="text-[10px] text-white font-medium">${count}</span>` : ''}
+                </div>
+              </div>
+              ${pct <= 20 ? `<span class="text-xs text-slate-500 w-6">${count}</span>` : '<span class="w-6"></span>'}
+            </div>`;
+        }).join('');
+
+        const rows = attempts.length > 0
+          ? attempts.map((a, i) => `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+              <td class="px-4 py-2.5 text-sm text-slate-500">${i + 1}</td>
+              <td class="px-4 py-2.5 text-sm font-medium text-slate-800">${a.userName || a.userId || '-'}</td>
+              <td class="px-4 py-2.5 text-sm font-semibold ${a.score >= (exam.passingScore || 60) ? 'text-emerald-600' : 'text-red-500'}">${a.score ?? '-'}</td>
+              <td class="px-4 py-2.5">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${a.passed ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}">${a.passed ? '通过' : '未通过'}</span>
+              </td>
+              <td class="px-4 py-2.5 text-sm text-slate-600">${a.correctCount ?? '-'}/${a.totalQuestions ?? '-'}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-500">${a.submittedAt ? new Date(a.submittedAt).toLocaleString('zh-CN') : '-'}</td>
+            </tr>`).join('')
+          : `<tr><td colspan="6" class="px-4 py-12 text-center text-slate-400 text-sm">暂无人参加考试</td></tr>`;
+
+        container.innerHTML = `
+          <div class="p-6">
+            <div class="grid grid-cols-5 gap-4 mb-6">
+              <div class="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><i class="fas fa-users text-amber-500 text-sm"></i></div>
+                  <span class="text-xs text-amber-600/70">参考人数</span>
+                </div>
+                <p class="text-2xl font-bold text-amber-700">${attempts.length}</p>
+              </div>
+              <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><i class="fas fa-chart-line text-blue-500 text-sm"></i></div>
+                  <span class="text-xs text-blue-600/70">平均分</span>
+                </div>
+                <p class="text-2xl font-bold text-blue-700">${avgScore}</p>
+              </div>
+              <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i class="fas fa-check-circle text-emerald-500 text-sm"></i></div>
+                  <span class="text-xs text-emerald-600/70">通过率</span>
+                </div>
+                <p class="text-2xl font-bold text-emerald-700">${passRate}%</p>
+              </div>
+              <div class="bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center"><i class="fas fa-trophy text-green-500 text-sm"></i></div>
+                  <span class="text-xs text-green-600/70">最高分</span>
+                </div>
+                <p class="text-2xl font-bold text-green-700">${maxScore}</p>
+              </div>
+              <div class="bg-gradient-to-br from-red-50 to-red-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center"><i class="fas fa-arrow-down text-red-500 text-sm"></i></div>
+                  <span class="text-xs text-red-600/70">最低分</span>
+                </div>
+                <p class="text-2xl font-bold text-red-700">${minScore}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-6 mb-6">
+              <div>
+                <h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-chart-bar text-amber-400 mr-2"></i>分数段分布</h4>
+                <div class="space-y-2">${rangeBars}</div>
+              </div>
+              <div class="flex items-center justify-center">
+                <div class="relative w-36 h-36">
+                  <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <path class="text-slate-200" stroke="currentColor" stroke-width="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="text-emerald-500" stroke="currentColor" stroke-width="3.5" fill="none" stroke-dasharray="${passRate}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  </svg>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span class="text-2xl font-bold text-slate-800">${passRate}%</span>
+                    <span class="text-[10px] text-slate-400">通过率</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-sm font-semibold text-slate-700"><i class="fas fa-list-ul text-amber-400 mr-2"></i>考试成绩明细</h4>
+                <button onclick="exportAnalyticsExam()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
+                  <i class="fas fa-file-excel mr-1"></i>导出
+                </button>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full">
+                  <thead class="bg-slate-50"><tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">考生</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">分数</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">状态</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">正确率</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">提交时间</th>
+                  </tr></thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      } catch (err) {
+        container.innerHTML = '<div class="text-center py-20 text-slate-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p>加载考试数据失败</p></div>';
+      }
+    }
+
+    // ========== 数据分析 - 考勤分析 ==========
+    async function renderAnalyticsAttendance(trainingId) {
+      const container = document.getElementById('analytics-content');
+      container.innerHTML = '<div class="flex items-center justify-center py-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div><span class="ml-3 text-slate-500">加载考勤数据...</span></div>';
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/signins');
+        const result = await res.json();
+        const signins = result.data || [];
+        const event = data.training.find(x => x.id === trainingId);
+        _analyticsAttendanceData = { signins, event, trainingId };
+
+        // 获取报名人数作为应到人数
+        let expectedCount = 0;
+        try {
+          const enrollRes = await fetch(API + '/training/' + trainingId + '/enroll-count');
+          const enrollData = await enrollRes.json();
+          expectedCount = enrollData.count || 0;
+        } catch(e) { /* ignore */ }
+
+        const actualCount = signins.length;
+        const absentCount = Math.max(0, expectedCount - actualCount);
+        const attendanceRate = expectedCount > 0 ? Math.round((actualCount / expectedCount) * 100) : 0;
+
+        // 签到时间分布
+        let earliestSignin = '-', latestSignin = '-';
+        if (signins.length > 0) {
+          const sorted = [...signins].sort((a, b) => new Date(a.signedAt) - new Date(b.signedAt));
+          earliestSignin = new Date(sorted[0].signedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+          latestSignin = new Date(sorted[sorted.length - 1].signedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // 获取报名人员列表来计算缺卡人员
+        let absentNames = [];
+        try {
+          const enrollRes = await fetch(API + '/training/' + trainingId + '/enrollments');
+          const enrollData = await enrollRes.json();
+          const enrolledUsers = (enrollData.data || []).map(e => e.userId);
+          const signedUserIds = new Set(signins.map(s => s.userId));
+          const enrollments = enrollData.data || [];
+          absentNames = enrollments.filter(e => !signedUserIds.has(e.userId)).map(e => e.userName || '未知');
+        } catch(e) { /* ignore */ }
+        _analyticsAttendanceData.absentNames = absentNames;
+        _analyticsAttendanceData.expectedCount = expectedCount;
+        _analyticsAttendanceData.actualCount = actualCount;
+
+        const rows = signins.length > 0
+          ? signins.map((s, i) => {
+            const seed = encodeURIComponent(s.userName || s.userId);
+            const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+            return `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+              <td class="px-4 py-2.5 text-sm text-slate-500">${i + 1}</td>
+              <td class="px-4 py-2.5">
+                <div class="flex items-center gap-2">
+                  <img src="${avatarUrl}" class="w-7 h-7 rounded-full object-cover" />
+                  <span class="text-sm font-medium text-slate-800">${s.userName || '-'}</span>
+                </div>
+              </td>
+              <td class="px-4 py-2.5 text-sm text-slate-600">${s.department || '-'}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-500">${new Date(s.signedAt).toLocaleString('zh-CN')}</td>
+              <td class="px-4 py-2.5">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-600">已签到</span>
+              </td>
+            </tr>`;
+          }).join('')
+          : `<tr><td colspan="5" class="px-4 py-12 text-center text-slate-400 text-sm">暂无签到记录</td></tr>`;
+
+        container.innerHTML = `
+          <div class="p-6">
+            <div class="grid grid-cols-4 gap-4 mb-6">
+              <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i class="fas fa-clipboard-check text-emerald-500 text-sm"></i></div>
+                  <span class="text-xs text-emerald-600/70">签到率</span>
+                </div>
+                <p class="text-2xl font-bold text-emerald-700">${expectedCount > 0 ? attendanceRate + '%' : '-'}</p>
+              </div>
+              <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><i class="fas fa-user-clock text-blue-500 text-sm"></i></div>
+                  <span class="text-xs text-blue-600/70">应到人数</span>
+                </div>
+                <p class="text-2xl font-bold text-blue-700">${expectedCount}</p>
+              </div>
+              <div class="bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center"><i class="fas fa-check text-green-500 text-sm"></i></div>
+                  <span class="text-xs text-green-600/70">实到人数</span>
+                </div>
+                <p class="text-2xl font-bold text-green-700">${actualCount}</p>
+              </div>
+              <div class="bg-gradient-to-br from-red-50 to-red-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center"><i class="fas fa-user-times text-red-500 text-sm"></i></div>
+                  <span class="text-xs text-red-600/70">缺卡人数</span>
+                </div>
+                <p class="text-2xl font-bold text-red-700">${absentCount}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-6 mb-6">
+              <div>
+                <h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-info-circle text-emerald-400 mr-2"></i>签到概况</h4>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">培训课题</span><span class="font-medium text-slate-800">${event ? event.name : '-'}</span></div>
+                  <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">讲师</span><span class="font-medium text-slate-800">${event ? (event.instructor || '-') : '-'}</span></div>
+                  <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">最早签到</span><span class="font-medium text-emerald-600">${earliestSignin}</span></div>
+                  <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">最晚签到</span><span class="font-medium text-amber-600">${latestSignin}</span></div>
+                </div>
+              </div>
+              ${absentNames.length > 0 ? `
+              <div>
+                <h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-user-times text-red-400 mr-2"></i>缺卡人员</h4>
+                <div class="flex flex-wrap gap-2">
+                  ${absentNames.map(name => `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-600"><i class="fas fa-user text-[8px]"></i>${name}</span>`).join('')}
+                </div>
+              </div>` : ''}
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-sm font-semibold text-slate-700"><i class="fas fa-list-ul text-emerald-400 mr-2"></i>签到明细</h4>
+                <button onclick="exportAnalyticsAttendance()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
+                  <i class="fas fa-file-excel mr-1"></i>导出
+                </button>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full">
+                  <thead class="bg-slate-50"><tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">签到时间</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">状态</th>
+                  </tr></thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      } catch (err) {
+        container.innerHTML = '<div class="text-center py-20 text-slate-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p>加载考勤数据失败</p></div>';
       }
     }
 
@@ -4510,7 +5528,7 @@
       document.getElementById('training-current-month').textContent = `${trainingCurrentYear}年${trainingCurrentMonth + 1}月`;
     }
 
-    function renderTrainingList() {
+    async function renderTrainingList() {
       const tbody = document.getElementById('training-table-body');
       const emptyState = document.getElementById('training-list-empty');
       const events = data.training || [];
@@ -4521,6 +5539,15 @@
         return;
       }
       emptyState.classList.add('hidden');
+
+      // 批量获取报名人数
+      const enrollCounts = {};
+      try {
+        const results = await Promise.all(events.map(e =>
+          fetch(API + '/training/' + e.id + '/enroll-count').then(r => r.json()).then(d => ({ id: e.id, count: d.count || 0 }))
+        ));
+        results.forEach(r => { enrollCounts[r.id] = r.count; });
+      } catch(e) { /* 获取失败不影响列表展示 */ }
 
       tbody.innerHTML = events.map(e => {
         const cat = trainingCategories[e.project] || { color: 'bg-slate-100 text-slate-600' };
@@ -4535,6 +5562,7 @@
         if (hasSurvey) serviceBadges.push(`<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-600"><i class="fas fa-poll text-[8px]"></i>调研</span>`);
         if (hasExam) serviceBadges.push(`<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-600"><i class="fas fa-file-alt text-[8px]"></i>考试</span>`);
         const serviceHtml = serviceBadges.length > 0 ? `<div class="flex flex-wrap gap-1 justify-center">${serviceBadges.join('')}</div>` : '<span class="text-xs text-slate-300">-</span>';
+        const enrollCount = enrollCounts[e.id] || 0;
         return `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="px-6 py-4"><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${cat.color}"><i class="fas ${cat.icon || 'fa-tag'} text-[10px]"></i>${e.project}</span></td>
@@ -4544,11 +5572,13 @@
             <td class="px-6 py-4 text-sm text-slate-600">${start}</td>
             <td class="px-6 py-4 text-sm text-slate-600">${end}</td>
             <td class="px-6 py-4 text-center">${serviceHtml}</td>
+            <td class="px-6 py-4 text-center">
+              <span class="inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-full text-xs font-semibold ${enrollCount > 0 ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}">${enrollCount}</span>
+            </td>
             <td class="px-6 py-4 text-right">
               <div class="flex items-center justify-end gap-1">
-                <button onclick="viewTrainingSignins(${e.id})" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="签到数据"><i class="fas fa-check-circle"></i></button>
-                <button onclick="viewTrainingSurvey(${e.id})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="调研数据"><i class="fas fa-poll"></i></button>
-                <button onclick="viewTrainingExam(${e.id})" class="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition" title="考试数据"><i class="fas fa-file-alt"></i></button>
+                <button onclick="openTrainingAnalytics(${e.id})" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="数据分析"><i class="fas fa-chart-pie"></i></button>
+                <button onclick="openAssignStudentsModal(${e.id})" class="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition" title="指派学员"><i class="fas fa-user-plus"></i></button>
                 <button onclick="openTrainingServiceModal(${e.id})" class="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition" title="配置集成服务"><i class="fas fa-cogs"></i></button>
                 <button onclick="editTraining(${e.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit"></i></button>
                 <button onclick="deleteTraining(${e.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash"></i></button>
@@ -5211,6 +6241,305 @@
         }
       } catch (err) {
         toast('保存失败', 'error');
+      }
+    }
+
+    // ========== 培训报名管理 ==========
+
+    // 查看报名人员（数据统计）
+    async function viewTrainingEnrollments(trainingId) {
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/enrollments');
+        const result = await res.json();
+        const enrollments = result.data || [];
+        const event = data.training.find(x => x.id === trainingId);
+        const title = event ? event.name : '培训报名';
+
+        const rows = enrollments.length > 0
+          ? enrollments.map((e, i) => {
+            const seed = encodeURIComponent(e.userName || e.userId);
+            const avatarUrl = e.userAvatar && e.userAvatar.startsWith('http') ? e.userAvatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+            return `
+            <tr class="border-b border-slate-100 hover:bg-slate-50">
+              <td class="px-4 py-3 text-sm text-slate-600">${i + 1}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <img src="${avatarUrl}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm" />
+                  <span class="text-sm font-medium text-slate-800">${e.userName || '-'}</span>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-600">${e.userDepartment || '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${e.userPhone || '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${e.enrolledAt ? new Date(e.enrolledAt).toLocaleString('zh-CN') : '-'}</td>
+              <td class="px-4 py-3 text-right">
+                <button onclick="removeEnrollment(${e.id}, ${trainingId})" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition" title="移除"><i class="fas fa-times text-xs"></i></button>
+              </td>
+            </tr>`;
+          }).join('')
+          : `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">
+              <i class="fas fa-users text-2xl mb-2 block"></i>
+              <p>暂无报名人员</p>
+              <p class="text-xs mt-1">点击"指派学员"按钮添加学员</p>
+            </td></tr>`;
+
+        // 部门统计
+        const deptStats = {};
+        enrollments.forEach(e => {
+          const dept = e.userDepartment || '未知部门';
+          deptStats[dept] = (deptStats[dept] || 0) + 1;
+        });
+        const deptBadges = Object.entries(deptStats).map(([dept, count]) =>
+          `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">${dept}: ${count}</span>`
+        ).join('');
+
+        showModal(`
+          <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-users text-indigo-500 mr-2"></i>报名数据统计</h3>
+                <p class="text-sm text-slate-500">${title}</p>
+              </div>
+              <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="px-6 py-3 border-b border-slate-50 flex items-center justify-between">
+              <div class="flex items-center gap-2 flex-wrap">${deptBadges || '<span class="text-xs text-slate-400">暂无数据</span>'}</div>
+              <button onclick="openAssignStudentsModal(${trainingId})" class="px-3 py-1.5 bg-cyan-50 text-cyan-600 rounded-lg text-xs font-medium hover:bg-cyan-100 transition">
+                <i class="fas fa-user-plus mr-1"></i>指派学员
+              </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+              <table class="w-full">
+                <thead class="bg-slate-50"><tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">电话</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">报名时间</th>
+                  <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500">操作</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-100 flex justify-between items-center">
+              <p class="text-sm text-slate-500">报名总人数：<strong class="text-indigo-600">${enrollments.length}</strong></p>
+              <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+            </div>
+          </div>
+        `);
+      } catch (err) {
+        toast('加载报名数据失败', 'error');
+      }
+    }
+
+    // 移除单个报名
+    async function removeEnrollment(enrollId, trainingId) {
+      if (!confirm('确定移除该学员的报名?')) return;
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/enrollments/' + enrollId, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) {
+          toast('已移除报名');
+          viewTrainingEnrollments(trainingId); // 刷新
+        } else {
+          toast(result.error || '移除失败', 'error');
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+
+    // 指派学员
+    async function openAssignStudentsModal(trainingId) {
+      try {
+        // 获取当前报名用户ID列表
+        const enrollRes = await fetch(API + '/training/' + trainingId + '/enrollments');
+        const enrollData = await enrollRes.json();
+        const enrolledIds = new Set((enrollData.data || []).map(e => String(e.userId)));
+
+        // 确保 allUsers 已加载
+        if (!allUsers || allUsers.length === 0) {
+          try {
+            const token = localStorage.getItem('adminToken');
+            const usersRes = await fetch(API + '/auth/users', {
+              headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (usersRes.ok) {
+              const usersJson = await usersRes.json();
+              allUsers = (usersJson.data && usersJson.data.users) ? usersJson.data.users : (usersJson.data || usersJson || []);
+            }
+          } catch(e) { /* ignore */ }
+        }
+
+        const users = allUsers || [];
+        if (users.length === 0) {
+          toast('暂无可用用户，请先添加用户', 'warning');
+          return;
+        }
+
+        const event = data.training.find(x => x.id === trainingId);
+        const title = event ? event.name : '培训指派';
+
+        // 按部门分组
+        const departments = {};
+        users.forEach(u => {
+          const dept = u.department || '未分组';
+          if (!departments[dept]) departments[dept] = [];
+          departments[dept].push(u);
+        });
+
+        let usersHtml = '';
+        Object.entries(departments).sort((a, b) => a[0].localeCompare(b[0])).forEach(([dept, deptUsers]) => {
+          const deptEnrolledCount = deptUsers.filter(u => enrolledIds.has(String(u.id))).length;
+          usersHtml += `
+            <div class="mb-4">
+              <div class="flex items-center justify-between mb-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="dept-check rounded text-indigo-600 focus:ring-indigo-500" data-dept="${dept}" onchange="toggleDeptUsers('${dept}', this.checked)" />
+                  <span class="text-sm font-semibold text-slate-700">${dept}</span>
+                </label>
+                <span class="text-xs text-slate-400">${deptEnrolledCount}/${deptUsers.length} 已报名</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pl-6">
+                ${deptUsers.map(u => {
+                  const checked = enrolledIds.has(String(u.id));
+                  const seed = encodeURIComponent(u.realName || u.username);
+                  const avatarUrl = u.avatar && u.avatar.startsWith('http') ? u.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+                  return `
+                    <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer ${checked ? 'bg-indigo-50' : ''}">
+                      <input type="checkbox" class="user-check rounded text-indigo-600 focus:ring-indigo-500" data-user-id="${u.id}" data-dept="${dept}" ${checked ? 'checked' : ''} onchange="updateAssignCount(); syncDeptCheckbox('${dept}')" />
+                      <img src="${avatarUrl}" class="w-6 h-6 rounded-full object-cover" />
+                      <span class="text-xs text-slate-700 truncate">${u.realName || u.username}</span>
+                    </label>`;
+                }).join('')}
+              </div>
+            </div>`;
+        });
+
+        showModal(`
+          <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-user-plus text-cyan-500 mr-2"></i>指派学员</h3>
+                <p class="text-sm text-slate-500">${title}</p>
+              </div>
+              <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="px-6 py-3 border-b border-slate-50 flex items-center justify-between">
+              <div class="relative flex-1 max-w-xs">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="assign-search" placeholder="搜索姓名..." class="pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 w-full" oninput="filterAssignUsers(this.value)" />
+              </div>
+              <span class="text-xs text-slate-400 ml-3" id="assign-count">已选: ${enrolledIds.size} 人</span>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1" id="assign-users-list">${usersHtml}</div>
+            <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+              <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+              <button onclick="submitAssignStudents(${trainingId})" class="px-5 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-medium">确认指派</button>
+            </div>
+          </div>
+        `);
+      } catch (err) {
+        toast('加载失败', 'error');
+      }
+    }
+
+    // 部门全选/取消
+    function toggleDeptUsers(dept, checked) {
+      const checkboxes = document.querySelectorAll(`.user-check[data-dept="${dept}"]`);
+      checkboxes.forEach(cb => { cb.checked = checked; });
+      updateAssignCount();
+    }
+
+    // 同步部门复选框状态
+    function syncDeptCheckbox(dept) {
+      const checkboxes = document.querySelectorAll(`.user-check[data-dept="${dept}"]`);
+      const deptCb = document.querySelector(`.dept-check[data-dept="${dept}"]`);
+      if (deptCb) {
+        const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+        deptCb.checked = allChecked;
+      }
+    }
+
+    // 搜索过滤
+    function filterAssignUsers(keyword) {
+      const labels = document.querySelectorAll('#assign-users-list label');
+      const kw = keyword.trim().toLowerCase();
+      labels.forEach(label => {
+        const nameSpan = label.querySelector('span.text-xs');
+        if (nameSpan) {
+          const name = nameSpan.textContent.toLowerCase();
+          label.style.display = (!kw || name.includes(kw)) ? '' : 'none';
+        }
+      });
+      // 部门标题也做显隐处理
+      document.querySelectorAll('#assign-users-list > div').forEach(deptDiv => {
+        const visibleUsers = deptDiv.querySelectorAll('.grid label:not([style*="display: none"])');
+        const deptHeader = deptDiv.querySelector('.flex.items-center.justify-between');
+        if (deptHeader) {
+          deptHeader.style.display = (kw && visibleUsers.length === 0) ? 'none' : '';
+        }
+      });
+    }
+
+    // 更新已选计数
+    function updateAssignCount() {
+      const count = document.querySelectorAll('#assign-users-list .user-check:checked').length;
+      const el = document.getElementById('assign-count');
+      if (el) el.textContent = `已选: ${count} 人`;
+    }
+
+    // 提交指派
+    async function submitAssignStudents(trainingId) {
+      const checkedIds = Array.from(document.querySelectorAll('#assign-users-list .user-check:checked'))
+        .map(cb => parseInt(cb.dataset.userId));
+
+      // 获取当前已报名ID
+      try {
+        const enrollRes = await fetch(API + '/training/' + trainingId + '/enrollments');
+        const enrollData = await enrollRes.json();
+        const currentEnrolledIds = new Set((enrollData.data || []).map(e => e.userId));
+
+        const toAdd = checkedIds.filter(id => !currentEnrolledIds.has(id));
+        const toRemove = Array.from(currentEnrolledIds).filter(id => !checkedIds.includes(id));
+
+        // 批量添加
+        if (toAdd.length > 0) {
+          const res = await fetch(API + '/training/' + trainingId + '/assign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userIds: toAdd })
+          });
+          const result = await res.json();
+          if (!result.success) {
+            toast(result.error || '指派失败', 'error');
+            return;
+          }
+        }
+
+        // 批量移除取消勾选的
+        for (const userId of toRemove) {
+          await fetch(API + '/training/' + trainingId + '/enroll', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
+          });
+        }
+
+        const msgs = [];
+        if (toAdd.length > 0) msgs.push(`新增 ${toAdd.length} 人`);
+        if (toRemove.length > 0) msgs.push(`移除 ${toRemove.length} 人`);
+        toast(msgs.length > 0 ? msgs.join('，') : '无变更');
+
+        closeModal();
+        // 刷新数据
+        await loadAllData();
+        renderTrainingList();
+        // 如果当前在数据分析视图，也刷新当前标签页
+        if (trainingViewMode === 'analytics' && analyticsTrainingId === trainingId) {
+          switchAnalyticsTab(analyticsCurrentTab);
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
       }
     }
 
@@ -6914,6 +8243,57 @@
       } catch (e) { toast('导入失败: ' + e.message, 'error'); }
     }
 
+    // ====== 试卷导入试题 ======
+    function openPaperImportQuestionsModal() {
+      document.getElementById('paperImportQuestionsFile').value = '';
+      const modal = document.getElementById('paperImportQuestionsModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closePaperImportQuestionsModal() {
+      const modal = document.getElementById('paperImportQuestionsModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function doPaperImportQuestions() {
+      const file = document.getElementById('paperImportQuestionsFile').files[0];
+      if (!file) return toast('请选择Excel文件', 'warning');
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      try {
+        const res = await fetch('/api/questions/import', { method: 'POST', body: formData });
+        const result = await res.json();
+        if (result.success) {
+          closePaperImportQuestionsModal();
+          toast(`导入完成：成功 ${result.imported} 题` + (result.failed ? `，失败 ${result.failed} 题` : ''));
+          
+          // 将导入的题目添加到当前试卷
+          const importedQuestions = (result.importedData || []);
+          importedQuestions.forEach((q, i) => {
+            paperQuestions.push({
+              id: Date.now() + i,
+              questionId: q.id,
+              score: q.score || 5,
+              order: paperQuestions.length + i,
+              questionDetail: q
+            });
+          });
+          
+          // 更新试卷题目列表显示
+          updatePaperQuestionList();
+          updatePaperStats();
+        } else { 
+          toast(result.error || '导入失败', 'error'); 
+        }
+      } catch (e) { 
+        toast('导入失败: ' + e.message, 'error'); 
+      }
+    }
+
     function fillCategorySelect(selectId) {
       const sel = document.getElementById(selectId);
       if (!sel) return;
@@ -6982,6 +8362,7 @@
             <td class="px-5 py-4 text-center">
               <div class="flex items-center justify-center gap-1">
                 <button onclick="editExam(${exam.id})" class="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit text-sm"></i></button>
+                <button onclick="previewExam(${exam.id})" class="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition" title="预览"><i class="fas fa-eye text-sm"></i></button>
                 ${exam.status === 'draft' ? `<button onclick="publishExam(${exam.id})" class="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition" title="发布"><i class="fas fa-paper-plane text-sm"></i></button>` : ''}
                 ${exam.status === 'published' ? `<button onclick="closeExam(${exam.id})" class="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition" title="结束"><i class="fas fa-stop-circle text-sm"></i></button>` : ''}
                 <button onclick="viewExamResults(${exam.id}, '${escHtml(exam.title)}')" class="p-2 text-slate-400 hover:text-purple-500 hover:bg-purple-50 rounded-lg transition" title="成绩"><i class="fas fa-chart-bar text-sm"></i></button>
@@ -6999,6 +8380,11 @@
     let examMgmtAllData = [];
     let examSelectedIds = new Set();
     let examSearchTimer = null;
+    let examCurrentPage = 1;
+    let examTotalPages = 1;
+    let examPageSize = 10;
+    let examSortField = '';
+    let examSortOrder = 'asc';
 
     async function loadExamMgmtList() {
       const tbody = document.getElementById('examMgmtList');
@@ -7034,11 +8420,25 @@
     function applyExamFilters() {
       const search = (document.getElementById('examSearchInput')?.value || '').trim().toLowerCase();
       const status = document.getElementById('examFilterStatus')?.value || 'all';
-      return examMgmtAllData.filter(e => {
+      let filtered = examMgmtAllData.filter(e => {
         if (search && !(e.title || '').toLowerCase().includes(search)) return false;
         if (status !== 'all' && e.status !== status) return false;
         return true;
       });
+      // 排序
+      if (examSortField) {
+        filtered.sort((a, b) => {
+          let av = a[examSortField] || 0;
+          let bv = b[examSortField] || 0;
+          if (examSortField === 'title') { av = av || ''; bv = bv || ''; }
+          if (typeof av === 'string') av = av.toLowerCase();
+          if (typeof bv === 'string') bv = bv.toLowerCase();
+          if (av < bv) return examSortOrder === 'asc' ? -1 : 1;
+          if (av > bv) return examSortOrder === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+      return filtered;
     }
 
     function renderExamMgmtList() {
@@ -7047,7 +8447,31 @@
       const filtered = applyExamFilters();
       if (countEl) countEl.textContent = `共 ${filtered.length} 场考试`;
 
-      if (!filtered.length) {
+      // 分页计算
+      examTotalPages = Math.max(1, Math.ceil(filtered.length / examPageSize));
+      if (examCurrentPage > examTotalPages) examCurrentPage = examTotalPages;
+      const start = (examCurrentPage - 1) * examPageSize;
+      const end = start + examPageSize;
+      const pageData = filtered.slice(start, end);
+
+      // 更新分页控件
+      const pagination = document.getElementById('examPagination');
+      if (pagination) {
+        if (filtered.length > examPageSize) {
+          pagination.classList.remove('hidden');
+          document.getElementById('examTotalCount').textContent = filtered.length;
+          document.getElementById('examCurrentPageNum').textContent = examCurrentPage;
+          document.getElementById('examTotalPageNum').textContent = examTotalPages;
+          document.getElementById('examFirstPage').disabled = examCurrentPage <= 1;
+          document.getElementById('examPrevPage').disabled = examCurrentPage <= 1;
+          document.getElementById('examNextPage').disabled = examCurrentPage >= examTotalPages;
+          document.getElementById('examLastPage').disabled = examCurrentPage >= examTotalPages;
+        } else {
+          pagination.classList.add('hidden');
+        }
+      }
+
+      if (!pageData.length) {
         tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-16 text-center text-slate-400"><i class="fas fa-clipboard-list text-4xl mb-3 block opacity-30"></i><p>暂无考试</p><p class="text-xs mt-1">点击右上角“创建考试”开始安排考试</p></td></tr>';
         return;
       }
@@ -7058,7 +8482,7 @@
         closed: { cls: 'bg-red-100 text-red-600', text: '已结束', dot: 'bg-red-500' }
       };
 
-      tbody.innerHTML = filtered.map(exam => {
+      tbody.innerHTML = pageData.map(exam => {
         const st = statusMap[exam.status] || statusMap.draft;
         const checked = examSelectedIds.has(exam.id) ? 'checked' : '';
         const paperName = exam.paperName || '—';
@@ -7309,6 +8733,29 @@
       }
     }
 
+    function sortExamList(field) {
+      if (examSortField === field) {
+        examSortOrder = examSortOrder === 'asc' ? 'desc' : 'asc';
+      } else {
+        examSortField = field;
+        examSortOrder = 'asc';
+      }
+      examCurrentPage = 1;
+      renderExamMgmtList();
+    }
+
+    function goExamPage(page) {
+      if (page < 1 || page > examTotalPages) return;
+      examCurrentPage = page;
+      renderExamMgmtList();
+    }
+
+    function onExamPageSizeChange() {
+      examPageSize = parseInt(document.getElementById('examPageSize').value) || 10;
+      examCurrentPage = 1;
+      renderExamMgmtList();
+    }
+
     function onExamSearch() {
       clearTimeout(examSearchTimer);
       examSearchTimer = setTimeout(() => renderExamMgmtList(), 250);
@@ -7321,6 +8768,7 @@
     }
     function toggleExamSelect(id) {
       if (examSelectedIds.has(id)) examSelectedIds.delete(id); else examSelectedIds.add(id);
+      updateBatchActionBar();
     }
     function toggleExamSelectAll() {
       const checked = document.getElementById('examSelectAll').checked;
@@ -7328,6 +8776,177 @@
       if (checked) visible.forEach(e => examSelectedIds.add(e.id));
       else visible.forEach(e => examSelectedIds.delete(e.id));
       renderExamMgmtList();
+      updateBatchActionBar();
+    }
+
+    function updateBatchActionBar() {
+      const bar = document.getElementById('examBatchActionBar');
+      const count = document.getElementById('examBatchCount');
+      if (!bar || !count) return;
+      if (examSelectedIds.size > 0) {
+        bar.classList.remove('hidden');
+        count.textContent = `已选 ${examSelectedIds.size} 项`;
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+
+    function clearExamSelection() {
+      examSelectedIds.clear();
+      document.getElementById('examSelectAll').checked = false;
+      renderExamMgmtList();
+      updateBatchActionBar();
+    }
+
+    async function batchDeleteExams() {
+      if (examSelectedIds.size === 0) return;
+      if (!confirm(`确定删除选中的 ${examSelectedIds.size} 场考试吗？此操作不可恢复。`)) return;
+      let success = 0, failed = 0;
+      for (const id of examSelectedIds) {
+        try {
+          const res = await fetch('/api/exams/' + id, { method: 'DELETE' });
+          if (res.ok) success++; else failed++;
+        } catch (e) { failed++; }
+      }
+      toast(`批量删除完成：成功 ${success} 场，失败 ${failed} 场`);
+      clearExamSelection();
+      loadExamMgmtList();
+    }
+
+    async function batchPublishExams() {
+      if (examSelectedIds.size === 0) return;
+      if (!confirm(`确定发布选中的 ${examSelectedIds.size} 场考试吗？`)) return;
+      let success = 0, failed = 0;
+      for (const id of examSelectedIds) {
+        try {
+          const res = await fetch('/api/exams/' + id + '/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'published' }) });
+          if (res.ok) success++; else failed++;
+        } catch (e) { failed++; }
+      }
+      toast(`批量发布完成：成功 ${success} 场，失败 ${failed} 场`);
+      clearExamSelection();
+      loadExamMgmtList();
+    }
+
+    async function batchCloseExams() {
+      if (examSelectedIds.size === 0) return;
+      if (!confirm(`确定结束选中的 ${examSelectedIds.size} 场考试吗？`)) return;
+      let success = 0, failed = 0;
+      for (const id of examSelectedIds) {
+        try {
+          const res = await fetch('/api/exams/' + id + '/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'closed' }) });
+          if (res.ok) success++; else failed++;
+        } catch (e) { failed++; }
+      }
+      toast(`批量结束完成：成功 ${success} 场，失败 ${failed} 场`);
+      clearExamSelection();
+      loadExamMgmtList();
+    }
+
+    let examUserPickerData = [];
+    let examUserPickerTemp = new Set();
+
+    function onExamAccessTypeChange() {
+      const type = document.getElementById('examAccessType').value;
+      const container = document.getElementById('examAllowedUsersContainer');
+      if (type === 'restricted') {
+        container.classList.remove('hidden');
+      } else {
+        container.classList.add('hidden');
+      }
+    }
+
+    async function openExamUserPicker() {
+      examUserPickerTemp = new Set(examUserPickerData.filter(u => u.selected).map(u => u.id));
+      const modal = document.getElementById('examUserPickerModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('examUserPickerSearch').value = '';
+      await loadExamUserPickerData();
+      renderExamUserPicker();
+    }
+
+    function closeExamUserPicker() {
+      const modal = document.getElementById('examUserPickerModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function loadExamUserPickerData() {
+      try {
+        const res = await fetch('/api/users');
+        const users = await res.json();
+        examUserPickerData = users.map(u => ({
+          id: u.id,
+          name: u.real_name || u.username || u.name || '未知',
+          avatar: u.avatar || '',
+          selected: examUserPickerTemp.has(u.id)
+        }));
+      } catch (e) {
+        examUserPickerData = [];
+      }
+    }
+
+    function renderExamUserPicker() {
+      const search = document.getElementById('examUserPickerSearch').value.toLowerCase();
+      const list = document.getElementById('examUserPickerList');
+      const filtered = examUserPickerData.filter(u => u.name.toLowerCase().includes(search));
+      if (filtered.length === 0) {
+        list.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">无匹配学员</p>';
+      } else {
+        list.innerHTML = filtered.map(u => `
+          <label class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition">
+            <input type="checkbox" ${u.selected ? 'checked' : ''} onchange="toggleExamUserSelect(${u.id})"
+              class="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500">
+            <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs font-bold">
+              ${u.name.charAt(0)}
+            </div>
+            <span class="text-sm text-slate-700">${escHtml(u.name)}</span>
+          </label>
+        `).join('');
+      }
+      document.getElementById('examUserPickerCount').textContent = examUserPickerData.filter(u => u.selected).length;
+    }
+
+    function toggleExamUserSelect(id) {
+      const user = examUserPickerData.find(u => u.id === id);
+      if (user) {
+        user.selected = !user.selected;
+        if (user.selected) examUserPickerTemp.add(id);
+        else examUserPickerTemp.delete(id);
+      }
+      renderExamUserPicker();
+    }
+
+    function confirmExamUserPicker() {
+      renderExamAllowedUsers();
+      closeExamUserPicker();
+    }
+
+    function renderExamAllowedUsers() {
+      const selected = examUserPickerData.filter(u => u.selected);
+      const count = document.getElementById('examAllowedUsersCount');
+      const list = document.getElementById('examAllowedUsersList');
+      count.textContent = selected.length;
+      if (selected.length === 0) {
+        list.innerHTML = '<p class="text-sm text-slate-400 w-full">未选择学员</p>';
+      } else {
+        list.innerHTML = selected.map(u => `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full">
+            ${escHtml(u.name)}
+            <button type="button" onclick="removeExamAllowedUser(${u.id})" class="hover:text-emerald-900">
+              <i class="fas fa-times"></i>
+            </button>
+          </span>
+        `).join('');
+      }
+    }
+
+    function removeExamAllowedUser(id) {
+      const user = examUserPickerData.find(u => u.id === id);
+      if (user) user.selected = false;
+      examUserPickerTemp.delete(id);
+      renderExamAllowedUsers();
     }
 
     function openExamModal(id = null) {
@@ -7347,12 +8966,16 @@
       document.getElementById('examShuffle').checked = false;
       document.getElementById('examShowAnswer').checked = true;
       document.getElementById('examPaperId').value = '';
+      document.getElementById('examAccessType').value = 'public';
+      onExamAccessTypeChange();
+      examUserPickerData = [];
+      examUserPickerTemp = new Set();
+      renderExamAllowedUsers();
       renderSelectedQuestions();
       // 加载试卷下拉
       loadExamPaperOptions();
-      const modal = document.getElementById('examModal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
+      document.getElementById('examDrawerOverlay').classList.remove('hidden');
+      document.getElementById('examModal').classList.remove('translate-x-full');
       if (id) loadExamForEdit(id);
     }
 
@@ -7420,9 +9043,8 @@
     }
 
     function closeExamModal() {
-      const modal = document.getElementById('examModal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
+      document.getElementById('examDrawerOverlay').classList.add('hidden');
+      document.getElementById('examModal').classList.add('translate-x-full');
       editingExamId = null;
       selectedExamQuestions = [];
     }
@@ -7455,6 +9077,15 @@
           // 恢复关联试卷
           if (exam.paperId) {
             document.getElementById('examPaperId').value = exam.paperId;
+          }
+          // 恢复参考学员
+          const hasRestricted = exam.allowedUsers && Array.isArray(exam.allowedUsers) && exam.allowedUsers.length > 0;
+          document.getElementById('examAccessType').value = hasRestricted ? 'restricted' : 'public';
+          onExamAccessTypeChange();
+          if (hasRestricted) {
+            examUserPickerTemp = new Set(exam.allowedUsers);
+            await loadExamUserPickerData();
+            renderExamAllowedUsers();
           }
         }
         renderSelectedQuestions();
@@ -7495,6 +9126,36 @@
     async function saveExam(e) {
       e.preventDefault();
       const paperId = document.getElementById('examPaperId').value;
+      const totalScore = parseInt(document.getElementById('examTotalScore').value) || 0;
+      const passingScore = parseInt(document.getElementById('examPassingScore').value) || 0;
+      const startTime = document.getElementById('examStartTime').value;
+      const endTime = document.getElementById('examEndTime').value;
+
+      // 表单校验
+      if (!paperId && selectedExamQuestions.length === 0) {
+        toast('请选择关联试卷或手动添加题目', 'warning');
+        return;
+      }
+      if (passingScore > totalScore) {
+        toast('及格分数不能大于总分', 'warning');
+        return;
+      }
+      if (startTime && endTime) {
+        const start = new Date(startTime);
+        const end = new Date(endTime);
+        if (start >= end) {
+          toast('考试开始时间必须早于截止时间', 'warning');
+          return;
+        }
+      }
+      if (endTime) {
+        const end = new Date(endTime);
+        if (end < new Date()) {
+          toast('截止时间不能早于当前时间', 'warning');
+          return;
+        }
+      }
+
       // 获取试卷名称
       let paperName = '';
       if (paperId) {
@@ -7509,6 +9170,8 @@
           if (paper) paperName = paper.name;
         } catch(e) {}
       }
+      const accessType = document.getElementById('examAccessType').value;
+      const allowedUsers = accessType === 'restricted' ? Array.from(examUserPickerTemp) : null;
       const payload = {
         title: document.getElementById('examTitle').value.trim(),
         description: document.getElementById('examDesc').value.trim(),
@@ -7523,7 +9186,8 @@
         showAnswer: document.getElementById('examShowAnswer').checked,
         questions: selectedExamQuestions,
         paperId: paperId || null,
-        paperName: paperName
+        paperName: paperName,
+        allowedUsers: allowedUsers
       };
       try {
         let res;
@@ -7553,7 +9217,72 @@
       }
     }
 
-    async function editExam(id) { openExamEditor(id); }
+    async function previewExam(id) {
+      try {
+        const res = await fetch('/api/exams/' + id + '/questions');
+        const data = await res.json();
+        const examRes = await fetch('/api/exams');
+        const allExams = await examRes.json();
+        const exam = allExams.find(e => e.id === id);
+        document.getElementById('previewExamTitle').textContent = exam ? exam.title : '考试';
+        const questions = data.questions || [];
+        const typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '问答题' };
+        if (questions.length === 0) {
+          document.getElementById('examPreviewContent').innerHTML = '<p class="text-sm text-slate-400 text-center py-4">暂无题目</p>';
+        } else {
+          document.getElementById('examPreviewContent').innerHTML = questions.map((q, i) => {
+            const detail = q.questionDetail || {};
+            let optionsHtml = '';
+            if (detail.options && Array.isArray(detail.options)) {
+              optionsHtml = detail.options.map((opt, idx) => {
+                const isCorrect = (Array.isArray(detail.answer) ? detail.answer : [detail.answer]).includes(String.fromCharCode(65 + idx));
+                return `<div class="flex items-start gap-2 py-1 ${isCorrect ? 'text-emerald-700 font-medium' : 'text-slate-600'}">
+                  <span class="flex-shrink-0 w-6 h-6 rounded-full border ${isCorrect ? 'border-emerald-500 bg-emerald-50 text-emerald-600' : 'border-slate-300 text-slate-500'} flex items-center justify-center text-xs font-bold">${String.fromCharCode(65 + idx)}</span>
+                  <span class="text-sm">${escHtml(opt)}${isCorrect ? ' <i class="fas fa-check-circle text-emerald-500 ml-1"></i>' : ''}</span>
+                </div>`;
+              }).join('');
+            }
+            return `
+              <div class="border border-slate-200 rounded-xl p-5 bg-white">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-bold">${i + 1}</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-500">${typeNames[detail.type] || ''}</span>
+                  <span class="text-xs text-slate-400 ml-auto">${q.score || 1} 分</span>
+                </div>
+                <div class="text-sm text-slate-800 mb-3 font-medium">${escHtml(detail.title || detail.content || '(无内容)')}</div>
+                ${optionsHtml ? `<div class="space-y-1 pl-2">${optionsHtml}</div>` : ''}
+                ${detail.type === 'judge' ? `<div class="space-y-1 pl-2">
+                  <div class="flex items-center gap-2 text-sm ${detail.answer === '正确' || detail.answer === 'true' || detail.answer === 'A' ? 'text-emerald-700 font-medium' : 'text-slate-600'}">
+                    <span class="w-5 h-5 rounded-full border ${detail.answer === '正确' || detail.answer === 'true' || detail.answer === 'A' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300'} flex items-center justify-center text-xs">对</span>
+                    正确${detail.answer === '正确' || detail.answer === 'true' || detail.answer === 'A' ? ' <i class="fas fa-check-circle text-emerald-500 ml-1"></i>' : ''}
+                  </div>
+                  <div class="flex items-center gap-2 text-sm ${detail.answer === '错误' || detail.answer === 'false' || detail.answer === 'B' ? 'text-emerald-700 font-medium' : 'text-slate-600'}">
+                    <span class="w-5 h-5 rounded-full border ${detail.answer === '错误' || detail.answer === 'false' || detail.answer === 'B' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300'} flex items-center justify-center text-xs">错</span>
+                    错误${detail.answer === '错误' || detail.answer === 'false' || detail.answer === 'B' ? ' <i class="fas fa-check-circle text-emerald-500 ml-1"></i>' : ''}
+                  </div>
+                </div>` : ''}
+                ${detail.type === 'fill' || detail.type === 'essay' ? `<div class="mt-2 p-3 bg-emerald-50 rounded-lg text-sm text-emerald-700">
+                  <i class="fas fa-check-circle mr-1.5"></i>参考答案：${escHtml(detail.answer || '无')}
+                </div>` : ''}
+              </div>
+            `;
+          }).join('');
+        }
+        const modal = document.getElementById('examPreviewModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      } catch (e) {
+        toast('加载预览失败', 'error');
+      }
+    }
+
+    function closeExamPreview() {
+      const modal = document.getElementById('examPreviewModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function editExam(id) { openExamEditor(id); }
 
     async function deleteExam(id) {
       if (!confirm('确定要删除这个考试吗?相关成绩记录也将被清除。')) return;
@@ -7589,8 +9318,12 @@
       } catch (e) { toast('操作失败', 'error'); }
     }
 
+    let currentExamResults = [];
+    let currentExamResultTitle = '';
+
     async function viewExamResults(id, title) {
       document.getElementById('resultsExamTitle').textContent = title;
+      currentExamResultTitle = title;
       const tbody = document.getElementById('examResultsBody');
       tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
       const modal = document.getElementById('examResultsModal');
@@ -7600,6 +9333,7 @@
         const res = await fetch('/api/exams/' + id + '/results');
         const data = await res.json();
         const results = data.results || [];
+        currentExamResults = results;
         if (!results.length) {
           tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">暂无成绩记录</td></tr>';
           return;
@@ -7619,6 +9353,27 @@
       } catch (e) {
         tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-red-500">加载失败</td></tr>';
       }
+    }
+
+    function exportExamResults() {
+      if (!currentExamResults || currentExamResults.length === 0) {
+        toast('没有可导出的成绩数据', 'warning');
+        return;
+      }
+      const headers = ['学员姓名', '得分', '正确题数', '总题数', '是否通过', '提交时间'];
+      const rows = currentExamResults.map(r => [
+        r.userName || '未知',
+        r.score || 0,
+        r.correctCount || 0,
+        r.totalQuestions || 0,
+        r.passed ? '通过' : '未通过',
+        r.completedAt ? new Date(r.completedAt).toLocaleString('zh-CN') : '-'
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '考试成绩');
+      XLSX.writeFile(wb, (currentExamResultTitle || '考试') + '_成绩_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('成绩导出成功');
     }
 
     function closeExamResults() {
@@ -7671,7 +9426,7 @@
       tbody.innerHTML = papers.map(p => {
         const qCount = (p.questions || []).length;
         const isEnabled = p.status !== 'disabled' && p.status !== 'closed';
-        const deptName = p.department || (p.categoryName || '未分配');
+        const deptName = p.department || (p.categoryName && !/^\d+$/.test(p.categoryName) ? p.categoryName : '未分配');
         const paperType = p.type || 'fixed';
         const typeText = paperType === 'fixed' ? '固定试卷' : '随机试卷';
         const creator = p.creator || p.createdBy || '—';
@@ -7701,12 +9456,19 @@
               </span>
             </td>
             <td class="pl-3 pr-5 py-4">
-              <div class="flex items-center gap-3 text-sm">
-                <a href="javascript:;" onclick="editPaper('${p.id}')" class="text-indigo-500 hover:text-indigo-600">编辑</a>
-                <a href="javascript:;" onclick="openPaperCollaborator('${p.id}')" class="text-indigo-500 hover:text-indigo-600">协同人</a>
-                <div class="relative">
-                  <a href="javascript:;" onclick="togglePaperMoreMenu('${p.id}', event)" class="text-indigo-500 hover:text-indigo-600">更多<i class="fas fa-chevron-down ml-0.5 text-xs"></i></a>
-                </div>
+              <div class="flex items-center gap-1">
+                <button onclick="editPaper('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 transition" title="编辑">
+                  <i class="fas fa-pen text-sm"></i>
+                </button>
+                <button onclick="togglePaperStatus('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition" title="停用/启用">
+                  <i class="fas fa-power-off text-sm"></i>
+                </button>
+                <button onclick="duplicatePaper('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 transition" title="复制试卷">
+                  <i class="fas fa-copy text-sm"></i>
+                </button>
+                <button onclick="deletePaper('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition" title="删除">
+                  <i class="fas fa-trash-alt text-sm"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -7746,8 +9508,6 @@
     // 重置筛选
     function resetPaperFilters() {
       document.getElementById('paperSearchInput').value = '';
-      document.getElementById('paperFilterDept').value = '';
-      document.getElementById('paperFilterManager').value = 'all';
       document.getElementById('paperFilterStatus').value = 'all';
       document.getElementById('paperFilterType').value = 'all';
       renderPaperList(applyPaperFilters());
@@ -7853,12 +9613,6 @@
       }
     }
 
-    // 协同人
-    function openPaperCollaborator(id) {
-      // TODO 后续实现
-      toast('协同人功能待后续实现', 'info');
-    }
-
     // 格式化日期时间
     function formatDateTime(d) {
       const dt = new Date(d);
@@ -7876,6 +9630,9 @@
       document.getElementById('paperName').value = '';
       document.getElementById('paperCategory').value = '';
       document.getElementById('paperDesc').value = '';
+      // 重置出卷方式为固定试卷
+      const fixedRadio = document.querySelector('input[name="paperType"][value="fixed"]');
+      if (fixedRadio) fixedRadio.checked = true;
       
       // 加载分类下拉（与试题管理使用相同数据源）
       fillCategorySelect('paperCategory');
@@ -7916,6 +9673,9 @@
         document.getElementById('paperName').value = paper.name || '';
         document.getElementById('paperCategory').value = paper.category || '';
         document.getElementById('paperDesc').value = paper.description || '';
+        // 回填出卷方式
+        const typeRadio = document.querySelector(`input[name="paperType"][value="${paper.type || 'fixed'}"]`);
+        if (typeRadio) typeRadio.checked = true;
         // 弹窗已精简，duration/passScore 等字段在编辑页设置
         const elDuration = document.getElementById('paperDuration');
         if (elDuration) elDuration.value = paper.duration || 60;
@@ -8056,7 +9816,7 @@
         name: name,
         category: category,
         categoryId: category,
-        categoryName: (data.categories || []).find(c => c.id === category)?.name || '',
+        categoryName: (data.categories || []).find(c => String(c.id) === String(category))?.name || '',
         description: document.getElementById('paperDesc').value.trim(),
         // 保留旧字段（编辑模式）默认值
         duration: 60,
@@ -8074,7 +9834,7 @@
           type: q.type
         })),
         status: 'draft',
-        type: 'fixed',
+        type: document.querySelector('input[name="paperType"]:checked')?.value || 'fixed',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         creator: '当前用户',
@@ -8150,8 +9910,23 @@
           document.getElementById('paperEditorView').classList.remove('hidden');
           // 填充编辑页数据
           document.getElementById('peTitle').textContent = paper.name;
-          document.getElementById('peCategory').textContent = paper.categoryName || paper.category || '未分类';
-          document.getElementById('peDesc').textContent = paper.description || '暂无说明';
+          // 分类名称：优先用 categoryName，如果是纯数字则从分类数据中查找
+          let catName = paper.categoryName || paper.category || '';
+          if (/^\d+$/.test(catName) || !catName) {
+            const cat = (data.categories || []).find(c => String(c.id) === String(paper.category || paper.categoryId));
+            catName = cat ? cat.name : (paper.categoryName || paper.category || '未分类');
+          }
+          document.getElementById('peCategory').textContent = catName || '未分类';
+          document.getElementById('peName').value = paper.name || '';
+          // 填充分类下拉
+          fillCategorySelect('peCategoryInput');
+          const catId = paper.categoryId || paper.category || '';
+          setTimeout(() => {
+            const sel = document.getElementById('peCategoryInput');
+            if (sel) sel.value = catId;
+          }, 50);
+          document.getElementById('peType').value = paper.type || 'fixed';
+          document.getElementById('peDescInput').value = paper.description || '';
           document.getElementById('peDuration').value = paper.duration || 60;
           document.getElementById('pePassScore').value = paper.passScore || 60;
           renderPaperEditorQuestions();
@@ -8184,26 +9959,20 @@
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2 text-sm">
-              <label class="text-slate-500">时长</label>
-              <input type="number" id="peDuration" value="60" min="5" max="300" class="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-center focus:ring-2 focus:ring-indigo-500 outline-none"> <span class="text-slate-400">分钟</span>
+            <div class="flex items-center gap-1.5 px-3 py-2 bg-slate-100 rounded-full text-sm">
+              <span class="text-slate-400">总分：</span>
+              <span class="font-semibold text-slate-700" id="peHeaderTotalScore">-</span>
+              <span class="text-slate-300 mx-1">|</span>
+              <span class="text-slate-400">试题：</span>
+              <span class="font-semibold text-slate-700" id="peHeaderQCount">0</span>
             </div>
-            <div class="flex items-center gap-2 text-sm">
-              <label class="text-slate-500">及格分</label>
-              <input type="number" id="pePassScore" value="60" min="0" class="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-center focus:ring-2 focus:ring-indigo-500 outline-none"> <span class="text-slate-400">分</span>
-            </div>
-            <button onclick="savePaperEditorSettings()" class="px-4 py-2 text-sm border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition">
-              <i class="fas fa-save mr-1.5"></i>保存设置
+            <button onclick="openPaperInfoDrawer()" class="px-4 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+              <i class="fas fa-cog mr-1.5"></i>设置
             </button>
-            <button onclick="publishPaper('${editingPaperId || ''}')" class="btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition">
-              <i class="fas fa-paper-plane mr-1.5"></i>发布试卷
+            <button onclick="publishPaper()" id="pePublishBtn" class="px-4 py-2 text-sm border border-slate-200 rounded-lg text-slate-400 font-medium transition" disabled>
+              <i class="fas fa-paper-plane mr-1.5"></i>发布
             </button>
           </div>
-        </div>
-
-        <!-- 试卷说明 -->
-        <div class="bg-white rounded-lg border border-slate-200/60 shadow-sm p-4 mb-4">
-          <p class="text-sm text-slate-600" id="peDesc">暂无说明</p>
         </div>
 
         <!-- 题目操作栏 -->
@@ -8213,11 +9982,9 @@
             <span class="text-sm text-slate-400" id="peQuestionStats">0 题，总分 0 分</span>
           </div>
           <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2 text-sm">
-              <label class="text-slate-500">统一分值</label>
-              <input type="number" id="peUniformScore" value="5" min="1" max="100" class="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-center focus:ring-2 focus:ring-indigo-500 outline-none">
-              <button onclick="applyUniformScoreEditor()" class="px-3 py-1.5 text-xs border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition">应用</button>
-            </div>
+            <button onclick="openPaperImportQuestionsModal()" class="px-4 py-2 text-sm border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 hover:border-slate-300 transition">
+              <i class="fas fa-file-import mr-1.5"></i>导入试题
+            </button>
             <button onclick="openPaperQuestionPicker()" class="btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition">
               <i class="fas fa-plus mr-1.5"></i>从题库选题
             </button>
@@ -8230,6 +9997,59 @@
         <!-- 题目列表 -->
         <div id="peQuestionList" class="space-y-3">
           <p class="text-sm text-slate-400 text-center py-8">暂未添加题目，请点击上方按钮从题库选择</p>
+        </div>
+
+        <!-- 右侧抽屉：试卷信息 -->
+        <div id="paperInfoDrawerOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden transition-opacity" onclick="closePaperInfoDrawer()"></div>
+        <div id="paperInfoDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-cog text-indigo-500 mr-2"></i>试卷信息</h3>
+            <button onclick="closePaperInfoDrawer()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">试卷名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="peName" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm" placeholder="请输入试卷名称">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">试卷分类</label>
+              <select id="peCategoryInput" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm bg-white">
+                <option value="">请选择分类</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">试卷类型</label>
+              <select id="peType" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm bg-white">
+                <option value="fixed">固定试卷</option>
+                <option value="random">随机试卷</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">试卷说明</label>
+              <textarea id="peDescInput" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm resize-none" placeholder="请输入试卷说明..."></textarea>
+            </div>
+            <div class="border-t border-slate-100 pt-4">
+              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">考试设置</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">考试时长（分钟）</label>
+                  <input type="number" id="peDuration" value="60" min="5" max="300" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm text-center">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">及格分</label>
+                  <input type="number" id="pePassScore" value="60" min="0" max="100" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm text-center">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-slate-100 flex-shrink-0 flex gap-3">
+            <button onclick="closePaperInfoDrawer()" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition">取消</button>
+            <button onclick="savePaperInfoFromDrawer()" class="flex-1 py-2.5 btn-primary text-white rounded-xl text-sm font-medium shadow-sm hover:shadow-md transition">
+              <i class="fas fa-check mr-1.5"></i>保存
+            </button>
+          </div>
         </div>
       `;
       container.appendChild(div);
@@ -8245,6 +10065,21 @@
 
       if (statsEl) statsEl.textContent = `${qCount} 题，总分 ${totalScore} 分`;
       if (headerStatsEl) headerStatsEl.textContent = `${qCount} 题 / 总分 ${totalScore}`;
+      // 更新头部信息栏
+      const headerTotal = document.getElementById('peHeaderTotalScore');
+      const headerQCount = document.getElementById('peHeaderQCount');
+      const publishBtn = document.getElementById('pePublishBtn');
+      if (headerTotal) headerTotal.textContent = totalScore;
+      if (headerQCount) headerQCount.textContent = qCount;
+      if (publishBtn) {
+        if (qCount > 0) {
+          publishBtn.disabled = false;
+          publishBtn.className = 'btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition';
+        } else {
+          publishBtn.disabled = true;
+          publishBtn.className = 'px-4 py-2 text-sm border border-slate-200 rounded-lg text-slate-400 font-medium transition';
+        }
+      }
 
       if (!container) return;
 
@@ -8296,11 +10131,56 @@
     }
 
     // 保存试卷编辑设置
+    // 打开试卷信息抽屉
+    function openPaperInfoDrawer() {
+      const overlay = document.getElementById('paperInfoDrawerOverlay');
+      const drawer = document.getElementById('paperInfoDrawer');
+      if (overlay) overlay.classList.remove('hidden');
+      if (drawer) drawer.classList.remove('translate-x-full');
+    }
+
+    // 关闭试卷信息抽屉
+    function closePaperInfoDrawer() {
+      const overlay = document.getElementById('paperInfoDrawerOverlay');
+      const drawer = document.getElementById('paperInfoDrawer');
+      if (overlay) overlay.classList.add('hidden');
+      if (drawer) drawer.classList.add('translate-x-full');
+    }
+
+    // 从抽屉保存试卷信息
+    async function savePaperInfoFromDrawer() {
+      const paper = papersAllData.find(p => p.id === editingPaperId);
+      if (!paper) { toast('试卷不存在', 'error'); return; }
+      const name = document.getElementById('peName').value.trim();
+      if (!name) { toast('请输入试卷名称', 'error'); return; }
+      paper.name = name;
+      const catSelect = document.getElementById('peCategoryInput');
+      const catId = catSelect ? catSelect.value : '';
+      paper.category = catId;
+      paper.categoryId = catId;
+      paper.categoryName = catSelect && catSelect.selectedIndex > 0 ? catSelect.options[catSelect.selectedIndex].text : '';
+      paper.type = document.getElementById('peType').value;
+      paper.description = document.getElementById('peDescInput').value.trim();
+      paper.duration = parseInt(document.getElementById('peDuration').value) || 60;
+      paper.passScore = parseInt(document.getElementById('pePassScore').value) || 60;
+      paper.updatedAt = new Date().toISOString();
+      // 同步更新标题显示
+      document.getElementById('peTitle').textContent = paper.name;
+      document.getElementById('peCategory').textContent = paper.categoryName || '未分类';
+      try {
+        if (window.dataSync && window.dataSync.setData) {
+          window.dataSync.setData('papers', papersAllData);
+        } else {
+          localStorage.setItem('papers', JSON.stringify(papersAllData));
+        }
+        toast('试卷信息已保存');
+        closePaperInfoDrawer();
+      } catch(e) { toast('保存失败', 'error'); }
+    }
+
     async function savePaperEditorSettings() {
       const paper = papersAllData.find(p => p.id === editingPaperId);
       if (!paper) { toast('试卷不存在', 'error'); return; }
-      paper.duration = parseInt(document.getElementById('peDuration').value) || 60;
-      paper.passScore = parseInt(document.getElementById('pePassScore').value) || 60;
       paper.questions = paperQuestions.map((q, i) => ({
         questionId: q.questionId,
         score: q.score || 5,
@@ -8323,8 +10203,14 @@
     // 发布试卷
     async function publishPaper(id) {
       const paperId = id || editingPaperId;
+      console.log('[publishPaper] paperId:', paperId, 'editingPaperId:', editingPaperId);
       const paper = papersAllData.find(p => p.id === paperId);
-      if (!paper) return;
+      if (!paper) {
+        console.error('[publishPaper] 找不到试卷, paperId:', paperId, 'papersAllData:', papersAllData);
+        toast('试卷数据异常，请刷新后重试', 'error');
+        return;
+      }
+      console.log('[publishPaper] paper:', paper.name, 'paperQuestions:', paperQuestions.length);
       if ((paper.questions || []).length === 0 && paperQuestions.length === 0) {
         toast('请先添加题目再发布', 'error');
         return;
@@ -8339,16 +10225,21 @@
       paper.status = 'published';
       paper.totalScore = paperQuestions.reduce((s, q) => s + (q.score || 0), 0);
       paper.updatedAt = new Date().toISOString();
+      console.log('[publishPaper] 准备保存, questions:', paper.questions.length, 'totalScore:', paper.totalScore);
       try {
         if (window.dataSync && window.dataSync.setData) {
           window.dataSync.setData('papers', papersAllData);
         } else {
           localStorage.setItem('papers', JSON.stringify(papersAllData));
         }
+        console.log('[publishPaper] 保存成功');
         toast('试卷已发布');
         closePaperEditor();
         loadPapers();
-      } catch(e) { toast('发布失败', 'error'); }
+      } catch(e) {
+        console.error('[publishPaper] 保存失败:', e);
+        toast('发布失败', 'error');
+      }
     }
 
     // 关闭编辑页
@@ -10210,8 +12101,363 @@
         if (parent === 'portal' && child === 'lecturer-apply') {
           loadLecturerApplications();
         }
+        if (parent === 'portal' && child === 'training-requests') {
+          loadTrainingRequests();
+        }
       };
     }
+
+    // ========== 培训需求管理功能 ==========
+
+    // 加载培训需求列表
+    async function loadTrainingRequests() {
+      try {
+        let requests = [];
+        
+        // 尝试从服务器获取
+        try {
+          const res = await fetch('/api/training-requests');
+          if (res.ok) {
+            const result = await res.json();
+            requests = result.data || [];
+          }
+        } catch (e) {
+          console.log('从服务器获取失败，使用本地数据:', e.message);
+        }
+        
+        // 如果服务器没有数据，从 localStorage 获取
+        if (requests.length === 0) {
+          requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        }
+        
+        // 按状态筛选
+        const statusFilter = document.getElementById('training-request-status-filter')?.value || 'all';
+        if (statusFilter !== 'all') {
+          requests = requests.filter(r => r.status === statusFilter);
+        }
+        
+        // 按时间倒序排列
+        requests.sort((a, b) => new Date(b.submitTime) - new Date(a.submitTime));
+        
+        // 更新统计
+        updateTrainingRequestStats();
+        
+        // 渲染列表
+        renderTrainingRequestList(requests);
+        
+      } catch (e) {
+        console.error('加载培训需求失败:', e);
+        toast('加载培训需求失败: ' + e.message, 'error');
+      }
+    }
+
+    // 更新培训需求统计
+    function updateTrainingRequestStats() {
+      let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+      
+      // 尝试合并服务器数据
+      try {
+        const serverData = localStorage.getItem('training_requests_server');
+        if (serverData) {
+          const serverRequests = JSON.parse(serverData);
+          requests = [...requests, ...serverRequests];
+        }
+      } catch (e) {}
+      
+      const stats = {
+        total: requests.length,
+        pending: requests.filter(r => r.status === 'pending').length,
+        approved: requests.filter(r => r.status === 'approved').length,
+        rejected: requests.filter(r => r.status === 'rejected').length,
+        completed: requests.filter(r => r.status === 'completed').length
+      };
+      
+      document.getElementById('req-stat-total').textContent = stats.total;
+      document.getElementById('req-stat-pending').textContent = stats.pending;
+      document.getElementById('req-stat-approved').textContent = stats.approved;
+      document.getElementById('req-stat-rejected').textContent = stats.rejected;
+      document.getElementById('req-stat-completed').textContent = stats.completed;
+      
+      // 更新徽章
+      const badge = document.getElementById('training-request-badge');
+      if (badge) {
+        if (stats.pending > 0) {
+          badge.textContent = stats.pending;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+    }
+
+    // 渲染培训需求列表
+    function renderTrainingRequestList(requests) {
+      const tbody = document.getElementById('training-request-list');
+      if (!tbody) return;
+      
+      if (requests.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="px-6 py-12 text-center text-slate-400">
+              <i class="fas fa-inbox text-4xl mb-3 block"></i>
+              <p>暂无培训需求</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      
+      const statusMap = {
+        'pending': '<span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">待处理</span>',
+        'approved': '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">已批准</span>',
+        'rejected': '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">已拒绝</span>',
+        'completed': '<span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">已完成</span>'
+      };
+      
+      tbody.innerHTML = requests.map(req => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-4 py-3 text-sm font-medium text-slate-800">${escHtml(req.submitterName)}</td>
+          <td class="px-4 py-3 text-sm text-slate-600">${escHtml(req.department)}</td>
+          <td class="px-4 py-3 text-sm text-slate-600">
+            <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-xs">${escHtml(req.trainingType)}</span>
+          </td>
+          <td class="px-4 py-3 text-sm text-slate-800 font-medium max-w-[150px] truncate" title="${escHtml(req.topic)}">${escHtml(req.topic)}</td>
+          <td class="px-4 py-3 text-sm text-slate-600 max-w-[100px] truncate" title="${escHtml(req.targetAudience || '')}">${escHtml(req.targetAudience) || '-'}</td>
+          <td class="px-4 py-3 text-sm text-slate-600">${escHtml(req.expectedTime) || '-'}</td>
+          <td class="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">${req.submitTime ? new Date(req.submitTime).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+          <td class="px-4 py-3">${statusMap[req.status] || req.status}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-center gap-2">
+              <button onclick="viewTrainingRequestDetail('${req.id}')" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs font-medium transition">
+                <i class="fas fa-eye mr-1"></i>查看
+              </button>
+              ${req.status === 'pending' ? `
+                <button onclick="updateTrainingRequestStatus('${req.id}', 'approved')" class="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg text-xs font-medium transition">
+                  <i class="fas fa-check mr-1"></i>批准
+                </button>
+                <button onclick="updateTrainingRequestStatus('${req.id}', 'rejected')" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-medium transition">
+                  <i class="fas fa-times mr-1"></i>拒绝
+                </button>
+              ` : ''}
+              <button onclick="deleteTrainingRequest('${req.id}')" class="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-lg text-xs font-medium transition">
+                <i class="fas fa-trash mr-1"></i>删除
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // 查看培训需求详情
+    async function viewTrainingRequestDetail(id) {
+      try {
+        // 从 localStorage 获取
+        let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        let req = requests.find(r => r.id === id);
+        
+        if (!req) {
+          toast('需求记录不存在', 'error');
+          return;
+        }
+        
+        const statusMap = {
+          'pending': '待处理',
+          'approved': '已批准',
+          'rejected': '已拒绝',
+          'completed': '已完成'
+        };
+        
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center';
+        modal.onclick = function(e) { if (e.target === this) this.remove(); };
+        
+        modal.innerHTML = `
+          <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl m-4" onclick="event.stopPropagation()">
+            <div class="bg-gradient-primary px-6 py-4 flex-shrink-0">
+              <h2 class="text-xl font-bold text-white"><i class="fa fa-clipboard-list mr-2"></i>培训需求详情</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs text-slate-500 mb-1">提交人</label>
+                  <p class="text-sm font-medium text-slate-800">${escHtml(req.submitterName)}</p>
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-500 mb-1">部门</label>
+                  <p class="text-sm font-medium text-slate-800">${escHtml(req.department)}</p>
+                </div>
+              </div>
+              <div class="border-t border-slate-100 pt-4">
+                <label class="block text-xs text-slate-500 mb-1">培训类型</label>
+                <p class="text-sm font-medium text-slate-800">${escHtml(req.trainingType)}</p>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">培训主题</label>
+                <p class="text-sm font-medium text-slate-800">${escHtml(req.topic)}</p>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">培训对象</label>
+                <p class="text-sm text-slate-700">${escHtml(req.targetAudience) || '未填写'}</p>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">期望时间</label>
+                <p class="text-sm text-slate-700">${escHtml(req.expectedTime) || '未填写'}</p>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">需求描述</label>
+                <p class="text-sm text-slate-700 whitespace-pre-wrap bg-slate-50 p-3 rounded-lg">${escHtml(req.description) || '未填写'}</p>
+              </div>
+              <div class="border-t border-slate-100 pt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs text-slate-500 mb-1">当前状态</label>
+                  <p class="text-sm font-medium">${statusMap[req.status] || req.status}</p>
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-500 mb-1">提交时间</label>
+                  <p class="text-sm text-slate-700">${new Date(req.submitTime).toLocaleString('zh-CN')}</p>
+                </div>
+              </div>
+            </div>
+            <div class="px-6 pb-5 pt-2 border-t flex gap-3">
+              ${req.status === 'pending' ? `
+                <button onclick="updateTrainingRequestStatus('${req.id}', 'approved'); this.closest('.fixed').remove();" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-medium transition">
+                  <i class="fas fa-check mr-2"></i>批准
+                </button>
+                <button onclick="updateTrainingRequestStatus('${req.id}', 'rejected'); this.closest('.fixed').remove();" class="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition">
+                  <i class="fas fa-times mr-2"></i>拒绝
+                </button>
+              ` : ''}
+              <button onclick="this.closest('.fixed').remove()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition">关闭</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+      } catch (e) {
+        toast('加载详情失败: ' + e.message, 'error');
+      }
+    }
+
+    // 更新培训需求状态
+    async function updateTrainingRequestStatus(id, status) {
+      const actionText = status === 'approved' ? '批准' : (status === 'rejected' ? '拒绝' : '完成');
+      if (!confirm(`确定要${actionText}该培训需求吗？`)) return;
+      
+      try {
+        // 尝试发送到服务器
+        try {
+          const res = await fetch(`/api/training-requests/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status, updateTime: new Date().toISOString() })
+          });
+          if (res.ok) {
+            toast(`需求已${actionText}`);
+            loadTrainingRequests();
+            return;
+          }
+        } catch (e) {
+          console.log('服务器更新失败，使用本地存储:', e.message);
+        }
+        
+        // 本地更新
+        let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        const index = requests.findIndex(r => r.id === id);
+        if (index !== -1) {
+          requests[index].status = status;
+          requests[index].updateTime = new Date().toISOString();
+          localStorage.setItem('training_requests', JSON.stringify(requests));
+          toast(`需求已${actionText}（本地保存）`);
+          loadTrainingRequests();
+        }
+      } catch (e) {
+        toast('操作失败: ' + e.message, 'error');
+      }
+    }
+
+    // 删除培训需求
+    async function deleteTrainingRequest(id) {
+      if (!confirm('确定要删除该培训需求吗？此操作不可恢复。')) return;
+      
+      try {
+        // 尝试发送到服务器
+        try {
+          const res = await fetch(`/api/training-requests/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            toast('需求已删除');
+            loadTrainingRequests();
+            return;
+          }
+        } catch (e) {
+          console.log('服务器删除失败，使用本地存储:', e.message);
+        }
+        
+        // 本地删除
+        let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        requests = requests.filter(r => r.id !== id);
+        localStorage.setItem('training_requests', JSON.stringify(requests));
+        toast('需求已删除（本地保存）');
+        loadTrainingRequests();
+      } catch (e) {
+        toast('删除失败: ' + e.message, 'error');
+      }
+    }
+
+    // 导出培训需求
+    function exportTrainingRequests() {
+      try {
+        let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        
+        if (requests.length === 0) {
+          toast('没有可导出的数据', 'error');
+          return;
+        }
+        
+        const statusMap = {
+          'pending': '待处理',
+          'approved': '已批准',
+          'rejected': '已拒绝',
+          'completed': '已完成'
+        };
+        
+        // CSV 表头
+        const headers = ['提交人', '部门', '岗位', '邮箱', '培训类型', '培训主题', '培训对象', '期望时间', '需求描述', '状态', '提交时间'];
+        
+        // CSV 内容
+        const rows = requests.map(req => [
+          req.submitterName,
+          req.department,
+          req.position,
+          req.email,
+          req.trainingType,
+          req.topic,
+          req.targetAudience || '',
+          req.expectedTime || '',
+          (req.description || '').replace(/\n/g, ' '),
+          statusMap[req.status] || req.status,
+          new Date(req.submitTime).toLocaleString('zh-CN')
+        ]);
+        
+        // 构建 CSV
+        const csvContent = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
+        
+        // 下载
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `培训需求_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        
+        toast('导出成功');
+      } catch (e) {
+        toast('导出失败: ' + e.message, 'error');
+      }
+    }
+
+    // 页面加载时更新徽章
+    document.addEventListener('DOMContentLoaded', () => {
+      updateTrainingRequestStats();
+    });
   </script>
 
 </body>

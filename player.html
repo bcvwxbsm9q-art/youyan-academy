@@ -265,6 +265,24 @@
                 100% { transform: scale(1) rotate(0); }
             }
 
+            /* 分享按钮激活状态 */
+            #btn-share.btn-share-active {
+                border-color: #22c55e !important; /* green-500 */
+                background-color: #f0fdf4 !important; /* green-50 */
+                color: #22c55e !important; /* green-500 */
+            }
+            #btn-share.btn-share-active i {
+                font-weight: 900;
+                animation: shareBounce 0.4s ease-in-out;
+            }
+            @keyframes shareBounce {
+                0% { transform: scale(1); }
+                25% { transform: scale(1.3); }
+                50% { transform: scale(0.9); }
+                75% { transform: scale(1.1); }
+                100% { transform: scale(1); }
+            }
+
             /* 评分弹窗星星交互 */
             .star-btn.active,
             .star-btn.active ~ .star-btn {
@@ -502,6 +520,11 @@
                                         <button id="btn-like" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-gray-200 hover:border-blue-300 hover:bg-blue-50 text-sm text-gray-500 hover:text-blue-500 font-medium transition-all duration-300 group" title="点赞">
                                             <i class="fa fa-thumbs-o-up group-hover:scale-110 transition-transform" id="like-icon"></i>
                                             <span id="interaction-likes">0</span>
+                                        </button>
+                                        <!-- 分享按钮 -->
+                                        <button id="btn-share" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-gray-200 hover:border-green-300 hover:bg-green-50 text-sm text-gray-500 hover:text-green-500 font-medium transition-all duration-300 group" title="分享">
+                                            <i class="fa fa-share-alt group-hover:scale-110 transition-transform" id="share-icon"></i>
+                                            <span id="interaction-shares">0</span>
                                         </button>
                                         <!-- 评分按钮 -->
                                         <button id="btn-rate" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-primary text-white text-sm font-medium hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300" title="评分">
@@ -1578,11 +1601,16 @@
                 data = {
                     likes: 0,
                     userLikes: {},
+                    shares: 0,
+                    userShares: {},
                     userRatings: {},
                     ratingSum: 0,
                     ratingCount: 0
                 };
             }
+            // 兼容旧数据：如果没有 shares 字段，初始化为 0
+            if (data.shares === undefined) data.shares = 0;
+            if (!data.userShares) data.userShares = {};
             return data;
         }
 
@@ -1608,6 +1636,10 @@
             // 更新点赞数（按钮内嵌数字）
             const likesEl = document.getElementById('interaction-likes');
             if (likesEl) likesEl.textContent = interactionData.likes || 0;
+
+            // 更新分享数（按钮内嵌数字）
+            const sharesEl = document.getElementById('interaction-shares');
+            if (sharesEl) sharesEl.textContent = interactionData.shares || 0;
 
             // 更新评分平均分（课程信息区）——先用本地数据快速渲染
             const playerRatingEl = document.getElementById('player-rating');
@@ -1650,6 +1682,9 @@
 
             // 绑定点赞按钮事件
             bindLikeButton(userId);
+
+            // 绑定分享按钮事件（支持多次分享）
+            bindShareButton(userId);
 
             // 绑定评分按钮事件
             bindRateButton(userId, interactionData);
@@ -1712,6 +1747,9 @@
                     data.likes = (data.likes || 0) + 1;
                     updateLikeButtonState(true);
                     showToast('点赞成功！');
+
+                    // 更新用户点赞课程数（用于点赞达人徽章 - 点赞5个不同课程）
+                    await incrementUserLikeCount();
                 }
 
                 const likesEl = document.getElementById('interaction-likes');
@@ -1720,6 +1758,168 @@
                 await saveCourseInteractionData(data);
                 broadcastInteractionSync();
             });
+        }
+
+        // 增加用户点赞课程数（用于点赞达人徽章 - 点赞5个不同课程）
+        async function incrementUserLikeCount() {
+            const api = window.DataAPI;
+            const userId = getUserId();
+            if (!api || !userId) return { isNewCourse: false };
+
+            const key = `user_likes_${userId}`;
+            let likeData = api.get(key) || { totalLikes: 0, likedCourses: [] };
+            likeData.totalLikes = (likeData.totalLikes || 0) + 1;
+
+            // 记录点赞的课程ID（去重）- 用于徽章计算
+            let isNewCourse = false;
+            if (!likeData.likedCourses.includes(courseId)) {
+                likeData.likedCourses.push(courseId);
+                isNewCourse = true;
+            }
+
+            await api.set(key, likeData);
+
+            // 更新 learningData 中的 likes 字段（点赞的不同课程数量，用于徽章）
+            const learningData = api.getUserLearningData(userId);
+            learningData.likes = likeData.likedCourses.length; // 不同课程数
+            await api.set(`learning_data_${userId}`, learningData);
+
+            // 提示获得徽章进度
+            const likedCount = likeData.likedCourses.length;
+            if (isNewCourse && likedCount < 5) {
+                showToast(`点赞达人进度：${likedCount}/5 个课程`);
+            } else if (isNewCourse && likedCount === 5) {
+                showToast('恭喜！获得"点赞达人"徽章！');
+            }
+
+            return { isNewCourse };
+        }
+
+        // ==================== 分享功能 ====================
+        function updateShareButtonState(isShared) {
+            const btn = document.getElementById('btn-share');
+            const icon = document.getElementById('share-icon');
+
+            if (!btn || !icon) return;
+
+            if (isShared) {
+                btn.classList.add('btn-share-active');
+                icon.className = 'fa fa-check-circle group-hover:scale-110 transition-transform';
+                btn.title = '已分享';
+            } else {
+                btn.classList.remove('btn-share-active');
+                icon.className = 'fa fa-share-alt group-hover:scale-110 transition-transform';
+                btn.title = '分享';
+            }
+        }
+
+        function bindShareButton(userId) {
+            const btn = document.getElementById('btn-share');
+            if (!btn) return;
+
+            // 防止重复绑定
+            if (btn._shareBound) return;
+            btn._shareBound = true;
+
+            btn.addEventListener('click', async () => {
+                const data = getCourseInteractionData();
+
+                // 执行分享操作
+                const shareUrl = window.location.href;
+                const courseName = document.getElementById('course-title')?.textContent || '这个课程';
+                const shareText = `我在游雁学院发现了一个好课程《${courseName}》，推荐给你！`;
+
+                let shareSuccess = false;
+
+                // 尝试使用 Web Share API
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: courseName,
+                            text: shareText,
+                            url: shareUrl
+                        });
+                        shareSuccess = true;
+                    } catch (err) {
+                        // 用户取消分享，不记录
+                        if (err.name !== 'AbortError') {
+                            console.warn('分享失败:', err);
+                        }
+                    }
+                } else {
+                    // 降级方案：复制到剪贴板
+                    try {
+                        await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+                        showToast('链接已复制到剪贴板，快去分享吧！');
+                        shareSuccess = true;
+                    } catch (err) {
+                        // 最终降级：手动选择复制
+                        const textArea = document.createElement('textarea');
+                        textArea.value = `${shareText} ${shareUrl}`;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        showToast('链接已复制到剪贴板，快去分享吧！');
+                        shareSuccess = true;
+                    }
+                }
+
+                // 记录分享（每次点击都计数，支持多次分享）
+                if (shareSuccess) {
+                    data.shares = (data.shares || 0) + 1;
+
+                    // 更新分享数显示
+                    const sharesEl = document.getElementById('interaction-shares');
+                    if (sharesEl) sharesEl.textContent = data.shares;
+
+                    await saveCourseInteractionData(data);
+                    broadcastInteractionSync();
+
+                    // 更新用户分享数据（用于分享达人徽章）
+                    const shareResult = await incrementUserShareCount();
+
+                    // 如果不是新课程，显示累计分享次数
+                    if (!shareResult.isNewCourse) {
+                        showToast(`分享成功！该课程已分享过，累计分享 ${data.shares} 次`);
+                    }
+                }
+            });
+        }
+
+        // 增加用户分享课程数（用于分享达人徽章 - 分享5个不同课程）
+        async function incrementUserShareCount() {
+            const api = window.DataAPI;
+            const userId = getUserId();
+            if (!api || !userId) return { isNewCourse: false };
+
+            const key = `user_shares_${userId}`;
+            let shareData = api.get(key) || { totalShares: 0, sharedCourses: [] };
+            shareData.totalShares = (shareData.totalShares || 0) + 1;
+
+            // 记录分享的课程ID（去重）- 用于徽章计算
+            let isNewCourse = false;
+            if (!shareData.sharedCourses.includes(courseId)) {
+                shareData.sharedCourses.push(courseId);
+                isNewCourse = true;
+            }
+
+            await api.set(key, shareData);
+
+            // 更新 learningData 中的 shares 字段（分享的不同课程数量，用于徽章）
+            const learningData = api.getUserLearningData(userId);
+            learningData.shares = shareData.sharedCourses.length; // 不同课程数
+            await api.set(`learning_data_${userId}`, learningData);
+
+            // 提示获得徽章进度
+            const sharedCount = shareData.sharedCourses.length;
+            if (isNewCourse && sharedCount < 5) {
+                showToast(`分享达人进度：${sharedCount}/5 个课程`);
+            } else if (isNewCourse && sharedCount === 5) {
+                showToast('恭喜！获得"分享达人"徽章！');
+            }
+
+            return { isNewCourse };
         }
 
         let _rateBtnBound = false; // 防止重复绑定
@@ -1792,46 +1992,89 @@
                     return;
                 }
 
+                // ====== 第一步：立即更新本地数据并关闭弹窗（不阻塞UI）======
                 data.userRatings[userId] = currentRatingScore;
                 data.ratingSum += currentRatingScore;
                 data.ratingCount++;
 
-                await saveCourseInteractionData(data);
+                // 立即更新评分显示（用本地数据）
+                const localAvg = (data.ratingSum / data.ratingCount).toFixed(1);
+                const playerRatingEl = document.getElementById('player-rating');
+                if (playerRatingEl) playerRatingEl.textContent = localAvg;
 
-                // ====== 同步到后端 ======
-                try {
-                    const resp = await fetch(`/api/courses/${courseId}/ratings`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId, score: currentRatingScore })
-                    });
-                    const backendData = await resp.json();
-                    if (backendData.success) {
-                        const playerRatingEl = document.getElementById('player-rating');
-                        if (playerRatingEl) playerRatingEl.textContent = backendData.avgRating.toFixed(1);
-                    }
-                } catch (e) {
-                    console.warn('评分同步到后端失败，使用本地数据:', e.message);
-                    const newAvg = (data.ratingSum / data.ratingCount).toFixed(1);
-                    const playerRatingEl = document.getElementById('player-rating');
-                    if (playerRatingEl) playerRatingEl.textContent = newAvg;
-                }
+                // 立即关闭弹窗、显示成功提示、锁定按钮
+                closeModal();
+                showToast(`评分成功：${currentRatingScore}分 ${RATING_LABELS[currentRatingScore]}`);
+                setRateButtonRated(btn, currentRatingScore);
+                Object.assign(currentData, data);
 
                 // 更新课程对象的rating字段
                 const api = window.DataAPI;
                 const c = api.getCourse(courseId);
-                if (c) c.rating = parseFloat(backendData?.avgRating?.toFixed?.(1) ?? (data.ratingSum / data.ratingCount).toFixed(1));
+                if (c) c.rating = parseFloat(localAvg);
 
-                closeModal();
-                showToast(`评分成功：${currentRatingScore}分 ${RATING_LABELS[currentRatingScore]}`);
+                // 更新用户评分课程数（用于评分达人徽章 - 评分5个不同课程）
+                incrementUserRatingCount();
 
-                // 锁定按钮
-                setRateButtonRated(btn, currentRatingScore);
-
-                broadcastInteractionSync();
-
-                Object.assign(currentData, data);
+                // ====== 第二步：后台同步到服务器（不阻塞UI）======
+                // 所有服务器请求并行执行，不await
+                Promise.all([
+                    // 同步 interaction 数据到服务器
+                    saveCourseInteractionData(data).catch(e => {
+                        console.warn('[评分] interaction同步失败:', e.message);
+                    }),
+                    // 同步评分到 course_ratings
+                    fetch(`/api/courses/${courseId}/ratings`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId, score: currentRatingScore })
+                    }).then(r => r.json()).then(backendData => {
+                        if (backendData.success && playerRatingEl) {
+                            playerRatingEl.textContent = backendData.avgRating.toFixed(1);
+                            if (c) c.rating = backendData.avgRating;
+                        }
+                    }).catch(e => {
+                        console.warn('[评分] ratings同步失败:', e.message);
+                    })
+                ]).then(() => {
+                    broadcastInteractionSync();
+                });
             });
+        }
+
+        // 增加用户评分课程数（用于评分达人徽章 - 评分5个不同课程）
+        async function incrementUserRatingCount() {
+            const api = window.DataAPI;
+            const userId = getUserId();
+            if (!api || !userId) return { isNewCourse: false };
+
+            const key = `user_ratings_${userId}`;
+            let ratingData = api.get(key) || { totalRatings: 0, ratedCourses: [] };
+            ratingData.totalRatings = (ratingData.totalRatings || 0) + 1;
+
+            // 记录评分的课程ID（去重）- 用于徽章计算
+            let isNewCourse = false;
+            if (!ratingData.ratedCourses.includes(courseId)) {
+                ratingData.ratedCourses.push(courseId);
+                isNewCourse = true;
+            }
+
+            await api.set(key, ratingData);
+
+            // 更新 learningData 中的 ratings 字段（评分的不同课程数量，用于徽章）
+            const learningData = api.getUserLearningData(userId);
+            learningData.ratings = ratingData.ratedCourses.length; // 不同课程数
+            await api.set(`learning_data_${userId}`, learningData);
+
+            // 提示获得徽章进度
+            const ratedCount = ratingData.ratedCourses.length;
+            if (isNewCourse && ratedCount < 5) {
+                showToast(`评分达人进度：${ratedCount}/5 个课程`);
+            } else if (isNewCourse && ratedCount === 5) {
+                showToast('恭喜！获得"评分达人"徽章！');
+            }
+
+            return { isNewCourse };
         }
 
         function updateRatingUI(score) {

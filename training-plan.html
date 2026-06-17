@@ -101,6 +101,97 @@
         </div>
     </div>
 
+    <!-- 培训需求提交弹窗 -->
+    <div id="training-request-modal" style="display: none; position: fixed; inset: 0; z-index: 50; align-items: center; justify-content: center; padding: 1rem;">
+        <div onclick="closeTrainingRequestModal()" style="position: absolute; inset: 0; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(8px);"></div>
+        <div style="position: relative; background-color: white; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); width: 100%; max-width: 560px; max-height: 90vh; overflow: hidden; animation: modalIn 0.3s ease-out;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; color: white;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.25rem;">Training Request</div>
+                        <div style="font-size: 1.5rem; font-weight: bold;">提交培训需求</div>
+                    </div>
+                    <button onclick="closeTrainingRequestModal()" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background-color: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                        <i class="fa fa-times" style="font-size: 1.25rem;"></i>
+                    </button>
+                </div>
+            </div>
+            <div style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
+                <form id="training-request-form" onsubmit="submitTrainingRequest(event)">
+                    <!-- 基本信息 - 自动填充，可手动修改 -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
+                                <i class="fa fa-user mr-1 text-primary"></i>姓名 <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" id="req-name" required style="width: 100%; padding: 0.625rem 0.875rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; outline: none; transition: all 0.2s;" placeholder="请输入您的姓名">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
+                                <i class="fa fa-building mr-1 text-primary"></i>部门 <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" id="req-department" required style="width: 100%; padding: 0.625rem 0.875rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; outline: none; transition: all 0.2s;" placeholder="请输入您的部门">
+                        </div>
+                    </div>
+
+                    <!-- 培训需求信息 -->
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
+                            <i class="fa fa-tag mr-1 text-primary"></i>培训类型 <span style="color: #ef4444;">*</span>
+                        </label>
+                        <select id="req-type" required style="width: 100%; padding: 0.625rem 0.875rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; outline: none; transition: all 0.2s; background-color: white;">
+                            <option value="">请选择培训类型</option>
+                            <option value="技能培训">技能培训</option>
+                            <option value="管理培训">管理培训</option>
+                            <option value="软技能培训">软技能培训</option>
+                            <option value="新技术培训">新技术培训</option>
+                            <option value="认证培训">认证培训</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
+                            <i class="fa fa-graduation-cap mr-1 text-primary"></i>培训主题/课程名称 <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="text" id="req-topic" required style="width: 100%; padding: 0.625rem 0.875rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; outline: none; transition: all 0.2s;" placeholder="请输入您希望参加的培训主题">
+                    </div>
+
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
+                            <i class="fa fa-users mr-1 text-primary"></i>培训对象
+                        </label>
+                        <input type="text" id="req-target" style="width: 100%; padding: 0.625rem 0.875rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; outline: none; transition: all 0.2s;" placeholder="如：部门全员/新员工/特定岗位">
+                    </div>
+
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
+                            <i class="fa fa-calendar mr-1 text-primary"></i>期望时间
+                        </label>
+                        <input type="text" id="req-time" style="width: 100%; padding: 0.625rem 0.875rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; outline: none; transition: all 0.2s;" placeholder="如：2026年Q2/尽快安排/具体时间">
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
+                            <i class="fa fa-comment mr-1 text-primary"></i>需求描述/备注
+                        </label>
+                        <textarea id="req-description" rows="4" style="width: 100%; padding: 0.625rem 0.875rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; outline: none; transition: all 0.2s; resize: vertical;" placeholder="请详细描述您的培训需求，包括培训目的、预期效果、人数规模等..."></textarea>
+                    </div>
+
+                    <!-- 提交按钮 -->
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button type="button" onclick="closeTrainingRequestModal()" style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #6b7280; background-color: white; cursor: pointer; transition: all 0.2s;">
+                            取消
+                        </button>
+                        <button type="submit" style="flex: 1; padding: 0.75rem; border: none; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: white; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); cursor: pointer; transition: all 0.2s;">
+                            <i class="fa fa-paper-plane mr-1"></i>提交需求
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <header class="bg-white/95 backdrop-blur-md shadow-sm fixed w-full top-0 z-50 transition-all duration-300">
         <div class="container-responsive">
             <div class="flex justify-between items-center py-3">
@@ -252,6 +343,19 @@
                     </div>
 
                     <div class="space-y-6">
+                        <!-- 提交培训需求按钮 -->
+                        <div class="bg-gradient-to-br from-primary to-secondary rounded-xl shadow-lg p-6 text-white cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-300" onclick="openTrainingRequestModal()">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-plus text-white text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold">提交培训需求</h3>
+                                    <p class="text-white/80 text-sm mt-1">有培训需求？点击这里提交申请</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="bg-white rounded-xl shadow-sm p-6">
                             <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                                 <i class="fa fa-clock-o mr-2 text-primary"></i>我的培训进度
@@ -260,16 +364,16 @@
                                 <div>
                                     <div class="flex justify-between text-sm mb-1">
                                         <span class="text-gray-600">已完成培训</span>
-                                        <span class="font-semibold text-primary">8/12</span>
+                                        <span class="font-semibold text-primary" id="completed-training-count">8/12</span>
                                     </div>
                                     <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                        <div class="h-full bg-gradient-primary rounded-full" style="width: 66.67%;"></div>
+                                        <div class="h-full bg-gradient-primary rounded-full" id="completed-training-bar" style="width: 66.67%;"></div>
                                     </div>
                                 </div>
                                 <div>
                                     <div class="flex justify-between text-sm mb-1">
                                         <span class="text-gray-600">本月已报名</span>
-                                        <span class="font-semibold text-primary">3</span>
+                                        <span class="font-semibold text-primary" id="monthly-enrolled-count">3</span>
                                     </div>
                                     <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
                                         <div class="h-full bg-green-500 rounded-full" style="width: 100%;"></div>
@@ -278,37 +382,18 @@
                             </div>
                         </div>
 
+                        <!-- 我的必修课程 -->
                         <div class="bg-white rounded-xl shadow-sm p-6">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                                <i class="fa fa-star mr-2 text-primary"></i>热门培训
-                            </h3>
-                            <div class="space-y-3">
-                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" onclick="showCourseDetail(1)">
-                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center flex-shrink-0">
-                                        <i class="fa fa-rocket text-white"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="font-medium text-gray-800 truncate">新员工入职培训</div>
-                                        <div class="text-xs text-gray-400">128人已报名</div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" onclick="showCourseDetail(2)">
-                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0">
-                                        <i class="fa fa-code text-white"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="font-medium text-gray-800 truncate">Python进阶培训</div>
-                                        <div class="text-xs text-gray-400">89人已报名</div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" onclick="showCourseDetail(3)">
-                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0">
-                                        <i class="fa fa-laptop text-white"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="font-medium text-gray-800 truncate">AI应用实践分享</div>
-                                        <div class="text-xs text-gray-400">67人已报名</div>
-                                    </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                                    <i class="fa fa-graduation-cap mr-2 text-red-500"></i>我的必修课程
+                                </h3>
+                                <span class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium" id="required-course-badge">0</span>
+                            </div>
+                            <div id="required-courses-list" class="space-y-3">
+                                <div class="text-center py-6 text-gray-400">
+                                    <i class="fa fa-check-circle text-3xl mb-2 text-green-400"></i>
+                                    <p class="text-sm">暂无必修课程</p>
                                 </div>
                             </div>
                         </div>
@@ -339,7 +424,8 @@
 
         let courses = [];
         let instructorsMap = {};
-        let enrolledCourses = JSON.parse(localStorage.getItem('enrolledCourses') || '[]');
+        // 报名数据从服务器加载，不再使用 localStorage
+        let enrollMap = {}; // courseId -> { enrolledUsers: [], enrollCount: N, isEnrolled: bool }
 
         async function loadLecturers() {
             try {
@@ -376,6 +462,15 @@
                 const json = await res.json();
                 if (json.success && json.data && json.data.length > 0) {
                     courses = json.data;
+                    // 从服务器数据构建报名状态
+                    const user = AuthGuard ? AuthGuard.getCurrentUser() : null;
+                    const currentUserId = user ? (user.id || user.userId) : null;
+                    enrollMap = {};
+                    courses.forEach(c => {
+                        const enrolledUsers = c.enrolledUsers || [];
+                        const isEnrolled = currentUserId ? enrolledUsers.some(u => u.userId == currentUserId) : false;
+                        enrollMap[c.id] = { enrolledUsers, enrollCount: c.enrollCount || enrolledUsers.length, isEnrolled };
+                    });
                     const firstDate = new Date(json.data[0].date);
                     if (!isNaN(firstDate.getTime())) {
                         currentYear = firstDate.getFullYear();
@@ -404,27 +499,90 @@
             }
         }
 
-        function toggleEnroll(courseId) {
-            const index = enrolledCourses.indexOf(courseId);
-            if (index > -1) {
-                enrolledCourses.splice(index, 1);
-                showToast('取消报名成功');
-            } else {
-                enrolledCourses.push(courseId);
-                showToast('报名成功');
+        async function toggleEnroll(courseId) {
+            const user = AuthGuard ? AuthGuard.getCurrentUser() : null;
+            const userId = user ? (user.id || user.userId) : null;
+            if (!userId) { showToast('请先登录后再报名'); return; }
+
+            const info = enrollMap[courseId] || { enrolledUsers: [], enrollCount: 0, isEnrolled: false };
+            const btn = event ? event.target.closest('button') : null;
+            if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+            try {
+                if (info.isEnrolled) {
+                    // 取消报名
+                    const res = await fetch('/api/training/' + courseId + '/enroll', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId })
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                        info.isEnrolled = false;
+                        info.enrollCount = result.enrollCount;
+                        info.enrolledUsers = info.enrolledUsers.filter(u => u.userId != userId);
+                        enrollMap[courseId] = info;
+                        showToast('已取消报名');
+                    } else {
+                        showToast(result.error || '取消失败', true);
+                    }
+                } else {
+                    // 报名
+                    const res = await fetch('/api/training/' + courseId + '/enroll', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId })
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                        info.isEnrolled = true;
+                        info.enrollCount = result.enrollCount;
+                        const userName = user.realName || user.real_name || user.username || '我';
+                        info.enrolledUsers.push({ userId, name: userName, avatar: user.avatar || '', department: user.department || '' });
+                        enrollMap[courseId] = info;
+                        showToast('报名成功！');
+                    } else {
+                        showToast(result.error || '报名失败', true);
+                    }
+                }
+            } catch (e) {
+                showToast('网络错误，请稍后重试', true);
+            } finally {
+                if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
             }
-            localStorage.setItem('enrolledCourses', JSON.stringify(enrolledCourses));
             renderCalendar();
+            renderMonthlyCourses();
         }
 
-        function showToast(message) {
+        function showToast(message, isError) {
             const toast = document.createElement('div');
-            toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 bg-gray-800 text-white rounded-full shadow-lg text-sm z-50 animate-fade-in';
+            toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg text-sm z-50 animate-fade-in ' + (isError ? 'bg-red-500 text-white' : 'bg-gray-800 text-white');
             toast.textContent = message;
             document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.remove();
-            }, 2000);
+            setTimeout(() => { toast.remove(); }, 2000);
+        }
+
+        // 渲染报名者头像网格
+        function renderEnrolledAvatars(courseId) {
+            const info = enrollMap[courseId];
+            if (!info || !info.enrolledUsers || info.enrolledUsers.length === 0) {
+                return `<div class="flex items-center mt-2 text-xs text-gray-400"><i class="fa fa-user-o mr-1"></i>暂无人报名</div>`;
+            }
+            const users = info.enrolledUsers;
+            const maxShow = 6;
+            const showUsers = users.slice(0, maxShow);
+            const remaining = users.length - maxShow;
+            let html = '<div class="mt-2.5 pt-2.5 border-t border-gray-200/60">';
+            html += '<div class="text-[11px] text-gray-400 mb-1.5"><i class="fa fa-users mr-1"></i>已报名 (' + info.enrollCount + '人)</div>';
+            html += '<div class="flex flex-wrap gap-1.5">';
+            showUsers.forEach(u => {
+                html += `<span class="inline-flex items-center px-2 py-0.5 bg-white border border-gray-200 rounded-full text-xs text-gray-700 shadow-sm" title="${u.department || ''}">${u.name}</span>`;
+            });
+            if (remaining > 0) {
+                html += `<span class="inline-flex items-center justify-center h-6 min-w-[28px] px-1.5 rounded-full bg-gray-100 text-[11px] text-gray-500 font-medium">+${remaining}人</span>`;
+            }
+            html += '</div></div>';
+            return html;
         }
 
         const holidays = {
@@ -641,7 +799,7 @@
                 const d = new Date(c.date);
                 const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
                 const instructor = getInstructorInfo(c.instructor);
-                const isEnrolled = enrolledCourses.includes(c.id);
+                const isEnrolled = enrollMap[c.id]?.isEnrolled || false;
                 const isFromTraining = !!c.projectName;
 
                 return `
@@ -670,6 +828,7 @@
                                 </span>
                                 ${c.location ? `<span class="flex items-center gap-1"><i class="fa fa-map-marker-alt text-gray-400"></i>${c.location}</span>` : ''}
                             </div>
+                            ${renderEnrolledAvatars(c.id)}
                         </div>
                         <div class="flex flex-col justify-center items-end">
                             <span class="text-xs text-gray-400 mb-2">${c.duration}</span>
@@ -715,6 +874,7 @@
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="${getDayTypeClass(c.category)} text-xs px-2 py-0.5 rounded-full">${getDayTypeName(c.category)}</span>
                                     <span class="text-gray-400 text-xs">${c.time}</span>
+                                    ${c.location ? `<span class="text-xs text-gray-400"><i class="fa fa-map-marker-alt mr-1"></i>${c.location}</span>` : ''}
                                     ${isFromTraining ? '<span class="text-xs px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded">培训</span>' : ''}
                                 </div>
                                 <h4 class="font-semibold text-gray-800 truncate">${c.name}</h4>
@@ -724,16 +884,13 @@
                                     <span class="text-sm text-gray-500">${c.instructor}</span>
                                     <span class="text-xs text-gray-400">${instructor.title}</span>
                                 </div>
-                                <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
-                                    ${c.location ? `<span><i class="fa fa-map-marker-alt mr-1"></i>${c.location}</span>` : ''}
-                                    ${isFromTraining ? `<span><i class="fa fa-folder mr-1"></i>${c.projectName}</span>` : ''}
-                                </div>
+                                ${renderEnrolledAvatars(c.id)}
                             </div>
                             <div class="flex flex-col justify-center">
                                 <span class="text-xs text-gray-400">${c.duration}</span>
                                 <button onclick="handleModalEnroll(${c.id})" 
-                                        class="${enrolledCourses.includes(c.id) ? 'bg-gray-200 text-gray-500' : 'btn-primary text-white'} mt-1 px-4 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-all">
-                                    ${enrolledCourses.includes(c.id) ? '已报名' : '报名'}
+                                        class="${enrollMap[c.id]?.isEnrolled ? 'bg-gray-200 text-gray-500' : 'btn-primary text-white'} mt-1 px-4 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 transition-all">
+                                    ${enrollMap[c.id]?.isEnrolled ? '已报名' : '报名'}
                                 </button>
                             </div>
                         </div>
@@ -750,8 +907,8 @@
             document.getElementById('day-modal').style.display = 'none';
         }
 
-        function handleModalEnroll(courseId) {
-            toggleEnroll(courseId);
+        async function handleModalEnroll(courseId) {
+            await toggleEnroll(courseId);
             const d = document.getElementById('day-modal').querySelector('#modal-date').textContent;
             const dateParts = d.match(/(\d+)年(\d+)月(\d+)日/);
             if (dateParts) {
@@ -767,7 +924,7 @@
             const d = new Date(course.date);
             const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
             const instructor = getInstructorInfo(course.instructor);
-            const isEnrolled = enrolledCourses.includes(courseId);
+            const isEnrolled = enrollMap[courseId]?.isEnrolled || false;
 
             document.getElementById('detail-category').textContent = getDayTypeName(course.category);
             document.getElementById('detail-title').textContent = course.name;
@@ -802,26 +959,28 @@
                             <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                                 <i class="fa fa-calendar-o text-gray-400 w-5"></i>
                                 <div>
-                                    <div class="text-xs text-gray-400">日期</div>
+                                    <div class="text-xs text-gray-400">培训日期</div>
                                     <div class="text-sm font-medium text-gray-800">${d.getMonth() + 1}月${d.getDate()}日 ${weekDays[d.getDay()]}</div>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                                 <i class="fa fa-clock-o text-gray-400 w-5"></i>
                                 <div>
-                                    <div class="text-xs text-gray-400">时间</div>
+                                    <div class="text-xs text-gray-400">培训时间</div>
                                     <div class="text-sm font-medium text-gray-800">${course.time}</div>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg col-span-2">
-                                <i class="fa fa-map-marker-alt text-gray-400 w-5"></i>
+                                <i class="fa fa-map-marker text-gray-400 w-5"></i>
                                 <div>
-                                    <div class="text-xs text-gray-400">地点</div>
+                                    <div class="text-xs text-gray-400">培训地点</div>
                                     <div class="text-sm font-medium text-gray-800">${course.location || '待定'}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <div class="p-3 bg-gray-50 rounded-xl">${renderEnrolledAvatars(courseId)}</div>
 
                     <div class="p-4 bg-blue-50 rounded-xl">
                         <div class="flex items-center gap-2 mb-2">
@@ -833,7 +992,7 @@
                         </p>
                     </div>
 
-                    <button onclick="event.stopPropagation(); toggleEnroll(${courseId}); closeCourseDetailModal()" 
+                    <button onclick="event.stopPropagation(); toggleEnroll(${courseId}).then(() => closeCourseDetailModal())" 
                             class="${isEnrolled ? 'bg-gray-200 text-gray-600 hover:bg-gray-300' : 'btn-primary text-white hover:opacity-90'} w-full py-3 rounded-xl font-medium transition-all">
                         ${isEnrolled ? '取消报名' : '立即报名'}
                     </button>
@@ -912,9 +1071,270 @@
                 if (e.key === 'Escape') {
                     closeDayModal();
                     closeCourseDetailModal();
+                    closeTrainingRequestModal();
                 }
             });
+
+            // 加载必修课程
+            loadRequiredCourses();
+            // 加载培训进度
+            loadTrainingProgress();
         });
+
+        // ========== 培训需求提交功能 ==========
+        
+        // 打开培训需求弹窗
+        function openTrainingRequestModal() {
+            const modal = document.getElementById('training-request-modal');
+            modal.style.display = 'flex';
+            
+            // 预填充用户信息（如果已登录）
+            const currentUser = getCurrentUser();
+            if (currentUser) {
+                document.getElementById('req-name').value = currentUser.name || '未识别';
+                document.getElementById('req-department').value = currentUser.department || '未识别';
+            } else {
+                document.getElementById('req-name').value = '未识别';
+                document.getElementById('req-department').value = '未识别';
+            }
+        }
+
+        // 关闭培训需求弹窗
+        function closeTrainingRequestModal() {
+            document.getElementById('training-request-modal').style.display = 'none';
+            document.getElementById('training-request-form').reset();
+        }
+
+        // 获取当前登录用户
+        function getCurrentUser() {
+            try {
+                const userStr = localStorage.getItem('learning_platform_current_user');
+                if (userStr) {
+                    return JSON.parse(userStr);
+                }
+            } catch (e) {
+                console.error('获取用户信息失败:', e);
+            }
+            return null;
+        }
+
+        // 提交培训需求
+        async function submitTrainingRequest(event) {
+            event.preventDefault();
+            
+            const currentUser = getCurrentUser();
+            if (!currentUser) {
+                alert('请先登录后再提交培训需求');
+                return;
+            }
+
+            // 收集表单数据
+            const requestData = {
+                id: 'req_' + Date.now(),
+                submitterId: currentUser.id,
+                submitterName: document.getElementById('req-name').value.trim() || currentUser.name,
+                department: document.getElementById('req-department').value.trim() || currentUser.department,
+                trainingType: document.getElementById('req-type').value,
+                topic: document.getElementById('req-topic').value.trim(),
+                targetAudience: document.getElementById('req-target').value.trim(),
+                expectedTime: document.getElementById('req-time').value.trim(),
+                description: document.getElementById('req-description').value.trim(),
+                status: 'pending', // pending, approved, rejected, completed
+                submitTime: new Date().toISOString(),
+                updateTime: new Date().toISOString()
+            };
+
+            try {
+                // 尝试发送到服务器
+                const response = await fetch('/api/training-requests', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast('培训需求提交成功！我们会尽快处理您的申请。');
+                        closeTrainingRequestModal();
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('服务器提交失败，保存到本地:', e.message);
+            }
+
+            // 离线模式：保存到 localStorage
+            saveTrainingRequestLocally(requestData);
+            showToast('培训需求已提交（本地保存）');
+            closeTrainingRequestModal();
+        }
+
+        // 本地保存培训需求
+        function saveTrainingRequestLocally(requestData) {
+            const storageKey = 'training_requests';
+            let requests = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            requests.push(requestData);
+            localStorage.setItem(storageKey, JSON.stringify(requests));
+            
+            // 触发数据同步事件
+            if (window.DataSync) {
+                window.DataSync.emit(window.DataSync.EventTypes.TRAINING_REQUEST, requestData);
+            }
+        }
+
+        // Toast 提示
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `position: fixed; top: 20px; left: 50%; transform: translateX(-50%); 
+                padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; z-index: 9999;
+                animation: fadeIn 0.3s ease; ${type === 'success' ? 'background: #10b981; color: white;' : 'background: #ef4444; color: white;'}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ========== 必修课程功能 ==========
+        
+        // 加载必修课程
+        async function loadRequiredCourses() {
+            const currentUser = getCurrentUser();
+            if (!currentUser) return;
+
+            try {
+                // 尝试从服务器获取
+                const response = await fetch(`/api/users/${currentUser.id}/required-courses`);
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        renderRequiredCourses(result.data);
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('从服务器获取必修课程失败:', e.message);
+            }
+
+            // 离线模式：从 localStorage 获取
+            const requiredKey = `required_courses_${currentUser.id}`;
+            const requiredCourses = JSON.parse(localStorage.getItem(requiredKey) || '[]');
+            renderRequiredCourses(requiredCourses);
+        }
+
+        // 渲染必修课程
+        function renderRequiredCourses(courses) {
+            const container = document.getElementById('required-courses-list');
+            const badge = document.getElementById('required-course-badge');
+            
+            if (!container) return;
+
+            // 更新徽章数量
+            if (badge) {
+                badge.textContent = courses.length;
+                badge.style.display = courses.length > 0 ? 'inline-block' : 'none';
+            }
+
+            if (courses.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 text-gray-400">
+                        <i class="fa fa-check-circle text-3xl mb-2 text-green-400"></i>
+                        <p class="text-sm">暂无必修课程</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = courses.map(course => {
+                const progress = course.progress || 0;
+                const isCompleted = progress >= 100;
+                const isUrgent = course.deadline && new Date(course.deadline) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+                
+                return `
+                    <div class="flex items-center gap-3 p-3 ${isUrgent && !isCompleted ? 'bg-red-50 border border-red-100' : 'bg-gray-50'} rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" 
+                         onclick="window.location.href='player.html?course=${course.id}'">
+                        <div class="w-10 h-10 rounded-xl ${isCompleted ? 'bg-green-500' : 'bg-gradient-to-br from-red-400 to-red-600'} flex items-center justify-center flex-shrink-0">
+                            <i class="fa ${isCompleted ? 'fa-check text-white' : 'fa-graduation-cap text-white'}"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium text-gray-800 truncate flex items-center gap-1">
+                                ${course.name}
+                                ${isUrgent && !isCompleted ? '<span class="px-1.5 py-0.5 bg-red-500 text-white text-[10px] rounded">即将截止</span>' : ''}
+                            </div>
+                            <div class="text-xs text-gray-400">${course.deadline ? '截止: ' + new Date(course.deadline).toLocaleDateString() : '无截止日期'}</div>
+                            <div class="mt-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div class="h-full ${isCompleted ? 'bg-green-500' : 'bg-primary'} rounded-full" style="width: ${progress}%"></div>
+                            </div>
+                        </div>
+                        <div class="text-xs font-medium ${isCompleted ? 'text-green-600' : 'text-primary'}">${progress}%</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ========== 培训进度功能 ==========
+        
+        // 加载培训进度
+        async function loadTrainingProgress() {
+            const currentUser = getCurrentUser();
+            if (!currentUser) return;
+
+            try {
+                // 获取用户学习数据
+                let learningData = null;
+                
+                // 尝试从服务器获取
+                try {
+                    const response = await fetch(`/api/users/${currentUser.id}/learning-stats`);
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success && result.data) {
+                            learningData = result.data;
+                        }
+                    }
+                } catch (e) {
+                    console.log('从服务器获取学习统计失败:', e.message);
+                }
+
+                // 离线模式：从 localStorage 获取
+                if (!learningData) {
+                    const dataKey = `user_learning_${currentUser.id}`;
+                    learningData = JSON.parse(localStorage.getItem(dataKey) || '{}');
+                }
+
+                // 更新培训进度显示
+                updateTrainingProgress(learningData);
+            } catch (e) {
+                console.error('加载培训进度失败:', e);
+            }
+        }
+
+        // 更新培训进度显示
+        function updateTrainingProgress(data) {
+            const completedCount = data.completedCourses?.length || 0;
+            const totalCount = data.totalCourses || 12; // 默认总课程数
+            const monthlyEnrolled = data.monthlyEnrolled || 0;
+
+            // 更新已完成培训
+            const completedEl = document.getElementById('completed-training-count');
+            const completedBar = document.getElementById('completed-training-bar');
+            if (completedEl) {
+                completedEl.textContent = `${completedCount}/${totalCount}`;
+            }
+            if (completedBar) {
+                const percentage = totalCount > 0 ? (completedCount / totalCount * 100) : 0;
+                completedBar.style.width = `${percentage}%`;
+            }
+
+            // 更新本月已报名
+            const monthlyEl = document.getElementById('monthly-enrolled-count');
+            if (monthlyEl) {
+                monthlyEl.textContent = monthlyEnrolled;
+            }
+        }
     </script>
 </body>
 </html>

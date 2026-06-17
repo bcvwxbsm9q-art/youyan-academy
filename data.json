@@ -25,7 +25,7 @@
       "role": "user",
       "avatar": "",
       "createdAt": "2026/6/10 18:23:41",
-      "lastLogin": "2026/6/12 09:45:26",
+      "lastLogin": "2026/6/17 10:03:46",
       "status": "active"
     }
   ],
@@ -33,7 +33,8 @@
     "totalHours": 0,
     "completedCourses": [
       1781087462994,
-      1781065453648
+      1781065453648,
+      1781065281803
     ],
     "videoProgress": {
       "1781087462994_0": 100,
@@ -42,14 +43,17 @@
       "1781080411545_0": 100,
       "1781080411545_1": 48,
       "1781064630171_0": 52,
-      "1781506198054_0": 3
+      "1781506198054_0": 16,
+      "1781065281803_0": 3,
+      "1781065485355_0": 1
     },
-    "lastStudyTime": "2026-06-15T06:50:35.086Z",
+    "lastStudyTime": "2026-06-17T02:03:35.399Z",
     "studyDates": [
       "2026-06-14",
-      "2026-06-15"
+      "2026-06-15",
+      "2026-06-17"
     ],
-    "totalSeconds": 83,
+    "totalSeconds": 193,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -185,6 +189,123 @@
         "duration": 27,
         "timestamp": "2026-06-15T06:50:35.086Z",
         "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 4,
+        "timestamp": "2026-06-15T06:52:47.592Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-15T07:18:24.181Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781087427858,
+        "courseTitle": "Unity UI Draw Call基础指南",
+        "videoIndex": 0,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 2,
+        "timestamp": "2026-06-15T07:18:33.324Z",
+        "date": "2026-06-15"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T01:42:18.543Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 42,
+        "timestamp": "2026-06-17T01:43:02.662Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T01:54:49.671Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781065485355,
+        "courseTitle": "角色模型制作思路",
+        "videoIndex": 0,
+        "videoTitle": "角色模型制作思路.mp4",
+        "duration": 36,
+        "timestamp": "2026-06-17T01:55:30.820Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T01:55:34.671Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 2,
+        "timestamp": "2026-06-17T01:55:40.919Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781087427858,
+        "courseTitle": "Unity UI Draw Call基础指南",
+        "videoIndex": 0,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 3,
+        "timestamp": "2026-06-17T01:55:47.039Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 10,
+        "timestamp": "2026-06-17T01:56:03.371Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 6,
+        "timestamp": "2026-06-17T02:03:30.910Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T02:03:35.399Z",
+        "date": "2026-06-17"
       }
     ],
     "shares": 2,
@@ -371,24 +492,6 @@
       "regDate": "2026-06-10",
       "id": 1781064213921,
       "rating": 4.9
-    },
-    {
-      "id": 1781230021472,
-      "name": "何银",
-      "department": "蜗牛工作室",
-      "title": "内部讲师",
-      "level": "intern",
-      "levelName": "实习讲师",
-      "avatar": "",
-      "intro": "fd",
-      "paymentRate": 0,
-      "status": "disabled",
-      "type": "internal",
-      "skills": [
-        "163"
-      ],
-      "courseCount": 0,
-      "regDate": "2026-06-12"
     }
   ],
   "index_banners": [
@@ -624,7 +727,7 @@
       ],
       "attachments": [],
       "duration": 1909,
-      "views": 8,
+      "views": 12,
       "rating": 0,
       "id": 1781065281803,
       "createdAt": "2026/6/10 12:21:21"
@@ -648,7 +751,7 @@
       ],
       "attachments": [],
       "duration": 2415,
-      "views": 11,
+      "views": 14,
       "rating": 0,
       "id": 1781065453648,
       "createdAt": "2026/6/10 12:24:13"
@@ -672,8 +775,8 @@
       ],
       "attachments": [],
       "duration": 2096,
-      "views": 2,
-      "rating": 0,
+      "views": 4,
+      "rating": 5,
       "id": 1781065485355,
       "createdAt": "2026/6/10 12:24:45"
     },
@@ -703,7 +806,7 @@
         }
       ],
       "duration": 2069,
-      "views": 1,
+      "views": 2,
       "rating": 0,
       "id": 1781077900894,
       "createdAt": "2026/6/10 15:51:40",
@@ -735,7 +838,7 @@
       ],
       "attachments": [],
       "duration": 2054,
-      "views": 28,
+      "views": 31,
       "rating": 3,
       "id": 1781080411545,
       "createdAt": "2026/6/10 16:33:31",
@@ -760,7 +863,7 @@
       ],
       "attachments": [],
       "duration": 1044,
-      "views": 9,
+      "views": 12,
       "rating": 5,
       "id": 1781087427858,
       "createdAt": "2026/6/10 18:30:27",
@@ -785,7 +888,7 @@
       ],
       "attachments": [],
       "duration": 2360,
-      "views": 17,
+      "views": 19,
       "rating": 5,
       "id": 1781087462994,
       "createdAt": "2026/6/10 18:31:02",
@@ -810,7 +913,7 @@
       ],
       "attachments": [],
       "duration": 2249,
-      "views": 1,
+      "views": 10,
       "rating": 5,
       "id": 1781506198054,
       "createdAt": "2026/6/15 14:49:58",
@@ -841,7 +944,11 @@
       "date": "2026-06-12",
       "startTime": "2026-06-12T17:30",
       "endTime": "2026-06-12T18:30",
-      "id": 1781148703132
+      "id": 1781148703132,
+      "signinEnabled": true,
+      "signinCode": "4099",
+      "linkedSurveyId": 1781170180951,
+      "linkedExamId": 1781401477291
     },
     {
       "project": "鸿雁计划",
@@ -852,7 +959,11 @@
       "date": "2026-06-17",
       "startTime": "2026-06-17T11:00",
       "endTime": "2026-06-17T12:00",
-      "id": 1781148746172
+      "id": 1781148746172,
+      "signinEnabled": false,
+      "signinCode": null,
+      "linkedSurveyId": 1781170180951,
+      "linkedExamId": null
     },
     {
       "project": "AI实践分享",
@@ -901,16 +1012,16 @@
     "savedAt": "2026-06-10T04:11:05.732Z"
   },
   "video_pos_1780909174403_1781065281803_0": {
-    "position": 1909,
-    "savedAt": "2026-06-11T14:16:25.911Z"
+    "position": 68,
+    "savedAt": "2026-06-17T01:55:40.885Z"
   },
   "video_pos_1780909174403_1781064630171_0": {
     "position": 868,
     "savedAt": "2026-06-15T06:49:05.078Z"
   },
   "video_pos_1780909174403_1781065485355_0": {
-    "position": 1,
-    "savedAt": "2026-06-10T07:42:08.717Z"
+    "position": 36,
+    "savedAt": "2026-06-17T01:55:30.788Z"
   },
   "video_pos_1780909174403_1781077900894_0": {
     "position": 2069,
@@ -933,7 +1044,7 @@
   },
   "video_pos_1780909174403_1781080411545_0": {
     "position": 1009,
-    "savedAt": "2026-06-15T03:30:46.182Z"
+    "savedAt": "2026-06-17T01:55:35.844Z"
   },
   "course_interaction_1781080411545": {
     "likes": 2,
@@ -950,7 +1061,7 @@
   },
   "video_pos_1780909174403_1781080411545_1": {
     "position": 505,
-    "savedAt": "2026-06-15T03:30:56.788Z"
+    "savedAt": "2026-06-15T07:18:25.990Z"
   },
   "course_interaction_1781077900894": {
     "likes": 0,
@@ -959,7 +1070,9 @@
       "1780909174403": 3
     },
     "ratingSum": 3,
-    "ratingCount": 1
+    "ratingCount": 1,
+    "shares": 2,
+    "userShares": {}
   },
   "course_interaction_1781064630171": {
     "likes": 1,
@@ -975,7 +1088,7 @@
   },
   "video_pos_1780909174403_1781065453648_0": {
     "position": 2415,
-    "savedAt": "2026-06-15T03:32:25.437Z"
+    "savedAt": "2026-06-17T01:43:08.678Z"
   },
   "course_interaction_1781065453648": {
     "likes": 1,
@@ -995,13 +1108,19 @@
     ],
     "videoProgress": {
       "1781087462994_0": 100,
-      "1781087427858_0": 5
+      "1781087427858_0": 5,
+      "1781065281803_0": 3,
+      "1781506198054_0": 13,
+      "1781080411545_0": 7,
+      "1781065453648_0": 36,
+      "1781077900894_0": 2
     },
-    "lastStudyTime": "2026-06-12T04:01:40.195Z",
+    "lastStudyTime": "2026-06-17T10:04:53.423Z",
     "studyDates": [
-      "2026-06-12"
+      "2026-06-12",
+      "2026-06-17"
     ],
-    "totalSeconds": 21,
+    "totalSeconds": 395,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -1020,20 +1139,176 @@
         "duration": 3,
         "timestamp": "2026-06-12T04:01:40.195Z",
         "date": "2026-06-12"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 9,
+        "timestamp": "2026-06-17T02:03:47.321Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T02:03:52.697Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 4,
+        "timestamp": "2026-06-17T02:03:59.414Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781087427858,
+        "courseTitle": "Unity UI Draw Call基础指南",
+        "videoIndex": 0,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T02:04:05.389Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T02:04:11.941Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 8,
+        "timestamp": "2026-06-17T02:04:24.256Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 6,
+        "timestamp": "2026-06-17T02:04:33.181Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781065453648,
+        "courseTitle": "成就系统设计：从理论到实践",
+        "videoIndex": 0,
+        "videoTitle": "成就系统设计：从理论到实践.mp4",
+        "duration": 2,
+        "timestamp": "2026-06-17T02:04:44.070Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781065453648,
+        "courseTitle": "成就系统设计：从理论到实践",
+        "videoIndex": 0,
+        "videoTitle": "成就系统设计：从理论到实践.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T02:04:50.998Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 5,
+        "timestamp": "2026-06-17T06:11:23.937Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T09:48:34.030Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-17T09:59:25.666Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-17T10:00:25.683Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-17T10:01:25.660Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-17T10:02:25.668Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 49,
+        "timestamp": "2026-06-17T10:03:15.626Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781077900894,
+        "courseTitle": "GPU Skinning",
+        "videoIndex": 0,
+        "videoTitle": "GPU Skinning（谭森）.mp4",
+        "duration": 46,
+        "timestamp": "2026-06-17T10:04:53.423Z",
+        "date": "2026-06-17"
       }
-    ]
+    ],
+    "ratings": 0,
+    "shares": 3,
+    "likes": 0
   },
   "video_pos_1781087021554_1781064630171_0": {
     "position": 18,
     "savedAt": "2026-06-12T02:27:47.194Z"
   },
   "video_pos_1781087021554_1781065281803_0": {
-    "position": 2,
-    "savedAt": "2026-06-11T02:01:54.753Z"
+    "position": 76,
+    "savedAt": "2026-06-17T02:03:48.412Z"
   },
   "video_pos_1781087021554_1781087427858_0": {
-    "position": 53,
-    "savedAt": "2026-06-12T04:01:40.160Z"
+    "position": 54,
+    "savedAt": "2026-06-17T02:04:07.741Z"
   },
   "course_interaction_1781087427858": {
     "likes": 2,
@@ -1050,7 +1325,7 @@
   },
   "video_pos_1781087021554_1781087462994_0": {
     "position": 2359,
-    "savedAt": "2026-06-12T03:54:18.376Z"
+    "savedAt": "2026-06-17T02:03:52.805Z"
   },
   "course_interaction_1781087462994": {
     "likes": 1,
@@ -1065,12 +1340,12 @@
     "ratingCount": 2
   },
   "video_pos_1781087021554_1781080411545_0": {
-    "position": 55,
-    "savedAt": "2026-06-12T01:54:24.705Z"
+    "position": 72,
+    "savedAt": "2026-06-17T02:04:39.526Z"
   },
   "video_pos_1781087021554_1781065453648_0": {
-    "position": 1,
-    "savedAt": "2026-06-11T02:18:18.985Z"
+    "position": 892,
+    "savedAt": "2026-06-17T02:04:54.165Z"
   },
   "video_pos_1781087021554_1781065485355_0": {
     "position": 10,
@@ -1082,10 +1357,11 @@
       "1781087021554": true
     },
     "userRatings": {
-      "1781087021554": 5
+      "1781087021554": 5,
+      "1780909174403": 5
     },
-    "ratingSum": 5,
-    "ratingCount": 1
+    "ratingSum": 10,
+    "ratingCount": 2
   },
   "notifications": [
     {
@@ -1419,6 +1695,69 @@
       "id": 1781235958851,
       "createdAt": "2026/6/12 11:45:58",
       "updatedAt": "2026/6/12 11:45:58"
+    },
+    {
+      "type": "single",
+      "title": "画面色彩中，主色调应该占（   ）？",
+      "content": "画面色彩中，主色调应该占（   ）？",
+      "options": [
+        "7分",
+        "6分",
+        "8分"
+      ],
+      "answer": "A",
+      "explanation": "画面色彩中主色调占7分。",
+      "analysis": "画面色彩中主色调占7分。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 0,
+      "id": 1781515331433,
+      "createdAt": "2026/6/15 17:22:11",
+      "updatedAt": "2026/6/15 17:22:11"
+    },
+    {
+      "type": "single",
+      "title": "在163构图模型布局比例下，前景、中景、背景分别应该占多少比例？（   ）",
+      "content": "在163构图模型布局比例下，前景、中景、背景分别应该占多少比例？（   ）",
+      "options": [
+        "10%，60%，30%",
+        "30%，60%，10%",
+        "10%，30%，60%"
+      ],
+      "answer": "A",
+      "explanation": "在163构图模型布局比例下，前景、中景、背景分别应该占10%、60%、30%",
+      "analysis": "在163构图模型布局比例下，前景、中景、背景分别应该占10%、60%、30%",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 0,
+      "id": 1781515331435,
+      "createdAt": "2026/6/15 17:22:11",
+      "updatedAt": "2026/6/15 17:22:11"
+    },
+    {
+      "type": "multiple",
+      "title": "在课堂中提到的721色彩比例规则和163场景构图模型中，以下哪些表述符合标准化流程？（   ）",
+      "content": "在课堂中提到的721色彩比例规则和163场景构图模型中，以下哪些表述符合标准化流程？（   ）",
+      "options": [
+        "中景是承载叙事主体的视觉重心区域",
+        "背景需通过强化细节来与中景形成视觉对比，突出主体",
+        "对比色可利用补色关系制造冷暖冲突，牵引观众注意力"
+      ],
+      "answer": [
+        "A",
+        "C"
+      ],
+      "explanation": "A正确：中景60%是163模型的核心区域，承载叙事主体与视觉重心，决定构图稳定性；\nB错误：背景30%的设计要点是弱化细节、利用雾效制造虚实对比，而非强化细节，目的是减少干扰、突出中景主体；\nE正确：对比色10%作为点睛之笔，补色关系的冷暖冲突是制造视觉张力、引导视线的重要方式。",
+      "analysis": "A正确：中景60%是163模型的核心区域，承载叙事主体与视觉重心，决定构图稳定性；\nB错误：背景30%的设计要点是弱化细节、利用雾效制造虚实对比，而非强化细节，目的是减少干扰、突出中景主体；\nE正确：对比色10%作为点睛之笔，补色关系的冷暖冲突是制造视觉张力、引导视线的重要方式。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 5,
+      "bankId": 0,
+      "id": 1781515331437,
+      "createdAt": "2026/6/15 17:22:11",
+      "updatedAt": "2026/6/15 17:22:11"
     }
   ],
   "exams": [
@@ -1597,11 +1936,27 @@
       "score": 5,
       "createdAt": "2026-06-15T06:50:11.616Z",
       "updatedAt": "2026-06-15T06:50:11.616Z"
+    },
+    {
+      "id": 1781661297380,
+      "userId": 1780909174403,
+      "courseId": 1781065485355,
+      "score": 5,
+      "createdAt": "2026-06-17T01:54:57.380Z",
+      "updatedAt": "2026-06-17T01:54:57.380Z"
+    },
+    {
+      "id": 1781661837448,
+      "userId": 1781087021554,
+      "courseId": 1781506198054,
+      "score": 5,
+      "createdAt": "2026-06-17T02:03:57.448Z",
+      "updatedAt": "2026-06-17T02:03:57.448Z"
     }
   ],
   "video_pos_1780909174403_1781087462994_0": {
     "position": 2359,
-    "savedAt": "2026-06-15T03:35:58.446Z"
+    "savedAt": "2026-06-17T01:54:49.834Z"
   },
   "lecturer_applications": [
     {
@@ -1619,8 +1974,8 @@
     }
   ],
   "video_pos_1780909174403_1781087427858_0": {
-    "position": 45,
-    "savedAt": "2026-06-15T03:26:07.886Z"
+    "position": 49,
+    "savedAt": "2026-06-17T01:55:47.006Z"
   },
   "video_pos_1781087021554_1781080411545_1": {
     "position": 4,
@@ -2126,16 +2481,258 @@
     "studyDates": []
   },
   "video_pos_1780909174403_1781506198054_0": {
-    "position": 72,
-    "savedAt": "2026-06-15T06:51:19.782Z"
+    "position": 375,
+    "savedAt": "2026-06-17T02:03:35.367Z"
   },
   "course_interaction_1781506198054": {
     "likes": 0,
     "userLikes": {},
     "userRatings": {
-      "1780909174403": 5
+      "1780909174403": 5,
+      "1781087021554": 5
     },
-    "ratingSum": 5,
-    "ratingCount": 1
+    "ratingSum": 10,
+    "ratingCount": 2,
+    "shares": 1,
+    "userShares": {
+      "1781087021554": true
+    }
+  },
+  "video_pos_1_1781065281803_0": {
+    "position": 70,
+    "savedAt": "2026-06-17T02:03:41.245Z"
+  },
+  "video_pos_1781087021554_1781506198054_0": {
+    "position": 301,
+    "savedAt": "2026-06-17T10:03:18.464Z"
+  },
+  "training_enrollments": [
+    {
+      "id": 1781676715225,
+      "trainingId": 1781148746172,
+      "userId": 1781087021554,
+      "enrolledAt": "2026-06-17T06:11:55.225Z",
+      "source": "self"
+    },
+    {
+      "id": 1781686371928,
+      "trainingId": 1781148746172,
+      "userId": 1780909174403,
+      "enrolledAt": "2026-06-17T08:52:51.928Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1781688058762,
+      "trainingId": 1781148703132,
+      "userId": 1780909174403,
+      "enrolledAt": "2026-06-17T09:20:58.762Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1781688058763,
+      "trainingId": 1781148703132,
+      "userId": 1781087021554,
+      "enrolledAt": "2026-06-17T09:20:58.762Z",
+      "source": "assigned"
+    }
+  ],
+  "user_shares_1781087021554": {
+    "totalShares": 3,
+    "sharedCourses": [
+      1781506198054,
+      1781077900894
+    ]
+  },
+  "learning_data_1781087021554": {
+    "totalHours": 0,
+    "completedCourses": [
+      1781087462994
+    ],
+    "videoProgress": {
+      "1781087462994_0": 100,
+      "1781087427858_0": 5,
+      "1781065281803_0": 3,
+      "1781506198054_0": 13,
+      "1781080411545_0": 7,
+      "1781065453648_0": 36,
+      "1781077900894_0": 0
+    },
+    "lastStudyTime": "2026-06-17T10:03:15.626Z",
+    "studyDates": [
+      "2026-06-12",
+      "2026-06-17"
+    ],
+    "totalSeconds": 349,
+    "studyRecords": [
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 18,
+        "timestamp": "2026-06-12T03:54:15.652Z",
+        "date": "2026-06-12"
+      },
+      {
+        "courseId": 1781087427858,
+        "courseTitle": "Unity UI Draw Call基础指南",
+        "videoIndex": 0,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 3,
+        "timestamp": "2026-06-12T04:01:40.195Z",
+        "date": "2026-06-12"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 9,
+        "timestamp": "2026-06-17T02:03:47.321Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T02:03:52.697Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 4,
+        "timestamp": "2026-06-17T02:03:59.414Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781087427858,
+        "courseTitle": "Unity UI Draw Call基础指南",
+        "videoIndex": 0,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T02:04:05.389Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T02:04:11.941Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 8,
+        "timestamp": "2026-06-17T02:04:24.256Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 6,
+        "timestamp": "2026-06-17T02:04:33.181Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781065453648,
+        "courseTitle": "成就系统设计：从理论到实践",
+        "videoIndex": 0,
+        "videoTitle": "成就系统设计：从理论到实践.mp4",
+        "duration": 2,
+        "timestamp": "2026-06-17T02:04:44.070Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781065453648,
+        "courseTitle": "成就系统设计：从理论到实践",
+        "videoIndex": 0,
+        "videoTitle": "成就系统设计：从理论到实践.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T02:04:50.998Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 5,
+        "timestamp": "2026-06-17T06:11:23.937Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-17T09:48:34.030Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-17T09:59:25.666Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-17T10:00:25.683Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-17T10:01:25.660Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-17T10:02:25.668Z",
+        "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 49,
+        "timestamp": "2026-06-17T10:03:15.626Z",
+        "date": "2026-06-17"
+      }
+    ],
+    "ratings": 0,
+    "shares": 3,
+    "likes": 0
+  },
+  "video_pos_1781087021554_1781077900894_0": {
+    "position": 45,
+    "savedAt": "2026-06-17T10:04:53.388Z"
   }
 }

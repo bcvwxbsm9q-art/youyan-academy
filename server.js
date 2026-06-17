@@ -171,8 +171,31 @@ function writeData(data) {
 
 // 从 course_ratings 计算课程平均评分
 function getCourseAvgRating(data, courseId) {
+  // 从 course_ratings 获取评分
   const ratings = (data.course_ratings || []).filter(r => r.courseId === courseId);
-  if (ratings.length === 0) return null;  // 无人评分返回 null，前端兜底显示 0
+  // 同时从 course_interaction 数据获取评分（前端 DataAPI 存储的评分）
+  const interactionKey = 'course_interaction_' + courseId;
+  const interaction = data[interactionKey];
+  if (interaction && interaction.ratingCount > 0) {
+    // 合并两个来源评分数据
+    const interactionSum = interaction.ratingSum || 0;
+    const interactionCount = interaction.ratingCount || 0;
+    const ratingsSum = ratings.reduce((s, r) => s + r.score, 0);
+    const totalSum = interactionSum + ratingsSum;
+    const totalCount = interactionCount + ratings.length;
+    // 去重：如果 course_ratings 中的 userId 在 interaction 中也存在，只计算一次
+    const interactionUserIds = new Set(Object.keys(interaction.userRatings || {}).map(String));
+    let dedupSum = interactionSum;
+    let dedupCount = interactionCount;
+    ratings.forEach(r => {
+      if (!interactionUserIds.has(String(r.userId))) {
+        dedupSum += r.score;
+        dedupCount++;
+      }
+    });
+    if (dedupCount > 0) return Math.round((dedupSum / dedupCount) * 10) / 10;
+  }
+  if (ratings.length === 0) return null;
   return Math.round((ratings.reduce((s, r) => s + r.score, 0) / ratings.length) * 10) / 10;
 }
 
@@ -874,6 +897,8 @@ app.get('/api/training', (req, res) => {
 app.get('/api/training/schedule', (req, res) => {
   const data = readData();
   const events = data.training_events || [];
+  const enrollments = data.training_enrollments || [];
+  const users = data.registered_users || [];
 
   // 转换为前端需要的格式
   const schedule = events.map(event => {
@@ -889,6 +914,18 @@ app.get('/api/training/schedule', (req, res) => {
     const durationMs = (startDate && endDate && !isNaN(startDate) && !isNaN(endDate)) ? (endDate - startDate) : 0;
     const durationHours = durationMs > 0 ? (durationMs / (1000 * 60 * 60)).toFixed(1) : '0.0';
 
+    // 报名人数及用户详情
+    const eventEnrollments = enrollments.filter(e => e.trainingId === event.id);
+    const enrolledUsers = eventEnrollments.map(e => {
+      const user = users.find(u => u.id === e.userId);
+      return {
+        userId: e.userId,
+        name: user ? (user.realName || user.username) : '未知用户',
+        avatar: user ? (user.avatar || '') : '',
+        department: user ? (user.department || '') : ''
+      };
+    });
+
     return {
       id: event.id,
       name: event.name,
@@ -901,7 +938,9 @@ app.get('/api/training/schedule', (req, res) => {
       location: event.location,
       content: event.content,
       startTime: event.startTime,
-      endTime: event.endTime
+      endTime: event.endTime,
+      enrollCount: eventEnrollments.length,
+      enrolledUsers: enrolledUsers
     };
   });
 
@@ -1108,6 +1147,134 @@ app.delete('/api/training/:id', (req, res) => {
   }
 });
 
+// ============================================================
+// 培训报名 API
+// ============================================================
+
+// GET /api/training/:id/enrollments - 获取某培训事件的报名列表（含用户详情）
+app.get('/api/training/:id/enrollments', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const enrollments = (data.training_enrollments || []).filter(e => e.trainingId === trainingId);
+  const users = data.registered_users || [];
+
+  // 关联用户信息
+  const enriched = enrollments.map(e => {
+    const user = users.find(u => u.id === e.userId);
+    return {
+      ...e,
+      userName: user ? (user.realName || user.username) : '未知用户',
+      userDepartment: user ? (user.department || '-') : '-',
+      userPhone: user ? (user.phone || '-') : '-',
+      userAvatar: user ? (user.avatar || '') : ''
+    };
+  });
+
+  res.json({ success: true, data: enriched, total: enriched.length });
+});
+
+// POST /api/training/:id/enroll - 用户自主报名
+app.post('/api/training/:id/enroll', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ success: false, error: '缺少 userId' });
+
+  // 检查培训是否存在
+  const training = (data.training_events || []).find(t => t.id === trainingId);
+  if (!training) return res.status(404).json({ success: false, error: '培训不存在' });
+
+  if (!data.training_enrollments) data.training_enrollments = [];
+
+  // 检查是否已报名
+  const existing = data.training_enrollments.find(e => e.trainingId === trainingId && e.userId === userId);
+  if (existing) return res.status(400).json({ success: false, error: '已报名，无需重复操作' });
+
+  data.training_enrollments.push({
+    id: Date.now(),
+    trainingId,
+    userId: Number(userId) || userId,
+    enrolledAt: new Date().toISOString(),
+    source: 'self'
+  });
+
+  writeData(data);
+  const count = data.training_enrollments.filter(e => e.trainingId === trainingId).length;
+  res.json({ success: true, message: '报名成功', enrollCount: count });
+});
+
+// DELETE /api/training/:id/enroll - 用户取消报名
+app.delete('/api/training/:id/enroll', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ success: false, error: '缺少 userId' });
+
+  if (!data.training_enrollments) data.training_enrollments = [];
+  const idx = data.training_enrollments.findIndex(e => e.trainingId === trainingId && e.userId === userId);
+  if (idx === -1) return res.status(404).json({ success: false, error: '未找到报名记录' });
+
+  data.training_enrollments.splice(idx, 1);
+  writeData(data);
+  const count = data.training_enrollments.filter(e => e.trainingId === trainingId).length;
+  res.json({ success: true, message: '已取消报名', enrollCount: count });
+});
+
+// POST /api/training/:id/assign - 管理员指派学员（支持批量）
+app.post('/api/training/:id/assign', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const { userIds } = req.body; // 数组
+
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return res.status(400).json({ success: false, error: '请选择至少一名学员' });
+  }
+
+  const training = (data.training_events || []).find(t => t.id === trainingId);
+  if (!training) return res.status(404).json({ success: false, error: '培训不存在' });
+
+  if (!data.training_enrollments) data.training_enrollments = [];
+
+  let addedCount = 0;
+  userIds.forEach(uid => {
+    const existing = data.training_enrollments.find(e => e.trainingId === trainingId && e.userId === uid);
+    if (!existing) {
+      data.training_enrollments.push({
+        id: Date.now() + addedCount,
+        trainingId,
+        userId: Number(uid) || uid,
+        enrolledAt: new Date().toISOString(),
+        source: 'assigned'
+      });
+      addedCount++;
+    }
+  });
+
+  writeData(data);
+  const totalCount = data.training_enrollments.filter(e => e.trainingId === trainingId).length;
+  res.json({ success: true, message: `已指派 ${addedCount} 名学员`, added: addedCount, enrollCount: totalCount });
+});
+
+// DELETE /api/training/:id/enrollments/:enrollId - 管理员删除某条报名记录
+app.delete('/api/training/:id/enrollments/:enrollId', (req, res) => {
+  const data = readData();
+  const enrollId = parseInt(req.params.enrollId);
+  if (!data.training_enrollments) data.training_enrollments = [];
+  const idx = data.training_enrollments.findIndex(e => e.id === enrollId);
+  if (idx === -1) return res.status(404).json({ success: false, error: '未找到报名记录' });
+  data.training_enrollments.splice(idx, 1);
+  writeData(data);
+  res.json({ success: true, message: '已移除' });
+});
+
+// GET /api/training/:id/enroll-count - 快速获取报名人数（用于列表页）
+app.get('/api/training/:id/enroll-count', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const count = (data.training_enrollments || []).filter(e => e.trainingId === trainingId).length;
+  res.json({ success: true, count });
+});
+
 // POST /api/training/:projectId/courses - 为培训项目添加课程
 app.post('/api/training/:projectId/courses', (req, res) => {
   const projectId = parseInt(req.params.projectId);
@@ -1191,12 +1358,48 @@ app.get('/api/courses/:id/ratings', (req, res) => {
   const courseId = parseInt(req.params.id);
   const userId = req.query.userId || '';
   const data = readData();
+
+  // 从 course_ratings 获取评分
   const ratings = (data.course_ratings || []).filter(r => r.courseId === courseId);
-  const avg = ratings.length > 0
-    ? Math.round((ratings.reduce((s, r) => s + r.score, 0) / ratings.length) * 10) / 10
-    : 0;
-  const myRating = userId ? ratings.find(r => r.userId === userId)?.score : null;
-  res.json({ success: true, avgRating: avg, ratingCount: ratings.length, myRating });
+
+  // 同时从 course_interaction 数据获取评分（前端 DataAPI 存储的评分）
+  const interactionKey = 'course_interaction_' + courseId;
+  const interaction = data[interactionKey];
+
+  let totalSum = ratings.reduce((s, r) => s + r.score, 0);
+  let totalCount = ratings.length;
+  let myRating = null;
+
+  // 合并 interaction 数据（去重）
+  if (interaction && interaction.ratingCount > 0) {
+    const interactionUserIds = new Set(Object.keys(interaction.userRatings || {}).map(String));
+    const ratingsUserIds = new Set(ratings.map(r => String(r.userId)));
+
+    // 将 interaction 中的评分加入总计
+    totalSum += (interaction.ratingSum || 0);
+    totalCount += (interaction.ratingCount || 0);
+
+    // 去除 course_ratings 中重复的用户评分（interaction 中已有的不重复计算）
+    ratings.forEach(r => {
+      if (interactionUserIds.has(String(r.userId))) {
+        totalSum -= r.score;
+        totalCount--;
+      }
+    });
+
+    // 当前用户评分：优先从 interaction 获取
+    if (userId && interaction.userRatings && interaction.userRatings[userId] !== undefined) {
+      myRating = interaction.userRatings[userId];
+    }
+  }
+
+  // 如果 interaction 中没有当前用户评分，从 course_ratings 获取
+  if (!myRating && userId) {
+    myRating = ratings.find(r => String(r.userId) === String(userId))?.score || null;
+  }
+
+  const avg = totalCount > 0 ? Math.round((totalSum / totalCount) * 10) / 10 : 0;
+  res.json({ success: true, avgRating: avg, ratingCount: totalCount, myRating });
 });
 
 // POST /api/courses/:id/ratings - 提交/更新课程评分（只能评一次，可以修改）
@@ -1254,7 +1457,7 @@ app.get('/api/exams', (req, res) => {
 
 // POST /api/exams - 创建考试
 app.post('/api/exams', (req, res) => {
-  const { title, description, duration, passingScore, totalScore, bankId, shuffleQuestions, showAnswer, status, questions, startTime, endTime, maxAttempts, paperId, paperName } = req.body;
+  const { title, description, duration, passingScore, totalScore, bankId, shuffleQuestions, showAnswer, status, questions, startTime, endTime, maxAttempts, paperId, paperName, allowedUsers } = req.body;
   if (!title) {
     return res.status(400).json({ success: false, error: '考试名称不能为空' });
   }
@@ -1277,6 +1480,7 @@ app.post('/api/exams', (req, res) => {
     maxAttempts: parseInt(maxAttempts) || 0,
     paperId: paperId || null,
     paperName: paperName || '',
+    allowedUsers: allowedUsers || null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -1343,9 +1547,30 @@ app.put('/api/exams/:id/status', (req, res) => {
   if (index === -1) {
     return res.status(404).json({ success: false, error: '考试不存在' });
   }
+  const oldStatus = exams[index].status;
   exams[index].status = status;
   exams[index].updatedAt = new Date().toISOString();
   if (writeData(data)) {
+    // 发布考试时发送通知给指定学员
+    if (oldStatus === 'draft' && status === 'published' && data.notifications) {
+      const exam = exams[index];
+      const allowedUsers = exam.allowedUsers;
+      if (allowedUsers && Array.isArray(allowedUsers) && allowedUsers.length > 0) {
+        allowedUsers.forEach(userId => {
+          const notification = {
+            id: Date.now() + Math.random(),
+            userId: userId,
+            title: '新考试安排',
+            content: `您有一场新考试「${exam.title}」待参加，请尽快登录完成。`,
+            type: 'system',
+            read: false,
+            createdAt: new Date().toISOString()
+          };
+          data.notifications.push(notification);
+        });
+        writeData(data);
+      }
+    }
     res.json({ success: true, exam: exams[index] });
   } else {
     res.status(500).json({ success: false, error: '状态更新失败' });

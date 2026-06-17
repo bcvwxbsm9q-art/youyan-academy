@@ -318,7 +318,7 @@ router.post('/questions/import', upload.single('file'), (req, res) => {
     const data = readData();
     const questions = data.questions || [];
 
-    const result = { success: 0, failed: 0, errors: [] };
+    const result = { success: 0, failed: 0, errors: [], importedData: [] };
 
     // Sheet名称与题型映射（支持常见命名）
     const sheetTypeMap = {
@@ -350,6 +350,7 @@ router.post('/questions/import', upload.single('file'), (req, res) => {
             q.createdAt = new Date().toLocaleString('zh-CN');
             q.updatedAt = new Date().toLocaleString('zh-CN');
             questions.push(q);
+            result.importedData.push(q);
             result.success++;
           }
         } catch (e) {
@@ -361,7 +362,7 @@ router.post('/questions/import', upload.single('file'), (req, res) => {
 
     data.questions = questions;
     writeData(data);
-    res.json({ success: true, imported: result.success, failed: result.failed, errors: result.errors });
+    res.json({ success: true, imported: result.success, failed: result.failed, errors: result.errors, importedData: result.importedData });
   } catch (e) {
     console.error('Excel导入失败:', e);
     res.status(500).json({ success: false, error: '文件解析失败: ' + e.message });
