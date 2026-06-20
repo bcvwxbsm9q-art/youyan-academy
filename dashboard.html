@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -219,8 +219,16 @@
         <button onclick="switchTab('survey')" data-tab="survey" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
           <i class="fas fa-poll w-5"></i><span>调研管理</span>
         </button>
-        <button onclick="switchTab('exams')" data-tab="exams" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
-          <i class="fas fa-file-alt w-5"></i><span>考试管理</span>
+
+        <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium mt-6">考试系统</div>
+        <button onclick="switchTab('question-bank')" data-tab="question-bank" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-database w-5"></i><span>题库管理</span>
+        </button>
+        <button onclick="switchTab('paper-mgmt')" data-tab="paper-mgmt" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-file-alt w-5"></i><span>试卷管理</span>
+        </button>
+        <button onclick="switchTab('exam-schedule')" data-tab="exam-schedule" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-tasks w-5"></i><span>考试安排</span>
         </button>
 
         <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium mt-6">数据管理</div>
@@ -834,29 +842,15 @@
 
       </div>
 
-      <!-- 考试管理（酷学院三模块设计） -->
-      <div id="tab-exams" class="tab-content hidden">
+      <!-- 题库管理 -->
+      <div id="tab-question-bank" class="tab-content hidden">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-2xl font-bold text-slate-800">
-            <i class="fas fa-file-alt text-indigo-500 mr-2"></i>考试管理
+            <i class="fas fa-database text-indigo-500 mr-2"></i>题库管理
           </h2>
         </div>
 
-        <!-- 子标签页 -->
-        <div class="bg-white rounded-xl shadow-sm p-1.5 mb-6 inline-flex gap-1">
-          <button onclick="switchSubTab('exams', 'question-bank')" class="subtab-btn active px-5 py-2.5 rounded-lg text-sm font-medium transition-all">
-            <i class="fas fa-database mr-1.5 opacity-70"></i>试题管理
-          </button>
-          <button onclick="switchSubTab('exams', 'paper-mgmt')" class="subtab-btn px-5 py-2.5 rounded-lg text-sm font-medium transition-all">
-            <i class="fas fa-file-alt mr-1.5 opacity-70"></i>试卷管理
-          </button>
-          <button onclick="switchSubTab('exams', 'exam-mgmt')" class="subtab-btn px-5 py-2.5 rounded-lg text-sm font-medium transition-all">
-            <i class="fas fa-tasks mr-1.5 opacity-70"></i>考试安排
-          </button>
-        </div>
-
-        <!-- ========== 子标签1：试题管理（仓库列表模式） ========== -->
-        <div id="exams-question-bank" class="subtab-content">
+        <div>
           <!-- 试题列表视图 -->
           <div id="bankListView">
             <div class="flex items-center justify-between mb-6">
@@ -963,10 +957,18 @@
               </div>
             </div>
           </div>
+      </div>
+      </div>
+
+      <!-- 试卷管理 -->
+      <div id="tab-paper-mgmt" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-file-alt text-indigo-500 mr-2"></i>试卷管理
+          </h2>
         </div>
 
-        <!-- ========== 子标签2：试卷管理 ========== -->
-        <div id="exams-paper-mgmt" class="subtab-content hidden">
+        <div>
           <!-- 列表视图 -->
           <div id="paperListView">
           <!-- 顶部标题栏 -->
@@ -1027,145 +1029,151 @@
           </div>
         </div>
 
-        <!-- ========== 子标签3：考试管理（酷学院风格） ========== -->
-        <div id="exams-exam-mgmt" class="subtab-content hidden">
-          <!-- 统计卡片 -->
-          <div class="grid grid-cols-4 gap-4 mb-6">
-            <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4">
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-clipboard-list text-white text-lg"></i>
-              </div>
-              <div>
-                <p class="text-2xl font-bold text-slate-800" id="exam-stat-total">0</p>
-                <p class="text-sm text-slate-500">考试总数</p>
-              </div>
-            </div>
-            <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4">
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-paper-plane text-white text-lg"></i>
-              </div>
-              <div>
-                <p class="text-2xl font-bold text-slate-800" id="exam-stat-published">0</p>
-                <p class="text-sm text-slate-500">进行中</p>
-              </div>
-            </div>
-            <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4">
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-300 to-indigo-500 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-users text-white text-lg"></i>
-              </div>
-              <div>
-                <p class="text-2xl font-bold text-slate-800" id="exam-stat-attempts">0</p>
-                <p class="text-sm text-slate-500">参考人次</p>
-              </div>
-            </div>
-            <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4">
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-chart-pie text-white text-lg"></i>
-              </div>
-              <div>
-                <p class="text-2xl font-bold text-slate-800" id="exam-stat-passrate">0%</p>
-                <p class="text-sm text-slate-500">通过率</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- 顶部标题栏 -->
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-              <h2 class="text-xl font-bold text-slate-800">全部考试</h2>
-              <span class="text-sm text-slate-400" id="examCount">共 0 场考试</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="relative">
-                <input type="text" id="examSearchInput" placeholder="搜索考试名称..." oninput="onExamSearch()"
-                  class="w-56 pl-4 pr-10 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
-              </div>
-              <button onclick="openExamModal()" class="btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition">
-                <i class="fas fa-plus mr-1.5"></i>创建考试
-              </button>
-            </div>
-          </div>
-
-          <!-- 筛选器行 -->
-          <div class="flex items-center gap-3 mb-4">
-            <select id="examFilterStatus" onchange="onExamFilterChange()" class="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white hover:border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
-              <option value="all">全部状态</option>
-              <option value="draft">草稿</option>
-              <option value="published">进行中</option>
-              <option value="closed">已结束</option>
-            </select>
-            <button onclick="resetExamFilters()" class="ml-auto w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition" title="重置筛选">
-              <i class="fas fa-cog"></i>
-            </button>
-          </div>
-
-          <!-- 批量操作工具栏 -->
-          <div id="examBatchActionBar" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-3">
-            <span class="text-sm text-indigo-700 font-medium" id="examBatchCount">已选 0 项</span>
-            <div class="h-4 w-px bg-indigo-300"></div>
-            <button onclick="batchPublishExams()" class="text-sm text-indigo-700 hover:text-indigo-900 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition">
-              <i class="fas fa-paper-plane mr-1.5"></i>发布
-            </button>
-            <button onclick="batchCloseExams()" class="text-sm text-indigo-700 hover:text-indigo-900 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition">
-              <i class="fas fa-stop-circle mr-1.5"></i>结束
-            </button>
-            <button onclick="batchDeleteExams()" class="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1.5 rounded-md transition">
-              <i class="fas fa-trash-alt mr-1.5"></i>删除
-            </button>
-            <button onclick="clearExamSelection()" class="ml-auto text-sm text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-md transition">
-              取消选择
-            </button>
-          </div>
-
-          <!-- 考试列表 -->
-          <div class="bg-white rounded-lg border border-slate-200/60 shadow-sm overflow-hidden">
-            <table class="w-full">
-              <thead>
-                <tr class="bg-slate-50/80 border-b border-slate-200">
-                  <th class="pl-5 pr-3 py-3.5 w-12">
-                    <input type="checkbox" id="examSelectAll" onchange="toggleExamSelectAll()" class="rounded border-slate-300 text-indigo-500 focus:ring-indigo-500 cursor-pointer">
-                  </th>
-                  <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider cursor-pointer hover:text-indigo-600 transition" onclick="sortExamList('title')">考试名称 <i class="fas fa-sort text-slate-300"></i></th>
-                  <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-28">关联试卷</th>
-                  <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-24">考试时长</th>
-                  <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-24">及格/总分</th>
-                  <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-20 cursor-pointer hover:text-indigo-600 transition" onclick="sortExamList('attemptCount')">参考人数 <i class="fas fa-sort text-slate-300"></i></th>
-                  <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-24 cursor-pointer hover:text-indigo-600 transition" onclick="sortExamList('passRate')">通过率 <i class="fas fa-sort text-slate-300"></i></th>
-                  <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-20 cursor-pointer hover:text-indigo-600 transition" onclick="sortExamList('status')">状态 <i class="fas fa-sort text-slate-300"></i></th>
-                  <th class="pl-3 pr-5 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-44">操作</th>
-                </tr>
-              </thead>
-              <tbody id="examMgmtList" class="divide-y divide-slate-100">
-                <tr><td colspan="9" class="px-6 py-16 text-center text-slate-400">
-                  <i class="fas fa-spinner fa-spin mr-2"></i>加载中...
-                </td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- 分页控件 -->
-          <div id="examPagination" class="flex items-center justify-between mt-4 hidden">
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-slate-500">每页</span>
-              <select id="examPageSize" onchange="onExamPageSizeChange()" class="px-2 py-1 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-              </select>
-              <span class="text-sm text-slate-500">条，共 <span id="examTotalCount">0</span> 条</span>
-            </div>
-            <div class="flex items-center gap-1">
-              <button onclick="goExamPage(1)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examFirstPage">首页</button>
-              <button onclick="goExamPage(examCurrentPage - 1)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examPrevPage">上一页</button>
-              <span class="px-3 py-1.5 text-sm text-slate-600"><span id="examCurrentPageNum">1</span> / <span id="examTotalPageNum">1</span></span>
-              <button onclick="goExamPage(examCurrentPage + 1)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examNextPage">下一页</button>
-              <button onclick="goExamPage(examTotalPages)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examLastPage">尾页</button>
-            </div>
-          </div>
-          <!-- 编辑页视图（动态创建） -->
-        </div>
       </div>
+      </div>
+
+      <!-- 考试安排 -->
+      <div id="tab-exam-schedule" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-tasks text-indigo-500 mr-2"></i>考试安排
+          </h2>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+          <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-clipboard-list text-white text-lg"></i>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-slate-800" id="exam-stat-total">0</p>
+              <p class="text-sm text-slate-500">考试总数</p>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-paper-plane text-white text-lg"></i>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-slate-800" id="exam-stat-published">0</p>
+              <p class="text-sm text-slate-500">进行中</p>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-300 to-indigo-500 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-users text-white text-lg"></i>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-slate-800" id="exam-stat-attempts">0</p>
+              <p class="text-sm text-slate-500">参考人次</p>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-chart-pie text-white text-lg"></i>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-slate-800" id="exam-stat-passrate">0%</p>
+              <p class="text-sm text-slate-500">通过率</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 顶部标题栏 -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl font-bold text-slate-800">全部考试</h2>
+            <span class="text-sm text-slate-400" id="examCount">共 0 场考试</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <input type="text" id="examSearchInput" placeholder="搜索考试名称..." oninput="onExamSearch()"
+                class="w-56 pl-4 pr-10 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+              <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+            </div>
+            <button onclick="openExamModal()" class="btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition">
+              <i class="fas fa-plus mr-1.5"></i>创建考试
+            </button>
+          </div>
+        </div>
+
+        <!-- 筛选器行 -->
+        <div class="flex items-center gap-3 mb-4">
+          <select id="examFilterStatus" onchange="onExamFilterChange()" class="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white hover:border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+            <option value="all">全部状态</option>
+            <option value="draft">草稿</option>
+            <option value="published">进行中</option>
+            <option value="closed">已结束</option>
+          </select>
+          <button onclick="resetExamFilters()" class="ml-auto w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition" title="重置筛选">
+            <i class="fas fa-cog"></i>
+          </button>
+        </div>
+
+        <!-- 批量操作工具栏 -->
+        <div id="examBatchActionBar" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-3">
+          <span class="text-sm text-indigo-700 font-medium" id="examBatchCount">已选 0 项</span>
+          <div class="h-4 w-px bg-indigo-300"></div>
+          <button onclick="batchPublishExams()" class="text-sm text-indigo-700 hover:text-indigo-900 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition">
+            <i class="fas fa-paper-plane mr-1.5"></i>发布
+          </button>
+          <button onclick="batchCloseExams()" class="text-sm text-indigo-700 hover:text-indigo-900 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition">
+            <i class="fas fa-stop-circle mr-1.5"></i>结束
+          </button>
+          <button onclick="batchDeleteExams()" class="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1.5 rounded-md transition">
+            <i class="fas fa-trash-alt mr-1.5"></i>删除
+          </button>
+          <button onclick="clearExamSelection()" class="ml-auto text-sm text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-md transition">
+            取消选择
+          </button>
+        </div>
+
+        <!-- 考试列表 -->
+        <div class="bg-white rounded-lg border border-slate-200/60 shadow-sm overflow-hidden">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-slate-50/80 border-b border-slate-200">
+                <th class="pl-5 pr-3 py-3.5 w-12">
+                  <input type="checkbox" id="examSelectAll" onchange="toggleExamSelectAll()" class="rounded border-slate-300 text-indigo-500 focus:ring-indigo-500 cursor-pointer">
+                </th>
+                <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider cursor-pointer hover:text-indigo-600 transition" onclick="sortExamList('title')">考试名称 <i class="fas fa-sort text-slate-300"></i></th>
+                <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-28">关联试卷</th>
+                <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-24">考试时长</th>
+                <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-24">及格/总分</th>
+                <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-20 cursor-pointer hover:text-indigo-600 transition" onclick="sortExamList('attemptCount')">参考人数 <i class="fas fa-sort text-slate-300"></i></th>
+                <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-24 cursor-pointer hover:text-indigo-600 transition" onclick="sortExamList('passRate')">通过率 <i class="fas fa-sort text-slate-300"></i></th>
+                <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider w-20 cursor-pointer hover:text-indigo-600 transition" onclick="sortExamList('status')">状态 <i class="fas fa-sort text-slate-300"></i></th>
+                <th class="pl-3 pr-5 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-44">操作</th>
+              </tr>
+            </thead>
+            <tbody id="examMgmtList" class="divide-y divide-slate-100">
+              <tr><td colspan="9" class="px-6 py-16 text-center text-slate-400">
+                <i class="fas fa-spinner fa-spin mr-2"></i>加载中...
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 分页控件 -->
+        <div id="examPagination" class="flex items-center justify-between mt-4 hidden">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-500">每页</span>
+            <select id="examPageSize" onchange="onExamPageSizeChange()" class="px-2 py-1 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+            <span class="text-sm text-slate-500">条，共 <span id="examTotalCount">0</span> 条</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button onclick="goExamPage(1)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examFirstPage">首页</button>
+            <button onclick="goExamPage(examCurrentPage - 1)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examPrevPage">上一页</button>
+            <span class="px-3 py-1.5 text-sm text-slate-600"><span id="examCurrentPageNum">1</span> / <span id="examTotalPageNum">1</span></span>
+            <button onclick="goExamPage(examCurrentPage + 1)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examNextPage">下一页</button>
+            <button onclick="goExamPage(examTotalPages)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examLastPage">尾页</button>
+          </div>
+        </div>
       </div>
 
       <!-- 调研管理 -->
@@ -2535,20 +2543,7 @@
         loadLecturerApplications();
       }
 
-      // 切换到试题管理时加载数据
-      if (tabName === 'exams' && subTabName === 'question-bank') {
-        loadBankList();
-      }
-
-      // 切换到试卷管理时加载数据
-      if (tabName === 'exams' && subTabName === 'paper-mgmt') {
-        loadPapers();
-      }
-
-      // 切换到考试管理时加载数据
-      if (tabName === 'exams' && subTabName === 'exam-mgmt') {
-        loadExamMgmtList();
-      }
+      // 考试相关功能已迁移至独立的题库管理和试卷管理页面
 
     }
 
@@ -2849,7 +2844,9 @@
         notices: renderNotices,
         users: loadUsers,
         portal: loadCarousels,
-        exams: loadBankList,
+        'question-bank': loadBankList,
+        'paper-mgmt': loadPapers,
+        'exam-schedule': loadExamMgmtList,
         survey: loadSurveyList,
         reports: loadReports
       };

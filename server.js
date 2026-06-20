@@ -1552,17 +1552,19 @@ app.put('/api/exams/:id/status', (req, res) => {
   exams[index].updatedAt = new Date().toISOString();
   if (writeData(data)) {
     // 发布考试时发送通知给指定学员
-    if (oldStatus === 'draft' && status === 'published' && data.notifications) {
+    if (oldStatus === 'draft' && status === 'published') {
+      initNotificationsData(data);
       const exam = exams[index];
       const allowedUsers = exam.allowedUsers;
       if (allowedUsers && Array.isArray(allowedUsers) && allowedUsers.length > 0) {
-        allowedUsers.forEach(userId => {
+        allowedUsers.forEach((userId, i) => {
           const notification = {
-            id: Date.now() + Math.random(),
+            id: Date.now() + i,
             userId: userId,
             title: '新考试安排',
-            content: `您有一场新考试「${exam.title}」待参加，请尽快登录完成。`,
-            type: 'system',
+            content: `您有一场新考试「${exam.title}」待参加，考试时间${exam.duration || 60}分钟，请尽快完成。`,
+            type: 'exam',
+            examId: exam.id,
             read: false,
             createdAt: new Date().toISOString()
           };
@@ -1575,6 +1577,17 @@ app.put('/api/exams/:id/status', (req, res) => {
   } else {
     res.status(500).json({ success: false, error: '状态更新失败' });
   }
+});
+
+// GET /api/exams/:id - 获取单条考试详情
+app.get('/api/exams/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const exam = (data.exams || []).find(e => e.id === id);
+  if (!exam) {
+    return res.status(404).json({ success: false, error: '考试不存在' });
+  }
+  res.json({ success: true, data: exam });
 });
 
 // GET /api/exams/:id/questions - 获取考试题目详情（含完整题目内容）
@@ -1617,12 +1630,12 @@ app.get('/api/exams/:id/results', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
   const attempts = (data.exam_attempts || []).filter(a => a.examId === id);
-  // 关联用户信息
-  const users = data.users || [];
+  // 关联用户信息（使用 registered_users 主表）
+  const users = data.registered_users || [];
   const results = attempts.map(a => {
-    const user = users.find(u => u.id === a.userId);
+    const user = users.find(u => String(u.id) === String(a.userId));
     return { ...a, userName: user ? (user.real_name || user.username) : '未知用户' };
-  }).sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+  }).sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
   res.json({ success: true, results });
 });
 
@@ -1652,9 +1665,13 @@ app.post('/api/exams/:id/take', (req, res) => {
   // 去掉答案
   const safeQuestions = examQuestions.map(({ answer, analysis, ...rest }) => rest);
 
+  // 计算及格线百分比（exam.html 使用 passScore 作为百分比显示）
+  const fullScore = exam.totalScore || examQuestions.reduce((s, eq) => s + (eq.score || 1), 0);
+  const passScorePercent = fullScore > 0 ? Math.round((exam.passingScore || 60) / fullScore * 100) : 60;
+
   res.json({
     success: true,
-    exam: { ...exam, questions: undefined },
+    exam: { ...exam, questions: undefined, passScore: passScorePercent, name: exam.title },
     questions: safeQuestions,
     totalQuestions: examQuestions.length,
     duration: exam.duration * 60 // 转换为秒
@@ -1666,6 +1683,7 @@ app.post('/api/exams/:id/enter', (req, res) => {
   const id = parseInt(req.params.id);
   const { userId } = req.body;
   const data = readData();
+  const exam = (data.exams || []).find(e => e.id === id);
   if (!data.exam_attempts) data.exam_attempts = [];
   const attemptId = Date.now();
   data.exam_attempts.push({
@@ -1679,36 +1697,89 @@ app.post('/api/exams/:id/enter', (req, res) => {
     passed: null
   });
   writeData(data);
-  res.json({ success: true, attemptId });
+  // 返回 session 对象供 exam.html 使用
+  const durationSeconds = (exam ? exam.duration || 60 : 60) * 60;
+  res.json({
+    success: true,
+    attemptId,
+    session: {
+      attemptId,
+      deadline: new Date(Date.now() + durationSeconds * 1000).toISOString(),
+      remainingSeconds: durationSeconds,
+      expired: false
+    }
+  });
 });
 
 // POST /api/exams/:id/submit - 提交考试答卷
 app.post('/api/exams/:id/submit', (req, res) => {
   const id = parseInt(req.params.id);
-  const { userId, attemptId, answers } = req.body;
+  const { userId, attemptId, answers, durationUsed } = req.body;
   const data = readData();
   const exam = (data.exams || []).find(e => e.id === id);
   if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
 
+  // 查找 attempt 记录：优先使用 attemptId，否则按 userId+examId 查找最近的 "taking" 状态
+  const attempts = data.exam_attempts || [];
+  let attemptIndex = -1;
+  if (attemptId) {
+    attemptIndex = attempts.findIndex(a => a.id === attemptId);
+  } else if (userId) {
+    // 查找该用户该考试最近一次进行中的 attempt
+    for (let i = attempts.length - 1; i >= 0; i--) {
+      if (String(attempts[i].userId) === String(userId) && attempts[i].examId === id && attempts[i].status === 'taking') {
+        attemptIndex = i;
+        break;
+      }
+    }
+  }
+
   const allQuestions = data.questions || [];
+  const examQuestions = exam.questions || [];
   let correctCount = 0;
   let totalScore = 0;
+  const detail = [];
 
-  Object.entries(answers || {}).forEach(([questionId, userAnswer]) => {
-    const q = allQuestions.find(qq => qq.id === parseInt(questionId));
-    if (q) {
-      const isCorrect = userAnswer === q.answer;
-      if (isCorrect) correctCount++;
-      totalScore += isCorrect ? (exam.totalScore / ((exam.questions || []).length) || 1) : 0;
+  // 逐题评分，使用每道题的独立分值
+  examQuestions.forEach(eq => {
+    const q = allQuestions.find(qq => qq.id === eq.questionId);
+    if (!q) return;
+    const qScore = eq.score || 1;
+    const userAnswer = (answers || {})[String(q.id)] || '';
+    // 多选题答案排序比较
+    let isCorrect = false;
+    if (q.type === 'multiple') {
+      // 答案可能是数组或字符串，统一转为排序后的字符串
+      const ua = (userAnswer || '').split('').sort().join('');
+      const caRaw = Array.isArray(q.answer) ? q.answer.join('') : (q.answer || '');
+      const ca = caRaw.split('').sort().join('');
+      isCorrect = ua === ca && ua !== '';
+    } else {
+      isCorrect = userAnswer === q.answer && userAnswer !== '';
     }
+    const earnedScore = isCorrect ? qScore : 0;
+    if (isCorrect) correctCount++;
+    totalScore += earnedScore;
+    detail.push({
+      questionId: q.id,
+      type: q.type || 'single',
+      title: q.title || q.content || '',
+      userAnswer: userAnswer,
+      correctAnswer: Array.isArray(q.answer) ? q.answer.join('') : (q.answer || ''),
+      isCorrect,
+      score: earnedScore,
+      fullScore: qScore,
+      options: q.options || [],
+      analysis: q.analysis || q.explanation || ''
+    });
   });
 
   const finalScore = Math.round(totalScore);
-  const passed = finalScore >= exam.passingScore;
+  const fullScore = exam.totalScore || examQuestions.reduce((s, eq) => s + (eq.score || 1), 0);
+  const passed = finalScore >= (exam.passingScore || 60);
+  const percent = fullScore > 0 ? Math.round(finalScore / fullScore * 100) : 0;
 
-  // 更新 attempt 记录
-  const attempts = data.exam_attempts || [];
-  const attemptIndex = attempts.findIndex(a => a.id === attemptId);
+  // 更新 attempt 记录（使用上面已查找到的 attemptIndex）
   if (attemptIndex !== -1) {
     attempts[attemptIndex] = {
       ...attempts[attemptIndex],
@@ -1718,12 +1789,25 @@ app.post('/api/exams/:id/submit', (req, res) => {
       score: finalScore,
       passed,
       correctCount,
-      totalQuestions: (exam.questions || []).length
+      totalQuestions: examQuestions.length
     };
   }
 
   writeData(data);
-  res.json({ success: true, score: finalScore, passed, correctCount, totalQuestions: (exam.questions || []).length });
+  res.json({
+    success: true,
+    result: {
+      score: finalScore,
+      fullScore,
+      passed,
+      correctCount,
+      totalCount: examQuestions.length,
+      totalQuestions: examQuestions.length,
+      percent,
+      durationUsed: durationUsed || 0,
+      detail
+    }
+  });
 });
 
 // POST /api/exams/:id/abandon - 放弃考试
@@ -2371,7 +2455,7 @@ app.get('/api/notifications', (req, res) => {
   
   // 2. 添加用户的个人通知
   const userNotifications = data.notifications.filter(
-    n => n.userId === currentUser.id
+    n => String(n.userId) === String(currentUser.id)
   );
   userNotifications.forEach(n => {
     notifications.push({
