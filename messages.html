@@ -1,4 +1,4 @@
-﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -54,13 +54,13 @@
             transition: background 0.2s ease, box-shadow 0.2s ease;
         }
         .msg-table tbody tr { transition: all 0.2s ease; }
-        .msg-table tr:hover td { background: #f8faff; }
-        .msg-table tr.unread-row td { 
+        .msg-table tr:hover td { background: #f8fafc; }
+        .msg-table tr.unread-row td {
             background: #fafbff;
             font-weight: 500;
         }
-        .msg-table tr.unread-row:hover td { 
-            background: #f5f0ff;
+        .msg-table tr.unread-row:hover td {
+            background: #f8fafc;
         }
         .msg-checkbox {
             width: 18px; height: 18px;
@@ -185,12 +185,14 @@
 
         /* ===== 消息行交互 ===== */
         .msg-table tbody tr.msg-clickable { cursor: pointer; }
-        .msg-table tbody tr.msg-clickable:hover td { 
-            background: #eef2ff;
-            box-shadow: inset 0 0 0 1px #c7d2fe;
+        .msg-table tbody tr.msg-clickable:hover td {
+            background: #f8fafc;
+        }
+        .msg-table tbody tr.msg-clickable:hover td:first-child {
+            box-shadow: inset 3px 0 0 #667eea;
         }
         .msg-table tbody tr.msg-clickable:active td {
-            background: #e0e7ff;
+            background: #f1f5f9;
             transition: background 0.05s;
         }
 

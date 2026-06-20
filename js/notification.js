@@ -35,12 +35,14 @@
     var user = getToken();
     if (!user) return;
     try {
-      var res = await fetch('/api/notifications?userId=' + user.id);
-      var data = await res.json();
+      var res = await fetch('/api/notifications');
+      var result = await res.json();
+      var list = (result.success && result.data) ? result.data : [];
+      var unreadCount = list.filter(function(n){ return !n.read; }).length;
       var badge = document.getElementById('notification-badge');
       if (!badge) return;
-      if (data.unreadCount > 0) {
-        badge.textContent = data.unreadCount > 99 ? '99+' : data.unreadCount;
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
         badge.classList.remove('hidden');
       } else {
         badge.classList.add('hidden');
@@ -77,12 +79,14 @@
     var listEl = document.getElementById('notification-list');
     if (listEl) listEl.innerHTML = '<div class="px-4 py-8 text-center text-slate-400 text-sm">加载中...</div>';
     try {
-      var res = await fetch('/api/notifications?userId=' + user.id);
-      var data = await res.json();
-      renderNotificationList(data.notifications || []);
+      var res = await fetch('/api/notifications');
+      var result = await res.json();
+      var list = (result.success && result.data) ? result.data : [];
+      renderNotificationList(list);
+      var unreadCount = list.filter(function(n){ return !n.read; }).length;
       var badge = document.getElementById('notification-badge');
       if (badge) {
-        if (data.unreadCount > 0) { badge.textContent = data.unreadCount > 99 ? '99+' : data.unreadCount; badge.classList.remove('hidden'); }
+        if (unreadCount > 0) { badge.textContent = unreadCount > 99 ? '99+' : unreadCount; badge.classList.remove('hidden'); }
         else { badge.classList.add('hidden'); }
       }
     } catch (e) {
@@ -142,9 +146,21 @@
   };
 
   window.markAllNotificationsRead = async function () {
-    var user = getToken();
-    if (!user) return;
-    try { await fetch('/api/notifications/read-all?userId=' + user.id, { method: 'PUT' }); await loadNotifications(); } catch (e) {}
+    try {
+      // 先获取所有通知，找出未读的ID
+      var res = await fetch('/api/notifications');
+      var result = await res.json();
+      var list = (result.success && result.data) ? result.data : [];
+      var unreadIds = list.filter(function(n){ return !n.read; }).map(function(n){ return n.id; });
+      if (unreadIds.length === 0) return;
+      // 批量标记已读
+      await fetch('/api/notifications/batch-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: unreadIds })
+      });
+      await loadNotifications();
+    } catch (e) {}
   };
 
   if (typeof document !== 'undefined') {
