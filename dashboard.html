@@ -2396,6 +2396,8 @@
 
       // 初始化用户管理筛选器
       initUserFilters();
+
+      // 培训列表上传图片按钮已改为 onclick 直接绑定
     });
 
     function updateTime() {
@@ -5574,7 +5576,7 @@
             </td>
             <td class="px-6 py-4 text-right">
               <div class="flex items-center justify-end gap-1">
-                <button onclick="openTrainingImageUpload(${e.id})" class="p-2 text-pink-500 hover:bg-pink-50 rounded-lg transition" title="上传图片"><i class="fas fa-image"></i></button>
+                <button onclick="openTrainingImageUpload(${e.id})" class="p-2 text-pink-500 hover:bg-pink-50 rounded-lg transition cursor-pointer" title="上传图片"><i class="fas fa-image"></i></button>
                 <button onclick="openTrainingAnalytics(${e.id})" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="数据分析"><i class="fas fa-chart-pie"></i></button>
                 <button onclick="openAssignStudentsModal(${e.id})" class="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition" title="指派学员"><i class="fas fa-user-plus"></i></button>
                 <button onclick="openTrainingServiceModal(${e.id})" class="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition" title="配置集成服务"><i class="fas fa-cogs"></i></button>
@@ -5625,7 +5627,6 @@
               </div>
             </div>
             <div class="flex flex-col gap-1">
-              <button onclick="closeModal(); openTrainingImageUpload(${e.id})" class="p-1.5 text-pink-500 hover:bg-pink-50 rounded-lg transition" title="上传图片"><i class="fas fa-image text-xs"></i></button>
               <button onclick="closeModal(); editTraining(${e.id})" class="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit text-xs"></i></button>
               <button onclick="closeModal(); deleteTraining(${e.id})" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash text-xs"></i></button>
             </div>
@@ -5663,14 +5664,14 @@
 
       // 从 localStorage 读取已有图片（兼容数字和字符串两种 key）
       const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
-      let data = gallery[trainingId];
-      if (!data && typeof trainingId === 'number') {
-        data = gallery[String(trainingId)];
+      let galleryData = gallery[trainingId];
+      if (!galleryData && typeof trainingId === 'number') {
+        galleryData = gallery[String(trainingId)];
       }
-      if (!data && typeof trainingId === 'string') {
-        data = gallery[parseInt(trainingId)];
+      if (!galleryData && typeof trainingId === 'string') {
+        galleryData = gallery[parseInt(trainingId)];
       }
-      const existingImages = (data && data.images) ? data.images : [];
+      const existingImages = (galleryData && galleryData.images) ? galleryData.images : [];
 
       showModal(`
         <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">

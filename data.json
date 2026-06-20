@@ -1816,7 +1816,44 @@
       "updatedAt": "2026/6/15 17:22:11"
     }
   ],
-  "exams": [],
+  "exams": [
+    {
+      "id": 1781964119297,
+      "title": "123",
+      "description": "",
+      "duration": 60,
+      "passingScore": 60,
+      "totalScore": 100,
+      "bankId": null,
+      "shuffleQuestions": true,
+      "showAnswer": true,
+      "status": "published",
+      "questions": [
+        {
+          "questionId": 1781235958849,
+          "score": 20,
+          "order": 0,
+          "content": "(题目未找到)",
+          "type": "single"
+        },
+        {
+          "questionId": 1781235958851,
+          "score": 10,
+          "order": 1,
+          "content": "(题目未找到)",
+          "type": "single"
+        }
+      ],
+      "startTime": "2026-06-20T14:01:00.000Z",
+      "endTime": "2026-06-21T14:01:00.000Z",
+      "maxAttempts": 0,
+      "paperId": "paper_1781514013324",
+      "paperName": "2026企业文化与制度",
+      "allowedUsers": null,
+      "createdAt": "2026-06-20T14:01:59.297Z",
+      "updatedAt": "2026-06-20T14:01:59.297Z"
+    }
+  ],
   "exam_attempts": [],
   "survey_responses": [
     {
