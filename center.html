@@ -434,34 +434,53 @@
                         
                         <!-- 我的课程 -->
                         <div class="tab-content hidden" id="my-courses-content">
-                            <!-- 学习统计 -->
-                            <div class="grid grid-cols-3 gap-6 mb-6">
-                                <div class="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all">
-                                    <div class="flex items-center gap-3 mb-2">
-                                        <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                                            <i class="fa fa-clock-o text-blue-500"></i>
-                                        </div>
-                                        <div class="text-3xl font-bold" id="course-stat-hours">0</div>
-                                    </div>
-                                    <p class="text-sm text-gray-500">学习时长 (小时)</p>
+                            <!-- 学习统计面板 -->
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                        <i class="fa fa-pie-chart text-primary text-sm"></i>学习概览
+                                    </h3>
+                                    <span class="text-xs text-gray-400" id="stats-update-time"></span>
                                 </div>
-                                <div class="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all">
-                                    <div class="flex items-center gap-3 mb-2">
-                                        <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                                            <i class="fa fa-check-circle text-green-500"></i>
-                                        </div>
-                                        <div class="text-3xl font-bold" id="course-stat-completed">0</div>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                    <!-- 学习时长 -->
+                                    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 p-4 group hover:shadow-md transition-shadow">
+                                        <div class="absolute -right-3 -top-3 w-16 h-16 bg-blue-100/60 rounded-full blur-sm"></div>
+                                        <i class="fa fa-clock-o text-blue-500 text-lg mb-2 block"></i>
+                                        <div class="text-2xl font-extrabold text-gray-800" id="course-stat-hours">0</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">学习时长(h)</div>
                                     </div>
-                                    <p class="text-sm text-gray-500">已完成课程</p>
+                                    <!-- 已完成 -->
+                                    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-50 to-green-50 p-4 group hover:shadow-md transition-shadow">
+                                        <div class="absolute -right-3 -top-3 w-16 h-16 bg-green-100/60 rounded-full blur-sm"></div>
+                                        <i class="fa fa-check-circle text-emerald-500 text-lg mb-2 block"></i>
+                                        <div class="text-2xl font-extrabold text-gray-800" id="course-stat-completed">0</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">已完成</div>
+                                    </div>
+                                    <!-- 进行中 -->
+                                    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 p-4 group hover:shadow-md transition-shadow">
+                                        <div class="absolute -right-3 -top-3 w-16 h-16 bg-amber-100/60 rounded-full blur-sm"></div>
+                                        <i class="fa fa-play-circle text-amber-500 text-lg mb-2 block"></i>
+                                        <div class="text-2xl font-extrabold text-gray-800" id="course-stat-inprogress">0</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">进行中</div>
+                                    </div>
+                                    <!-- 完成率 -->
+                                    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 p-4 group hover:shadow-md transition-shadow">
+                                        <div class="absolute -right-3 -top-3 w-16 h-16 bg-violet-100/60 rounded-full blur-sm"></div>
+                                        <i class="fa fa-trophy text-violet-500 text-lg mb-2 block"></i>
+                                        <div class="text-2xl font-extrabold text-gray-800"><span id="course-stat-rate">0</span>%</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">完成率</div>
+                                    </div>
                                 </div>
-                                <div class="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all">
-                                    <div class="flex items-center gap-3 mb-2">
-                                        <div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                                            <i class="fa fa-spinner text-orange-500"></i>
-                                        </div>
-                                        <div class="text-3xl font-bold" id="course-stat-inprogress">0</div>
+                                <!-- 进度条 -->
+                                <div class="mt-4 pt-4 border-t border-gray-100">
+                                    <div class="flex items-center justify-between text-xs text-gray-400 mb-1.5">
+                                        <span>总体进度</span>
+                                        <span id="course-stat-progress-text">0 / 0 门课程</span>
                                     </div>
-                                    <p class="text-sm text-gray-500">进行中</p>
+                                    <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div id="course-stat-progress-bar" class="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -2065,6 +2084,20 @@ const BADGES = [
             const totalHours = totalSec > 0 ? (Math.round(totalSec / 3600 * 10) / 10) : (learningData.totalHours || 0);
             document.getElementById('course-stat-hours').textContent = totalHours;
             document.getElementById('course-stat-completed').textContent = completed.length;
+            document.getElementById('course-stat-inprogress').textContent = inProgress.length;
+
+            // 完成率 & 进度条
+            const totalCourses = completed.length + inProgress.length;
+            const rate = totalCourses > 0 ? Math.round((completed.length / totalCourses) * 100) : 0;
+            document.getElementById('course-stat-rate').textContent = rate;
+            document.getElementById('course-stat-progress-text').textContent = completed.length + ' / ' + totalCourses + ' 门课程';
+            document.getElementById('course-stat-progress-bar').style.width = rate + '%';
+
+            // 更新时间戳
+            const now = new Date();
+            document.getElementById('stats-update-time').textContent =
+                '更新于 ' + (now.getMonth() + 1) + '/' + now.getDate() + ' ' +
+                String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 
             // 同步更新顶部个人信息卡和统计页
             document.getElementById('stat-hours').textContent = totalHours;
