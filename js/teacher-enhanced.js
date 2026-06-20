@@ -390,7 +390,7 @@
                             <div class="space-y-2">
                                 ${(api && getLecturerCourses(lecturer.id).slice(0, 3).map(c => {
                                     return `
-                                    <div class="bg-gray-50 rounded-xl p-3 cursor-pointer hover:bg-gray-100 transition-colors">
+                                    <div class="bg-gray-50 rounded-xl p-3 cursor-pointer hover:bg-gray-100 transition-colors" onclick="location.href='player.html?courseId=${c.id}'">
                                         <div class="flex items-center gap-3">
                                             <img src="${c.cover || ''}" class="w-16 h-12 rounded-lg object-cover flex-shrink-0" onerror="this.src='https://placehold.co/64x48/667eea/white?text=课'">
                                             <div class="flex-1 min-w-0">

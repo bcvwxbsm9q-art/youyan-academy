@@ -488,14 +488,6 @@
                                 </div>
                             </div>
 
-                            <!-- 学习图表 -->
-                            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-                                <h3 class="font-bold text-lg mb-4">学习分析</h3>
-                                <div class="h-64">
-                                    <canvas id="learning-chart"></canvas>
-                                </div>
-                            </div>
-
                             <!-- 未完成课程 -->
                             <div class="mb-6">
                                 <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
@@ -829,7 +821,6 @@ const BADGES = [
             checkAuthAndUpdateUI();
             loadUserData();
             initTabNavigation();
-            initLearningChart();
             loadAllData();
             initCalendar();
             loadActivityTimeline();
@@ -2239,87 +2230,6 @@ const BADGES = [
                     </button>
                 </div>
             </div>`;
-        }
-
-        // 初始化学习图表（使用真实学习记录数据）
-        function initLearningChart() {
-            const ctx = document.getElementById('learning-chart');
-            if (!ctx) return;
-
-            const userId = currentUser.id;
-            const learningData = api.getUserLearningData(userId);
-            const records = learningData.studyRecords || [];
-
-            // 获取最近7天的学习时长
-            const days = [];
-            const hours = [];
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const dateStr = d.toISOString().split('T')[0];
-                const dayLabel = i === 0 ? '今天' : i === 1 ? '昨天' : ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
-                days.push(dayLabel);
-                
-                // 汇总当天所有记录的时长
-                const daySeconds = records
-                    .filter(r => r.date === dateStr)
-                    .reduce((sum, r) => sum + (r.duration || 0), 0);
-                hours.push(Math.round(daySeconds / 3600 * 10) / 10); // 转为小时，保留1位小数
-            }
-
-            const hasData = hours.some(h => h > 0);
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: days,
-                    datasets: [{
-                        label: '学习时长(小时)',
-                        data: hasData ? hours : [0, 0, 0, 0, 0, 0, 0],
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: hasData ? 4 : 0,
-                        pointBackgroundColor: '#667eea',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(ctx) {
-                                    return ctx.parsed.y > 0 ? `${ctx.parsed.y}小时` : '无记录';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { 
-                            beginAtZero: true,
-                            ticks: {
-                                callback: v => v + 'h'
-                            }
-                        }
-                    }
-                }
-            });
-
-            // 如果没有数据，显示提示
-            if (!hasData) {
-                const parent = ctx.parentElement;
-                if (parent && !parent.querySelector('.no-data-hint')) {
-                    const hint = document.createElement('div');
-                    hint.className = 'no-data-hint absolute inset-0 flex items-center justify-center text-gray-400 text-sm pointer-events-none';
-                    hint.innerHTML = '<i class="fa fa-line-chart mr-2"></i>暂无学习记录，开始学习后这里会展示趋势';
-                    parent.style.position = 'relative';
-                    parent.appendChild(hint);
-                }
-            }
         }
 
         // 继续学习

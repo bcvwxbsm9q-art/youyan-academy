@@ -627,7 +627,6 @@
                                 <div class="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-indigo-50 to-purple-50 p-0.5">
                                     <img src="${l.avatar || ''}" alt="${l.name}" class="w-full h-full rounded-full object-cover" onerror="this.src='https://placehold.co/64x64/f0f0f0/666?text=${encodeURIComponent(l.name.charAt(0))}'">
                                 </div>
-                                <div class="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <h3 class="font-semibold text-gray-800 text-lg mb-1 group-hover:text-indigo-600 transition-colors">${l.name}</h3>

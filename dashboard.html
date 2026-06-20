@@ -5574,6 +5574,7 @@
             </td>
             <td class="px-6 py-4 text-right">
               <div class="flex items-center justify-end gap-1">
+                <button onclick="openTrainingImageUpload(${e.id})" class="p-2 text-pink-500 hover:bg-pink-50 rounded-lg transition" title="上传图片"><i class="fas fa-image"></i></button>
                 <button onclick="openTrainingAnalytics(${e.id})" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="数据分析"><i class="fas fa-chart-pie"></i></button>
                 <button onclick="openAssignStudentsModal(${e.id})" class="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition" title="指派学员"><i class="fas fa-user-plus"></i></button>
                 <button onclick="openTrainingServiceModal(${e.id})" class="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition" title="配置集成服务"><i class="fas fa-cogs"></i></button>
@@ -5624,6 +5625,7 @@
               </div>
             </div>
             <div class="flex flex-col gap-1">
+              <button onclick="closeModal(); openTrainingImageUpload(${e.id})" class="p-1.5 text-pink-500 hover:bg-pink-50 rounded-lg transition" title="上传图片"><i class="fas fa-image text-xs"></i></button>
               <button onclick="closeModal(); editTraining(${e.id})" class="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit text-xs"></i></button>
               <button onclick="closeModal(); deleteTraining(${e.id})" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash text-xs"></i></button>
             </div>
@@ -5650,6 +5652,226 @@
           </div>
         </div>
       `);
+    }
+
+    function openTrainingImageUpload(trainingId) {
+      const event = data.training.find(x => x.id === trainingId);
+      if (!event) {
+        toast('培训记录不存在', 'error');
+        return;
+      }
+
+      // 从 localStorage 读取已有图片（兼容数字和字符串两种 key）
+      const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+      let data = gallery[trainingId];
+      if (!data && typeof trainingId === 'number') {
+        data = gallery[String(trainingId)];
+      }
+      if (!data && typeof trainingId === 'string') {
+        data = gallery[parseInt(trainingId)];
+      }
+      const existingImages = (data && data.images) ? data.images : [];
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-image text-pink-500 mr-2"></i>上传培训图片</h3>
+              <p class="text-sm text-slate-500">${event.name}</p>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6">
+            <div id="upload-dropzone" class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-pink-300 hover:bg-pink-50/30 transition cursor-pointer" onclick="document.getElementById('training-image-input').click()">
+              <i class="fas fa-cloud-upload-alt text-4xl text-slate-300 mb-3"></i>
+              <p class="text-sm text-slate-600 font-medium">点击或拖拽上传图片</p>
+              <p class="text-xs text-slate-400 mt-1">支持 JPG、PNG、GIF，单张不超过 5MB</p>
+              <input type="file" id="training-image-input" accept="image/*" multiple class="hidden" onchange="handleTrainingImageUpload(${trainingId}, this.files)">
+            </div>
+            <div id="upload-preview-area" class="mt-4 hidden">
+              <p class="text-sm font-medium text-slate-700 mb-2">待上传图片：</p>
+              <div id="upload-preview-list" class="grid grid-cols-4 gap-2"></div>
+            </div>
+            <div id="upload-existing-area" class="mt-4 ${existingImages.length > 0 ? '' : 'hidden'}">
+              <p class="text-sm font-medium text-slate-700 mb-2">已有图片：</p>
+              <div id="upload-existing-list" class="grid grid-cols-4 gap-2">
+                ${existingImages.map((img, i) => `
+                  <div class="relative group aspect-square rounded-lg overflow-hidden border border-slate-200">
+                    <img src="${img}" class="w-full h-full object-cover">
+                    <button onclick="deleteTrainingImage(${trainingId}, ${i})" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+            <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+            <button id="upload-submit-btn" onclick="submitTrainingImages(${trainingId})" class="px-5 py-2 btn-primary text-white rounded-xl font-medium transition opacity-50 cursor-not-allowed" disabled>开始上传</button>
+          </div>
+        </div>
+      `);
+
+      // 拖拽上传支持
+      setTimeout(() => {
+        const dropzone = document.getElementById('upload-dropzone');
+        if (dropzone) {
+          dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-pink-400', 'bg-pink-50'); });
+          dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('border-pink-400', 'bg-pink-50'); });
+          dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('border-pink-400', 'bg-pink-50');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+              document.getElementById('training-image-input').files = files;
+              handleTrainingImageUpload(trainingId, files);
+            }
+          });
+        }
+      }, 100);
+    }
+
+    let pendingUploadFiles = [];
+
+    function handleTrainingImageUpload(trainingId, files) {
+      pendingUploadFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+      if (pendingUploadFiles.length === 0) {
+        toast('请选择图片文件', 'warning');
+        return;
+      }
+
+      const previewArea = document.getElementById('upload-preview-area');
+      const previewList = document.getElementById('upload-preview-list');
+      const submitBtn = document.getElementById('upload-submit-btn');
+
+      previewArea.classList.remove('hidden');
+      previewList.innerHTML = pendingUploadFiles.map((file, i) => {
+        const url = URL.createObjectURL(file);
+        return `
+          <div class="relative aspect-square rounded-lg overflow-hidden border border-slate-200">
+            <img src="${url}" class="w-full h-full object-cover">
+            <button onclick="removePendingImage(${i})" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
+    function removePendingImage(index) {
+      pendingUploadFiles.splice(index, 1);
+      if (pendingUploadFiles.length === 0) {
+        document.getElementById('upload-preview-area').classList.add('hidden');
+        const submitBtn = document.getElementById('upload-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        handleTrainingImageUpload(null, pendingUploadFiles);
+      }
+    }
+
+    async function submitTrainingImages(trainingId) {
+      if (pendingUploadFiles.length === 0) {
+        toast('没有待上传的图片', 'warning');
+        return;
+      }
+
+      const submitBtn = document.getElementById('upload-submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>处理中...';
+
+      const uploadedUrls = [];
+      for (const file of pendingUploadFiles) {
+        try {
+          // 读取文件为 base64 存储到 localStorage
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          uploadedUrls.push(base64);
+        } catch (err) {
+          toast(`处理失败: ${file.name}`, 'error');
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        // 存储到 localStorage 的 training_gallery
+        const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+        
+        // 兼容数字和字符串两种 key
+        let data = gallery[trainingId];
+        if (!data && typeof trainingId === 'number') {
+          data = gallery[String(trainingId)];
+        }
+        if (!data && typeof trainingId === 'string') {
+          data = gallery[parseInt(trainingId)];
+        }
+        
+        if (!data) {
+          data = { images: [] };
+          gallery[trainingId] = data;
+        }
+        
+        data.images = [...(data.images || []), ...uploadedUrls];
+        localStorage.setItem('training_gallery', JSON.stringify(gallery));
+
+        // 更新本地数据
+        const event = data.training.find(x => x.id === trainingId || x.id === parseInt(trainingId) || x.id === String(trainingId));
+        if (event) {
+          event.images = data.images;
+        }
+
+        toast(`成功添加 ${uploadedUrls.length} 张图片`, 'success');
+        closeModal();
+        renderTrainingList();
+      } else {
+        toast('处理失败，请重试', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '开始上传';
+      }
+
+      pendingUploadFiles = [];
+    }
+
+    async function deleteTrainingImage(trainingId, imageIndex) {
+      if (!confirm('确定要删除这张图片吗？')) return;
+
+      const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+      
+      // 兼容数字和字符串两种 key
+      let data = gallery[trainingId];
+      if (!data && typeof trainingId === 'number') {
+        data = gallery[String(trainingId)];
+      }
+      if (!data && typeof trainingId === 'string') {
+        data = gallery[parseInt(trainingId)];
+      }
+      
+      if (!data || !data.images || !data.images[imageIndex]) {
+        toast('图片不存在', 'error');
+        return;
+      }
+
+      // 从 localStorage 删除
+      data.images.splice(imageIndex, 1);
+      localStorage.setItem('training_gallery', JSON.stringify(gallery));
+
+      // 更新本地数据
+      const event = data.training.find(x => x.id === trainingId || x.id === parseInt(trainingId) || x.id === String(trainingId));
+      if (event) {
+        event.images = data.images;
+      }
+
+      toast('图片已删除', 'success');
+      // 刷新弹窗
+      openTrainingImageUpload(trainingId);
+      renderTrainingList();
     }
 
     function prevTrainingMonth() {
@@ -5872,6 +6094,26 @@
       try {
         const res = await fetch(API + '/training/' + id, { method: 'DELETE' });
         if (res.ok) {
+          // 同步删除 localStorage 中的学习风采图片
+          const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+          const strId = String(id);
+          const numId = Number(id);
+          let deleted = false;
+          
+          if (gallery[strId]) {
+            delete gallery[strId];
+            deleted = true;
+          }
+          if (gallery[numId]) {
+            delete gallery[numId];
+            deleted = true;
+          }
+          
+          if (deleted) {
+            localStorage.setItem('training_gallery', JSON.stringify(gallery));
+            console.log(`[学习风采] 已同步删除培训 ${id} 的图片数据`);
+          }
+          
           toast('培训已删除');
           await loadAllData();
           renderTraining();
