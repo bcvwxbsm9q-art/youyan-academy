@@ -276,88 +276,101 @@
             <div class="absolute -top-20 -right-20 w-80 h-80 bg-purple-200/30 rounded-full blur-3xl"></div>
             <div class="absolute -bottom-20 -left-20 w-72 h-72 bg-indigo-200/30 rounded-full blur-3xl"></div>
 
-            <div class="relative max-w-[1200px] mx-auto px-6 py-16 md:py-24">
-                <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            <div class="relative max-w-[1200px] mx-auto px-6 py-10 md:py-14">
+                <div class="flex flex-col lg:flex-row items-center gap-8 lg:gap-10">
                     <!-- 左侧文案 -->
                     <div class="flex-1 text-center lg:text-left">
-                        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-5">
+                        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-3">
                             <i class="fa fa-bullhorn"></i>
                             讲师招募中
                         </span>
-                        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-4">
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-3">
                             分享知识，传递价值
                         </h2>
-                        <p class="text-lg text-gray-500 mb-8 max-w-md mx-auto lg:mx-0">
+                        <p class="text-sm md:text-base text-gray-500 mb-5 max-w-md mx-auto lg:mx-0">
                             加入游雁学院讲师团队，与行业精英同行，让您的专业知识影响更多人
                         </p>
 
                         <!-- 优势标签 -->
-                        <div class="flex flex-wrap justify-center lg:justify-start gap-3 mb-8">
-                            <span class="flex items-center gap-2 px-4 py-2 bg-white rounded-xl text-sm text-gray-600 shadow-sm border border-gray-100">
+                        <div class="flex flex-wrap justify-center lg:justify-start gap-2.5 mb-5">
+                            <span class="flex items-center gap-2 px-4 py-1.5 bg-white rounded-xl text-sm text-gray-600 shadow-sm border border-gray-100">
                                 <i class="fa fa-check-circle text-green-500"></i>弹性授课时间
                             </span>
-                            <span class="flex items-center gap-2 px-4 py-2 bg-white rounded-xl text-sm text-gray-600 shadow-sm border border-gray-100">
+                            <span class="flex items-center gap-2 px-4 py-1.5 bg-white rounded-xl text-sm text-gray-600 shadow-sm border border-gray-100">
                                 <i class="fa fa-check-circle text-green-500"></i>专业平台支持
                             </span>
-                            <span class="flex items-center gap-2 px-4 py-2 bg-white rounded-xl text-sm text-gray-600 shadow-sm border border-gray-100">
+                            <span class="flex items-center gap-2 px-4 py-1.5 bg-white rounded-xl text-sm text-gray-600 shadow-sm border border-gray-100">
                                 <i class="fa fa-check-circle text-green-500"></i>丰厚课酬回报
                             </span>
                         </div>
 
-                        <button onclick="openApplyModal()" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white font-semibold shadow-lg shadow-indigo-300/40 hover:shadow-xl hover:shadow-indigo-400/40 hover:-translate-y-0.5 transition-all duration-300">
+                        <button onclick="openApplyModal()" class="inline-flex items-center gap-2 px-7 py-2.5 rounded-xl bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white font-semibold shadow-lg shadow-indigo-300/40 hover:shadow-xl hover:shadow-indigo-400/40 hover:-translate-y-0.5 transition-all duration-300">
                             <i class="fa fa-paper-plane"></i>
                             立即申请成为讲师
                             <i class="fa fa-angle-right ml-1"></i>
                         </button>
                     </div>
 
-                    <!-- 右侧视觉卡片 -->
-                    <div class="w-full lg:w-[380px] flex-shrink-0">
-                        <div class="relative bg-white rounded-2xl shadow-xl shadow-indigo-100/50 p-8 border border-white/80">
-                            <!-- 顶部装饰条 -->
-                            <div class="absolute top-0 left-8 right-8 h-1 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-b-full"></div>
+                    <!-- 右侧视觉区 -->
+                    <div class="w-full lg:w-[320px] flex-shrink-0">
+                        <div class="relative">
+                            <!-- 主卡片 -->
+                            <div class="bg-white rounded-2xl shadow-xl shadow-indigo-100/50 p-6 border border-gray-100/80">
 
-                            <!-- 头像区 -->
-                            <div class="flex justify-center mb-6">
-                                <div class="relative">
-                                    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-[#667eea] to-[#764ba2] p-[3px]">
-                                        <div class="w-full h-full rounded-full bg-white flex items-center justify-center">
-                                            <i class="fa fa-user-plus text-3xl text-[#667eea]"></i>
-                                        </div>
+                                <!-- 顶部：图标 + 标题 -->
+                                <div class="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+                                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center shadow-lg shadow-indigo-200/50">
+                                        <i class="fa fa-graduation-cap text-white text-lg"></i>
                                     </div>
-                                    <!-- 徽章 -->
-                                    <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-md border-2 border-white">
-                                        <i class="fa fa-star text-white text-xs"></i>
+                                    <div>
+                                        <p class="font-semibold text-gray-900">讲师入驻</p>
+                                        <p class="text-xs text-gray-400">Lecturer Program</p>
+                                    </div>
+                                </div>
+
+                                <!-- 数据网格 -->
+                                <div class="grid grid-cols-3 gap-2.5 mb-5">
+                                    <div class="bg-indigo-50 rounded-xl p-2.5 text-center">
+                                        <i class="fa fa-users text-primary text-base mb-0.5"></i>
+                                        <p class="text-lg font-bold text-gray-900">128+</p>
+                                        <p class="text-[10px] text-gray-400">认证讲师</p>
+                                    </div>
+                                    <div class="bg-purple-50 rounded-xl p-2.5 text-center">
+                                        <i class="fa fa-book text-purple-500 text-base mb-0.5"></i>
+                                        <p class="text-lg font-bold text-gray-900">360+</p>
+                                        <p class="text-[10px] text-gray-400">精品课程</p>
+                                    </div>
+                                    <div class="bg-blue-50 rounded-xl p-2.5 text-center">
+                                        <i class="fa fa-user-graduate text-blue-500 text-base mb-0.5"></i>
+                                        <p class="text-lg font-bold text-gray-900">12K+</p>
+                                        <p class="text-[10px] text-gray-400">学员受益</p>
+                                    </div>
+                                </div>
+
+                                <!-- 流程步骤 -->
+                                <div class="space-y-2.5">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-[11px] font-bold shrink-0">1</span>
+                                        <span class="text-sm text-gray-600">提交申请，审核资质</span>
+                                        <i class="fa fa-check text-green-400 ml-auto text-xs"></i>
+                                    </div>
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[11px] font-bold shrink-0">2</span>
+                                        <span class="text-sm text-gray-600">平台培训，熟悉流程</span>
+                                    </div>
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="w-6 h-6 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-[11px] font-bold shrink-0">3</span>
+                                        <span class="text-sm text-gray-400">正式开课，获取收益</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- 统计数据 -->
-                            <div class="grid grid-cols-3 gap-4 mb-6 text-center">
-                                <div>
-                                    <p class="text-2xl font-bold text-gray-900">128+</p>
-                                    <p class="text-xs text-gray-400 mt-1">认证讲师</p>
-                                </div>
-                                <div>
-                                    <p class="text-2xl font-bold text-gray-900">360+</p>
-                                    <p class="text-xs text-gray-400 mt-1">精品课程</p>
-                                </div>
-                                <div>
-                                    <p class="text-2xl font-bold text-gray-900">12K+</p>
-                                    <p class="text-xs text-gray-400 mt-1">学员受益</p>
-                                </div>
+                            <!-- 悬浮装饰 -->
+                            <div class="absolute -top-3 -right-3 w-10 h-10 bg-yellow-400 rounded-xl shadow-lg shadow-yellow-200/50 flex items-center justify-center rotate-12">
+                                <i class="fa fa-star text-white text-sm"></i>
                             </div>
-
-                            <!-- 引用文字 -->
-                            <div class="bg-gray-50 rounded-xl p-4 relative">
-                                <i class="fa fa-quote-left absolute top-3 left-3 text-indigo-200 text-lg"></i>
-                                <p class="text-sm text-gray-600 leading-relaxed pl-5">
-                                    "在这里，每一位讲师都能找到属于自己的舞台，让知识产生真正的价值。"
-                                </p>
-                                <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-                                    <div class="w-6 h-6 rounded-full bg-gradient-to-r from-[#667eea] to-[#764ba2]"></div>
-                                    <span class="text-xs text-gray-500">来自讲师社区</span>
-                                </div>
+                            <div class="absolute -bottom-3 -left-3 w-9 h-9 bg-green-400 rounded-lg shadow-lg shadow-green-200/50 flex items-center justify-center -rotate-6">
+                                <i class="fa fa-bolt text-white text-xs"></i>
                             </div>
                         </div>
                     </div>
