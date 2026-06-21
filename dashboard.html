@@ -111,56 +111,6 @@
 </head>
 <body class="bg-slate-50 min-h-screen">
 
-  <!-- 登录模态框 -->
-  <div id="login-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 modal">
-      <!-- Logo和标题 -->
-      <div class="text-center mb-8">
-        <div class="w-16 h-16 btn-primary rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4">
-          <i class="fas fa-graduation-cap text-white text-2xl"></i>
-        </div>
-        <h2 class="text-2xl font-bold text-slate-800">游雁学院</h2>
-        <p class="text-sm text-slate-500 mt-1">管理后台登录</p>
-      </div>
-
-      <!-- 登录表单 -->
-      <form onsubmit="handleLogin(event)" class="space-y-5">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">
-            <i class="fas fa-user mr-1 text-slate-400"></i>用户名
-          </label>
-          <input type="text" id="login-username" required
-            placeholder="请输入管理员账号"
-            class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-            value="admin">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">
-            <i class="fas fa-lock mr-1 text-slate-400"></i>密码
-          </label>
-          <input type="password" id="login-password" required
-            placeholder="请输入密码"
-            class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-            value="admin2026">
-        </div>
-
-        <button type="submit"
-          class="w-full btn-primary text-white py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
-          <i class="fas fa-sign-in-alt mr-2"></i>登录
-        </button>
-      </form>
-
-      <!-- 提示信息 -->
-      <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-        <p class="text-xs text-blue-700">
-          <i class="fas fa-info-circle mr-1"></i>
-          默认账号:<strong>admin</strong> / <strong>admin2026</strong>
-        </p>
-      </div>
-    </div>
-  </div>
-
   <!-- 顶部导航 -->
   <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-100">
     <div class="flex items-center justify-between px-6 py-4">
@@ -187,7 +137,10 @@
             </div>
             <span class="text-sm font-medium text-slate-700" id="admin-username">管理员</span>
           </div>
-          <button onclick="handleLogout()" class="text-slate-500 hover:text-red-600 transition" title="退出登录">
+          <a href="index.html" class="text-sm text-indigo-600 hover:text-indigo-800 transition font-medium" title="切换到学员端">
+            <i class="fas fa-user-graduate mr-1"></i>学员端
+          </a>
+          <button onclick="AuthGuard ? AuthGuard.logout() : handleLogout()" class="text-slate-500 hover:text-red-600 transition" title="退出登录">
             <i class="fas fa-sign-out-alt text-lg"></i>
           </button>
         </div>
@@ -1021,7 +974,7 @@
                   <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-24">创建人</th>
                   <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-40">创建时间</th>
                   <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-24">状态</th>
-                  <th class="pl-3 pr-5 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-40">操作</th>
+                     <th class="pl-3 pr-5 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-40">操作</th>
                 </tr>
               </thead>
               <tbody id="paperList" class="divide-y divide-slate-100"></tbody>
@@ -1439,7 +1392,7 @@
             <option value="all">全部角色</option>
             <option value="admin">管理员</option>
             <option value="teacher">讲师</option>
-            <option value="student">学员</option>
+            <option value="user">学员</option>
           </select>
           <select id="user-status-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
             <option value="all">全部状态</option>
@@ -2243,29 +2196,27 @@
 
   <script src="js/data-api.js"></script>
   <script src="js/data-sync.js"></script>
+  <script src="js/auth-modal.js"></script>
+  <script src="js/auth-guard.js"></script>
   <script>
     // ========== 全局配置 ==========
     const API = window.location.origin + '/api';
 
-    // ========== 登录功能 ==========
+    // ========== 登录功能（统一认证） ==========
 
-    // 检查是否已登录
+    // 检查是否已登录（使用统一 token）
     function checkLogin() {
-      const token = localStorage.getItem('adminToken');
-      const loginModal = document.getElementById('login-modal');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const userInfo = document.getElementById('user-info');
 
       if (token) {
-        // 已登录,隐藏登录框,显示用户信息
-        if (loginModal) {
-          loginModal.style.display = 'none';
-        }
+        // 已登录，显示用户信息
         if (userInfo) {
           userInfo.classList.remove('hidden');
           userInfo.classList.add('flex');
 
           // 显示用户名
-          const userStr = localStorage.getItem('adminUser');
+          const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
           if (userStr) {
             try {
               const user = JSON.parse(userStr);
@@ -2280,10 +2231,7 @@
         }
         return true;
       } else {
-        // 未登录,显示登录框,隐藏用户信息
-        if (loginModal) {
-          loginModal.style.display = 'flex';
-        }
+        // 未登录（AuthGuard 会处理重定向）
         if (userInfo) {
           userInfo.classList.add('hidden');
           userInfo.classList.remove('flex');
@@ -2292,63 +2240,18 @@
       }
     }
 
-    // 处理登录
-    async function handleLogin(event) {
-      event.preventDefault();
-
-      const username = document.getElementById('login-username').value.trim();
-      const password = document.getElementById('login-password').value.trim();
-
-      if (!username || !password) {
-        toast('请输入用户名和密码', 'error');
-        return;
-      }
-
-      try {
-        const res = await fetch(API + '/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ username, password })
-        });
-
-        const result = await res.json();
-
-        if (res.ok && result.success) {
-          // 保存token
-          localStorage.setItem('adminToken', result.data.token);
-          localStorage.setItem('adminUser', JSON.stringify(result.data.user));
-
-          toast('登录成功!');
-
-          // 隐藏登录框,显示用户信息
-          checkLogin();
-
-          // 加载数据
-          await loadAllData();
-          switchTab('dashboard');
-          initUserFilters();
-        } else {
-          toast(result.error || '登录失败', 'error');
-        }
-      } catch (err) {
-        console.error('登录错误:', err);
-        toast('网络错误,请检查服务器是否运行', 'error');
-      }
-    }
-
-    // 退出登录
+    // 退出登录（使用统一认证）
     function handleLogout() {
-      if (confirm('确定要退出登录吗?')) {
-        localStorage.removeItem('adminToken');
-        localStorage.removeItem('adminUser');
-        toast('已退出登录');
-
-        // 显示登录框
-        const loginModal = document.getElementById('login-modal');
-        if (loginModal) {
-          loginModal.style.display = 'flex';
+      if (AuthGuard) {
+        AuthGuard.logout();
+      } else {
+        if (confirm('确定要退出登录吗?')) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('user');
+          toast('已退出登录');
+          window.location.href = 'index.html';
         }
       }
     }
@@ -2434,7 +2337,7 @@
 
         // 加载用户数据(报表模块需要)
         try {
-          const token = localStorage.getItem('adminToken');
+          const token = localStorage.getItem('token') || sessionStorage.getItem('token');
           const usersRes = await fetch(API + '/auth/users', {
             headers: { 'Authorization': 'Bearer ' + token }
           });
@@ -6599,7 +6502,7 @@
         // 确保 allUsers 已加载
         if (!allUsers || allUsers.length === 0) {
           try {
-            const token = localStorage.getItem('adminToken');
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
             const usersRes = await fetch(API + '/auth/users', {
               headers: { 'Authorization': 'Bearer ' + token }
             });
@@ -6794,7 +6697,7 @@
       (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#94a3b8\">loadUsers: 开始加载用户...</div>';})();
       console.log('[User Management] 开始加载用户列表...');
       try {
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         console.log('[User Management] Token:', token ? '存在' : '不存在');
 
         if (!token) {
@@ -6902,7 +6805,10 @@
           </tr>
         `;
       } else {
+        const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+        const currentUserId = currentUser.id;
         tbody.innerHTML = pageUsers.map(user => {
+          const isCurrentUser = user.id === currentUserId;
           const roleMap = {
             admin: { text: '管理员', class: 'bg-red-100 text-red-700' },
             teacher: { text: '讲师', class: 'bg-blue-100 text-blue-700' },
@@ -6945,6 +6851,9 @@
               <td class="px-6 py-4 text-center">
                 <button onclick="editUser(${user.id})" class="text-indigo-600 hover:text-indigo-800 mr-2" title="编辑资料"><i class="fas fa-edit"></i></button>
                 <button onclick="resetUserPassword(${user.id})" class="text-orange-600 hover:text-orange-800 mr-2" title="重置密码"><i class="fas fa-key"></i></button>
+                <button onclick="toggleUserRole(${user.id})" class="${user.role === 'admin' ? 'text-purple-600 hover:text-purple-800' : 'text-emerald-600 hover:text-emerald-800'} mr-2" title="${user.role === 'admin' ? '取消管理员' : '设为管理员'}" ${isCurrentUser ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>
+                  <i class="fas fa-${user.role === 'admin' ? 'user-shield' : 'user-plus'}"></i>
+                </button>
                 <button onclick="toggleUserStatus(${user.id})" class="${user.status === 'active' ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'} mr-2" title="${user.status === 'active' ? '禁用' : '启用'}">
                   <i class="fas fa-${user.status === 'active' ? 'ban' : 'check'}"></i>
                 </button>
@@ -7065,7 +6974,7 @@
       };
 
       try {
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         const res = await fetch(`${API}/auth/users/${userId}`, {
           method: 'PUT',
           headers: {
@@ -7096,22 +7005,26 @@
         return;
       }
 
-      const newPassword = prompt(`确定要重置用户 "${user.realName || user.username}" 的密码吗?\n\n新密码将随机生成。`);
+      const newPassword = prompt(`请输入用户 "${user.realName || user.username}" 的新密码（至少6位）：`);
       if (newPassword === null) return;
+      if (newPassword.trim().length < 6) {
+        toast('密码不能少于6位', 'error');
+        return;
+      }
 
       try {
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         const res = await fetch(`${API}/auth/users/${userId}/reset-password`, {
           method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
-          }
+          },
+          body: JSON.stringify({ newPassword: newPassword.trim() })
         });
 
         if (res.ok) {
-          const result = await res.json();
-          alert(`密码重置成功!\n\n新密码:${result.data.newPassword}\n\n请妥善保管并告知用户。`);
-          toast('密码已重置');
+          toast('密码重置成功');
         } else {
           const error = await res.json();
           toast(error.error || '重置失败', 'error');
@@ -7137,7 +7050,7 @@
       }
 
       try {
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         const res = await fetch(`${API}/auth/users/${userId}/status`, {
           method: 'PUT',
           headers: {
@@ -7172,7 +7085,7 @@
       }
 
       try {
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         const res = await fetch(`${API}/auth/users/${userId}`, {
           method: 'DELETE',
           headers: {
@@ -7189,6 +7102,45 @@
         }
       } catch (err) {
         console.error('删除用户失败:', err);
+        toast('网络错误', 'error');
+      }
+    }
+
+    // 切换用户管理员权限
+    async function toggleUserRole(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) return;
+
+      const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+      if (currentUser.id === userId) {
+        toast('不能修改自己的权限', 'error');
+        return;
+      }
+
+      const actionText = user.role === 'admin' ? '撤销管理员权限' : '授予管理员权限';
+      if (!confirm(`确定要${actionText}给用户 "${user.realName || user.username}" 吗?`)) {
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const res = await fetch(`${API}/auth/users/${userId}/toggle-role`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          toast(result.message);
+          await loadUsers();
+        } else {
+          const error = await res.json();
+          toast(error.error || '操作失败', 'error');
+        }
+      } catch (err) {
+        console.error('切换权限失败:', err);
         toast('网络错误', 'error');
       }
     }

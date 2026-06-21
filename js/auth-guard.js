@@ -22,16 +22,12 @@
         'center.html',
         'player.html',
         'messages.html',
-        'survey.html'
+        'survey.html',
+        'dashboard.html'
     ];
 
     // 公开页面（不需要登录）
     const PUBLIC_PAGES = [];
-
-    // 管理后台页面（独立认证逻辑，dashboard.html内置登录弹窗）
-    const ADMIN_PAGES = [
-        'dashboard.html'
-    ];
 
     /**
      * 获取存储的 token
@@ -130,7 +126,6 @@
      */
     function requiresAuth() {
         const page = getCurrentPage();
-        if (ADMIN_PAGES.includes(page)) return false;
         if (PUBLIC_PAGES.includes(page)) return false;
         return true;
     }
@@ -286,12 +281,36 @@
                 if (mobileNameEl) mobileNameEl.textContent = displayName;
             }
 
-            // 管理员链接
+            // 管理员链接：根据当前页面动态设置文本和链接
             if (user.role === 'admin') {
-                const adminLink = document.getElementById('mobile-admin-link');
-                if (adminLink) adminLink.classList.remove('hidden');
+                const currentPage = getCurrentPage();
+                const isDashboard = currentPage === 'dashboard.html';
+                
+                // 桌面端管理链接
                 const desktopAdminLink = document.getElementById('desktop-admin-link');
-                if (desktopAdminLink) desktopAdminLink.classList.remove('hidden');
+                if (desktopAdminLink) {
+                    desktopAdminLink.classList.remove('hidden');
+                    if (isDashboard) {
+                        desktopAdminLink.href = 'index.html';
+                        desktopAdminLink.textContent = '学员端';
+                    } else {
+                        desktopAdminLink.href = 'dashboard.html';
+                        desktopAdminLink.textContent = '管理端';
+                    }
+                }
+                
+                // 移动端管理链接
+                const mobileAdminLink = document.getElementById('mobile-admin-link');
+                if (mobileAdminLink) {
+                    mobileAdminLink.classList.remove('hidden');
+                    if (isDashboard) {
+                        mobileAdminLink.href = 'index.html';
+                        mobileAdminLink.innerHTML = '<i class="fa fa-user w-6"></i><span>学员端</span>';
+                    } else {
+                        mobileAdminLink.href = 'dashboard.html';
+                        mobileAdminLink.innerHTML = '<i class="fa fa-cog w-6"></i><span>管理端</span>';
+                    }
+                }
             }
         } else {
             // 未登录：隐藏用户信息区域
@@ -356,6 +375,11 @@
 
         // 没有 token → 立即弹登录框
         if (!token) {
+            // dashboard页面未登录时，重定向到首页（首页会弹登录框）
+            if (getCurrentPage() === 'dashboard.html') {
+                window.location.href = 'index.html';
+                return;
+            }
             showLoginModal();
             return;
         }
@@ -367,8 +391,23 @@
         if (!isValid) {
             // Token 无效 → 清除 → 弹登录框
             clearAuth();
+            if (getCurrentPage() === 'dashboard.html') {
+                window.location.href = 'index.html';
+                return;
+            }
             showLoginModal();
             return;
+        }
+
+        // Token 有效 → 检查 dashboard 访问权限
+        if (getCurrentPage() === 'dashboard.html') {
+            const user = getStoredUser();
+            if (!user || user.role !== 'admin') {
+                // 非管理员访问 dashboard → 重定向到首页
+                hideLoadingOverlay();
+                window.location.href = 'index.html';
+                return;
+            }
         }
 
         // Token 有效 → 隐藏遮罩 → 更新 UI
@@ -383,8 +422,13 @@
         if (confirm('确定要退出登录吗？')) {
             clearAuth();
             window.dispatchEvent(new CustomEvent('userLogout'));
+            // dashboard 页面退出后重定向到首页（首页会弹登录框）
+            if (getCurrentPage() === 'dashboard.html') {
+                window.location.href = 'index.html';
+                return;
+            }
             updateUserInfo();
-            // 所有页面退出后都弹登录框
+            // 学员页面退出后弹登录框
             showLoginModal();
         }
     }

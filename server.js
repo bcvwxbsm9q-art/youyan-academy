@@ -79,9 +79,8 @@ const upload = multer({
 // 数据存储文件路径
 const DATA_FILE = path.join(__dirname, 'data.json');
 
-// 管理员账号配置
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'admin2026';
+// 默认管理员手机号（首次启动时自动创建）
+const DEFAULT_ADMIN_PHONE = '15302206488';
 
 // 简单的 JWT 实现
 const JWT_SECRET = 'youyan-academy-secret-key-2024';
@@ -166,6 +165,44 @@ function writeData(data) {
   } catch (e) {
     console.error('写入数据失败:', e.message);
     return false;
+  }
+}
+
+// 初始化管理员账号（服务器启动时调用）
+function initDefaultAdmin() {
+  const data = readData();
+  if (!data.registered_users) data.registered_users = [];
+  
+  // 检查默认管理员是否已存在
+  let adminUser = data.registered_users.find(u => u.username === DEFAULT_ADMIN_PHONE || u.phone === DEFAULT_ADMIN_PHONE);
+  
+  if (!adminUser) {
+    // 创建默认管理员账号
+    adminUser = {
+      id: Date.now(),
+      username: DEFAULT_ADMIN_PHONE,
+      passwordHash: hashPassword(DEFAULT_ADMIN_PHONE),
+      email: '',
+      phone: DEFAULT_ADMIN_PHONE,
+      realName: '系统管理员',
+      department: '管理部',
+      role: 'admin',
+      avatar: '',
+      createdAt: new Date().toLocaleString('zh-CN'),
+      lastLogin: null,
+      status: 'active'
+    };
+    data.registered_users.push(adminUser);
+    writeData(data);
+    console.log(`  默认管理员账号已创建: ${DEFAULT_ADMIN_PHONE}`);
+  } else if (adminUser.role !== 'admin') {
+    // 确保管理员角色正确，并重置密码为默认值
+    adminUser.role = 'admin';
+    adminUser.passwordHash = hashPassword(DEFAULT_ADMIN_PHONE);
+    writeData(data);
+    console.log(`  管理员账号角色已修正: ${DEFAULT_ADMIN_PHONE}`);
+  } else {
+    console.log(`  管理员账号已存在: ${DEFAULT_ADMIN_PHONE}`);
   }
 }
 
@@ -462,28 +499,7 @@ app.post('/api/auth/login', (req, res) => {
   const data = readData();
   if (!data.registered_users) data.registered_users = [];
   
-  // 首先检查是否是管理员登录
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    const adminUser = {
-      id: 0,
-      username: ADMIN_USERNAME,
-      role: 'admin',
-      realName: '系统管理员',
-      email: 'admin@youyan.com',
-      avatar: ''
-    };
-    const token = createToken(adminUser);
-    return res.json({
-      success: true,
-      message: '管理员登录成功',
-      data: {
-        token,
-        user: adminUser
-      }
-    });
-  }
-  
-  // 查找普通用户
+  // 查找用户（支持用户名、邮箱、手机号登录）
   const user = data.registered_users.find(u => 
     (u.username === username || u.email === username || u.phone === username)
   );
@@ -536,28 +552,16 @@ app.get('/api/auth/me', (req, res) => {
   const data = readData();
   if (!data.registered_users) data.registered_users = [];
   
-  let user;
-  if (payload.id === 0 && payload.role === 'admin') {
-    user = {
-      id: 0,
-      username: ADMIN_USERNAME,
-      role: 'admin',
-      realName: '系统管理员',
-      email: 'admin@youyan.com',
-      avatar: ''
-    };
-  } else {
-    user = data.registered_users.find(u => u.id === payload.id);
-    if (!user) {
-      return res.status(401).json({ success: false, error: '用户不存在' });
-    }
-    user = { ...user };
-    delete user.passwordHash;
+  const user = data.registered_users.find(u => u.id === payload.id);
+  if (!user) {
+    return res.status(401).json({ success: false, error: '用户不存在' });
   }
+  const userInfo = { ...user };
+  delete userInfo.passwordHash;
   
   res.json({
     success: true,
-    data: { user }
+    data: { user: userInfo }
   });
 });
 
@@ -722,6 +726,11 @@ app.post('/api/auth/users/:id/reset-password', (req, res) => {
   }
   
   const userId = parseInt(req.params.id);
+  const { newPassword } = req.body;
+  
+  if (!newPassword || newPassword.trim().length < 6) {
+    return res.status(400).json({ success: false, error: '密码不能少于6位' });
+  }
   
   const data = readData();
   if (!data.registered_users) data.registered_users = [];
@@ -731,27 +740,66 @@ app.post('/api/auth/users/:id/reset-password', (req, res) => {
     return res.status(404).json({ success: false, error: '用户不存在' });
   }
   
-  // 生成随机密码（8位字母数字组合）
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-  let newPassword = '';
-  for (let i = 0; i < 8; i++) {
-    newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  
   // 更新密码
-  data.registered_users[userIndex].passwordHash = hashPassword(newPassword);
+  data.registered_users[userIndex].passwordHash = hashPassword(newPassword.trim());
   
   if (writeData(data)) {
     res.json({ 
       success: true, 
       message: '密码重置成功',
       data: { 
-        username: data.registered_users[userIndex].username,
-        newPassword: newPassword 
+        username: data.registered_users[userIndex].username
       } 
     });
   } else {
     res.status(500).json({ success: false, error: '重置失败' });
+  }
+});
+
+// 管理员 - 切换用户管理员权限
+app.put('/api/auth/users/:id/toggle-role', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: '未提供认证令牌' });
+  }
+  
+  const token = authHeader.slice(7);
+  const payload = verifyToken(token);
+  
+  if (!payload || payload.role !== 'admin') {
+    return res.status(403).json({ success: false, error: '需要管理员权限' });
+  }
+  
+  const userId = parseInt(req.params.id);
+  
+  // 不允许撤销自己的管理员权限
+  if (payload.id === userId) {
+    return res.status(400).json({ success: false, error: '不能修改自己的权限' });
+  }
+  
+  const data = readData();
+  if (!data.registered_users) data.registered_users = [];
+  
+  const userIndex = data.registered_users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, error: '用户不存在' });
+  }
+  
+  // 切换角色
+  const currentRole = data.registered_users[userIndex].role;
+  const newRole = currentRole === 'admin' ? 'user' : 'admin';
+  data.registered_users[userIndex].role = newRole;
+  
+  if (writeData(data)) {
+    const user = { ...data.registered_users[userIndex] };
+    delete user.passwordHash;
+    res.json({ 
+      success: true, 
+      message: newRole === 'admin' ? '已授予管理员权限' : '已撤销管理员权限',
+      data: { user } 
+    });
+  } else {
+    res.status(500).json({ success: false, error: '更新失败' });
   }
 });
 
@@ -1486,7 +1534,12 @@ app.post('/api/exams', (req, res) => {
   };
   data.exams.push(newExam);
   if (writeData(data)) {
-    res.json({ success: true, exam: newExam });
+    // 创建时直接发布，发送通知
+    let notifiedCount = 0;
+    if (newExam.status === 'published') {
+      notifiedCount = sendExamNotifications(data, newExam);
+    }
+    res.json({ success: true, exam: newExam, notifiedCount });
   } else {
     res.status(500).json({ success: false, error: '创建失败' });
   }
@@ -1502,12 +1555,18 @@ app.put('/api/exams/:id', (req, res) => {
     return res.status(404).json({ success: false, error: '考试不存在' });
   }
   const updates = req.body;
+  const oldStatus = exams[index].status;
   delete updates.id; // 不允许修改ID
   delete updates.createdAt; // 不允许修改创建时间
   updates.updatedAt = new Date().toISOString();
   data.exams[index] = { ...exams[index], ...updates };
   if (writeData(data)) {
-    res.json({ success: true, exam: data.exams[index] });
+    // 状态从非published变为published时发送通知
+    let notifiedCount = 0;
+    if (oldStatus !== 'published' && updates.status === 'published') {
+      notifiedCount = sendExamNotifications(data, data.exams[index]);
+    }
+    res.json({ success: true, exam: data.exams[index], notifiedCount });
   } else {
     res.status(500).json({ success: false, error: '更新失败' });
   }
@@ -1551,29 +1610,13 @@ app.put('/api/exams/:id/status', (req, res) => {
   exams[index].status = status;
   exams[index].updatedAt = new Date().toISOString();
   if (writeData(data)) {
-    // 发布考试时发送通知给指定学员
-    if (oldStatus === 'draft' && status === 'published') {
-      initNotificationsData(data);
-      const exam = exams[index];
-      const allowedUsers = exam.allowedUsers;
-      if (allowedUsers && Array.isArray(allowedUsers) && allowedUsers.length > 0) {
-        allowedUsers.forEach((userId, i) => {
-          const notification = {
-            id: Date.now() + i,
-            userId: userId,
-            title: '新考试安排',
-            content: `您有一场新考试「${exam.title}」待参加，考试时间${exam.duration || 60}分钟，请尽快完成。`,
-            type: 'exam',
-            examId: exam.id,
-            read: false,
-            createdAt: new Date().toISOString()
-          };
-          data.notifications.push(notification);
-        });
-        writeData(data);
-      }
+    // 发布考试时发送通知
+    if (oldStatus !== 'published' && status === 'published') {
+      const notifiedCount = sendExamNotifications(data, exams[index]);
+      res.json({ success: true, exam: exams[index], notifiedCount });
+    } else {
+      res.json({ success: true, exam: exams[index] });
     }
-    res.json({ success: true, exam: exams[index] });
   } else {
     res.status(500).json({ success: false, error: '状态更新失败' });
   }
@@ -2417,6 +2460,45 @@ function initNotificationsData(data) {
   return data;
 }
 
+// 统一发送考试通知（支持指定学员和全员开放）
+function sendExamNotifications(data, exam) {
+  initNotificationsData(data);
+  const users = data.registered_users || [];
+  let targetUsers = [];
+
+  if (exam.allowedUsers && Array.isArray(exam.allowedUsers) && exam.allowedUsers.length > 0) {
+    // 指定学员：只通知 selected users
+    targetUsers = users.filter(u => exam.allowedUsers.includes(u.id));
+  } else {
+    // 全员开放：通知所有活跃学员
+    targetUsers = users.filter(u => u.status !== 'disabled');
+  }
+
+  if (targetUsers.length === 0) return 0;
+
+  const now = Date.now();
+  targetUsers.forEach((user, i) => {
+    // 避免重复通知（同一考试同一用户）
+    const alreadyNotified = data.notifications.some(n =>
+      n.userId === user.id && n.type === 'exam' && n.examId === exam.id
+    );
+    if (alreadyNotified) return;
+
+    data.notifications.push({
+      id: now + i,
+      userId: user.id,
+      title: '新考试安排',
+      content: `您有一场新考试「${exam.title}」待参加，考试时长${exam.duration || 60}分钟，及格分数${exam.passingScore || 60}分，请尽快完成。`,
+      type: 'exam',
+      examId: exam.id,
+      read: false,
+      createdAt: new Date().toISOString()
+    });
+  });
+  writeData(data);
+  return targetUsers.length;
+}
+
 // GET /api/notifications - 获取当前用户的通知（公告 + 个人通知）
 app.get('/api/notifications', (req, res) => {
   const currentUser = getCurrentUser(req);
@@ -3086,6 +3168,11 @@ const server = app.listen(port, () => {
   console.log('========================================');
   console.log(`  服务器已启动: http://localhost:${port}`);
   console.log('');
+  
+  // 初始化管理员账号
+  initDefaultAdmin();
+  console.log('');
+  
   console.log('  页面访问地址：');
   console.log(`  首页:       http://localhost:${port}/`);
   console.log(`  课程中心:   http://localhost:${port}/course`);

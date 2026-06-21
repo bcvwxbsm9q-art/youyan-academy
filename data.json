@@ -8,10 +8,10 @@
       "phone": "15302206488",
       "realName": "许志坚",
       "department": "人力资源部",
-      "role": "user",
+      "role": "admin",
       "avatar": "",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/6/20 18:37:13",
+      "lastLogin": "2026/6/21 19:52:39",
       "status": "active"
     },
     {
@@ -25,7 +25,7 @@
       "role": "user",
       "avatar": "",
       "createdAt": "2026/6/10 18:23:41",
-      "lastLogin": "2026/6/17 10:03:46",
+      "lastLogin": "2026/6/21 19:00:38",
       "status": "active"
     }
   ],
