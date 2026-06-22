@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -199,7 +199,6 @@
 
     <!-- 主内容区 -->
     <main class="flex-1 ml-64 p-6">
-
       <!-- 数据概览 -->
       <div id="tab-dashboard" class="tab-content fade-in">
         <h2 class="text-2xl font-bold text-slate-800 mb-6">
@@ -974,7 +973,7 @@
                   <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-24">创建人</th>
                   <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-40">创建时间</th>
                   <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-24">状态</th>
-                     <th class="pl-3 pr-5 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-40">操作</th>
+                  <th class="pl-3 pr-5 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider w-40">操作</th>
                 </tr>
               </thead>
               <tbody id="paperList" class="divide-y divide-slate-100"></tbody>
@@ -1033,6 +1032,8 @@
           </div>
         </div>
 
+        <!-- 考试列表内容 -->
+        <div id="examListView">
         <!-- 顶部标题栏 -->
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
@@ -1127,6 +1128,7 @@
             <button onclick="goExamPage(examTotalPages)" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" id="examLastPage">尾页</button>
           </div>
         </div>
+        </div><!-- /examListView -->
       </div>
 
       <!-- 调研管理 -->
@@ -1386,7 +1388,7 @@
         <div class="flex items-center gap-4 mb-6">
           <div class="flex-1 relative">
             <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="text" id="user-search-input" placeholder="搜索用户名、邮箱或手机号..." class="w-full pl-12 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <input type="text" id="user-search-input" placeholder="搜索用户名或手机号..." class="w-full pl-12 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </div>
           <select id="user-role-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
             <option value="all">全部角色</option>
@@ -1605,7 +1607,7 @@
   </div>
 
   <!-- ========== 新建题库弹窗 ========== -->
-  <div id="newBankModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+  <div id="newBankModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-md m-4 shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100">
         <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>新建题库</h3>
@@ -1717,8 +1719,19 @@
         <button onclick="closePaperImportQuestionsModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
       </div>
       <div class="p-6">
-        <p class="text-sm text-slate-600 mb-4">向当前试卷导入试题：</p>
+        <p class="text-sm text-slate-600 mb-4">导入试题到目标题库，并自动添加到当前试卷：</p>
         <div class="space-y-4 mb-6">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">目标题库 <span class="text-red-500">*</span></label>
+            <div class="flex gap-2">
+              <select id="paperImportBankSelect" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="">请选择目标题库</option>
+              </select>
+              <button type="button" onclick="openNewBankModal()" class="px-3 py-2.5 border border-indigo-200 text-indigo-600 rounded-xl text-sm hover:bg-indigo-50 transition whitespace-nowrap">
+                <i class="fas fa-plus mr-1"></i>新建
+              </button>
+            </div>
+          </div>
           <div class="p-4 bg-amber-50 rounded-xl text-sm text-amber-700">
             <i class="fas fa-info-circle mr-1"></i>支持导入包含单选题、多选题、判断题、填空题、简答题的 Excel 文件
           </div>
@@ -1728,6 +1741,29 @@
           </div>
         </div>
         <button onclick="doPaperImportQuestions()" class="w-full btn-primary py-2.5 text-white rounded-xl font-medium transition">开始导入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 考试编辑器导入试题弹窗 ========== -->
+  <div id="examImportModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-md m-4 shadow-2xl">
+      <div class="flex justify-between items-center p-6 border-b border-slate-100">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-upload text-indigo-500 mr-2"></i>导入试题到考试</h3>
+        <button onclick="closeExamImportModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <div class="p-6">
+        <p class="text-sm text-slate-600 mb-4">向当前考试导入试题：</p>
+        <div class="space-y-4 mb-6">
+          <div class="p-4 bg-amber-50 rounded-xl text-sm text-amber-700">
+            <i class="fas fa-info-circle mr-1"></i>支持导入包含单选题、多选题、判断题、填空题、简答题的 Excel 文件
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">选择Excel文件 <span class="text-red-500">*</span></label>
+            <input type="file" id="examImportFile" accept=".xlsx,.xls" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+          </div>
+        </div>
+        <button onclick="doExamImport()" class="w-full btn-primary py-2.5 text-white rounded-xl font-medium transition">开始导入</button>
       </div>
     </div>
   </div>
@@ -1770,36 +1806,99 @@
 
         <!-- 考试设置 -->
         <div class="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-xl p-4 mb-4">
-          <h4 class="text-sm font-bold text-indigo-800 mb-3"><i class="fas fa-cog mr-1.5"></i>考试设置</h4>
-          <div class="space-y-3">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">时长(分钟)</label>
+          <h4 class="text-sm font-bold text-indigo-800 mb-4"><i class="fas fa-cog mr-1.5"></i>考试设置</h4>
+          <div class="space-y-4">
+            <!-- 考试次数 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">考试次数：</span>
+              <div class="flex items-center space-x-2">
+                <div class="flex rounded-lg overflow-hidden border border-slate-200">
+                  <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-orange-500 text-white" data-group="examAttempts" data-value="unlimited" onclick="toggleBtn(this)">不限次数</button>
+                  <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examAttempts" data-value="until_pass" onclick="toggleBtn(this)">及格后终止</button>
+                  <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examAttempts" data-value="custom" onclick="toggleBtn(this)">自定义</button>
+                </div>
+                <input type="number" id="examAttemptsCustom" value="3" min="1" max="99" class="w-16 px-2 py-1.5 text-xs border border-slate-200 rounded-lg hidden" placeholder="次">
+                <span class="text-xs text-slate-400">次</span>
+              </div>
+            </div>
+            <p class="text-xs text-slate-400 -mt-2 ml-2">考试发布后，不限次/有限次之间不可变更</p>
+
+            <!-- 记录成绩 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">记录成绩：</span>
+              <div class="flex rounded-lg overflow-hidden border border-slate-200">
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examRecordScore" data-value="latest" onclick="toggleBtn(this)">最新</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-orange-500 text-white" data-group="examRecordScore" data-value="highest" onclick="toggleBtn(this)">最高</button>
+              </div>
+            </div>
+
+            <!-- 试题不足 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">试题不足：</span>
+              <div class="flex rounded-lg overflow-hidden border border-slate-200">
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-orange-500 text-white" data-group="examInsufficient" data-value="allow" onclick="toggleBtn(this)">可考试</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examInsufficient" data-value="deny" onclick="toggleBtn(this)">不可考试</button>
+              </div>
+            </div>
+            <p class="text-xs text-slate-400 -mt-2 ml-2">可能发生于随机试卷下试题被移动或删除</p>
+
+            <!-- 切屏次数 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">切屏次数：</span>
+              <div class="flex items-center space-x-2">
+                <div class="flex rounded-lg overflow-hidden border border-slate-200">
+                  <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-orange-500 text-white" data-group="examScreenSwitch" data-value="unlimited" onclick="toggleBtn(this)">不限次数</button>
+                  <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examScreenSwitch" data-value="forbidden" onclick="toggleBtn(this)">不允许</button>
+                  <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examScreenSwitch" data-value="custom" onclick="toggleBtn(this)">自定义</button>
+                </div>
+                <input type="number" id="examScreenSwitchCustom" value="3" min="1" max="10" class="w-16 px-2 py-1.5 text-xs border border-slate-200 rounded-lg hidden" placeholder="次">
+              </div>
+            </div>
+            <p class="text-xs text-slate-400 -mt-2 ml-2">设置防切屏后，PC端填空题和简答题学员作答时无法上传图片</p>
+
+            <!-- 作答顺序 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">作答顺序：</span>
+              <div class="flex items-center space-x-4">
+                <label class="inline-flex items-center space-x-2 cursor-pointer">
+                  <input type="checkbox" id="examShuffleQuestions" class="w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-500">
+                  <span class="text-sm text-slate-600">试题乱序</span>
+                </label>
+                <label class="inline-flex items-center space-x-2 cursor-pointer">
+                  <input type="checkbox" id="examShuffleOptions" class="w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-500">
+                  <span class="text-sm text-slate-600">选项乱序</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 考后设置 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">考后设置：</span>
+              <label class="inline-flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" id="examShowAnswer" checked class="w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-500">
+                <span class="text-sm text-slate-600">显示答案解析</span>
+              </label>
+            </div>
+
+            <!-- 时长 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">时长(分钟)：</span>
               <input type="number" id="examDuration" value="60" min="5" max="300"
-                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                class="w-24 px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
             </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">总分</label>
+
+            <!-- 总分 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">总分：</span>
               <input type="number" id="examTotalScore" value="100" min="1"
-                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                class="w-24 px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
             </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">及格分数</label>
+
+            <!-- 及格分数 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">及格分数：</span>
               <input type="number" id="examPassingScore" value="60" min="0"
-                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">最多考试次数</label>
-              <input type="number" id="examMaxAttempts" value="0" min="0" max="99"
-                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-              <p class="text-xs text-slate-400 mt-1">0=不限次数</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">考试状态</label>
-              <select id="examStatus" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white transition">
-                <option value="draft">草稿</option>
-                <option value="published">已发布</option>
-                <option value="closed">已结束</option>
-              </select>
+                class="w-24 px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
             </div>
           </div>
         </div>
@@ -1821,9 +1920,9 @@
           </div>
         </div>
 
-        <!-- 参考学员 -->
+        <!-- 指派学员 -->
         <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 mb-4">
-          <h4 class="text-sm font-bold text-emerald-800 mb-3"><i class="fas fa-users mr-1.5"></i>参考学员</h4>
+          <h4 class="text-sm font-bold text-emerald-800 mb-3"><i class="fas fa-user-plus mr-1.5"></i>指派学员</h4>
           <div class="space-y-3">
             <div class="flex items-center justify-between">
               <label class="text-sm font-medium text-slate-700">考试权限</label>
@@ -1861,27 +1960,109 @@
           </div>
         </div>
 
-        <!-- 题目预览 -->
-        <div class="border-t border-slate-200 pt-4">
-          <div class="flex justify-between items-center mb-3">
-            <label class="block text-sm font-bold text-slate-700"><i class="fas fa-list-ol mr-1.5 text-indigo-500"></i>考试题目</label>
-            <button type="button" onclick="openQuestionPicker()" class="text-sm px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
-              <i class="fas fa-plus mr-1"></i>从题库选题目
-            </button>
+        <!-- 学员查看设置 -->
+        <div class="bg-slate-50 rounded-xl p-4 mb-4">
+          <h4 class="text-sm font-bold text-slate-700 mb-4"><i class="fas fa-eye mr-1.5"></i>学员查看设置</h4>
+          <div class="space-y-4">
+            <!-- 考试数据 -->
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-sm font-medium text-slate-700">考试数据：</span>
+                <span class="text-xs text-slate-400 ml-1">含考试的成绩、记录、排行等信息</span>
+              </div>
+              <label class="inline-flex items-center cursor-pointer">
+                <span class="mr-2 text-sm font-medium text-slate-600" id="examDataLabel">显示</span>
+                <div class="relative w-11 h-6 rounded-full bg-orange-500 transition-colors" id="examDataToggle">
+                  <div class="absolute top-0.5 left-5 w-5 h-5 bg-white rounded-full shadow transition-transform" id="examDataDot"></div>
+                </div>
+                <input type="checkbox" id="examShowData" checked class="sr-only" onchange="toggleSwitch('examData')">
+              </label>
+            </div>
+            <!-- 查看作答详情 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">查看作答详情</span>
+              <div class="flex rounded-lg overflow-hidden border border-slate-200">
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-orange-500 text-white" data-group="examAnswerDetail" data-value="after_grade" onclick="toggleBtn(this)">阅卷后</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examAnswerDetail" data-value="after_pass" onclick="toggleBtn(this)">及格后</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examAnswerDetail" data-value="after_finish" onclick="toggleBtn(this)">考试结束</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examAnswerDetail" data-value="never" onclick="toggleBtn(this)">不可见</button>
+              </div>
+            </div>
+            <!-- 查看试题 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">查看试题</span>
+              <div class="flex rounded-lg overflow-hidden border border-slate-200">
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-orange-500 text-white" data-group="examViewQuestions" data-value="all" onclick="toggleBtn(this)">全部试题</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examViewQuestions" data-value="correct_only" onclick="toggleBtn(this)">仅对题</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examViewQuestions" data-value="wrong_only" onclick="toggleBtn(this)">仅错题</button>
+              </div>
+            </div>
+            <!-- 正确答案 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">正确答案</span>
+              <div class="flex rounded-lg overflow-hidden border border-slate-200">
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-orange-500 text-white" data-group="examShowCorrect" data-value="show" onclick="toggleBtn(this)">显示</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examShowCorrect" data-value="hide" onclick="toggleBtn(this)">不显示</button>
+              </div>
+            </div>
+            <!-- 答案解析 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">答案解析</span>
+              <div class="flex rounded-lg overflow-hidden border border-slate-200">
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-orange-500 text-white" data-group="examShowAnalysis" data-value="show" onclick="toggleBtn(this)">显示</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examShowAnalysis" data-value="hide" onclick="toggleBtn(this)">不显示</button>
+              </div>
+            </div>
+            <!-- 查看排行 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">查看排行</span>
+              <div class="flex rounded-lg overflow-hidden border border-slate-200">
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-orange-500 text-white" data-group="examViewRank" data-value="after_submit" onclick="toggleBtn(this)">交卷后</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examViewRank" data-value="after_pass" onclick="toggleBtn(this)">及格后</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examViewRank" data-value="after_finish" onclick="toggleBtn(this)">考试结束</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examViewRank" data-value="never" onclick="toggleBtn(this)">不可见</button>
+              </div>
+            </div>
           </div>
-          <div id="examSelectedQuestions" class="space-y-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
-            <p class="text-sm text-slate-400 text-center py-4">请选择关联试卷或手动添加题目</p>
+        </div>
+
+        <!-- 奖励设置 -->
+        <div class="bg-slate-50 rounded-xl p-4 mb-4">
+          <h4 class="text-sm font-bold text-slate-700 mb-4"><i class="fas fa-trophy mr-1.5"></i>奖励设置</h4>
+          <div class="space-y-4">
+            <!-- 发放学分 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">发放学分：</span>
+              <div class="flex rounded-lg overflow-hidden border border-slate-200">
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-orange-500 text-white" data-group="examCredit" data-value="none" onclick="toggleBtn(this)">不给分</button>
+                <button type="button" class="btn-toggle px-3 py-1.5 text-xs font-medium bg-white text-slate-600" data-group="examCredit" data-value="by_status" onclick="toggleBtn(this)">按状态</button>
+              </div>
+            </div>
+            <!-- 颁发证书 -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-slate-700">颁发证书：</span>
+              <div class="flex items-center space-x-2">
+                <button type="button" class="px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 transition" onclick="toast('证书功能开发中', 'info')">
+                  <i class="fas fa-plus mr-1"></i>选择证书
+                </button>
+                <span class="text-xs text-slate-400">及格后颁发</span>
+              </div>
+            </div>
           </div>
-          <p class="text-xs text-slate-400 mt-1" id="examQuestionCountHint">已选 0 题</p>
         </div>
       </form>
     </div>
     <!-- 底部按钮 -->
-    <div class="flex justify-end space-x-3 p-6 border-t border-slate-100 flex-shrink-0 bg-slate-50">
+    <div class="flex justify-between items-center p-6 border-t border-slate-100 flex-shrink-0 bg-slate-50">
       <button type="button" onclick="closeExamModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-white transition bg-white text-slate-600">取消</button>
-      <button type="submit" form="examForm" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition">
-        <i class="fas fa-check mr-1.5"></i>保存
-      </button>
+      <div class="flex space-x-3">
+        <button type="button" onclick="saveExamAsDraft()" class="px-6 py-2.5 border border-slate-300 rounded-xl hover:bg-slate-100 transition bg-white text-slate-700 font-medium">
+          <i class="fas fa-save mr-1.5"></i>存草稿
+        </button>
+        <button type="button" onclick="saveExamAsPublished()" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition">
+          <i class="fas fa-paper-plane mr-1.5"></i>发布
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1943,7 +2124,7 @@
   <div id="examUserPickerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-hidden m-4 flex flex-col shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
-        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-user-check mr-2 text-emerald-500"></i>选择参考学员</h3>
+        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-user-check mr-2 text-emerald-500"></i>选择学员</h3>
         <button onclick="closeExamUserPicker()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
       </div>
       <div class="px-6 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
@@ -2194,11 +2375,29 @@
     </div>
   </div>
 
-  <script src="js/data-api.js"></script>
+  <script src="data-api.js"></script>
   <script src="js/data-sync.js"></script>
   <script src="js/auth-modal.js"></script>
   <script src="js/auth-guard.js"></script>
   <script>
+    // dataSync 兼容层：将 window.dataSync.getData/setData 映射到 DataAPI
+    if (!window.dataSync) {
+      window.dataSync = {
+        getData(key) {
+          if (window.DataAPI && window.DataAPI.get) {
+            return window.DataAPI.get(key) || [];
+          }
+          return JSON.parse(localStorage.getItem(key) || '[]');
+        },
+        async setData(key, value) {
+          if (window.DataAPI && window.DataAPI.set) {
+            await window.DataAPI.set(key, value);
+          } else {
+            localStorage.setItem(key, JSON.stringify(value));
+          }
+        }
+      };
+    }
     // ========== 全局配置 ==========
     const API = window.location.origin + '/api';
 
@@ -2737,6 +2936,14 @@
       if (name === 'portal') {
         dbg('portal 标签页，自动切换到第一个子标签页', '#38bdf8');
         switchSubTab('portal', 'carousel');
+      }
+
+      // 切换到其他标签页时，关闭考试编辑器
+      if (name !== 'exam-schedule') {
+        const editorContainer = document.getElementById('examEditorContainer');
+        if (editorContainer && editorContainer.style.display !== 'none') {
+          closeExamEditor();
+        }
       }
 
       // 加载对应标签页数据（带错误处理）
@@ -6746,7 +6953,6 @@
         const matchSearch = !searchTerm ||
           (user.username && user.username.toLowerCase().includes(searchTerm)) ||
           (user.realName && user.realName.toLowerCase().includes(searchTerm)) ||
-          (user.email && user.email.toLowerCase().includes(searchTerm)) ||
           (user.phone && user.phone.includes(searchTerm));
 
         // 角色过滤
@@ -6912,6 +7118,104 @@
       renderUserList();
     }
 
+    // 打开添加用户弹窗
+    function openUserModal() {
+      const content = `
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">添加新用户</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveNewUser(event)" class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">手机号 <span class="text-red-500">*</span></label>
+              <input type="tel" id="new-user-phone" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入手机号">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">密码 <span class="text-red-500">*</span></label>
+              <input type="password" id="new-user-password" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="至少6位">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">真实姓名</label>
+              <input type="text" id="new-user-realname" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">部门</label>
+              <input type="text" id="new-user-department" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">角色</label>
+              <select id="new-user-role" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="user">学员</option>
+                <option value="teacher">讲师</option>
+                <option value="admin">管理员</option>
+              </select>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">添加</button>
+            </div>
+          </form>
+        </div>
+      `;
+      showModal(content);
+    }
+
+    // 保存新用户
+    async function saveNewUser(event) {
+      event.preventDefault();
+
+      const phone = document.getElementById('new-user-phone').value.trim();
+      const userData = {
+        username: phone,
+        password: document.getElementById('new-user-password').value,
+        realName: document.getElementById('new-user-realname').value.trim(),
+        phone: phone,
+        department: document.getElementById('new-user-department').value.trim(),
+        role: document.getElementById('new-user-role').value
+      };
+
+      if (!userData.phone || !userData.password) {
+        toast('手机号和密码不能为空', 'error');
+        return;
+      }
+
+      if (userData.username.length < 3 || userData.username.length > 20) {
+        toast('用户名长度必须在3-20个字符之间', 'error');
+        return;
+      }
+
+      if (userData.password.length < 6) {
+        toast('密码长度至少6个字符', 'error');
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const res = await fetch(`${API}/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(userData)
+        });
+
+        const result = await res.json();
+
+        if (res.ok && result.success) {
+          toast('用户添加成功');
+          closeModal();
+          await loadUsers();
+        } else {
+          toast(result.error || '添加失败', 'error');
+        }
+      } catch (err) {
+        console.error('添加用户错误:', err);
+        toast('网络错误', 'error');
+      }
+    }
+
     // 编辑用户
     async function editUser(userId) {
       const user = allUsers.find(u => u.id === userId);
@@ -6930,10 +7234,6 @@
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">真实姓名</label>
               <input type="text" id="edit-user-realname" value="${user.realName || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">邮箱</label>
-              <input type="email" id="edit-user-email" value="${user.email || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">手机号</label>
@@ -6967,7 +7267,6 @@
 
       const updateData = {
         realName: document.getElementById('edit-user-realname').value.trim(),
-        email: document.getElementById('edit-user-email').value.trim(),
         phone: document.getElementById('edit-user-phone').value.trim(),
         department: document.getElementById('edit-user-department').value.trim(),
         role: document.getElementById('edit-user-role').value
@@ -7859,6 +8158,18 @@
           document.getElementById('newBankName').value = '';
           toast('题库创建成功！');
           loadBankList();
+          // 刷新试卷导入弹窗的题库下拉（如果弹窗处于打开状态）
+          const paperImportSel = document.getElementById('paperImportBankSelect');
+          if (paperImportSel) {
+            fetch('/api/question-banks')
+              .then(res => res.json())
+              .then(r => {
+                const banks = r.data || [];
+                paperImportSel.innerHTML = '<option value="">请选择目标题库</option>' +
+                  banks.map(b => `<option value="${b.id}" ${b.id === result.data.id ? 'selected' : ''}>${escHtml(b.name)}</option>`).join('');
+              })
+              .catch(() => {});
+          }
           setTimeout(() => openBankDetail(result.data.id), 300);
         } else { toast(result.error || '创建失败', 'error'); }
       } catch (e) { toast('网络错误', 'error'); }
@@ -8438,6 +8749,18 @@
     // ====== 试卷导入试题 ======
     function openPaperImportQuestionsModal() {
       document.getElementById('paperImportQuestionsFile').value = '';
+      // 加载题库下拉列表
+      const sel = document.getElementById('paperImportBankSelect');
+      if (sel) {
+        fetch('/api/question-banks')
+          .then(res => res.json())
+          .then(result => {
+            const banks = result.data || [];
+            sel.innerHTML = '<option value="">请选择目标题库</option>' +
+              banks.map(b => `<option value="${b.id}">${escHtml(b.name)}</option>`).join('');
+          })
+          .catch(() => { /* 静默失败，保持默认选项 */ });
+      }
       const modal = document.getElementById('paperImportQuestionsModal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
@@ -8452,37 +8775,39 @@
     async function doPaperImportQuestions() {
       const file = document.getElementById('paperImportQuestionsFile').files[0];
       if (!file) return toast('请选择Excel文件', 'warning');
-      
+      const bankId = document.getElementById('paperImportBankSelect')?.value;
+      if (!bankId) return toast('请先选择目标题库', 'warning');
+
       const formData = new FormData();
       formData.append('file', file);
-      
+      formData.append('bankId', bankId);
+
       try {
         const res = await fetch('/api/questions/import', { method: 'POST', body: formData });
         const result = await res.json();
         if (result.success) {
           closePaperImportQuestionsModal();
           toast(`导入完成：成功 ${result.imported} 题` + (result.failed ? `，失败 ${result.failed} 题` : ''));
-          
+
           // 将导入的题目添加到当前试卷
-          const importedQuestions = (result.importedData || []);
-          importedQuestions.forEach((q, i) => {
+          const importedQuestions = result.importedData || [];
+          importedQuestions.forEach((q) => {
             paperQuestions.push({
-              id: Date.now() + i,
               questionId: q.id,
-              score: q.score || 5,
-              order: paperQuestions.length + i,
-              questionDetail: q
+              score: q.score || 0,
+              order: paperQuestions.length,
+              content: q.title || q.content || '(题目内容)',
+              type: q.type || 'single'
             });
           });
-          
-          // 更新试卷题目列表显示
-          updatePaperQuestionList();
-          updatePaperStats();
-        } else { 
-          toast(result.error || '导入失败', 'error'); 
+
+          // 更新试卷编辑页显示
+          renderPaperEditorQuestions();
+        } else {
+          toast(result.error || '导入失败', 'error');
         }
-      } catch (e) { 
-        toast('导入失败: ' + e.message, 'error'); 
+      } catch (e) {
+        toast('导入失败: ' + e.message, 'error');
       }
     }
 
@@ -8708,12 +9033,12 @@
             </span>
           </td>
           <td class="pl-3 pr-5 py-4">
-            <div class="flex items-center gap-2 text-sm">
-              <a href="javascript:;" onclick="openExamEditor(${exam.id})" class="text-indigo-500 hover:text-indigo-600">编辑</a>
-              <a href="javascript:;" onclick="viewExamResults(${exam.id}, '${escHtml(exam.title)}')" class="text-indigo-500 hover:text-indigo-600">成绩</a>
-              ${exam.status === 'draft' ? `<a href="javascript:;" onclick="publishExam(${exam.id})" class="text-emerald-500 hover:text-emerald-600">发布</a>` : ''}
-              ${exam.status === 'published' ? `<a href="javascript:;" onclick="closeExam(${exam.id})" class="text-amber-500 hover:text-amber-600">结束</a>` : ''}
-              <a href="javascript:;" onclick="deleteExam(${exam.id})" class="text-red-400 hover:text-red-600">删除</a>
+            <div class="flex items-center justify-center gap-1">
+              <button onclick="openExamModal(${exam.id})" class="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition" title="设置"><i class="fas fa-cog text-sm"></i></button>
+              <button onclick="viewExamResults(${exam.id}, '${escHtml(exam.title)}')" class="p-2 text-slate-400 hover:text-purple-500 hover:bg-purple-50 rounded-lg transition" title="成绩"><i class="fas fa-chart-bar text-sm"></i></button>
+              ${exam.status === 'draft' ? `<button onclick="publishExam(${exam.id})" class="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition" title="发布"><i class="fas fa-paper-plane text-sm"></i></button>` : ''}
+              ${exam.status === 'published' ? `<button onclick="closeExam(${exam.id})" class="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition" title="结束"><i class="fas fa-stop-circle text-sm"></i></button>` : ''}
+              <button onclick="deleteExam(${exam.id})" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash text-sm"></i></button>
             </div>
           </td>
         </tr>`;
@@ -8741,15 +9066,32 @@
         examEditorQuestions = (qResult.questions || []).sort((a, b) => (a.order || 0) - (b.order || 0));
         examEditorCurrentIdx = 0;
 
-        // 移除旧的编辑器（如果存在）
-        const old = document.getElementById('examEditorOverlay');
-        if (old) old.remove();
+        // 隐藏考试列表，显示编辑器（内嵌方式）
+        const tabContent = document.getElementById('tab-exam-schedule');
+        const examList = document.getElementById('examListView');
+        if (examList) examList.style.display = 'none';
+        // 隐藏统计卡片和筛选器
+        const statCards = tabContent.querySelector('.grid.grid-cols-4');
+        if (statCards) statCards.style.display = 'none';
+        const filterBar = tabContent.querySelector('.flex.items-center.justify-between.mb-4');
+        if (filterBar) filterBar.style.display = 'none';
+        const filterRow = tabContent.querySelector('.flex.items-center.gap-3.mb-4');
+        if (filterRow) filterRow.style.display = 'none';
+        const batchBar = document.getElementById('examBatchActionBar');
+        if (batchBar) batchBar.style.display = 'none';
+        const examTable = tabContent.querySelector('.bg-white.rounded-lg.border');
+        if (examTable) examTable.style.display = 'none';
+        const pagination = document.getElementById('examPagination');
+        if (pagination) pagination.style.display = 'none';
 
-        // 创建全屏覆盖层
-        const overlay = document.createElement('div');
-        overlay.id = 'examEditorOverlay';
-        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#f1f5f9;overflow-y:auto;';
-        document.body.appendChild(overlay);
+        // 创建编辑器容器
+        let editorContainer = document.getElementById('examEditorContainer');
+        if (!editorContainer) {
+          editorContainer = document.createElement('div');
+          editorContainer.id = 'examEditorContainer';
+          tabContent.appendChild(editorContainer);
+        }
+        editorContainer.style.display = 'block';
         renderExamEditor();
         console.log('[ExamEditor] editor rendered successfully');
       } catch (e) {
@@ -8759,119 +9101,141 @@
     }
 
     function closeExamEditor() {
-      const overlay = document.getElementById('examEditorOverlay');
-      if (overlay) overlay.remove();
+      // 恢复考试列表显示
+      const tabContent = document.getElementById('tab-exam-schedule');
+      const examList = document.getElementById('examListView');
+      if (examList) examList.style.display = '';
+      const statCards = tabContent.querySelector('.grid.grid-cols-4');
+      if (statCards) statCards.style.display = '';
+      const filterBar = tabContent.querySelector('.flex.items-center.justify-between.mb-4');
+      if (filterBar) filterBar.style.display = '';
+      const filterRow = tabContent.querySelector('.flex.items-center.gap-3.mb-4');
+      if (filterRow) filterRow.style.display = '';
+      const batchBar = document.getElementById('examBatchActionBar');
+      if (batchBar) batchBar.style.display = '';
+      const examTable = tabContent.querySelector('.bg-white.rounded-lg.border');
+      if (examTable) examTable.style.display = '';
+      const pagination = document.getElementById('examPagination');
+      if (pagination) pagination.style.display = '';
+
+      const editorContainer = document.getElementById('examEditorContainer');
+      if (editorContainer) editorContainer.style.display = 'none';
+
       examEditorData = null;
       examEditorQuestions = [];
       loadExamMgmtList();
     }
 
     function renderExamEditor() {
-      const overlay = document.getElementById('examEditorOverlay');
-      if (!overlay || !examEditorData) return;
+      const container = document.getElementById('examEditorContainer');
+      if (!container || !examEditorData) return;
       const totalScore = examEditorQuestions.reduce((s, q) => s + (q.score || q.questionDetail?.score || 1), 0);
       const qCount = examEditorQuestions.length;
       const typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
 
-      // 渲染当前题目
-      const currentQ = examEditorQuestions[examEditorCurrentIdx];
-      let questionHtml = '';
-      if (currentQ) {
-        const qd = currentQ.questionDetail || currentQ;
-        const options = qd.options || [];
-        const answer = qd.answer;
-        const score = currentQ.score || qd.score || 1;
-        const answerArr = Array.isArray(answer) ? answer : (answer != null ? [String(answer)] : []);
-
-        questionHtml = '<div class="mb-2 text-sm text-slate-500">' + '\u3010' + (typeNames[qd.type] || qd.type) + '\u3011</div>';
-        questionHtml += '<h3 class="text-base font-semibold text-slate-800 mb-4 leading-relaxed">' + escHtml(qd.title || qd.content || '(无标题)') + ' <span class="text-slate-400 font-normal">(' + score + ' \u5206)</span></h3>';
-        if (options.length > 0) {
-          questionHtml += '<div class="space-y-3">';
-          for (var oi = 0; oi < options.length; oi++) {
-            var letter = String.fromCharCode(65 + oi);
-            var isCorrect = answerArr.indexOf(letter) !== -1;
-            var cls = isCorrect ? 'text-indigo-600' : 'text-slate-600';
-            var bgCls = isCorrect ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200';
-            questionHtml += '<div class="flex items-center gap-3 p-3 rounded-lg border ' + bgCls + ' ' + cls + '">';
-            questionHtml += '<span class="font-bold flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ' + (isCorrect ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-600') + ' text-sm">' + letter + '</span>';
-            questionHtml += '<span class="flex-1">' + escHtml(options[oi]) + '</span>';
-            if (isCorrect) questionHtml += '<i class="fas fa-check-circle text-indigo-500"></i>';
-            questionHtml += '</div>';
-          }
-          questionHtml += '</div>';
-        } else if (qd.type === 'judge') {
-          var judgeAnswer = String(answer);
-          questionHtml += '<div class="space-y-2">';
-          questionHtml += '<div class="p-3 rounded-lg border ' + (judgeAnswer === 'true' || judgeAnswer === '1' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500') + '"><i class="fas fa-check mr-2"></i>\u6b63\u786e</div>';
-          questionHtml += '<div class="p-3 rounded-lg border ' + (judgeAnswer === 'false' || judgeAnswer === '0' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500') + '"><i class="fas fa-times mr-2"></i>\u9519\u8bef</div>';
-          questionHtml += '</div>';
-        } else if (qd.type === 'fill') {
-          questionHtml += '<div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800"><strong>\u53c2\u8003\u7b54\u6848\uff1a</strong>' + escHtml(Array.isArray(answer) ? answer.join(', ') : String(answer || '')) + '</div>';
-        } else if (qd.type === 'essay') {
-          questionHtml += '<div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800"><strong>\u53c2\u8003\u7b54\u6848\uff1a</strong><br>' + escHtml(String(answer || '')) + '</div>';
-        }
+      // 渲染所有题目
+      let allQuestionsHtml = '';
+      if (examEditorQuestions.length === 0) {
+        allQuestionsHtml = '<div class="text-center py-20 text-slate-400"><i class="fas fa-inbox text-5xl mb-4 block opacity-30"></i><p class="text-lg">暂无题目</p><p class="text-sm mt-2">请从左侧点击"题库选题"添加试题</p></div>';
       } else {
-        questionHtml = '<div class="text-center py-20 text-slate-400"><i class="fas fa-inbox text-5xl mb-4 block opacity-30"></i><p class="text-lg">\u6682\u65e0\u9898\u76ee</p><p class="text-sm mt-2">\u8bf7\u4ece\u5de6\u4fa7\u70b9\u51fb\u201c\u9898\u5e93\u9009\u9898\u201d\u6dfb\u52a0\u8bd5\u9898</p></div>';
+        for (var qi = 0; qi < examEditorQuestions.length; qi++) {
+          const currentQ = examEditorQuestions[qi];
+          const qd = currentQ.questionDetail || currentQ;
+          const options = qd.options || [];
+          const answer = qd.answer;
+          const score = currentQ.score || qd.score || 1;
+          const answerArr = Array.isArray(answer) ? answer : (answer != null ? [String(answer)] : []);
+
+          allQuestionsHtml += '<div id="exam-question-' + qi + '" style="padding:24px;border-bottom:1px solid #e2e8f0;">';
+          allQuestionsHtml += '<div class="mb-2 text-sm text-slate-500">第 ' + (qi + 1) + ' 题 【' + (typeNames[qd.type] || qd.type) + '】</div>';
+          allQuestionsHtml += '<h3 class="text-base font-semibold text-slate-800 mb-4 leading-relaxed">' + escHtml(qd.title || qd.content || '(无标题)') + ' <span class="text-slate-400 font-normal">(' + score + ' 分)</span></h3>';
+
+          if (options.length > 0) {
+            allQuestionsHtml += '<div class="space-y-3">';
+            for (var oi = 0; oi < options.length; oi++) {
+              var letter = String.fromCharCode(65 + oi);
+              var isCorrect = answerArr.indexOf(letter) !== -1;
+              var cls = isCorrect ? 'text-indigo-600' : 'text-slate-600';
+              var bgCls = isCorrect ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200';
+              allQuestionsHtml += '<div class="flex items-center gap-3 p-3 rounded-lg border ' + bgCls + ' ' + cls + '">';
+              allQuestionsHtml += '<span class="font-bold flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ' + (isCorrect ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-600') + ' text-sm">' + letter + '</span>';
+              allQuestionsHtml += '<span class="flex-1">' + escHtml(options[oi]) + '</span>';
+              if (isCorrect) allQuestionsHtml += '<i class="fas fa-check-circle text-indigo-500"></i>';
+              allQuestionsHtml += '</div>';
+            }
+            allQuestionsHtml += '</div>';
+          } else if (qd.type === 'judge') {
+            var judgeAnswer = String(answer);
+            allQuestionsHtml += '<div class="space-y-2">';
+            allQuestionsHtml += '<div class="p-3 rounded-lg border ' + (judgeAnswer === 'true' || judgeAnswer === '1' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500') + '"><i class="fas fa-check mr-2"></i>正确</div>';
+            allQuestionsHtml += '<div class="p-3 rounded-lg border ' + (judgeAnswer === 'false' || judgeAnswer === '0' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500') + '"><i class="fas fa-times mr-2"></i>错误</div>';
+            allQuestionsHtml += '</div>';
+          } else if (qd.type === 'fill') {
+            allQuestionsHtml += '<div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800"><strong>参考答案：</strong>' + escHtml(Array.isArray(answer) ? answer.join(', ') : String(answer || '')) + '</div>';
+          } else if (qd.type === 'essay') {
+            allQuestionsHtml += '<div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800"><strong>参考答案：</strong><br>' + escHtml(String(answer || '')) + '</div>';
+          }
+          allQuestionsHtml += '</div>';
+        }
       }
 
       // 构建题号按钮
       var numButtons = '';
       for (var i = 0; i < examEditorQuestions.length; i++) {
-        var activeCls = (i === examEditorCurrentIdx) ? 'background:#6366f1;color:#fff;box-shadow:0 2px 8px rgba(99,102,241,0.3);' : 'background:#f1f5f9;color:#64748b;';
-        numButtons += '<button onclick="switchExamQuestion(' + i + ')" style="' + activeCls + '" class="w-10 h-10 rounded-lg text-sm font-medium transition hover:opacity-80">' + (i + 1) + '</button>';
+        numButtons += '<button onclick="scrollToExamQuestion(' + i + ')" style="background:#f1f5f9;color:#64748b;" class="w-10 h-10 rounded-lg text-sm font-medium transition hover:opacity-80">' + (i + 1) + '</button>';
       }
 
-      overlay.innerHTML = ''
-        + '<div style="min-height:100vh;display:flex;flex-direction:column;">'
+      container.innerHTML = ''
+        + '<div style="display:flex;flex-direction:column;">'
         + '  <div style="background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;">'
         + '    <div style="display:flex;align-items:center;gap:16px;flex:1;">'
         + '      <button onclick="closeExamEditor()" style="display:flex;align-items:center;gap:6px;font-size:14px;color:#64748b;background:none;border:none;cursor:pointer;padding:6px 12px;border-radius:8px;" onmouseover="this.style.background=\'#f1f5f9\'" onmouseout="this.style.background=\'none\'">'
-        + '        <i class="fas fa-arrow-left"></i> \u8fd4\u56de'
+        + '        <i class="fas fa-arrow-left"></i> 返回'
         + '      </button>'
         + '      <div style="width:1px;height:24px;background:#e2e8f0;"></div>'
         + '      <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin:0;">' + escHtml(examEditorData.title) + '</h2>'
         + '    </div>'
         + '    <div style="display:flex;align-items:center;gap:16px;font-size:14px;color:#64748b;">'
-        + '      <span>\u603b\u5206\uff1a<strong style="color:#1e293b;">' + totalScore.toFixed(1) + '</strong></span>'
-        + '      <span>\u8bd5\u9898\uff1a<strong style="color:#1e293b;">' + qCount + '</strong></span>'
+        + '      <span>总分：<strong style="color:#1e293b;">' + totalScore.toFixed(1) + '</strong></span>'
+        + '      <span>试题：<strong style="color:#1e293b;">' + qCount + '</strong></span>'
         + '      <button onclick="openExamEditorScoreSettings()" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#64748b;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'">'
-        + '        <i class="fas fa-cog"></i> \u8bbe\u7f6e'
+        + '        <i class="fas fa-cog"></i> 设置'
         + '      </button>'
         + '      <button onclick="saveExamEditorQuestions()" style="padding:6px 20px;background:#6366f1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;" onmouseover="this.style.background=\'#4f46e5\'" onmouseout="this.style.background=\'#6366f1\'">'
-        + '        <i class="fas fa-check" style="margin-right:4px;"></i>\u66f4\u65b0'
+        + '        <i class="fas fa-check" style="margin-right:4px;"></i>更新'
         + '      </button>'
         + '    </div>'
         + '  </div>'
-        + '  <div style="display:flex;flex:1;padding:24px;gap:24px;max-width:1200px;width:100%;margin:0 auto;">'
+        + '  <div style="display:flex;padding:24px;gap:24px;max-width:1200px;width:100%;margin:0 auto;">'
         + '    <div style="width:220px;flex-shrink:0;">'
         + '      <div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:20px;position:sticky;top:80px;">'
         + '        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
-        + '          <h4 style="font-size:14px;font-weight:600;color:#334155;margin:0;">\u8bd5\u9898\u5217\u8868 (' + qCount + ')</h4>'
+        + '          <h4 style="font-size:14px;font-weight:600;color:#334155;margin:0;">试题列表 (' + qCount + ')</h4>'
         + '          <button onclick="openExamEditorScoreSettings()" style="font-size:12px;color:#6366f1;background:none;border:none;cursor:pointer;" onmouseover="this.style.color=\'#4f46e5\'" onmouseout="this.style.color=\'#6366f1\'">'
-        + '            <i class="fas fa-sliders-h" style="margin-right:4px;"></i>\u5206\u6570\u8bbe\u7f6e'
+        + '            <i class="fas fa-sliders-h" style="margin-right:4px;"></i>分数设置'
         + '          </button>'
         + '        </div>'
         + '        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;">' + numButtons + '</div>'
         + '        <div style="display:flex;flex-direction:column;gap:8px;">'
         + '          <button onclick="openExamEditorQuestionPicker()" style="width:100%;padding:10px;font-size:13px;border:1px solid #c7d2fe;color:#4f46e5;border-radius:8px;background:#fff;cursor:pointer;font-weight:600;" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'">'
-        + '            <i class="fas fa-plus" style="margin-right:6px;"></i>\u9898\u5e93\u9009\u9898'
+        + '            <i class="fas fa-plus" style="margin-right:6px;"></i>题库选题'
         + '          </button>'
-        + '          <button onclick="toast(\'\u5bfc\u5165\u529f\u80fd\u5f00\u53d1\u4e2d\', \'info\')" style="width:100%;padding:10px;font-size:13px;border:1px solid #e2e8f0;color:#64748b;border-radius:8px;background:#fff;cursor:pointer;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'">'
-        + '            <i class="fas fa-file-import" style="margin-right:6px;"></i>\u5bfc\u5165\u8bd5\u9898'
+        + '          <button onclick="openExamEditorImport()" style="width:100%;padding:10px;font-size:13px;border:1px solid #e2e8f0;color:#64748b;border-radius:8px;background:#fff;cursor:pointer;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'">'
+        + '            <i class="fas fa-file-import" style="margin-right:6px;"></i>导入试题'
         + '          </button>'
         + '        </div>'
         + '      </div>'
         + '    </div>'
-        + '    <div style="flex:1;background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:32px;min-height:400px;">'
-        + questionHtml
+        + '    <div style="flex:1;background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow-y:auto;">'
+        + allQuestionsHtml
         + '    </div>'
         + '  </div>'
         + '</div>';
     }
 
-    function switchExamQuestion(idx) {
-      examEditorCurrentIdx = idx;
-      renderExamEditor();
+    function scrollToExamQuestion(idx) {
+      const el = document.getElementById('exam-question-' + idx);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function openExamEditorQuestionPicker() {
@@ -8902,6 +9266,62 @@
         };
       });
       openScoreSettingsModal();
+    }
+
+    function openExamEditorImport() {
+      console.log('[ExamEditor] openExamEditorImport called');
+      document.getElementById('examImportFile').value = '';
+      const modal = document.getElementById('examImportModal');
+      if (!modal) {
+        console.error('[ExamEditor] examImportModal not found');
+        return;
+      }
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      console.log('[ExamEditor] modal shown');
+    }
+
+    function closeExamImportModal() {
+      const modal = document.getElementById('examImportModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function doExamImport() {
+      const file = document.getElementById('examImportFile').files[0];
+      if (!file) return toast('请选择Excel文件', 'warning');
+      if (!examEditorData) return toast('考试数据丢失，请重新打开', 'error');
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bankId', '0');
+
+      try {
+        const res = await fetch('/api/questions/import', { method: 'POST', body: formData });
+        const result = await res.json();
+        if (result.success) {
+          closeExamImportModal();
+          toast('导入完成：成功 ' + result.imported + ' 题' + (result.failed ? '，失败 ' + result.failed + ' 题' : ''));
+
+          // 将导入的题目添加到当前考试
+          var importedQuestions = result.importedData || [];
+          importedQuestions.forEach(function(q) {
+            examEditorQuestions.push({
+              questionId: q.id,
+              score: q.score || 5,
+              order: examEditorQuestions.length,
+              questionDetail: q
+            });
+          });
+
+          // 重新渲染编辑器
+          renderExamEditor();
+        } else {
+          toast(result.error || '导入失败', 'error');
+        }
+      } catch (e) {
+        toast('导入失败: ' + e.message, 'error');
+      }
     }
 
     async function saveExamEditorQuestions() {
@@ -9048,6 +9468,69 @@
       }
     }
 
+    function toggleBtn(btn) {
+      const group = btn.getAttribute('data-group');
+      const buttons = document.querySelectorAll(`.btn-toggle[data-group="${group}"]`);
+      buttons.forEach(b => {
+        b.classList.remove('bg-orange-500', 'text-white');
+        b.classList.add('bg-white', 'text-slate-600');
+      });
+      btn.classList.remove('bg-white', 'text-slate-600');
+      btn.classList.add('bg-orange-500', 'text-white');
+      // 处理自定义输入框显示/隐藏
+      if (group === 'examAttempts') {
+        const customInput = document.getElementById('examAttemptsCustom');
+        if (btn.getAttribute('data-value') === 'custom') {
+          customInput.classList.remove('hidden');
+        } else {
+          customInput.classList.add('hidden');
+        }
+      } else if (group === 'examScreenSwitch') {
+        const customInput = document.getElementById('examScreenSwitchCustom');
+        if (btn.getAttribute('data-value') === 'custom') {
+          customInput.classList.remove('hidden');
+        } else {
+          customInput.classList.add('hidden');
+        }
+      }
+    }
+
+    function toggleSwitch(name) {
+      const checkbox = document.getElementById('examShowData');
+      const toggle = document.getElementById('examDataToggle');
+      const dot = document.getElementById('examDataDot');
+      const label = document.getElementById('examDataLabel');
+      if (checkbox.checked) {
+        toggle.classList.remove('bg-slate-300');
+        toggle.classList.add('bg-orange-500');
+        dot.style.left = '20px';
+        label.textContent = '显示';
+      } else {
+        toggle.classList.remove('bg-orange-500');
+        toggle.classList.add('bg-slate-300');
+        dot.style.left = '2px';
+        label.textContent = '隐藏';
+      }
+    }
+
+    function getBtnGroupValue(group) {
+      const active = document.querySelector(`.btn-toggle[data-group="${group}"].bg-orange-500`);
+      return active ? active.getAttribute('data-value') : null;
+    }
+
+    function setBtnGroupValue(group, value) {
+      const buttons = document.querySelectorAll(`.btn-toggle[data-group="${group}"]`);
+      buttons.forEach(b => {
+        if (b.getAttribute('data-value') === value) {
+          b.classList.remove('bg-white', 'text-slate-600');
+          b.classList.add('bg-orange-500', 'text-white');
+        } else {
+          b.classList.remove('bg-orange-500', 'text-white');
+          b.classList.add('bg-white', 'text-slate-600');
+        }
+      });
+    }
+
     async function openExamUserPicker() {
       examUserPickerTemp = new Set(examUserPickerData.filter(u => u.selected).map(u => u.id));
       const modal = document.getElementById('examUserPickerModal');
@@ -9066,11 +9549,11 @@
 
     async function loadExamUserPickerData() {
       try {
-        const res = await fetch('/api/users');
+        const res = await fetch('/api/data/users');
         const users = await res.json();
         examUserPickerData = users.map(u => ({
           id: u.id,
-          name: u.real_name || u.username || u.name || '未知',
+          name: u.real_name || u.username || '未知',
           avatar: u.avatar || '',
           selected: examUserPickerTemp.has(u.id)
         }));
@@ -9144,6 +9627,7 @@
     function openExamModal(id = null) {
       editingExamId = id;
       selectedExamQuestions = [];
+      pendingExamStatus = 'draft';
       document.getElementById('examId').value = id || '';
       document.getElementById('examModalTitle').textContent = id ? '编辑考试' : '创建考试';
       document.getElementById('examTitle').value = '';
@@ -9151,8 +9635,7 @@
       document.getElementById('examDuration').value = '60';
       document.getElementById('examTotalScore').value = '100';
       document.getElementById('examPassingScore').value = '60';
-      document.getElementById('examStatus').value = 'draft';
-      document.getElementById('examMaxAttempts').value = '0';
+      var _maxAttempts = document.getElementById('examMaxAttempts'); if (_maxAttempts) _maxAttempts.value = '0';
       document.getElementById('examStartTime').value = '';
       document.getElementById('examEndTime').value = '';
       document.getElementById('examShuffle').checked = false;
@@ -9160,6 +9643,27 @@
       document.getElementById('examPaperId').value = '';
       document.getElementById('examAccessType').value = 'public';
       onExamAccessTypeChange();
+      // 重置考试设置
+      setBtnGroupValue('examAttempts', 'unlimited');
+      var _attemptsCustom = document.getElementById('examAttemptsCustom'); if (_attemptsCustom) { _attemptsCustom.classList.add('hidden'); _attemptsCustom.value = '3'; }
+      setBtnGroupValue('examRecordScore', 'highest');
+      setBtnGroupValue('examInsufficient', 'allow');
+      setBtnGroupValue('examScreenSwitch', 'unlimited');
+      var _switchCustom = document.getElementById('examScreenSwitchCustom'); if (_switchCustom) { _switchCustom.classList.add('hidden'); _switchCustom.value = '3'; }
+      var _shuffleQ = document.getElementById('examShuffleQuestions'); if (_shuffleQ) _shuffleQ.checked = false;
+      var _shuffleO = document.getElementById('examShuffleOptions'); if (_shuffleO) _shuffleO.checked = false;
+      // 重置学员查看设置
+      var _showData = document.getElementById('examShowData'); if (_showData) _showData.checked = true;
+      var _dataLabel = document.getElementById('examDataLabel'); if (_dataLabel) _dataLabel.textContent = '显示';
+      var _dataToggle = document.getElementById('examDataToggle');
+      if (_dataToggle) { _dataToggle.classList.remove('bg-slate-300'); _dataToggle.classList.add('bg-orange-500'); }
+      var _dataDot = document.getElementById('examDataDot'); if (_dataDot) _dataDot.style.left = '20px';
+      setBtnGroupValue('examAnswerDetail', 'after_grade');
+      setBtnGroupValue('examViewQuestions', 'all');
+      setBtnGroupValue('examShowCorrect', 'show');
+      setBtnGroupValue('examShowAnalysis', 'show');
+      setBtnGroupValue('examViewRank', 'after_submit');
+      setBtnGroupValue('examCredit', 'none');
       examUserPickerData = [];
       examUserPickerTemp = new Set();
       renderExamAllowedUsers();
@@ -9243,34 +9747,79 @@
 
     async function loadExamForEdit(id) {
       try {
-        const res = await fetch('/api/exams/' + id + '/questions');
-        const data = await res.json();
-        selectedExamQuestions = (data.questions || []).map(q => ({
-          questionId: q.questionId,
-          score: q.score || 1,
-          order: q.order || 0,
-          content: q.questionDetail ? (q.questionDetail.title || q.questionDetail.content) : '(题目未找到)'
-        }));
         const examRes = await fetch('/api/exams');
         const allExams = await examRes.json();
-        const exam = allExams.find(e => e.id === id);
+        const exam = allExams.find(e => e.id === id || e.id === Number(id) || String(e.id) === String(id));
         if (exam) {
           document.getElementById('examTitle').value = exam.title || '';
           document.getElementById('examDesc').value = exam.description || '';
           document.getElementById('examDuration').value = exam.duration || 60;
           document.getElementById('examTotalScore').value = exam.totalScore || 100;
           document.getElementById('examPassingScore').value = exam.passingScore || 60;
-          document.getElementById('examStatus').value = exam.status || 'draft';
-          document.getElementById('examMaxAttempts').value = exam.maxAttempts || 0;
+          var _ma = document.getElementById('examMaxAttempts'); if (_ma) _ma.value = exam.maxAttempts || 0;
           document.getElementById('examStartTime').value = exam.startTime ? new Date(exam.startTime).toISOString().slice(0, 16) : '';
           document.getElementById('examEndTime').value = exam.endTime ? new Date(exam.endTime).toISOString().slice(0, 16) : '';
           document.getElementById('examShuffle').checked = !!exam.shuffleQuestions;
           document.getElementById('examShowAnswer').checked = !!exam.showAnswer;
+          // 恢复考试设置
+          if (exam.attemptsPolicy) {
+            setBtnGroupValue('examAttempts', exam.attemptsPolicy);
+            var _ac = document.getElementById('examAttemptsCustom');
+            if (_ac) {
+              if (exam.attemptsPolicy === 'custom') {
+                _ac.classList.remove('hidden');
+                _ac.value = exam.attemptsCount || 3;
+              } else {
+                _ac.classList.add('hidden');
+              }
+            }
+          }
+          if (exam.recordScore) setBtnGroupValue('examRecordScore', exam.recordScore);
+          if (exam.insufficientQuestions) setBtnGroupValue('examInsufficient', exam.insufficientQuestions);
+          if (exam.screenSwitchPolicy) {
+            setBtnGroupValue('examScreenSwitch', exam.screenSwitchPolicy);
+            var _sc = document.getElementById('examScreenSwitchCustom');
+            if (_sc) {
+              if (exam.screenSwitchPolicy === 'custom') {
+                _sc.classList.remove('hidden');
+                _sc.value = exam.screenSwitchCount || 3;
+              } else {
+                _sc.classList.add('hidden');
+              }
+            }
+          }
+          var _sq = document.getElementById('examShuffleQuestions'); if (_sq) _sq.checked = !!exam.shuffleQuestions;
+          var _so = document.getElementById('examShuffleOptions'); if (_so) _so.checked = !!exam.shuffleOptions;
+          // 恢复学员查看设置
+          if (exam.showData !== undefined) {
+            var _sd = document.getElementById('examShowData'); if (_sd) _sd.checked = !!exam.showData;
+            var _dl = document.getElementById('examDataLabel'); if (_dl) _dl.textContent = exam.showData ? '显示' : '隐藏';
+            var _dt = document.getElementById('examDataToggle');
+            var _dd = document.getElementById('examDataDot');
+            if (_dt) {
+              if (exam.showData) {
+                _dt.classList.remove('bg-slate-300');
+                _dt.classList.add('bg-orange-500');
+                if (_dd) _dd.style.left = '20px';
+              } else {
+                _dt.classList.remove('bg-orange-500');
+                _dt.classList.add('bg-slate-300');
+                if (_dd) _dd.style.left = '2px';
+              }
+            }
+          }
+          if (exam.answerDetail) setBtnGroupValue('examAnswerDetail', exam.answerDetail);
+          if (exam.viewQuestions) setBtnGroupValue('examViewQuestions', exam.viewQuestions);
+          if (exam.showCorrect) setBtnGroupValue('examShowCorrect', exam.showCorrect);
+          if (exam.showAnalysis) setBtnGroupValue('examShowAnalysis', exam.showAnalysis);
+          if (exam.viewRank) setBtnGroupValue('examViewRank', exam.viewRank);
+          // 恢复奖励设置
+          if (exam.creditPolicy) setBtnGroupValue('examCredit', exam.creditPolicy);
           // 恢复关联试卷
           if (exam.paperId) {
             document.getElementById('examPaperId').value = exam.paperId;
           }
-          // 恢复参考学员
+          // 恢复指派学员
           const hasRestricted = exam.allowedUsers && Array.isArray(exam.allowedUsers) && exam.allowedUsers.length > 0;
           document.getElementById('examAccessType').value = hasRestricted ? 'restricted' : 'public';
           onExamAccessTypeChange();
@@ -9280,7 +9829,6 @@
             renderExamAllowedUsers();
           }
         }
-        renderSelectedQuestions();
       } catch (e) { console.error(e); }
     }
 
@@ -9315,8 +9863,20 @@
       renderSelectedQuestions();
     }
 
+    let pendingExamStatus = 'draft';
+
+    function saveExamAsDraft() {
+      pendingExamStatus = 'draft';
+      saveExam(null);
+    }
+
+    function saveExamAsPublished() {
+      pendingExamStatus = 'published';
+      saveExam(null);
+    }
+
     async function saveExam(e) {
-      e.preventDefault();
+      if (e) e.preventDefault();
       const paperId = document.getElementById('examPaperId').value;
       const totalScore = parseInt(document.getElementById('examTotalScore').value) || 0;
       const passingScore = parseInt(document.getElementById('examPassingScore').value) || 0;
@@ -9364,18 +9924,37 @@
       }
       const accessType = document.getElementById('examAccessType').value;
       const allowedUsers = accessType === 'restricted' ? Array.from(examUserPickerTemp) : null;
+      const attemptsPolicy = getBtnGroupValue('examAttempts') || 'unlimited';
+      const screenSwitchPolicy = getBtnGroupValue('examScreenSwitch') || 'unlimited';
       const payload = {
         title: document.getElementById('examTitle').value.trim(),
         description: document.getElementById('examDesc').value.trim(),
         duration: parseInt(document.getElementById('examDuration').value),
-        totalScore: parseInt(document.getElementById('examTotalScore').value),
-        passingScore: parseInt(document.getElementById('examPassingScore').value),
-        status: document.getElementById('examStatus').value,
-        maxAttempts: parseInt(document.getElementById('examMaxAttempts').value) || 0,
-        startTime: document.getElementById('examStartTime').value ? new Date(document.getElementById('examStartTime').value).toISOString() : null,
-        endTime: document.getElementById('examEndTime').value ? new Date(document.getElementById('examEndTime').value).toISOString() : null,
-        shuffleQuestions: document.getElementById('examShuffle').checked,
+        totalScore: totalScore,
+        passingScore: passingScore,
+        status: pendingExamStatus,
+        maxAttempts: (function(){ var _e = document.getElementById('examMaxAttempts'); return _e ? (parseInt(_e.value) || 0) : 0; })(),
+        startTime: startTime ? new Date(startTime).toISOString() : null,
+        endTime: endTime ? new Date(endTime).toISOString() : null,
+        shuffleQuestions: (function(){ var _e = document.getElementById('examShuffleQuestions'); return _e ? _e.checked : false; })(),
+        shuffleOptions: (function(){ var _e = document.getElementById('examShuffleOptions'); return _e ? _e.checked : false; })(),
         showAnswer: document.getElementById('examShowAnswer').checked,
+        // 考试设置
+        attemptsPolicy: attemptsPolicy,
+        attemptsCount: (function(){ var _e = document.getElementById('examAttemptsCustom'); return attemptsPolicy === 'custom' && _e ? (parseInt(_e.value) || 3) : null; })(),
+        recordScore: getBtnGroupValue('examRecordScore') || 'highest',
+        insufficientQuestions: getBtnGroupValue('examInsufficient') || 'allow',
+        screenSwitchPolicy: screenSwitchPolicy,
+        screenSwitchCount: (function(){ var _e = document.getElementById('examScreenSwitchCustom'); return screenSwitchPolicy === 'custom' && _e ? (parseInt(_e.value) || 3) : null; })(),
+        // 学员查看设置
+        showData: (function(){ var _e = document.getElementById('examShowData'); return _e ? _e.checked : true; })(),
+        answerDetail: getBtnGroupValue('examAnswerDetail') || 'after_grade',
+        viewQuestions: getBtnGroupValue('examViewQuestions') || 'all',
+        showCorrect: getBtnGroupValue('examShowCorrect') || 'show',
+        showAnalysis: getBtnGroupValue('examShowAnalysis') || 'show',
+        viewRank: getBtnGroupValue('examViewRank') || 'after_submit',
+        // 奖励设置
+        creditPolicy: getBtnGroupValue('examCredit') || 'none',
         questions: selectedExamQuestions,
         paperId: paperId || null,
         paperName: paperName,
@@ -9398,9 +9977,14 @@
         }
         const data = await res.json();
         if (data.success) {
+          const newExamId = data.exam ? data.exam.id : editingExamId;
           closeExamModal();
           loadExamMgmtList();
           toast(editingExamId ? '考试已更新' : '考试创建成功');
+          // 创建成功后自动打开编辑器选题目
+          if (!editingExamId && newExamId) {
+            setTimeout(function() { openExamEditor(newExamId); }, 500);
+          }
         } else {
           toast(data.error || '保存失败', 'error');
         }
@@ -9474,7 +10058,7 @@
       modal.classList.remove('flex');
     }
 
-    function editExam(id) { openExamEditor(id); }
+    function editExam(id) { openExamModal(id); }
 
     async function deleteExam(id) {
       if (!confirm('确定要删除这个考试吗?相关成绩记录也将被清除。')) return;
@@ -10077,61 +10661,75 @@
       const paper = papersAllData.find(p => p.id === id);
       if (!paper) { toast('试卷不存在', 'error'); return; }
       editingPaperId = id;
-      // 从API加载题目详情
-      fetch('/api/questions?pageSize=9999')
+
+      // 先用本地数据构建 paperQuestions（不依赖 API）
+      paperQuestions = (paper.questions || []).map((pq, idx) => ({
+        questionId: pq.questionId,
+        score: pq.score || 5,
+        partialScore: pq.partialScore || 0,
+        order: idx,
+        content: pq.content || '(题目内容)',
+        type: pq.type || 'single'
+      }));
+
+      // 隐藏试卷列表，显示编辑页
+      document.getElementById('paperListView').classList.add('hidden');
+      const editorEl = document.getElementById('paperEditorView');
+      if (!editorEl) {
+        createPaperEditorView();
+      }
+      document.getElementById('paperEditorView').classList.remove('hidden');
+
+      // 填充编辑页数据
+      document.getElementById('peTitle').textContent = paper.name;
+      // 分类名称：优先用 categoryName，如果是纯数字则从分类数据中查找
+      let catName = paper.categoryName || paper.category || '';
+      if (/^\d+$/.test(catName) || !catName) {
+        const cat = (data.categories || []).find(c => String(c.id) === String(paper.category || paper.categoryId));
+        catName = cat ? cat.name : (paper.categoryName || paper.category || '未分类');
+      }
+      document.getElementById('peCategory').textContent = catName || '未分类';
+      document.getElementById('peName').value = paper.name || '';
+      // 填充分类下拉
+      fillCategorySelect('peCategoryInput');
+      const catId = paper.categoryId || paper.category || '';
+      setTimeout(() => {
+        const sel = document.getElementById('peCategoryInput');
+        if (sel) sel.value = catId;
+      }, 50);
+      document.getElementById('peType').value = paper.type || 'fixed';
+      document.getElementById('peDescInput').value = paper.description || '';
+      document.getElementById('peDuration').value = paper.duration || 60;
+      document.getElementById('pePassScore').value = paper.passScore || 60;
+      renderPaperEditorQuestions();
+
+      // 异步加载题库数据来补充题目详情（不影响编辑页显示）
+      fetch(API + '/questions?pageSize=9999')
         .then(res => res.json())
         .then(result => {
           const allQuestions = result.data || [];
-          paperQuestions = (paper.questions || []).map((pq, idx) => {
+          // 用完整信息更新 paperQuestions 的 title/content/type
+          const updated = paperQuestions.map(pq => {
             const q = allQuestions.find(qq => qq.id === pq.questionId);
-            return {
-              questionId: pq.questionId,
-              score: pq.score || 5,
-              partialScore: pq.partialScore || 0,
-              order: idx,
-              content: q ? (q.title || q.content) : '(题目未找到)',
-              type: q ? q.type : 'single'
-            };
+            return q ? { ...pq, content: q.title || q.content || pq.content, type: q.type || pq.type } : pq;
           });
-          // 隐藏试卷列表，显示编辑页
-          document.getElementById('paperListView').classList.add('hidden');
-          const editorEl = document.getElementById('paperEditorView');
-          if (!editorEl) {
-            createPaperEditorView();
+          // 检查是否有变化再重新渲染
+          const changed = updated.some((u, i) =>
+            u.content !== paperQuestions[i].content || u.type !== paperQuestions[i].type
+          );
+          if (changed) {
+            paperQuestions = updated;
+            renderPaperEditorQuestions();
           }
-          document.getElementById('paperEditorView').classList.remove('hidden');
-          // 填充编辑页数据
-          document.getElementById('peTitle').textContent = paper.name;
-          // 分类名称：优先用 categoryName，如果是纯数字则从分类数据中查找
-          let catName = paper.categoryName || paper.category || '';
-          if (/^\d+$/.test(catName) || !catName) {
-            const cat = (data.categories || []).find(c => String(c.id) === String(paper.category || paper.categoryId));
-            catName = cat ? cat.name : (paper.categoryName || paper.category || '未分类');
-          }
-          document.getElementById('peCategory').textContent = catName || '未分类';
-          document.getElementById('peName').value = paper.name || '';
-          // 填充分类下拉
-          fillCategorySelect('peCategoryInput');
-          const catId = paper.categoryId || paper.category || '';
-          setTimeout(() => {
-            const sel = document.getElementById('peCategoryInput');
-            if (sel) sel.value = catId;
-          }, 50);
-          document.getElementById('peType').value = paper.type || 'fixed';
-          document.getElementById('peDescInput').value = paper.description || '';
-          document.getElementById('peDuration').value = paper.duration || 60;
-          document.getElementById('pePassScore').value = paper.passScore || 60;
-          renderPaperEditorQuestions();
         })
         .catch(err => {
-          console.error('加载题库数据失败:', err);
-          toast('加载题库数据失败', 'error');
+          console.warn('[试卷] 题库详情补充加载失败（非致命）:', err);
         });
     }
 
     // 创建试卷编辑页 DOM
     function createPaperEditorView() {
-      const container = document.getElementById('exams-paper-mgmt');
+      const container = document.getElementById('tab-paper-mgmt');
       const div = document.createElement('div');
       div.id = 'paperEditorView';
       div.className = 'hidden';
@@ -10297,8 +10895,8 @@
           <div class="flex items-center gap-3 flex-shrink-0">
             <div class="flex items-center gap-1.5">
               <span class="text-xs text-slate-400">分值</span>
-              <input type="number" value="${q.score}" min="1" max="100" onchange="updatePaperQuestionScore(${i}, this.value)"
-                class="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <input type="number" value="${q.score || ''}" min="0" max="100" onchange="updatePaperQuestionScore(${i}, this.value)"
+                class="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="请输入">
             </div>
             <button type="button" onclick="movePaperQuestion(${i}, -1)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition" title="上移" ${i === 0 ? 'disabled' : ''}>
               <i class="fas fa-chevron-up text-xs"></i>
@@ -10639,7 +11237,7 @@
       }
       
       const uniformScoreEl = document.getElementById('peUniformScore');
-      const defaultScore = uniformScoreEl ? (parseInt(uniformScoreEl.value) || 5) : 5;
+      const defaultScore = uniformScoreEl ? (parseInt(uniformScoreEl.value) || 0) : 0;
       
       paperQpAllQuestions.forEach(q => {
         if (paperQpSelectedIds.has(q.id)) {
@@ -10730,7 +11328,7 @@
       // 读取当前各题型的分值（从已有题目中取第一个该类型的分值）
       const currentScores = {};
       paperQuestions.forEach(q => {
-        if (!(q.type in currentScores)) currentScores[q.type] = q.score || 5;
+        if (!(q.type in currentScores)) currentScores[q.type] = q.score || 0;
       });
       ssTypeScores = { ...currentScores };
 
@@ -10741,7 +11339,7 @@
       const container = document.getElementById('ssTypeList');
       container.innerHTML = Object.keys(typeNames).map(type => {
         const count = typeCounts[type] || 0;
-        const score = ssTypeScores[type] || 5;
+        const score = ssTypeScores[type] || 0;
         const total = (count * score).toFixed(1);
         
         let extraField = '';
@@ -10752,20 +11350,8 @@
               class="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
               placeholder="请输入">
           `;
-        } else if (type === 'fill') {
-          extraField = `
-            <select class="px-2 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-              <option>每空分值</option>
-            </select>
-          `;
-        } else if (type === 'essay') {
-          extraField = `
-            <select class="px-2 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-              <option>每词分值</option>
-            </select>
-          `;
         }
-        
+
         return `
           <div class="flex items-center gap-3 py-4 border-b border-slate-100">
             <div class="w-24 text-sm font-semibold text-slate-700">[${typeNames[type]}]</div>
@@ -10773,7 +11359,7 @@
               <span class="font-medium">${count}</span>
               <span>题 ×</span>
             </div>
-            ${type === 'fill' || type === 'essay' ? extraField : ''}
+            <span class="text-sm text-slate-500 ml-2">每题分值：</span>
             <input type="number" value="${count > 0 ? score : ''}" min="0" max="100" step="0.5"
               onchange="onSsTypeScoreChange('${type}', this.value)"
               class="w-24 px-2 py-1.5 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -10820,11 +11406,12 @@
           <td class="py-3 text-center">
             <span class="text-xs text-slate-500">${typeNames[q.type] || q.type}</span>
           </td>
-          <td class="py-3 text-center text-sm text-slate-600">${q.score || 5}</td>
+          <td class="py-3 text-center text-sm text-slate-600">${q.score || '-'}</td>
           <td class="py-3 text-center">
-            <input type="number" value="${q.score || 5}" min="0" max="100" step="0.5"
+            <input type="number" value="${q.score || ''}" min="0" max="100" step="0.5"
               data-idx="${i}" onchange="onSsQuestionScoreChange(${i}, this.value)"
-              class="w-20 px-2 py-1 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              class="w-20 px-2 py-1 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="请输入">
           </td>
           <td class="py-3 text-center">
             ${isMultiple ? `

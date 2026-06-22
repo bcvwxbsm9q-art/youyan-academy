@@ -2253,12 +2253,62 @@ const BADGES = [
 
             const department = document.getElementById('edit-department').value.trim();
             const position = document.getElementById('edit-position').value.trim();
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
             
-            // 处理头像
+            // 处理头像上传
             let avatarUrl = currentUser.avatar || '';
             if (selectedAvatarFile) {
-                // 将图片转换为 base64
-                avatarUrl = await fileToBase64(selectedAvatarFile);
+                // 上传头像到服务器
+                const formData = new FormData();
+                formData.append('avatar', selectedAvatarFile);
+                
+                try {
+                    const response = await fetch('/api/auth/avatar', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        avatarUrl = result.data.avatar;
+                    } else {
+                        showToast('头像上传失败', 'error');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('头像上传失败:', error);
+                    showToast('头像上传失败', 'error');
+                    return;
+                }
+            }
+            
+            // 更新个人资料到服务器
+            try {
+                const response = await fetch('/api/auth/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        realName: name,
+                        department: department,
+                        position: position
+                    })
+                });
+                
+                const result = await response.json();
+                if (!result.success) {
+                    showToast('保存失败', 'error');
+                    return;
+                }
+            } catch (error) {
+                console.error('保存失败:', error);
+                showToast('保存失败', 'error');
+                return;
             }
             
             // 更新 currentUser

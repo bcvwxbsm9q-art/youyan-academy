@@ -9,10 +9,11 @@
       "realName": "许志坚",
       "department": "人力资源部",
       "role": "admin",
-      "avatar": "",
+      "avatar": "/uploads/avatars/1782044069160-440027461.jpg",
       "createdAt": "2026/6/8 16:59:34",
       "lastLogin": "2026/6/21 19:52:39",
-      "status": "active"
+      "status": "active",
+      "position": ""
     },
     {
       "id": 1781087021554,
@@ -34,27 +35,29 @@
     "completedCourses": [
       1781087462994,
       1781065453648,
-      1781065281803
+      1781065281803,
+      1781080411545
     ],
     "videoProgress": {
       "1781087462994_0": 100,
       "1781065453648_0": 100,
-      "1781087427858_0": 4,
+      "1781087427858_0": 5,
       "1781080411545_0": 100,
-      "1781080411545_1": 48,
+      "1781080411545_1": 100,
       "1781064630171_0": 52,
       "1781506198054_0": 17,
       "1781065281803_0": 3,
       "1781065485355_0": 1
     },
-    "lastStudyTime": "2026-06-20T13:08:45.629Z",
+    "lastStudyTime": "2026-06-22T06:49:56.810Z",
     "studyDates": [
       "2026-06-14",
       "2026-06-15",
       "2026-06-17",
-      "2026-06-20"
+      "2026-06-20",
+      "2026-06-22"
     ],
-    "totalSeconds": 212,
+    "totalSeconds": 239,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -352,6 +355,69 @@
         "duration": 2,
         "timestamp": "2026-06-20T13:08:45.629Z",
         "date": "2026-06-20"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-22T03:40:23.019Z",
+        "date": "2026-06-22"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 3,
+        "timestamp": "2026-06-22T03:40:28.916Z",
+        "date": "2026-06-22"
+      },
+      {
+        "courseId": 1781087427858,
+        "courseTitle": "Unity UI Draw Call基础指南",
+        "videoIndex": 0,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 5,
+        "timestamp": "2026-06-22T03:40:39.185Z",
+        "date": "2026-06-22"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 3,
+        "timestamp": "2026-06-22T06:49:35.534Z",
+        "date": "2026-06-22"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 12,
+        "timestamp": "2026-06-22T06:49:49.992Z",
+        "date": "2026-06-22"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-22T06:49:54.041Z",
+        "date": "2026-06-22"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 2,
+        "timestamp": "2026-06-22T06:49:56.810Z",
+        "date": "2026-06-22"
       }
     ],
     "shares": 1,
@@ -797,7 +863,7 @@
       ],
       "attachments": [],
       "duration": 2415,
-      "views": 15,
+      "views": 16,
       "rating": 0,
       "id": 1781065453648,
       "createdAt": "2026/6/10 12:24:13"
@@ -884,7 +950,7 @@
       ],
       "attachments": [],
       "duration": 2054,
-      "views": 31,
+      "views": 34,
       "rating": 3,
       "id": 1781080411545,
       "createdAt": "2026/6/10 16:33:31",
@@ -909,7 +975,7 @@
       ],
       "attachments": [],
       "duration": 1044,
-      "views": 13,
+      "views": 14,
       "rating": 5,
       "id": 1781087427858,
       "createdAt": "2026/6/10 18:30:27",
@@ -994,7 +1060,7 @@
       "signinEnabled": true,
       "signinCode": "4099",
       "linkedSurveyId": 1781170180951,
-      "linkedExamId": 1781401477291
+      "linkedExamId": null
     },
     {
       "project": "鸿雁计划",
@@ -1090,7 +1156,7 @@
   },
   "video_pos_1780909174403_1781080411545_0": {
     "position": 1009,
-    "savedAt": "2026-06-17T01:55:35.844Z"
+    "savedAt": "2026-06-22T06:49:54.492Z"
   },
   "course_interaction_1781080411545": {
     "likes": 2,
@@ -1106,8 +1172,8 @@
     "ratingCount": 2
   },
   "video_pos_1780909174403_1781080411545_1": {
-    "position": 505,
-    "savedAt": "2026-06-15T07:18:25.990Z"
+    "position": 1043,
+    "savedAt": "2026-06-22T06:50:00.814Z"
   },
   "course_interaction_1781077900894": {
     "likes": 0,
@@ -1134,7 +1200,7 @@
   },
   "video_pos_1780909174403_1781065453648_0": {
     "position": 2415,
-    "savedAt": "2026-06-20T11:30:27.753Z"
+    "savedAt": "2026-06-22T06:49:22.524Z"
   },
   "course_interaction_1781065453648": {
     "likes": 1,
@@ -1439,6 +1505,37 @@
       "read": true,
       "createdAt": "2026-06-12T02:07:01.473Z",
       "readAt": "2026-06-12T02:08:05.838Z"
+    },
+    {
+      "id": 1782051919021,
+      "userId": 1781087021554,
+      "title": "新考试安排",
+      "content": "您有一场新考试「123」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782051919011,
+      "read": false,
+      "createdAt": "2026-06-21T14:25:19.020Z"
+    },
+    {
+      "id": 1782109662304,
+      "userId": 1780909174403,
+      "title": "新考试安排",
+      "content": "您有一场新考试「123」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782109662294,
+      "read": true,
+      "createdAt": "2026-06-22T06:27:42.304Z",
+      "readAt": "2026-06-22T06:44:06.978Z"
+    },
+    {
+      "id": 1782109662305,
+      "userId": 1781087021554,
+      "title": "新考试安排",
+      "content": "您有一场新考试「123」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782109662294,
+      "read": false,
+      "createdAt": "2026-06-22T06:27:42.304Z"
     }
   ],
   "notification_reads": [
@@ -1814,11 +1911,271 @@
       "id": 1781515331437,
       "createdAt": "2026/6/15 17:22:11",
       "updatedAt": "2026/6/15 17:22:11"
+    },
+    {
+      "type": "single",
+      "title": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "content": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "options": [
+        "计算Mesh的每个顶点的位置信息",
+        "计算Local的每个顶点的位置信息"
+      ],
+      "answer": "A",
+      "explanation": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "analysis": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 0,
+      "id": 1782110426420,
+      "createdAt": "2026/6/22 14:40:26",
+      "updatedAt": "2026/6/22 14:40:26"
+    },
+    {
+      "type": "single",
+      "title": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "content": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "options": [
+        "简单粒子",
+        "多元粒子",
+        "高级粒子"
+      ],
+      "answer": "A",
+      "explanation": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "analysis": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 0,
+      "id": 1782110426423,
+      "createdAt": "2026/6/22 14:40:26",
+      "updatedAt": "2026/6/22 14:40:26"
+    },
+    {
+      "type": "multiple",
+      "title": "使用简单粒子所带来的问题有哪些？",
+      "content": "使用简单粒子所带来的问题有哪些？",
+      "options": [
+        "CG需要支持该脚本",
+        "项目特效优化框架需要支持此脚本",
+        "广告板效果需要独立的材质，防止合批导致效果错误",
+        "美术需要适应此脚本，制作上更加繁琐等等"
+      ],
+      "answer": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "explanation": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
+      "analysis": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 5,
+      "bankId": 0,
+      "id": 1782110426425,
+      "createdAt": "2026/6/22 14:40:26",
+      "updatedAt": "2026/6/22 14:40:26"
+    },
+    {
+      "type": "single",
+      "title": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "content": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "options": [
+        "计算Mesh的每个顶点的位置信息",
+        "计算Local的每个顶点的位置信息"
+      ],
+      "answer": "A",
+      "explanation": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "analysis": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 0,
+      "id": 1782110435798,
+      "createdAt": "2026/6/22 14:40:35",
+      "updatedAt": "2026/6/22 14:40:35"
+    },
+    {
+      "type": "single",
+      "title": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "content": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "options": [
+        "简单粒子",
+        "多元粒子",
+        "高级粒子"
+      ],
+      "answer": "A",
+      "explanation": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "analysis": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 0,
+      "id": 1782110435800,
+      "createdAt": "2026/6/22 14:40:35",
+      "updatedAt": "2026/6/22 14:40:35"
+    },
+    {
+      "type": "multiple",
+      "title": "使用简单粒子所带来的问题有哪些？",
+      "content": "使用简单粒子所带来的问题有哪些？",
+      "options": [
+        "CG需要支持该脚本",
+        "项目特效优化框架需要支持此脚本",
+        "广告板效果需要独立的材质，防止合批导致效果错误",
+        "美术需要适应此脚本，制作上更加繁琐等等"
+      ],
+      "answer": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "explanation": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
+      "analysis": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 5,
+      "bankId": 0,
+      "id": 1782110435802,
+      "createdAt": "2026/6/22 14:40:35",
+      "updatedAt": "2026/6/22 14:40:35"
+    },
+    {
+      "type": "single",
+      "title": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "content": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "options": [
+        "计算Mesh的每个顶点的位置信息",
+        "计算Local的每个顶点的位置信息"
+      ],
+      "answer": "A",
+      "explanation": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "analysis": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 0,
+      "id": 1782110720241,
+      "createdAt": "2026/6/22 14:45:20",
+      "updatedAt": "2026/6/22 14:45:20"
+    },
+    {
+      "type": "single",
+      "title": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "content": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "options": [
+        "简单粒子",
+        "多元粒子",
+        "高级粒子"
+      ],
+      "answer": "A",
+      "explanation": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "analysis": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 0,
+      "id": 1782110720243,
+      "createdAt": "2026/6/22 14:45:20",
+      "updatedAt": "2026/6/22 14:45:20"
+    },
+    {
+      "type": "multiple",
+      "title": "使用简单粒子所带来的问题有哪些？",
+      "content": "使用简单粒子所带来的问题有哪些？",
+      "options": [
+        "CG需要支持该脚本",
+        "项目特效优化框架需要支持此脚本",
+        "广告板效果需要独立的材质，防止合批导致效果错误",
+        "美术需要适应此脚本，制作上更加繁琐等等"
+      ],
+      "answer": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "explanation": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
+      "analysis": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 5,
+      "bankId": 0,
+      "id": 1782110720245,
+      "createdAt": "2026/6/22 14:45:20",
+      "updatedAt": "2026/6/22 14:45:20"
+    },
+    {
+      "type": "single",
+      "title": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "content": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "options": [
+        "计算Mesh的每个顶点的位置信息",
+        "计算Local的每个顶点的位置信息"
+      ],
+      "answer": "A",
+      "explanation": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "analysis": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 1782111517453,
+      "id": 1782111523712,
+      "createdAt": "2026/6/22 14:58:43",
+      "updatedAt": "2026/6/22 14:58:43"
+    },
+    {
+      "type": "single",
+      "title": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "content": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "options": [
+        "简单粒子",
+        "多元粒子",
+        "高级粒子"
+      ],
+      "answer": "A",
+      "explanation": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "analysis": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 1782111517453,
+      "id": 1782111523714,
+      "createdAt": "2026/6/22 14:58:43",
+      "updatedAt": "2026/6/22 14:58:43"
+    },
+    {
+      "type": "multiple",
+      "title": "使用简单粒子所带来的问题有哪些？",
+      "content": "使用简单粒子所带来的问题有哪些？",
+      "options": [
+        "CG需要支持该脚本",
+        "项目特效优化框架需要支持此脚本",
+        "广告板效果需要独立的材质，防止合批导致效果错误",
+        "美术需要适应此脚本，制作上更加繁琐等等"
+      ],
+      "answer": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "explanation": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
+      "analysis": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 5,
+      "bankId": 1782111517453,
+      "id": 1782111523716,
+      "createdAt": "2026/6/22 14:58:43",
+      "updatedAt": "2026/6/22 14:58:43"
     }
   ],
   "exams": [
     {
-      "id": 1781964119297,
+      "id": 1782109662294,
       "title": "123",
       "description": "",
       "duration": 60,
@@ -1828,30 +2185,15 @@
       "shuffleQuestions": true,
       "showAnswer": true,
       "status": "published",
-      "questions": [
-        {
-          "questionId": 1781235958849,
-          "score": 20,
-          "order": 0,
-          "content": "(题目未找到)",
-          "type": "single"
-        },
-        {
-          "questionId": 1781235958851,
-          "score": 10,
-          "order": 1,
-          "content": "(题目未找到)",
-          "type": "single"
-        }
-      ],
-      "startTime": "2026-06-20T14:01:00.000Z",
-      "endTime": "2026-06-21T14:01:00.000Z",
+      "questions": [],
+      "startTime": "2026-06-22T06:27:00.000Z",
+      "endTime": "2026-06-22T08:27:00.000Z",
       "maxAttempts": 0,
-      "paperId": "paper_1781514013324",
+      "paperId": "paper_1782101623449",
       "paperName": "2026企业文化与制度",
       "allowedUsers": null,
-      "createdAt": "2026-06-20T14:01:59.297Z",
-      "updatedAt": "2026-06-20T14:01:59.297Z"
+      "createdAt": "2026-06-22T06:27:42.294Z",
+      "updatedAt": "2026-06-22T06:27:42.294Z"
     }
   ],
   "exam_attempts": [],
@@ -2046,8 +2388,8 @@
     }
   ],
   "video_pos_1780909174403_1781087427858_0": {
-    "position": 50,
-    "savedAt": "2026-06-20T10:38:56.927Z"
+    "position": 54,
+    "savedAt": "2026-06-22T03:40:39.144Z"
   },
   "video_pos_1781087021554_1781080411545_1": {
     "position": 4,
@@ -2073,6 +2415,16 @@
       "createdBy": "管理员",
       "createdAt": "2026/6/12 11:45:58",
       "updatedAt": "2026/6/12 11:45:58"
+    },
+    {
+      "id": 1782111517453,
+      "name": "粒子系统",
+      "categoryId": 1780974142620,
+      "description": "",
+      "status": "active",
+      "createdBy": "管理员",
+      "createdAt": "2026/6/22 14:58:37",
+      "updatedAt": "2026/6/22 14:58:37"
     }
   ],
   "index_featured_courses": [
@@ -3105,5 +3457,48 @@
     "shares": 1,
     "ratings": 0,
     "likes": 0
-  }
+  },
+  "papers": [
+    {
+      "id": "paper_1782110402343",
+      "name": "粒子系统",
+      "category": "1780974099732",
+      "categoryId": "1780974099732",
+      "categoryName": "美术",
+      "description": "",
+      "duration": 60,
+      "passScore": 60,
+      "maxAttempts": 0,
+      "shuffle": false,
+      "showAnswer": true,
+      "uniformScore": 5,
+      "questions": [
+        {
+          "questionId": 1782111366476,
+          "score": 3,
+          "partialScore": 0,
+          "order": 0
+        },
+        {
+          "questionId": 1782111366478,
+          "score": 3,
+          "partialScore": 0,
+          "order": 1
+        },
+        {
+          "questionId": 1782111366480,
+          "score": 5,
+          "partialScore": 0,
+          "order": 2
+        }
+      ],
+      "status": "published",
+      "type": "random",
+      "createdAt": "2026-06-22T06:40:02.344Z",
+      "updatedAt": "2026-06-22T06:56:08.304Z",
+      "creator": "当前用户",
+      "createdBy": "当前用户",
+      "totalScore": 11
+    }
+  ]
 }

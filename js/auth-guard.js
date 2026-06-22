@@ -199,11 +199,10 @@
                         serverUser.real_name = serverUser.realName = serverUser.username || '用户';
                     }
 
-                    // 合并本地编辑的前端字段（仅头像、部门、职位、手机）
-                    // 注意：姓名以服务端为准，不从 localProfile 合并
+                    // 合并本地编辑的前端字段（部门、职位、手机）
+                    // 注意：头像、姓名以服务端为准，不从 localProfile 合并
                     const localProfile = getLocalProfile(serverUser.id);
                     if (localProfile) {
-                        if (localProfile.avatar) serverUser.avatar = localProfile.avatar;
                         if (localProfile.department) serverUser.department = localProfile.department;
                         if (localProfile.position) serverUser.position = localProfile.position;
                         if (localProfile.phone) serverUser.phone = localProfile.phone;

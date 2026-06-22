@@ -2806,6 +2806,56 @@ app.delete('/api/categories/:id', (req, res) => {
 });
 
 // ============================================================
+// 题库管理 API
+// ============================================================
+
+// GET /api/questions - 获取题目列表（支持分页和筛选）
+app.get('/api/questions', (req, res) => {
+  const data = readData();
+  let questions = data.questions || [];
+  
+  // 筛选条件
+  const { pageSize, page, bankId, type, difficulty, keyword } = req.query;
+  
+  // 按题库筛选
+  if (bankId) {
+    questions = questions.filter(q => String(q.bankId) === String(bankId));
+  }
+  
+  // 按题型筛选
+  if (type) {
+    questions = questions.filter(q => q.type === type);
+  }
+  
+  // 按难度筛选
+  if (difficulty) {
+    questions = questions.filter(q => q.difficulty === difficulty);
+  }
+  
+  // 按关键词搜索
+  if (keyword) {
+    const kw = keyword.toLowerCase();
+    questions = questions.filter(q => 
+      (q.title || '').toLowerCase().includes(kw) ||
+      (q.content || '').toLowerCase().includes(kw)
+    );
+  }
+  
+  // 分页
+  const limit = parseInt(pageSize) || 100;
+  const offset = (parseInt(page) - 1) * limit || 0;
+  const paginatedQuestions = questions.slice(offset, offset + limit);
+  
+  res.json({ 
+    success: true, 
+    data: paginatedQuestions,
+    total: questions.length,
+    page: parseInt(page) || 1,
+    pageSize: limit
+  });
+});
+
+// ============================================================
 // 数据统计 API
 // ============================================================
 
@@ -3034,6 +3084,122 @@ app.get('/:page', (req, res) => {
       res.status(404).send(`页面 "${page}" 未找到`);
     }
   });
+});
+
+// ============================================================
+// 用户个人资料 API
+// ============================================================
+
+// POST /api/auth/avatar - 上传/更换头像（自动删除旧头像文件）
+app.post('/api/auth/avatar', (req, res) => {
+  // 创建专门的头像上传配置
+  const avatarStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      const targetDir = path.join(uploadsDir, 'avatars');
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+      cb(null, targetDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, uniqueSuffix + ext);
+    }
+  });
+  
+  const avatarUpload = multer({
+    storage: avatarStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('只允许上传图片文件'), false);
+      }
+    }
+  }).single('avatar');
+  
+  avatarUpload(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
+    
+    const currentUser = getCurrentUser(req);
+    if (!currentUser) {
+      return res.status(401).json({ success: false, error: '未登录' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: '没有文件上传' });
+    }
+
+    const data = readData();
+    if (!data.registered_users) data.registered_users = [];
+    const userIndex = data.registered_users.findIndex(u => u.id === currentUser.id);
+    if (userIndex === -1) {
+      return res.status(404).json({ success: false, error: '用户不存在' });
+    }
+
+    const user = data.registered_users[userIndex];
+    const oldAvatar = user.avatar || '';
+
+    // 删除旧头像文件（仅当是服务器本地文件时）
+    if (oldAvatar && oldAvatar.startsWith('/uploads/')) {
+      const oldPath = path.join(__dirname, oldAvatar);
+      if (fs.existsSync(oldPath)) {
+        try {
+          fs.unlinkSync(oldPath);
+          console.log(`  已删除旧头像: ${oldAvatar}`);
+        } catch (e) {
+          console.warn('  删除旧头像失败:', e.message);
+        }
+      }
+    }
+
+    // 更新头像 URL
+    const newAvatarUrl = `/uploads/avatars/${req.file.filename}`;
+    user.avatar = newAvatarUrl;
+
+    if (writeData(data)) {
+      const userInfo = { ...user };
+      delete userInfo.passwordHash;
+      res.json({ success: true, data: { avatar: newAvatarUrl, user: userInfo } });
+    } else {
+      res.status(500).json({ success: false, error: '保存失败' });
+    }
+  });
+});
+
+// PUT /api/auth/profile - 更新当前用户个人资料
+app.put('/api/auth/profile', (req, res) => {
+  const currentUser = getCurrentUser(req);
+  if (!currentUser) {
+    return res.status(401).json({ success: false, error: '未登录' });
+  }
+
+  const data = readData();
+  if (!data.registered_users) data.registered_users = [];
+  const userIndex = data.registered_users.findIndex(u => u.id === currentUser.id);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, error: '用户不存在' });
+  }
+
+  const user = data.registered_users[userIndex];
+  const { realName, department, position, phone, email } = req.body;
+  if (realName !== undefined) user.realName = realName;
+  if (department !== undefined) user.department = department;
+  if (position !== undefined) user.position = position;
+  if (phone !== undefined) user.phone = phone;
+  if (email !== undefined) user.email = email;
+
+  if (writeData(data)) {
+    const userInfo = { ...user };
+    delete userInfo.passwordHash;
+    res.json({ success: true, data: { user: userInfo } });
+  } else {
+    res.status(500).json({ success: false, error: '保存失败' });
+  }
 });
 
 // ============================================================

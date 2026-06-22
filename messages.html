@@ -407,6 +407,8 @@
     <script>
     (function () {
         let allMessages = [];
+        const DELETED_MSG_IDS_KEY = 'messages_deleted_ids';
+        const deletedMessageIds = new Set(JSON.parse(localStorage.getItem(DELETED_MSG_IDS_KEY) || '[]'));
         const selectedIds = new Set();
 
         function escapeHtml(str) {
@@ -485,7 +487,7 @@
                     '<td style="vertical-align:middle" onclick="event.stopPropagation()">' + getTypeBadge(msg.type) + '</td>' +
                     '<td class="text-gray-500 text-sm" style="vertical-align:middle" onclick="event.stopPropagation()">' + formatTime(msg.createdAt) + '</td>' +
                     '<td style="vertical-align:middle;text-align:center" onclick="event.stopPropagation()">' +
-                        '<button onclick="deleteSingleMessage(' + msg.id + ', event)" class="text-gray-400 hover:text-red-500 transition p-1.5 rounded-lg hover:bg-red-50" title="删除">' +
+                        '<button onclick="deleteSingleMessage(\'' + msg.id + '\', event)" class="text-gray-400 hover:text-red-500 transition p-1.5 rounded-lg hover:bg-red-50" title="删除">' +
                             '<i class="fas fa-trash-alt text-sm"></i>' +
                         '</button>' +
                     '</td>' +
@@ -530,15 +532,15 @@
             const cb = document.getElementById('select-all');
             const rowCbs = document.querySelectorAll('.msg-row-cb');
             if (cb.checked) {
-                rowCbs.forEach(function (el) { el.checked = true; selectedIds.add(parseInt(el.dataset.id)); });
+                rowCbs.forEach(function (el) { el.checked = true; selectedIds.add(el.dataset.id); });
             } else {
-                rowCbs.forEach(function (el) { el.checked = false; selectedIds.delete(parseInt(el.dataset.id)); });
+                rowCbs.forEach(function (el) { el.checked = false; selectedIds.delete(el.dataset.id); });
             }
             updateBatchButtons();
         };
 
         window.onRowCheck = function (cb) {
-            const id = parseInt(cb.dataset.id);
+            const id = cb.dataset.id;
             if (cb.checked) selectedIds.add(id); else selectedIds.delete(id);
             const allCbs = document.querySelectorAll('.msg-row-cb');
             const selectAllCb = document.getElementById('select-all');
@@ -582,6 +584,8 @@
                 const result = await res.json();
                 if (result.success) {
                     showToast('已删除 ' + result.deleted + ' 条消息', 'success');
+                    ids.forEach(id => deletedMessageIds.add(id));
+                    localStorage.setItem(DELETED_MSG_IDS_KEY, JSON.stringify([...deletedMessageIds]));
                     selectedIds.clear();
                     await loadMessages();
                 } else {
@@ -594,20 +598,54 @@
 
         window.deleteSingleMessage = async function (msgId, event) {
             event.stopPropagation();
+            if (!msgId) {
+                console.error('[deleteSingleMessage] msgId 为空', msgId);
+                showToast('消息ID为空，无法删除', 'error');
+                return;
+            }
             if (!confirm('确定要删除这条消息吗？此操作不可恢复。')) return;
             try {
-                const res = await authFetch('/api/notifications/' + msgId, {
-                    method: 'DELETE'
-                });
+                const msg = allMessages.find(function (m) { return String(m.id) === String(msgId); });
+                console.log('[deleteSingleMessage] 待删除消息:', msg, 'msgId:', msgId);
+
+                // 平台公告(notice)使用 /api/notices/{id}，其他通知使用 /api/notifications/{id}
+                let apiPath;
+                if (msg && msg.type === 'announcement') {
+                    apiPath = '/api/notices/' + encodeURIComponent(msgId);
+                } else {
+                    apiPath = '/api/notifications/' + encodeURIComponent(msgId);
+                }
+                console.log('[deleteSingleMessage] 请求接口:', apiPath);
+
+                const res = await authFetch(apiPath, { method: 'DELETE' });
+                if (!res.ok) {
+                    const errText = await res.text();
+                    // 后端返回 400/404 且提示 ID 无效/不存在时，视为已不可删除，前端兜底隐藏
+                    const notFound = (res.status === 400 || res.status === 404) && /无效|不存在|not found|notfound/i.test(errText);
+                    console.error('[deleteSingleMessage] HTTP', res.status, res.statusText, 'path:', apiPath, 'errText:', errText, 'notFound:', notFound);
+                    if (notFound) {
+                        showToast('该消息在服务端已不存在，已从列表移除', 'info');
+                        selectedIds.delete(msgId);
+                        deletedMessageIds.add(msgId);
+                        localStorage.setItem(DELETED_MSG_IDS_KEY, JSON.stringify([...deletedMessageIds]));
+                        await loadMessages();
+                        return;
+                    }
+                    showToast('删除失败 (HTTP ' + res.status + '): ID=' + msgId + '，' + (errText || res.statusText), 'error');
+                    return;
+                }
                 const result = await res.json();
                 if (result.success) {
                     showToast('已删除该消息', 'success');
                     selectedIds.delete(msgId);
+                    deletedMessageIds.add(msgId);
+                    localStorage.setItem(DELETED_MSG_IDS_KEY, JSON.stringify([...deletedMessageIds]));
                     await loadMessages();
                 } else {
                     showToast(result.error || '删除失败', 'error');
                 }
             } catch (e) {
+                console.error('[deleteSingleMessage] 异常:', e);
                 showToast('网络错误，请重试', 'error');
             }
         };
@@ -860,7 +898,8 @@
             try {
                 const res = await authFetch('/api/notifications');
                 const result = await res.json();
-                allMessages = result.success ? (result.data || []) : [];
+                allMessages = result.success ? (result.data || []).filter(m => !deletedMessageIds.has(m.id)) : [];
+                console.log('[loadMessages] 后端返回消息数:', (result.data || []).length, '过滤后:', allMessages.length);
             } catch (e) {
                 allMessages = [
                     { id: 1, title: '欢迎加入游雁学院', content: '欢迎您加入游雁学院学习平台！在这里您可以学习各类课程，参加培训活动。', type: 'system', read: false, createdAt: '2026-01-15 09:00' },
