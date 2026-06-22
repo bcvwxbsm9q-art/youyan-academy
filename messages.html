@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -120,7 +120,6 @@
             display: flex; flex-direction: column;
             box-shadow: 0 25px 80px rgba(0,0,0,0.25);
             animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            overflow: hidden;
         }
         @keyframes modalSlideUp { 
             from { opacity: 0; transform: translateY(40px) scale(0.96); } 
@@ -859,7 +858,7 @@
             examCardHtml += '</div>';
             examCardHtml += '</div>';
             examCardHtml += '</div>';
-            examCardHtml += '<button onclick="startExam(' + (exam.id || '') + ')" style="width:100%;margin-top:12px;padding:10px;border:none;border-radius:8px;background:#fff;color:#92400e;font-weight:500;cursor:pointer;transition:background 0.2s;hover:bg:#fef9c3;">';
+            examCardHtml += '<button type="button" onclick="event.stopPropagation();startExam(' + (exam.id || '') + ')" style="width:100%;margin-top:12px;padding:10px;border:none;border-radius:8px;background:#fff;color:#92400e;font-weight:500;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background=\'#fef9c3\'" onmouseout="this.style.background=\'#fff\'">';
             examCardHtml += '<i class="fa fa-play-circle mr-2"></i>开始考试';
             examCardHtml += '</button>';
             examCardHtml += '<p style="text-center;margin-top:14px;font-size:12px;color:#94a3b8"><i class="fa fa-circle-info" style="margin-right:4px"></i>点击按钮后将开始计时，请确保网络连接稳定</p>';
@@ -872,6 +871,12 @@
         function startExam(examId) {
             window.location.href = 'exam.html?id=' + examId;
         }
+
+        // 挂载到全局供 onclick 内联事件调用
+        window.startExam = startExam;
+        window.loadExamDetail = loadExamDetail;
+        window.renderExamDetail = renderExamDetail;
+        window.renderTrainingDetail = renderTrainingDetail;
 
         // 获取认证 Token
         function getAuthToken() {

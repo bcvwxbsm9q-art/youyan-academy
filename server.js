@@ -2066,8 +2066,40 @@ app.post('/api/notices', (req, res) => {
   notice.updatedAt = new Date().toISOString();
   
   data.notices.push(notice);
+  
+  // 如果是发布状态，自动为所有用户创建通知记录（用于铃铛红点提示）
+  let notificationCreated = false;
+  if (notice.status === 'published') {
+    try {
+      initNotificationsData(data);
+      // 获取所有已注册用户
+      const users = data.registered_users || [];
+      const now = new Date().toISOString();
+      
+      users.forEach(user => {
+        data.notifications.push({
+          id: Date.now() + Math.random() * 1000,
+          userId: user.id || user.username,
+          title: notice.title,
+          content: (notice.content || '').replace(/<[^>]+>/g, '').substring(0, 100) + (notice.content && notice.content.length > 100 ? '...' : ''),
+          type: 'announcement',
+          read: false,
+          noticeId: notice.id,
+          isHtml: true,
+          fullContent: notice.content,
+          createdAt: now
+        });
+      });
+      
+      notificationCreated = users.length > 0;
+      console.log(`[公告] 已为 ${users.length} 个用户创建通知记录`);
+    } catch (e) {
+      console.error('[公告] 创建通知记录失败:', e.message);
+    }
+  }
+  
   if (writeData(data)) {
-    res.json({ success: true, notice });
+    res.json({ success: true, notice, notificationCreated });
   } else {
     res.status(500).json({ success: false, error: '写入失败' });
   }

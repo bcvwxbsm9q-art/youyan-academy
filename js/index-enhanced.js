@@ -150,7 +150,7 @@
         _renderDebounceTimer = setTimeout(async function() {
             _renderDebounceTimer = null;
             renderBanners();
-            renderNotice();
+            await renderNotice();  // 现在是async函数，需要await
             renderFeaturedCourses();
             await renderFeaturedLecturers();
             renderStats();
@@ -334,19 +334,41 @@
     }
 
     /**
-     * 渲染公告
+     * 渲染公告 - 优先从API获取最新数据
      */
-    function renderNotice() {
+    async function renderNotice() {
         const el = document.getElementById('notice-content');
         if (!el) return;
 
         let notices = [];
-        if (window.DataAPI) {
+
+        // 优先从API服务器获取最新公告数据
+        try {
+            const res = await fetch(`${API_SERVER}/notices`);
+            if (res.ok) {
+                const apiNotices = await res.json();
+                if (Array.isArray(apiNotices) && apiNotices.length > 0) {
+                    notices = apiNotices;
+                    console.log('[Index] 从API获取到', notices.length, '条公告');
+                }
+            }
+        } catch (e) {
+            console.warn('[Index] 获取公告API失败，回退到本地缓存:', e.message);
+        }
+
+        // 回退到DataAPI缓存
+        if (!notices.length && window.DataAPI) {
             notices = window.DataAPI.getNotices() || [];
         }
-        
-        const published = notices.filter(n => n.status === 'published');
-        
+
+        // 按置顶和发布时间排序：置顶优先，然后按时间倒序
+        const published = notices.filter(n => n.status === 'published')
+            .sort((a, b) => {
+                if (a.pinned && !b.pinned) return -1;
+                if (!a.pinned && b.pinned) return 1;
+                return new Date(b.publishedAt || b.createdAt || 0) - new Date(a.publishedAt || a.createdAt || 0);
+            });
+
         if (!published.length) {
             el.innerHTML = `
                 <i class="fa fa-bullhorn text-primary text-lg md:text-xl"></i>
@@ -354,7 +376,7 @@
             `;
             return;
         }
-        
+
         const latest = published[0];
         el.innerHTML = `
             <i class="fa fa-bullhorn text-primary text-lg md:text-xl"></i>

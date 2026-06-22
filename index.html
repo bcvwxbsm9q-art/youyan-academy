@@ -243,6 +243,7 @@
 
     <script src="js/data-sync.js?v=2024010801"></script>
     <script src="data-api.js?v=2024010801"></script>
+    <script src="js/notification.js?v=20260622"></script>
     <script src="js/index-enhanced.js?v=2024010801"></script>
     <script src="js/auth-modal.js?v=2024010801"></script>
     <script src="js/auth-guard.js?v=2024010801"></script>
@@ -266,7 +267,7 @@
         
         // 用户菜单切换
         document.addEventListener('DOMContentLoaded', () => {
-            checkAuthAndUpdateUI();
+            AuthGuard.updateUserInfo();
             
             const mobileMenuButton = document.getElementById('mobile-menu-button');
             const mobileMenu = document.getElementById('mobile-menu');
