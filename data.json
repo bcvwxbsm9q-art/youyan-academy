@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1782044069160-440027461.jpg",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/6/23 11:12:52",
+      "lastLogin": "2026/6/23 15:18:22",
       "status": "active",
       "position": ""
     },
@@ -424,7 +424,31 @@
     ],
     "shares": 1,
     "ratings": 0,
-    "likes": 1
+    "likes": 1,
+    "examRecords": [
+      {
+        "examId": 1782182264380,
+        "examTitle": "企业文化与制度",
+        "score": 100,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 3,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-23T02:38:31.106Z",
+        "attemptId": 1782182299038
+      },
+      {
+        "examId": 1782181381247,
+        "examTitle": "粒子系统",
+        "score": 90,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 2,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-23T03:59:54.139Z",
+        "attemptId": 1782187184372
+      }
+    ]
   },
   "lecturers": [
     {
@@ -1424,6 +1448,17 @@
         "totalQuestions": 3,
         "completedAt": "2026-06-23T03:27:21.203Z",
         "attemptId": 1782185241140
+      },
+      {
+        "examId": 1782181381247,
+        "examTitle": "粒子系统",
+        "score": 0,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 0,
+        "totalQuestions": 0,
+        "completedAt": "2026-06-23T04:46:33.213Z",
+        "attemptId": 1782189993188
       }
     ]
   },
@@ -1500,8 +1535,9 @@
       "content": "您有一场新考试「粒子系统」待参加，考试时长60分钟，及格分数80分，请尽快完成。",
       "type": "exam",
       "examId": 1782181381247,
-      "read": false,
-      "createdAt": "2026-06-23T03:52:06.588Z"
+      "read": true,
+      "createdAt": "2026-06-23T03:52:06.588Z",
+      "readAt": "2026-06-23T03:59:42.674Z"
     },
     {
       "id": 1782186726589,
@@ -1512,6 +1548,27 @@
       "examId": 1782181381247,
       "read": false,
       "createdAt": "2026-06-23T03:52:06.588Z"
+    },
+    {
+      "id": 1782188167223,
+      "userId": 1780909174403,
+      "title": "新考试安排",
+      "content": "您有一场新考试「企业文化与制度」待参加，考试时长60分钟，及格分数80分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782182264380,
+      "read": true,
+      "createdAt": "2026-06-23T04:16:07.223Z",
+      "readAt": "2026-06-23T06:35:55.835Z"
+    },
+    {
+      "id": 1782188167224,
+      "userId": 1781087021554,
+      "title": "新考试安排",
+      "content": "您有一场新考试「企业文化与制度」待参加，考试时长60分钟，及格分数80分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782182264380,
+      "read": false,
+      "createdAt": "2026-06-23T04:16:07.223Z"
     }
   ],
   "notification_reads": [
@@ -2127,6 +2184,70 @@
       "id": 1782111523716,
       "createdAt": "2026/6/22 14:58:43",
       "updatedAt": "2026/6/22 14:58:43"
+    },
+    {
+      "type": "single",
+      "title": "在 Lua 中，关于变量访问效率的说法，正确的是（          ）？",
+      "content": "在 Lua 中，关于变量访问效率的说法，正确的是（          ）？",
+      "options": [
+        "全局变量访问效率高于局部变量",
+        "局部变量访问无需查表，效率更高",
+        "UpValue 变量与全局变量效率一致"
+      ],
+      "answer": "B",
+      "explanation": "非local局部变量，即UpValue（全局变量其实也是记录在名为_ENV的第一个Table类型的UpValue中）的访问通常需更多的指令操作，而Local变量的访问，只需要一条简单寄存器读取指令，所以能节省出数据查询带来的性能开销",
+      "analysis": "非local局部变量，即UpValue（全局变量其实也是记录在名为_ENV的第一个Table类型的UpValue中）的访问通常需更多的指令操作，而Local变量的访问，只需要一条简单寄存器读取指令，所以能节省出数据查询带来的性能开销",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 1782207270022,
+      "id": 1782207270221,
+      "createdAt": "2026/6/23 17:34:30",
+      "updatedAt": "2026/6/23 17:34:30"
+    },
+    {
+      "type": "single",
+      "title": "由于require会有一个package.loaded[name] 的判断，所以当要重新require的时候，必须将其置为（           ）？",
+      "content": "由于require会有一个package.loaded[name] 的判断，所以当要重新require的时候，必须将其置为（           ）？",
+      "options": [
+        "nil",
+        "ture",
+        "false"
+      ],
+      "answer": "A",
+      "explanation": "由于require会有一个package.loaded[name] 的判断，所以当要重新require的时候，必须将其置为nil。\npackage.loaded[name] = nil",
+      "analysis": "由于require会有一个package.loaded[name] 的判断，所以当要重新require的时候，必须将其置为nil。\npackage.loaded[name] = nil",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 1782207270022,
+      "id": 1782207270223,
+      "createdAt": "2026/6/23 17:34:30",
+      "updatedAt": "2026/6/23 17:34:30"
+    },
+    {
+      "type": "multiple",
+      "title": "以下哪些是 Lua 的基本数据类型\n（      ）？",
+      "content": "以下哪些是 Lua 的基本数据类型\n（      ）？",
+      "options": [
+        "Boolean",
+        "String",
+        "Table"
+      ],
+      "answer": [
+        "A",
+        "B",
+        "C"
+      ],
+      "explanation": "Lua的数据类型有Nil、Boolean、Number、String、Function、User data(Heavy 、Light)、Thread、Table(Metatable、Environment)、Rider 调试通过断点可以获得类型",
+      "analysis": "Lua的数据类型有Nil、Boolean、Number、String、Function、User data(Heavy 、Light)、Thread、Table(Metatable、Environment)、Rider 调试通过断点可以获得类型",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 5,
+      "bankId": 1782207270022,
+      "id": 1782207270225,
+      "createdAt": "2026/6/23 17:34:30",
+      "updatedAt": "2026/6/23 17:34:30"
     }
   ],
   "exams": [
@@ -2144,17 +2265,17 @@
       "questions": [
         {
           "questionId": 1782111523712,
-          "score": 30,
+          "score": 5,
           "order": 0
         },
         {
           "questionId": 1782111523714,
-          "score": 30,
+          "score": 5,
           "order": 1
         },
         {
           "questionId": 1782111523716,
-          "score": 40,
+          "score": 5,
           "order": 2
         }
       ],
@@ -2168,8 +2289,20 @@
         1781087021554
       ],
       "createdAt": "2026-06-23T02:23:01.247Z",
-      "updatedAt": "2026-06-23T03:52:06.579Z",
-      "accessType": "restricted"
+      "updatedAt": "2026-06-23T06:05:26.214Z",
+      "accessType": "restricted",
+      "shuffleOptions": false,
+      "attemptsPolicy": "unlimited",
+      "attemptsCount": null,
+      "recordScore": "highest",
+      "screenSwitchPolicy": "unlimited",
+      "screenSwitchCount": null,
+      "showData": true,
+      "answerDetail": "after_grade",
+      "viewQuestions": "all",
+      "showCorrect": "show",
+      "showAnalysis": "show",
+      "viewRank": "after_submit"
     },
     {
       "id": 1782182264380,
@@ -2200,20 +2333,24 @@
         {
           "questionId": 1781235958851,
           "score": 40,
+          "partialScore": 20,
           "order": 2,
           "content": "在课堂中提到低模拓扑的关键要点有哪些？（   ）",
           "type": "multiple"
         }
       ],
-      "startTime": "2026-06-23T02:37:00.000Z",
-      "endTime": "2026-06-24T02:38:00.000Z",
+      "startTime": "2026-06-22T18:37:00.000Z",
+      "endTime": "2026-06-23T18:38:00.000Z",
       "maxAttempts": 0,
       "paperId": "paper_1782182121955",
       "paperName": "2026企业文化与制度",
-      "allowedUsers": null,
+      "allowedUsers": [
+        1780909174403,
+        1781087021554
+      ],
       "createdAt": "2026-06-23T02:37:44.380Z",
-      "updatedAt": "2026-06-23T02:38:06.833Z",
-      "accessType": "public"
+      "updatedAt": "2026-06-23T04:16:07.211Z",
+      "accessType": "restricted"
     }
   ],
   "exam_attempts": [
@@ -2267,6 +2404,40 @@
       "completedAt": "2026-06-23T03:27:21.203Z",
       "correctCount": 2,
       "totalQuestions": 3
+    },
+    {
+      "id": 1782187184372,
+      "examId": 1782181381247,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-06-23T03:59:44.372Z",
+      "answers": {
+        "1782111523712": "A",
+        "1782111523714": "A",
+        "1782111523716": "ABC"
+      },
+      "score": 90,
+      "passed": true,
+      "completedAt": "2026-06-23T03:59:54.139Z",
+      "correctCount": 2,
+      "totalQuestions": 3
+    },
+    {
+      "id": 1782189993188,
+      "examId": 1782181381247,
+      "userId": "1781087021554",
+      "status": "completed",
+      "startedAt": "2026-06-23T04:46:33.188Z",
+      "answers": {
+        "1781235958849": "A",
+        "1781235958851": "AB",
+        "1781235958847": "A"
+      },
+      "score": 0,
+      "passed": false,
+      "completedAt": "2026-06-23T04:46:33.212Z",
+      "correctCount": 0,
+      "totalQuestions": 0
     }
   ],
   "survey_responses": [
@@ -2497,6 +2668,16 @@
       "createdBy": "管理员",
       "createdAt": "2026/6/22 14:58:37",
       "updatedAt": "2026/6/22 14:58:37"
+    },
+    {
+      "id": 1782207270022,
+      "name": "《LUA性能优化》课堂测验定稿版",
+      "categoryId": 1780974142620,
+      "description": "",
+      "status": "active",
+      "createdBy": "管理员",
+      "createdAt": "2026/6/23 17:34:30",
+      "updatedAt": "2026/6/23 17:34:30"
     }
   ],
   "index_featured_courses": [
@@ -3722,5 +3903,13 @@
     "likedCourses": [
       1781077900894
     ]
-  }
+  },
+  "notice_visits": [
+    {
+      "noticeId": 1782183780370,
+      "userId": 1780909174403,
+      "username": "15302206488",
+      "visitedAt": "2026-06-23T09:17:09.557Z"
+    }
+  ]
 }

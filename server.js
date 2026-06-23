@@ -1494,12 +1494,35 @@ app.post('/api/courses/:id/ratings', (req, res) => {
 app.get('/api/exams', (req, res) => {
   const data = readData();
   const exams = data.exams || [];
-  // 关联题目数量
-  const enriched = exams.map(exam => ({
-    ...exam,
-    questionCount: (exam.questions || []).length,
-    attemptCount: (data.exam_attempts || []).filter(a => a.examId === exam.id).length
-  }));
+  const attempts = data.exam_attempts || [];
+  const users = data.registered_users || [];
+  // 关联题目数量及参考/及格/不及格/缺考统计
+  const enriched = exams.map(exam => {
+    const examAttempts = attempts.filter(a => a.examId === exam.id && a.status === 'completed');
+    const attemptCount = examAttempts.length;
+    const passCount = examAttempts.filter(a => a.passed).length;
+    const failCount = examAttempts.filter(a => !a.passed).length;
+
+    // 缺考/未开始：基于 allowedUsers 计算被指派的学员中尚未完成的
+    let absentCount = 0;
+    let unstartedCount = 0;
+    if (exam.accessType === 'restricted' && Array.isArray(exam.allowedUsers) && exam.allowedUsers.length > 0) {
+      const allowedIds = exam.allowedUsers.map(id => String(id));
+      const joinedIds = new Set(examAttempts.map(a => String(a.userId)));
+      absentCount = allowedIds.filter(uid => !joinedIds.has(uid)).length;
+      unstartedCount = 0;
+    }
+
+    return {
+      ...exam,
+      questionCount: (exam.questions || []).length,
+      attemptCount,
+      passCount,
+      failCount,
+      absentCount,
+      unstartedCount
+    };
+  });
   res.json(enriched);
 });
 
@@ -1673,18 +1696,84 @@ app.put('/api/exams/:id/questions', (req, res) => {
   }
 });
 
-// GET /api/exams/:id/results - 获取考试成绩列表
+// GET /api/exams/:id/results - 获取考试成绩列表（包含缺考学员）
 app.get('/api/exams/:id/results', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
+  const exam = (data.exams || []).find(e => e.id === id);
+  if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
   const attempts = (data.exam_attempts || []).filter(a => a.examId === id);
-  // 关联用户信息（使用 registered_users 主表）
   const users = data.registered_users || [];
-  const results = attempts.map(a => {
-    const user = users.find(u => String(u.id) === String(a.userId));
-    return { ...a, userName: user ? (user.real_name || user.username) : '未知用户' };
-  }).sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+
+  // 构建所有应参加考试的学员ID集合
+  let targetUserIds = [];
+  if (exam.accessType === 'restricted' && Array.isArray(exam.allowedUsers) && exam.allowedUsers.length > 0) {
+    targetUserIds = [...exam.allowedUsers];
+  } else {
+    // 全员公开：以实际参加学员为准（无固定范围）
+    targetUserIds = attempts.map(a => a.userId);
+  }
+
+  const joinedUserIds = new Set(attempts.map(a => String(a.userId)));
+  const results = [];
+
+  targetUserIds.forEach(uid => {
+    const user = users.find(u => String(u.id) === String(uid));
+    const userName = user ? (user.realName || user.real_name || user.username) : '未知用户';
+    const attempt = attempts.find(a => String(a.userId) === String(uid) && a.status === 'completed');
+    if (attempt) {
+      results.push({ ...attempt, userName });
+    } else {
+      // 缺考记录
+      results.push({
+        userId: uid,
+        userName,
+        examId: id,
+        status: 'absent',
+        score: 0,
+        passed: false,
+        correctCount: 0,
+        totalQuestions: (exam.questions || []).length,
+        completedAt: null
+      });
+    }
+  });
+
+  // 补充不在 allowedUsers 中但实际参加了的学员（兼容旧数据或公开考试）
+  attempts.forEach(a => {
+    if (!targetUserIds.some(uid => String(uid) === String(a.userId))) {
+      const user = users.find(u => String(u.id) === String(a.userId));
+      results.push({ ...a, userName: user ? (user.realName || user.real_name || user.username) : '未知用户' });
+    }
+  });
+
+  results.sort((a, b) => {
+    // 已完成优先，缺考在后
+    if (a.status === 'absent' && b.status !== 'absent') return 1;
+    if (a.status !== 'absent' && b.status === 'absent') return -1;
+    return new Date(b.completedAt || 0) - new Date(a.completedAt || 0);
+  });
+
   res.json({ success: true, results });
+});
+
+// GET /api/exams/:id/attempts - 获取考试所有作答记录
+app.get('/api/exams/:id/attempts', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const exam = (data.exams || []).find(e => e.id === id);
+  if (!exam) {
+    return res.status(404).json({ success: false, error: '考试不存在' });
+  }
+  const users = data.registered_users || [];
+  const attempts = (data.exam_attempts || [])
+    .filter(a => a.examId === id && (a.status === 'completed' || a.status === 'submitted'))
+    .map(a => {
+      const user = users.find(u => String(u.id) === String(a.userId));
+      return { ...a, userName: user ? (user.realName || user.real_name || user.username) : '未知用户' };
+    })
+    .sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+  res.json({ success: true, attempts });
 });
 
 // GET /api/user/exam-records - 获取当前用户的考试记录（供个人中心徽章计算）
@@ -1852,14 +1941,14 @@ app.post('/api/exams/:id/submit', (req, res) => {
       if (isCorrect) {
         earnedScore = qScore;
       } else if (ua !== '') {
-        // 多选题部分正确：按答对比例得分（答对的选项数 / 正确答案总选项数）
+        // 多选题部分正确：按考试管理中的“漏选设置分值”计分
+        // 漏选：用户选的都在正确答案中 → 得 partialScore
+        // 错选：用户选了不在正确答案中的 → 0分
         const correctSet = new Set(ca.split(''));
         const userSet = new Set(ua.split(''));
-        // 漏选：用户选的都在正确答案中 → 按比例得分
-        // 错选：用户选了不在正确答案中的 → 0分
         const hasWrong = [...userSet].some(ch => !correctSet.has(ch));
         if (!hasWrong && userSet.size > 0) {
-          earnedScore = Math.round(qScore * userSet.size / correctSet.size);
+          earnedScore = (eq.partialScore === undefined || eq.partialScore === null) ? Math.round(qScore * userSet.size / correctSet.size) : parseFloat(eq.partialScore);
         }
       }
     } else {
@@ -1898,7 +1987,8 @@ app.post('/api/exams/:id/submit', (req, res) => {
       score: finalScore,
       passed,
       correctCount,
-      totalQuestions: examQuestions.length
+      totalQuestions: examQuestions.length,
+      durationUsed: durationUsed || 0
     };
   }
 
