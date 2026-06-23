@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -10285,10 +10285,10 @@
             if (_dt) {
               if (exam.showData) {
                 _dt.classList.remove('bg-slate-300');
-                _dt.classList.add('bg-orange-500');
+                _dt.classList.add('bg-indigo-500');
                 if (_dd) _dd.style.left = '20px';
               } else {
-                _dt.classList.remove('bg-orange-500');
+                _dt.classList.remove('bg-indigo-500');
                 _dt.classList.add('bg-slate-300');
                 if (_dd) _dd.style.left = '2px';
               }
@@ -10540,7 +10540,7 @@
         const exam = resJson.data || resJson;
         if (!exam || exam.error) { toast('获取原考试数据失败', 'error'); return; }
         const { id: _, createdAt: __, updatedAt: ___, questionCount, attemptCount, completedCount, passCount, failCount, absentCount, unstartedCount, ...copyData } = exam;
-        copyData.title = (exam.title || '考试') + '(副本)';
+        copyData.title = (exam.title || '考试') + '副本';
         copyData.status = 'draft';
         const createRes = await fetch('/api/exams', {
           method: 'POST',

@@ -765,6 +765,9 @@
         viewRank: examData.viewRank||'after_submit'
       };
 
+      const scoreBody=document.querySelector('#state-result .px-8.pb-8');
+      if(scoreBody) scoreBody.classList.remove('hidden');
+
       // 考试数据总开关：隐藏时不展示成绩与详情
       if(!viewSettings.showData){
         document.getElementById('result-header-bg').innerHTML=`<div class="py-12 text-center">

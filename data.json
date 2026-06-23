@@ -1061,7 +1061,7 @@
       "subcategoryId": 1780974147097,
       "lecturerId": 1780973279917,
       "description": "",
-      "status": "published",
+      "status": "offline",
       "videos": [
         {
           "url": "/uploads/videos/1781506189662-278866776.mp4",
@@ -1077,7 +1077,7 @@
       "rating": 5,
       "id": 1781506198054,
       "createdAt": "2026/6/15 14:49:58",
-      "updatedAt": "2026/6/15 14:49:58"
+      "updatedAt": "2026/6/23 23:04:27"
     }
   ],
   "training_projects": [
@@ -2245,8 +2245,144 @@
         1781087021554
       ],
       "createdAt": "2026-06-23T13:29:07.409Z",
-      "updatedAt": "2026-06-23T13:29:50.650Z",
-      "accessType": "restricted"
+      "updatedAt": "2026-06-23T14:46:42.636Z",
+      "accessType": "restricted",
+      "showData": true,
+      "showAnalysis": "show",
+      "attemptsPolicy": "unlimited",
+      "viewRank": "after_submit",
+      "showCorrect": "show",
+      "answerDetail": "after_grade",
+      "viewQuestions": "all",
+      "recordScore": "highest",
+      "shuffleOptions": false,
+      "attemptsCount": null,
+      "screenSwitchPolicy": "unlimited",
+      "screenSwitchCount": null
+    },
+    {
+      "id": 1782226307417,
+      "title": "粒子系统副本",
+      "description": "",
+      "duration": 60,
+      "passingScore": 60,
+      "totalScore": 100,
+      "bankId": null,
+      "shuffleQuestions": true,
+      "shuffleOptions": false,
+      "showAnswer": false,
+      "status": "draft",
+      "questions": [
+        {
+          "questionId": 1782111523712,
+          "score": 30,
+          "order": 0,
+          "content": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+          "type": "single",
+          "partialScore": 0
+        },
+        {
+          "questionId": 1782111523714,
+          "score": 30,
+          "order": 1,
+          "content": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+          "type": "single",
+          "partialScore": 0
+        },
+        {
+          "questionId": 1782111523716,
+          "score": 40,
+          "order": 2,
+          "content": "使用简单粒子所带来的问题有哪些？",
+          "type": "multiple",
+          "partialScore": 20
+        }
+      ],
+      "startTime": "2026-06-23T13:29:00.000Z",
+      "endTime": "2026-06-24T13:29:00.000Z",
+      "maxAttempts": 0,
+      "paperId": "paper_1782113932466",
+      "paperName": "粒子系统",
+      "allowedUsers": [
+        1780909174403,
+        1781087021554
+      ],
+      "accessType": "restricted",
+      "attemptsPolicy": "unlimited",
+      "attemptsCount": null,
+      "recordScore": "highest",
+      "screenSwitchPolicy": "unlimited",
+      "screenSwitchCount": null,
+      "showData": true,
+      "answerDetail": "after_grade",
+      "viewQuestions": "all",
+      "showCorrect": "show",
+      "showAnalysis": "show",
+      "viewRank": "after_submit",
+      "createdAt": "2026-06-23T14:51:47.417Z",
+      "updatedAt": "2026-06-23T14:51:47.417Z"
+    },
+    {
+      "id": 1782226621391,
+      "title": "粒子系统副本",
+      "description": "",
+      "duration": 60,
+      "passingScore": 60,
+      "totalScore": 100,
+      "bankId": null,
+      "shuffleQuestions": true,
+      "shuffleOptions": false,
+      "showAnswer": false,
+      "status": "draft",
+      "questions": [
+        {
+          "questionId": 1782111523712,
+          "score": 30,
+          "order": 0,
+          "content": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+          "type": "single",
+          "partialScore": 0
+        },
+        {
+          "questionId": 1782111523714,
+          "score": 30,
+          "order": 1,
+          "content": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+          "type": "single",
+          "partialScore": 0
+        },
+        {
+          "questionId": 1782111523716,
+          "score": 40,
+          "order": 2,
+          "content": "使用简单粒子所带来的问题有哪些？",
+          "type": "multiple",
+          "partialScore": 20
+        }
+      ],
+      "startTime": "2026-06-23T13:29:00.000Z",
+      "endTime": "2026-06-24T13:29:00.000Z",
+      "maxAttempts": 0,
+      "paperId": "paper_1782113932466",
+      "paperName": "粒子系统",
+      "allowedUsers": [
+        1780909174403,
+        1781087021554
+      ],
+      "accessType": "restricted",
+      "attemptsPolicy": "unlimited",
+      "attemptsCount": null,
+      "recordScore": "highest",
+      "screenSwitchPolicy": "unlimited",
+      "screenSwitchCount": null,
+      "showData": true,
+      "answerDetail": "after_grade",
+      "viewQuestions": "all",
+      "showCorrect": "show",
+      "showAnalysis": "show",
+      "viewRank": "after_submit",
+      "createdAt": "2026-06-23T14:57:01.391Z",
+      "updatedAt": "2026-06-23T14:57:01.391Z"
     }
   ],
   "exam_attempts": [
