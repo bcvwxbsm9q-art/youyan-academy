@@ -311,11 +311,11 @@
         }
 
         // ===== 持久化计时：调用 enter 接口建立/恢复会话 =====
-        const sessRes=await fetch('/api/exams/'+examId+'/enter',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({userId:String(user.id)})
-        });
+      const sessRes=await fetch('/api/exams/'+examId+'/enter',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({userId:String(user.id), attemptId: result.attemptId})
+      });
         const sessData=await sessRes.json();
         if(sessData.success&&sessData.session){
           examDeadline=new Date(sessData.session.deadline).getTime();
@@ -594,7 +594,8 @@
       },1000);
 
       // 切屏检测（如果配置了）
-      if(examData.switchLimit!=='unlimited'&&examData.switchLimit!=='deny'){
+      const screenPolicy = examData.screenSwitchPolicy || 'unlimited';
+      if(screenPolicy !== 'unlimited'){
         document.addEventListener('visibilitychange',handleVisibilityChange);
       }
     }
@@ -610,17 +611,29 @@
     }
 
     let switchCount=0;
+    let switchSubmitted=false;
     function handleVisibilityChange(){
-      if(document.hidden){
-        switchCount++;
-        const limit=parseInt(examData.switchLimit)||3;
-        if(switchCount>=limit){
-          toast(`已切屏${switchCount}次，达到限制，即将自动提交！`,'error');
-          clearInterval(timerHandle);
-          setTimeout(()=>doSubmit(),2000);
-        }else{
-          toast(`警告：已切屏${switchCount}次（限制${limit}次）`,'warn');
-        }
+      if(switchSubmitted || !document.hidden) return;
+      const screenPolicy = examData.screenSwitchPolicy || 'unlimited';
+      if(screenPolicy === 'unlimited') return;
+      switchCount++;
+      if(screenPolicy === 'forbidden'){
+        // 不允许切屏：第一次切屏即警告并自动交卷
+        toast('检测到离开考试页面，不允许切屏，即将自动交卷！','error');
+        switchSubmitted=true;
+        clearInterval(timerHandle);
+        setTimeout(()=>doSubmit(),1500);
+        return;
+      }
+      // 自定义次数
+      const limit=parseInt(examData.screenSwitchCount)||3;
+      if(switchCount>=limit){
+        toast(`已切屏${switchCount}次，达到限制，即将自动提交！`,'error');
+        switchSubmitted=true;
+        clearInterval(timerHandle);
+        setTimeout(()=>doSubmit(),1500);
+      }else{
+        toast(`警告：已切屏${switchCount}次（限制${limit}次）`,'warn');
       }
     }
 
@@ -742,19 +755,56 @@
       const durS=durSec%60;
       document.getElementById('res-time').textContent=durMin>0?durMin+'分'+durS+'秒':durS+'秒';
 
-      // ====== 始终展示完整答题详情 ======
+      // 学员查看设置控制
+      const viewSettings={
+        showData: examData.showData!==false,
+        answerDetail: examData.answerDetail||'after_grade',
+        viewQuestions: examData.viewQuestions||'all',
+        showCorrect: examData.showCorrect||'show',
+        showAnalysis: examData.showAnalysis||'show',
+        viewRank: examData.viewRank||'after_submit'
+      };
+
+      // 考试数据总开关：隐藏时不展示成绩与详情
+      if(!viewSettings.showData){
+        document.getElementById('result-header-bg').innerHTML=`<div class="py-12 text-center">
+          <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <i class="fa fa-eye-slash text-3xl text-slate-400"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-700">成绩暂不公布</h2>
+          <p class="text-sm text-slate-500 mt-2">本次考试设置为由管理员统一公布成绩</p>
+        </div>`;
+        document.getElementById('result-header-bg').className='px-8 pt-6 pb-6';
+        document.querySelector('#state-result .px-8.pb-8')?.classList.add('hidden');
+        document.getElementById('result-detail-section').classList.add('hidden');
+        return;
+      }
+
+      // 答题详情可见性
       const detailSec=document.getElementById('result-detail-section');
-      detailSec.classList.remove('hidden');
+      let showDetail = true;
+      if(viewSettings.answerDetail==='never') showDetail=false;
+      else if(viewSettings.answerDetail==='after_pass' && !passed) showDetail=false;
+      // after_grade / after_finish 在交卷后即可查看
+      if(showDetail){
+        detailSec.classList.remove('hidden');
+      }else{
+        detailSec.classList.add('hidden');
+      }
       const list=document.getElementById('result-detail-list');
 
       const typeMap={ single:'单选题', multiple:'多选题', judge:'判断题' };
       const typeIcon={ single:'fa-dot-circle-o', multiple:'fa-check-square-o', judge:'fa-exchange' };
 
-      list.innerHTML=(result.detail||[]).map((d,di)=>{
+      // 按查看试题设置过滤
+      let detailList=(result.detail||[]);
+      if(viewSettings.viewQuestions==='correct_only') detailList=detailList.filter(d=>d.isCorrect);
+      else if(viewSettings.viewQuestions==='wrong_only') detailList=detailList.filter(d=>!d.isCorrect);
+
+      list.innerHTML=detailList.map((d,di)=>{
         const qIdx=questions.findIndex(q=>q.id===d.questionId);
         const qNum=qIdx>=0?qIdx+1:'?';
-        const origQ=questions[qIdx];
-        const opts=origQ?origQ.options:[];
+        const opts=d.options||[];
 
         // 用户答案格式化
         let userAnsHtml='';
@@ -788,12 +838,13 @@
         let optionsHtml='';
         if(opts&&opts.length>0){
           const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+          const showCorrectFlag=viewSettings.showCorrect==='show';
           optionsHtml=`<div class="mt-2 pt-2 border-t border-slate-100">
             <p class="text-[11px] text-slate-400 mb-1.5 font-medium">选项</p>
             <div class="flex flex-wrap gap-1.5">${opts.map((opt,oi)=>{
               const ch=letters[oi];
               const isUserAns=d.type==='judge'?false:(d.userAnswer||'').includes(ch);
-              const isCorrectAns=d.type==='judge'?false:(d.correctAnswer||'').includes(ch);
+              const isCorrectAns=showCorrectFlag && d.type!=='judge' && (d.correctAnswer||'').includes(ch);
               let optCls='bg-slate-50 text-slate-500 border border-slate-200';
               if(isCorrectAns) optCls='bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold';
               else if(isUserAns&&!d.isCorrect) optCls='bg-red-50 text-red-600 border border-red-200 line-through';
@@ -830,14 +881,14 @@
                 <span class="text-xs text-slate-400 font-medium">你的答案：</span>
                 ${userAnsHtml}
               </div>
-              <div class="flex items-center gap-2">
+              ${viewSettings.showCorrect==='show'?`<div class="flex items-center gap-2">
                 <span class="text-xs text-slate-400 font-medium">正确答案：</span>
                 ${correctAnsHtml}
-              </div>
+              </div>`:''}
             </div>
 
             <!-- 解析 -->
-            ${d.analysis?`<div class="analysis-box mt-3 px-4 py-3 rounded-r-xl">
+            ${(viewSettings.showAnalysis==='show'&&d.analysis)?`<div class="analysis-box mt-3 px-4 py-3 rounded-r-xl">
               <p class="text-xs font-semibold text-amber-700 mb-1"><i class="fa fa-lightbulb-o mr-1"></i>解析</p>
               <p class="text-xs text-amber-800/80 leading-relaxed">${escapeHtml(d.analysis)}</p>
             </div>`:''}

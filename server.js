@@ -1495,32 +1495,25 @@ app.get('/api/exams', (req, res) => {
   const data = readData();
   const exams = data.exams || [];
   const attempts = data.exam_attempts || [];
-  const users = data.registered_users || [];
-  // 关联题目数量及参考/及格/不及格/缺考统计
+  // 关联题目数量及参考/通过/不及格等统计
   const enriched = exams.map(exam => {
-    const examAttempts = attempts.filter(a => a.examId === exam.id && a.status === 'completed');
-    const attemptCount = examAttempts.length;
-    const passCount = examAttempts.filter(a => a.passed).length;
-    const failCount = examAttempts.filter(a => !a.passed).length;
-
-    // 缺考/未开始：基于 allowedUsers 计算被指派的学员中尚未完成的
-    let absentCount = 0;
-    let unstartedCount = 0;
-    if (exam.accessType === 'restricted' && Array.isArray(exam.allowedUsers) && exam.allowedUsers.length > 0) {
-      const allowedIds = exam.allowedUsers.map(id => String(id));
-      const joinedIds = new Set(examAttempts.map(a => String(a.userId)));
-      absentCount = allowedIds.filter(uid => !joinedIds.has(uid)).length;
-      unstartedCount = 0;
-    }
-
+    const examAttempts = attempts.filter(a => a.examId === exam.id);
+    const completed = examAttempts.filter(a => a.status === 'completed');
+    const passed = completed.filter(a => a.passed).length;
+    const failed = completed.length - passed;
+    const absent = examAttempts.filter(a => a.status === 'abandoned').length;
+    const unstarted = (exam.allowedUsers && Array.isArray(exam.allowedUsers))
+      ? Math.max(0, exam.allowedUsers.length - examAttempts.length)
+      : 0;
     return {
       ...exam,
       questionCount: (exam.questions || []).length,
-      attemptCount,
-      passCount,
-      failCount,
-      absentCount,
-      unstartedCount
+      attemptCount: examAttempts.length,
+      completedCount: completed.length,
+      passCount: passed,
+      failCount: failed,
+      absentCount: absent,
+      unstartedCount: unstarted
     };
   });
   res.json(enriched);
@@ -1528,7 +1521,16 @@ app.get('/api/exams', (req, res) => {
 
 // POST /api/exams - 创建考试
 app.post('/api/exams', (req, res) => {
-  const { title, description, duration, passingScore, totalScore, bankId, shuffleQuestions, showAnswer, status, questions, startTime, endTime, maxAttempts, paperId, paperName, allowedUsers } = req.body;
+  const {
+    title, description, duration, passingScore, totalScore, bankId,
+    shuffleQuestions, shuffleOptions, showAnswer, status, questions,
+    startTime, endTime, maxAttempts, paperId, paperName, allowedUsers,
+    accessType,
+    // 考试设置
+    attemptsPolicy, attemptsCount, recordScore, screenSwitchPolicy, screenSwitchCount,
+    // 学员查看设置
+    showData, answerDetail, viewQuestions, showCorrect, showAnalysis, viewRank
+  } = req.body;
   if (!title) {
     return res.status(400).json({ success: false, error: '考试名称不能为空' });
   }
@@ -1543,6 +1545,7 @@ app.post('/api/exams', (req, res) => {
     totalScore: parseInt(totalScore) || 100,
     bankId: bankId || null,
     shuffleQuestions: !!shuffleQuestions,
+    shuffleOptions: !!shuffleOptions,
     showAnswer: !!showAnswer,
     status: status || 'draft',
     questions: questions || [],
@@ -1552,6 +1555,20 @@ app.post('/api/exams', (req, res) => {
     paperId: paperId || null,
     paperName: paperName || '',
     allowedUsers: allowedUsers || null,
+    accessType: accessType || 'open',
+    // 考试设置
+    attemptsPolicy: attemptsPolicy || 'unlimited',
+    attemptsCount: attemptsPolicy === 'custom' ? (parseInt(attemptsCount) || 3) : null,
+    recordScore: recordScore || 'highest',
+    screenSwitchPolicy: screenSwitchPolicy || 'unlimited',
+    screenSwitchCount: screenSwitchPolicy === 'custom' ? (parseInt(screenSwitchCount) || 3) : null,
+    // 学员查看设置
+    showData: showData !== undefined ? !!showData : true,
+    answerDetail: answerDetail || 'after_grade',
+    viewQuestions: viewQuestions || 'all',
+    showCorrect: showCorrect || 'show',
+    showAnalysis: showAnalysis || 'show',
+    viewRank: viewRank || 'after_submit',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -1696,84 +1713,213 @@ app.put('/api/exams/:id/questions', (req, res) => {
   }
 });
 
-// GET /api/exams/:id/results - 获取考试成绩列表（包含缺考学员）
+// GET /api/exams/:id/results - 获取考试成绩列表
 app.get('/api/exams/:id/results', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const attempts = (data.exam_attempts || []).filter(a => a.examId === id);
+  // 关联用户信息（使用 registered_users 主表）
+  const users = data.registered_users || [];
+  const results = attempts.map(a => {
+    const user = users.find(u => String(u.id) === String(a.userId));
+    return { ...a, userName: user ? (user.realName || user.username) : '未知用户' };
+  }).sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+  res.json({ success: true, results });
+});
+
+// GET /api/exams/:id/students - 获取考试的学员聚合数据
+app.get('/api/exams/:id/students', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
   const exam = (data.exams || []).find(e => e.id === id);
   if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
-  const attempts = (data.exam_attempts || []).filter(a => a.examId === id);
-  const users = data.registered_users || [];
 
-  // 构建所有应参加考试的学员ID集合
-  let targetUserIds = [];
-  if (exam.accessType === 'restricted' && Array.isArray(exam.allowedUsers) && exam.allowedUsers.length > 0) {
-    targetUserIds = [...exam.allowedUsers];
+  const users = data.registered_users || [];
+  const attempts = (data.exam_attempts || []).filter(a => a.examId === id);
+  const fullScore = exam.totalScore || (exam.questions || []).reduce((s, q) => s + (q.score || 1), 0);
+  const recordScore = exam.recordScore || 'highest';
+
+  // 确定候选学员范围
+  let candidateUsers = [];
+  if (exam.accessType === 'restricted' && exam.allowedUsers && exam.allowedUsers.length > 0) {
+    candidateUsers = exam.allowedUsers.map(uid => users.find(u => String(u.id) === String(uid))).filter(Boolean);
   } else {
-    // 全员公开：以实际参加学员为准（无固定范围）
-    targetUserIds = attempts.map(a => a.userId);
+    candidateUsers = users.filter(u => u.role !== 'admin');
   }
 
-  const joinedUserIds = new Set(attempts.map(a => String(a.userId)));
-  const results = [];
+  const students = candidateUsers.map(user => {
+    const userAttempts = attempts.filter(a => String(a.userId) === String(user.id))
+      .sort((a, b) => new Date(b.completedAt || b.startedAt || 0) - new Date(a.completedAt || a.startedAt || 0));
+    const completedAttempts = userAttempts.filter(a => a.status === 'completed');
+    const takingAttempts = userAttempts.filter(a => a.status === 'taking');
+    const abandonedAttempts = userAttempts.filter(a => a.status === 'abandoned');
 
-  targetUserIds.forEach(uid => {
-    const user = users.find(u => String(u.id) === String(uid));
-    const userName = user ? (user.realName || user.real_name || user.username) : '未知用户';
-    const attempt = attempts.find(a => String(a.userId) === String(uid) && a.status === 'completed');
-    if (attempt) {
-      results.push({ ...attempt, userName });
-    } else {
-      // 缺考记录
-      results.push({
-        userId: uid,
-        userName,
-        examId: id,
-        status: 'absent',
-        score: 0,
-        passed: false,
-        correctCount: 0,
-        totalQuestions: (exam.questions || []).length,
-        completedAt: null
-      });
+    let status = 'unstarted';
+    let statusText = '未考';
+    let selectedAttempt = null;
+
+    if (takingAttempts.length > 0) {
+      status = 'taking';
+      statusText = '进行中';
+    } else if (abandonedAttempts.length > 0 && completedAttempts.length === 0) {
+      status = 'absent';
+      statusText = '缺考';
+    } else if (completedAttempts.length > 0) {
+      selectedAttempt = recordScore === 'latest'
+        ? completedAttempts[0]
+        : completedAttempts.slice().sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+      if (selectedAttempt.passed) {
+        status = 'passed';
+        statusText = '及格';
+      } else {
+        status = 'failed';
+        statusText = '不及格';
+      }
     }
+
+    const score = selectedAttempt ? (selectedAttempt.score || 0) : 0;
+    const scoreRate = fullScore > 0 ? Math.round(score / fullScore * 100) : 0;
+    const duration = selectedAttempt ? (selectedAttempt.durationUsed || 0) : 0;
+    const joinTime = userAttempts.length > 0
+      ? new Date(userAttempts[userAttempts.length - 1].startedAt || userAttempts[userAttempts.length - 1].completedAt).toLocaleString('zh-CN')
+      : (user.createdAt || user.created_at ? new Date(user.createdAt || user.created_at).toLocaleString('zh-CN') : '-');
+
+    return {
+      userId: user.id,
+      userName: user.realName || user.username || '未知',
+      department: user.department || '-',
+      phone: user.phone || '-',
+      joinTime,
+      attemptCount: userAttempts.length,
+      score,
+      fullScore,
+      scoreRate,
+      duration,
+      status,
+      statusText,
+      selectedAttemptId: selectedAttempt ? selectedAttempt.id : null
+    };
   });
 
-  // 补充不在 allowedUsers 中但实际参加了的学员（兼容旧数据或公开考试）
-  attempts.forEach(a => {
-    if (!targetUserIds.some(uid => String(uid) === String(a.userId))) {
-      const user = users.find(u => String(u.id) === String(a.userId));
-      results.push({ ...a, userName: user ? (user.realName || user.real_name || user.username) : '未知用户' });
-    }
-  });
-
-  results.sort((a, b) => {
-    // 已完成优先，缺考在后
-    if (a.status === 'absent' && b.status !== 'absent') return 1;
-    if (a.status !== 'absent' && b.status === 'absent') return -1;
-    return new Date(b.completedAt || 0) - new Date(a.completedAt || 0);
-  });
-
-  res.json({ success: true, results });
+  res.json({ success: true, exam: { id: exam.id, title: exam.title, passingScore: exam.passingScore || 60, totalScore: exam.totalScore, recordScore, fullScore }, students });
 });
 
-// GET /api/exams/:id/attempts - 获取考试所有作答记录
-app.get('/api/exams/:id/attempts', (req, res) => {
+// GET /api/exams/:id/students/:userId/records - 获取某学员在某考试下的所有考试记录
+app.get('/api/exams/:id/students/:userId/records', (req, res) => {
+  const id = parseInt(req.params.id);
+  const userId = req.params.userId;
+  const data = readData();
+  const exam = (data.exams || []).find(e => e.id === id);
+  if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
+  const user = (data.registered_users || []).find(u => String(u.id) === String(userId));
+
+  const attempts = (data.exam_attempts || [])
+    .filter(a => a.examId === id && String(a.userId) === String(userId))
+    .sort((a, b) => new Date(b.completedAt || b.startedAt || 0) - new Date(a.completedAt || a.startedAt || 0));
+
+  const fullScore = exam.totalScore || (exam.questions || []).reduce((s, q) => s + (q.score || 1), 0);
+  const highestScore = attempts.filter(a => a.status === 'completed').length > 0
+    ? Math.max(...attempts.filter(a => a.status === 'completed').map(a => a.score || 0))
+    : null;
+
+  const records = attempts.map(a => {
+    const score = a.status === 'completed' ? (a.score || 0) : 0;
+    const scoreRate = fullScore > 0 ? Math.round(score / fullScore * 100) : 0;
+    return {
+      id: a.id,
+      status: a.status,
+      startedAt: a.startedAt,
+      completedAt: a.completedAt,
+      durationUsed: a.durationUsed || 0,
+      score,
+      fullScore,
+      scoreRate,
+      passed: a.passed || false,
+      correctCount: a.correctCount || 0,
+      totalQuestions: a.totalQuestions || 0,
+      isHighest: a.status === 'completed' && score === highestScore,
+      isLatest: a === attempts[0]
+    };
+  });
+
+  res.json({
+    success: true,
+    exam: { id: exam.id, title: exam.title, passingScore: exam.passingScore || 60, totalScore: exam.totalScore, recordScore: exam.recordScore || 'highest', fullScore },
+    user: user ? { id: user.id, userName: user.realName || user.username || '未知', department: user.department || '-', phone: user.phone || '-' } : null,
+    records
+  });
+});
+
+// GET /api/exams/:id/question-stats - 获取考试的答题数据统计
+app.get('/api/exams/:id/question-stats', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
   const exam = (data.exams || []).find(e => e.id === id);
-  if (!exam) {
-    return res.status(404).json({ success: false, error: '考试不存在' });
-  }
-  const users = data.registered_users || [];
-  const attempts = (data.exam_attempts || [])
-    .filter(a => a.examId === id && (a.status === 'completed' || a.status === 'submitted'))
-    .map(a => {
-      const user = users.find(u => String(u.id) === String(a.userId));
-      return { ...a, userName: user ? (user.realName || user.real_name || user.username) : '未知用户' };
-    })
-    .sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
-  res.json({ success: true, attempts });
+  if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
+
+  const allQuestions = data.questions || [];
+  const examQuestions = (exam.questions || []).map((eq, idx) => {
+    const q = allQuestions.find(qq => qq.id === eq.questionId);
+    return {
+      questionId: eq.questionId,
+      order: eq.order !== undefined ? eq.order + 1 : idx + 1,
+      score: eq.score || 1,
+      ...(q || {})
+    };
+  });
+
+  const completedAttempts = (data.exam_attempts || [])
+    .filter(a => a.examId === id && a.status === 'completed');
+
+  const typeMap = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
+
+  const stats = examQuestions.map(q => {
+    const correctAnswer = Array.isArray(q.answer) ? q.answer.join('') : (q.answer || '');
+    let correctCount = 0;
+    const optionStats = {};
+    (q.options || []).forEach((opt, idx) => { optionStats[String.fromCharCode(65 + idx)] = 0; });
+
+    completedAttempts.forEach(a => {
+      const userAnswer = (a.answers || {})[String(q.questionId)] || '';
+      let isCorrect = false;
+      if (q.type === 'multiple') {
+        const ua = (userAnswer || '').replace(/\s/g, '').split('').sort().join('');
+        const ca = (correctAnswer || '').replace(/\s/g, '').split('').sort().join('');
+        isCorrect = ua === ca && ua !== '';
+      } else if (q.type === 'judge') {
+        isCorrect = String(userAnswer).trim() === String(correctAnswer).trim() && userAnswer !== '';
+      } else {
+        isCorrect = String(userAnswer).trim() === String(correctAnswer).trim() && userAnswer !== '';
+      }
+      if (isCorrect) correctCount++;
+
+      // 选项统计（仅对客观题）
+      if (q.type === 'single' || q.type === 'multiple' || q.type === 'judge') {
+        const ans = String(userAnswer || '').replace(/\s/g, '').split('');
+        ans.forEach(ch => { if (optionStats[ch] !== undefined) optionStats[ch]++; });
+      }
+    });
+
+    const totalCount = completedAttempts.length;
+    const correctRate = totalCount > 0 ? Math.round(correctCount / totalCount * 100) : 0;
+
+    return {
+      questionId: q.questionId,
+      order: q.order,
+      title: q.title || q.content || '(无标题)',
+      bankName: (q.bankName || q.bank || '-'),
+      type: q.type || 'single',
+      typeText: typeMap[q.type] || '单选题',
+      knowledge: q.knowledge || q.category || '-',
+      correctAnswer,
+      correctCount,
+      totalCount,
+      correctRate,
+      optionStats
+    };
+  });
+
+  res.json({ success: true, exam: { id: exam.id, title: exam.title }, stats });
 });
 
 // GET /api/user/exam-records - 获取当前用户的考试记录（供个人中心徽章计算）
@@ -1829,6 +1975,21 @@ const takeExamHandler = (req, res) => {
     }
   }
 
+  // 考试次数限制
+  const attempts = data.exam_attempts || [];
+  const userAttempts = attempts.filter(a => String(a.userId) === String(userId) && a.examId === id);
+  const completedAttempts = userAttempts.filter(a => a.status === 'completed');
+  if (exam.attemptsPolicy === 'until_pass') {
+    if (completedAttempts.some(a => a.passed)) {
+      return res.status(403).json({ success: false, error: '您已通过该考试，无法再次参加' });
+    }
+  } else if (exam.attemptsPolicy === 'custom') {
+    const maxCount = exam.attemptsCount || 3;
+    if (completedAttempts.length >= maxCount) {
+      return res.status(403).json({ success: false, error: `您已达到最大考试次数（${maxCount}次）` });
+    }
+  }
+
   const allQuestions = data.questions || [];
   let examQuestions = (exam.questions || [])
     .map(eq => {
@@ -1838,13 +1999,58 @@ const takeExamHandler = (req, res) => {
     .filter(Boolean)
     .sort((a, b) => a.order - b.order);
 
-  // 如果配置了随机打乱
+  // 试题乱序
   if (exam.shuffleQuestions) {
     examQuestions = examQuestions.sort(() => Math.random() - 0.5);
   }
 
+  // 选项乱序：生成映射，正确答案按新顺序重新计算
+  let optionMappings = {};
+  if (exam.shuffleOptions) {
+    examQuestions = examQuestions.map(q => {
+      if (!q.options || q.options.length <= 1) return q;
+      const indices = q.options.map((_, i) => i).sort(() => Math.random() - 0.5);
+      const shuffledOptions = indices.map(i => q.options[i]);
+      const oldAnswer = Array.isArray(q.answer) ? q.answer.join('') : (q.answer || '');
+      const newAnswer = oldAnswer.split('').map(ch => {
+        const oldIdx = ch.charCodeAt(0) - 65;
+        if (oldIdx < 0 || oldIdx >= indices.length) return ch;
+        const newIdx = indices.indexOf(oldIdx);
+        return String.fromCharCode(65 + newIdx);
+      }).sort().join('');
+      optionMappings[q.id] = { indices, newAnswer, options: shuffledOptions };
+      return { ...q, options: shuffledOptions, originalAnswer: q.answer, answer: newAnswer };
+    });
+  }
+
   // 去掉答案
-  const safeQuestions = examQuestions.map(({ answer, analysis, ...rest }) => rest);
+  const safeQuestions = examQuestions.map(({ answer, analysis, originalAnswer, ...rest }) => rest);
+
+  // 复用或创建 prepared attempt，记录选项映射与试题顺序
+  const oneHourAgo = Date.now() - 3600000;
+  let attempt = attempts.find(a => String(a.userId) === String(userId) && a.examId === id && a.status === 'prepared');
+  // 清理该用户该考试过旧的 prepared 记录
+  data.exam_attempts = attempts.filter(a => !(String(a.userId) === String(userId) && a.examId === id && a.status === 'prepared' && new Date(a.startedAt || 0).getTime() < oneHourAgo && a !== attempt));
+  if (!attempt) {
+    attempt = {
+      id: Date.now(),
+      examId: id,
+      userId: userId,
+      status: 'prepared',
+      startedAt: new Date().toISOString(),
+      answers: {},
+      score: null,
+      passed: null,
+      optionMappings,
+      shuffledQuestionIds: exam.shuffleQuestions ? examQuestions.map(q => q.id) : null
+    };
+    data.exam_attempts.push(attempt);
+  } else {
+    attempt.optionMappings = optionMappings;
+    attempt.shuffledQuestionIds = exam.shuffleQuestions ? examQuestions.map(q => q.id) : null;
+    attempt.startedAt = new Date().toISOString();
+  }
+  writeData(data);
 
   // 计算及格线百分比（exam.html 使用 passScore 作为百分比显示）
   const fullScore = exam.totalScore || examQuestions.reduce((s, eq) => s + (eq.score || 1), 0);
@@ -1855,7 +2061,8 @@ const takeExamHandler = (req, res) => {
     exam: { ...exam, questions: undefined, passScore: passScorePercent, name: exam.title },
     questions: safeQuestions,
     totalQuestions: examQuestions.length,
-    duration: exam.duration * 60 // 转换为秒
+    duration: exam.duration * 60, // 转换为秒
+    attemptId: attempt.id
   });
 };
 app.get('/api/exams/:id/take', takeExamHandler);
@@ -1864,32 +2071,51 @@ app.post('/api/exams/:id/take', takeExamHandler);
 // POST /api/exams/:id/enter - 学员进入考试（记录开始）
 app.post('/api/exams/:id/enter', (req, res) => {
   const id = parseInt(req.params.id);
-  const { userId } = req.body;
+  const { userId, attemptId: bodyAttemptId } = req.body;
   const data = readData();
   const exam = (data.exams || []).find(e => e.id === id);
   if (!data.exam_attempts) data.exam_attempts = [];
-  const attemptId = Date.now();
-  data.exam_attempts.push({
-    id: attemptId,
-    examId: id,
-    userId: userId,
-    status: 'taking',
-    startedAt: new Date().toISOString(),
-    answers: {},
-    score: null,
-    passed: null
-  });
+
+  // 优先使用 take 阶段已创建的 prepared attempt
+  let attempt;
+  if (bodyAttemptId) {
+    attempt = data.exam_attempts.find(a => a.id === bodyAttemptId);
+  }
+  if (!attempt) {
+    attempt = data.exam_attempts.find(a => String(a.userId) === String(userId) && a.examId === id && a.status === 'prepared');
+  }
+
+  if (!attempt) {
+    // 兜底：新建 taking attempt
+    attempt = {
+      id: Date.now(),
+      examId: id,
+      userId: userId,
+      status: 'taking',
+      startedAt: new Date().toISOString(),
+      answers: {},
+      score: null,
+      passed: null
+    };
+    data.exam_attempts.push(attempt);
+  } else {
+    attempt.status = 'taking';
+    if (!attempt.startedAt) attempt.startedAt = new Date().toISOString();
+  }
   writeData(data);
+
   // 返回 session 对象供 exam.html 使用
   const durationSeconds = (exam ? exam.duration || 60 : 60) * 60;
+  const elapsed = attempt.startedAt ? Math.floor((Date.now() - new Date(attempt.startedAt).getTime()) / 1000) : 0;
+  const remainingSeconds = Math.max(0, durationSeconds - elapsed);
   res.json({
     success: true,
-    attemptId,
+    attemptId: attempt.id,
     session: {
-      attemptId,
-      deadline: new Date(Date.now() + durationSeconds * 1000).toISOString(),
-      remainingSeconds: durationSeconds,
-      expired: false
+      attemptId: attempt.id,
+      deadline: new Date(Date.now() + remainingSeconds * 1000).toISOString(),
+      remainingSeconds,
+      expired: remainingSeconds <= 0
     }
   });
 });
@@ -1919,40 +2145,53 @@ app.post('/api/exams/:id/submit', (req, res) => {
 
   const allQuestions = data.questions || [];
   const examQuestions = exam.questions || [];
+  const papers = data.papers || [];
+  const paper = exam.paperId ? papers.find(p => p.id === exam.paperId) : null;
+  const paperQuestions = paper ? (paper.questions || []) : [];
+  const attempt = attemptIndex !== -1 ? attempts[attemptIndex] : null;
+  const optionMappings = attempt && attempt.optionMappings ? attempt.optionMappings : {};
   let correctCount = 0;
   let totalScore = 0;
   const detail = [];
 
-  // 逐题评分，使用每道题的独立分值
+  // 逐题评分，使用每道题的独立分值；若考试题目自身无漏选得分，回退到关联试卷设置
   examQuestions.forEach(eq => {
+    const pq = paperQuestions.find(p => p.questionId === eq.questionId);
+    if (eq.partialScore === undefined && pq && pq.partialScore !== undefined) {
+      eq.partialScore = pq.partialScore;
+    }
     const q = allQuestions.find(qq => qq.id === eq.questionId);
     if (!q) return;
     const qScore = eq.score || 1;
     const userAnswer = (answers || {})[String(q.id)] || '';
+    // 选项乱序时，使用映射后的正确答案与选项
+    const mapping = optionMappings[String(q.id)];
+    const correctAnswerRaw = mapping ? mapping.newAnswer : (Array.isArray(q.answer) ? q.answer.join('') : (q.answer || ''));
+    const options = mapping ? mapping.options : (q.options || []);
     // 多选题答案排序比较
     let isCorrect = false;
     let earnedScore = 0;
     if (q.type === 'multiple') {
       // 答案可能是数组或字符串（如 "A B C D" 或 "ABCD"），统一转为去除空格后的排序字符串
       const ua = (userAnswer || '').replace(/\s/g, '').split('').sort().join('');
-      const caRaw = Array.isArray(q.answer) ? q.answer.join('') : (q.answer || '');
-      const ca = caRaw.replace(/\s/g, '').split('').sort().join('');
+      const ca = correctAnswerRaw.replace(/\s/g, '').split('').sort().join('');
       isCorrect = ua === ca && ua !== '';
       if (isCorrect) {
         earnedScore = qScore;
       } else if (ua !== '') {
-        // 多选题部分正确：按考试管理中的“漏选设置分值”计分
-        // 漏选：用户选的都在正确答案中 → 得 partialScore
-        // 错选：用户选了不在正确答案中的 → 0分
+        // 多选题部分正确：按试卷设置的漏选得分计算
         const correctSet = new Set(ca.split(''));
         const userSet = new Set(ua.split(''));
+        // 漏选：用户选的都在正确答案中且数量不足 → 按漏选得分计
+        // 错选：用户选了不在正确答案中的 → 0分
         const hasWrong = [...userSet].some(ch => !correctSet.has(ch));
         if (!hasWrong && userSet.size > 0) {
-          earnedScore = (eq.partialScore === undefined || eq.partialScore === null) ? Math.round(qScore * userSet.size / correctSet.size) : parseFloat(eq.partialScore);
+          const partialScore = eq.partialScore !== undefined ? eq.partialScore : (q.partialScore || 0);
+          earnedScore = partialScore;
         }
       }
     } else {
-      isCorrect = userAnswer === q.answer && userAnswer !== '';
+      isCorrect = userAnswer === correctAnswerRaw && userAnswer !== '';
       earnedScore = isCorrect ? qScore : 0;
     }
     if (isCorrect) correctCount++;
@@ -1963,11 +2202,11 @@ app.post('/api/exams/:id/submit', (req, res) => {
       title: q.title || q.content || '',
       content: q.content || q.title || '',
       userAnswer: userAnswer,
-      correctAnswer: Array.isArray(q.answer) ? q.answer.join('') : (q.answer || ''),
+      correctAnswer: correctAnswerRaw,
       isCorrect,
       score: earnedScore,
       fullScore: qScore,
-      options: q.options || [],
+      options,
       analysis: q.analysis || q.explanation || ''
     });
   });
@@ -1996,9 +2235,10 @@ app.post('/api/exams/:id/submit', (req, res) => {
   const learningKey = `user_learning_${userId}`;
   if (!data[learningKey]) data[learningKey] = {};
   if (!data[learningKey].examRecords) data[learningKey].examRecords = [];
-  // 避免重复记录同一次 attempt
-  const existIdx = data[learningKey].examRecords.findIndex(r => r.attemptId === (attemptIndex !== -1 ? attempts[attemptIndex].id : null));
-  const examRecord = {
+  // 根据记录成绩策略（最高/最新）决定是否写入个人中心记录
+  const recordScore = exam.recordScore || 'highest';
+  const existingRecordIdx = data[learningKey].examRecords.findIndex(r => r.examId === id);
+  const newExamRecord = {
     examId: id,
     examTitle: exam.title || '',
     score: finalScore,
@@ -2009,10 +2249,17 @@ app.post('/api/exams/:id/submit', (req, res) => {
     completedAt: new Date().toISOString(),
     attemptId: attemptIndex !== -1 ? attempts[attemptIndex].id : null
   };
-  if (existIdx >= 0) {
-    data[learningKey].examRecords[existIdx] = examRecord;
+  if (existingRecordIdx >= 0) {
+    const existing = data[learningKey].examRecords[existingRecordIdx];
+    if (recordScore === 'latest') {
+      data[learningKey].examRecords[existingRecordIdx] = newExamRecord;
+    } else if (recordScore === 'highest') {
+      if (finalScore >= (existing.score || 0)) {
+        data[learningKey].examRecords[existingRecordIdx] = newExamRecord;
+      }
+    }
   } else {
-    data[learningKey].examRecords.push(examRecord);
+    data[learningKey].examRecords.push(newExamRecord);
   }
 
   writeData(data);

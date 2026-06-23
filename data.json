@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1782044069160-440027461.jpg",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/6/23 15:18:22",
+      "lastLogin": "2026/6/23 11:12:52",
       "status": "active",
       "position": ""
     },
@@ -427,26 +427,48 @@
     "likes": 1,
     "examRecords": [
       {
-        "examId": 1782182264380,
-        "examTitle": "企业文化与制度",
+        "examId": 1782181381247,
+        "examTitle": "粒子系统",
         "score": 100,
         "fullScore": 100,
         "passed": true,
         "correctCount": 3,
         "totalQuestions": 3,
-        "completedAt": "2026-06-23T02:38:31.106Z",
-        "attemptId": 1782182299038
+        "completedAt": "2026-06-23T12:43:39.215Z",
+        "attemptId": 1782218595579
       },
       {
-        "examId": 1782181381247,
+        "examId": 1782221347409,
         "examTitle": "粒子系统",
         "score": 90,
         "fullScore": 100,
         "passed": true,
         "correctCount": 2,
         "totalQuestions": 3,
-        "completedAt": "2026-06-23T03:59:54.139Z",
-        "attemptId": 1782187184372
+        "completedAt": "2026-06-23T13:30:24.250Z",
+        "attemptId": 1782221414020
+      },
+      {
+        "examId": 1782221347409,
+        "examTitle": "粒子系统",
+        "score": 50,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 1,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-23T13:48:28.848Z",
+        "attemptId": 1782222496080
+      },
+      {
+        "examId": 1782221347409,
+        "examTitle": "粒子系统",
+        "score": 50,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 1,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-23T14:06:07.120Z",
+        "attemptId": null
       }
     ]
   },
@@ -1448,17 +1470,6 @@
         "totalQuestions": 3,
         "completedAt": "2026-06-23T03:27:21.203Z",
         "attemptId": 1782185241140
-      },
-      {
-        "examId": 1782181381247,
-        "examTitle": "粒子系统",
-        "score": 0,
-        "fullScore": 100,
-        "passed": false,
-        "correctCount": 0,
-        "totalQuestions": 0,
-        "completedAt": "2026-06-23T04:46:33.213Z",
-        "attemptId": 1782189993188
       }
     ]
   },
@@ -1537,7 +1548,7 @@
       "examId": 1782181381247,
       "read": true,
       "createdAt": "2026-06-23T03:52:06.588Z",
-      "readAt": "2026-06-23T03:59:42.674Z"
+      "readAt": "2026-06-23T12:43:13.607Z"
     },
     {
       "id": 1782186726589,
@@ -1550,25 +1561,25 @@
       "createdAt": "2026-06-23T03:52:06.588Z"
     },
     {
-      "id": 1782188167223,
+      "id": 1782221347419,
       "userId": 1780909174403,
       "title": "新考试安排",
-      "content": "您有一场新考试「企业文化与制度」待参加，考试时长60分钟，及格分数80分，请尽快完成。",
+      "content": "您有一场新考试「粒子系统」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
       "type": "exam",
-      "examId": 1782182264380,
+      "examId": 1782221347409,
       "read": true,
-      "createdAt": "2026-06-23T04:16:07.223Z",
-      "readAt": "2026-06-23T06:35:55.835Z"
+      "createdAt": "2026-06-23T13:29:07.419Z",
+      "readAt": "2026-06-23T13:48:13.144Z"
     },
     {
-      "id": 1782188167224,
+      "id": 1782221347420,
       "userId": 1781087021554,
       "title": "新考试安排",
-      "content": "您有一场新考试「企业文化与制度」待参加，考试时长60分钟，及格分数80分，请尽快完成。",
+      "content": "您有一场新考试「粒子系统」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
       "type": "exam",
-      "examId": 1782182264380,
+      "examId": 1782221347409,
       "read": false,
-      "createdAt": "2026-06-23T04:16:07.223Z"
+      "createdAt": "2026-06-23T13:29:07.419Z"
     }
   ],
   "notification_reads": [
@@ -2184,132 +2195,15 @@
       "id": 1782111523716,
       "createdAt": "2026/6/22 14:58:43",
       "updatedAt": "2026/6/22 14:58:43"
-    },
-    {
-      "type": "single",
-      "title": "在 Lua 中，关于变量访问效率的说法，正确的是（          ）？",
-      "content": "在 Lua 中，关于变量访问效率的说法，正确的是（          ）？",
-      "options": [
-        "全局变量访问效率高于局部变量",
-        "局部变量访问无需查表，效率更高",
-        "UpValue 变量与全局变量效率一致"
-      ],
-      "answer": "B",
-      "explanation": "非local局部变量，即UpValue（全局变量其实也是记录在名为_ENV的第一个Table类型的UpValue中）的访问通常需更多的指令操作，而Local变量的访问，只需要一条简单寄存器读取指令，所以能节省出数据查询带来的性能开销",
-      "analysis": "非local局部变量，即UpValue（全局变量其实也是记录在名为_ENV的第一个Table类型的UpValue中）的访问通常需更多的指令操作，而Local变量的访问，只需要一条简单寄存器读取指令，所以能节省出数据查询带来的性能开销",
-      "difficulty": "easy",
-      "knowledge": "",
-      "score": 3,
-      "bankId": 1782207270022,
-      "id": 1782207270221,
-      "createdAt": "2026/6/23 17:34:30",
-      "updatedAt": "2026/6/23 17:34:30"
-    },
-    {
-      "type": "single",
-      "title": "由于require会有一个package.loaded[name] 的判断，所以当要重新require的时候，必须将其置为（           ）？",
-      "content": "由于require会有一个package.loaded[name] 的判断，所以当要重新require的时候，必须将其置为（           ）？",
-      "options": [
-        "nil",
-        "ture",
-        "false"
-      ],
-      "answer": "A",
-      "explanation": "由于require会有一个package.loaded[name] 的判断，所以当要重新require的时候，必须将其置为nil。\npackage.loaded[name] = nil",
-      "analysis": "由于require会有一个package.loaded[name] 的判断，所以当要重新require的时候，必须将其置为nil。\npackage.loaded[name] = nil",
-      "difficulty": "easy",
-      "knowledge": "",
-      "score": 3,
-      "bankId": 1782207270022,
-      "id": 1782207270223,
-      "createdAt": "2026/6/23 17:34:30",
-      "updatedAt": "2026/6/23 17:34:30"
-    },
-    {
-      "type": "multiple",
-      "title": "以下哪些是 Lua 的基本数据类型\n（      ）？",
-      "content": "以下哪些是 Lua 的基本数据类型\n（      ）？",
-      "options": [
-        "Boolean",
-        "String",
-        "Table"
-      ],
-      "answer": [
-        "A",
-        "B",
-        "C"
-      ],
-      "explanation": "Lua的数据类型有Nil、Boolean、Number、String、Function、User data(Heavy 、Light)、Thread、Table(Metatable、Environment)、Rider 调试通过断点可以获得类型",
-      "analysis": "Lua的数据类型有Nil、Boolean、Number、String、Function、User data(Heavy 、Light)、Thread、Table(Metatable、Environment)、Rider 调试通过断点可以获得类型",
-      "difficulty": "easy",
-      "knowledge": "",
-      "score": 5,
-      "bankId": 1782207270022,
-      "id": 1782207270225,
-      "createdAt": "2026/6/23 17:34:30",
-      "updatedAt": "2026/6/23 17:34:30"
     }
   ],
   "exams": [
     {
-      "id": 1782181381247,
+      "id": 1782221347409,
       "title": "粒子系统",
       "description": "",
       "duration": 60,
-      "passingScore": 80,
-      "totalScore": 100,
-      "bankId": null,
-      "shuffleQuestions": false,
-      "showAnswer": false,
-      "status": "published",
-      "questions": [
-        {
-          "questionId": 1782111523712,
-          "score": 5,
-          "order": 0
-        },
-        {
-          "questionId": 1782111523714,
-          "score": 5,
-          "order": 1
-        },
-        {
-          "questionId": 1782111523716,
-          "score": 5,
-          "order": 2
-        }
-      ],
-      "startTime": "2026-06-23T02:23:00.000Z",
-      "endTime": "2026-06-24T02:23:00.000Z",
-      "maxAttempts": 0,
-      "paperId": "paper_1782113932466",
-      "paperName": "粒子系统",
-      "allowedUsers": [
-        1780909174403,
-        1781087021554
-      ],
-      "createdAt": "2026-06-23T02:23:01.247Z",
-      "updatedAt": "2026-06-23T06:05:26.214Z",
-      "accessType": "restricted",
-      "shuffleOptions": false,
-      "attemptsPolicy": "unlimited",
-      "attemptsCount": null,
-      "recordScore": "highest",
-      "screenSwitchPolicy": "unlimited",
-      "screenSwitchCount": null,
-      "showData": true,
-      "answerDetail": "after_grade",
-      "viewQuestions": "all",
-      "showCorrect": "show",
-      "showAnalysis": "show",
-      "viewRank": "after_submit"
-    },
-    {
-      "id": 1782182264380,
-      "title": "企业文化与制度",
-      "description": "",
-      "duration": 60,
-      "passingScore": 80,
+      "passingScore": 60,
       "totalScore": 100,
       "bankId": null,
       "shuffleQuestions": true,
@@ -2317,100 +2211,51 @@
       "status": "published",
       "questions": [
         {
-          "questionId": 1781235958847,
+          "questionId": 1782111523712,
           "score": 30,
           "order": 0,
-          "content": "次世代模型是指采用高精度建模、法线贴图、PBR材质等技术制作的，具有（      ）的3D模型。",
-          "type": "single"
+          "content": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+          "type": "single",
+          "partialScore": 0
         },
         {
-          "questionId": 1781235958849,
+          "questionId": 1782111523714,
           "score": 30,
           "order": 1,
-          "content": "PBR材质制作的常用制作软件是（      ）？",
-          "type": "single"
+          "content": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+          "type": "single",
+          "partialScore": 0
         },
         {
-          "questionId": 1781235958851,
+          "questionId": 1782111523716,
           "score": 40,
-          "partialScore": 20,
           "order": 2,
-          "content": "在课堂中提到低模拓扑的关键要点有哪些？（   ）",
-          "type": "multiple"
+          "content": "使用简单粒子所带来的问题有哪些？",
+          "type": "multiple",
+          "partialScore": 20
         }
       ],
-      "startTime": "2026-06-22T18:37:00.000Z",
-      "endTime": "2026-06-23T18:38:00.000Z",
+      "startTime": "2026-06-23T13:29:00.000Z",
+      "endTime": "2026-06-24T13:29:00.000Z",
       "maxAttempts": 0,
-      "paperId": "paper_1782182121955",
-      "paperName": "2026企业文化与制度",
+      "paperId": "paper_1782113932466",
+      "paperName": "粒子系统",
       "allowedUsers": [
         1780909174403,
         1781087021554
       ],
-      "createdAt": "2026-06-23T02:37:44.380Z",
-      "updatedAt": "2026-06-23T04:16:07.211Z",
+      "createdAt": "2026-06-23T13:29:07.409Z",
+      "updatedAt": "2026-06-23T13:29:50.650Z",
       "accessType": "restricted"
     }
   ],
   "exam_attempts": [
     {
-      "id": 1782181447328,
-      "examId": 1782181381247,
-      "userId": "1781087021554",
-      "status": "completed",
-      "startedAt": "2026-06-23T02:24:07.328Z",
-      "answers": {
-        "1782111523712": "A",
-        "1782111523714": "A",
-        "1782111523716": "ABCD"
-      },
-      "score": 100,
-      "passed": true,
-      "completedAt": "2026-06-23T02:24:24.157Z",
-      "correctCount": 3,
-      "totalQuestions": 3
-    },
-    {
-      "id": 1782182299038,
-      "examId": 1782182264380,
+      "id": 1782221414020,
+      "examId": 1782221347409,
       "userId": "1780909174403",
       "status": "completed",
-      "startedAt": "2026-06-23T02:38:19.038Z",
-      "answers": {
-        "1781235958847": "A",
-        "1781235958849": "B",
-        "1781235958851": "ABC"
-      },
-      "score": 100,
-      "passed": true,
-      "completedAt": "2026-06-23T02:38:31.106Z",
-      "correctCount": 3,
-      "totalQuestions": 3
-    },
-    {
-      "id": 1782185241140,
-      "examId": 1782181381247,
-      "userId": "1781087021554",
-      "status": "completed",
-      "startedAt": "2026-06-23T03:27:21.140Z",
-      "answers": {
-        "1782111523712": "A",
-        "1782111523714": "A",
-        "1782111523716": "AB"
-      },
-      "score": 80,
-      "passed": true,
-      "completedAt": "2026-06-23T03:27:21.203Z",
-      "correctCount": 2,
-      "totalQuestions": 3
-    },
-    {
-      "id": 1782187184372,
-      "examId": 1782181381247,
-      "userId": "1780909174403",
-      "status": "completed",
-      "startedAt": "2026-06-23T03:59:44.372Z",
+      "startedAt": "2026-06-23T13:30:14.020Z",
       "answers": {
         "1782111523712": "A",
         "1782111523714": "A",
@@ -2418,26 +2263,28 @@
       },
       "score": 90,
       "passed": true,
-      "completedAt": "2026-06-23T03:59:54.139Z",
+      "completedAt": "2026-06-23T13:30:24.250Z",
       "correctCount": 2,
-      "totalQuestions": 3
+      "totalQuestions": 3,
+      "durationUsed": 10
     },
     {
-      "id": 1782189993188,
-      "examId": 1782181381247,
-      "userId": "1781087021554",
+      "id": 1782222496080,
+      "examId": 1782221347409,
+      "userId": "1780909174403",
       "status": "completed",
-      "startedAt": "2026-06-23T04:46:33.188Z",
+      "startedAt": "2026-06-23T13:48:16.080Z",
       "answers": {
-        "1781235958849": "A",
-        "1781235958851": "AB",
-        "1781235958847": "A"
+        "1782111523716": "AB",
+        "1782111523714": "B",
+        "1782111523712": "A"
       },
-      "score": 0,
+      "score": 50,
       "passed": false,
-      "completedAt": "2026-06-23T04:46:33.212Z",
-      "correctCount": 0,
-      "totalQuestions": 0
+      "completedAt": "2026-06-23T13:48:28.848Z",
+      "correctCount": 1,
+      "totalQuestions": 3,
+      "durationUsed": 13
     }
   ],
   "survey_responses": [
@@ -2668,16 +2515,6 @@
       "createdBy": "管理员",
       "createdAt": "2026/6/22 14:58:37",
       "updatedAt": "2026/6/22 14:58:37"
-    },
-    {
-      "id": 1782207270022,
-      "name": "《LUA性能优化》课堂测验定稿版",
-      "categoryId": 1780974142620,
-      "description": "",
-      "status": "active",
-      "createdBy": "管理员",
-      "createdAt": "2026/6/23 17:34:30",
-      "updatedAt": "2026/6/23 17:34:30"
     }
   ],
   "index_featured_courses": [
@@ -3909,7 +3746,7 @@
       "noticeId": 1782183780370,
       "userId": 1780909174403,
       "username": "15302206488",
-      "visitedAt": "2026-06-23T09:17:09.557Z"
+      "visitedAt": "2026-06-23T13:02:51.006Z"
     }
   ]
 }
