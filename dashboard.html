@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -582,15 +582,14 @@
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">封面图</th>
                 <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">标题</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">置顶</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">发布时间</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">发布时间</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">访问量</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
               </tr>
             </thead>
             <tbody id="notice-list" class="divide-y divide-slate-200">
               <tr>
-                <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                <td colspan="5" class="px-6 py-12 text-center text-slate-400">
                   <i class="fas fa-bullhorn text-4xl mb-3 block"></i>
                   <p>暂无公告</p>
                 </td>
@@ -1252,12 +1251,13 @@
               <thead class="bg-slate-50">
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">标题</th>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
-                  <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">发布时间</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">访问量</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
               <tbody id="portal-notice-list" class="divide-y divide-slate-200">
-                <tr><td colspan="3" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-bullhorn text-2xl mb-2 block"></i><p>暂无公告</p></td></tr>
+                <tr><td colspan="4" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-bullhorn text-2xl mb-2 block"></i><p>暂无公告</p></td></tr>
               </tbody>
             </table>
           </div>
@@ -2909,11 +2909,17 @@
         switchSubTab('portal', 'carousel');
       }
 
-      // 切换到其他标签页时，关闭考试编辑器
+      // 切换到其他标签页时，关闭编辑器
       if (name !== 'exam-schedule') {
-        const editorContainer = document.getElementById('examEditorContainer');
-        if (editorContainer && editorContainer.style.display !== 'none') {
-          closeExamEditor();
+        const editorContainer = document.getElementById('unifiedEditorContainer');
+        if (editorContainer && editorContainer.style.display !== 'none' && editorMode === 'exam') {
+          closeUnifiedEditor();
+        }
+      }
+      if (name !== 'paper-mgmt') {
+        const editorContainer = document.getElementById('unifiedEditorContainer');
+        if (editorContainer && editorContainer.style.display !== 'none' && editorMode === 'paper') {
+          closeUnifiedEditor();
         }
       }
 
@@ -7680,30 +7686,22 @@
             </div>
           </td>
 
-          <!-- 置顶 -->
-          <td class="px-6 py-4 text-center">
-            ${n.pinned
-              ? '<span class="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-medium"><i class="fas fa-thumbtack mr-1"></i>是</span>'
-              : '<span class="text-slate-400 text-xs">否</span>'
-            }
-          </td>
-
-          <!-- 状态 -->
-          <td class="px-6 py-4 text-center">
-            <span class="px-2 py-1 rounded text-xs font-medium ${n.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
-              ${n.status === 'published' ? '已发布' : '草稿'}
-            </span>
-          </td>
-
           <!-- 发布时间 -->
-          <td class="px-6 py-4 text-center text-sm text-slate-600">
+          <td class="px-6 py-4 text-sm text-slate-600">
             ${n.publishedAt || n.createdAt || '-'}
           </td>
 
+          <!-- 访问量 -->
+          <td class="px-6 py-4 text-sm">
+            <button onclick="showNoticeVisits(${n.id}, decodeURIComponent('${encodeURIComponent(n.title || '公告')}'))" class="text-indigo-600 hover:text-indigo-800 font-medium underline cursor-pointer" title="点击查看访问详情">
+              ${n.visitCount || 0} 人
+            </button>
+          </td>
+
           <!-- 操作 -->
-          <td class="px-6 py-4 text-center">
-            <button onclick="toggleNoticeStatus(${n.id})" class="px-3 py-1.5 rounded-lg text-xs font-medium transition mr-2 ${n.status === 'published' ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}" title="${n.status === 'published' ? '下架' : '发布'}">
-              <i class="fas ${n.status === 'published' ? 'fa-eye-slash' : 'fa-eye'} mr-1"></i>${n.status === 'published' ? '下架' : '发布'}
+          <td class="px-6 py-4">
+            <button onclick="togglePinNotice(${n.id})" class="px-3 py-1.5 rounded-lg text-xs font-medium transition mr-2 ${n.pinned ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}" title="${n.pinned ? '取消置顶' : '设为置顶'}">
+              <i class="fas fa-thumbtack mr-1"></i>${n.pinned ? '已置顶' : '置顶'}
             </button>
             <button onclick="viewNotice(${n.id})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs hover:bg-indigo-100 transition mr-2">
               <i class="fas fa-eye mr-1"></i>查看
@@ -7728,7 +7726,7 @@
       if (!tbody) return;
 
       if (!data.notices || data.notices.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-bullhorn text-2xl mb-2 block"></i><p>暂无公告</p></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-bullhorn text-2xl mb-2 block"></i><p>暂无公告</p></td></tr>`;
         return;
       }
 
@@ -7743,16 +7741,18 @@
         <tr class="hover:bg-slate-50 transition">
           <td class="px-6 py-4">
             <div class="text-sm font-medium text-slate-800">${n.title}</div>
-            <div class="text-xs text-slate-400 mt-0.5">${n.publishedAt || n.createdAt || '-'}</div>
+          </td>
+          <td class="px-6 py-4 text-sm text-slate-600">
+            ${n.publishedAt || n.createdAt || '-'}
+          </td>
+          <td class="px-6 py-4 text-sm">
+            <button onclick="showNoticeVisits(${n.id}, decodeURIComponent('${encodeURIComponent(n.title || '公告')}'))" class="text-indigo-600 hover:text-indigo-800 font-medium underline cursor-pointer" title="点击查看访问详情">
+              ${n.visitCount || 0} 人
+            </button>
           </td>
           <td class="px-6 py-4">
-            <span class="px-2 py-1 rounded text-xs font-medium ${n.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
-              ${n.status === 'published' ? '已发布' : '草稿'}
-            </span>
-          </td>
-          <td class="px-6 py-4 text-center">
-            <button onclick="toggleNoticeStatus(${n.id})" class="px-2.5 py-1 rounded text-xs font-medium transition mr-1 ${n.status === 'published' ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}" title="${n.status === 'published' ? '下架' : '发布'}">
-              <i class="fas ${n.status === 'published' ? 'fa-eye-slash' : 'fa-eye'}"></i>
+            <button onclick="togglePinNotice(${n.id})" class="px-2.5 py-1 rounded text-xs font-medium transition mr-1 ${n.pinned ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}" title="${n.pinned ? '取消置顶' : '设为置顶'}">
+              <i class="fas fa-thumbtack"></i>
             </button>
             <button onclick="viewNotice(${n.id})" class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded text-xs hover:bg-indigo-100 mr-1" title="查看">
               <i class="fas fa-eye"></i>
@@ -7796,24 +7796,6 @@
               </div>
               <input type="hidden" id="n-content" value="${content.replace(/"/g, '&quot;')}">
               <p class="text-xs text-slate-400 mt-1">支持文字、图片、标题、列表等格式(编辑器固定高度400px,内容过多时可滚动)</p>
-            </div>
-
-            <!-- 状态选择 -->
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">发布状态</label>
-                <select id="n-status" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option value="draft" ${notice?.status === 'draft' ? 'selected' : ''}>草稿</option>
-                  <option value="published" ${!notice || notice?.status === 'published' ? 'selected' : ''}>立即发布</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">置顶</label>
-                <select id="n-pinned" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option value="0" ${!notice?.pinned ? 'selected' : ''}>否</option>
-                  <option value="1" ${notice?.pinned ? 'selected' : ''}>是</option>
-                </select>
-              </div>
             </div>
           </form>
 
@@ -7877,8 +7859,8 @@
       const formData = {
         title: document.getElementById('n-title').value.trim(),
         content: content,
-        status: document.getElementById('n-status').value,
-        pinned: parseInt(document.getElementById('n-pinned').value) || 0,
+        status: 'published',  // 公告发布后直接为已发布状态
+        pinned: 0,  // 默认不置顶，通过操作栏的置顶按钮控制
         publishedAt: new Date().toISOString().split('T')[0]
       };
 
@@ -7919,9 +7901,24 @@
       }
     }
 
-    function viewNotice(id) {
+    async function viewNotice(id) {
       const n = data.notices.find(x => x.id === id);
       if (!n) return;
+
+      // 记录访问
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+        await fetch(API + '/notices/' + id + '/visit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.id || currentUser.username || 'admin',
+            username: currentUser.displayName || currentUser.username || '管理员'
+          })
+        });
+      } catch (e) {
+        console.warn('[Dashboard] 记录访问失败:', e.message);
+      }
 
       showModal(`
         <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
@@ -7943,9 +7940,6 @@
             <!-- 元信息 -->
             <div class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
               ${n.pinned ? '<span class="px-3 py-1 bg-red-100 text-red-600 rounded-full text-sm font-medium"><i class="fas fa-thumbtack mr-1"></i>置顶</span>' : ''}
-              <span class="px-3 py-1 rounded-full text-sm font-medium ${n.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
-                ${n.status === 'published' ? '已发布' : '草稿'}
-              </span>
               <span class="text-sm text-slate-400">
                 <i class="far fa-clock mr-1"></i>${n.publishedAt || n.createdAt}
               </span>
@@ -7987,28 +7981,129 @@
       }
     }
 
-    // 切换公告发布/下架状态
-    async function toggleNoticeStatus(id) {
-      const notice = data.notices.find(n => n.id === id);
-      if (!notice) return;
-      const newStatus = notice.status === 'published' ? 'draft' : 'published';
-      const actionText = newStatus === 'published' ? '发布' : '下架';
-      if (!confirm(`确定要${actionText}公告「${notice.title}」吗?`)) return;
+    // 切换公告置顶状态（互斥置顶：同时只能有一条公告置顶）
+    async function togglePinNotice(id) {
+      // 确保 id 为数字类型
+      const numId = parseInt(id);
+      const notice = data.notices.find(n => n.id === numId);
+      if (!notice) {
+        console.error('[Dashboard] 找不到公告 id:', numId);
+        return;
+      }
+
+      // 如果要取消置顶，直接设为0
+      // 如果要设为置顶，需要先将其他公告的pinned设为0，再将当前公告设为1
+      const newPinned = notice.pinned ? 0 : 1;
+      const actionText = newPinned ? '置顶' : '取消置顶';
 
       try {
-        const res = await fetch(API + '/notices/' + id, {
+        // 如果设为置顶，先取消其他公告的置顶（确保互斥）
+        if (newPinned === 1) {
+          const unpinRes = await fetch(API + '/notices/unpin-all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          if (!unpinRes.ok) {
+            const errText = await unpinRes.text();
+            toast('取消其他公告置顶失败: ' + errText, 'error');
+            console.error('[Dashboard] unpin-all 失败:', errText);
+            return;
+          }
+        }
+
+        // 设置当前公告的置顶状态
+        const res = await fetch(API + '/notices/' + numId, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: newStatus })
+          body: JSON.stringify({ pinned: newPinned })
         });
         if (res.ok) {
           toast(`公告已${actionText}`);
           await loadAllData();
           renderNotices();
           if (window.DataSync) window.DataSync.broadcast('notices');
+        } else {
+          const errText = await res.text();
+          toast('操作失败: ' + errText, 'error');
+          console.error('[Dashboard] PUT notices 失败:', errText);
         }
       } catch (err) {
-        toast(`${actionText}失败`, 'error');
+        toast('操作失败', 'error');
+        console.error('[Dashboard] 切换置顶状态异常:', err);
+      }
+    }
+
+    // 显示公告访问详情弹窗
+    async function showNoticeVisits(noticeId, noticeTitle) {
+      // 安全转义标题中的 HTML 特殊字符
+      const safeTitle = String(noticeTitle || '公告').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800">访问详情 - ${safeTitle}</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div id="visit-detail-body" class="flex-1 overflow-y-auto p-6">
+            <div class="text-center text-slate-400 py-8"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>
+          </div>
+          <div class="px-6 py-4 border-t border-slate-100 flex justify-end flex-shrink-0">
+            <button onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+          </div>
+        </div>
+      `);
+
+      // 等待一帧确保 DOM 渲染完成
+      await new Promise(r => requestAnimationFrame(r));
+
+      try {
+        console.log('[Dashboard] 获取访问详情:', API + '/notices/' + noticeId + '/visits');
+        const res = await fetch(API + '/notices/' + noticeId + '/visits');
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error('[Dashboard] 请求失败:', res.status, errText);
+          throw new Error(res.status + ' ' + errText);
+        }
+        const respData = await res.json();
+        const visits = respData.visits || [];
+        const body = document.getElementById('visit-detail-body');
+        if (!body) {
+          console.error('[Dashboard] visit-detail-body 未找到');
+          return;
+        }
+
+        if (visits.length === 0) {
+          body.innerHTML = '<div class="text-center text-slate-400 py-8"><i class="fas fa-user-slash text-3xl mb-3 block"></i><p>暂无访问记录</p></div>';
+          return;
+        }
+
+        body.innerHTML = `
+          <div class="text-sm text-slate-500 mb-4">共 <span class="font-semibold text-slate-700">${visits.length}</span> 人访问</div>
+          <table class="w-full">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">用户</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">访问时间</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              ${visits.map(v => `
+                <tr class="hover:bg-slate-50">
+                  <td class="px-4 py-3 text-sm text-slate-700">
+                    <i class="fas fa-user-circle text-slate-400 mr-2"></i>${v.username || v.userId}
+                  </td>
+                  <td class="px-4 py-3 text-sm text-slate-500">
+                    <i class="far fa-clock mr-1"></i>${new Date(v.visitedAt).toLocaleString('zh-CN')}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (err) {
+        console.error('[Dashboard] 获取访问详情失败:', err);
+        const body = document.getElementById('visit-detail-body');
+        if (body) body.innerHTML = '<div class="text-center text-red-400 py-8"><i class="fas fa-exclamation-triangle text-3xl mb-3 block"></i><p>加载失败: ' + err.message + '</p></div>';
       }
     }
 
@@ -8779,7 +8874,7 @@
           });
 
           // 更新试卷编辑页显示
-          renderPaperEditorQuestions();
+          if (editorMode) { renderUnifiedEditor(); } else { renderPaperQuestions(); }
         } else {
           toast(result.error || '导入失败', 'error');
         }
@@ -9024,303 +9119,481 @@
       }).join('');
     }
 
-    // ========== 考试编辑页（全屏覆盖视图） ==========
+    // ========== 统一编辑器（考试 + 试卷共用） ==========
+    let editorMode = null; // 'exam' | 'paper' | null
     let examEditorData = null;
-    let examEditorQuestions = [];
-    let examEditorCurrentIdx = 0;
+
+    // 编辑器适配器：封装考试/试卷两种模式的加载、保存差异
+    const editorAdapter = {
+      exam: {
+        async load(id) {
+          const examRes = await fetch('/api/exams');
+          const allExams = await examRes.json();
+          examEditorData = allExams.find(e => e.id === id || e.id === Number(id) || String(e.id) === String(id));
+          if (!examEditorData) throw new Error('考试不存在');
+          const qRes = await fetch('/api/exams/' + id + '/questions');
+          const qResult = await qRes.json();
+          return (qResult.questions || []).sort((a, b) => (a.order || 0) - (b.order || 0)).map(function(q) {
+            var qd = q.questionDetail || q;
+            return {
+              questionId: q.questionId || q.id,
+              score: q.score || qd.score || 5,
+              partialScore: q.partialScore || 0,
+              order: q.order || 0,
+              content: qd.title || qd.content || '(无标题)',
+              type: qd.type || 'single',
+              options: qd.options || [],
+              answer: qd.answer || '',
+              explanation: qd.explanation || ''
+            };
+          });
+        },
+        async save(questions) {
+          var payload = questions.map(function(q, i) {
+            return { questionId: q.questionId || q.id, score: q.score || 5, order: i };
+          });
+          await fetch('/api/exams/' + examEditorData.id + '/questions', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ questions: payload })
+          });
+        },
+        getTitle: function() { return examEditorData ? examEditorData.title : ''; },
+        isPublish: false
+      },
+      paper: {
+        async load(id) {
+          var paper = papersAllData.find(function(p) { return p.id === id; });
+          if (!paper) throw new Error('试卷不存在');
+          editingPaperId = id;
+          return (paper.questions || []).map(function(pq, idx) {
+            return {
+              questionId: pq.questionId,
+              score: pq.score || 0,
+              partialScore: pq.partialScore || 0,
+              order: idx,
+              content: pq.content || '(题目内容)',
+              type: pq.type || 'single',
+              options: pq.options || [],
+              answer: pq.answer || '',
+              explanation: pq.explanation || ''
+            };
+          });
+        },
+        async save(questions) {
+          var paper = papersAllData.find(function(p) { return p.id === editingPaperId; });
+          if (!paper) throw new Error('试卷不存在');
+          paper.questions = questions.map(function(q, i) {
+            return { questionId: q.questionId, score: q.score || 5, partialScore: q.partialScore || 0, order: i };
+          });
+          paper.totalScore = questions.reduce(function(s, q) { return s + (q.score || 0); }, 0);
+          paper.updatedAt = new Date().toISOString();
+          if (window.dataSync && window.dataSync.setData) {
+            window.dataSync.setData('papers', papersAllData);
+          } else {
+            localStorage.setItem('papers', JSON.stringify(papersAllData));
+          }
+        },
+        getTitle: function() {
+          var p = papersAllData.find(function(pp) { return pp.id === editingPaperId; });
+          return p ? p.name : '';
+        },
+        isPublish: true
+      }
+    };
+
+    // 隐藏/显示考试列表元素
+    function toggleExamListViews(hide) {
+      var tabContent = document.getElementById('tab-exam-schedule');
+      var examList = document.getElementById('examListView');
+      if (examList) examList.style.display = hide ? 'none' : '';
+      var statCards = tabContent ? tabContent.querySelector('.grid.grid-cols-4') : null;
+      if (statCards) statCards.style.display = hide ? 'none' : '';
+      var filterBar = tabContent ? tabContent.querySelector('.flex.items-center.justify-between.mb-4') : null;
+      if (filterBar) filterBar.style.display = hide ? 'none' : '';
+      var filterRow = tabContent ? tabContent.querySelector('.flex.items-center.gap-3.mb-4') : null;
+      if (filterRow) filterRow.style.display = hide ? 'none' : '';
+      var batchBar = document.getElementById('examBatchActionBar');
+      if (batchBar) batchBar.style.display = hide ? 'none' : '';
+      var examTable = tabContent ? tabContent.querySelector('.bg-white.rounded-lg.border') : null;
+      if (examTable) examTable.style.display = hide ? 'none' : '';
+      var pagination = document.getElementById('examPagination');
+      if (pagination) pagination.style.display = hide ? 'none' : '';
+    }
 
     async function openExamEditor(examId) {
-      console.log('[ExamEditor] openExamEditor called with id:', examId, typeof examId);
+      console.log('[openExamEditor] 开始, examId:', examId, typeof examId);
       try {
-        const examRes = await fetch('/api/exams');
-        const allExams = await examRes.json();
-        console.log('[ExamEditor] fetched exams:', allExams.length);
-        examEditorData = allExams.find(e => e.id === examId || e.id === Number(examId) || String(e.id) === String(examId));
-        console.log('[ExamEditor] found exam:', examEditorData ? examEditorData.title : 'NOT FOUND');
-        if (!examEditorData) { toast('考试不存在', 'error'); return; }
+        editorMode = 'exam';
+        console.log('[openExamEditor] 正在加载考试数据...');
+        paperQuestions = await editorAdapter.exam.load(examId);
+        console.log('[openExamEditor] 加载完成, 题目数:', paperQuestions.length);
+        toggleExamListViews(true);
 
-        const qRes = await fetch('/api/exams/' + examId + '/questions');
-        const qResult = await qRes.json();
-        console.log('[ExamEditor] fetched questions:', qResult);
-        examEditorQuestions = (qResult.questions || []).sort((a, b) => (a.order || 0) - (b.order || 0));
-        examEditorCurrentIdx = 0;
-
-        // 隐藏考试列表，显示编辑器（内嵌方式）
-        const tabContent = document.getElementById('tab-exam-schedule');
-        const examList = document.getElementById('examListView');
-        if (examList) examList.style.display = 'none';
-        // 隐藏统计卡片和筛选器
-        const statCards = tabContent.querySelector('.grid.grid-cols-4');
-        if (statCards) statCards.style.display = 'none';
-        const filterBar = tabContent.querySelector('.flex.items-center.justify-between.mb-4');
-        if (filterBar) filterBar.style.display = 'none';
-        const filterRow = tabContent.querySelector('.flex.items-center.gap-3.mb-4');
-        if (filterRow) filterRow.style.display = 'none';
-        const batchBar = document.getElementById('examBatchActionBar');
-        if (batchBar) batchBar.style.display = 'none';
-        const examTable = tabContent.querySelector('.bg-white.rounded-lg.border');
-        if (examTable) examTable.style.display = 'none';
-        const pagination = document.getElementById('examPagination');
-        if (pagination) pagination.style.display = 'none';
-
-        // 创建编辑器容器
-        let editorContainer = document.getElementById('examEditorContainer');
-        if (!editorContainer) {
-          editorContainer = document.createElement('div');
-          editorContainer.id = 'examEditorContainer';
-          tabContent.appendChild(editorContainer);
+        var tabContent = document.getElementById('tab-exam-schedule');
+        console.log('[openExamEditor] tab-exam-schedule:', !!tabContent);
+        if (tabContent) {
+          console.log('[openExamEditor] tab display:', tabContent.style.display, 'hidden:', tabContent.classList.contains('hidden'));
         }
-        editorContainer.style.display = 'block';
-        renderExamEditor();
-        console.log('[ExamEditor] editor rendered successfully');
+        // 确保 container 在正确的 tab 中（可能之前被试卷编辑器创建在了 paper-mgmt tab）
+        var container = document.getElementById('unifiedEditorContainer');
+        if (container && container.parentElement && container.parentElement.id !== 'tab-exam-schedule') {
+          console.log('[openExamEditor] container 在错误的 tab 中, 当前父:', container.parentElement.id, '→ 移动到 exam-schedule');
+          container.parentElement.removeChild(container);
+          container = null;
+        }
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'unifiedEditorContainer';
+          tabContent.appendChild(container);
+          console.log('[openExamEditor] 创建了新 container');
+        }
+        container.style.display = 'block';
+        container.classList.remove('hidden');
+        renderUnifiedEditor();
+        console.log('[openExamEditor] renderUnifiedEditor 完成, innerHTML长度:', container.innerHTML.length);
+        // 诊断：如果容器为空，输出详细信息
+        if (!container.innerHTML || container.innerHTML.length < 50) {
+          console.error('[openExamEditor] 渲染内容为空! editorMode:', editorMode, 'editorAdapter[editorMode]:', !!editorAdapter[editorMode]);
+          console.error('[openExamEditor] examEditorData:', examEditorData);
+          console.error('[openExamEditor] paperQuestions.length:', paperQuestions.length);
+          container.innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444;"><p style="font-size:16px;font-weight:600;">编辑器加载异常</p><p style="font-size:13px;color:#94a3b8;margin-top:8px;">请刷新页面重试，或查看控制台(F12)获取详细信息</p></div>';
+        }
+        enrichQuestionDetails();
+        // 滚动到顶部确保编辑器可见
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (e) {
-        console.error('[ExamEditor] 打开考试编辑页失败:', e);
+        console.error('[openExamEditor] 打开考试编辑页失败:', e);
         toast('加载失败: ' + e.message, 'error');
+        editorMode = null;
       }
     }
 
-    function closeExamEditor() {
-      // 恢复考试列表显示
-      const tabContent = document.getElementById('tab-exam-schedule');
-      const examList = document.getElementById('examListView');
-      if (examList) examList.style.display = '';
-      const statCards = tabContent.querySelector('.grid.grid-cols-4');
-      if (statCards) statCards.style.display = '';
-      const filterBar = tabContent.querySelector('.flex.items-center.justify-between.mb-4');
-      if (filterBar) filterBar.style.display = '';
-      const filterRow = tabContent.querySelector('.flex.items-center.gap-3.mb-4');
-      if (filterRow) filterRow.style.display = '';
-      const batchBar = document.getElementById('examBatchActionBar');
-      if (batchBar) batchBar.style.display = '';
-      const examTable = tabContent.querySelector('.bg-white.rounded-lg.border');
-      if (examTable) examTable.style.display = '';
-      const pagination = document.getElementById('examPagination');
-      if (pagination) pagination.style.display = '';
+    // 统一关闭编辑器
+    function closeUnifiedEditor() {
+      var container = document.getElementById('unifiedEditorContainer');
+      if (container) container.style.display = 'none';
 
-      const editorContainer = document.getElementById('examEditorContainer');
-      if (editorContainer) editorContainer.style.display = 'none';
+      if (editorMode === 'exam') {
+        toggleExamListViews(false);
+        examEditorData = null;
+        loadExamMgmtList();
+      } else if (editorMode === 'paper') {
+        var listView = document.getElementById('paperListView');
+        if (listView) listView.classList.remove('hidden');
+        editingPaperId = null;
+      }
+      paperQuestions = [];
+      editorMode = null;
+    }
+    // 兼容旧调用
+    function closeExamEditor() { closeUnifiedEditor(); }
+    function closePaperEditor() { closeUnifiedEditor(); }
 
-      examEditorData = null;
-      examEditorQuestions = [];
-      loadExamMgmtList();
+    // 异步补充题目详情（从题库获取选项、答案等）
+    function enrichQuestionDetails() {
+      fetch(API + '/questions?pageSize=9999')
+        .then(function(res) { return res.json(); })
+        .then(function(result) {
+          var allQuestions = result.data || [];
+          var updated = paperQuestions.map(function(pq) {
+            var q = allQuestions.find(function(qq) { return qq.id === pq.questionId; });
+            if (!q) return pq;
+            return Object.assign({}, pq, {
+              content: q.title || q.content || pq.content,
+              type: q.type || pq.type,
+              options: (q.options && q.options.length > 0) ? q.options : pq.options,
+              answer: q.answer || pq.answer,
+              explanation: q.explanation || pq.explanation
+            });
+          });
+          var changed = updated.some(function(u, i) {
+            return u.content !== paperQuestions[i].content || u.type !== paperQuestions[i].type ||
+              (u.options || []).length !== (paperQuestions[i].options || []).length || u.answer !== paperQuestions[i].answer;
+          });
+          if (changed) { paperQuestions = updated; renderUnifiedEditor(); }
+        })
+        .catch(function(err) { console.warn('[UnifiedEditor] 题库详情补充加载失败（非致命）:', err); });
     }
 
-    function renderExamEditor() {
-      const container = document.getElementById('examEditorContainer');
-      if (!container || !examEditorData) return;
-      const totalScore = examEditorQuestions.reduce((s, q) => s + (q.score || q.questionDetail?.score || 1), 0);
-      const qCount = examEditorQuestions.length;
-      const typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
+    function renderUnifiedEditor() {
+      var container = document.getElementById('unifiedEditorContainer');
+      if (!container) return;
+      var adapter = editorAdapter[editorMode];
+      if (!adapter) return;
+      var title = adapter.getTitle();
+      var totalScore = paperQuestions.reduce(function(s, q) { return s + (q.score || 0); }, 0);
+      var qCount = paperQuestions.length;
+      var typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
+      var typeColors = { single: 'bg-blue-100 text-blue-700', multiple: 'bg-purple-100 text-purple-700', judge: 'bg-amber-100 text-amber-700', fill: 'bg-emerald-100 text-emerald-700', essay: 'bg-rose-100 text-rose-700' };
+      var optLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+      var isPaper = editorMode === 'paper';
 
-      // 渲染所有题目
-      let allQuestionsHtml = '';
-      if (examEditorQuestions.length === 0) {
+      // 试卷模式：获取分类名
+      var categoryBadge = '';
+      if (isPaper) {
+        var paper = papersAllData.find(function(p) { return p.id === editingPaperId; });
+        if (paper) {
+          var catName = paper.categoryName || paper.category || '';
+          if (/^\d+$/.test(catName) || !catName) {
+            var cat = (data.categories || []).find(function(c) { return String(c.id) === String(paper.category || paper.categoryId); });
+            catName = cat ? cat.name : (paper.categoryName || paper.category || '未分类');
+          }
+          categoryBadge = '<span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-xs rounded-full font-medium">' + escHtml(catName || '未分类') + '</span>';
+        }
+      }
+
+      // 渲染所有题目卡片
+      var allQuestionsHtml = '';
+      if (qCount === 0) {
         allQuestionsHtml = '<div class="text-center py-20 text-slate-400"><i class="fas fa-inbox text-5xl mb-4 block opacity-30"></i><p class="text-lg">暂无题目</p><p class="text-sm mt-2">请从左侧点击"题库选题"添加试题</p></div>';
       } else {
-        for (var qi = 0; qi < examEditorQuestions.length; qi++) {
-          const currentQ = examEditorQuestions[qi];
-          const qd = currentQ.questionDetail || currentQ;
-          const options = qd.options || [];
-          const answer = qd.answer;
-          const score = currentQ.score || qd.score || 1;
-          const answerArr = Array.isArray(answer) ? answer : (answer != null ? [String(answer)] : []);
+        for (var qi = 0; qi < paperQuestions.length; qi++) {
+          var q = paperQuestions[qi];
+          var options = q.options || [];
+          var answer = q.answer;
+          var score = q.score || 1;
+          var answerArr = Array.isArray(answer) ? answer : (answer != null ? [String(answer)] : []);
 
-          allQuestionsHtml += '<div id="exam-question-' + qi + '" style="padding:24px;border-bottom:1px solid #e2e8f0;">';
-          allQuestionsHtml += '<div class="mb-2 text-sm text-slate-500">第 ' + (qi + 1) + ' 题 【' + (typeNames[qd.type] || qd.type) + '】</div>';
-          allQuestionsHtml += '<h3 class="text-base font-semibold text-slate-800 mb-4 leading-relaxed">' + escHtml(qd.title || qd.content || '(无标题)') + ' <span class="text-slate-400 font-normal">(' + score + ' 分)</span></h3>';
+          allQuestionsHtml += '<div id="exam-question-' + qi + '" class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 mb-4 group hover:border-indigo-200 transition">';
+          // 题目头部
+          allQuestionsHtml += '<div class="flex items-start gap-3">';
+          // 序号徽章
+          allQuestionsHtml += '<div class="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 flex items-center justify-center text-sm font-bold">' + (qi + 1) + '</div>';
+          // 题目内容区
+          allQuestionsHtml += '<div class="flex-1 min-w-0">';
+          allQuestionsHtml += '<div class="flex items-center gap-2 flex-wrap mb-2">';
+          allQuestionsHtml += '<span class="px-2 py-0.5 text-xs rounded-full font-medium ' + (typeColors[q.type] || 'bg-slate-100 text-slate-600') + '">' + (typeNames[q.type] || q.type) + '</span>';
+          allQuestionsHtml += '<span class="font-medium text-slate-800 text-sm">' + escHtml(q.content || '(无标题)') + '</span>';
+          allQuestionsHtml += '<span class="text-slate-400 text-xs ml-1">（' + score + ' 分）</span>';
+          allQuestionsHtml += '</div>';
 
-          if (options.length > 0) {
-            allQuestionsHtml += '<div class="space-y-3">';
+          // 选项渲染（单选/多选）
+          if (options.length > 0 && (q.type === 'single' || q.type === 'multiple')) {
+            allQuestionsHtml += '<div class="space-y-2 mt-2">';
             for (var oi = 0; oi < options.length; oi++) {
               var letter = String.fromCharCode(65 + oi);
               var isCorrect = answerArr.indexOf(letter) !== -1;
-              var cls = isCorrect ? 'text-indigo-600' : 'text-slate-600';
-              var bgCls = isCorrect ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200';
-              allQuestionsHtml += '<div class="flex items-center gap-3 p-3 rounded-lg border ' + bgCls + ' ' + cls + '">';
-              allQuestionsHtml += '<span class="font-bold flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ' + (isCorrect ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-600') + ' text-sm">' + letter + '</span>';
+              var optBg = isCorrect ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-600';
+              var badgeBg = isCorrect ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-600';
+              allQuestionsHtml += '<div class="flex items-center gap-3 p-2.5 rounded-lg border ' + optBg + ' text-sm">';
+              allQuestionsHtml += '<span class="font-bold flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ' + badgeBg + ' text-xs">' + letter + '</span>';
               allQuestionsHtml += '<span class="flex-1">' + escHtml(options[oi]) + '</span>';
               if (isCorrect) allQuestionsHtml += '<i class="fas fa-check-circle text-indigo-500"></i>';
               allQuestionsHtml += '</div>';
             }
             allQuestionsHtml += '</div>';
-          } else if (qd.type === 'judge') {
+          } else if (q.type === 'judge') {
             var judgeAnswer = String(answer);
-            allQuestionsHtml += '<div class="space-y-2">';
-            allQuestionsHtml += '<div class="p-3 rounded-lg border ' + (judgeAnswer === 'true' || judgeAnswer === '1' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500') + '"><i class="fas fa-check mr-2"></i>正确</div>';
-            allQuestionsHtml += '<div class="p-3 rounded-lg border ' + (judgeAnswer === 'false' || judgeAnswer === '0' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500') + '"><i class="fas fa-times mr-2"></i>错误</div>';
+            allQuestionsHtml += '<div class="space-y-1.5 mt-2">';
+            allQuestionsHtml += '<div class="p-2.5 rounded-lg border text-sm ' + (judgeAnswer === 'true' || judgeAnswer === '1' || judgeAnswer === '正确' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500') + '"><i class="fas fa-check mr-2"></i>正确</div>';
+            allQuestionsHtml += '<div class="p-2.5 rounded-lg border text-sm ' + (judgeAnswer === 'false' || judgeAnswer === '0' || judgeAnswer === '错误' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500') + '"><i class="fas fa-times mr-2"></i>错误</div>';
             allQuestionsHtml += '</div>';
-          } else if (qd.type === 'fill') {
-            allQuestionsHtml += '<div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800"><strong>参考答案：</strong>' + escHtml(Array.isArray(answer) ? answer.join(', ') : String(answer || '')) + '</div>';
-          } else if (qd.type === 'essay') {
-            allQuestionsHtml += '<div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800"><strong>参考答案：</strong><br>' + escHtml(String(answer || '')) + '</div>';
+          } else if (q.type === 'fill') {
+            allQuestionsHtml += '<div class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm"><strong>参考答案：</strong>' + escHtml(Array.isArray(answer) ? answer.join(', ') : String(answer || '')) + '</div>';
+          } else if (q.type === 'essay') {
+            allQuestionsHtml += '<div class="mt-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-sm"><strong>参考答案：</strong><br>' + escHtml(String(answer || '')) + '</div>';
           }
+
+          allQuestionsHtml += '</div>'; // end content area
+
+          // 操作控件（分值、上移、下移、删除）
+          allQuestionsHtml += '<div class="flex items-center gap-2 flex-shrink-0 ml-2">';
+          allQuestionsHtml += '<div class="flex items-center gap-1"><span class="text-xs text-slate-400">分值</span>';
+          allQuestionsHtml += '<input type="number" value="' + (q.score || '') + '" min="0" max="100" onchange="updatePaperQuestionScore(' + qi + ', this.value)" class="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="分值"></div>';
+          allQuestionsHtml += '<button type="button" onclick="movePaperQuestion(' + qi + ', -1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition" title="上移"' + (qi === 0 ? ' disabled style="pointer-events:none;opacity:0.3"' : '') + '><i class="fas fa-chevron-up text-xs"></i></button>';
+          allQuestionsHtml += '<button type="button" onclick="movePaperQuestion(' + qi + ', 1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition" title="下移"' + (qi === qCount - 1 ? ' disabled style="pointer-events:none;opacity:0.3"' : '') + '><i class="fas fa-chevron-down text-xs"></i></button>';
+          allQuestionsHtml += '<button type="button" onclick="removePaperQuestion(' + qi + ')" class="w-7 h-7 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash-alt text-xs"></i></button>';
           allQuestionsHtml += '</div>';
+
+          allQuestionsHtml += '</div>'; // end flex items-start
+          allQuestionsHtml += '</div>'; // end question card
         }
       }
 
-      // 构建题号按钮
+      // 题号按钮
       var numButtons = '';
-      for (var i = 0; i < examEditorQuestions.length; i++) {
-        numButtons += '<button onclick="scrollToExamQuestion(' + i + ')" style="background:#f1f5f9;color:#64748b;" class="w-10 h-10 rounded-lg text-sm font-medium transition hover:opacity-80">' + (i + 1) + '</button>';
+      for (var i = 0; i < qCount; i++) {
+        numButtons += '<button onclick="scrollToExamQuestion(' + i + ')" class="w-10 h-10 rounded-lg text-sm font-medium transition hover:bg-indigo-100 hover:text-indigo-600 bg-slate-100 text-slate-600">' + (i + 1) + '</button>';
       }
 
-      container.innerHTML = ''
-        + '<div style="display:flex;flex-direction:column;">'
-        + '  <div style="background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;">'
-        + '    <div style="display:flex;align-items:center;gap:16px;flex:1;">'
-        + '      <button onclick="closeExamEditor()" style="display:flex;align-items:center;gap:6px;font-size:14px;color:#64748b;background:none;border:none;cursor:pointer;padding:6px 12px;border-radius:8px;" onmouseover="this.style.background=\'#f1f5f9\'" onmouseout="this.style.background=\'none\'">'
-        + '        <i class="fas fa-arrow-left"></i> 返回'
-        + '      </button>'
-        + '      <div style="width:1px;height:24px;background:#e2e8f0;"></div>'
-        + '      <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin:0;">' + escHtml(examEditorData.title) + '</h2>'
-        + '    </div>'
-        + '    <div style="display:flex;align-items:center;gap:16px;font-size:14px;color:#64748b;">'
-        + '      <span>总分：<strong style="color:#1e293b;">' + totalScore.toFixed(1) + '</strong></span>'
-        + '      <span>试题：<strong style="color:#1e293b;">' + qCount + '</strong></span>'
-        + '      <button onclick="openExamEditorScoreSettings()" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#64748b;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'">'
-        + '        <i class="fas fa-cog"></i> 设置'
-        + '      </button>'
-        + '      <button onclick="saveExamEditorQuestions()" style="padding:6px 20px;background:#6366f1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;" onmouseover="this.style.background=\'#4f46e5\'" onmouseout="this.style.background=\'#6366f1\'">'
-        + '        <i class="fas fa-check" style="margin-right:4px;"></i>更新'
-        + '      </button>'
-        + '    </div>'
-        + '  </div>'
-        + '  <div style="display:flex;padding:24px;gap:24px;max-width:1200px;width:100%;margin:0 auto;">'
-        + '    <div style="width:220px;flex-shrink:0;">'
-        + '      <div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:20px;position:sticky;top:80px;">'
-        + '        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
-        + '          <h4 style="font-size:14px;font-weight:600;color:#334155;margin:0;">试题列表 (' + qCount + ')</h4>'
-        + '          <button onclick="openExamEditorScoreSettings()" style="font-size:12px;color:#6366f1;background:none;border:none;cursor:pointer;" onmouseover="this.style.color=\'#4f46e5\'" onmouseout="this.style.color=\'#6366f1\'">'
-        + '            <i class="fas fa-sliders-h" style="margin-right:4px;"></i>分数设置'
-        + '          </button>'
-        + '        </div>'
-        + '        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;">' + numButtons + '</div>'
-        + '        <div style="display:flex;flex-direction:column;gap:8px;">'
-        + '          <button onclick="openExamEditorQuestionPicker()" style="width:100%;padding:10px;font-size:13px;border:1px solid #c7d2fe;color:#4f46e5;border-radius:8px;background:#fff;cursor:pointer;font-weight:600;" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'">'
-        + '            <i class="fas fa-plus" style="margin-right:6px;"></i>题库选题'
-        + '          </button>'
-        + '          <button onclick="openExamEditorImport()" style="width:100%;padding:10px;font-size:13px;border:1px solid #e2e8f0;color:#64748b;border-radius:8px;background:#fff;cursor:pointer;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'">'
-        + '            <i class="fas fa-file-import" style="margin-right:6px;"></i>导入试题'
-        + '          </button>'
-        + '        </div>'
-        + '      </div>'
-        + '    </div>'
-        + '    <div style="flex:1;background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow-y:auto;">'
-        + allQuestionsHtml
-        + '    </div>'
-        + '  </div>'
-        + '</div>';
+      // 导入按钮：考试模式用 examImportModal，试卷模式用 paperImportQuestionsModal
+      var importOnclick = isPaper ? 'openPaperImportQuestionsModal()' : 'openExamEditorImport()';
+      // 选题按钮
+      var pickOnclick = 'openPaperQuestionPicker()';
+      // 设置按钮
+      var settingsOnclick = 'openScoreSettingsModal()';
+
+      // 顶栏右侧按钮
+      var topRightBtns = '';
+      topRightBtns += '<div class="flex items-center gap-1.5 px-3 py-2 bg-slate-100 rounded-full text-sm">';
+      topRightBtns += '<span class="text-slate-400">总分：</span><span class="font-semibold text-slate-700" id="ueTotalScore">' + totalScore.toFixed(1) + '</span>';
+      topRightBtns += '<span class="text-slate-300 mx-1">|</span>';
+      topRightBtns += '<span class="text-slate-400">试题：</span><span class="font-semibold text-slate-700" id="ueQCount">' + qCount + '</span>';
+      topRightBtns += '</div>';
+
+      if (isPaper) {
+        topRightBtns += '<button onclick="openPaperInfoDrawer()" class="px-4 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"><i class="fas fa-cog mr-1.5"></i>设置</button>';
+        var pubDisabled = qCount === 0 ? ' disabled' : '';
+        var pubClass = qCount > 0 ? 'btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition' : 'px-4 py-2 text-sm border border-slate-200 rounded-lg text-slate-400 font-medium transition';
+        topRightBtns += '<button onclick="publishPaper()" id="pePublishBtn" class="' + pubClass + '"' + pubDisabled + '><i class="fas fa-paper-plane mr-1.5"></i>发布</button>';
+      } else {
+        topRightBtns += '<button onclick="' + settingsOnclick + '" class="px-4 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition border border-slate-200"><i class="fas fa-cog mr-1.5"></i>设置</button>';
+        topRightBtns += '<button onclick="saveUnifiedEditor()" class="px-5 py-2 text-sm bg-indigo-500 text-white rounded-lg font-semibold hover:bg-indigo-600 transition shadow-sm"><i class="fas fa-check mr-1.5"></i>更新</button>';
+      }
+
+      // 试卷模式：信息抽屉 HTML
+      var drawerHtml = '';
+      if (isPaper) {
+        var paper = papersAllData.find(function(p) { return p.id === editingPaperId; });
+        drawerHtml = ''
+          + '<div id="paperInfoDrawerOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden transition-opacity" onclick="closePaperInfoDrawer()"></div>'
+          + '<div id="paperInfoDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">'
+          + '  <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">'
+          + '    <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-cog text-indigo-500 mr-2"></i>试卷信息</h3>'
+          + '    <button onclick="closePaperInfoDrawer()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"><i class="fas fa-times"></i></button>'
+          + '  </div>'
+          + '  <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">'
+          + '    <div><label class="block text-sm font-medium text-slate-700 mb-1.5">试卷名称 <span class="text-red-500">*</span></label>'
+          + '    <input type="text" id="peName" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm" placeholder="请输入试卷名称" value="' + escHtml(paper ? paper.name : '') + '"></div>'
+          + '    <div><label class="block text-sm font-medium text-slate-700 mb-1.5">试卷分类</label>'
+          + '    <select id="peCategoryInput" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm bg-white"><option value="">请选择分类</option></select></div>'
+          + '    <div><label class="block text-sm font-medium text-slate-700 mb-1.5">试卷类型</label>'
+          + '    <select id="peType" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm bg-white">'
+          + '      <option value="fixed"' + (paper && paper.type === 'fixed' ? ' selected' : '') + '>固定试卷</option>'
+          + '      <option value="random"' + (paper && paper.type === 'random' ? ' selected' : '') + '>随机试卷</option>'
+          + '    </select></div>'
+          + '    <div><label class="block text-sm font-medium text-slate-700 mb-1.5">试卷说明</label>'
+          + '    <textarea id="peDescInput" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm resize-none" placeholder="请输入试卷说明...">' + escHtml(paper ? paper.description || '' : '') + '</textarea></div>'
+          + '    <div class="border-t border-slate-100 pt-4"><p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">考试设置</p>'
+          + '    <div class="grid grid-cols-2 gap-3">'
+          + '      <div><label class="block text-sm font-medium text-slate-700 mb-1.5">考试时长（分钟）</label>'
+          + '      <input type="number" id="peDuration" value="' + (paper ? paper.duration || 60 : 60) + '" min="5" max="300" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm text-center"></div>'
+          + '      <div><label class="block text-sm font-medium text-slate-700 mb-1.5">及格分</label>'
+          + '      <input type="number" id="pePassScore" value="' + (paper ? paper.passScore || 60 : 60) + '" min="0" max="100" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm text-center"></div>'
+          + '    </div></div>'
+          + '  </div>'
+          + '  <div class="px-6 py-4 border-t border-slate-100 flex-shrink-0 flex gap-3">'
+          + '    <button onclick="closePaperInfoDrawer()" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition">取消</button>'
+          + '    <button onclick="savePaperInfoFromDrawer()" class="flex-1 py-2.5 btn-primary text-white rounded-xl text-sm font-medium shadow-sm hover:shadow-md transition"><i class="fas fa-check mr-1.5"></i>保存</button>'
+          + '  </div>'
+          + '</div>';
+
+        // 填充分类下拉（延迟到 DOM 渲染后）
+        setTimeout(function() {
+          if (typeof fillCategorySelect === 'function') fillCategorySelect('peCategoryInput');
+          var catId = paper ? (paper.categoryId || paper.category || '') : '';
+          var sel = document.getElementById('peCategoryInput');
+          if (sel) sel.value = catId;
+        }, 50);
+      }
+
+      // 构建完整 HTML
+      var html = '';
+      html += '<div style="display:flex;flex-direction:column;">';
+      // 粘性顶栏
+      html += '<div style="background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;">';
+      html += '  <div style="display:flex;align-items:center;gap:16px;flex:1;">';
+      html += '    <button onclick="closeUnifiedEditor()" style="display:flex;align-items:center;gap:6px;font-size:14px;color:#64748b;background:none;border:none;cursor:pointer;padding:6px 12px;border-radius:8px;" onmouseover="this.style.background=\'#f1f5f9\'" onmouseout="this.style.background=\'none\'"><i class="fas fa-arrow-left"></i> 返回</button>';
+      html += '    <div style="width:1px;height:24px;background:#e2e8f0;"></div>';
+      html += '    <div>';
+      html += '      <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin:0;">' + escHtml(title) + '</h2>';
+      if (categoryBadge) {
+        html += '      <div class="flex items-center gap-2 mt-1">' + categoryBadge + '</div>';
+      }
+      html += '    </div>';
+      html += '  </div>';
+      html += '  <div style="display:flex;align-items:center;gap:12px;">' + topRightBtns + '</div>';
+      html += '</div>';
+      // 内容区：侧栏 + 题目列表
+      html += '<div style="display:flex;padding:24px;gap:24px;max-width:1200px;width:100%;margin:0 auto;">';
+      // 左侧栏
+      html += '  <div style="width:220px;flex-shrink:0;">';
+      html += '    <div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:20px;position:sticky;top:80px;">';
+      html += '      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">';
+      html += '        <h4 style="font-size:14px;font-weight:600;color:#334155;margin:0;">试题列表 (' + qCount + ')</h4>';
+      html += '        <button onclick="' + settingsOnclick + '" style="font-size:12px;color:#6366f1;background:none;border:none;cursor:pointer;"><i class="fas fa-sliders-h" style="margin-right:4px;"></i>分数设置</button>';
+      html += '      </div>';
+      html += '      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;max-height:200px;overflow-y:auto;">' + numButtons + '</div>';
+      html += '      <div style="display:flex;flex-direction:column;gap:8px;">';
+      html += '        <button onclick="' + pickOnclick + '" style="width:100%;padding:10px;font-size:13px;border:1px solid #c7d2fe;color:#4f46e5;border-radius:8px;background:#fff;cursor:pointer;font-weight:600;" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'"><i class="fas fa-plus" style="margin-right:6px;"></i>题库选题</button>';
+      html += '        <button onclick="' + importOnclick + '" style="width:100%;padding:10px;font-size:13px;border:1px solid #e2e8f0;color:#64748b;border-radius:8px;background:#fff;cursor:pointer;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'"><i class="fas fa-file-import" style="margin-right:6px;"></i>导入试题</button>';
+      html += '      </div>';
+      html += '    </div>';
+      html += '  </div>';
+      // 主内容区
+      html += '  <div style="flex:1;min-width:0;">' + allQuestionsHtml + '</div>';
+      html += '</div>';
+      html += '</div>';
+      // 抽屉（仅试卷模式）
+      html += drawerHtml;
+
+      container.innerHTML = html;
+    }
+
+    function saveUnifiedEditor() {
+      if (!editorMode || !editorAdapter[editorMode]) return;
+      editorAdapter[editorMode].save(paperQuestions).then(function() {
+        toast(editorMode === 'exam' ? '更新成功' : '保存成功');
+      }).catch(function() {
+        toast('保存失败', 'error');
+      });
     }
 
     function scrollToExamQuestion(idx) {
-      const el = document.getElementById('exam-question-' + idx);
+      var el = document.getElementById('exam-question-' + idx);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    function openExamEditorQuestionPicker() {
-      paperQuestions = examEditorQuestions.map(function(q) {
-        return {
-          questionId: q.questionId || q.id,
-          score: q.score || (q.questionDetail && q.questionDetail.score) || 5,
-          partialScore: q.partialScore || 0,
-          content: (q.questionDetail && q.questionDetail.title) || (q.questionDetail && q.questionDetail.content) || q.content || '(无标题)',
-          type: (q.questionDetail && q.questionDetail.type) || q.type || 'single'
-        };
-      });
-      openPaperQuestionPicker();
-    }
-
-    function openExamEditorScoreSettings() {
-      if (!examEditorQuestions.length) {
-        toast('请先添加题目再设置分数', 'error');
-        return;
-      }
-      paperQuestions = examEditorQuestions.map(function(q) {
-        return {
-          questionId: q.questionId || q.id,
-          score: q.score || (q.questionDetail && q.questionDetail.score) || 5,
-          partialScore: q.partialScore || 0,
-          content: (q.questionDetail && q.questionDetail.title) || (q.questionDetail && q.questionDetail.content) || q.content || '(无标题)',
-          type: (q.questionDetail && q.questionDetail.type) || q.type || 'single'
-        };
-      });
-      openScoreSettingsModal();
-    }
-
     function openExamEditorImport() {
-      console.log('[ExamEditor] openExamEditorImport called');
-      document.getElementById('examImportFile').value = '';
-      const modal = document.getElementById('examImportModal');
-      if (!modal) {
-        console.error('[ExamEditor] examImportModal not found');
-        return;
-      }
+      var fileInput = document.getElementById('examImportFile');
+      if (fileInput) fileInput.value = '';
+      var modal = document.getElementById('examImportModal');
+      if (!modal) return;
       modal.classList.remove('hidden');
       modal.classList.add('flex');
-      console.log('[ExamEditor] modal shown');
     }
 
     function closeExamImportModal() {
-      const modal = document.getElementById('examImportModal');
+      var modal = document.getElementById('examImportModal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
     }
 
     async function doExamImport() {
-      const file = document.getElementById('examImportFile').files[0];
+      var file = document.getElementById('examImportFile').files[0];
       if (!file) return toast('请选择Excel文件', 'warning');
-      if (!examEditorData) return toast('考试数据丢失，请重新打开', 'error');
+      if (editorMode === 'exam' && !examEditorData) return toast('考试数据丢失，请重新打开', 'error');
 
-      const formData = new FormData();
+      var formData = new FormData();
       formData.append('file', file);
       formData.append('bankId', '0');
 
       try {
-        const res = await fetch('/api/questions/import', { method: 'POST', body: formData });
-        const result = await res.json();
+        var res = await fetch('/api/questions/import', { method: 'POST', body: formData });
+        var result = await res.json();
         if (result.success) {
           closeExamImportModal();
           toast('导入完成：成功 ' + result.imported + ' 题' + (result.failed ? '，失败 ' + result.failed + ' 题' : ''));
-
-          // 将导入的题目添加到当前考试
           var importedQuestions = result.importedData || [];
           importedQuestions.forEach(function(q) {
-            examEditorQuestions.push({
+            paperQuestions.push({
               questionId: q.id,
               score: q.score || 5,
-              order: examEditorQuestions.length,
-              questionDetail: q
+              order: paperQuestions.length,
+              content: q.title || q.content || '(导入题目)',
+              type: q.type || 'single',
+              options: q.options || [],
+              answer: q.answer || '',
+              explanation: q.explanation || ''
             });
           });
-
-          // 重新渲染编辑器
-          renderExamEditor();
+          renderUnifiedEditor();
         } else {
           toast(result.error || '导入失败', 'error');
         }
       } catch (e) {
         toast('导入失败: ' + e.message, 'error');
-      }
-    }
-
-    async function saveExamEditorQuestions() {
-      if (!examEditorData) return;
-      try {
-        var questions = examEditorQuestions.map(function(q, i) {
-          return {
-            questionId: q.questionId || q.id,
-            score: q.score || (q.questionDetail && q.questionDetail.score) || 5,
-            order: i
-          };
-        });
-        await fetch('/api/exams/' + examEditorData.id + '/questions', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ questions: questions })
-        });
-        toast('更新成功');
-      } catch (e) {
-        toast('更新失败', 'error');
       }
     }
 
@@ -10581,9 +10854,9 @@
 
     // 渲染试卷题目列表（弹窗内，已弃用，改用编辑页）
     function renderPaperQuestions() {
-      // 如果在编辑页模式下，同步更新编辑页
-      if (document.getElementById('paperEditorView') && !document.getElementById('paperEditorView').classList.contains('hidden')) {
-        renderPaperEditorQuestions();
+      // 如果在统一编辑器模式下，同步更新编辑器
+      if (editorMode && document.getElementById('unifiedEditorContainer') && document.getElementById('unifiedEditorContainer').style.display !== 'none') {
+        renderUnifiedEditor();
         return;
       }
       const container = document.getElementById('paperQuestionList');
@@ -10631,7 +10904,11 @@
     function updatePaperQuestionScore(idx, val) {
       if (paperQuestions[idx]) {
         paperQuestions[idx].score = parseInt(val) || 1;
-        renderPaperQuestions();
+        if (editorMode) {
+          renderUnifiedEditor();
+        } else {
+          renderPaperQuestions();
+        }
       }
     }
 
@@ -10639,21 +10916,29 @@
     function movePaperQuestion(idx, direction) {
       const newIdx = idx + direction;
       if (newIdx < 0 || newIdx >= paperQuestions.length) return;
-      
+
       const temp = paperQuestions[idx];
       paperQuestions[idx] = paperQuestions[newIdx];
       paperQuestions[newIdx] = temp;
-      
+
       // 更新order
       paperQuestions.forEach((q, i) => q.order = i);
-      renderPaperQuestions();
+      if (editorMode) {
+        renderUnifiedEditor();
+      } else {
+        renderPaperQuestions();
+      }
     }
 
     // 删除题目
     function removePaperQuestion(idx) {
       paperQuestions.splice(idx, 1);
       paperQuestions.forEach((q, i) => q.order = i);
-      renderPaperQuestions();
+      if (editorMode) {
+        renderUnifiedEditor();
+      } else {
+        renderPaperQuestions();
+      }
     }
 
     // 应用统一分数
@@ -10749,8 +11034,17 @@
         
         // 新建后跳转到编辑页面
         if (isNew) {
-          setTimeout(() => {
-            openPaperEditor(savedId);
+          setTimeout(function() {
+            try {
+              console.log('[savePaper] 准备打开编辑器, savedId:', savedId);
+              console.log('[savePaper] papersAllData 长度:', papersAllData.length);
+              console.log('[savePaper] 能否找到试卷:', papersAllData.some(function(p) { return p.id === savedId; }));
+              openPaperEditor(savedId);
+              console.log('[savePaper] openPaperEditor 执行完毕');
+            } catch (err) {
+              console.error('[savePaper] 打开编辑器失败:', err);
+              toast('打开编辑器失败: ' + err.message, 'error');
+            }
           }, 400);
         }
       } catch (err) {
@@ -10759,341 +11053,69 @@
     }
 
     // 打开试卷编辑页面（内联全屏编辑）
-    function openPaperEditor(id) {
-      const paper = papersAllData.find(p => p.id === id);
-      if (!paper) { toast('试卷不存在', 'error'); return; }
-      editingPaperId = id;
-
-      // 先用本地数据构建 paperQuestions（不依赖 API）
-      paperQuestions = (paper.questions || []).map((pq, idx) => ({
-        questionId: pq.questionId,
-        score: pq.score || 0,
-        partialScore: pq.partialScore || 0,
-        order: idx,
-        content: pq.content || '(题目内容)',
-        type: pq.type || 'single',
-        options: pq.options || [],
-        answer: pq.answer || '',
-        explanation: pq.explanation || ''
-      }));
-
-      // 隐藏试卷列表，显示编辑页
-      document.getElementById('paperListView').classList.add('hidden');
-      const editorEl = document.getElementById('paperEditorView');
-      if (!editorEl) {
-        createPaperEditorView();
-      }
-      document.getElementById('paperEditorView').classList.remove('hidden');
-
-      // 填充编辑页数据
-      document.getElementById('peTitle').textContent = paper.name;
-      // 分类名称：优先用 categoryName，如果是纯数字则从分类数据中查找
-      let catName = paper.categoryName || paper.category || '';
-      if (/^\d+$/.test(catName) || !catName) {
-        const cat = (data.categories || []).find(c => String(c.id) === String(paper.category || paper.categoryId));
-        catName = cat ? cat.name : (paper.categoryName || paper.category || '未分类');
-      }
-      document.getElementById('peCategory').textContent = catName || '未分类';
-      document.getElementById('peName').value = paper.name || '';
-      // 填充分类下拉
-      fillCategorySelect('peCategoryInput');
-      const catId = paper.categoryId || paper.category || '';
-      setTimeout(() => {
-        const sel = document.getElementById('peCategoryInput');
-        if (sel) sel.value = catId;
-      }, 50);
-      document.getElementById('peType').value = paper.type || 'fixed';
-      document.getElementById('peDescInput').value = paper.description || '';
-      document.getElementById('peDuration').value = paper.duration || 60;
-      document.getElementById('pePassScore').value = paper.passScore || 60;
-      renderPaperEditorQuestions();
-
-      // 异步加载题库数据来补充题目详情（不影响编辑页显示）
-      fetch(API + '/questions?pageSize=9999')
-        .then(res => res.json())
-        .then(result => {
-          const allQuestions = result.data || [];
-          // 用完整信息更新 paperQuestions 的 content/type/options/answer
-          const updated = paperQuestions.map(pq => {
-            const q = allQuestions.find(qq => qq.id === pq.questionId);
-            if (!q) return pq;
-            return {
-              ...pq,
-              content: q.title || q.content || pq.content,
-              type: q.type || pq.type,
-              options: (q.options && q.options.length > 0) ? q.options : pq.options,
-              answer: q.answer || pq.answer,
-              explanation: q.explanation || pq.explanation
-            };
-          });
-          // 检查是否有变化再重新渲染
-          const changed = updated.some((u, i) =>
-            u.content !== paperQuestions[i].content ||
-            u.type !== paperQuestions[i].type ||
-            (u.options || []).length !== (paperQuestions[i].options || []).length ||
-            u.answer !== paperQuestions[i].answer
-          );
-          if (changed) {
-            paperQuestions = updated;
-            renderPaperEditorQuestions();
-          }
-        })
-        .catch(err => {
-          console.warn('[试卷] 题库详情补充加载失败（非致命）:', err);
-        });
-    }
-
-    // 创建试卷编辑页 DOM
-    function createPaperEditorView() {
-      const container = document.getElementById('tab-paper-mgmt');
-      const div = document.createElement('div');
-      div.id = 'paperEditorView';
-      div.className = 'hidden';
-      div.innerHTML = `
-        <!-- 顶部导航 -->
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-4">
-            <button onclick="closePaperEditor()" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition">
-              <i class="fas fa-arrow-left"></i>
-            </button>
-            <div>
-              <h2 class="text-xl font-bold text-slate-800" id="peTitle">试卷名称</h2>
-              <div class="flex items-center gap-2 mt-1">
-                <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-xs rounded-full font-medium" id="peCategory">分类</span>
-                <span class="text-xs text-slate-400" id="peStats">0 题 / 总分 0</span>
-              </div>
-            </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="flex items-center gap-1.5 px-3 py-2 bg-slate-100 rounded-full text-sm">
-              <span class="text-slate-400">总分：</span>
-              <span class="font-semibold text-slate-700" id="peHeaderTotalScore">-</span>
-              <span class="text-slate-300 mx-1">|</span>
-              <span class="text-slate-400">试题：</span>
-              <span class="font-semibold text-slate-700" id="peHeaderQCount">0</span>
-            </div>
-            <button onclick="openPaperInfoDrawer()" class="px-4 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
-              <i class="fas fa-cog mr-1.5"></i>设置
-            </button>
-            <button onclick="publishPaper()" id="pePublishBtn" class="px-4 py-2 text-sm border border-slate-200 rounded-lg text-slate-400 font-medium transition" disabled>
-              <i class="fas fa-paper-plane mr-1.5"></i>发布
-            </button>
-          </div>
-        </div>
-
-        <!-- 题目操作栏 -->
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-3">
-            <h3 class="text-lg font-semibold text-slate-800">题目列表</h3>
-            <span class="text-sm text-slate-400" id="peQuestionStats">0 题，总分 0 分</span>
-          </div>
-          <div class="flex items-center gap-3">
-            <button onclick="openPaperImportQuestionsModal()" class="px-4 py-2 text-sm border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 hover:border-slate-300 transition">
-              <i class="fas fa-file-import mr-1.5"></i>导入试题
-            </button>
-            <button onclick="openPaperQuestionPicker()" class="btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition">
-              <i class="fas fa-plus mr-1.5"></i>从题库选题
-            </button>
-            <button onclick="openScoreSettingsModal()" class="px-4 py-2 text-sm border border-indigo-200 text-indigo-600 rounded-lg font-medium hover:bg-indigo-50 transition">
-              <i class="fas fa-sliders-h mr-1.5"></i>分数设置
-            </button>
-          </div>
-        </div>
-
-        <!-- 题目列表 -->
-        <div id="peQuestionList" class="space-y-3">
-          <p class="text-sm text-slate-400 text-center py-8">暂未添加题目，请点击上方按钮从题库选择</p>
-        </div>
-
-        <!-- 右侧抽屉：试卷信息 -->
-        <div id="paperInfoDrawerOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden transition-opacity" onclick="closePaperInfoDrawer()"></div>
-        <div id="paperInfoDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
-            <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-cog text-indigo-500 mr-2"></i>试卷信息</h3>
-            <button onclick="closePaperInfoDrawer()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">试卷名称 <span class="text-red-500">*</span></label>
-              <input type="text" id="peName" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm" placeholder="请输入试卷名称">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">试卷分类</label>
-              <select id="peCategoryInput" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm bg-white">
-                <option value="">请选择分类</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">试卷类型</label>
-              <select id="peType" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm bg-white">
-                <option value="fixed">固定试卷</option>
-                <option value="random">随机试卷</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">试卷说明</label>
-              <textarea id="peDescInput" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm resize-none" placeholder="请输入试卷说明..."></textarea>
-            </div>
-            <div class="border-t border-slate-100 pt-4">
-              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">考试设置</p>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1.5">考试时长（分钟）</label>
-                  <input type="number" id="peDuration" value="60" min="5" max="300" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm text-center">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1.5">及格分</label>
-                  <input type="number" id="pePassScore" value="60" min="0" max="100" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm text-center">
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="px-6 py-4 border-t border-slate-100 flex-shrink-0 flex gap-3">
-            <button onclick="closePaperInfoDrawer()" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition">取消</button>
-            <button onclick="savePaperInfoFromDrawer()" class="flex-1 py-2.5 btn-primary text-white rounded-xl text-sm font-medium shadow-sm hover:shadow-md transition">
-              <i class="fas fa-check mr-1.5"></i>保存
-            </button>
-          </div>
-        </div>
-      `;
-      container.appendChild(div);
-    }
-
-    // 渲染编辑页题目列表
-    function renderPaperEditorQuestions() {
-      const container = document.getElementById('peQuestionList');
-      const statsEl = document.getElementById('peQuestionStats');
-      const headerStatsEl = document.getElementById('peStats');
-      const totalScore = paperQuestions.reduce((sum, q) => sum + (q.score || 0), 0);
-      const qCount = paperQuestions.length;
-
-      if (statsEl) statsEl.textContent = `${qCount} 题，总分 ${totalScore} 分`;
-      if (headerStatsEl) headerStatsEl.textContent = `${qCount} 题 / 总分 ${totalScore}`;
-      // 更新头部信息栏
-      const headerTotal = document.getElementById('peHeaderTotalScore');
-      const headerQCount = document.getElementById('peHeaderQCount');
-      const publishBtn = document.getElementById('pePublishBtn');
-      if (headerTotal) headerTotal.textContent = totalScore;
-      if (headerQCount) headerQCount.textContent = qCount;
-      if (publishBtn) {
-        if (qCount > 0) {
-          publishBtn.disabled = false;
-          publishBtn.className = 'btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition';
-        } else {
-          publishBtn.disabled = true;
-          publishBtn.className = 'px-4 py-2 text-sm border border-slate-200 rounded-lg text-slate-400 font-medium transition';
-        }
-      }
-
-      if (!container) return;
-
-      if (!qCount) {
-        container.innerHTML = '<p class="text-sm text-slate-400 text-center py-8">暂未添加题目，请点击上方按钮从题库选择</p>';
+    async function openPaperEditor(id) {
+      console.log('[openPaperEditor] 开始, id:', id);
+      editorMode = 'paper';
+      var paper = papersAllData.find(function(p) { return p.id === id; });
+      if (!paper) {
+        console.error('[openPaperEditor] 试卷不存在! id:', id, 'papersAllData:', papersAllData.map(function(p){return p.id;}));
+        toast('试卷不存在', 'error');
+        editorMode = null;
         return;
       }
+      editingPaperId = id;
+      console.log('[openPaperEditor] 找到试卷:', paper.name, '题目数:', (paper.questions||[]).length);
 
-      const typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
-      const typeColors = { single: 'bg-blue-100 text-blue-700', multiple: 'bg-purple-100 text-purple-700', judge: 'bg-amber-100 text-amber-700', fill: 'bg-emerald-100 text-emerald-700', essay: 'bg-rose-100 text-rose-700' };
-      const optLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+      // 先用本地数据构建 paperQuestions
+      paperQuestions = (paper.questions || []).map(function(pq, idx) {
+        return {
+          questionId: pq.questionId,
+          score: pq.score || 0,
+          partialScore: pq.partialScore || 0,
+          order: idx,
+          content: pq.content || '(题目内容)',
+          type: pq.type || 'single',
+          options: pq.options || [],
+          answer: pq.answer || '',
+          explanation: pq.explanation || ''
+        };
+      });
 
-      // 格式化正确答案显示
-      function formatAnswer(q) {
-        if (!q.answer && q.answer !== 0) return '';
-        const ans = q.answer;
-        if (Array.isArray(ans)) {
-          // 多选/填空/简答：数组形式
-          if (q.type === 'multiple') {
-            return ans.join('');
-          }
-          return ans.join('、');
-        }
-        return String(ans);
+      // 隐藏试卷列表，显示编辑器
+      var listView = document.getElementById('paperListView');
+      console.log('[openPaperEditor] paperListView:', !!listView);
+      if (listView) listView.classList.add('hidden');
+      var container = document.getElementById('unifiedEditorContainer');
+      console.log('[openPaperEditor] 已有container:', !!container);
+      // 确保 container 在正确的 tab 中
+      if (container && container.parentElement && container.parentElement.id !== 'tab-paper-mgmt') {
+        console.log('[openPaperEditor] container 在错误的 tab 中, 当前父:', container.parentElement.id, '→ 移动到 paper-mgmt');
+        container.parentElement.removeChild(container);
+        container = null;
       }
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'unifiedEditorContainer';
+        document.getElementById('tab-paper-mgmt').appendChild(container);
+        console.log('[openPaperEditor] 创建了新container');
+      }
+      container.style.display = 'block';
+      container.classList.remove('hidden');
+      renderUnifiedEditor();
+      console.log('[openPaperEditor] renderUnifiedEditor 完成, container.innerHTML长度:', container.innerHTML.length);
 
-      container.innerHTML = paperQuestions.map((q, i) => {
-        // 渲染选项列表（单选/多选）
-        let optionsHtml = '';
-        if ((q.type === 'single' || q.type === 'multiple') && q.options && q.options.length > 0) {
-          optionsHtml = `<div class="mt-2 space-y-1">
-            ${q.options.map((opt, oi) => {
-              const label = optLabels[oi] || String.fromCharCode(65 + oi);
-              // 判断该选项是否为正确答案
-              const isCorrect = Array.isArray(q.answer)
-                ? q.answer.includes(label)
-                : String(q.answer) === label;
-              return `<div class="flex items-start gap-2 text-sm leading-relaxed">
-                <span class="font-medium text-slate-600 flex-shrink-0">${label}：</span>
-                <span class="text-slate-700">${escHtml(opt)}</span>
-                ${isCorrect ? '<span class="ml-2 text-indigo-500 font-medium text-xs whitespace-nowrap">(正确答案)</span>' : ''}
-              </div>`;
-            }).join('')}
-          </div>`;
-        } else if (q.type === 'judge' && q.answer) {
-          optionsHtml = `<div class="mt-2 space-y-1">
-            <div class="flex items-start gap-2 text-sm leading-relaxed">
-              <span class="font-medium text-slate-600 flex-shrink-0">A：</span>
-              <span class="text-slate-700">正确</span>
-              ${String(q.answer) === '正确' ? '<span class="ml-2 text-indigo-500 font-medium text-xs whitespace-nowrap">(正确答案)</span>' : ''}
-            </div>
-            <div class="flex items-start gap-2 text-sm leading-relaxed">
-              <span class="font-medium text-slate-600 flex-shrink-0">B：</span>
-              <span class="text-slate-700">错误</span>
-              ${String(q.answer) === '错误' ? '<span class="ml-2 text-indigo-500 font-medium text-xs whitespace-nowrap">(正确答案)</span>' : ''}
-            </div>
-          </div>`;
-        }
-
-        // 正确答案行（填空/简答类型）
-        let answerLine = '';
-        if ((q.type === 'fill' || q.type === 'essay') && formatAnswer(q)) {
-          answerLine = `<div class="mt-1.5 text-xs text-indigo-500 font-medium"><i class="fas fa-check-circle mr-1"></i>参考答案：${escHtml(formatAnswer(q))}</div>`;
-        }
-
-        return `
-        <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-4 group hover:border-indigo-200 transition">
-          <!-- 题目头部：序号 + 题干 + 分值 -->
-          <div class="flex items-start gap-3">
-            <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 flex items-center justify-center text-sm font-bold cursor-move" title="拖拽排序">
-              ${i + 1}
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="px-2 py-0.5 text-xs rounded-full font-medium ${typeColors[q.type] || 'bg-slate-100 text-slate-600'}">${typeNames[q.type] || q.type}</span>
-                <span class="font-medium text-slate-800 text-sm">${escHtml(q.content)}</span>
-                ${(q.type === 'single' || q.type === 'multiple' || q.type === 'judge') ? '<span class="text-slate-400 font-normal">（<span class="inline-block w-6 border-b border-slate-300"></span>）</span>' : ''}
-                ${q.score ? `<span class="text-slate-400 text-xs ml-1">（${q.score} 分）</span>` : ''}
-              </div>
-              ${optionsHtml}
-              ${answerLine}
-            </div>
-            <div class="flex items-center gap-2 flex-shrink-0 ml-2">
-              <div class="flex items-center gap-1">
-                <span class="text-xs text-slate-400">分值</span>
-                <input type="number" value="${q.score || ''}" min="0" max="100" onchange="updatePaperQuestionScore(${i}, this.value)"
-                  class="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="请输入">
-              </div>
-              <button type="button" onclick="movePaperQuestion(${i}, -1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition" title="上移" ${i === 0 ? 'disabled style="pointer-events:none;opacity:0.3"' : ''}>
-                <i class="fas fa-chevron-up text-xs"></i>
-              </button>
-              <button type="button" onclick="movePaperQuestion(${i}, 1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition" title="下移" ${i === paperQuestions.length - 1 ? 'disabled style="pointer-events:none;opacity:0.3"' : ''}>
-                <i class="fas fa-chevron-down text-xs"></i>
-              </button>
-              <button type="button" onclick="removePaperQuestion(${i})" class="w-7 h-7 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="删除">
-                <i class="fas fa-trash-alt text-xs"></i>
-              </button>
-            </div>
-          </div>
-        </div>`;
-      }).join('');
+      // 异步加载题库数据来补充题目详情
+      enrichQuestionDetails();
     }
+
+    // [已统一到 renderUnifiedEditor] createPaperEditorView 和 renderPaperEditorQuestions 已合并到统一编辑器
 
     // 应用统一分数（编辑页）
     function applyUniformScoreEditor() {
-      const score = parseInt(document.getElementById('peUniformScore').value) || 5;
+      const el = document.getElementById('peUniformScore');
+      const score = el ? (parseInt(el.value) || 5) : 5;
       paperQuestions.forEach(q => q.score = score);
-      renderPaperEditorQuestions();
+      renderUnifiedEditor();
       toast(`已将所有题目分值设为 ${score} 分`);
     }
 
@@ -11132,8 +11154,12 @@
       paper.passScore = parseInt(document.getElementById('pePassScore').value) || 60;
       paper.updatedAt = new Date().toISOString();
       // 同步更新标题显示
-      document.getElementById('peTitle').textContent = paper.name;
-      document.getElementById('peCategory').textContent = paper.categoryName || '未分类';
+      var peTitle = document.getElementById('peTitle');
+      var peCategory = document.getElementById('peCategory');
+      if (peTitle) peTitle.textContent = paper.name;
+      if (peCategory) peCategory.textContent = paper.categoryName || '未分类';
+      // 如果在统一编辑器中，重新渲染以更新顶栏标题
+      if (editorMode === 'paper') renderUnifiedEditor();
       try {
         if (window.dataSync && window.dataSync.setData) {
           window.dataSync.setData('papers', papersAllData);
@@ -11209,43 +11235,7 @@
       }
     }
 
-    // 关闭编辑页
-    function closePaperEditor() {
-      document.getElementById('paperEditorView')?.classList.add('hidden');
-      document.getElementById('paperListView')?.classList.remove('hidden');
-      editingPaperId = null;
-      paperQuestions = [];
-    }
-
-    // 编辑页题目操作
-    function updatePaperQuestionScore(idx, val) {
-      if (paperQuestions[idx]) paperQuestions[idx].score = parseInt(val) || 1;
-      // 更新统计
-      const totalScore = paperQuestions.reduce((s, q) => s + (q.score || 0), 0);
-      const statsEl = document.getElementById('peQuestionStats');
-      if (statsEl) statsEl.textContent = `${paperQuestions.length} 题，总分 ${totalScore} 分`;
-      const headerStats = document.getElementById('peStats');
-      if (headerStats) headerStats.textContent = `${paperQuestions.length} 题 / 总分 ${totalScore}`;
-    }
-
-    function movePaperQuestion(idx, dir) {
-      const newIdx = idx + dir;
-      if (newIdx < 0 || newIdx >= paperQuestions.length) return;
-      [paperQuestions[idx], paperQuestions[newIdx]] = [paperQuestions[newIdx], paperQuestions[idx]];
-      paperQuestions.forEach((q, i) => q.order = i);
-      renderPaperEditorQuestions();
-    }
-
-    function removePaperQuestion(idx) {
-      paperQuestions.splice(idx, 1);
-      paperQuestions.forEach((q, i) => q.order = i);
-      renderPaperEditorQuestions();
-    }
-
-    // 编辑页中打开题目选择器
-    function openPaperQuestionPicker() {
-      openQuestionPicker();
-    }
+    // [closePaperEditor / 题目操作函数已统一到上方]
 
     // 保存草稿（可选操作，保留兼容）
     function savePaperDraft() {
@@ -11431,21 +11421,9 @@
         }
       });
       
-      // 如果在考试编辑页模式下，同步回 examEditorQuestions
-      if (examEditorData && document.getElementById('examEditorOverlay')) {
-        paperQuestions.forEach((pq, i) => {
-          if (!examEditorQuestions[i]) {
-            examEditorQuestions.push({
-              questionId: pq.questionId,
-              score: pq.score,
-              order: i,
-              content: pq.content,
-              type: pq.type,
-              questionDetail: null
-            });
-          }
-        });
-        renderExamEditor();
+      // paperQuestions 是两种模式的唯一数据源，直接重新渲染
+      if (editorMode) {
+        renderUnifiedEditor();
       } else {
         renderPaperQuestions();
       }
@@ -11649,17 +11627,11 @@
         }
       }
       // 按试题设分已在 onchange 中实时更新
-      // 如果在考试编辑页模式下，同步回 examEditorQuestions
-      if (examEditorData && document.getElementById('examEditorOverlay')) {
-        paperQuestions.forEach((pq, i) => {
-          if (examEditorQuestions[i]) {
-            examEditorQuestions[i].score = pq.score;
-            examEditorQuestions[i].partialScore = pq.partialScore || 0;
-          }
-        });
-        renderExamEditor();
+      // paperQuestions 是两种模式的唯一数据源
+      if (editorMode) {
+        renderUnifiedEditor();
       } else {
-        renderPaperEditorQuestions();
+        renderPaperQuestions();
       }
       closeScoreSettingsModal();
       toast('分数设置已应用');
@@ -11751,7 +11723,7 @@
     function confirmQuestionPick() {
       const checkedCbs = document.querySelectorAll('.qp-cb:checked');
       if (!checkedCbs.length) { toast('请先勾选要添加的题目', 'warning'); return; }
-      const isPaperEditor = document.getElementById('paperEditorView') && !document.getElementById('paperEditorView').classList.contains('hidden');
+      const isPaperEditor = editorMode === 'paper' || (document.getElementById('unifiedEditorContainer') && document.getElementById('unifiedEditorContainer').style.display !== 'none');
       checkedCbs.forEach(cb => {
         const idx = parseInt(cb.dataset.idx);
         const q = qpAllQuestions[idx];
@@ -11778,7 +11750,7 @@
         }
       });
       if (isPaperEditor) {
-        renderPaperEditorQuestions();
+        if (editorMode) { renderUnifiedEditor(); } else { renderPaperQuestions(); }
       } else {
         renderSelectedQuestions();
       }

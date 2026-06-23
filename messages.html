@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -394,6 +394,10 @@
     <script src="js/auth-modal.js?v=20260526c"></script>
     <script src="js/auth-guard.js?v=20260526d"></script>
     <script>
+    // 退出登录
+    function handleLogout() {
+        AuthGuard.logout();
+    }
     // 移动端菜单切换
     (function() {
         const btn = document.getElementById('mobile-menu-button');
@@ -608,9 +612,11 @@
                 console.log('[deleteSingleMessage] 待删除消息:', msg, 'msgId:', msgId);
 
                 // 平台公告(notice)使用 /api/notices/{id}，其他通知使用 /api/notifications/{id}
+                // 公告通知ID格式为 'notice_xxx'，需剥离前缀
                 let apiPath;
                 if (msg && msg.type === 'announcement') {
-                    apiPath = '/api/notices/' + encodeURIComponent(msgId);
+                    const noticeId = String(msgId).replace(/^notice_/, '');
+                    apiPath = '/api/notices/' + encodeURIComponent(noticeId);
                 } else {
                     apiPath = '/api/notifications/' + encodeURIComponent(msgId);
                 }
@@ -687,7 +693,7 @@
                 await loadExamDetail(msg.examId, msgId);
             } else {
                 contentEl.className = 'modal-body ' + (msg.isHtml ? 'html-content' : 'plain-content');
-                contentEl.innerHTML = msg.isHtml ? msg.content : escapeHtml(msg.content || '暂无内容');
+                contentEl.innerHTML = msg.isHtml ? (msg.fullContent || msg.content || '暂无内容') : escapeHtml(msg.content || '暂无内容');
                 document.getElementById('msg-detail-modal').style.display = 'flex';
             }
         };

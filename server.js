@@ -1556,14 +1556,19 @@ app.put('/api/exams/:id', (req, res) => {
   }
   const updates = req.body;
   const oldStatus = exams[index].status;
+  const oldAllowedUsers = exams[index].allowedUsers;
   delete updates.id; // 不允许修改ID
   delete updates.createdAt; // 不允许修改创建时间
   updates.updatedAt = new Date().toISOString();
   data.exams[index] = { ...exams[index], ...updates };
   if (writeData(data)) {
-    // 状态从非published变为published时发送通知
     let notifiedCount = 0;
+    // 场景1：状态从非published变为published → 发送通知
     if (oldStatus !== 'published' && updates.status === 'published') {
+      notifiedCount = sendExamNotifications(data, data.exams[index]);
+    }
+    // 场景2：考试已发布，且 allowedUsers 发生变化（任务指派）→ 补发通知给新增学员
+    if (data.exams[index].status === 'published' && updates.allowedUsers !== undefined) {
       notifiedCount = sendExamNotifications(data, data.exams[index]);
     }
     res.json({ success: true, exam: data.exams[index], notifiedCount });
@@ -1682,15 +1687,59 @@ app.get('/api/exams/:id/results', (req, res) => {
   res.json({ success: true, results });
 });
 
-// POST /api/exams/:id/take - 学员开始考试（获取试卷）
-app.post('/api/exams/:id/take', (req, res) => {
+// GET /api/user/exam-records - 获取当前用户的考试记录（供个人中心徽章计算）
+app.get('/api/user/exam-records', (req, res) => {
+  const currentUser = getCurrentUser(req);
+  if (!currentUser) {
+    return res.status(401).json({ success: false, error: '未登录' });
+  }
+  const data = readData();
+  const userId = currentUser.id;
+  // 优先从 user_learning_{userId}.examRecords 读取
+  const learningKey = `user_learning_${userId}`;
+  const learningData = data[learningKey] || {};
+  let examRecords = learningData.examRecords || [];
+  // 如果 user_learning 中没有，从 exam_attempts 中补充
+  if (examRecords.length === 0) {
+    const attempts = (data.exam_attempts || []).filter(a =>
+      String(a.userId) === String(userId) && a.status === 'completed'
+    );
+    examRecords = attempts.map(a => {
+      const exam = (data.exams || []).find(e => e.id === a.examId);
+      return {
+        examId: a.examId,
+        examTitle: exam ? exam.title : '',
+        score: a.score || 0,
+        fullScore: exam ? exam.totalScore || 100 : 100,
+        passed: a.passed || false,
+        correctCount: a.correctCount || 0,
+        totalQuestions: a.totalQuestions || 0,
+        completedAt: a.completedAt || null,
+        attemptId: a.id
+      };
+    });
+  }
+  res.json({ success: true, examRecords });
+});
+
+// GET/POST /api/exams/:id/take - 学员开始考试（获取试卷）
+const takeExamHandler = (req, res) => {
   const id = parseInt(req.params.id);
-  const { userId } = req.query;
+  const userId = req.query.userId || (req.body && req.body.userId);
   const data = readData();
   const exam = (data.exams || []).find(e => e.id === id && e.status === 'published');
   if (!exam) {
     return res.status(404).json({ success: false, error: '考试不存在或未发布' });
   }
+
+  // 如果是限制访问的考试，检查 userId 是否在 allowedUsers 中
+  if (exam.accessType === 'restricted' && exam.allowedUsers && exam.allowedUsers.length > 0) {
+    const allowedIds = exam.allowedUsers.map(uid => String(uid));
+    if (!allowedIds.includes(String(userId))) {
+      return res.status(403).json({ success: false, error: '您未被指派参加此考试' });
+    }
+  }
+
   const allQuestions = data.questions || [];
   let examQuestions = (exam.questions || [])
     .map(eq => {
@@ -1719,7 +1768,9 @@ app.post('/api/exams/:id/take', (req, res) => {
     totalQuestions: examQuestions.length,
     duration: exam.duration * 60 // 转换为秒
   });
-});
+};
+app.get('/api/exams/:id/take', takeExamHandler);
+app.post('/api/exams/:id/take', takeExamHandler);
 
 // POST /api/exams/:id/enter - 学员进入考试（记录开始）
 app.post('/api/exams/:id/enter', (req, res) => {
@@ -1791,22 +1842,37 @@ app.post('/api/exams/:id/submit', (req, res) => {
     const userAnswer = (answers || {})[String(q.id)] || '';
     // 多选题答案排序比较
     let isCorrect = false;
+    let earnedScore = 0;
     if (q.type === 'multiple') {
-      // 答案可能是数组或字符串，统一转为排序后的字符串
-      const ua = (userAnswer || '').split('').sort().join('');
+      // 答案可能是数组或字符串（如 "A B C D" 或 "ABCD"），统一转为去除空格后的排序字符串
+      const ua = (userAnswer || '').replace(/\s/g, '').split('').sort().join('');
       const caRaw = Array.isArray(q.answer) ? q.answer.join('') : (q.answer || '');
-      const ca = caRaw.split('').sort().join('');
+      const ca = caRaw.replace(/\s/g, '').split('').sort().join('');
       isCorrect = ua === ca && ua !== '';
+      if (isCorrect) {
+        earnedScore = qScore;
+      } else if (ua !== '') {
+        // 多选题部分正确：按答对比例得分（答对的选项数 / 正确答案总选项数）
+        const correctSet = new Set(ca.split(''));
+        const userSet = new Set(ua.split(''));
+        // 漏选：用户选的都在正确答案中 → 按比例得分
+        // 错选：用户选了不在正确答案中的 → 0分
+        const hasWrong = [...userSet].some(ch => !correctSet.has(ch));
+        if (!hasWrong && userSet.size > 0) {
+          earnedScore = Math.round(qScore * userSet.size / correctSet.size);
+        }
+      }
     } else {
       isCorrect = userAnswer === q.answer && userAnswer !== '';
+      earnedScore = isCorrect ? qScore : 0;
     }
-    const earnedScore = isCorrect ? qScore : 0;
     if (isCorrect) correctCount++;
     totalScore += earnedScore;
     detail.push({
       questionId: q.id,
       type: q.type || 'single',
       title: q.title || q.content || '',
+      content: q.content || q.title || '',
       userAnswer: userAnswer,
       correctAnswer: Array.isArray(q.answer) ? q.answer.join('') : (q.answer || ''),
       isCorrect,
@@ -1834,6 +1900,29 @@ app.post('/api/exams/:id/submit', (req, res) => {
       correctCount,
       totalQuestions: examQuestions.length
     };
+  }
+
+  // 同步考试记录到用户学习数据（供个人中心徽章计算使用）
+  const learningKey = `user_learning_${userId}`;
+  if (!data[learningKey]) data[learningKey] = {};
+  if (!data[learningKey].examRecords) data[learningKey].examRecords = [];
+  // 避免重复记录同一次 attempt
+  const existIdx = data[learningKey].examRecords.findIndex(r => r.attemptId === (attemptIndex !== -1 ? attempts[attemptIndex].id : null));
+  const examRecord = {
+    examId: id,
+    examTitle: exam.title || '',
+    score: finalScore,
+    fullScore,
+    passed,
+    correctCount,
+    totalQuestions: examQuestions.length,
+    completedAt: new Date().toISOString(),
+    attemptId: attemptIndex !== -1 ? attempts[attemptIndex].id : null
+  };
+  if (existIdx >= 0) {
+    data[learningKey].examRecords[existIdx] = examRecord;
+  } else {
+    data[learningKey].examRecords.push(examRecord);
   }
 
   writeData(data);
@@ -2044,10 +2133,19 @@ app.put('/api/banners/reorder', (req, res) => {
 // 公告管理 API
 // ============================================================
 
-// GET /api/notices - 获取所有公告
+// GET /api/notices - 获取所有公告（含访问量）
 app.get('/api/notices', (req, res) => {
   const data = readData();
-  res.json(data.notices || []);
+  const notices = data.notices || [];
+  const visits = data.notice_visits || [];
+  
+  // 为每条公告附加访问量统计
+  const result = notices.map(n => ({
+    ...n,
+    visitCount: visits.filter(v => v.noticeId === n.id).length
+  }));
+  
+  res.json(result);
 });
 
 // POST /api/notices - 添加公告
@@ -2067,39 +2165,11 @@ app.post('/api/notices', (req, res) => {
   
   data.notices.push(notice);
   
-  // 如果是发布状态，自动为所有用户创建通知记录（用于铃铛红点提示）
-  let notificationCreated = false;
-  if (notice.status === 'published') {
-    try {
-      initNotificationsData(data);
-      // 获取所有已注册用户
-      const users = data.registered_users || [];
-      const now = new Date().toISOString();
-      
-      users.forEach(user => {
-        data.notifications.push({
-          id: Date.now() + Math.random() * 1000,
-          userId: user.id || user.username,
-          title: notice.title,
-          content: (notice.content || '').replace(/<[^>]+>/g, '').substring(0, 100) + (notice.content && notice.content.length > 100 ? '...' : ''),
-          type: 'announcement',
-          read: false,
-          noticeId: notice.id,
-          isHtml: true,
-          fullContent: notice.content,
-          createdAt: now
-        });
-      });
-      
-      notificationCreated = users.length > 0;
-      console.log(`[公告] 已为 ${users.length} 个用户创建通知记录`);
-    } catch (e) {
-      console.error('[公告] 创建通知记录失败:', e.message);
-    }
-  }
+  // 注意：公告通知由 GET /api/notifications 从 notices 表动态生成，
+  // 不在此处重复创建 notifications 记录，避免双重计数。
   
   if (writeData(data)) {
-    res.json({ success: true, notice, notificationCreated });
+    res.json({ success: true, notice });
   } else {
     res.status(500).json({ success: false, error: '写入失败' });
   }
@@ -2126,6 +2196,28 @@ app.put('/api/notices/:id', (req, res) => {
   }
 });
 
+// POST /api/notices/unpin-all - 取消所有公告的置顶
+app.post('/api/notices/unpin-all', (req, res) => {
+  const data = readData();
+  if (!data.notices) data.notices = [];
+  
+  let updatedCount = 0;
+  data.notices.forEach(n => {
+    if (n.pinned) {
+      n.pinned = 0;
+      n.updatedAt = new Date().toISOString();
+      updatedCount++;
+    }
+  });
+  
+  if (writeData(data)) {
+    console.log(`[公告] 已取消 ${updatedCount} 条公告的置顶`);
+    res.json({ success: true, updatedCount });
+  } else {
+    res.status(500).json({ success: false, error: '写入失败' });
+  }
+});
+
 // DELETE /api/notices/:id - 删除公告
 app.delete('/api/notices/:id', (req, res) => {
   const id = parseInt(req.params.id);
@@ -2141,6 +2233,48 @@ app.delete('/api/notices/:id', (req, res) => {
   } else {
     res.status(404).json({ success: false, error: '公告不存在' });
   }
+});
+
+// POST /api/notices/:id/visit - 记录公告访问
+app.post('/api/notices/:id/visit', (req, res) => {
+  const noticeId = parseInt(req.params.id);
+  const { userId, username } = req.body;
+  const data = readData();
+  
+  if (!data.notice_visits) data.notice_visits = [];
+  
+  // 同一用户对同一公告只记录一次
+  const exists = data.notice_visits.find(v => v.noticeId === noticeId && v.userId === userId);
+  if (exists) {
+    exists.visitedAt = new Date().toISOString();
+  } else {
+    data.notice_visits.push({
+      noticeId: noticeId,
+      userId: userId || 'anonymous',
+      username: username || '匿名用户',
+      visitedAt: new Date().toISOString()
+    });
+  }
+  
+  if (writeData(data)) {
+    res.json({ success: true, visitCount: data.notice_visits.filter(v => v.noticeId === noticeId).length });
+  } else {
+    res.status(500).json({ success: false, error: '写入失败' });
+  }
+});
+
+// GET /api/notices/:id/visits - 获取公告访问详情
+app.get('/api/notices/:id/visits', (req, res) => {
+  const noticeId = parseInt(req.params.id);
+  const data = readData();
+  const visits = (data.notice_visits || []).filter(v => v.noticeId === noticeId);
+  
+  res.json({
+    success: true,
+    noticeId: noticeId,
+    totalCount: visits.length,
+    visits: visits.sort((a, b) => new Date(b.visitedAt) - new Date(a.visitedAt))
+  });
 });
 
 // ============================================================
@@ -2499,8 +2633,9 @@ function sendExamNotifications(data, exam) {
   let targetUsers = [];
 
   if (exam.allowedUsers && Array.isArray(exam.allowedUsers) && exam.allowedUsers.length > 0) {
-    // 指定学员：只通知 selected users
-    targetUsers = users.filter(u => exam.allowedUsers.includes(u.id));
+    // 指定学员：只通知 selected users（用 String 比较兼容 number/string 类型不一致）
+    const allowedIds = exam.allowedUsers.map(id => String(id));
+    targetUsers = users.filter(u => allowedIds.includes(String(u.id)));
   } else {
     // 全员开放：通知所有活跃学员
     targetUsers = users.filter(u => u.status !== 'disabled');
@@ -2509,10 +2644,11 @@ function sendExamNotifications(data, exam) {
   if (targetUsers.length === 0) return 0;
 
   const now = Date.now();
+  let addedCount = 0;
   targetUsers.forEach((user, i) => {
     // 避免重复通知（同一考试同一用户）
     const alreadyNotified = data.notifications.some(n =>
-      n.userId === user.id && n.type === 'exam' && n.examId === exam.id
+      String(n.userId) === String(user.id) && n.type === 'exam' && n.examId === exam.id
     );
     if (alreadyNotified) return;
 
@@ -2526,9 +2662,10 @@ function sendExamNotifications(data, exam) {
       read: false,
       createdAt: new Date().toISOString()
     });
+    addedCount++;
   });
   writeData(data);
-  return targetUsers.length;
+  return addedCount;
 }
 
 // GET /api/notifications - 获取当前用户的通知（公告 + 个人通知）
@@ -2552,11 +2689,23 @@ app.get('/api/notifications', (req, res) => {
         r => r.userId === currentUser.id && r.noticeId === notice.id
       );
       
+      // 智能截取纯文本预览：去除HTML标签和base64图片后保留前120字
+      let contentPreview = (notice.content || '')
+        .replace(/<img[^>]*>/gi, '[图片]')     // 图片替换为[图片]
+        .replace(/<br\s*\/?>/gi, ' ')
+        .replace(/<[^>]+>/g, '')               // 去其余HTML标签
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (contentPreview.length > 120) {
+        contentPreview = contentPreview.substring(0, 120) + '...';
+      }
+      
       notifications.push({
         id: 'notice_' + notice.id,  // 前缀避免ID冲突
         originalId: notice.id,
         title: notice.title,
-        content: notice.content,
+        content: contentPreview || '点击查看公告详情',
+        fullContent: notice.content || '',  // 保留原始 HTML 用于详情展示
         type: 'announcement',
         isHtml: true,
         read: !!readRecord,

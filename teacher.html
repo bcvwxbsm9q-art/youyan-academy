@@ -382,10 +382,10 @@
 
     <script src="js/data-sync.js"></script>
     <script src="data-api.js"></script>
-    <script src="js/notification.js?v=20260622"></script>
     <script src="js/teacher-enhanced.js"></script>
     <script src="js/auth-modal.js"></script>
     <script src="js/auth-guard.js"></script>
+    <script src="js/notification.js?v=20260623"></script>
     <script>
         // 退出登录（使用统一认证模块）
         function handleLogout() {
@@ -415,7 +415,15 @@
         // 加载未读通知数量
         async function loadNotificationCount() {
             try {
-                const res = await fetch('/api/notifications');
+                const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+                const headers = {};
+                if (userStr) {
+                    try {
+                        const user = JSON.parse(userStr);
+                        if (user.token) headers['Authorization'] = 'Bearer ' + user.token;
+                    } catch(e) {}
+                }
+                const res = await fetch('/api/notifications', { headers });
                 if (!res.ok) return;
                 const result = await res.json();
                 const notifications = result.data || [];

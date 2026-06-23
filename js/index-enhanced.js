@@ -413,6 +413,22 @@
         const notice = notices.find(n => n.id === noticeId);
         if (!notice) return;
 
+        // 记录公告访问
+        try {
+          const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+          const user = userStr ? JSON.parse(userStr) : {};
+          await fetch(`${API_SERVER}/notices/${noticeId}/visit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id || user.username || 'anonymous',
+              username: user.displayName || user.username || '访客'
+            })
+          });
+        } catch (e) {
+          console.warn('[Index] 记录公告访问失败:', e.message);
+        }
+
         const modal = document.createElement('div');
         modal.id = 'notice-modal';
         modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';

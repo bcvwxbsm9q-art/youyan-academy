@@ -819,6 +819,7 @@ const BADGES = [
             checkAuthAndUpdateUI();
             loadUserData();
             initTabNavigation();
+            await loadExamRecordsFromServer(); // 拉取服务端考试记录用于徽章计算
             loadAllData();
             loadActivityTimeline();
             loadBadges();
@@ -826,6 +827,25 @@ const BADGES = [
             // 默认显示学习统计
             switchTab('learning-stats');
         });
+
+        // 从服务端拉取用户考试记录，写入 api 缓存供徽章计算使用
+        async function loadExamRecordsFromServer() {
+            const user = getLoggedInUser();
+            if (!user) return;
+            try {
+                const res = await fetch('/api/user/exam-records', {
+                    headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || sessionStorage.getItem('token') || '') }
+                });
+                const result = await res.json();
+                if (result.success && result.examRecords) {
+                    const learningData = api.getUserLearningData(user.id);
+                    learningData.examRecords = result.examRecords;
+                    await api.set(`user_learning_${user.id}`, learningData);
+                }
+            } catch (e) {
+                console.warn('[考试记录] 拉取失败:', e);
+            }
+        }
 
         // 获取当前登录用户
         function getLoggedInUser() {

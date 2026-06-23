@@ -7,7 +7,13 @@
 (function () {
   var notificationPanelOpen = false;
 
+  // 获取 Bearer token（对齐 auth-guard 和 messages.html 的方式）
   function getToken() {
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
+  }
+
+  // 获取用户信息对象
+  function getUserInfo() {
     var userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (!userStr) return null;
     try { return JSON.parse(userStr); } catch (e) { return null; }
@@ -32,10 +38,13 @@
   }
 
   async function loadNotificationBadge() {
-    var user = getToken();
-    if (!user) return;
+    var token = getToken();
+    if (!token) return;
     try {
-      var res = await fetch('/api/notifications');
+      var headers = {};
+      headers['Authorization'] = 'Bearer ' + token;
+      var res = await fetch('/api/notifications', { headers: headers });
+      if (!res.ok) return;
       var result = await res.json();
       var list = (result.success && result.data) ? result.data : [];
       var unreadCount = list.filter(function(n){ return !n.read; }).length;
@@ -47,7 +56,9 @@
       } else {
         badge.classList.add('hidden');
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) {
+      console.warn('[Notification] 加载未读数失败:', e.message);
+    }
   }
 
   window.toggleNotificationPanel = async function () {
@@ -74,12 +85,15 @@
   };
 
   async function loadNotifications() {
-    var user = getToken();
-    if (!user) return;
+    var token = getToken();
+    if (!token) return;
     var listEl = document.getElementById('notification-list');
     if (listEl) listEl.innerHTML = '<div class="px-4 py-8 text-center text-slate-400 text-sm">加载中...</div>';
     try {
-      var res = await fetch('/api/notifications');
+      var headers = {};
+      headers['Authorization'] = 'Bearer ' + token;
+      var res = await fetch('/api/notifications', { headers: headers });
+      if (!res.ok) return;
       var result = await res.json();
       var list = (result.success && result.data) ? result.data : [];
       renderNotificationList(list);
@@ -142,13 +156,19 @@
   }
 
   window.markNotificationRead = async function (id) {
-    try { await fetch('/api/notifications/' + id + '/read', { method: 'PUT' }); await loadNotifications(); } catch (e) {}
+    var token = getToken();
+    var headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    try { await fetch('/api/notifications/' + id + '/read', { method: 'PUT', headers: headers }); await loadNotifications(); } catch (e) {}
   };
 
   window.markAllNotificationsRead = async function () {
+    var token = getToken();
+    var headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
     try {
       // 先获取所有通知，找出未读的ID
-      var res = await fetch('/api/notifications');
+      var res = await fetch('/api/notifications', { headers: headers });
       var result = await res.json();
       var list = (result.success && result.data) ? result.data : [];
       var unreadIds = list.filter(function(n){ return !n.read; }).map(function(n){ return n.id; });
@@ -156,7 +176,7 @@
       // 批量标记已读
       await fetch('/api/notifications/batch-read', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify({ ids: unreadIds })
       });
       await loadNotifications();
@@ -164,6 +184,45 @@
   };
 
   if (typeof document !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', function () { loadNotificationBadge(); setInterval(loadNotificationBadge, 60000); });
+    // 启动徽章刷新
+    function startBadgeRefresh() {
+      loadNotificationBadge();
+      // 每60秒自动刷新未读数
+      if (!startBadgeRefresh._timer) {
+        startBadgeRefresh._timer = setInterval(loadNotificationBadge, 60000);
+      }
+    }
+
+    // 停止定时器（页面卸载时）
+    window.addEventListener('beforeunload', function () {
+      if (startBadgeRefresh._timer) {
+        clearInterval(startBadgeRefresh._timer);
+        startBadgeRefresh._timer = null;
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // 初次尝试加载
+      startBadgeRefresh();
+
+      // 如果 token 还没准备好（auth-guard 异步），等待并重试
+      var retries = 0;
+      var retryInterval = setInterval(function () {
+        retries++;
+        if (getToken()) {
+          clearInterval(retryInterval);
+          loadNotificationBadge();
+        } else if (retries >= 50) {
+          // 5秒后仍未获取到 token，放弃等待
+          clearInterval(retryInterval);
+          console.warn('[Notification] 等待 token 超时，将不会显示通知徽章');
+        }
+      }, 100);
+    });
+
+    // 监听登录/登出事件，及时更新徽章
+    window.addEventListener('userLoginSuccess', function () { loadNotificationBadge(); });
+    window.addEventListener('authChange', function () { loadNotificationBadge(); });
+    window.addEventListener('userProfileUpdated', function () { loadNotificationBadge(); });
   }
 })();
