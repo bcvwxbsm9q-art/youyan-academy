@@ -317,6 +317,10 @@
                                     <i class="fa fa-book w-6"></i>
                                     <span>我的课程</span>
                                 </button>
+                                <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center" data-tab="my-exams">
+                                    <i class="fa fa-clipboard w-6"></i>
+                                    <span>我的考试</span>
+                                </button>
                                 <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center" data-tab="achievements">
                                     <i class="fa fa-trophy w-6"></i>
                                     <span>成就徽章</span>
@@ -518,6 +522,46 @@
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="not-started-courses">
                                     <!-- 动态渲染 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 我的考试 -->
+                        <div class="tab-content hidden" id="my-exams-content">
+                            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                                <div class="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h3 class="font-bold text-lg flex items-center gap-2">
+                                            <i class="fa fa-clipboard text-primary"></i>
+                                            我的考试
+                                        </h3>
+                                        <p class="text-sm text-gray-500 mt-1">查看已参加的考试记录和成绩</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-2xl font-bold text-primary" id="my-exam-count">0</div>
+                                        <div class="text-xs text-gray-400">场考试</div>
+                                    </div>
+                                </div>
+                                <div id="my-exams-list" class="space-y-4">
+                                    <!-- 动态渲染 -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 考试历史弹窗 -->
+                        <div id="exam-history-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4" onclick="if(event.target===this)closeExamHistoryModal()">
+                            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                                <div class="bg-gradient-primary px-6 py-4 flex items-center justify-between">
+                                    <h3 class="text-white font-bold flex items-center gap-2"><i class="fa fa-history"></i><span id="exam-history-title">考试记录</span></h3>
+                                    <button onclick="closeExamHistoryModal()" class="w-8 h-8 rounded-full bg-white/20 text-white hover:bg-white/30 flex items-center justify-center transition"><i class="fa fa-times"></i></button>
+                                </div>
+                                <div class="p-6 max-h-[60vh] overflow-y-auto">
+                                    <div id="exam-history-list" class="space-y-3">
+                                        <!-- 动态渲染 -->
+                                    </div>
+                                </div>
+                                <div class="px-6 py-4 border-t text-right">
+                                    <button onclick="closeExamHistoryModal()" class="px-5 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 text-sm font-medium transition">关闭</button>
                                 </div>
                             </div>
                         </div>
@@ -1001,6 +1045,19 @@ const BADGES = [
             };
         }
 
+        // 统一计算已解锁徽章ID（当前满足条件 + 历史已解锁）
+        function calculateUnlockedBadgeIds() {
+            const userId = currentUser?.id;
+            const stats = getBadgeStats();
+            const currentlyUnlocked = BADGES.filter(b => b.condition(currentUser, stats)).map(b => b.id);
+            let storedIds = [];
+            if (userId) {
+                storedIds = JSON.parse(localStorage.getItem(`badges_unlocked_${userId}`) || '[]');
+            }
+            const allIds = [...new Set([...storedIds, ...currentlyUnlocked])];
+            return { allIds, currentlyUnlocked, storedIds };
+        }
+
         // 从 interaction 数据计算点赞的不同课程数（兼容老用户）
         function getLikedCoursesCountFromInteractions(userId) {
             try {
@@ -1146,10 +1203,11 @@ const BADGES = [
             
             // 成就徽章数量
             const stats = getBadgeStats();
-            const unlockedBadges = BADGES.filter(b => b.condition(currentUser, stats));
-            document.getElementById('stat-badges').textContent = unlockedBadges.length;
+            const { allIds: unlockedBadgeIds } = calculateUnlockedBadgeIds();
+            if (currentUser?.id) localStorage.setItem(`badges_unlocked_${currentUser.id}`, JSON.stringify(unlockedBadgeIds));
+            document.getElementById('stat-badges').textContent = unlockedBadgeIds.length;
             document.getElementById('stat-total-badges').textContent = BADGES.length;
-            
+
             // 更新顶部等级和经验值（复用上面的 stats）
             const totalExp = calculateTotalExp(stats);
             const levelInfo = getLevelInfo(totalExp);
@@ -1253,6 +1311,9 @@ const BADGES = [
             }
             if (tabId === 'my-courses') {
                 loadMyCourses();
+            }
+            if (tabId === 'my-exams') {
+                loadMyExams();
             }
             if (tabId === 'achievements') {
                 loadAllBadges();
@@ -1550,27 +1611,20 @@ const BADGES = [
         // 加载徽章（个人中心顶部显示）
         function loadBadges() {
             const userId = currentUser.id;
-            
-            // 使用统一的 getBadgeStats 获取统计数据
-            const stats = getBadgeStats();
-            
-            // 检查每个徽章条件
-            const unlockedBadges = BADGES.filter(b => b.condition(currentUser, stats));
-            
-            // 从localStorage读取已保存的解锁状态（确保与成就页一致）
+
+            // 使用统一函数计算已解锁徽章（当前满足条件 + 历史已解锁）
+            const { allIds: allUnlockedIds, currentlyUnlocked: currentUnlockedIds } = calculateUnlockedBadgeIds();
             const unlockedKey = `badges_unlocked_${userId}`;
-            const storedUnlocked = JSON.parse(localStorage.getItem(unlockedKey) || '[]');
-            
-            // 合并当前计算结果和已存储的解锁状态（取并集，确保持久化）
-            const currentUnlockedIds = unlockedBadges.map(b => b.id);
-            const allUnlockedIds = [...new Set([...storedUnlocked, ...currentUnlockedIds])];
-            
+            localStorage.setItem(unlockedKey, JSON.stringify(allUnlockedIds));
+
+            const unlockedBadges = BADGES.filter(b => currentUnlockedIds.includes(b.id));
+
             // 检查新解锁徽章并记录解锁时间
             const newBadges = unlockedBadges.filter(b => !previousUnlockedBadges.includes(b.id));
             newBadges.forEach(b => {
                 badgeUnlockHistory[b.id] = new Date().toISOString();
             });
-            
+
             // 保存已解锁徽章ID列表到localStorage（持久化解锁时间）
             const unlockTimeKey = `badge_unlock_times_${userId}`;
             const unlockTimes = JSON.parse(localStorage.getItem(unlockTimeKey) || '{}');
@@ -1578,11 +1632,10 @@ const BADGES = [
                 unlockTimes[b.id] = new Date().toISOString();
             });
             localStorage.setItem(unlockTimeKey, JSON.stringify(unlockTimes));
-            localStorage.setItem(unlockedKey, JSON.stringify(allUnlockedIds));
-            
+
             // 更新previousUnlockedBadges
             previousUnlockedBadges = allUnlockedIds;
-            
+
             // 使用合并后的解锁列表构建已解锁徽章数组（与成就页一致）
             const allUnlockedBadges = BADGES.filter(b => allUnlockedIds.includes(b.id));
             
@@ -1619,20 +1672,13 @@ const BADGES = [
         // 加载所有徽章（成就页）
         function loadAllBadges() {
             const userId = currentUser.id;
-            
-            // 从localStorage读取已保存的解锁状态（与loadBadges共享同一数据源）
+
+            // 使用统一函数计算已解锁徽章（调用前读取旧状态用于判断新解锁）
             const unlockedKey = `badges_unlocked_${userId}`;
             const storedUnlocked = JSON.parse(localStorage.getItem(unlockedKey) || '[]');
-            
-            // 使用统一的 getBadgeStats 获取统计数据
             const stats = getBadgeStats();
-            
-            // 计算当前满足条件的徽章
-            const currentlyUnlocked = BADGES.filter(b => b.condition(currentUser, stats)).map(b => b.id);
-            
-            // 合并存储的和当前计算的（取并集，确保历史解锁不会丢失）
-            const allUnlockedIds = [...new Set([...storedUnlocked, ...currentlyUnlocked])];
-            
+            const { allIds: allUnlockedIds } = calculateUnlockedBadgeIds();
+
             // 保存合并后的解锁状态（与loadBadges一致）
             localStorage.setItem(unlockedKey, JSON.stringify(allUnlockedIds));
             
@@ -2125,6 +2171,138 @@ const BADGES = [
             document.getElementById('stat-hours').textContent = totalHours;
             document.getElementById('stats-total-hours').textContent = totalHours;
             document.getElementById('stats-completed-courses').textContent = completed.length;
+        }
+
+        // 加载我的考试
+        async function loadMyExams() {
+            const userId = currentUser?.id;
+            const listEl = document.getElementById('my-exams-list');
+            const countEl = document.getElementById('my-exam-count');
+            if (!userId || !listEl) return;
+
+            const escapeHtml = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+            listEl.innerHTML = '<div class="py-12 text-center text-gray-400"><i class="fa fa-spinner fa-spin mr-2"></i>加载中...</div>';
+            try {
+                const res = await fetch('/api/data');
+                const data = await res.json();
+                const exams = data.exams || [];
+                const attempts = (data.exam_attempts || []).filter(a => String(a.userId) === String(userId));
+
+                if (attempts.length === 0) {
+                    listEl.innerHTML = '<div class="py-12 text-center text-gray-400"><i class="fa fa-clipboard text-4xl mb-3 block opacity-30"></i><p>暂无考试记录</p></div>';
+                    countEl.textContent = '0';
+                    return;
+                }
+
+                const examMap = {};
+                attempts.forEach(a => {
+                    if (!examMap[a.examId]) examMap[a.examId] = [];
+                    examMap[a.examId].push(a);
+                });
+
+                const items = Object.keys(examMap).map(examId => {
+                    const exam = exams.find(e => String(e.id) === String(examId)) || { title: '未知考试' };
+                    const list = examMap[examId].sort((a, b) => new Date(b.startedAt || b.completedAt || b.createdAt || 0) - new Date(a.startedAt || a.completedAt || a.createdAt || 0));
+                    const completed = list.filter(a => a.status === 'completed');
+                    const recordScore = exam.recordScore || 'highest';
+                    let scoreAttempt;
+                    if (recordScore === 'latest') {
+                        scoreAttempt = list[0];
+                    } else {
+                        scoreAttempt = completed.slice().sort((a, b) => (b.score || 0) - (a.score || 0))[0] || list[0];
+                    }
+                    return { exam, attempts: list, scoreAttempt, completedCount: completed.length };
+                });
+                window.myExamItems = items;
+
+                countEl.textContent = items.length;
+
+                listEl.innerHTML = items.map(item => {
+                    const score = item.scoreAttempt?.score ?? '-';
+                    const passed = item.scoreAttempt?.passed;
+                    const statusText = passed === true ? '及格' : (passed === false ? '不及格' : '未完成');
+                    const statusClass = passed === true ? 'bg-green-100 text-green-700' : (passed === false ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600');
+                    const time = item.scoreAttempt?.completedAt || item.scoreAttempt?.startedAt;
+                    const timeStr = time ? new Date(time).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+                    return `
+                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow">
+                        <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-gray-800 text-base mb-2">${escapeHtml(item.exam.title)}</h4>
+                                <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-3">
+                                    <span><i class="fa fa-clock-o mr-1 text-primary"></i>${item.exam.duration || '-'}分钟</span>
+                                    <span><i class="fa fa-star mr-1 text-primary"></i>满分${item.exam.totalScore || '-'}分</span>
+                                    <span><i class="fa fa-check-circle mr-1 text-primary"></i>及格线${item.exam.passingScore || '-'}分</span>
+                                    <button onclick="showExamHistory(${item.exam.id})" class="inline-flex items-center text-primary hover:text-indigo-700 hover:underline cursor-pointer bg-transparent border-0 p-0 font-inherit text-sm">
+                                        <i class="fa fa-repeat mr-1 text-primary"></i>已考${item.attempts.length}次
+                                    </button>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-4">
+                                    <div>
+                                        <span class="text-xs text-gray-400 block">考试成绩</span>
+                                        <div class="text-xl font-bold ${passed === false ? 'text-red-500' : 'text-primary'}">${score}<span class="text-sm font-normal text-gray-400 ml-1">分</span></div>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs text-gray-400 block">考试时间</span>
+                                        <div class="text-sm text-gray-600">${timeStr}</div>
+                                    </div>
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium ${statusClass}">${statusText}</span>
+                                </div>
+                            </div>
+                            <button onclick="location.href='exam.html?id=${item.exam.id}'" class="px-4 py-2 rounded-lg bg-gradient-primary text-white text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-1 flex-shrink-0">
+                                <i class="fa fa-redo"></i>重新考试
+                            </button>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                listEl.innerHTML = '<div class="py-12 text-center text-red-500">加载失败</div>';
+                console.error(e);
+            }
+        }
+
+        function showExamHistory(examId) {
+            const items = window.myExamItems || [];
+            const item = items.find(i => String(i.exam.id) === String(examId));
+            if (!item) return;
+
+            document.getElementById('exam-history-title').textContent = (item.exam.title || '考试') + ' 的考试记录';
+            const listEl = document.getElementById('exam-history-list');
+
+            if (item.attempts.length === 0) {
+                listEl.innerHTML = '<p class="text-center text-gray-400 py-4">暂无考试记录</p>';
+            } else {
+                listEl.innerHTML = item.attempts.map((a, idx) => {
+                    const score = a.score ?? '-';
+                    const passed = a.passed;
+                    const statusText = passed === true ? '及格' : (passed === false ? '不及格' : '未完成');
+                    const statusClass = passed === true ? 'bg-green-100 text-green-700' : (passed === false ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600');
+                    const time = a.completedAt || a.startedAt;
+                    const timeStr = time ? new Date(time).toLocaleString('zh-CN') : '-';
+                    const durationMin = a.durationUsed ? Math.ceil(a.durationUsed / 60) : (a.startedAt && a.completedAt ? Math.round((new Date(a.completedAt) - new Date(a.startedAt)) / 60000) : '-');
+                    return `
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-bold">${idx + 1}</div>
+                            <div>
+                                <div class="text-sm text-gray-500 mb-0.5">考试时间：${timeStr}</div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg font-bold ${passed === false ? 'text-red-500' : 'text-primary'}">${score}<span class="text-xs font-normal text-gray-400 ml-1">分</span></span>
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusClass}">${statusText}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-400">用时${durationMin !== '-' ? durationMin + '分钟' : durationMin}</div>
+                    </div>`;
+                }).join('');
+            }
+
+            document.getElementById('exam-history-modal').classList.remove('hidden');
+        }
+
+        function closeExamHistoryModal() {
+            document.getElementById('exam-history-modal')?.classList.add('hidden');
         }
 
         // ===== 课程卡片渲染函数 =====

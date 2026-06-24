@@ -278,8 +278,10 @@
       document.getElementById('confirm-title').textContent=title;
       document.getElementById('confirm-msg').textContent=msg;
       const iconWrap=document.getElementById('confirm-icon');
-      iconWrap.className='w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center '+iconClass;
-      iconWrap.querySelector('i').className='text-2xl '+iconClass.split(' ').find(c=>c.startsWith('fa-'))||'';
+      const cls=iconClass||'bg-slate-50';
+      iconWrap.className='w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center '+cls;
+      const iClasses=cls.split(' ').filter(c=>c.startsWith('fa-')||c.startsWith('text-')).join(' ');
+      iconWrap.querySelector('i').className='text-2xl '+(iClasses||'fa-question-circle text-slate-400');
       document.getElementById('confirm-ok').textContent=okText||'确定';
       document.getElementById('confirm-cancel').textContent=cancelText||'取消';
       confirmCallback=callback;
@@ -643,7 +645,7 @@
       showConfirm(
         '确认退出？',
         `当前已完成 ${answered}/${questions.length} 题，退出后进度不会保存。`,
-        'bg-amber-50',
+        'bg-amber-50 fa-exclamation-triangle text-amber-500',
         '仍要退出',
         '继续答题',
         ()=>{clearInterval(timerHandle);history.back();}
@@ -662,7 +664,7 @@
       showConfirm(
         '确认交卷',
         msg,
-        'bg-blue-50',
+        'bg-blue-50 fa-question-circle text-blue-500',
         '确认交卷',
         '再检查一下',
         doSubmit

@@ -11,9 +11,9 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1782044069160-440027461.jpg",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/6/24 09:28:22",
+      "lastLogin": "2026/6/24 14:05:56",
       "status": "active",
-      "position": ""
+      "position": "人事经理"
     },
     {
       "id": 1781087021554,
@@ -43,7 +43,7 @@
       "1781087462994_0": 100,
       "1781065453648_0": 100,
       "1781087427858_0": 5,
-      "1781080411545_0": 99,
+      "1781080411545_0": 100,
       "1781080411545_1": 100,
       "1781064630171_0": 52,
       "1781506198054_0": 17,
@@ -51,15 +51,16 @@
       "1781065485355_0": 1,
       "1781077900894_0": 100
     },
-    "lastStudyTime": "2026-06-22T06:49:56.810Z",
+    "lastStudyTime": "2026-06-24T06:15:46.943Z",
     "studyDates": [
       "2026-06-14",
       "2026-06-15",
       "2026-06-17",
       "2026-06-20",
-      "2026-06-22"
+      "2026-06-22",
+      "2026-06-24"
     ],
-    "totalSeconds": 239,
+    "totalSeconds": 242,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -420,6 +421,33 @@
         "duration": 2,
         "timestamp": "2026-06-22T06:49:56.810Z",
         "date": "2026-06-22"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-24T06:15:39.693Z",
+        "date": "2026-06-24"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-24T06:15:42.752Z",
+        "date": "2026-06-24"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-24T06:15:46.943Z",
+        "date": "2026-06-24"
       }
     ],
     "shares": 1,
@@ -469,6 +497,17 @@
         "totalQuestions": 3,
         "completedAt": "2026-06-23T14:06:07.120Z",
         "attemptId": null
+      },
+      {
+        "examId": 1782281099486,
+        "examTitle": "粒子系统副本",
+        "score": 100,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 3,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-24T07:57:42.654Z",
+        "attemptId": 1782287855038
       }
     ]
   },
@@ -998,7 +1037,7 @@
       ],
       "attachments": [],
       "duration": 2054,
-      "views": 36,
+      "views": 37,
       "rating": 3,
       "id": 1781080411545,
       "createdAt": "2026/6/10 16:33:31",
@@ -1204,7 +1243,7 @@
   },
   "video_pos_1780909174403_1781080411545_0": {
     "position": 1009,
-    "savedAt": "2026-06-22T14:37:03.306Z"
+    "savedAt": "2026-06-24T06:15:41.298Z"
   },
   "course_interaction_1781080411545": {
     "likes": 2,
@@ -1221,7 +1260,7 @@
   },
   "video_pos_1780909174403_1781080411545_1": {
     "position": 1043,
-    "savedAt": "2026-06-22T06:50:00.814Z"
+    "savedAt": "2026-06-24T06:15:48.115Z"
   },
   "course_interaction_1781077900894": {
     "likes": 1,
@@ -1569,7 +1608,7 @@
       "examId": 1782221347409,
       "read": true,
       "createdAt": "2026-06-23T13:29:07.419Z",
-      "readAt": "2026-06-24T01:26:56.514Z"
+      "readAt": "2026-06-24T06:14:50.887Z"
     },
     {
       "id": 1782221347420,
@@ -1580,6 +1619,27 @@
       "examId": 1782221347409,
       "read": false,
       "createdAt": "2026-06-23T13:29:07.419Z"
+    },
+    {
+      "id": 1782281169738,
+      "userId": 1780909174403,
+      "title": "新考试安排",
+      "content": "您有一场新考试「粒子系统副本」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782281099486,
+      "read": true,
+      "createdAt": "2026-06-24T06:06:09.738Z",
+      "readAt": "2026-06-24T08:34:41.806Z"
+    },
+    {
+      "id": 1782281169739,
+      "userId": 1781087021554,
+      "title": "新考试安排",
+      "content": "您有一场新考试「粒子系统副本」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782281099486,
+      "read": false,
+      "createdAt": "2026-06-24T06:06:09.738Z"
     }
   ],
   "notification_reads": [
@@ -1595,12 +1655,12 @@
     }
   ],
   "index_featured_lecturers": [
-    1780911271132,
-    1780915354634,
-    1781064123970,
-    1781064213921,
     1781064033425,
-    1780986326119
+    1781063989679,
+    1780986326119,
+    1780973279917,
+    1780915354634,
+    1780911271132
   ],
   "surveys": [
     {
@@ -2245,7 +2305,7 @@
         1781087021554
       ],
       "createdAt": "2026-06-23T13:29:07.409Z",
-      "updatedAt": "2026-06-24T01:26:38.309Z",
+      "updatedAt": "2026-06-24T06:04:54.984Z",
       "accessType": "restricted",
       "showData": true,
       "showAnalysis": "show",
@@ -2259,6 +2319,68 @@
       "attemptsCount": null,
       "screenSwitchPolicy": "forbidden",
       "screenSwitchCount": null
+    },
+    {
+      "id": 1782281099486,
+      "title": "粒子系统副本",
+      "description": "",
+      "duration": 60,
+      "passingScore": 60,
+      "totalScore": 100,
+      "bankId": null,
+      "shuffleQuestions": false,
+      "shuffleOptions": false,
+      "showAnswer": false,
+      "status": "published",
+      "questions": [
+        {
+          "questionId": 1782111523712,
+          "score": 30,
+          "partialScore": 0,
+          "order": 0,
+          "content": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+          "type": "single"
+        },
+        {
+          "questionId": 1782111523714,
+          "score": 30,
+          "partialScore": 0,
+          "order": 1,
+          "content": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+          "type": "single"
+        },
+        {
+          "questionId": 1782111523716,
+          "score": 40,
+          "partialScore": 20,
+          "order": 2,
+          "content": "使用简单粒子所带来的问题有哪些？",
+          "type": "multiple"
+        }
+      ],
+      "startTime": "2026-06-23T13:29:00.000Z",
+      "endTime": "2026-06-24T13:29:00.000Z",
+      "maxAttempts": 0,
+      "paperId": "paper_1782113932466",
+      "paperName": "粒子系统",
+      "allowedUsers": [
+        1780909174403,
+        1781087021554
+      ],
+      "accessType": "restricted",
+      "attemptsPolicy": "unlimited",
+      "attemptsCount": null,
+      "recordScore": "highest",
+      "screenSwitchPolicy": "forbidden",
+      "screenSwitchCount": null,
+      "showData": true,
+      "answerDetail": "after_grade",
+      "viewQuestions": "all",
+      "showCorrect": "show",
+      "showAnalysis": "show",
+      "viewRank": "after_submit",
+      "createdAt": "2026-06-24T06:04:59.486Z",
+      "updatedAt": "2026-06-24T06:06:09.728Z"
     }
   ],
   "exam_attempts": [
@@ -2317,6 +2439,174 @@
       "correctCount": 1,
       "totalQuestions": 3,
       "durationUsed": 5
+    },
+    {
+      "id": 1782281934607,
+      "examId": 1782281099486,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-06-24T06:18:54.607Z",
+      "answers": {
+        "1782111523712": "",
+        "1782111523714": "B",
+        "1782111523716": "BD"
+      },
+      "score": 20,
+      "passed": false,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-24T06:19:28.474Z",
+      "correctCount": 0,
+      "totalQuestions": 3,
+      "durationUsed": 34
+    },
+    {
+      "id": 1782282051696,
+      "examId": 1782281099486,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-06-24T06:20:51.696Z",
+      "answers": {
+        "1782111523712": "",
+        "1782111523714": "B",
+        "1782111523716": "A"
+      },
+      "score": 20,
+      "passed": false,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-24T06:20:57.551Z",
+      "correctCount": 0,
+      "totalQuestions": 3,
+      "durationUsed": 6
+    },
+    {
+      "id": 1782285337704,
+      "examId": 1782281099486,
+      "userId": "1780909174403",
+      "status": "taking",
+      "startedAt": "2026-06-24T07:15:37.704Z",
+      "answers": {},
+      "score": null,
+      "passed": null,
+      "optionMappings": {},
+      "shuffledQuestionIds": null
+    },
+    {
+      "id": 1782285560551,
+      "examId": 1782221347409,
+      "userId": "1780909174403",
+      "status": "taking",
+      "startedAt": "2026-06-24T07:19:20.551Z",
+      "answers": {},
+      "score": null,
+      "passed": null,
+      "optionMappings": {},
+      "shuffledQuestionIds": null
+    },
+    {
+      "id": 1782287713112,
+      "examId": 1782221347409,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-06-24T07:55:13.112Z",
+      "answers": {
+        "1782111523712": "A",
+        "1782111523714": "B",
+        "1782111523716": "AB"
+      },
+      "score": 50,
+      "passed": false,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-24T07:57:22.998Z",
+      "correctCount": 1,
+      "totalQuestions": 3,
+      "durationUsed": 130
+    },
+    {
+      "id": 1782287855038,
+      "examId": 1782281099486,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-06-24T07:57:35.038Z",
+      "answers": {
+        "1782111523712": "A",
+        "1782111523714": "A",
+        "1782111523716": "ABCD"
+      },
+      "score": 100,
+      "passed": true,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-24T07:57:42.654Z",
+      "correctCount": 3,
+      "totalQuestions": 3,
+      "durationUsed": 8
+    },
+    {
+      "id": 1782287887497,
+      "examId": 1782221347409,
+      "userId": "1780909174403",
+      "status": "taking",
+      "startedAt": "2026-06-24T07:58:07.497Z",
+      "answers": {},
+      "score": null,
+      "passed": null,
+      "optionMappings": {},
+      "shuffledQuestionIds": null
+    },
+    {
+      "id": 1782289558238,
+      "examId": 1782281099486,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-06-24T08:25:58.238Z",
+      "answers": {
+        "1782111523712": "",
+        "1782111523714": "A",
+        "1782111523716": "C"
+      },
+      "score": 50,
+      "passed": false,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-24T08:26:18.647Z",
+      "correctCount": 1,
+      "totalQuestions": 3,
+      "durationUsed": 20
+    },
+    {
+      "id": 1782289755840,
+      "examId": 1782281099486,
+      "userId": "1780909174403",
+      "status": "taking",
+      "startedAt": "2026-06-24T08:29:15.840Z",
+      "answers": {},
+      "score": null,
+      "passed": null,
+      "optionMappings": {},
+      "shuffledQuestionIds": null
+    },
+    {
+      "id": 1782290085125,
+      "examId": 1782281099486,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-06-24T08:34:45.125Z",
+      "answers": {
+        "1782111523712": "B",
+        "1782111523714": "B",
+        "1782111523716": "C"
+      },
+      "score": 20,
+      "passed": false,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-24T08:35:53.328Z",
+      "correctCount": 0,
+      "totalQuestions": 3,
+      "durationUsed": 68
     }
   ],
   "survey_responses": [
@@ -3778,7 +4068,7 @@
       "noticeId": 1782183780370,
       "userId": 1780909174403,
       "username": "15302206488",
-      "visitedAt": "2026-06-23T13:02:51.006Z"
+      "visitedAt": "2026-06-24T08:25:46.110Z"
     }
   ]
 }

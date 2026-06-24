@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -130,6 +130,8 @@
             padding: 24px 28px 18px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #fff;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
         }
         .modal-header h3 {
             color: #fff;
@@ -833,44 +835,49 @@
             const contentEl = document.getElementById('modal-content');
             contentEl.className = 'modal-body html-content';
 
+            const metaItems = [];
+            if (exam.duration) metaItems.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#f1f5f9;border-radius:20px;font-size:13px;color:#475569;"><i class="fa fa-clock-o" style="color:#667eea;"></i>' + exam.duration + '分钟</span>');
+            if (exam.totalScore) metaItems.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#f1f5f9;border-radius:20px;font-size:13px;color:#475569;"><i class="fa fa-star" style="color:#667eea;"></i>满分' + exam.totalScore + '分</span>');
+            if (exam.passingScore) metaItems.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#f1f5f9;border-radius:20px;font-size:13px;color:#475569;"><i class="fa fa-check-circle" style="color:#667eea;"></i>及格线' + exam.passingScore + '分</span>');
+            if (exam.questionCount) metaItems.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#f1f5f9;border-radius:20px;font-size:13px;color:#475569;"><i class="fa fa-list-ol" style="color:#667eea;"></i>共' + exam.questionCount + '题</span>');
+
             let html = '';
 
-            html += '<div style="padding-bottom:12px;border-bottom:1px solid #f1f5f9;margin-bottom:16px;">';
-            html += '<div style="font-weight:700;color:#1e293b;font-size:16px;margin-bottom:8px">' + escapeHtml(exam.title || '未命名考试') + '</div>';
-            html += '<div style="display:flex;flex-wrap:gap-4;font-size:13px;color:#64748b;">';
-            if (exam.duration) html += '<span><i class="fa fa-clock-o mr-1"></i>' + exam.duration + '分钟</span>';
-            if (exam.totalScore) html += '<span><i class="fa fa-score mr-1"></i>满分' + exam.totalScore + '分</span>';
-            if (exam.passingScore) html += '<span><i class="fa fa-target mr-1"></i>及格线' + exam.passingScore + '分</span>';
+            // 标题区
+            html += '<div style="text-align:center;margin-bottom:22px;">';
+            html += '<div style="width:68px;height:68px;border-radius:18px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 10px 25px rgba(102,126,234,0.32);">';
+            html += '<i class="fa fa-clipboard-check" style="color:#fff;font-size:30px;"></i>';
             html += '</div>';
+            html += '<h2 style="font-size:20px;font-weight:700;color:#1e293b;margin-bottom:12px;line-height:1.4;">' + escapeHtml(exam.title || '未命名考试') + '</h2>';
+            html += '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;">' + metaItems.join('') + '</div>';
             html += '</div>';
 
+            // 描述
             if (exam.description) {
-                html += '<div style="padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:16px;">';
-                html += '<p style="font-size:14px;color:#475569;line-height:1.6">' + escapeHtml(exam.description) + '</p>';
+                html += '<div style="padding:14px 16px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:12px;margin-bottom:20px;border-left:3px solid #667eea;">';
+                html += '<p style="font-size:14px;color:#475569;line-height:1.7;margin:0;">' + escapeHtml(exam.description) + '</p>';
                 html += '</div>';
             }
 
-            let examCardHtml = '';
-            examCardHtml += '<div style="padding:16px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:12px;">';
-            examCardHtml += '<div style="display:flex;align-items:center;gap:12px;">';
-            examCardHtml += '<div style="width:48px;height:48px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-center;">';
-            examCardHtml += '<i class="fa fa-file-text text-orange-500 text-xl"></i>';
-            examCardHtml += '</div>';
-            examCardHtml += '<div style="flex:1;">';
-            examCardHtml += '<div style="font-weight:600;color:#92400e;">' + escapeHtml(exam.title || '考试') + '</div>';
-            examCardHtml += '<div style="font-size:13px;color:#b45309;margin-top:2px;">';
-            if (exam.duration) examCardHtml += exam.duration + '分钟 ';
-            if (exam.totalScore) examCardHtml += '共' + exam.totalScore + '分';
-            examCardHtml += '</div>';
-            examCardHtml += '</div>';
-            examCardHtml += '</div>';
-            examCardHtml += '<button type="button" onclick="event.stopPropagation();startExam(' + (exam.id || '') + ')" style="width:100%;margin-top:12px;padding:10px;border:none;border-radius:8px;background:#fff;color:#92400e;font-weight:500;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background=\'#fef9c3\'" onmouseout="this.style.background=\'#fff\'">';
-            examCardHtml += '<i class="fa fa-play-circle mr-2"></i>开始考试';
-            examCardHtml += '</button>';
-            examCardHtml += '<p style="text-center;margin-top:14px;font-size:12px;color:#94a3b8"><i class="fa fa-circle-info" style="margin-right:4px"></i>点击按钮后将开始计时，请确保网络连接稳定</p>';
-            examCardHtml += '</div>';
+            // 考试操作卡片
+            html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:22px;box-shadow:0 4px 24px rgba(0,0,0,0.06);">';
+            html += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">';
+            html += '<div style="width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
+            html += '<i class="fa fa-file-text" style="color:#7c3aed;font-size:22px;"></i>';
+            html += '</div>';
+            html += '<div style="flex:1;min-width:0;">';
+            html += '<div style="font-weight:600;color:#1e293b;font-size:15px;margin-bottom:3px;">准备参加考试</div>';
+            html += '<div style="font-size:13px;color:#64748b;">请确认网络稳定后再开始作答</div>';
+            html += '</div>';
+            html += '</div>';
 
-            html += examCardHtml;
+            html += '<button type="button" onclick="event.stopPropagation();startExam(' + (exam.id || '') + ')" style="width:100%;padding:14px 20px;border:none;border-radius:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;font-weight:600;font-size:15px;cursor:pointer;box-shadow:0 6px 18px rgba(102,126,234,0.32);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.transform=\'translateY(-1px)\';this.style.boxShadow=\'0 8px 22px rgba(102,126,234,0.4)\'" onmouseout="this.style.transform=\'translateY(0)\';this.style.boxShadow=\'0 6px 18px rgba(102,126,234,0.32)\'">';
+            html += '<i class="fa fa-play-circle" style="font-size:18px;"></i>开始考试';
+            html += '</button>';
+
+            html += '<p style="text-align:center;margin-top:16px;margin-bottom:0;font-size:12px;color:#94a3b8;"><i class="fa fa-info-circle" style="margin-right:5px;color:#cbd5e1;"></i>点击按钮后将开始计时，中途请勿刷新或关闭页面</p>';
+            html += '</div>';
+
             contentEl.innerHTML = html;
         }
 
