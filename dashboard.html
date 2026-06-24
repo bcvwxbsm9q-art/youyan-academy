@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -1137,8 +1137,8 @@
               <h3 id="examDetailTitle" class="text-lg font-bold text-slate-800">考试详情</h3>
             </div>
             <div class="flex items-center gap-2">
-              <button onclick="exportExamDetailStudents()" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition"><i class="fas fa-file-export mr-1"></i>导出学员数据</button>
-              <button onclick="exportExamDetailQuestions()" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 transition"><i class="fas fa-file-export mr-1"></i>导出答题数据</button>
+              <button onclick="exportExamDetailStudents()" class="px-3 py-1.5 text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition shadow-sm shadow-emerald-500/20"><i class="fas fa-file-excel mr-1"></i>导出学员数据</button>
+              <button onclick="exportExamDetailQuestions()" class="px-3 py-1.5 text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition shadow-sm shadow-emerald-500/20"><i class="fas fa-file-excel mr-1"></i>导出答题数据</button>
             </div>
           </div>
 
@@ -1201,9 +1201,9 @@
       <div id="examStudentRecordsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col m-4">
           <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-            <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-history text-amber-500 mr-2"></i>考试记录 - <span id="examStudentRecordsTitle"></span></h3>
+            <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-history text-indigo-500 mr-2"></i>考试记录 - <span id="examStudentRecordsTitle"></span></h3>
             <div class="flex items-center gap-3">
-              <button onclick="exportExamStudentRecords()" class="px-3 py-1.5 text-sm bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition"><i class="fas fa-file-export mr-1"></i>导出</button>
+              <button onclick="exportExamStudentRecords()" class="px-3 py-1.5 text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition shadow-sm shadow-emerald-500/20"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
               <button onclick="closeExamStudentRecordsModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
             </div>
           </div>
@@ -1220,6 +1220,46 @@
               </tr></thead>
               <tbody id="examStudentRecordsBody" class="divide-y divide-slate-100 text-sm"></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 作答详情弹窗 -->
+      <div id="examAttemptDetailModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col m-4">
+          <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-clipboard-list text-indigo-500 mr-2"></i>作答详情</h3>
+              <p id="examAttemptDetailSubtitle" class="text-xs text-slate-500 mt-0.5"></p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button onclick="exportExamAttemptDetail()" class="px-3 py-1.5 text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition shadow-sm shadow-emerald-500/20"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
+              <button onclick="closeExamAttemptDetailModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+          </div>
+          <div id="examAttemptDetailBody" class="p-6 overflow-y-auto space-y-4">
+            <div class="py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 题目作答详情弹窗 -->
+      <div id="examQuestionAnswersModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col m-4">
+          <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-list-ul text-indigo-500 mr-2"></i>答题数据</h3>
+              <p id="examQuestionAnswersSubtitle" class="text-xs text-slate-500 mt-0.5"></p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button onclick="exportExamQuestionAnswers()" class="px-3 py-1.5 text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition shadow-sm shadow-emerald-500/20"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
+              <button onclick="closeExamQuestionAnswersModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+          </div>
+          <div class="p-6 overflow-y-auto">
+            <div id="examQuestionAnswersBody" class="space-y-3">
+              <div class="py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>
+            </div>
           </div>
         </div>
       </div>
@@ -10786,11 +10826,11 @@
       }
       tbody.innerHTML = students.map(s => {
         const statusClass = {
-          passed: 'bg-green-100 text-green-700',
-          failed: 'bg-red-100 text-red-600',
+          passed: 'bg-emerald-100 text-emerald-700',
+          failed: 'bg-rose-100 text-rose-600',
           unstarted: 'bg-slate-100 text-slate-500',
           taking: 'bg-blue-100 text-blue-600',
-          absent: 'bg-amber-100 text-amber-600'
+          absent: 'bg-indigo-100 text-indigo-600'
         }[s.status] || 'bg-slate-100 text-slate-500';
         const scoreDisplay = s.status === 'passed' || s.status === 'failed' ? s.score : '-';
         const rateDisplay = s.status === 'passed' || s.status === 'failed' ? s.scoreRate + '%' : '-';
@@ -10800,7 +10840,7 @@
           <td class="px-3 py-3 text-slate-600">${escHtml(s.phone)}</td>
           <td class="px-3 py-3 text-slate-500 text-xs">${s.joinTime}</td>
           <td class="px-3 py-3 text-center">
-            <button onclick="openExamStudentRecords(${currentExamDetailId}, ${s.userId}, '${escJs(s.userName)}')" class="text-amber-600 hover:text-amber-700 text-sm font-medium">${s.attemptCount} <i class="fas fa-chevron-right text-xs"></i></button>
+            <button onclick="openExamStudentRecords(${currentExamDetailId}, ${s.userId}, '${escJs(s.userName)}')" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">${s.attemptCount} <i class="fas fa-chevron-right text-xs"></i></button>
           </td>
           <td class="px-3 py-3 text-center font-medium text-slate-700">${scoreDisplay}</td>
           <td class="px-3 py-3 text-center text-slate-600">${rateDisplay}</td>
@@ -10851,7 +10891,7 @@
           <td class="px-3 py-3 text-slate-600">${escHtml(q.knowledge)}</td>
           <td class="px-3 py-3 text-slate-700 font-medium">${escHtml(q.correctAnswer)}</td>
           <td class="px-3 py-3 text-center">
-            <span class="px-2 py-0.5 text-xs rounded-full font-medium ${q.correctRate >= 80 ? 'bg-green-100 text-green-700' : q.correctRate >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}">${q.correctRate}%</span>
+            <span class="px-2 py-0.5 text-xs rounded-full font-medium ${q.correctRate >= 80 ? 'bg-emerald-100 text-emerald-700' : q.correctRate >= 60 ? 'bg-indigo-100 text-indigo-700' : 'bg-rose-100 text-rose-600'}">${q.correctRate}%</span>
           </td>
           <td class="px-3 py-3 text-center">
             <button onclick="showExamQuestionDetail(${q.questionId})" class="text-indigo-600 hover:text-indigo-700 text-xs font-medium">数据</button>
@@ -10860,11 +10900,79 @@
       `).join('');
     }
 
-    function showExamQuestionDetail(questionId) {
+    let currentExamAttemptDetail = null;
+    let currentExamQuestionAnswers = null;
+
+    async function showExamQuestionDetail(questionId) {
       const question = (currentExamDetailData.questions || []).find(q => q.questionId === questionId);
       if (!question) return;
-      const optionText = Object.entries(question.optionStats || {}).map(([k, v]) => `${k}: ${v}人`).join('，');
-      toast(`${escHtml(question.title)} | 正确率 ${question.correctRate}% | ${optionText || '无选项数据'}`, 'info');
+      const modal = document.getElementById('examQuestionAnswersModal');
+      const body = document.getElementById('examQuestionAnswersBody');
+      const subtitle = document.getElementById('examQuestionAnswersSubtitle');
+      subtitle.textContent = `第${question.order}题 · ${question.typeText} · 正确率 ${question.correctRate}%`;
+      body.innerHTML = '<div class="py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>';
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      try {
+        const res = await fetch('/api/exams/' + currentExamDetailId + '/questions/' + questionId + '/answers');
+        const data = await res.json();
+        currentExamQuestionAnswers = data;
+        const answers = data.answers || [];
+        if (!answers.length) {
+          body.innerHTML = '<div class="py-12 text-center text-slate-400">暂无答题数据</div>';
+          return;
+        }
+        body.innerHTML = answers.map(a => {
+          const resultClass = a.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600';
+          const resultText = a.isCorrect ? '正确' : '错误';
+          return `
+          <div class="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-sm transition">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 text-xs font-bold">${escHtml(a.userName.charAt(0))}</div>
+                <div>
+                  <p class="text-sm font-semibold text-slate-800">${escHtml(a.userName)}</p>
+                  <p class="text-xs text-slate-500">${escHtml(a.department)} · ${escHtml(a.phone)}</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 text-xs rounded-full font-medium ${resultClass}">${resultText}</span>
+            </div>
+            <div class="flex flex-wrap gap-4 text-sm">
+              <div><span class="text-slate-400">学员答案：</span><span class="font-medium text-slate-700">${a.userAnswer ? escHtml(a.userAnswer) : '<span class="text-slate-400">未作答</span>'}</span></div>
+              <div><span class="text-slate-400">正确答案：</span><span class="font-medium text-emerald-600">${escHtml(a.correctAnswer)}</span></div>
+              <div><span class="text-slate-400">交卷时间：</span><span class="text-slate-600">${a.completedAt ? new Date(a.completedAt).toLocaleString('zh-CN') : '-'}</span></div>
+            </div>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        body.innerHTML = '<div class="py-12 text-center text-red-500">加载失败</div>';
+      }
+    }
+
+    function closeExamQuestionAnswersModal() {
+      const modal = document.getElementById('examQuestionAnswersModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentExamQuestionAnswers = null;
+    }
+
+    function exportExamQuestionAnswers() {
+      if (!currentExamQuestionAnswers || !currentExamQuestionAnswers.answers || !currentExamQuestionAnswers.answers.length) {
+        toast('没有可导出的答题数据', 'warning');
+        return;
+      }
+      const q = currentExamQuestionAnswers.question || {};
+      const headers = ['学员姓名', '部门', '手机号', '学员答案', '正确答案', '是否正确', '交卷时间'];
+      const rows = currentExamQuestionAnswers.answers.map(a => [
+        a.userName, a.department, a.phone, a.userAnswer || '未作答', a.correctAnswer,
+        a.isCorrect ? '正确' : '错误',
+        a.completedAt ? new Date(a.completedAt).toLocaleString('zh-CN') : '-'
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '答题数据');
+      XLSX.writeFile(wb, (currentExamDetailTitle || '考试') + '_第' + (q.order || '') + '题答题数据_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('答题数据导出成功');
     }
 
     async function openExamStudentRecords(examId, userId, userName) {
@@ -10887,7 +10995,7 @@
         tbody.innerHTML = records.map(r => {
           const resultClass = r.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600';
           const resultText = r.status === 'completed' ? (r.passed ? '及格' : '不及格') : (r.status === 'abandoned' ? '缺考' : '进行中');
-          const badge = r.isHighest ? '<span class="ml-1 px-1 py-0.5 text-[10px] border border-amber-300 text-amber-600 rounded">最高</span>' : '';
+          const badge = r.isHighest ? '<span class="ml-1 px-1 py-0.5 text-[10px] border border-indigo-300 text-indigo-600 rounded">最高</span>' : '';
           return `<tr>
             <td class="px-3 py-3 text-slate-600">${r.completedAt ? new Date(r.completedAt).toLocaleString('zh-CN') : '-'}</td>
             <td class="px-3 py-3 text-center text-slate-600">${formatDuration(r.durationUsed)}</td>
@@ -10895,7 +11003,7 @@
             <td class="px-3 py-3 text-center text-slate-600">${r.scoreRate}%</td>
             <td class="px-3 py-3 text-center text-slate-600">系统</td>
             <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 text-xs rounded-full font-medium ${resultClass}">${resultText}</span></td>
-            <td class="px-3 py-3 text-center"><button class="text-indigo-600 hover:text-indigo-700 text-xs font-medium">作答详情</button></td>
+            <td class="px-3 py-3 text-center"><button onclick="openExamAttemptDetail(${r.id})" class="text-indigo-600 hover:text-indigo-700 text-xs font-medium">作答详情</button></td>
           </tr>`;
         }).join('');
       } catch (e) {
@@ -10957,6 +11065,85 @@
       XLSX.utils.book_append_sheet(wb, ws, '考试记录');
       XLSX.writeFile(wb, currentExamStudentRecordTitle + '_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
       toast('考试记录导出成功');
+    }
+
+    async function openExamAttemptDetail(attemptId) {
+      const modal = document.getElementById('examAttemptDetailModal');
+      const body = document.getElementById('examAttemptDetailBody');
+      const subtitle = document.getElementById('examAttemptDetailSubtitle');
+      body.innerHTML = '<div class="py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>';
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      try {
+        const res = await fetch('/api/exams/attempts/' + attemptId + '/detail');
+        const data = await res.json();
+        currentExamAttemptDetail = data;
+        const attempt = data.attempt || {};
+        const user = data.user || {};
+        const exam = data.exam || {};
+        subtitle.textContent = `${escHtml(user.userName || '')} · ${escHtml(exam.title || '')} · 得分 ${attempt.score || 0}/${exam.fullScore || exam.totalScore || 0}`;
+        const details = data.details || [];
+        if (!details.length) {
+          body.innerHTML = '<div class="py-12 text-center text-slate-400">暂无作答数据</div>';
+          return;
+        }
+        body.innerHTML = details.map(d => {
+          const resultClass = d.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600';
+          const resultText = d.userAnswer ? (d.isCorrect ? '正确' : '错误') : '未作答';
+          const optionsHtml = Object.entries(d.options || {}).map(([k, v]) => `<div class="text-sm ${k === d.correctAnswer ? 'text-emerald-600 font-medium' : (k === d.userAnswer ? 'text-rose-600' : 'text-slate-600')}"><span class="inline-block w-5 text-xs">${k}.</span>${escHtml(v)}</div>`).join('');
+          return `
+          <div class="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-sm transition">
+            <div class="flex items-start justify-between gap-4 mb-3">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 text-[10px] font-semibold rounded bg-indigo-50 text-indigo-600">第${d.order}题</span>
+                  <span class="px-2 py-0.5 text-[10px] font-semibold rounded bg-slate-100 text-slate-600">${d.typeText}</span>
+                  <span class="text-xs text-slate-400">${escHtml(d.knowledge)}</span>
+                </div>
+                <p class="text-sm font-medium text-slate-800">${escHtml(d.title)}</p>
+              </div>
+              <span class="px-2 py-0.5 text-xs rounded-full font-medium ${resultClass}">${resultText}</span>
+            </div>
+            <div class="space-y-1.5 mb-3 pl-1">${optionsHtml || '<div class="text-sm text-slate-400">非客观题，无选项</div>'}</div>
+            <div class="flex flex-wrap gap-4 text-sm bg-slate-50 rounded-lg p-3">
+              <div><span class="text-slate-400">学员答案：</span><span class="font-medium ${d.userAnswer ? (d.isCorrect ? 'text-emerald-600' : 'text-rose-600') : 'text-slate-400'}">${d.userAnswer ? escHtml(d.userAnswer) : '未作答'}</span></div>
+              <div><span class="text-slate-400">正确答案：</span><span class="font-medium text-emerald-600">${escHtml(d.correctAnswer)}</span></div>
+              <div><span class="text-slate-400">分值：</span><span class="text-slate-600">${d.score}分</span></div>
+            </div>
+            ${d.analysis ? `<div class="mt-3 text-sm text-slate-600 bg-indigo-50/50 border-l-2 border-indigo-400 pl-3 py-2 rounded-r-lg"><span class="text-indigo-600 font-medium">解析：</span>${escHtml(d.analysis)}</div>` : ''}
+          </div>`;
+        }).join('');
+      } catch (e) {
+        body.innerHTML = '<div class="py-12 text-center text-red-500">加载失败</div>';
+      }
+    }
+
+    function closeExamAttemptDetailModal() {
+      const modal = document.getElementById('examAttemptDetailModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentExamAttemptDetail = null;
+    }
+
+    function exportExamAttemptDetail() {
+      if (!currentExamAttemptDetail || !currentExamAttemptDetail.details || !currentExamAttemptDetail.details.length) {
+        toast('没有可导出的作答数据', 'warning');
+        return;
+      }
+      const attempt = currentExamAttemptDetail.attempt || {};
+      const user = currentExamAttemptDetail.user || {};
+      const exam = currentExamAttemptDetail.exam || {};
+      const headers = ['题号', '题型', '题目', '学员答案', '正确答案', '结果', '分值', '知识点'];
+      const rows = currentExamAttemptDetail.details.map(d => [
+        d.order, d.typeText, d.title, d.userAnswer || '未作答', d.correctAnswer,
+        d.userAnswer ? (d.isCorrect ? '正确' : '错误') : '未作答',
+        d.score, d.knowledge
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '作答详情');
+      XLSX.writeFile(wb, (user.userName || '学员') + '_' + (exam.title || '考试') + '_作答详情_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('作答详情导出成功');
     }
 
     // ========== 试卷管理 ==========

@@ -1850,6 +1850,129 @@ app.get('/api/exams/:id/students/:userId/records', (req, res) => {
   });
 });
 
+// GET /api/exams/attempts/:attemptId/detail - 获取单次考试作答详情
+app.get('/api/exams/attempts/:attemptId/detail', (req, res) => {
+  const attemptId = parseInt(req.params.attemptId);
+  const data = readData();
+  const attempt = (data.exam_attempts || []).find(a => a.id === attemptId);
+  if (!attempt) return res.status(404).json({ success: false, error: '考试记录不存在' });
+
+  const exam = (data.exams || []).find(e => e.id === attempt.examId);
+  if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
+
+  const user = (data.registered_users || []).find(u => String(u.id) === String(attempt.userId));
+  const allQuestions = data.questions || [];
+
+  const fullScore = exam.totalScore || (exam.questions || []).reduce((s, q) => s + (q.score || 1), 0);
+  const details = (exam.questions || []).map((eq, idx) => {
+    const q = allQuestions.find(qq => qq.id === eq.questionId) || {};
+    const userAnswer = (attempt.answers || {})[String(eq.questionId)] || '';
+    const correctAnswer = Array.isArray(q.answer) ? q.answer.join('') : (q.answer || '');
+    let isCorrect = false;
+    if (q.type === 'multiple') {
+      const ua = String(userAnswer || '').replace(/\s/g, '').split('').sort().join('');
+      const ca = String(correctAnswer || '').replace(/\s/g, '').split('').sort().join('');
+      isCorrect = ua === ca && ua !== '';
+    } else if (q.type === 'judge' || q.type === 'single') {
+      isCorrect = String(userAnswer).trim() === String(correctAnswer).trim() && userAnswer !== '';
+    }
+    const optionMap = {};
+    (q.options || []).forEach((opt, i) => { optionMap[String.fromCharCode(65 + i)] = opt.text || opt || ''; });
+    return {
+      order: eq.order !== undefined ? eq.order + 1 : idx + 1,
+      questionId: eq.questionId,
+      title: q.title || q.content || '(无标题)',
+      type: q.type || 'single',
+      typeText: ({ single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' })[q.type] || '单选题',
+      options: optionMap,
+      userAnswer,
+      correctAnswer,
+      isCorrect,
+      score: eq.score || 1,
+      knowledge: q.knowledge || q.category || '-',
+      analysis: q.analysis || ''
+    };
+  });
+
+  res.json({
+    success: true,
+    exam: { id: exam.id, title: exam.title, passingScore: exam.passingScore || 60, totalScore: exam.totalScore, fullScore },
+    user: user ? { id: user.id, userName: user.realName || user.username || '未知', department: user.department || '-', phone: user.phone || '-' } : null,
+    attempt: {
+      id: attempt.id,
+      status: attempt.status,
+      startedAt: attempt.startedAt,
+      completedAt: attempt.completedAt,
+      durationUsed: attempt.durationUsed || 0,
+      score: attempt.score || 0,
+      passed: attempt.passed || false,
+      correctCount: attempt.correctCount || 0,
+      totalQuestions: attempt.totalQuestions || 0
+    },
+    details
+  });
+});
+
+// GET /api/exams/:id/questions/:questionId/answers - 获取某题所有学员作答
+app.get('/api/exams/:id/questions/:questionId/answers', (req, res) => {
+  const id = parseInt(req.params.id);
+  const questionId = parseInt(req.params.questionId);
+  const data = readData();
+  const exam = (data.exams || []).find(e => e.id === id);
+  if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
+
+  const eq = (exam.questions || []).find(q => q.questionId === questionId);
+  if (!eq) return res.status(404).json({ success: false, error: '题目不存在' });
+
+  const allQuestions = data.questions || [];
+  const q = allQuestions.find(qq => qq.id === questionId) || {};
+  const correctAnswer = Array.isArray(q.answer) ? q.answer.join('') : (q.answer || '');
+
+  const completedAttempts = (data.exam_attempts || [])
+    .filter(a => a.examId === id && a.status === 'completed')
+    .sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+
+  const answers = completedAttempts.map(a => {
+    const user = (data.registered_users || []).find(u => String(u.id) === String(a.userId));
+    const userAnswer = (a.answers || {})[String(questionId)] || '';
+    let isCorrect = false;
+    if (q.type === 'multiple') {
+      const ua = String(userAnswer || '').replace(/\s/g, '').split('').sort().join('');
+      const ca = String(correctAnswer || '').replace(/\s/g, '').split('').sort().join('');
+      isCorrect = ua === ca && ua !== '';
+    } else if (q.type === 'judge' || q.type === 'single') {
+      isCorrect = String(userAnswer).trim() === String(correctAnswer).trim() && userAnswer !== '';
+    }
+    return {
+      attemptId: a.id,
+      userId: a.userId,
+      userName: user ? (user.realName || user.username || '未知') : '未知',
+      department: user ? (user.department || '-') : '-',
+      phone: user ? (user.phone || '-') : '-',
+      completedAt: a.completedAt,
+      userAnswer,
+      correctAnswer,
+      isCorrect,
+      score: a.score || 0
+    };
+  });
+
+  res.json({
+    success: true,
+    exam: { id: exam.id, title: exam.title },
+    question: {
+      questionId,
+      order: eq.order !== undefined ? eq.order + 1 : 1,
+      title: q.title || q.content || '(无标题)',
+      type: q.type || 'single',
+      typeText: ({ single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' })[q.type] || '单选题',
+      correctAnswer,
+      knowledge: q.knowledge || q.category || '-'
+    },
+    answers
+  });
+});
+
 // GET /api/exams/:id/question-stats - 获取考试的答题数据统计
 app.get('/api/exams/:id/question-stats', (req, res) => {
   const id = parseInt(req.params.id);
