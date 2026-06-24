@@ -1,0 +1,139 @@
+=== GIT LOG ===
+acc4c30 Backup: 项目更新存档 2026-06-18-v11
+f4de363 Backup: 项目更新存档 2026-06-18-v10
+920b4fa Backup: 项目更新存档 2026-06-18-v9
+29a16b3 Backup: 项目更新存档 2026-06-18-v8
+b819d87 Backup: 项目更新存档 2026-06-18-v7
+
+
+=== LINE STATS ===
+Backup lines: 7733
+Current lines: 14239
+Added: 6506
+
+=== POTENTIAL EXAM CODE SECTIONS ===
+Lines 7 - 62
+Lines 110 - 175
+Lines 177 - 241
+Lines 553 - 610
+Lines 616 - 693
+Lines 730 - 793
+Lines 797 - 913
+Lines 915 - 982
+Lines 987 - 1053
+Lines 1056 - 1110
+Lines 1112 - 1200
+Lines 1202 - 1278
+Lines 1671 - 1746
+Lines 1748 - 1807
+Lines 1838 - 1893
+Lines 1895 - 1967
+Lines 1977 - 2037
+Lines 2049 - 2118
+Lines 2120 - 2192
+Lines 2194 - 2246
+Lines 2248 - 2302
+Lines 2305 - 2359
+Lines 2362 - 2425
+Lines 2436 - 2495
+Lines 2607 - 2661
+Lines 3254 - 3313
+Lines 3350 - 3404
+Lines 4878 - 4942
+Lines 5114 - 5177
+Lines 5244 - 5296
+Lines 5316 - 5374
+Lines 5416 - 5508
+Lines 5533 - 5651
+Lines 5682 - 5737
+Lines 5769 - 5847
+Lines 5861 - 5927
+Lines 6441 - 6499
+Lines 6500 - 6594
+Lines 6602 - 6655
+Lines 6660 - 6735
+Lines 7082 - 7173
+Lines 7927 - 7979
+Lines 8267 - 8327
+Lines 8353 - 8424
+Lines 8464 - 8527
+Lines 8528 - 8596
+Lines 8601 - 8656
+Lines 8694 - 8759
+Lines 8811 - 8868
+Lines 8885 - 8950
+Lines 8952 - 9008
+Lines 9030 - 9100
+Lines 9102 - 9165
+Lines 9166 - 9258
+Lines 9260 - 9341
+Lines 9343 - 9408
+Lines 9419 - 9482
+Lines 9484 - 9536
+Lines 9538 - 9618
+Lines 9622 - 9679
+Lines 9680 - 9736
+Lines 9737 - 9794
+Lines 9795 - 9849
+Lines 9850 - 9904
+Lines 9923 - 9990
+Lines 9991 - 10083
+Lines 10085 - 10150
+Lines 10151 - 10208
+Lines 10219 - 10276
+Lines 10317 - 10423
+Lines 10424 - 10482
+Lines 10484 - 10558
+Lines 10559 - 10617
+Lines 10618 - 10672
+Lines 10673 - 10725
+Lines 10728 - 10784
+Lines 10785 - 10863
+Lines 10864 - 10923
+Lines 10925 - 10990
+Lines 10991 - 11049
+Lines 11050 - 11102
+Lines 11126 - 11181
+Lines 11183 - 11248
+Lines 11249 - 11312
+Lines 11313 - 11365
+Lines 11367 - 11424
+Lines 11435 - 11487
+Lines 11493 - 11555
+Lines 11564 - 11630
+Lines 11648 - 11706
+Lines 11708 - 11763
+Lines 11765 - 11821
+Lines 11833 - 11898
+Lines 11903 - 11965
+Lines 11966 - 12029
+Lines 12030 - 12085
+Lines 12087 - 12139
+Lines 12146 - 12200
+Lines 12216 - 12270
+Lines 12286 - 12340
+Lines 12377 - 12431
+Lines 12433 - 12486
+Lines 12487 - 12552
+Lines 12624 - 12677
+Lines 12689 - 12742
+Lines 12823 - 12877
+Lines 12889 - 12952
+Lines 12962 - 13028
+Lines 13048 - 13100
+Lines 13107 - 13176
+Lines 13232 - 13311
+Lines 13312 - 13382
+Lines 13389 - 13442
+Lines 13490 - 13552
+Lines 13591 - 13648
+Lines 14081 - 14135
+  "paperQuestion" found 117 times
+  "paperQuestions" found 88 times
+  "renderPaper" found 20 times
+  "savePaper" found 13 times
+  "examEditor" found 27 times
+  "questionBank" found 5 times
+  "examList" found 14 times
+  "paperList" found 16 times
+  "examForm" found 1 times
