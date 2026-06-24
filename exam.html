@@ -185,6 +185,12 @@
         </div>
       </div>
 
+      <!-- 答题详情 / 排行榜 切换 -->
+      <div id="result-tabs" class="hidden flex bg-white rounded-2xl shadow-sm border border-slate-200 p-1 mb-5">
+        <button onclick="switchResultTab('detail')" id="tab-detail" class="flex-1 py-2.5 rounded-xl text-sm font-semibold transition bg-gradient-primary text-white">答题详情</button>
+        <button onclick="switchResultTab('ranking')" id="tab-ranking" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">排行榜</button>
+      </div>
+
       <!-- 答题详情区域 -->
       <div id="result-detail-section">
         <div class="flex items-center justify-between mb-4 px-1">
@@ -197,12 +203,30 @@
         <div id="result-detail-list" class="space-y-3"></div>
       </div>
 
+      <!-- 排行榜区域 -->
+      <div id="result-ranking-section" class="hidden">
+        <div class="flex items-center justify-center gap-2 mb-4">
+          <span class="h-px w-8 bg-amber-300"></span>
+          <span class="text-amber-500 text-base font-bold tracking-widest flex items-center gap-1"><i class="fa fa-trophy"></i>榜上有名</span>
+          <span class="h-px w-8 bg-amber-300"></span>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="grid grid-cols-12 gap-2 px-4 py-3 bg-slate-50 text-xs text-slate-500 font-medium">
+            <div class="col-span-2 text-center">排名</div>
+            <div class="col-span-5">姓名/部门</div>
+            <div class="col-span-2 text-center">得分</div>
+            <div class="col-span-3 text-center">得分率</div>
+          </div>
+          <div id="ranking-list" class="divide-y divide-slate-100"></div>
+        </div>
+      </div>
+
       <!-- 操作按钮 -->
       <div class="mt-6 flex gap-3">
         <button onclick="location.href='center.html'" class="flex-1 py-3 bg-gradient-primary text-white rounded-xl font-semibold text-sm hover:opacity-90 transition shadow-md shadow-primary/20">
           <i class="fa fa-home mr-1"></i>返回个人中心
         </button>
-        <button onclick="location.reload()" class="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-50 transition">
+        <button id="btn-retake" class="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-50 transition">
           <i class="fa fa-refresh mr-1"></i>重新考试
         </button>
       </div>
@@ -241,6 +265,7 @@
     // ========== 全局状态 ==========
     const params = new URLSearchParams(location.search);
     const examId = params.get('id');
+    const attemptId = params.get('attemptId');
     let examData = null;
     let questions = [];
     let userAnswers = {};
@@ -293,6 +318,12 @@
     async function loadExam(){
       const user=getUser();
       if(!user){showError('请先登录','请登录后参加考试');return;}
+
+      // 如果指定了 attemptId，直接展示历史考试记录
+      if(attemptId){
+        return loadAttemptDetail(attemptId);
+      }
+
       if(!examId){showError('参数错误','缺少考试ID');return;}
 
       try {
@@ -336,6 +367,53 @@
       }catch(e){
         console.error('[loadExam]',e);
         showError('网络错误','无法连接到服务器，请检查网络后重试');
+      }
+    }
+
+    // 加载历史考试记录并直接展示结果
+    async function loadAttemptDetail(attemptId){
+      try{
+        const res=await fetch('/api/exams/attempts/'+attemptId+'/detail');
+        const data=await res.json();
+        if(!data.success){
+          showError('加载考试记录失败',data.error||'');
+          return;
+        }
+        examData=data.exam;
+        questions=data.details.map(d=>({
+          id:d.questionId,
+          content:d.title,
+          type:d.type,
+          options:Object.entries(d.options||{}).map(([k,v])=>({label:k,text:v})),
+          answer:d.correctAnswer,
+          analysis:d.analysis,
+          score:d.score
+        }));
+        const fullScore=data.exam.fullScore;
+        const result={
+          score:data.attempt.score,
+          fullScore:fullScore,
+          percent:fullScore>0?Math.round(data.attempt.score/fullScore*100):0,
+          correctCount:data.attempt.correctCount,
+          totalCount:data.attempt.totalQuestions,
+          durationUsed:data.attempt.durationUsed,
+          passed:data.attempt.passed,
+          detail:data.details.map(d=>({
+            questionId:d.questionId,
+            type:d.type,
+            content:d.title,
+            options:Object.entries(d.options||{}).map(([k,v])=>({label:k,text:v})),
+            userAnswer:d.userAnswer,
+            correctAnswer:d.correctAnswer,
+            isCorrect:d.isCorrect,
+            analysis:d.analysis,
+            score:d.score
+          }))
+        };
+        showResult(result);
+      }catch(e){
+        console.error('[loadAttemptDetail]',e);
+        showError('网络错误','无法加载考试记录');
       }
     }
 
@@ -903,6 +981,90 @@
       // 如果没有详情数据
       if(!result.detail||result.detail.length===0){
         list.innerHTML='<div class="text-center py-12 text-slate-400"><i class="fa fa-inbox text-3xl mb-3 block opacity-50"></i><p>暂无答题详情</p></div>';
+      }
+
+      // 排行榜显示控制
+      const rankPolicy = viewSettings.viewRank || 'after_submit';
+      const showRank = rankPolicy !== 'never';
+      const tabs = document.getElementById('result-tabs');
+      if(showRank && (showDetail || rankPolicy==='after_submit' || rankPolicy==='after_grade')){
+        tabs.classList.remove('hidden');
+      }else{
+        tabs.classList.add('hidden');
+      }
+      // 默认显示答题详情
+      switchResultTab('detail', false);
+
+      // 重新考试按钮：从历史记录进入时跳转到考试页，正常交卷后刷新
+      const retakeBtn=document.getElementById('btn-retake');
+      if(retakeBtn){
+        retakeBtn.onclick=attemptId?()=>location.href='exam.html?id='+examData.id:()=>location.reload();
+      }
+    }
+
+    function switchResultTab(tab, shouldLoad=true){
+      const detailSec=document.getElementById('result-detail-section');
+      const rankingSec=document.getElementById('result-ranking-section');
+      const tabDetail=document.getElementById('tab-detail');
+      const tabRanking=document.getElementById('tab-ranking');
+      if(tab==='ranking'){
+        detailSec.classList.add('hidden');
+        rankingSec.classList.remove('hidden');
+        tabDetail.className='flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition';
+        tabRanking.className='flex-1 py-2.5 rounded-xl text-sm font-semibold transition bg-gradient-primary text-white';
+        if(shouldLoad) loadRanking();
+      }else{
+        detailSec.classList.remove('hidden');
+        rankingSec.classList.add('hidden');
+        tabDetail.className='flex-1 py-2.5 rounded-xl text-sm font-semibold transition bg-gradient-primary text-white';
+        tabRanking.className='flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition';
+      }
+    }
+
+    async function loadRanking(){
+      const listEl=document.getElementById('ranking-list');
+      if(!listEl || !examData || !examData.id) return;
+      listEl.innerHTML='<div class="py-8 text-center text-slate-400"><i class="fa fa-spinner fa-spin mr-2"></i>加载中...</div>';
+      try{
+        const userId=currentUser?.id;
+        const res=await fetch(`/api/exams/${examData.id}/ranking?userId=${userId||''}`);
+        const data=await res.json();
+        if(!data.success){
+          listEl.innerHTML='<div class="py-8 text-center text-slate-400">暂无排行数据</div>';
+          return;
+        }
+        const ranking=data.ranking||[];
+        if(ranking.length===0){
+          listEl.innerHTML='<div class="py-8 text-center text-slate-400">暂无排行数据</div>';
+          return;
+        }
+        const currentUserId=String(userId);
+        listEl.innerHTML=ranking.map(item=>{
+          const isMe=item.isCurrentUser || (currentUserId && String(item.userId)===currentUserId);
+          let rankHtml='';
+          if(item.rank===1) rankHtml='<i class="fa fa-trophy text-amber-400 text-lg"></i>';
+          else if(item.rank===2) rankHtml='<i class="fa fa-trophy text-slate-400 text-lg"></i>';
+          else if(item.rank===3) rankHtml='<i class="fa fa-trophy text-amber-700 text-lg"></i>';
+          else rankHtml=`<span class="text-slate-600 text-sm">${item.rank}</span>`;
+          const rowClass=isMe?'bg-indigo-50/60 border-l-4 border-indigo-500':'bg-white';
+          const avatarHtml=item.avatar?`<img src="${escapeHtml(item.avatar)}" class="w-8 h-8 rounded-full object-cover" alt="">`:`<div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">${escapeHtml((item.userName||'未').charAt(0))}</div>`;
+          return `
+          <div class="grid grid-cols-12 gap-2 px-4 py-3 items-center ${rowClass}">
+            <div class="col-span-2 text-center">${rankHtml}</div>
+            <div class="col-span-5 flex items-center gap-2 min-w-0">
+              ${avatarHtml}
+              <div class="min-w-0">
+                <div class="text-sm font-medium truncate ${isMe?'text-indigo-700':'text-slate-800'}">${isMe?'我的排名':escapeHtml(item.userName)}</div>
+                <div class="text-xs text-slate-400 truncate">${escapeHtml(item.department)}</div>
+              </div>
+            </div>
+            <div class="col-span-2 text-center text-sm font-semibold text-slate-700">${item.score}</div>
+            <div class="col-span-3 text-center text-sm text-slate-600">${item.scoreRate}%</div>
+          </div>`;
+        }).join('');
+      }catch(e){
+        listEl.innerHTML='<div class="py-8 text-center text-slate-400">加载失败</div>';
+        console.error(e);
       }
     }
 

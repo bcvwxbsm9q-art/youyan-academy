@@ -1727,6 +1727,53 @@ app.get('/api/exams/:id/results', (req, res) => {
   res.json({ success: true, results });
 });
 
+// GET /api/exams/:id/ranking - 获取考试排行榜
+app.get('/api/exams/:id/ranking', (req, res) => {
+  const id = parseInt(req.params.id);
+  const currentUserId = req.query.userId;
+  const data = readData();
+  const exam = (data.exams || []).find(e => e.id === id);
+  if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
+
+  const users = data.registered_users || [];
+  const fullScore = exam.totalScore || (exam.questions || []).reduce((s, q) => s + (q.score || 1), 0);
+  const attempts = (data.exam_attempts || []).filter(a => a.examId === id && a.status === 'completed');
+
+  // 每个用户取最高分参与排名
+  const userBest = {};
+  attempts.forEach(a => {
+    const uid = String(a.userId);
+    if (!userBest[uid] || (a.score || 0) > (userBest[uid].score || 0)) {
+      userBest[uid] = a;
+    }
+  });
+
+  const ranking = Object.values(userBest).map(a => {
+    const user = users.find(u => String(u.id) === String(a.userId));
+    const score = a.score || 0;
+    return {
+      userId: a.userId,
+      userName: user ? (user.realName || user.username || '未知用户') : '未知用户',
+      department: user ? (user.department || '-') : '-',
+      avatar: user ? (user.avatar || '') : '',
+      score,
+      scoreRate: fullScore > 0 ? Math.round(score / fullScore * 100) : 0,
+      durationUsed: a.durationUsed || 0,
+      completedAt: a.completedAt,
+      isCurrentUser: currentUserId ? String(a.userId) === String(currentUserId) : false
+    };
+  }).sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    if ((a.durationUsed || 0) !== (b.durationUsed || 0)) return (a.durationUsed || 0) - (b.durationUsed || 0);
+    return new Date(a.completedAt || 0) - new Date(b.completedAt || 0);
+  });
+
+  ranking.forEach((item, index) => item.rank = index + 1);
+  const myRank = currentUserId ? ranking.find(r => String(r.userId) === String(currentUserId)) : null;
+
+  res.json({ success: true, ranking, myRank, fullScore, total: ranking.length });
+});
+
 // GET /api/exams/:id/students - 获取考试的学员聚合数据
 app.get('/api/exams/:id/students', (req, res) => {
   const id = parseInt(req.params.id);

@@ -508,6 +508,17 @@
         "totalQuestions": 3,
         "completedAt": "2026-06-24T07:57:42.654Z",
         "attemptId": 1782287855038
+      },
+      {
+        "examId": 1782293247918,
+        "examTitle": "123",
+        "score": 80,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 2,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-24T09:27:43.467Z",
+        "attemptId": 1782293258926
       }
     ]
   },
@@ -1629,7 +1640,7 @@
       "examId": 1782281099486,
       "read": true,
       "createdAt": "2026-06-24T06:06:09.738Z",
-      "readAt": "2026-06-24T08:34:41.806Z"
+      "readAt": "2026-06-24T09:27:06.993Z"
     },
     {
       "id": 1782281169739,
@@ -1640,6 +1651,27 @@
       "examId": 1782281099486,
       "read": false,
       "createdAt": "2026-06-24T06:06:09.738Z"
+    },
+    {
+      "id": 1782293247928,
+      "userId": 1780909174403,
+      "title": "新考试安排",
+      "content": "您有一场新考试「123」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782293247918,
+      "read": true,
+      "createdAt": "2026-06-24T09:27:27.928Z",
+      "readAt": "2026-06-24T09:27:33.672Z"
+    },
+    {
+      "id": 1782293247929,
+      "userId": 1781087021554,
+      "title": "新考试安排",
+      "content": "您有一场新考试「123」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782293247918,
+      "read": false,
+      "createdAt": "2026-06-24T09:27:27.928Z"
     }
   ],
   "notification_reads": [
@@ -2381,6 +2413,65 @@
       "viewRank": "after_submit",
       "createdAt": "2026-06-24T06:04:59.486Z",
       "updatedAt": "2026-06-24T06:06:09.728Z"
+    },
+    {
+      "id": 1782293247918,
+      "title": "123",
+      "description": "323",
+      "duration": 60,
+      "passingScore": 60,
+      "totalScore": 100,
+      "bankId": null,
+      "shuffleQuestions": false,
+      "shuffleOptions": false,
+      "showAnswer": false,
+      "status": "published",
+      "questions": [
+        {
+          "questionId": 1781235958847,
+          "score": 30,
+          "partialScore": 0,
+          "order": 0,
+          "content": "次世代模型是指采用高精度建模、法线贴图、PBR材质等技术制作的，具有（      ）的3D模型。",
+          "type": "single"
+        },
+        {
+          "questionId": 1781235958849,
+          "score": 30,
+          "partialScore": 0,
+          "order": 1,
+          "content": "PBR材质制作的常用制作软件是（      ）？",
+          "type": "single"
+        },
+        {
+          "questionId": 1781235958851,
+          "score": 40,
+          "partialScore": 20,
+          "order": 2,
+          "content": "在课堂中提到低模拓扑的关键要点有哪些？（   ）",
+          "type": "multiple"
+        }
+      ],
+      "startTime": null,
+      "endTime": null,
+      "maxAttempts": 0,
+      "paperId": "paper_1782182121955",
+      "paperName": "2026企业文化与制度",
+      "allowedUsers": null,
+      "accessType": "open",
+      "attemptsPolicy": "unlimited",
+      "attemptsCount": null,
+      "recordScore": "highest",
+      "screenSwitchPolicy": "unlimited",
+      "screenSwitchCount": null,
+      "showData": true,
+      "answerDetail": "after_grade",
+      "viewQuestions": "all",
+      "showCorrect": "show",
+      "showAnalysis": "show",
+      "viewRank": "after_submit",
+      "createdAt": "2026-06-24T09:27:27.918Z",
+      "updatedAt": "2026-06-24T09:27:27.918Z"
     }
   ],
   "exam_attempts": [
@@ -2607,6 +2698,46 @@
       "correctCount": 0,
       "totalQuestions": 3,
       "durationUsed": 68
+    },
+    {
+      "id": 1782292718744,
+      "examId": 1782281099486,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-06-24T09:18:38.744Z",
+      "answers": {
+        "1782111523712": "B",
+        "1782111523714": "C",
+        "1782111523716": "A"
+      },
+      "score": 20,
+      "passed": false,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-24T09:18:43.347Z",
+      "correctCount": 0,
+      "totalQuestions": 3,
+      "durationUsed": 5
+    },
+    {
+      "id": 1782293258926,
+      "examId": 1782293247918,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-06-24T09:27:38.926Z",
+      "answers": {
+        "1781235958847": "A",
+        "1781235958849": "B",
+        "1781235958851": "B"
+      },
+      "score": 80,
+      "passed": true,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-24T09:27:43.467Z",
+      "correctCount": 2,
+      "totalQuestions": 3,
+      "durationUsed": 4
     }
   ],
   "survey_responses": [

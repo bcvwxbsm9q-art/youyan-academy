@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -871,14 +871,50 @@
             html += '</div>';
             html += '</div>';
 
+            html += '<div id="exam-action-buttons">';
             html += '<button type="button" onclick="event.stopPropagation();startExam(' + (exam.id || '') + ')" style="width:100%;padding:14px 20px;border:none;border-radius:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;font-weight:600;font-size:15px;cursor:pointer;box-shadow:0 6px 18px rgba(102,126,234,0.32);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.transform=\'translateY(-1px)\';this.style.boxShadow=\'0 8px 22px rgba(102,126,234,0.4)\'" onmouseout="this.style.transform=\'translateY(0)\';this.style.boxShadow=\'0 6px 18px rgba(102,126,234,0.32)\'">';
             html += '<i class="fa fa-play-circle" style="font-size:18px;"></i>开始考试';
             html += '</button>';
+            html += '</div>';
 
             html += '<p style="text-align:center;margin-top:16px;margin-bottom:0;font-size:12px;color:#94a3b8;"><i class="fa fa-info-circle" style="margin-right:5px;color:#cbd5e1;"></i>点击按钮后将开始计时，中途请勿刷新或关闭页面</p>';
             html += '</div>';
 
             contentEl.innerHTML = html;
+
+            // 异步检查是否已有考试记录，有则追加“答题详情”按钮
+            loadExamAttemptButton(exam.id);
+        }
+
+        function getUser() {
+            const s = localStorage.getItem('user') || sessionStorage.getItem('user');
+            try { return s ? JSON.parse(s) : null; } catch(e) { return null; }
+        }
+
+        async function loadExamAttemptButton(examId) {
+            const user = getUser();
+            if (!user || !examId) return;
+            try {
+                const res = await fetch('/api/data');
+                const data = await res.json();
+                const attempts = (data.exam_attempts || []).filter(a =>
+                    String(a.userId) === String(user.id) &&
+                    a.examId === examId &&
+                    a.status === 'completed'
+                ).sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+                if (attempts.length === 0) return;
+                const latestAttempt = attempts[0];
+                const container = document.getElementById('exam-action-buttons');
+                if (!container) return;
+                const detailBtn = document.createElement('button');
+                detailBtn.type = 'button';
+                detailBtn.onclick = function() { location.href = 'exam.html?attemptId=' + latestAttempt.id; };
+                detailBtn.style.cssText = 'width:100%;padding:14px 20px;border:1.5px solid #667eea;border-radius:12px;background:#fff;color:#667eea;font-weight:600;font-size:15px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;';
+                detailBtn.innerHTML = '<i class="fa fa-file-text-o" style="font-size:18px;"></i>答题详情';
+                container.insertBefore(detailBtn, container.firstChild);
+            } catch (e) {
+                console.error('[loadExamAttemptButton]', e);
+            }
         }
 
         function startExam(examId) {

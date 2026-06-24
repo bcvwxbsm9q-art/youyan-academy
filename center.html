@@ -625,7 +625,7 @@
                                             <i class="fa fa-certificate text-primary"></i>
                                             获得证书
                                         </h3>
-                                        <p class="text-sm text-gray-500 mt-1">完成课程考核后自动颁发</p>
+                                        <p class="text-sm text-gray-500 mt-1">完成考核后自动颁发</p>
                                     </div>
                                     <div class="text-right">
                                         <div class="text-2xl font-bold text-primary" id="certificate-count">0</div>
@@ -2174,11 +2174,14 @@ const BADGES = [
         }
 
         // 加载我的考试
-        async function loadMyExams() {
+        async function loadMyExams(force = false) {
             const userId = currentUser?.id;
             const listEl = document.getElementById('my-exams-list');
             const countEl = document.getElementById('my-exam-count');
             if (!userId || !listEl) return;
+
+            // 已加载过且非强制刷新则直接复用，避免切换 tab 时抖动
+            if (!force && window.myExamItems && listEl.children.length > 0) return;
 
             const escapeHtml = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -2250,9 +2253,14 @@ const BADGES = [
                                     <span class="px-2.5 py-1 rounded-full text-xs font-medium ${statusClass}">${statusText}</span>
                                 </div>
                             </div>
-                            <button onclick="location.href='exam.html?id=${item.exam.id}'" class="px-4 py-2 rounded-lg bg-gradient-primary text-white text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-1 flex-shrink-0">
-                                <i class="fa fa-redo"></i>重新考试
-                            </button>
+                            <div class="flex flex-col gap-2 flex-shrink-0">
+                                <button onclick="location.href='exam.html?attemptId=${item.scoreAttempt.id}'" class="px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 bg-indigo-50 text-sm font-medium hover:bg-indigo-100 transition flex items-center justify-center gap-1">
+                                    <i class="fa fa-file-text-o"></i>答题详情
+                                </button>
+                                <button onclick="location.href='exam.html?id=${item.exam.id}'" class="px-4 py-2 rounded-lg bg-gradient-primary text-white text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-1">
+                                    <i class="fa fa-redo"></i>重新考试
+                                </button>
+                            </div>
                         </div>
                     </div>`;
                 }).join('');
