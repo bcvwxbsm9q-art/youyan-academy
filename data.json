@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1782044069160-440027461.jpg",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/6/24 14:05:56",
+      "lastLogin": "2026/6/25 11:28:29",
       "status": "active",
       "position": "人事经理"
     },
@@ -26,7 +26,7 @@
       "role": "user",
       "avatar": "",
       "createdAt": "2026/6/10 18:23:41",
-      "lastLogin": "2026/6/23 11:05:38",
+      "lastLogin": "2026/6/25 11:00:58",
       "status": "active"
     }
   ],
@@ -1520,6 +1520,28 @@
         "totalQuestions": 3,
         "completedAt": "2026-06-23T03:27:21.203Z",
         "attemptId": 1782185241140
+      },
+      {
+        "examId": 1782293247918,
+        "examTitle": "123",
+        "score": 20,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 0,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-25T03:01:05.239Z",
+        "attemptId": 1782356461676
+      },
+      {
+        "examId": 1782281099486,
+        "examTitle": "粒子系统副本",
+        "score": 20,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 0,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-25T03:01:43.675Z",
+        "attemptId": 1782356499320
       }
     ]
   },
@@ -1619,7 +1641,7 @@
       "examId": 1782221347409,
       "read": true,
       "createdAt": "2026-06-23T13:29:07.419Z",
-      "readAt": "2026-06-24T06:14:50.887Z"
+      "readAt": "2026-06-25T03:33:28.355Z"
     },
     {
       "id": 1782221347420,
@@ -1628,8 +1650,9 @@
       "content": "您有一场新考试「粒子系统」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
       "type": "exam",
       "examId": 1782221347409,
-      "read": false,
-      "createdAt": "2026-06-23T13:29:07.419Z"
+      "read": true,
+      "createdAt": "2026-06-23T13:29:07.419Z",
+      "readAt": "2026-06-25T03:01:29.160Z"
     },
     {
       "id": 1782281169738,
@@ -1640,7 +1663,7 @@
       "examId": 1782281099486,
       "read": true,
       "createdAt": "2026-06-24T06:06:09.738Z",
-      "readAt": "2026-06-24T09:27:06.993Z"
+      "readAt": "2026-06-25T03:20:04.401Z"
     },
     {
       "id": 1782281169739,
@@ -1649,8 +1672,9 @@
       "content": "您有一场新考试「粒子系统副本」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
       "type": "exam",
       "examId": 1782281099486,
-      "read": false,
-      "createdAt": "2026-06-24T06:06:09.738Z"
+      "read": true,
+      "createdAt": "2026-06-24T06:06:09.738Z",
+      "readAt": "2026-06-25T03:01:37.921Z"
     },
     {
       "id": 1782293247928,
@@ -1661,7 +1685,7 @@
       "examId": 1782293247918,
       "read": true,
       "createdAt": "2026-06-24T09:27:27.928Z",
-      "readAt": "2026-06-24T09:27:33.672Z"
+      "readAt": "2026-06-25T03:37:04.885Z"
     },
     {
       "id": 1782293247929,
@@ -1670,8 +1694,9 @@
       "content": "您有一场新考试「123」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
       "type": "exam",
       "examId": 1782293247918,
-      "read": false,
-      "createdAt": "2026-06-24T09:27:27.928Z"
+      "read": true,
+      "createdAt": "2026-06-24T09:27:27.928Z",
+      "readAt": "2026-06-25T03:01:00.416Z"
     }
   ],
   "notification_reads": [
@@ -2413,65 +2438,6 @@
       "viewRank": "after_submit",
       "createdAt": "2026-06-24T06:04:59.486Z",
       "updatedAt": "2026-06-24T06:06:09.728Z"
-    },
-    {
-      "id": 1782293247918,
-      "title": "123",
-      "description": "323",
-      "duration": 60,
-      "passingScore": 60,
-      "totalScore": 100,
-      "bankId": null,
-      "shuffleQuestions": false,
-      "shuffleOptions": false,
-      "showAnswer": false,
-      "status": "published",
-      "questions": [
-        {
-          "questionId": 1781235958847,
-          "score": 30,
-          "partialScore": 0,
-          "order": 0,
-          "content": "次世代模型是指采用高精度建模、法线贴图、PBR材质等技术制作的，具有（      ）的3D模型。",
-          "type": "single"
-        },
-        {
-          "questionId": 1781235958849,
-          "score": 30,
-          "partialScore": 0,
-          "order": 1,
-          "content": "PBR材质制作的常用制作软件是（      ）？",
-          "type": "single"
-        },
-        {
-          "questionId": 1781235958851,
-          "score": 40,
-          "partialScore": 20,
-          "order": 2,
-          "content": "在课堂中提到低模拓扑的关键要点有哪些？（   ）",
-          "type": "multiple"
-        }
-      ],
-      "startTime": null,
-      "endTime": null,
-      "maxAttempts": 0,
-      "paperId": "paper_1782182121955",
-      "paperName": "2026企业文化与制度",
-      "allowedUsers": null,
-      "accessType": "open",
-      "attemptsPolicy": "unlimited",
-      "attemptsCount": null,
-      "recordScore": "highest",
-      "screenSwitchPolicy": "unlimited",
-      "screenSwitchCount": null,
-      "showData": true,
-      "answerDetail": "after_grade",
-      "viewQuestions": "all",
-      "showCorrect": "show",
-      "showAnalysis": "show",
-      "viewRank": "after_submit",
-      "createdAt": "2026-06-24T09:27:27.918Z",
-      "updatedAt": "2026-06-24T09:27:27.918Z"
     }
   ],
   "exam_attempts": [
@@ -2720,24 +2686,92 @@
       "durationUsed": 5
     },
     {
-      "id": 1782293258926,
-      "examId": 1782293247918,
+      "id": 1782353515771,
+      "examId": 1782281099486,
       "userId": "1780909174403",
+      "status": "taking",
+      "startedAt": "2026-06-25T02:11:55.771Z",
+      "answers": {},
+      "score": null,
+      "passed": null,
+      "optionMappings": {},
+      "shuffledQuestionIds": null
+    },
+    {
+      "id": 1782356490566,
+      "examId": 1782221347409,
+      "userId": "1781087021554",
+      "status": "taking",
+      "startedAt": "2026-06-25T03:01:30.566Z",
+      "answers": {},
+      "score": null,
+      "passed": null,
+      "optionMappings": {},
+      "shuffledQuestionIds": null
+    },
+    {
+      "id": 1782356499320,
+      "examId": 1782281099486,
+      "userId": "1781087021554",
       "status": "completed",
-      "startedAt": "2026-06-24T09:27:38.926Z",
+      "startedAt": "2026-06-25T03:01:39.320Z",
       "answers": {
-        "1781235958847": "A",
-        "1781235958849": "B",
-        "1781235958851": "B"
+        "1782111523712": "B",
+        "1782111523714": "B",
+        "1782111523716": "B"
       },
-      "score": 80,
-      "passed": true,
+      "score": 20,
+      "passed": false,
       "optionMappings": {},
       "shuffledQuestionIds": null,
-      "completedAt": "2026-06-24T09:27:43.467Z",
-      "correctCount": 2,
+      "completedAt": "2026-06-25T03:01:43.675Z",
+      "correctCount": 0,
       "totalQuestions": 3,
       "durationUsed": 4
+    },
+    {
+      "id": 1782357666808,
+      "examId": 1782221347409,
+      "userId": "1780909174403",
+      "status": "taking",
+      "startedAt": "2026-06-25T03:21:06.808Z",
+      "answers": {},
+      "score": null,
+      "passed": null,
+      "optionMappings": {},
+      "shuffledQuestionIds": null
+    },
+    {
+      "id": 1782357752811,
+      "examId": 1782221347409,
+      "userId": "1780909174403",
+      "status": "taking",
+      "startedAt": "2026-06-25T03:22:32.811Z",
+      "answers": {},
+      "score": null,
+      "passed": null,
+      "optionMappings": {},
+      "shuffledQuestionIds": null
+    },
+    {
+      "id": 1782358416919,
+      "examId": 1782221347409,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-06-25T03:33:36.919Z",
+      "answers": {
+        "1782111523712": "",
+        "1782111523714": "A",
+        "1782111523716": "A"
+      },
+      "score": 50,
+      "passed": false,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-25T03:51:57.419Z",
+      "correctCount": 1,
+      "totalQuestions": 3,
+      "durationUsed": 1100
     }
   ],
   "survey_responses": [
@@ -4199,7 +4233,7 @@
       "noticeId": 1782183780370,
       "userId": 1780909174403,
       "username": "15302206488",
-      "visitedAt": "2026-06-24T08:25:46.110Z"
+      "visitedAt": "2026-06-25T03:02:58.503Z"
     }
   ]
 }

@@ -168,6 +168,24 @@ function writeData(data) {
   }
 }
 
+// 判断一次考试尝试是否应被统计/展示：
+// - 已完成（completed）始终有效
+// - 未完成的尝试，若从进入起算的持续时长 ≤ 10 秒，视为无效（网络卡顿、误触、异常退出），不计入次数、不展示
+function isValidAttempt(a, now = Date.now()) {
+  if (!a) return false;
+  if (a.status === 'completed') return true;
+  // 未完成的尝试才需要判断时长
+  let duration = 0;
+  if (typeof a.durationUsed === 'number' && a.durationUsed > 0) {
+    duration = a.durationUsed;
+  } else if (a.completedAt && a.startedAt) {
+    duration = Math.floor((new Date(a.completedAt).getTime() - new Date(a.startedAt).getTime()) / 1000);
+  } else if (a.startedAt) {
+    duration = Math.floor((now - new Date(a.startedAt).getTime()) / 1000);
+  }
+  return duration > 10;
+}
+
 // 初始化管理员账号（服务器启动时调用）
 function initDefaultAdmin() {
   const data = readData();
@@ -1497,7 +1515,7 @@ app.get('/api/exams', (req, res) => {
   const attempts = data.exam_attempts || [];
   // 关联题目数量及参考/通过/不及格等统计
   const enriched = exams.map(exam => {
-    const examAttempts = attempts.filter(a => a.examId === exam.id);
+    const examAttempts = (attempts.filter(a => a.examId === exam.id) || []).filter(isValidAttempt);
     const completed = examAttempts.filter(a => a.status === 'completed');
     const passed = completed.filter(a => a.passed).length;
     const failed = completed.length - passed;
@@ -1717,7 +1735,7 @@ app.put('/api/exams/:id/questions', (req, res) => {
 app.get('/api/exams/:id/results', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
-  const attempts = (data.exam_attempts || []).filter(a => a.examId === id);
+  const attempts = ((data.exam_attempts || []).filter(a => a.examId === id)).filter(isValidAttempt);
   // 关联用户信息（使用 registered_users 主表）
   const users = data.registered_users || [];
   const results = attempts.map(a => {
@@ -1782,7 +1800,7 @@ app.get('/api/exams/:id/students', (req, res) => {
   if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
 
   const users = data.registered_users || [];
-  const attempts = (data.exam_attempts || []).filter(a => a.examId === id);
+  const attempts = ((data.exam_attempts || []).filter(a => a.examId === id)).filter(isValidAttempt);
   const fullScore = exam.totalScore || (exam.questions || []).reduce((s, q) => s + (q.score || 1), 0);
   const recordScore = exam.recordScore || 'highest';
 
@@ -1805,13 +1823,8 @@ app.get('/api/exams/:id/students', (req, res) => {
     let statusText = '未考';
     let selectedAttempt = null;
 
-    if (takingAttempts.length > 0) {
-      status = 'taking';
-      statusText = '进行中';
-    } else if (abandonedAttempts.length > 0 && completedAttempts.length === 0) {
-      status = 'absent';
-      statusText = '缺考';
-    } else if (completedAttempts.length > 0) {
+    // 优先以已完成记录为准，避免最新一次“进行中”把历史成绩覆盖成“-”
+    if (completedAttempts.length > 0) {
       selectedAttempt = recordScore === 'latest'
         ? completedAttempts[0]
         : completedAttempts.slice().sort((a, b) => (b.score || 0) - (a.score || 0))[0];
@@ -1822,6 +1835,12 @@ app.get('/api/exams/:id/students', (req, res) => {
         status = 'failed';
         statusText = '不及格';
       }
+    } else if (takingAttempts.length > 0) {
+      status = 'taking';
+      statusText = '进行中';
+    } else if (abandonedAttempts.length > 0) {
+      status = 'absent';
+      statusText = '缺考';
     }
 
     const score = selectedAttempt ? (selectedAttempt.score || 0) : 0;
@@ -1860,8 +1879,9 @@ app.get('/api/exams/:id/students/:userId/records', (req, res) => {
   if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
   const user = (data.registered_users || []).find(u => String(u.id) === String(userId));
 
-  const attempts = (data.exam_attempts || [])
-    .filter(a => a.examId === id && String(a.userId) === String(userId))
+  const attempts = ((data.exam_attempts || [])
+    .filter(a => a.examId === id && String(a.userId) === String(userId)))
+    .filter(isValidAttempt)
     .sort((a, b) => new Date(b.completedAt || b.startedAt || 0) - new Date(a.completedAt || a.startedAt || 0));
 
   const fullScore = exam.totalScore || (exam.questions || []).reduce((s, q) => s + (q.score || 1), 0);
@@ -2028,12 +2048,15 @@ app.get('/api/exams/:id/question-stats', (req, res) => {
   if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
 
   const allQuestions = data.questions || [];
+  const banks = data.question_banks || [];
   const examQuestions = (exam.questions || []).map((eq, idx) => {
     const q = allQuestions.find(qq => qq.id === eq.questionId);
+    const bank = q && q.bankId ? banks.find(b => String(b.id) === String(q.bankId)) : null;
     return {
       questionId: eq.questionId,
       order: eq.order !== undefined ? eq.order + 1 : idx + 1,
       score: eq.score || 1,
+      bankName: bank ? bank.name : (q && (q.bankName || q.bank)) || '-',
       ...(q || {})
     };
   });
@@ -2145,9 +2168,10 @@ const takeExamHandler = (req, res) => {
     }
   }
 
-  // 考试次数限制
-  const attempts = data.exam_attempts || [];
-  const userAttempts = attempts.filter(a => String(a.userId) === String(userId) && a.examId === id);
+  // 考试次数限制（过滤掉 10 秒内的无效尝试）
+  const allAttempts = data.exam_attempts || [];
+  const validAttempts = allAttempts.filter(isValidAttempt);
+  const userAttempts = validAttempts.filter(a => String(a.userId) === String(userId) && a.examId === id);
   const completedAttempts = userAttempts.filter(a => a.status === 'completed');
   if (exam.attemptsPolicy === 'until_pass') {
     if (completedAttempts.some(a => a.passed)) {
@@ -2198,9 +2222,9 @@ const takeExamHandler = (req, res) => {
 
   // 复用或创建 prepared attempt，记录选项映射与试题顺序
   const oneHourAgo = Date.now() - 3600000;
-  let attempt = attempts.find(a => String(a.userId) === String(userId) && a.examId === id && a.status === 'prepared');
+  let attempt = allAttempts.find(a => String(a.userId) === String(userId) && a.examId === id && a.status === 'prepared');
   // 清理该用户该考试过旧的 prepared 记录
-  data.exam_attempts = attempts.filter(a => !(String(a.userId) === String(userId) && a.examId === id && a.status === 'prepared' && new Date(a.startedAt || 0).getTime() < oneHourAgo && a !== attempt));
+  data.exam_attempts = allAttempts.filter(a => !(String(a.userId) === String(userId) && a.examId === id && a.status === 'prepared' && new Date(a.startedAt || 0).getTime() < oneHourAgo && a !== attempt));
   if (!attempt) {
     attempt = {
       id: Date.now(),
@@ -2449,7 +2473,7 @@ app.post('/api/exams/:id/submit', (req, res) => {
   });
 });
 
-// POST /api/exams/:id/abandon - 放弃考试
+// POST /api/exams/:id/abandon - 放弃/退出考试
 app.post('/api/exams/:id/abandon', (req, res) => {
   const id = parseInt(req.params.id);
   const { attemptId } = req.body;
@@ -2457,8 +2481,17 @@ app.post('/api/exams/:id/abandon', (req, res) => {
   const attempts = data.exam_attempts || [];
   const index = attempts.findIndex(a => a.id === attemptId);
   if (index !== -1) {
-    attempts[index].status = 'abandoned';
-    attempts[index].completedAt = new Date().toISOString();
+    const attempt = attempts[index];
+    const startedAt = attempt.startedAt ? new Date(attempt.startedAt).getTime() : Date.now();
+    const durationUsed = Math.floor((Date.now() - startedAt) / 1000);
+    // 10 秒内退出视为误触/异常，直接删除，不计入次数、不记录
+    if (durationUsed <= 10) {
+      attempts.splice(index, 1);
+    } else {
+      attempt.status = 'abandoned';
+      attempt.completedAt = new Date().toISOString();
+      attempt.durationUsed = durationUsed;
+    }
     writeData(data);
   }
   res.json({ success: true });

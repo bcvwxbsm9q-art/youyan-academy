@@ -12,6 +12,8 @@
     }
   </script>
   <style>
+    /* 固定预留滚动条宽度，避免切换短内容时页面左右抖动 */
+    html { overflow-y: scroll; }
     body { opacity: 0; animation: pageLoad .4s ease forwards; }
     @keyframes pageLoad { to { opacity: 1; } }
     @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
@@ -269,6 +271,7 @@
     let examData = null;
     let questions = [];
     let userAnswers = {};
+    let currentAttemptId = null;
     let currentQ = 0;
     let flaggedSet = new Set();
     let timerSeconds = 0;
@@ -304,9 +307,13 @@
       document.getElementById('confirm-msg').textContent=msg;
       const iconWrap=document.getElementById('confirm-icon');
       const cls=iconClass||'bg-slate-50';
-      iconWrap.className='w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center '+cls;
-      const iClasses=cls.split(' ').filter(c=>c.startsWith('fa-')||c.startsWith('text-')).join(' ');
-      iconWrap.querySelector('i').className='text-2xl '+(iClasses||'fa-question-circle text-slate-400');
+      const parts=cls.split(/\s+/).filter(Boolean);
+      // 背景色等样式给外圈，图标类只给 <i>，避免重复渲染导致乱码
+      const wrapClasses=parts.filter(c=>c.startsWith('bg-')||c.startsWith('border')||c.startsWith('shadow')).join(' ')||'bg-slate-50';
+      const iconClasses=parts.filter(c=>c.startsWith('fa-')).join(' ')||'fa-question-circle';
+      const textClasses=parts.filter(c=>c.startsWith('text-')).join(' ')||'text-slate-400';
+      iconWrap.className='w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center '+wrapClasses;
+      iconWrap.querySelector('i').className='fa text-2xl '+iconClasses+' '+textClasses;
       document.getElementById('confirm-ok').textContent=okText||'确定';
       document.getElementById('confirm-cancel').textContent=cancelText||'取消';
       confirmCallback=callback;
@@ -337,6 +344,7 @@
 
         examData=result.exam;
         questions=result.questions||[];
+        currentAttemptId=result.attemptId||null;
 
         if(questions.length===0){
           showError('暂无题目','该试卷还没有添加试题');
@@ -380,6 +388,16 @@
           return;
         }
         examData=data.exam;
+        // 统一字段名：attempt/detail 接口返回 title/passingScore，take 接口返回 name/passScore
+        examData.name=examData.name||examData.title||'考试详情';
+        examData.totalScore=examData.totalScore||examData.fullScore||0;
+        if(!examData.passScore){
+          if(examData.totalScore>0&&examData.passingScore){
+            examData.passScore=Math.round(examData.passingScore/examData.totalScore*100);
+          }else{
+            examData.passScore=examData.passingScore||60;
+          }
+        }
         questions=data.details.map(d=>({
           id:d.questionId,
           content:d.title,
@@ -389,7 +407,7 @@
           analysis:d.analysis,
           score:d.score
         }));
-        const fullScore=data.exam.fullScore;
+        const fullScore=examData.fullScore||examData.totalScore||data.exam.fullScore;
         const result={
           score:data.attempt.score,
           fullScore:fullScore,
@@ -546,6 +564,7 @@
         item.querySelector('.opt-radio')?.classList.toggle('bg-purple-600',i===optIdx);
       });
       markAnswered(qId);
+      activateQuestion(qId); // 点击选项也让该题高亮为当前题
       renderAnswerSheet();
     }
 
@@ -564,6 +583,7 @@
         el.querySelector('.opt-checkbox i').style.opacity='1';
       }
       markAnswered(qId);
+      activateQuestion(qId); // 点击选项也让该题高亮为当前题
       renderAnswerSheet();
     }
 
@@ -576,6 +596,7 @@
         item.classList.toggle('selected',isSel);
       });
       markAnswered(qId);
+      activateQuestion(qId); // 点击选项也让该题高亮为当前题
       renderAnswerSheet();
     }
 
@@ -717,17 +738,40 @@
       }
     }
 
-    // ========== 退出确认 ==========
+    // ========== 退出/放弃考试 ==========
+    async function abandonExam(){
+      if(!examId||!currentAttemptId) return;
+      try{
+        await fetch('/api/exams/'+examId+'/abandon',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({attemptId:currentAttemptId})
+        });
+      }catch(e){ console.error('[abandonExam]',e); }
+    }
+
     function confirmExit(){
-      const answered=questions.filter(q=>isAnswered(userAnswers[q.id])).length;
-      showConfirm(
-        '确认退出？',
-        `当前已完成 ${answered}/${questions.length} 题，退出后进度不会保存。`,
-        'bg-amber-50 fa-exclamation-triangle text-amber-500',
-        '仍要退出',
-        '继续答题',
-        ()=>{clearInterval(timerHandle);history.back();}
-      );
+      // 结果页/错误页/加载页直接返回，不弹确认
+      if(!document.getElementById('state-exam')?.classList.contains('hidden')){
+        // 当前在答题页：弹出确认
+        const answered=questions.filter(q=>isAnswered(userAnswers[q.id])).length;
+        showConfirm(
+          '确认退出？',
+          `当前已完成 ${answered}/${questions.length} 题，退出后进度不会保存。`,
+          'bg-amber-50 fa-exclamation-triangle text-amber-500',
+          '仍要退出',
+          '继续答题',
+          async ()=>{
+            clearInterval(timerHandle);
+            await abandonExam(); // 未交卷退出时同步放弃/清理尝试记录
+            history.back();
+          }
+        );
+        return;
+      }
+      // 非答题页直接返回
+      clearInterval(timerHandle);
+      history.back();
     }
 
     // ========== 交卷 ==========
@@ -742,7 +786,7 @@
       showConfirm(
         '确认交卷',
         msg,
-        'bg-blue-50 fa-question-circle text-blue-500',
+        'bg-blue-50 fa-paper-plane text-blue-500',
         '确认交卷',
         '再检查一下',
         doSubmit
@@ -801,6 +845,12 @@
       showState('result');
       document.getElementById('timer-area').classList.add('hidden');
       document.getElementById('progress-bar-wrap').classList.add('hidden');
+
+      // 更新头部标题（历史记录进入时不会走 renderExam）
+      const headerTitle=document.getElementById('header-title');
+      if(headerTitle&&examData) headerTitle.textContent=examData.name||'考试结果';
+      const headerSub=document.getElementById('header-sub');
+      if(headerSub){ headerSub.classList.add('hidden'); }
 
       const passed=result.passed;
       const headerBg=document.getElementById('result-header-bg');
@@ -935,7 +985,7 @@
               return `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${optCls}">
                 ${isCorrectAns?'<i class="fa fa-check text-[10px]"></i>':''}
                 ${isUserAns&&!d.isCorrect?'<i class="fa fa-close text-[10px]"></i>':''}
-                ${ch}. ${escapeHtml(opt)}
+                ${ch}. ${escapeHtml(getOptionText(opt))}
               </span>`}).join('')}</div></div>`;
         }
 
@@ -950,7 +1000,7 @@
                 <div class="flex flex-wrap items-center gap-2 mb-1.5">
                   <span class="type-badge ${d.type}"><i class="fa ${typeIcon[d.type]||'fa-question'}"></i>${typeMap[d.type]||'未知'}</span>
                   <span class="text-xs text-slate-400 font-medium">第 ${qNum} 题</span>
-                  <span class="text-xs font-bold ${d.isCorrect?'text-emerald-500':'text-red-500'}">+${d.isCorrect?d.score:0}/${d.fullScore}分</span>
+                  <span class="text-xs font-bold ${d.isCorrect?'text-emerald-500':'text-red-500'}">+${d.isCorrect?d.score:0}/${d.score||1}分</span>
                 </div>
                 <p class="text-sm text-slate-700 leading-relaxed font-medium">${escapeHtml(d.content)}</p>
               </div>
@@ -1002,6 +1052,8 @@
       }
     }
 
+    function getOptionText(opt){ return opt && typeof opt==='object' ? (opt.text||opt.label||opt.value||'') : (opt||''); }
+
     function switchResultTab(tab, shouldLoad=true){
       const detailSec=document.getElementById('result-detail-section');
       const rankingSec=document.getElementById('result-ranking-section');
@@ -1026,7 +1078,8 @@
       if(!listEl || !examData || !examData.id) return;
       listEl.innerHTML='<div class="py-8 text-center text-slate-400"><i class="fa fa-spinner fa-spin mr-2"></i>加载中...</div>';
       try{
-        const userId=currentUser?.id;
+        const user=getUser();
+        const userId=user?.id;
         const res=await fetch(`/api/exams/${examData.id}/ranking?userId=${userId||''}`);
         const data=await res.json();
         if(!data.success){
@@ -1070,6 +1123,17 @@
 
     // ========== 启动 ==========
     window.onload=function(){loadExam();};
+    window.addEventListener('beforeunload',function(e){
+      // 在答题状态下关闭/刷新页面时，标记为放弃；10 秒内则自动删除
+      if(!examId||!currentAttemptId) return;
+      if(document.getElementById('state-exam')?.classList.contains('hidden')) return;
+      const payload=JSON.stringify({attemptId:currentAttemptId});
+      if(navigator.sendBeacon){
+        navigator.sendBeacon('/api/exams/'+examId+'/abandon',new Blob([payload],{type:'application/json'}));
+      }else{
+        fetch('/api/exams/'+examId+'/abandon',{method:'POST',headers:{'Content-Type':'application/json'},body:payload,keepalive:true});
+      }
+    });
   </script>
 </body>
 </html>
