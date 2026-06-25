@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -108,6 +108,7 @@
     .rpt-trend-btn:hover { background: #f0f1ff; color: #667eea; }
   </style>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
 
@@ -5240,7 +5241,7 @@
               <i class="fas fa-poll text-4xl mb-4 block text-slate-300"></i>
               <p class="text-lg font-medium text-slate-600 mb-2">未关联满意度调研</p>
               <p class="text-sm mb-4">请先为该培训配置关联的满意度调研</p>
-              <button onclick="openTrainingServiceModal(${trainingId})" class="px-5 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition text-sm font-medium">配置调研</button>
+              <button onclick="editTraining(${trainingId})" class="px-5 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition text-sm font-medium">去配置调研</button>
             </div>`;
           return;
         }
@@ -5372,7 +5373,7 @@
               <i class="fas fa-file-alt text-4xl mb-4 block text-slate-300"></i>
               <p class="text-lg font-medium text-slate-600 mb-2">未关联考试</p>
               <p class="text-sm mb-4">请先为该培训配置关联的考试</p>
-              <button onclick="openTrainingServiceModal(${trainingId})" class="px-5 py-2 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition text-sm font-medium">配置考试</button>
+              <button onclick="editTraining(${trainingId})" class="px-5 py-2 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition text-sm font-medium">去配置考试</button>
             </div>`;
           return;
         }
@@ -5795,7 +5796,7 @@
                 <button onclick="openTrainingImageUpload(${e.id})" class="p-2 text-pink-500 hover:bg-pink-50 rounded-lg transition cursor-pointer" title="上传图片"><i class="fas fa-image"></i></button>
                 <button onclick="openTrainingAnalytics(${e.id})" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="数据分析"><i class="fas fa-chart-pie"></i></button>
                 <button onclick="openAssignStudentsModal(${e.id})" class="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition" title="指派学员"><i class="fas fa-user-plus"></i></button>
-                <button onclick="openTrainingServiceModal(${e.id})" class="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition" title="配置集成服务"><i class="fas fa-cogs"></i></button>
+                <button onclick="openTrainingShareModal(${e.id})" class="p-2 text-purple-500 hover:bg-purple-50 rounded-lg transition" title="分享"><i class="fas fa-share-alt"></i></button>
                 <button onclick="editTraining(${e.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit"></i></button>
                 <button onclick="deleteTraining(${e.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash"></i></button>
               </div>
@@ -6165,8 +6166,22 @@
       }
     });
 
-    function openTrainingModal(training = null, prefillDate = null) {
+    // 培训弹窗全局状态
+    let currentEditingTraining = null;
+    let currentEditingTrainingId = null;
+    let trainingUserPickerData = [];
+    let trainingUserPickerTemp = new Set();
+
+    async function openTrainingModal(training = null, prefillDate = null) {
       const isEdit = !!training;
+      currentEditingTraining = training;
+      currentEditingTrainingId = training?.id || null;
+
+      // 确保 surveys / exams 已加载
+      await loadAllData();
+      const surveys = data.surveys || [];
+      const exams = data.exams || [];
+
       const startTimeValue = training?.startTime || '';
       const endTimeValue = training?.endTime || '';
 
@@ -6185,62 +6200,173 @@
         `<option value="${cat}" ${(training?.project || '') === cat ? 'selected' : ''}>${cat}</option>`
       ).join('');
 
+      const surveyOptions = surveys.map(s => `<option value="${s.id}" ${training?.linkedSurveyId === s.id ? 'selected' : ''}>${escHtml(s.title)}</option>`).join('');
+      const examOptions = exams.map(e => `<option value="${e.id}" ${training?.linkedExamId === e.id ? 'selected' : ''}>${escHtml(e.name || e.title)}</option>`).join('');
+
+      const signinEnabled = training?.signinEnabled || false;
+      const signinCode = training?.signinCode || '';
+
+      // 任务指派回填
+      let accessType = training?.accessType || 'none';
+      if (accessType === 'open' || accessType === 'public') accessType = 'public';
+      else if (accessType === 'restricted') accessType = (training?.allowedUsers && training.allowedUsers.length) ? 'restricted' : 'none';
+      else accessType = 'none';
+
+      trainingUserPickerTemp = new Set();
+      if (training?.allowedUsers && Array.isArray(training.allowedUsers)) {
+        training.allowedUsers.forEach(uid => trainingUserPickerTemp.add(String(uid)));
+      }
+
       showModal(`
-        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
             <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑' : '添加'}培训</h3>
             <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
           </div>
-          <form onsubmit="saveTraining(event, ${training?.id || 'null'})" class="p-6 space-y-4">
+          <form id="training-form" onsubmit="saveTraining(event, ${training?.id || 'null'})" class="flex-1 overflow-y-auto p-6 space-y-5">
+
+            <!-- 基本信息 -->
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">培训项目 <span class="text-red-500">*</span></label>
-              <select id="t-project" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                <option value="">请选择</option>
-                ${categoryOptions}
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">培训课题 <span class="text-red-500">*</span></label>
-              <input type="text" id="t-name" value="${training?.name || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">培训内容</label>
-              <textarea id="t-content" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none">${training?.content || ''}</textarea>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="relative">
-                <label class="block text-sm font-medium text-slate-700 mb-1">培训讲师 <span class="text-red-500">*</span></label>
-                <input type="text" id="t-instructor" value="${training?.instructor || ''}" required
-                       onfocus="showLecturerDropdown()" oninput="filterLecturerDropdown(this.value)"
-                       class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
-                       placeholder="输入或选择讲师" autocomplete="off">
-                <div id="t-instructor-dropdown" class="absolute left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto hidden z-50"></div>
+              <h4 class="text-sm font-semibold text-slate-800 mb-3"><i class="fas fa-info-circle text-indigo-500 mr-2"></i>基本信息</h4>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">培训项目 <span class="text-red-500">*</span></label>
+                  <select id="t-project" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                    <option value="">请选择</option>
+                    ${categoryOptions}
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">培训课题 <span class="text-red-500">*</span></label>
+                  <input type="text" id="t-name" value="${escHtml(training?.name || '')}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
               </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">培训地点 <span class="text-red-500">*</span></label>
-                <input type="text" id="t-location" value="${training?.location || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              <div class="mt-4">
+                <label class="block text-sm font-medium text-slate-700 mb-1">培训内容</label>
+                <input type="text" id="t-content" value="${escHtml(training?.content || '')}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div class="grid grid-cols-2 gap-4 mt-4">
+                <div class="relative">
+                  <label class="block text-sm font-medium text-slate-700 mb-1">培训讲师 <span class="text-red-500">*</span></label>
+                  <input type="text" id="t-instructor" value="${escHtml(training?.instructor || '')}" required
+                         onfocus="showLecturerDropdown()" oninput="filterLecturerDropdown(this.value)"
+                         class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                         placeholder="输入或选择讲师" autocomplete="off">
+                  <div id="t-instructor-dropdown" class="absolute left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto hidden z-50"></div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">培训地点 <span class="text-red-500">*</span></label>
+                  <input type="text" id="t-location" value="${escHtml(training?.location || '')}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">开始时间 <span class="text-red-500">*</span></label>
+                  <input type="datetime-local" id="t-start" value="${toDatetimeLocal(startTimeValue, prefillDate, '09:00')}" required
+                         class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                  <p class="text-xs text-slate-400 mt-1">支持手动输入,如 2026-06-11 09:00</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">结束时间 <span class="text-red-500">*</span></label>
+                  <input type="datetime-local" id="t-end" value="${toDatetimeLocal(endTimeValue, prefillDate, '17:00')}" required
+                         class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
               </div>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">开始时间 <span class="text-red-500">*</span></label>
-                <input type="datetime-local" id="t-start" value="${toDatetimeLocal(startTimeValue, prefillDate, '09:00')}" required
-                       class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                <p class="text-xs text-slate-400 mt-1">支持手动输入,如 2026-06-11 09:00</p>
+
+            <!-- 项目内容（折叠） -->
+            <div class="border border-slate-200 rounded-xl overflow-hidden">
+              <div onclick="toggleTrainingPanel('projectContent')" class="flex items-center justify-between px-4 py-3 bg-slate-50 cursor-pointer hover:bg-slate-100 transition">
+                <span class="text-sm font-semibold text-slate-800"><i class="fas fa-tasks text-emerald-500 mr-2"></i>项目内容</span>
+                <i id="projectContent-chevron" class="fas fa-chevron-down text-slate-400 transition-transform"></i>
               </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">结束时间 <span class="text-red-500">*</span></label>
-                <input type="datetime-local" id="t-end" value="${toDatetimeLocal(endTimeValue, prefillDate, '17:00')}" required
-                       class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              <div id="projectContent" class="hidden p-4 space-y-4">
+                <!-- 考勤 -->
+                <div class="bg-slate-50 rounded-xl p-4">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold text-slate-700"><i class="fas fa-check-circle text-emerald-500 mr-2"></i>考勤签到</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" id="t-signin-enable" class="sr-only peer" ${signinEnabled ? 'checked' : ''} onchange="toggleSigninCode(this.checked)">
+                      <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                  </div>
+                  <div id="t-signin-code-wrap" class="${signinEnabled ? '' : 'hidden'}">
+                    <label class="block text-xs text-slate-500 mb-1">签到码（4-6位数字，留空自动生成）</label>
+                    <input type="text" id="t-signin-code" value="${escHtml(signinCode)}" maxlength="6" placeholder="自动生成"
+                      class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                </div>
+                <!-- 考试 -->
+                <div class="bg-slate-50 rounded-xl p-4">
+                  <label class="block text-sm font-semibold text-slate-700 mb-2"><i class="fas fa-file-alt text-amber-500 mr-2"></i>关联考试</label>
+                  <select id="t-exam-id" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+                    <option value="">不关联</option>
+                    ${examOptions}
+                  </select>
+                </div>
+                <!-- 调研 -->
+                <div class="bg-slate-50 rounded-xl p-4">
+                  <label class="block text-sm font-semibold text-slate-700 mb-2"><i class="fas fa-poll text-blue-500 mr-2"></i>关联满意度调研</label>
+                  <select id="t-survey-id" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">不关联</option>
+                    ${surveyOptions}
+                  </select>
+                </div>
+                <!-- 课件 -->
+                <div class="bg-slate-50 rounded-xl p-4">
+                  <label class="block text-sm font-semibold text-slate-700 mb-2"><i class="fas fa-file-pdf text-rose-500 mr-2"></i>培训课件</label>
+                  <input type="file" id="t-courseware" multiple accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.zip,.rar"
+                    onchange="uploadTrainingCourseware(this, ${training?.id || 'null'})"
+                    class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+                  <div id="t-courseware-list" class="mt-3 space-y-2">${renderTrainingCoursewareList(training?.coursewareFiles)}</div>
+                </div>
               </div>
             </div>
-            <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
-              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium transition">保存</button>
+
+            <!-- 任务指派（折叠） -->
+            <div class="border border-slate-200 rounded-xl overflow-hidden">
+              <div onclick="toggleTrainingPanel('taskAssignment')" class="flex items-center justify-between px-4 py-3 bg-slate-50 cursor-pointer hover:bg-slate-100 transition">
+                <span class="text-sm font-semibold text-slate-800"><i class="fas fa-user-cog text-cyan-500 mr-2"></i>任务指派</span>
+                <i id="taskAssignment-chevron" class="fas fa-chevron-down text-slate-400 transition-transform"></i>
+              </div>
+              <div id="taskAssignment" class="hidden p-4 space-y-4">
+                <div class="flex items-center justify-between">
+                  <label class="text-sm font-medium text-slate-700">指派范围</label>
+                  <select id="t-access-type" onchange="onTrainingAccessTypeChange()" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="none" ${accessType === 'none' ? 'selected' : ''}>暂不指派</option>
+                    <option value="public" ${accessType === 'public' ? 'selected' : ''}>全员开放</option>
+                    <option value="restricted" ${accessType === 'restricted' ? 'selected' : ''}>指定学员</option>
+                    <option value="import" ${accessType === 'import' ? 'selected' : ''}>导入学员</option>
+                  </select>
+                </div>
+                <div id="t-allowed-users-wrap" class="${accessType === 'restricted' || accessType === 'import' ? '' : 'hidden'}">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-slate-600">已选 <span id="t-allowed-users-count">0</span> 人</span>
+                    <button type="button" onclick="openTrainingUserPicker()" class="text-sm px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition"><i class="fas fa-plus mr-1"></i>选择学员</button>
+                  </div>
+                  <div id="t-allowed-users-list" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto"><p class="text-sm text-slate-400 w-full">未选择学员</p></div>
+                </div>
+                <div id="t-import-users-wrap" class="${accessType === 'import' ? '' : 'hidden'}">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">导入 Excel（包含学员姓名列）</label>
+                  <input type="file" id="t-import-users-file" accept=".xlsx,.xls" onchange="onTrainingImportUsersFile()"
+                    class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+                  <p class="text-xs text-slate-400 mt-1">上传后会自动读取表格中的学员姓名并完成匹配导入</p>
+                  <div id="t-import-users-result" class="mt-2 hidden"></div>
+                </div>
+              </div>
             </div>
+
           </form>
+          <div class="flex justify-end items-center gap-3 p-6 border-t border-slate-100 flex-shrink-0 bg-slate-50">
+            <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+            <button type="submit" form="training-form" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium transition">保存</button>
+          </div>
         </div>
       `);
+
+      // 初始化指派学员列表显示
+      onTrainingAccessTypeChange();
+      renderTrainingAllowedUsers();
     }
 
     async function saveTraining(e, id) {
@@ -6261,6 +6387,24 @@
 
       const dateVal = startVal.split('T')[0];
 
+      // 项目内容
+      const signinEnabled = document.getElementById('t-signin-enable').checked;
+      let signinCode = document.getElementById('t-signin-code')?.value.trim() || '';
+      if (signinEnabled && !signinCode) {
+        signinCode = String(Math.floor(1000 + Math.random() * 9000));
+      }
+      if (signinCode && !/^\d{4,6}$/.test(signinCode)) {
+        toast('签到码必须是4-6位数字', 'error');
+        return;
+      }
+
+      // 任务指派
+      const accessTypeRaw = document.getElementById('t-access-type').value;
+      const accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
+      const allowedUsers = (accessTypeRaw === 'restricted' || accessTypeRaw === 'import')
+        ? Array.from(trainingUserPickerTemp).map(uid => isNaN(Number(uid)) ? uid : Number(uid))
+        : [];
+
       const formData = {
         project: document.getElementById('t-project').value,
         name: document.getElementById('t-name').value.trim(),
@@ -6269,7 +6413,14 @@
         location: document.getElementById('t-location').value.trim(),
         date: dateVal,
         startTime: startVal,
-        endTime: endVal
+        endTime: endVal,
+        signinEnabled: signinEnabled,
+        signinCode: signinEnabled ? signinCode : null,
+        linkedSurveyId: document.getElementById('t-survey-id').value ? parseInt(document.getElementById('t-survey-id').value) : null,
+        linkedExamId: document.getElementById('t-exam-id').value ? parseInt(document.getElementById('t-exam-id').value) : null,
+        accessType: accessType,
+        allowedUsers: allowedUsers.length ? allowedUsers : null,
+        coursewareFiles: currentEditingTraining?.coursewareFiles || []
       };
 
       try {
@@ -6288,6 +6439,18 @@
           });
         }
         if (res.ok) {
+          const result = await res.json();
+          const savedId = id || result.event?.id;
+
+          // 保存指派学员
+          if (savedId && allowedUsers.length > 0) {
+            await fetch(API + '/training/' + savedId + '/assign', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userIds: allowedUsers })
+            });
+          }
+
           toast(id ? '培训已更新' : '培训已添加');
           closeModal();
           await loadAllData();
@@ -6299,6 +6462,190 @@
       } catch (err) {
         toast('操作失败: ' + err.message, 'error');
       }
+    }
+
+    // ========== 培训弹窗 - 折叠面板与项目内容 ==========
+
+    function toggleTrainingPanel(id) {
+      const panel = document.getElementById(id);
+      const chevron = document.getElementById(id + '-chevron');
+      if (panel) panel.classList.toggle('hidden');
+      if (chevron) chevron.classList.toggle('rotate-180');
+    }
+
+    function toggleSigninCode(enabled) {
+      const wrap = document.getElementById('t-signin-code-wrap');
+      if (wrap) wrap.classList.toggle('hidden', !enabled);
+      if (!enabled) {
+        const input = document.getElementById('t-signin-code');
+        if (input) input.value = '';
+      }
+    }
+
+    async function uploadTrainingCourseware(input, trainingId) {
+      if (!input.files || !input.files.length) return;
+      if (!trainingId || trainingId === 'null') {
+        toast('请先保存培训基本信息，再上传课件', 'error');
+        input.value = '';
+        return;
+      }
+      const formData = new FormData();
+      Array.from(input.files).forEach(f => formData.append('courseware', f));
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/courseware', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await res.json();
+        if (result.success) {
+          if (currentEditingTraining) currentEditingTraining.coursewareFiles = result.files;
+          document.getElementById('t-courseware-list').innerHTML = renderTrainingCoursewareList(result.files);
+          toast('课件上传成功');
+        } else {
+          toast(result.error || '上传失败', 'error');
+        }
+      } catch (e) {
+        toast('上传失败', 'error');
+      }
+      input.value = '';
+    }
+
+    function renderTrainingCoursewareList(files) {
+      if (!files || !files.length) return '<p class="text-sm text-slate-400">暂无课件</p>';
+      return files.map((f, i) => `
+        <div class="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-200">
+          <div class="flex items-center gap-2 min-w-0">
+            <i class="fas fa-file text-slate-400"></i>
+            <span class="text-xs text-slate-700 truncate">${escHtml(f.name)}</span>
+          </div>
+          <button type="button" onclick="deleteTrainingCourseware(${i})" class="text-slate-400 hover:text-red-500 text-xs"><i class="fas fa-trash"></i></button>
+        </div>
+      `).join('');
+    }
+
+    async function deleteTrainingCourseware(index) {
+      if (!currentEditingTraining || !currentEditingTraining.coursewareFiles) return;
+      const file = currentEditingTraining.coursewareFiles[index];
+      if (!file) return;
+      const fileName = file.url.split('/').pop();
+      try {
+        const res = await fetch(API + '/training/' + currentEditingTrainingId + '/courseware/' + encodeURIComponent(fileName), {
+          method: 'DELETE'
+        });
+        const result = await res.json();
+        if (result.success) {
+          currentEditingTraining.coursewareFiles = result.files;
+          document.getElementById('t-courseware-list').innerHTML = renderTrainingCoursewareList(result.files);
+          toast('课件已删除');
+        } else {
+          toast(result.error || '删除失败', 'error');
+        }
+      } catch (e) {
+        toast('删除失败', 'error');
+      }
+    }
+
+    // ========== 培训弹窗 - 任务指派 ==========
+
+    function onTrainingAccessTypeChange() {
+      const accessType = document.getElementById('t-access-type').value;
+      const allowedWrap = document.getElementById('t-allowed-users-wrap');
+      const importWrap = document.getElementById('t-import-users-wrap');
+      if (allowedWrap) allowedWrap.classList.toggle('hidden', accessType !== 'restricted' && accessType !== 'import');
+      if (importWrap) importWrap.classList.toggle('hidden', accessType !== 'import');
+    }
+
+    async function openTrainingUserPicker() {
+      userPickerMode = 'training';
+      const modal = document.getElementById('examUserPickerModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('examUserPickerSearch').value = '';
+      await loadExamUserPickerData();
+      renderExamUserPicker();
+    }
+
+    async function onTrainingImportUsersFile() {
+      const input = document.getElementById('t-import-users-file');
+      const resultEl = document.getElementById('t-import-users-result');
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      try {
+        const buf = await file.arrayBuffer();
+        const workbook = XLSX.read(buf, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const names = [];
+        rows.forEach(row => {
+          row.forEach(cell => {
+            const v = cell !== undefined && cell !== null ? String(cell).trim() : '';
+            if (v) names.push(v);
+          });
+        });
+        if (!names.length) {
+          resultEl.innerHTML = '<p class="text-xs text-red-500">未读取到任何姓名</p>';
+          resultEl.classList.remove('hidden');
+          return;
+        }
+        const res = await fetch('/api/data/users');
+        const users = await res.json();
+        const matched = [];
+        const unmatched = [];
+        const seen = new Set();
+        names.forEach(name => {
+          if (seen.has(name)) return;
+          seen.add(name);
+          const user = users.find(u => {
+            const n = (u.real_name || u.username || '').trim();
+            return n === name;
+          });
+          if (user) matched.push({ id: String(user.id), name: user.real_name || user.username });
+          else unmatched.push(name);
+        });
+        matched.forEach(u => trainingUserPickerTemp.add(u.id));
+        trainingUserPickerData.forEach(u => {
+          u.selected = trainingUserPickerTemp.has(String(u.id));
+        });
+        renderTrainingAllowedUsers();
+        let html = `<p class="text-xs text-emerald-600">成功导入 ${matched.length} 人</p>`;
+        if (unmatched.length) {
+          html += `<p class="text-xs text-amber-600 mt-0.5">未匹配 ${unmatched.length} 人：${escHtml(unmatched.slice(0, 5).join('、'))}${unmatched.length > 5 ? ' 等' : ''}</p>`;
+        }
+        resultEl.innerHTML = html;
+        resultEl.classList.remove('hidden');
+      } catch (e) {
+        resultEl.innerHTML = '<p class="text-xs text-red-500">读取失败：' + escHtml(e.message) + '</p>';
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    function renderTrainingAllowedUsers() {
+      const selected = trainingUserPickerData.filter(u => u.selected);
+      const countEl = document.getElementById('t-allowed-users-count');
+      const listEl = document.getElementById('t-allowed-users-list');
+      if (countEl) countEl.textContent = selected.length;
+      if (listEl) {
+        if (selected.length === 0) {
+          listEl.innerHTML = '<p class="text-sm text-slate-400 w-full">未选择学员</p>';
+        } else {
+          listEl.innerHTML = selected.map(u => `
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs">
+              ${escHtml(u.name)}
+              <button type="button" onclick="removeTrainingAllowedUser('${u.id}')" class="text-indigo-400 hover:text-red-500">&times;</button>
+            </span>
+          `).join('');
+        }
+      }
+    }
+
+    function removeTrainingAllowedUser(id) {
+      const sid = String(id);
+      const user = trainingUserPickerData.find(u => String(u.id) === sid);
+      if (user) user.selected = false;
+      trainingUserPickerTemp.delete(id);
+      trainingUserPickerTemp.delete(sid);
+      trainingUserPickerTemp.delete(Number(id));
+      renderTrainingAllowedUsers();
     }
 
     function editTraining(id) {
@@ -6597,109 +6944,6 @@
       }
     }
 
-    async function openTrainingServiceModal(trainingId) {
-      const event = data.training.find(x => x.id === trainingId);
-      if (!event) return;
-
-      // 加载可选的调研和考试列表
-      await loadAllData();
-      const surveys = data.surveys || [];
-      const exams = data.exams || [];
-
-      const surveyOptions = surveys.map(s => `<option value="${s.id}" ${event.linkedSurveyId === s.id ? 'selected' : ''}>${s.title}</option>`).join('');
-      const examOptions = exams.map(e => `<option value="${e.id}" ${event.linkedExamId === e.id ? 'selected' : ''}>${e.name}</option>`).join('');
-
-      showModal(`
-        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-            <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-cogs text-purple-500 mr-2"></i>配置集成服务</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
-          </div>
-          <div class="p-6 space-y-5">
-            <div class="bg-slate-50 rounded-xl p-4">
-              <div class="flex items-center justify-between mb-3">
-                <label class="text-sm font-semibold text-slate-700"><i class="fas fa-check-circle text-emerald-500 mr-2"></i>签到</label>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" id="svc-signin-enable" class="sr-only peer" ${event.signinEnabled ? 'checked' : ''}>
-                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                </label>
-              </div>
-              <div>
-                <label class="block text-xs text-slate-500 mb-1">签到码（4-6位数字，留空则自动生成）</label>
-                <input type="text" id="svc-signin-code" value="${event.signinCode || ''}" maxlength="6" placeholder="自动生成"
-                  class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
-              </div>
-              <p class="text-xs text-slate-400 mt-2">员工签到页面：<code class="bg-slate-100 px-1 py-0.5 rounded">training-signin.html?id=${trainingId}</code></p>
-            </div>
-
-            <div class="bg-slate-50 rounded-xl p-4">
-              <label class="block text-sm font-semibold text-slate-700 mb-2"><i class="fas fa-poll text-blue-500 mr-2"></i>关联满意度调研</label>
-              <select id="svc-survey-id" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">不关联</option>
-                ${surveyOptions}
-              </select>
-              <p class="text-xs text-slate-400 mt-2">员工调研链接：<code class="bg-slate-100 px-1 py-0.5 rounded">survey.html?id=调研ID&trainingId=${trainingId}</code></p>
-            </div>
-
-            <div class="bg-slate-50 rounded-xl p-4">
-              <label class="block text-sm font-semibold text-slate-700 mb-2"><i class="fas fa-file-alt text-amber-500 mr-2"></i>关联考试</label>
-              <select id="svc-exam-id" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
-                <option value="">不关联</option>
-                ${examOptions}
-              </select>
-              <p class="text-xs text-slate-400 mt-2">员工考试链接：<code class="bg-slate-100 px-1 py-0.5 rounded">exam.html?id=考试ID</code></p>
-            </div>
-          </div>
-          <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
-            <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
-            <button onclick="saveTrainingServices(${trainingId})" class="btn-primary px-5 py-2 text-white rounded-xl font-medium transition">保存配置</button>
-          </div>
-        </div>
-      `);
-    }
-
-    async function saveTrainingServices(trainingId) {
-      const signinEnabled = document.getElementById('svc-signin-enable').checked;
-      let signinCode = document.getElementById('svc-signin-code').value.trim();
-      const surveyId = document.getElementById('svc-survey-id').value;
-      const examId = document.getElementById('svc-exam-id').value;
-
-      // 自动生成签到码
-      if (signinEnabled && !signinCode) {
-        signinCode = String(Math.floor(1000 + Math.random() * 9000));
-      }
-      if (signinCode && !/^\d{4,6}$/.test(signinCode)) {
-        toast('签到码必须是4-6位数字', 'error');
-        return;
-      }
-
-      const updates = {
-        signinEnabled,
-        signinCode: signinEnabled ? signinCode : null,
-        linkedSurveyId: surveyId ? parseInt(surveyId) : null,
-        linkedExamId: examId ? parseInt(examId) : null
-      };
-
-      try {
-        const res = await fetch(API + '/training/' + trainingId, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updates)
-        });
-        if (res.ok) {
-          toast('集成服务配置已保存');
-          closeModal();
-          await loadAllData();
-          renderTraining();
-        } else {
-          const err = await res.json();
-          toast(err.error || '保存失败', 'error');
-        }
-      } catch (err) {
-        toast('保存失败', 'error');
-      }
-    }
-
     // ========== 培训报名管理 ==========
 
     // 查看报名人员（数据统计）
@@ -6802,6 +7046,41 @@
       } catch (err) {
         toast('操作失败', 'error');
       }
+    }
+
+    // 分享培训任务
+    function openTrainingShareModal(trainingId) {
+      const event = data.training.find(x => x.id === trainingId);
+      if (!event) return;
+      const shareUrl = window.location.origin + '/training-signin.html?id=' + trainingId;
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+          <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fas fa-share-alt text-purple-500 mr-2"></i>分享培训任务</h3>
+          <div id="training-share-qrcode" class="flex justify-center mb-4"></div>
+          <div class="flex items-center gap-2 mb-4">
+            <input type="text" id="training-share-link" value="${shareUrl}" readonly class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50">
+            <button onclick="copyTrainingShareLink()" class="px-3 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">复制</button>
+          </div>
+          <p class="text-xs text-slate-400">员工扫码或点击链接即可一站式完成签到、考试、调研、课件下载</p>
+          <button onclick="closeModal()" class="mt-4 px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+        </div>
+      `);
+      new QRCode(document.getElementById('training-share-qrcode'), {
+        text: shareUrl,
+        width: 180,
+        height: 180,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+
+    function copyTrainingShareLink() {
+      const input = document.getElementById('training-share-link');
+      if (!input) return;
+      input.select();
+      document.execCommand('copy');
+      toast('链接已复制');
     }
 
     // 指派学员
@@ -9921,7 +10200,7 @@
       });
     }
 
-    let userPickerMode = 'exam'; // 'exam' 或 'assign'
+    let userPickerMode = 'exam'; // 'exam' / 'assign' / 'training'
 
     async function openExamUserPicker(mode) {
       userPickerMode = mode || 'exam';
@@ -9943,8 +10222,17 @@
       try {
         const res = await fetch('/api/data/users');
         const users = await res.json();
-        const targetData = userPickerMode === 'assign' ? assignExamUserPickerData : examUserPickerData;
-        const targetTemp = userPickerMode === 'assign' ? assignExamUserPickerTemp : examUserPickerTemp;
+        let targetData, targetTemp;
+        if (userPickerMode === 'assign') {
+          targetData = assignExamUserPickerData;
+          targetTemp = assignExamUserPickerTemp;
+        } else if (userPickerMode === 'training') {
+          targetData = trainingUserPickerData;
+          targetTemp = trainingUserPickerTemp;
+        } else {
+          targetData = examUserPickerData;
+          targetTemp = examUserPickerTemp;
+        }
 
         targetData.length = 0;
         users.forEach(u => {
@@ -9959,12 +10247,16 @@
         });
       } catch (e) {
         if (userPickerMode === 'assign') assignExamUserPickerData = [];
+        else if (userPickerMode === 'training') trainingUserPickerData = [];
         else examUserPickerData = [];
       }
     }
 
     function renderExamUserPicker() {
-      const sourceData = userPickerMode === 'assign' ? assignExamUserPickerData : examUserPickerData;
+      let sourceData;
+      if (userPickerMode === 'assign') sourceData = assignExamUserPickerData;
+      else if (userPickerMode === 'training') sourceData = trainingUserPickerData;
+      else sourceData = examUserPickerData;
       const search = document.getElementById('examUserPickerSearch').value.toLowerCase();
       const list = document.getElementById('examUserPickerList');
       const filtered = sourceData.filter(u => u.name.toLowerCase().includes(search));
@@ -9986,8 +10278,17 @@
     }
 
     function toggleExamUserSelect(id) {
-      const sourceData = userPickerMode === 'assign' ? assignExamUserPickerData : examUserPickerData;
-      const targetTemp = userPickerMode === 'assign' ? assignExamUserPickerTemp : examUserPickerTemp;
+      let sourceData, targetTemp;
+      if (userPickerMode === 'assign') {
+        sourceData = assignExamUserPickerData;
+        targetTemp = assignExamUserPickerTemp;
+      } else if (userPickerMode === 'training') {
+        sourceData = trainingUserPickerData;
+        targetTemp = trainingUserPickerTemp;
+      } else {
+        sourceData = examUserPickerData;
+        targetTemp = examUserPickerTemp;
+      }
       const user = sourceData.find(u => String(u.id) === String(id));
       if (user) {
         user.selected = !user.selected;
@@ -10000,6 +10301,8 @@
     function confirmExamUserPicker() {
       if (userPickerMode === 'assign') {
         renderAssignAllowedUsers();
+      } else if (userPickerMode === 'training') {
+        renderTrainingAllowedUsers();
       } else {
         renderExamAllowedUsers();
       }

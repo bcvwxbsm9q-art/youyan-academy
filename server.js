@@ -76,6 +76,28 @@ const upload = multer({
   }
 });
 
+// 培训课件上传专用配置
+const coursewareStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const trainingId = parseInt(req.params.id);
+    const targetDir = path.join(uploadsDir, 'training', String(trainingId));
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    cb(null, targetDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, uniqueSuffix + ext);
+  }
+});
+
+const coursewareUpload = multer({
+  storage: coursewareStorage,
+  limits: { fileSize: 500 * 1024 * 1024 }
+});
+
 // 数据存储文件路径
 const DATA_FILE = path.join(__dirname, 'data.json');
 
@@ -1153,13 +1175,15 @@ app.get('/api/training/:id/service-status', (req, res) => {
   });
 });
 
-// GET /api/training/:id - 获取单个培训事件
+// GET /api/training/:id - 获取单个培训事件（员工端访问，隐藏签到码）
 app.get('/api/training/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
   const event = data.training_events?.find(e => e.id === id);
   if (event) {
-    res.json(event);
+    const safeEvent = { ...event };
+    delete safeEvent.signinCode;
+    res.json(safeEvent);
   } else {
     res.status(404).json({ success: false, error: '培训事件不存在' });
   }
@@ -1210,6 +1234,59 @@ app.delete('/api/training/:id', (req, res) => {
     }
   } else {
     res.status(404).json({ success: false, error: '培训事件列表不存在' });
+  }
+});
+
+// ============================================================
+// 培训课件 API
+// ============================================================
+
+// POST /api/training/:id/courseware - 上传培训课件（支持多文件）
+app.post('/api/training/:id/courseware', coursewareUpload.array('courseware', 10), (req, res) => {
+  const trainingId = parseInt(req.params.id);
+  const files = req.files;
+  if (!files || files.length === 0) {
+    return res.status(400).json({ success: false, error: '未上传文件' });
+  }
+  const data = readData();
+  const idx = data.training_events?.findIndex(e => e.id === trainingId);
+  if (idx === -1 || idx === undefined) {
+    return res.status(404).json({ success: false, error: '培训不存在' });
+  }
+  if (!data.training_events[idx].coursewareFiles) {
+    data.training_events[idx].coursewareFiles = [];
+  }
+  files.forEach(f => {
+    data.training_events[idx].coursewareFiles.push({
+      name: f.originalname,
+      url: `/uploads/training/${trainingId}/${f.filename}`,
+      size: f.size,
+      uploadedAt: new Date().toISOString()
+    });
+  });
+  if (writeData(data)) {
+    res.json({ success: true, files: data.training_events[idx].coursewareFiles });
+  } else {
+    res.status(500).json({ success: false, error: '写入失败' });
+  }
+});
+
+// DELETE /api/training/:id/courseware/:fileName - 删除培训课件记录
+app.delete('/api/training/:id/courseware/:fileName', (req, res) => {
+  const trainingId = parseInt(req.params.id);
+  const fileName = req.params.fileName;
+  const data = readData();
+  const event = data.training_events?.find(e => e.id === trainingId);
+  if (!event) return res.status(404).json({ success: false, error: '培训不存在' });
+  if (!event.coursewareFiles) event.coursewareFiles = [];
+  event.coursewareFiles = event.coursewareFiles.filter(f => {
+    const parts = f.url.split('/');
+    return parts[parts.length - 1] !== fileName;
+  });
+  if (writeData(data)) {
+    res.json({ success: true, files: event.coursewareFiles });
+  } else {
+    res.status(500).json({ success: false, error: '写入失败' });
   }
 });
 
