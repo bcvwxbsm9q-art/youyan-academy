@@ -1806,8 +1806,10 @@ app.get('/api/exams/:id/students', (req, res) => {
 
   // 确定候选学员范围
   let candidateUsers = [];
-  if (exam.accessType === 'restricted' && exam.allowedUsers && exam.allowedUsers.length > 0) {
-    candidateUsers = exam.allowedUsers.map(uid => users.find(u => String(u.id) === String(uid))).filter(Boolean);
+  if (exam.accessType === 'none') {
+    candidateUsers = [];
+  } else if (exam.accessType === 'restricted') {
+    candidateUsers = (exam.allowedUsers || []).map(uid => users.find(u => String(u.id) === String(uid))).filter(Boolean);
   } else {
     candidateUsers = users.filter(u => u.role !== 'admin');
   }
@@ -2160,8 +2162,15 @@ const takeExamHandler = (req, res) => {
     return res.status(404).json({ success: false, error: '考试不存在或未发布' });
   }
 
+  // 暂不指派的考试不允许参加
+  if (exam.accessType === 'none') {
+    return res.status(403).json({ success: false, error: '该考试暂未指派学员' });
+  }
   // 如果是限制访问的考试，检查 userId 是否在 allowedUsers 中
-  if (exam.accessType === 'restricted' && exam.allowedUsers && exam.allowedUsers.length > 0) {
+  if (exam.accessType === 'restricted') {
+    if (!exam.allowedUsers || exam.allowedUsers.length === 0) {
+      return res.status(403).json({ success: false, error: '您未被指派参加此考试' });
+    }
     const allowedIds = exam.allowedUsers.map(uid => String(uid));
     if (!allowedIds.includes(String(userId))) {
       return res.status(403).json({ success: false, error: '您未被指派参加此考试' });

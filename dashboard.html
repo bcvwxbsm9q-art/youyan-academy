@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -2088,6 +2088,61 @@
             </div>
           </div>
         </div>
+
+        <!-- 任务指派 -->
+        <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 mb-4">
+          <h4 class="text-sm font-semibold text-emerald-800 mb-4"><i class="fas fa-tasks mr-1.5"></i>任务指派</h4>
+          <div class="space-y-4">
+            <!-- 考试时间（同一行） -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">开始时间</label>
+                <input type="datetime-local" id="examStartTime"
+                  class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                <p class="text-xs text-slate-400 mt-0.5">留空立即生效</p>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">截止时间</label>
+                <input type="datetime-local" id="examEndTime"
+                  class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                <p class="text-xs text-slate-400 mt-0.5">留空不限</p>
+              </div>
+            </div>
+
+            <!-- 指派学员 -->
+            <div class="flex items-center justify-between">
+              <label class="text-sm font-medium text-slate-700">指派学员</label>
+              <select id="examAccessType" onchange="onExamAccessTypeChange()" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="none">暂不指派</option>
+                <option value="public">全员开放</option>
+                <option value="restricted">指定学员</option>
+                <option value="import">导入学员</option>
+              </select>
+            </div>
+
+            <!-- 指定学员 -->
+            <div id="examAllowedUsersContainer" class="hidden">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-slate-600">已选 <span id="examAllowedUsersCount">0</span> 人</span>
+                <button type="button" onclick="openExamUserPicker('exam')" class="text-sm px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
+                  <i class="fas fa-plus mr-1"></i>选择学员
+                </button>
+              </div>
+              <div id="examAllowedUsersList" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                <p class="text-sm text-slate-400 w-full">未选择学员</p>
+              </div>
+            </div>
+
+            <!-- 导入学员 -->
+            <div id="examImportUsersContainer" class="hidden">
+              <label class="block text-xs font-medium text-slate-600 mb-1">导入Excel（包含学员姓名列）</label>
+              <input type="file" id="examImportUsersFile" accept=".xlsx,.xls" onchange="onExamImportUsersFile()"
+                class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+              <p class="text-xs text-slate-400 mt-1">上传后会自动读取表格中的学员姓名并完成匹配导入</p>
+              <div id="examImportUsersResult" class="mt-2 hidden"></div>
+            </div>
+          </div>
+        </div>
       </form>
     </div>
     <!-- 底部按钮 -->
@@ -2100,73 +2155,6 @@
       </button>
       <button type="button" onclick="saveExamAsPublished()" class="px-5 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-indigo-600 transition">
         <i class="fas fa-paper-plane mr-1.5"></i>发布
-      </button>
-    </div>
-  </div>
-
-  <!-- ========== 任务指派弹窗 ========== -->
-  <div id="examAssignOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden transition-opacity" onclick="closeExamAssignModal()"></div>
-  <div id="examAssignModal" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
-    <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
-      <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-tasks text-emerald-500 mr-2"></i>任务指派</h3>
-      <button onclick="closeExamAssignModal()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-    <div class="flex-1 overflow-y-auto p-6 space-y-5">
-      <input type="hidden" id="assignExamId">
-
-      <!-- 时间设置 -->
-      <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4">
-        <h4 class="text-sm font-semibold text-indigo-800 mb-3"><i class="fas fa-clock mr-1.5"></i>时间设置</h4>
-        <div class="space-y-3">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">考试开始时间</label>
-            <input type="datetime-local" id="assignStartTime"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm">
-            <p class="text-xs text-slate-400 mt-1">留空立即生效</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">考试截止时间</label>
-            <input type="datetime-local" id="assignEndTime"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm">
-            <p class="text-xs text-slate-400 mt-1">留空不限结束时间</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- 指派学员 -->
-      <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4">
-        <h4 class="text-sm font-semibold text-emerald-800 mb-3"><i class="fas fa-user-plus mr-1.5"></i>指派学员</h4>
-        <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <label class="text-sm font-medium text-slate-700">考试权限</label>
-            <select id="assignAccessType" onchange="onAssignAccessTypeChange()" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
-              <option value="public">全员开放</option>
-              <option value="restricted">指定学员</option>
-            </select>
-          </div>
-          <div id="assignAllowedUsersContainer" class="hidden">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-slate-600">已选 <span id="assignAllowedUsersCount">0</span> 人</span>
-              <button type="button" onclick="openExamUserPicker('assign')" class="text-sm px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
-                <i class="fas fa-plus mr-1"></i>选择学员
-              </button>
-            </div>
-            <div id="assignAllowedUsersList" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-              <p class="text-sm text-slate-400 w-full">未选择学员</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- 底部按钮 -->
-    <div class="flex justify-end items-center gap-3 p-6 border-t border-slate-100 flex-shrink-0 bg-slate-50">
-      <button type="button" onclick="closeExamAssignModal()" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
-        取消
-      </button>
-      <button type="button" onclick="saveExamAssign()" class="px-5 py-2.5 bg-emerald-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-emerald-600 transition">
-        <i class="fas fa-check mr-1.5"></i>保存
       </button>
     </div>
   </div>
@@ -9203,8 +9191,24 @@
         return;
       }
 
+      const statusMap = {
+        draft: { cls: 'bg-slate-100 text-slate-600', text: '未发布' },
+        published: { cls: 'bg-emerald-100 text-emerald-700', text: '已发布' },
+        closed: { cls: 'bg-red-100 text-red-600', text: '已结束' }
+      };
       tbody.innerHTML = pageData.map(exam => {
         const checked = examSelectedIds.has(exam.id) ? 'checked' : '';
+        const st = statusMap[exam.status] || statusMap.draft;
+        const statusCls = st.cls;
+        const statusText = st.text;
+        let toggleBtn = '';
+        if (exam.status === 'draft') {
+          toggleBtn = `<button onclick="publishExam(${exam.id})" class="p-1.5 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition flex-shrink-0" title="发布"><i class="fas fa-paper-plane text-xs"></i></button>`;
+        } else if (exam.status === 'published') {
+          toggleBtn = `<button onclick="closeExam(${exam.id})" class="p-1.5 text-amber-400 hover:text-amber-600 hover:bg-amber-50 rounded transition flex-shrink-0" title="结束"><i class="fas fa-stop-circle text-xs"></i></button>`;
+        } else if (exam.status === 'closed') {
+          toggleBtn = `<button onclick="publishExam(${exam.id})" class="p-1.5 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition flex-shrink-0" title="重新发布"><i class="fas fa-redo text-xs"></i></button>`;
+        }
         const total = exam.attemptCount || 0;
         const completed = exam.completedCount || 0;
         const passed = exam.passCount || 0;
@@ -9921,14 +9925,6 @@
 
     async function openExamUserPicker(mode) {
       userPickerMode = mode || 'exam';
-      const targetTemp = userPickerMode === 'assign' ? assignExamUserPickerTemp : examUserPickerTemp;
-      const targetData = userPickerMode === 'assign' ? assignExamUserPickerData : examUserPickerData;
-
-      targetTemp.clear();
-      targetData.forEach(u => { if (targetTemp.has(u.id)) /* keep */; });
-      // 从已有选中项恢复
-      targetData.filter(u => u.selected).forEach(u => targetTemp.add(u.id));
-
       const modal = document.getElementById('examUserPickerModal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
@@ -9951,12 +9947,16 @@
         const targetTemp = userPickerMode === 'assign' ? assignExamUserPickerTemp : examUserPickerTemp;
 
         targetData.length = 0;
-        users.forEach(u => targetData.push({
-          id: u.id,
-          name: u.real_name || u.username || '未知',
-          avatar: u.avatar || '',
-          selected: targetTemp.has(u.id)
-        }));
+        users.forEach(u => {
+          const uid = u.id;
+          const selected = targetTemp.has(uid) || targetTemp.has(String(uid)) || targetTemp.has(Number(uid));
+          targetData.push({
+            id: uid,
+            name: u.real_name || u.username || '未知',
+            avatar: u.avatar || '',
+            selected: selected
+          });
+        });
       } catch (e) {
         if (userPickerMode === 'assign') assignExamUserPickerData = [];
         else examUserPickerData = [];
@@ -9988,11 +9988,11 @@
     function toggleExamUserSelect(id) {
       const sourceData = userPickerMode === 'assign' ? assignExamUserPickerData : examUserPickerData;
       const targetTemp = userPickerMode === 'assign' ? assignExamUserPickerTemp : examUserPickerTemp;
-      const user = sourceData.find(u => u.id === id);
+      const user = sourceData.find(u => String(u.id) === String(id));
       if (user) {
         user.selected = !user.selected;
-        if (user.selected) targetTemp.add(id);
-        else targetTemp.delete(id);
+        if (user.selected) targetTemp.add(String(id));
+        else targetTemp.delete(String(id));
       }
       renderExamUserPicker();
     }
@@ -10000,6 +10000,8 @@
     function confirmExamUserPicker() {
       if (userPickerMode === 'assign') {
         renderAssignAllowedUsers();
+      } else {
+        renderExamAllowedUsers();
       }
       closeExamUserPicker();
     }
@@ -10012,27 +10014,30 @@
       const selected = sourceData.filter(u => u.selected);
       const count = document.getElementById(countId);
       const list = document.getElementById(listId);
-      count.textContent = selected.length;
-      if (selected.length === 0) {
-        list.innerHTML = '<p class="text-sm text-slate-400 w-full">未选择学员</p>';
-      } else {
-        list.innerHTML = selected.map(u => `
-          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full">
-            ${escHtml(u.name)}
-            <button type="button" onclick="removeExamAllowedUser(${u.id})" class="hover:text-emerald-900">
-              <i class="fas fa-times"></i>
-            </button>
-          </span>
-        `).join('');
+      if (count) count.textContent = selected.length;
+      if (list) {
+        if (selected.length === 0) {
+          list.innerHTML = '<p class="text-sm text-slate-400 w-full">未选择学员</p>';
+        } else {
+          list.innerHTML = selected.map(u => `
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs">
+              ${escHtml(u.name)}
+              <button type="button" onclick="removeExamAllowedUser('${u.id}')" class="text-indigo-400 hover:text-red-500">&times;</button>
+            </span>
+          `).join('');
+        }
       }
     }
 
     function removeExamAllowedUser(id) {
       const sourceData = userPickerMode === 'assign' ? assignExamUserPickerData : examUserPickerData;
       const targetTemp = userPickerMode === 'assign' ? assignExamUserPickerTemp : examUserPickerTemp;
-      const user = sourceData.find(u => u.id === id);
+      const sid = String(id);
+      const user = sourceData.find(u => String(u.id) === sid);
       if (user) user.selected = false;
       targetTemp.delete(id);
+      targetTemp.delete(sid);
+      targetTemp.delete(Number(id));
       if (userPickerMode === 'assign') renderAssignAllowedUsers();
       else renderExamAllowedUsers();
     }
@@ -10068,8 +10073,16 @@
       setBtnGroupValue('examShowCorrect', 'show');
       setBtnGroupValue('examShowAnalysis', 'show');
       setBtnGroupValue('examViewRank', 'after_submit');
+      // 重置任务指派
+      document.getElementById('examStartTime').value = '';
+      document.getElementById('examEndTime').value = '';
+      document.getElementById('examAccessType').value = 'none';
+      onExamAccessTypeChange();
+      document.getElementById('examImportUsersFile').value = '';
+      document.getElementById('examImportUsersResult').classList.add('hidden');
       examUserPickerData = [];
       examUserPickerTemp = new Set();
+      renderExamAllowedUsers();
       renderSelectedQuestions();
       // 加载试卷下拉
       loadExamPaperOptions();
@@ -10152,123 +10165,67 @@
       selectedExamQuestions = [];
     }
 
-    // ========== 任务指派弹窗 ==========
+    // ========== 考试抽屉 - 任务指派 ==========
     let assignExamUserPickerData = [];
     let assignExamUserPickerTemp = new Set();
 
-    function openExamAssignModal(id) {
-      document.getElementById('assignExamId').value = id;
-      document.getElementById('assignStartTime').value = '';
-      document.getElementById('assignEndTime').value = '';
-      document.getElementById('assignAccessType').value = 'public';
-      onAssignAccessTypeChange();
-      assignExamUserPickerData = [];
-      assignExamUserPickerTemp = new Set();
-      renderAssignAllowedUsers();
-
-      // 加载已有数据
-      fetch('/api/exams')
-        .then(res => res.json())
-        .then(exams => {
-          const exam = exams.find(e => e.id === id || e.id === Number(id) || String(e.id) === String(id));
-          if (exam) {
-            if (exam.startTime) document.getElementById('assignStartTime').value = new Date(exam.startTime).toISOString().slice(0, 16);
-            if (exam.endTime) document.getElementById('assignEndTime').value = new Date(exam.endTime).toISOString().slice(0, 16);
-            if (exam.accessType) document.getElementById('assignAccessType').value = exam.accessType;
-            onAssignAccessTypeChange();
-            if (exam.allowedUsers && Array.isArray(exam.allowedUsers)) {
-              assignExamUserPickerTemp = new Set(exam.allowedUsers);
-              // 并行加载用户真实姓名
-              fetch('/api/data/users')
-                .then(r => r.json())
-                .then(users => {
-                  const userMap = new Map(users.map(u => [String(u.id), u.real_name || u.username || '未知']));
-                  assignExamUserPickerData = exam.allowedUsers.map(uId => ({
-                    id: uId,
-                    name: userMap.get(String(uId)) || ('学员' + uId)
-                  }));
-                  renderAssignAllowedUsers();
-                }).catch(() => {
-                  assignExamUserPickerData = exam.allowedUsers.map(uId => ({ id: uId, name: '学员' + uId }));
-                  renderAssignAllowedUsers();
-                });
-            }
-          }
-        }).catch(() => {});
-
-      document.getElementById('examAssignOverlay').classList.remove('hidden');
-      document.getElementById('examAssignModal').classList.remove('translate-x-full');
+    function onExamAccessTypeChange() {
+      const accessType = document.getElementById('examAccessType').value;
+      document.getElementById('examAllowedUsersContainer').classList.toggle('hidden', accessType !== 'restricted' && accessType !== 'import');
+      document.getElementById('examImportUsersContainer').classList.toggle('hidden', accessType !== 'import');
     }
 
-    function closeExamAssignModal() {
-      document.getElementById('examAssignOverlay').classList.add('hidden');
-      document.getElementById('examAssignModal').classList.add('translate-x-full');
-      assignExamUserPickerData = [];
-      assignExamUserPickerTemp = new Set();
-    }
-
-    function onAssignAccessTypeChange() {
-      const container = document.getElementById('assignAllowedUsersContainer');
-      const selectVal = document.getElementById('assignAccessType').value;
-      container.classList.toggle('hidden', selectVal !== 'restricted');
-    }
-
-    function renderAssignAllowedUsers() {
-      const listEl = document.getElementById('assignAllowedUsersList');
-      const countEl = document.getElementById('assignAllowedUsersCount');
-      if (!listEl || !countEl) return;
-      const users = assignExamUserPickerData.filter(u => assignExamUserPickerTemp.has(u.id));
-      countEl.textContent = users.length;
-      if (!users.length) {
-        listEl.innerHTML = '<p class="text-sm text-slate-400 w-full">未选择学员</p>';
-        return;
-      }
-      listEl.innerHTML = users.map(u =>
-        `<span class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs">
-          ${escHtml(u.name)}
-          <button type="button" onclick="removeAssignUser('${u.id}')" class="text-indigo-400 hover:text-red-500">&times;</button>
-        </span>`
-      ).join('');
-    }
-
-    function removeAssignUser(userId) {
-      assignExamUserPickerTemp.delete(userId);
-      renderAssignAllowedUsers();
-    }
-
-    async function saveExamAssign() {
-      const id = document.getElementById('assignExamId').value;
-      const startTime = document.getElementById('assignStartTime').value;
-      const endTime = document.getElementById('assignEndTime').value;
-      const accessType = document.getElementById('assignAccessType').value;
-
-      if (startTime && endTime && new Date(startTime) >= new Date(endTime)) {
-        toast('开始时间必须早于截止时间', 'warning');
-        return;
-      }
-
-      const payload = {};
-      if (startTime) payload.startTime = new Date(startTime).toISOString();
-      if (endTime) payload.endTime = new Date(endTime).toISOString();
-      payload.accessType = accessType;
-      payload.allowedUsers = accessType === 'restricted' ? Array.from(assignExamUserPickerTemp) : null;
-
+    async function onExamImportUsersFile() {
+      const input = document.getElementById('examImportUsersFile');
+      const resultEl = document.getElementById('examImportUsersResult');
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
       try {
-        const res = await fetch('/api/exams/' + id, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+        const buf = await file.arrayBuffer();
+        const workbook = XLSX.read(buf, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const names = [];
+        rows.forEach(row => {
+          row.forEach(cell => {
+            const v = cell !== undefined && cell !== null ? String(cell).trim() : '';
+            if (v) names.push(v);
+          });
         });
-        const data = await res.json();
-        if (data.success) {
-          closeExamAssignModal();
-          loadExamMgmtList();
-          toast('任务指派已保存');
-        } else {
-          toast(data.message || '保存失败', 'error');
+        if (!names.length) {
+          resultEl.innerHTML = '<p class="text-xs text-red-500">未读取到任何姓名</p>';
+          resultEl.classList.remove('hidden');
+          return;
         }
+        const res = await fetch('/api/data/users');
+        const users = await res.json();
+        const matched = [];
+        const unmatched = [];
+        const seen = new Set();
+        names.forEach(name => {
+          if (seen.has(name)) return;
+          seen.add(name);
+          const user = users.find(u => {
+            const n = (u.real_name || u.username || '').trim();
+            return n === name;
+          });
+          if (user) matched.push({ id: String(user.id), name: user.real_name || user.username });
+          else unmatched.push(name);
+        });
+        matched.forEach(u => examUserPickerTemp.add(u.id));
+        examUserPickerData.forEach(u => {
+          u.selected = examUserPickerTemp.has(String(u.id));
+        });
+        renderExamAllowedUsers();
+        let html = `<p class="text-xs text-emerald-600">成功导入 ${matched.length} 人</p>`;
+        if (unmatched.length) {
+          html += `<p class="text-xs text-amber-600 mt-0.5">未匹配 ${unmatched.length} 人：${escHtml(unmatched.slice(0, 5).join('、'))}${unmatched.length > 5 ? ' 等' : ''}</p>`;
+        }
+        resultEl.innerHTML = html;
+        resultEl.classList.remove('hidden');
       } catch (e) {
-        toast('保存失败: ' + e.message, 'error');
+        resultEl.innerHTML = '<p class="text-xs text-red-500">读取失败：' + escHtml(e.message) + '</p>';
+        resultEl.classList.remove('hidden');
       }
     }
 
@@ -10350,6 +10307,32 @@
               type: q.type || 'single'
             }));
             renderSelectedQuestions();
+          }
+          // 恢复任务指派
+          if (exam.startTime) document.getElementById('examStartTime').value = new Date(exam.startTime).toISOString().slice(0, 16);
+          if (exam.endTime) document.getElementById('examEndTime').value = new Date(exam.endTime).toISOString().slice(0, 16);
+          let accessType = exam.accessType || 'none';
+          if (accessType === 'open' || accessType === 'public') accessType = 'public';
+          else if (accessType === 'restricted') accessType = exam.allowedUsers && exam.allowedUsers.length ? 'restricted' : 'none';
+          else accessType = 'none';
+          document.getElementById('examAccessType').value = accessType;
+          onExamAccessTypeChange();
+          if (exam.allowedUsers && Array.isArray(exam.allowedUsers)) {
+            examUserPickerTemp = new Set(exam.allowedUsers.map(uid => String(uid)));
+            fetch('/api/data/users')
+              .then(r => r.json())
+              .then(users => {
+                const userMap = new Map(users.map(u => [String(u.id), u.real_name || u.username || '未知']));
+                examUserPickerData = exam.allowedUsers.map(uId => ({
+                  id: uId,
+                  name: userMap.get(String(uId)) || ('学员' + uId),
+                  selected: true
+                }));
+                renderExamAllowedUsers();
+              }).catch(() => {
+                examUserPickerData = exam.allowedUsers.map(uId => ({ id: uId, name: '学员' + uId, selected: true }));
+                renderExamAllowedUsers();
+              });
           }
         }
       } catch (e) { console.error(e); }
@@ -10436,6 +10419,13 @@
       }
       const attemptsPolicy = getBtnGroupValue('examAttempts') || 'unlimited';
       const screenSwitchPolicy = getBtnGroupValue('examScreenSwitch') || 'unlimited';
+      const accessTypeRaw = document.getElementById('examAccessType').value;
+      const startTime = document.getElementById('examStartTime').value;
+      const endTime = document.getElementById('examEndTime').value;
+      const accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
+      const allowedUsers = (accessTypeRaw === 'restricted' || accessTypeRaw === 'import')
+        ? Array.from(examUserPickerTemp).map(id => isNaN(Number(id)) ? id : Number(id))
+        : [];
       const payload = {
         title: document.getElementById('examTitle').value.trim(),
         description: document.getElementById('examDesc').value.trim(),
@@ -10461,7 +10451,12 @@
         viewRank: getBtnGroupValue('examViewRank') || 'after_submit',
         questions: selectedExamQuestions,
         paperId: paperId || null,
-        paperName: paperName
+        paperName: paperName,
+        // 任务指派
+        startTime: startTime ? new Date(startTime).toISOString() : null,
+        endTime: endTime ? new Date(endTime).toISOString() : null,
+        accessType: accessType,
+        allowedUsers: allowedUsers.length ? allowedUsers : null
       };
       try {
         let res;
