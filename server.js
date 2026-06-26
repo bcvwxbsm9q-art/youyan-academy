@@ -95,7 +95,16 @@ const coursewareStorage = multer.diskStorage({
 
 const coursewareUpload = multer({
   storage: coursewareStorage,
-  limits: { fileSize: 500 * 1024 * 1024 }
+  limits: { fileSize: 500 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedExts = ['.pdf', '.ppt', '.pptx', '.doc', '.docx', '.xls', '.xlsx', '.zip', '.rar', '.txt', '.csv'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedExts.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`不支持的课件格式: ${ext}`), false);
+    }
+  }
 });
 
 // 数据存储文件路径
@@ -1279,9 +1288,20 @@ app.delete('/api/training/:id/courseware/:fileName', (req, res) => {
   const event = data.training_events?.find(e => e.id === trainingId);
   if (!event) return res.status(404).json({ success: false, error: '培训不存在' });
   if (!event.coursewareFiles) event.coursewareFiles = [];
+  const removed = event.coursewareFiles.filter(f => {
+    const parts = f.url.split('/');
+    return parts[parts.length - 1] === fileName;
+  });
   event.coursewareFiles = event.coursewareFiles.filter(f => {
     const parts = f.url.split('/');
     return parts[parts.length - 1] !== fileName;
+  });
+  // 同步删除磁盘文件
+  removed.forEach(f => {
+    const diskPath = path.join(uploadsDir, 'training', String(trainingId), fileName);
+    if (fs.existsSync(diskPath)) {
+      try { fs.unlinkSync(diskPath); } catch (e) { console.error('删除课件文件失败:', e.message); }
+    }
   });
   if (writeData(data)) {
     res.json({ success: true, files: event.coursewareFiles });

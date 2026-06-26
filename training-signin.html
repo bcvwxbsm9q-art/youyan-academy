@@ -105,6 +105,28 @@
       try { return s ? JSON.parse(s) : null; } catch(e) { return null; }
     }
 
+    function escHtml(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatFileSize(bytes) {
+      if (!bytes || bytes <= 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let i = 0;
+      let size = bytes;
+      while (size >= 1024 && i < units.length - 1) {
+        size /= 1024;
+        i++;
+      }
+      return size.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+    }
+
     function toast(msg, type) {
       const el = document.createElement('div');
       el.className = 'toast ' + (type || 'success');
@@ -118,10 +140,21 @@
       return Array.from(inputs).map(i => i.value).join('');
     }
 
+    function canAccessTraining(event, currentUser) {
+      if (!event || !currentUser) return false;
+      const accessType = event.accessType;
+      // 兼容旧数据：未设置 accessType 时默认全员开放
+      if (accessType === 'none') return false;
+      if (!accessType || accessType === 'all' || accessType === 'public' || accessType === 'open') return true;
+      const allowed = event.allowedUsers || [];
+      if (allowed.length === 0) return false;
+      return allowed.some(uid => String(uid) === String(currentUser.id));
+    }
+
     async function loadTraining() {
       user = getUser();
       if (!user) {
-        showError('请先登录', '登录后即可签到');
+        showError('请先登录', '登录后即可查看培训任务');
         return;
       }
       if (!trainingId) {
@@ -136,8 +169,8 @@
           return;
         }
         trainingData = event;
-        if (!event.signinEnabled) {
-          showError('签到未开启', '该培训尚未开启签到功能');
+        if (!canAccessTraining(event, user)) {
+          showError('暂无权限', '该培训暂未指派给您');
           return;
         }
         renderTraining();
@@ -148,7 +181,7 @@
 
     function renderTraining() {
       document.getElementById('loading-state').classList.add('hidden');
-      document.getElementById('signin-form').classList.remove('hidden');
+      document.getElementById('task-form').classList.remove('hidden');
 
       const e = trainingData;
       const start = e.startTime ? (e.startTime.includes('T') ? e.startTime.replace('T', ' ') : e.startTime) : '-';
@@ -160,30 +193,49 @@
             <i class="fa fa-graduation-cap text-white text-lg"></i>
           </div>
           <div class="flex-1 min-w-0">
-            <h2 class="font-bold text-slate-800 text-sm mb-1">${e.name || '未命名培训'}</h2>
-            <p class="text-xs text-slate-500 mb-1"><i class="fa fa-tag mr-1 text-slate-400"></i>${e.project || '-'} · ${e.instructor || '-'}</p>
-            <p class="text-xs text-slate-500 mb-1"><i class="fa fa-map-marker mr-1 text-slate-400"></i>${e.location || '-'}</p>
+            <h2 class="font-bold text-slate-800 text-sm mb-1">${escHtml(e.name || '未命名培训')}</h2>
+            <p class="text-xs text-slate-500 mb-1"><i class="fa fa-tag mr-1 text-slate-400"></i>${escHtml(e.project || '-')} · ${escHtml(e.instructor || '-')}</p>
+            <p class="text-xs text-slate-500 mb-1"><i class="fa fa-map-marker mr-1 text-slate-400"></i>${escHtml(e.location || '-')}</p>
             <p class="text-xs text-slate-500"><i class="fa fa-clock-o mr-1 text-slate-400"></i>${start} ~ ${end}</p>
           </div>
         </div>
       `;
 
-      // 快捷入口：调研 + 考试
-      const links = [];
-      if (e.linkedSurveyId) {
-        links.push(`
-          <a href="survey.html?id=${e.linkedSurveyId}&trainingId=${e.id}&stageIdx=0" class="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-slate-100 hover:border-blue-200 transition">
-            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <i class="fa fa-poll text-blue-500"></i>
-            </div>
-            <div class="flex-1">
-              <p class="text-sm font-semibold text-slate-800">填写满意度调研</p>
-              <p class="text-xs text-slate-400">培训结束后请填写反馈问卷</p>
-            </div>
-            <i class="fa fa-chevron-right text-slate-300 text-xs"></i>
-          </a>
-        `);
+      // 签到区
+      const signinSection = document.getElementById('signin-section');
+      if (e.signinEnabled) {
+        signinSection.classList.remove('hidden');
+      } else {
+        signinSection.classList.add('hidden');
       }
+
+      // 任务入口
+      document.getElementById('task-links').innerHTML = buildTaskLinks(e);
+    }
+
+    function buildTaskLinks(e) {
+      const links = [];
+
+      // 课件下载
+      if (e.coursewareFiles && e.coursewareFiles.length) {
+        e.coursewareFiles.forEach(file => {
+          const iconClass = getCoursewareIcon(file.name);
+          links.push(`
+            <a href="${file.url}" target="_blank" class="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-slate-100 hover:border-green-200 transition">
+              <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                <i class="fa ${iconClass} text-green-500"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-slate-800 truncate">${escHtml(file.name)}</p>
+                <p class="text-xs text-slate-400">${formatFileSize(file.size)} · 点击下载/查看</p>
+              </div>
+              <i class="fa fa-chevron-right text-slate-300 text-xs"></i>
+            </a>
+          `);
+        });
+      }
+
+      // 考试
       if (e.linkedExamId) {
         links.push(`
           <a href="exam.html?id=${e.linkedExamId}" class="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-slate-100 hover:border-amber-200 transition">
@@ -198,7 +250,39 @@
           </a>
         `);
       }
-      document.getElementById('quick-links').innerHTML = links.join('');
+
+      // 调研
+      if (e.linkedSurveyId) {
+        links.push(`
+          <a href="survey.html?id=${e.linkedSurveyId}&trainingId=${e.id}&stageIdx=0" class="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-slate-100 hover:border-blue-200 transition">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <i class="fa fa-poll text-blue-500"></i>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-slate-800">填写满意度调研</p>
+              <p class="text-xs text-slate-400">培训结束后请填写反馈问卷</p>
+            </div>
+            <i class="fa fa-chevron-right text-slate-300 text-xs"></i>
+          </a>
+        `);
+      }
+
+      if (links.length === 0) {
+        return `<p class="text-center text-sm text-slate-400 py-6">暂无任务内容</p>`;
+      }
+      return links.join('');
+    }
+
+    function getCoursewareIcon(fileName) {
+      if (!fileName) return 'fa-file-o';
+      const ext = fileName.split('.').pop().toLowerCase();
+      if (['pdf'].includes(ext)) return 'fa-file-pdf-o';
+      if (['ppt', 'pptx'].includes(ext)) return 'fa-file-powerpoint-o';
+      if (['doc', 'docx'].includes(ext)) return 'fa-file-word-o';
+      if (['xls', 'xlsx', 'csv'].includes(ext)) return 'fa-file-excel-o';
+      if (['zip', 'rar', '7z'].includes(ext)) return 'fa-file-archive-o';
+      if (['txt', 'md'].includes(ext)) return 'fa-file-text-o';
+      return 'fa-file-o';
     }
 
     function showError(title, desc) {
@@ -240,31 +324,13 @@
     }
 
     function showSuccess() {
-      document.getElementById('signin-form').classList.add('hidden');
+      document.getElementById('task-form').classList.add('hidden');
       document.getElementById('success-state').classList.remove('hidden');
-
-      const e = trainingData;
-      const links = [];
-      if (e.linkedSurveyId) {
-        links.push(`
-          <a href="survey.html?id=${e.linkedSurveyId}&trainingId=${e.id}&stageIdx=0" class="block w-full py-3 bg-blue-500 text-white rounded-xl font-semibold text-sm hover:bg-blue-600 transition text-center">
-            <i class="fa fa-poll mr-2"></i>去填写满意度调研
-          </a>
-        `);
-      }
-      if (e.linkedExamId) {
-        links.push(`
-          <a href="exam.html?id=${e.linkedExamId}" class="block w-full py-3 bg-amber-500 text-white rounded-xl font-semibold text-sm hover:bg-amber-600 transition text-center">
-            <i class="fa fa-file-alt mr-2"></i>去参加考试
-          </a>
-        `);
-      }
-      links.push(`
+      document.getElementById('success-links').innerHTML = buildTaskLinks(trainingData) + `
         <a href="center.html" class="block w-full py-3 bg-slate-100 text-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-200 transition text-center">
           <i class="fa fa-home mr-2"></i>返回个人中心
         </a>
-      `);
-      document.getElementById('success-links').innerHTML = links.join('');
+      `;
     }
 
     // 签到码输入框交互
