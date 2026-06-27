@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -545,7 +545,10 @@
             </div>
             <!-- 分析标签页导航 -->
             <div class="flex items-center bg-slate-50 rounded-xl p-1 gap-1" id="analytics-tabs">
-              <button onclick="switchAnalyticsTab('enroll')" id="analytics-tab-enroll" class="analytics-tab-btn active px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+              <button onclick="switchAnalyticsTab('overview')" id="analytics-tab-overview" class="analytics-tab-btn active px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+                <i class="fas fa-chart-pie"></i>数据总览
+              </button>
+              <button onclick="switchAnalyticsTab('enroll')" id="analytics-tab-enroll" class="analytics-tab-btn px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-slate-600 transition">
                 <i class="fas fa-users"></i>报名分析
               </button>
               <button onclick="switchAnalyticsTab('survey')" id="analytics-tab-survey" class="analytics-tab-btn px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-slate-600 transition">
@@ -1847,7 +1850,7 @@
   </div>
 
   <!-- ========== 试卷导入试题弹窗 ========== -->
-  <div id="paperImportQuestionsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+  <div id="paperImportQuestionsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-md m-4 shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100">
         <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-upload text-indigo-500 mr-2"></i>导入试题</h3>
@@ -1927,10 +1930,11 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">关联试卷 <span class="text-red-500">*</span></label>
-              <select id="examPaperId" onchange="onExamPaperChange()" required
-                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white text-sm">
-                <option value="">请选择试卷</option>
-              </select>
+              <input type="hidden" id="examPaperId" value="">
+              <div onclick="openExamPaperPicker()" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-white cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition flex items-center justify-between group">
+                <span id="exam-paper-display" class="text-sm text-slate-500 truncate">请选择试卷</span>
+                <span class="text-xs text-indigo-500 font-medium group-hover:text-indigo-600">选择试卷</span>
+              </div>
               <p class="text-xs text-slate-400 mt-1">选择试卷后将自动加载题目和分数配置</p>
             </div>
             <div>
@@ -1951,6 +1955,17 @@
                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none">
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- 题目配置 -->
+        <div class="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-xl p-4 mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-sm font-semibold text-indigo-800"><i class="fas fa-list-ol mr-1.5"></i>题目配置</h4>
+            <span id="examQuestionCountHint" class="text-xs text-slate-500">已选 0 题</span>
+          </div>
+          <div id="examSelectedQuestions" class="space-y-2 max-h-[300px] overflow-y-auto">
+            <p class="text-sm text-slate-400 text-center py-4">请选择关联试卷或手动添加题目</p>
           </div>
         </div>
 
@@ -2091,7 +2106,7 @@
         </div>
 
         <!-- 任务指派 -->
-        <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 mb-4">
+        <div id="examAssignmentSection" class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 mb-4">
           <h4 class="text-sm font-semibold text-emerald-800 mb-4"><i class="fas fa-tasks mr-1.5"></i>任务指派</h4>
           <div class="space-y-4">
             <!-- 考试时间（同一行） -->
@@ -2369,8 +2384,68 @@
     </div>
   </div>
 
+  <!-- ========== 试卷选择器弹窗（考试安排 / 培训管理共用） ========== -->
+  <div id="paperPickerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden m-4 flex flex-col shadow-2xl">
+      <div class="flex justify-between items-center p-5 border-b border-slate-100 flex-shrink-0">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-file-alt mr-2 text-indigo-500"></i>关联试卷</h3>
+        <button onclick="closePaperPickerModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <div class="px-5 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0 flex gap-3 flex-wrap items-center justify-between">
+        <input type="text" id="paper-picker-search" placeholder="根据试卷名称搜索" oninput="onPaperPickerSearch(this)"
+          class="flex-1 min-w-[200px] px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm bg-white">
+        <button onclick="createPaperFromPicker()" class="px-4 py-2 bg-indigo-500 text-white rounded-xl text-sm hover:bg-indigo-600 transition flex items-center gap-1.5">
+          <i class="fas fa-plus"></i>新建试卷
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-0">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 sticky top-0 z-10">
+            <tr>
+              <th class="px-5 py-3 text-left font-medium text-slate-600 w-12">选择</th>
+              <th class="px-5 py-3 text-left font-medium text-slate-600">试卷名称</th>
+              <th class="px-5 py-3 text-left font-medium text-slate-600">类型</th>
+              <th class="px-5 py-3 text-left font-medium text-slate-600">创建时间</th>
+              <th class="px-5 py-3 text-left font-medium text-slate-600">创建人</th>
+            </tr>
+          </thead>
+          <tbody id="paper-picker-list" class="divide-y divide-slate-100">
+            <!-- JS rendered -->
+          </tbody>
+        </table>
+        <div id="paper-picker-empty" class="hidden text-center py-16 text-slate-400">
+          <i class="fas fa-folder-open text-4xl mb-3 block opacity-30"></i>
+          <p>暂无试卷</p>
+          <p class="text-xs mt-1">点击右上角「新建试卷」开始创建</p>
+        </div>
+      </div>
+      <div class="px-5 py-3 border-t border-slate-100 bg-slate-50 flex-shrink-0 flex items-center justify-between">
+        <div id="paper-picker-pagination" class="flex items-center gap-2 text-sm text-slate-600">
+          <!-- pagination -->
+        </div>
+        <div class="flex gap-3">
+          <button onclick="closePaperPickerModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-white transition bg-white text-slate-600">取消</button>
+          <button onclick="confirmPaperPicker()" class="px-5 py-2 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition">确定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 行内试卷编辑器弹窗（从考试/培训弹窗内新建试卷时使用） ========== -->
+  <div id="inlinePaperEditorModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-6xl max-h-[92vh] overflow-hidden m-4 flex flex-col shadow-2xl">
+      <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 flex-shrink-0 bg-white">
+        <h3 class="text-base font-bold text-slate-800"><i class="fas fa-file-alt mr-2 text-indigo-500"></i>编辑试卷</h3>
+        <p class="text-xs text-slate-400">完成编辑后点击「返回」，即可回到关联试卷弹窗</p>
+      </div>
+      <div id="inline-paper-editor-body" class="flex-1 overflow-y-auto bg-slate-50">
+        <!-- unifiedEditorContainer 会被移动到这里 -->
+      </div>
+    </div>
+  </div>
+
   <!-- ========== 试卷题目选择器弹窗 ========== -->
-  <div id="paperQuestionPickerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] items-center justify-center hidden">
+  <div id="paperQuestionPickerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden m-4 flex flex-col shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
         <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-check-square mr-2 text-indigo-500"></i>从题库选择题目</h3>
@@ -4878,8 +4953,9 @@
     };
 
     let analyticsTrainingId = null;
-    let analyticsCurrentTab = 'enroll';
+    let analyticsCurrentTab = 'overview';
     let _analyticsEnrollData = null;
+    let _analyticsOverviewData = null;
     let _analyticsSurveyData = null;
     let _analyticsExamData = null;
     let _analyticsAttendanceData = null;
@@ -4915,7 +4991,7 @@
 
     function openTrainingAnalytics(trainingId) {
       analyticsTrainingId = trainingId;
-      analyticsCurrentTab = 'enroll';
+      analyticsCurrentTab = 'overview';
       const event = data.training.find(x => x.id === trainingId);
       const name = event ? event.name : '培训';
       const project = event ? event.project : '';
@@ -4923,7 +4999,7 @@
       document.getElementById('analytics-training-name').textContent = name;
       document.getElementById('analytics-training-sub').textContent = [project, instructor].filter(Boolean).join(' · ');
       switchTrainingView('analytics');
-      switchAnalyticsTab('enroll');
+      switchAnalyticsTab('overview');
     }
 
     function switchAnalyticsTab(tab) {
@@ -4940,10 +5016,329 @@
       }
       // 渲染对应内容
       const tid = analyticsTrainingId;
-      if (tab === 'enroll') renderAnalyticsEnroll(tid);
+      if (tab === 'overview') renderAnalyticsOverview(tid);
+      else if (tab === 'enroll') renderAnalyticsEnroll(tid);
       else if (tab === 'survey') renderAnalyticsSurvey(tid);
       else if (tab === 'exam') renderAnalyticsExam(tid);
       else if (tab === 'attendance') renderAnalyticsAttendance(tid);
+    }
+
+    // ========== 数据分析 - 数据总览 ==========
+    function renderOverviewPct(pct) {
+      if (pct === null || pct === undefined) return '<span class="text-slate-300">-</span>';
+      const cls = pct >= 100 ? 'bg-emerald-50 text-emerald-600' : (pct > 0 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-500');
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${cls}">${pct}%</span>`;
+    }
+
+    async function renderAnalyticsOverview(trainingId) {
+      const container = document.getElementById('analytics-content');
+      container.innerHTML = '<div class="flex items-center justify-center py-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div><span class="ml-3 text-slate-500">加载数据总览...</span></div>';
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/overview');
+        const result = await res.json();
+        const overview = result.data || {};
+        const summary = overview.summary || {};
+        const users = overview.users || [];
+        const training = overview.training || {};
+        _analyticsOverviewData = { overview, trainingId };
+
+        const total = summary.total || 0;
+        const avgCompletionRate = summary.avgCompletionRate ?? 0;
+        const signinRate = summary.signinRate ?? 0;
+        const surveyRate = summary.surveyRate ?? 0;
+        const examPassRate = summary.examPassRate ?? 0;
+        const signinEnabled = summary.signinEnabled;
+        const surveyEnabled = summary.surveyEnabled;
+        const examEnabled = summary.examEnabled;
+
+        // 汇总卡片
+        const summaryCards = `
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center"><i class="fas fa-users text-indigo-500 text-sm"></i></div>
+                <span class="text-xs text-indigo-600/70">参与人数</span>
+              </div>
+              <p class="text-2xl font-bold text-indigo-700">${total}</p>
+            </div>
+            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i class="fas fa-chart-line text-emerald-500 text-sm"></i></div>
+                <span class="text-xs text-emerald-600/70">平均完成率</span>
+              </div>
+              <p class="text-2xl font-bold text-emerald-700">${avgCompletionRate}%</p>
+            </div>
+            ${signinEnabled ? `
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><i class="fas fa-clipboard-check text-blue-500 text-sm"></i></div>
+                <span class="text-xs text-blue-600/70">考勤完成率</span>
+              </div>
+              <p class="text-2xl font-bold text-blue-700">${signinRate}%</p>
+            </div>` : ''}
+            ${surveyEnabled ? `
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center"><i class="fas fa-poll text-purple-500 text-sm"></i></div>
+                <span class="text-xs text-purple-600/70">调研完成率</span>
+              </div>
+              <p class="text-2xl font-bold text-purple-700">${surveyRate}%</p>
+            </div>` : ''}
+            ${examEnabled ? `
+            <div class="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><i class="fas fa-file-alt text-amber-500 text-sm"></i></div>
+                <span class="text-xs text-amber-600/70">考试通过率</span>
+              </div>
+              <p class="text-2xl font-bold text-amber-700">${examPassRate}%</p>
+            </div>` : ''}
+          </div>`;
+
+        // 学员明细行
+        const rows = users.length > 0
+          ? users.map((u, i) => {
+            const seed = encodeURIComponent(u.userName || u.userId);
+            const avatarUrl = u.avatar && u.avatar.startsWith('http') ? u.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+            const sourceLabel = u.source === 'assigned'
+              ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-cyan-50 text-cyan-600">任务指派</span>'
+              : (u.source === 'self'
+                ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-600">主动报名</span>'
+                : '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500">未报名</span>');
+            const isIncomplete = u.completionRate < 100;
+            const examTitle = u.examPassed ? '已通过' : (u.examScore !== null ? `得分 ${u.examScore}，未通过` : '未参加');
+            return `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+              <td class="px-4 py-3 text-sm text-slate-500">${i + 1}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2.5">
+                  <img src="${avatarUrl}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm" />
+                  <span class="text-sm font-medium text-slate-800">${u.userName || '-'}</span>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-600">${u.department || '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${u.position || '-'}</td>
+              <td class="px-4 py-3">${sourceLabel}</td>
+              <td class="px-4 py-3">${renderOverviewPct(u.signinPct)}</td>
+              <td class="px-4 py-3">${renderOverviewPct(u.surveyPct)}</td>
+              <td class="px-4 py-3" title="${examTitle}">${renderOverviewPct(u.examPct)}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-16 bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div class="h-full ${u.completionRate >= 100 ? 'bg-emerald-500' : (u.completionRate > 0 ? 'bg-amber-500' : 'bg-red-400')} rounded-full transition-all duration-500" style="width: ${u.completionRate}%"></div>
+                  </div>
+                  <span class="text-xs font-medium ${u.completionRate >= 100 ? 'text-emerald-600' : (u.completionRate > 0 ? 'text-amber-600' : 'text-red-500')}">${u.completionRate}%</span>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-end gap-2">
+                  <button onclick="remindUserTraining(${trainingId}, ${u.userId}, '${(u.userName || '').replace(/'/g, '\\\'')}')" class="px-2.5 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-medium hover:bg-indigo-100 transition" title="发送消息中心提醒">
+                    <i class="fas fa-bell mr-1"></i>催促
+                  </button>
+                  ${isIncomplete ? `
+                  <button onclick="delayUserTraining(${trainingId}, ${u.userId}, '${(u.userName || '').replace(/'/g, '\\\'')}')" class="px-2.5 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-medium hover:bg-amber-100 transition" title="延期并提醒">
+                    <i class="fas fa-clock mr-1"></i>延期
+                  </button>` : ''}
+                </div>
+              </td>
+            </tr>`;
+          }).join('')
+          : `<tr><td colspan="10" class="px-4 py-12 text-center text-slate-400">
+              <i class="fas fa-chart-pie text-3xl mb-3 block text-slate-300"></i>
+              <p>暂无参与人员</p>
+            </td></tr>`;
+
+        // 未完成的学员数量
+        const incompleteCount = users.filter(u => u.completionRate < 100).length;
+
+        container.innerHTML = `
+          <div class="p-6">
+            <!-- 汇总卡片 -->
+            ${summaryCards}
+
+            <!-- 学员明细 -->
+            <div class="mt-6">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <h4 class="text-sm font-semibold text-slate-700"><i class="fas fa-list-ul text-indigo-400 mr-2"></i>学员完成明细</h4>
+                  ${incompleteCount > 0 ? `<span class="px-2 py-0.5 rounded-full bg-red-50 text-red-500 text-[10px] font-medium">${incompleteCount} 人未完成</span>` : ''}
+                </div>
+                <div class="flex items-center gap-2">
+                  ${incompleteCount > 0 ? `
+                  <button onclick="remindAllIncomplete(${trainingId})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-100 transition">
+                    <i class="fas fa-bullhorn mr-1"></i>批量催促
+                  </button>
+                  <button onclick="delayAllTraining(${trainingId})" class="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-xs font-medium hover:bg-amber-100 transition">
+                    <i class="fas fa-calendar-plus mr-1"></i>批量延期
+                  </button>` : ''}
+                  <button onclick="exportAnalyticsOverview()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
+                    <i class="fas fa-file-excel mr-1"></i>导出
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full">
+                  <thead class="bg-slate-50"><tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">岗位</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">报名情况</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">考勤</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">调研</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">考试</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">完成率</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500">操作</th>
+                  </tr></thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      } catch (err) {
+        container.innerHTML = '<div class="text-center py-20 text-slate-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p>加载数据总览失败</p></div>';
+      }
+    }
+
+    async function sendTrainingNotification(trainingId, userIds, type = 'remind') {
+      const event = data.training.find(x => x.id === trainingId);
+      const name = event ? event.name : '培训';
+      const title = type === 'delay' ? '培训学习时间延期' : '培训学习提醒';
+      const content = type === 'delay'
+        ? `您参与的「${name}」学习时间已延期，请合理安排时间尽快完成学习任务。`
+        : `您报名的「${name}」尚未完成，请尽快完成学习任务。`;
+      let sent = 0;
+      for (const userId of userIds) {
+        try {
+          const res = await fetch(API + '/notifications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, title, content, type: 'training', trainingId })
+          });
+          if (res.ok) sent++;
+        } catch (e) { /* ignore */ }
+      }
+      return sent;
+    }
+
+    async function remindUserTraining(trainingId, userId, userName) {
+      const sent = await sendTrainingNotification(trainingId, [userId], 'remind');
+      toast(sent > 0 ? `已向 ${userName || '该学员'} 发送催促提醒` : '发送提醒失败', sent > 0 ? 'success' : 'error');
+    }
+
+    async function remindAllIncomplete(trainingId) {
+      if (!_analyticsOverviewData || !_analyticsOverviewData.overview) return;
+      const users = _analyticsOverviewData.overview.users || [];
+      const incomplete = users.filter(u => u.completionRate < 100);
+      if (incomplete.length === 0) { toast('没有未完成的学员', 'warning'); return; }
+      if (!confirm(`确定向 ${incomplete.length} 名未完成学员发送催促提醒？`)) return;
+      const sent = await sendTrainingNotification(trainingId, incomplete.map(u => u.userId), 'remind');
+      toast(`已向 ${sent} 名学员发送催促提醒`);
+    }
+
+    function openDelayModal(trainingId, userIds) {
+      const event = data.training.find(x => x.id === trainingId);
+      const name = event ? event.name : '培训';
+      const currentEnd = event && event.endTime ? new Date(event.endTime).toLocaleString('zh-CN', { hour12: false }) : '未设置';
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">延期学习</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="confirmDelayTraining(event, ${trainingId})" class="p-6 space-y-4">
+            <div class="bg-slate-50 rounded-xl p-4 text-sm">
+              <p class="text-slate-500 mb-1">培训名称</p>
+              <p class="font-medium text-slate-800">${name}</p>
+              <p class="text-slate-500 mt-2 mb-1">当前截止时间</p>
+              <p class="font-medium text-slate-800">${currentEnd}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">延期天数 <span class="text-red-500">*</span></label>
+              <div class="flex items-center gap-2">
+                <input type="number" id="delay-days" min="1" max="365" value="3" required class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500">
+                <span class="text-sm text-slate-500">天</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="delay-notify" checked class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500">
+              <label for="delay-notify" class="text-sm text-slate-600">同时发送延期通知给学员</label>
+            </div>
+            <input type="hidden" id="delay-target-ids" value="${userIds.join(',')}">
+            <div class="flex justify-end space-x-3 pt-2">
+              <button type="button" onclick="closeModal()" class="px-5 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 text-sm">取消</button>
+              <button type="submit" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-medium transition">确认延期</button>
+            </div>
+          </form>
+        </div>`);
+    }
+
+    function delayUserTraining(trainingId, userId, userName) {
+      openDelayModal(trainingId, [userId]);
+    }
+
+    function delayAllTraining(trainingId) {
+      if (!_analyticsOverviewData || !_analyticsOverviewData.overview) return;
+      const users = _analyticsOverviewData.overview.users || [];
+      const incomplete = users.filter(u => u.completionRate < 100);
+      if (incomplete.length === 0) { toast('没有需要延期的学员', 'warning'); return; }
+      openDelayModal(trainingId, incomplete.map(u => u.userId));
+    }
+
+    async function confirmDelayTraining(e, trainingId) {
+      e.preventDefault();
+      const days = parseInt(document.getElementById('delay-days').value) || 0;
+      if (days <= 0) { toast('请输入有效的延期天数', 'error'); return; }
+      const event = data.training.find(x => x.id === trainingId);
+      const currentEnd = event && event.endTime ? event.endTime : new Date().toISOString().slice(0, 16);
+      const newEnd = new Date(new Date(currentEnd).getTime() + days * 24 * 60 * 60 * 1000);
+      const newEndStr = newEnd.toISOString().slice(0, 16);
+      try {
+        const res = await fetch(API + '/training/' + trainingId, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endTime: newEndStr })
+        });
+        const result = await res.json();
+        if (!result.success) { toast(result.error || '延期失败', 'error'); return; }
+        if (event) event.endTime = newEndStr;
+        const notify = document.getElementById('delay-notify').checked;
+        const idsStr = document.getElementById('delay-target-ids').value;
+        const userIds = idsStr ? idsStr.split(',').map(id => id.trim()).filter(Boolean) : [];
+        if (notify && userIds.length > 0) {
+          const sent = await sendTrainingNotification(trainingId, userIds, 'delay');
+          toast(`已延期 ${days} 天，并通知 ${sent} 名学员`);
+        } else {
+          toast(`已延期 ${days} 天`);
+        }
+        closeModal();
+      } catch (err) {
+        toast('延期操作失败', 'error');
+      }
+    }
+
+    function exportAnalyticsOverview() {
+      if (!_analyticsOverviewData || !_analyticsOverviewData.overview) { toast('暂无数据可导出', 'warning'); return; }
+      const event = data.training.find(x => x.id === _analyticsOverviewData.trainingId);
+      const name = event ? event.name : '培训';
+      const users = _analyticsOverviewData.overview.users || [];
+      const headers = ['序号', '姓名', '部门', '岗位', '报名来源', '考勤', '调研', '考试', '完成率'];
+      const rows = users.map((u, i) => [
+        i + 1,
+        u.userName || '-',
+        u.department || '-',
+        u.position || '-',
+        u.source === 'assigned' ? '任务指派' : (u.source === 'self' ? '主动报名' : '未报名'),
+        u.signinPct === null ? '未启用' : (u.signinPct + '%'),
+        u.surveyPct === null ? '未启用' : (u.surveyPct + '%'),
+        u.examPct === null ? '未启用' : (u.examPct + '%'),
+        u.completionRate + '%'
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '数据总览');
+      XLSX.writeFile(wb, name + '_数据总览_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('数据总览导出成功');
     }
 
     // ========== 数据分析 - 报名分析 ==========
@@ -5110,6 +5505,17 @@
       toast('报名数据导出成功');
     }
 
+    // 兼容两种 answers 格式：数组 [{questionId, value}] 和对象 {"1": value}
+    function getSurveyAnswerValue(answers, questionId) {
+      if (!answers) return null;
+      if (Array.isArray(answers)) {
+        const ans = answers.find(a => a.questionId === questionId);
+        if (!ans) return null;
+        return ans.value !== undefined ? ans.value : (ans.text || null);
+      }
+      return answers[questionId] ?? answers[String(questionId)] ?? null;
+    }
+
     function exportAnalyticsSurvey() {
       if (!_analyticsSurveyData || !_analyticsSurveyData.survey) { toast('暂无数据可导出', 'warning'); return; }
       const event = data.training.find(x => x.id === _analyticsSurveyData.trainingId);
@@ -5121,8 +5527,8 @@
       const headers = ['序号', '填写人', '部门', '提交时间', ...questionTitles];
       const rows = responses.map((r, i) => {
         const answers = (survey.questions || []).map(q => {
-          const ans = r.answers ? r.answers.find(a => a.questionId === q.id) : null;
-          return ans ? (ans.value !== undefined ? String(ans.value) : (ans.text || '-')) : '-';
+          const val = getSurveyAnswerValue(r.answers, q.id);
+          return val !== null && val !== undefined ? String(val) : '-';
         });
         return [
           i + 1,
@@ -5146,18 +5552,40 @@
       const name = event ? event.name : '培训';
       const { exam, attempts } = _analyticsExamData;
 
-      const headers = ['序号', '考生', '分数', '是否通过', '正确题数', '总题数', '提交时间'];
-      const rows = attempts.map((a, i) => [
+      const headers = ['序号', '姓名', '部门', '考试次数', '最高分', '是否通过', '最近提交时间'];
+      // 按学员聚合
+      const userMap = {};
+      attempts.forEach(a => {
+        const uid = String(a.userId);
+        if (!userMap[uid]) {
+          userMap[uid] = {
+            userName: a.userName || a.userId || '-',
+            department: a.department || '-',
+            attempts: []
+          };
+        }
+        userMap[uid].attempts.push(a);
+      });
+      const users = Object.values(userMap).map(u => {
+        u.attempts.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+        const completedAttempts = u.attempts.filter(a => a.status === 'completed' && a.score !== null);
+        u.bestScore = completedAttempts.length > 0 ? Math.max(...completedAttempts.map(a => a.score || 0)) : '-';
+        u.passed = completedAttempts.some(a => a.passed);
+        u.latestCompletedAt = completedAttempts[0]?.completedAt || u.attempts[0]?.completedAt;
+        return u;
+      });
+
+      const rows = users.map((u, i) => [
         i + 1,
-        a.userName || a.userId || '-',
-        a.score ?? '-',
-        a.passed ? '通过' : '未通过',
-        a.correctCount ?? '-',
-        a.totalQuestions ?? '-',
-        a.submittedAt ? new Date(a.submittedAt).toLocaleString('zh-CN') : '-'
+        u.userName,
+        u.department,
+        u.attempts.length,
+        u.bestScore,
+        u.passed ? '通过' : '未通过',
+        u.latestCompletedAt ? new Date(u.latestCompletedAt).toLocaleString('zh-CN') : '-'
       ]);
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 22 }];
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 22 }];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, '考试数据');
       XLSX.writeFile(wb, name + '_考试分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
@@ -5249,11 +5677,9 @@
         // 评分统计
         const ratingQuestions = (survey.questions || []).filter(q => q.type === 'rating');
         const ratingStats = ratingQuestions.map(q => {
-          const values = responses.map(r => {
-            const ans = r.answers.find(a => a.questionId === q.id);
-            return ans ? ans.value : null;
-          }).filter(v => v !== null);
-          const avg = values.length > 0 ? (values.reduce((a, b) => a + b, 0) / values.length) : 0;
+          const values = responses.map(r => getSurveyAnswerValue(r.answers, q.id))
+            .filter(v => v !== null && v !== undefined && v !== '');
+          const avg = values.length > 0 ? (values.reduce((a, b) => a + parseFloat(b), 0) / values.length) : 0;
           return { title: q.title, avg: avg.toFixed(1), count: values.length };
         });
 
@@ -5277,10 +5703,8 @@
         // 文本题统计
         const textQuestions = (survey.questions || []).filter(q => q.type !== 'rating');
         const textBlocks = textQuestions.map(q => {
-          const answers = responses.map(r => {
-            const ans = r.answers.find(a => a.questionId === q.id);
-            return ans ? ans.value : null;
-          }).filter(v => v !== null && v !== '');
+          const answers = responses.map(r => getSurveyAnswerValue(r.answers, q.id))
+            .filter(v => v !== null && v !== undefined && v !== '');
           const answerItems = answers.slice(0, 10).map(a => `<div class="p-2 bg-slate-50 rounded-lg text-xs text-slate-600">${a}</div>`).join('');
           return `
             <div class="mb-4">
@@ -5378,16 +5802,41 @@
           return;
         }
 
-        const passedCount = attempts.filter(a => a.passed).length;
-        const failCount = attempts.length - passedCount;
-        const avgScore = attempts.length > 0
-          ? (attempts.reduce((s, a) => s + (a.score || 0), 0) / attempts.length).toFixed(1)
-          : '-';
-        const maxScore = attempts.length > 0 ? Math.max(...attempts.map(a => a.score || 0)) : '-';
-        const minScore = attempts.length > 0 ? Math.min(...attempts.map(a => a.score || 0)) : '-';
-        const passRate = attempts.length > 0 ? Math.round((passedCount / attempts.length) * 100) : 0;
+        // 按学员聚合考试记录
+        const userMap = {};
+        attempts.forEach(a => {
+          const uid = String(a.userId);
+          if (!userMap[uid]) {
+            userMap[uid] = {
+              userId: a.userId,
+              userName: a.userName || '未知用户',
+              department: a.department || '-',
+              position: a.position || '-',
+              attempts: []
+            };
+          }
+          userMap[uid].attempts.push(a);
+        });
+        const users = Object.values(userMap).map(u => {
+          u.attempts.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+          const completedAttempts = u.attempts.filter(a => a.status === 'completed' && a.score !== null);
+          u.bestScore = completedAttempts.length > 0 ? Math.max(...completedAttempts.map(a => a.score || 0)) : '-';
+          u.passed = completedAttempts.some(a => a.passed);
+          u.attemptCount = u.attempts.length;
+          u.latestCompletedAt = completedAttempts[0]?.completedAt || u.attempts[0]?.completedAt;
+          return u;
+        });
 
-        // 分数段分布
+        const passedCount = users.filter(u => u.passed).length;
+        const completedAll = attempts.filter(a => a.status === 'completed' && a.score !== null);
+        const avgScore = completedAll.length > 0
+          ? (completedAll.reduce((s, a) => s + (a.score || 0), 0) / completedAll.length).toFixed(1)
+          : '-';
+        const maxScore = completedAll.length > 0 ? Math.max(...completedAll.map(a => a.score || 0)) : '-';
+        const minScore = completedAll.length > 0 ? Math.min(...completedAll.map(a => a.score || 0)) : '-';
+        const passRate = users.length > 0 ? Math.round((passedCount / users.length) * 100) : 0;
+
+        // 分数段分布（按人次）
         const scoreRanges = { '90-100': 0, '80-89': 0, '70-79': 0, '60-69': 0, '60以下': 0 };
         attempts.forEach(a => {
           const s = a.score || 0;
@@ -5414,19 +5863,29 @@
             </div>`;
         }).join('');
 
-        const rows = attempts.length > 0
-          ? attempts.map((a, i) => `
+        const rows = users.length > 0
+          ? users.map((u, i) => `
             <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
               <td class="px-4 py-2.5 text-sm text-slate-500">${i + 1}</td>
-              <td class="px-4 py-2.5 text-sm font-medium text-slate-800">${a.userName || a.userId || '-'}</td>
-              <td class="px-4 py-2.5 text-sm font-semibold ${a.score >= (exam.passingScore || 60) ? 'text-emerald-600' : 'text-red-500'}">${a.score ?? '-'}</td>
+              <td class="px-4 py-2.5 text-sm font-medium text-slate-800">${u.userName}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-600">${u.department}</td>
               <td class="px-4 py-2.5">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${a.passed ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}">${a.passed ? '通过' : '未通过'}</span>
+                <button onclick='openUserAttemptsModal(${JSON.stringify(u).replace(/'/g, "&#39;")})' class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition" title="查看每次考试记录">
+                  <i class="fas fa-history mr-1"></i>${u.attemptCount} 次
+                </button>
               </td>
-              <td class="px-4 py-2.5 text-sm text-slate-600">${a.correctCount ?? '-'}/${a.totalQuestions ?? '-'}</td>
-              <td class="px-4 py-2.5 text-sm text-slate-500">${a.submittedAt ? new Date(a.submittedAt).toLocaleString('zh-CN') : '-'}</td>
+              <td class="px-4 py-2.5 text-sm font-semibold ${u.passed ? 'text-emerald-600' : 'text-red-500'}">${u.bestScore}</td>
+              <td class="px-4 py-2.5">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${u.passed ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}">${u.passed ? '通过' : '未通过'}</span>
+              </td>
+              <td class="px-4 py-2.5 text-sm text-slate-500">${u.latestCompletedAt ? new Date(u.latestCompletedAt).toLocaleString('zh-CN') : '-'}</td>
+              <td class="px-4 py-2.5">
+                <button onclick='openUserAttemptDetailModal(${JSON.stringify(u).replace(/'/g, "&#39;")})' class="px-2.5 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-medium hover:bg-amber-100 transition" title="查看每次作答明细">
+                  <i class="fas fa-eye mr-1"></i>查看详情
+                </button>
+              </td>
             </tr>`).join('')
-          : `<tr><td colspan="6" class="px-4 py-12 text-center text-slate-400 text-sm">暂无人参加考试</td></tr>`;
+          : `<tr><td colspan="8" class="px-4 py-12 text-center text-slate-400 text-sm">暂无人参加考试</td></tr>`;
 
         container.innerHTML = `
           <div class="p-6">
@@ -5436,7 +5895,7 @@
                   <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><i class="fas fa-users text-amber-500 text-sm"></i></div>
                   <span class="text-xs text-amber-600/70">参与人数</span>
                 </div>
-                <p class="text-2xl font-bold text-amber-700">${attempts.length}</p>
+                <p class="text-2xl font-bold text-amber-700">${users.length}</p>
               </div>
               <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4">
                 <div class="flex items-center gap-2 mb-1">
@@ -5496,11 +5955,13 @@
                 <table class="w-full">
                   <thead class="bg-slate-50"><tr>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">考生</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">分数</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">考试次数</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">最高分</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">状态</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">正确率</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">提交时间</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">最近提交时间</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500">操作</th>
                   </tr></thead>
                   <tbody>${rows}</tbody>
                 </table>
@@ -5510,6 +5971,208 @@
       } catch (err) {
         container.innerHTML = '<div class="text-center py-20 text-slate-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p>加载考试数据失败</p></div>';
       }
+    }
+
+    function openUserAttemptsModal(userData) {
+      const attempts = (userData.attempts || []).sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+      const rows = attempts.length > 0
+        ? attempts.map((a, idx) => `
+          <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+            <td class="px-4 py-3 text-sm text-slate-500">第 ${attempts.length - idx} 次</td>
+            <td class="px-4 py-3 text-sm font-semibold ${a.passed ? 'text-emerald-600' : 'text-red-500'}">${a.score ?? '-'}</td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${a.passed ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}">${a.passed ? '通过' : '未通过'}</span>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-600">${a.correctCount ?? '-'}/${a.totalQuestions ?? '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-500">${a.completedAt ? new Date(a.completedAt).toLocaleString('zh-CN') : '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-500">${a.durationUsed ? Math.round(a.durationUsed / 60) + ' 分钟' : '-'}</td>
+          </tr>`).join('')
+        : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400 text-sm">暂无考试记录</td></tr>';
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-800">${userData.userName} 的考试记录</h3>
+              <p class="text-xs text-slate-400 mt-0.5">共 ${attempts.length} 次考试，最佳分数 ${userData.bestScore ?? '-'} 分</p>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6 overflow-auto">
+            <div class="overflow-x-auto rounded-xl border border-slate-100">
+              <table class="w-full">
+                <thead class="bg-slate-50"><tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">次数</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">分数</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">状态</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">正确题数</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">提交时间</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">用时</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>`);
+    }
+
+    async function openUserAttemptDetailModal(userData) {
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-800">${userData.userName} 的作答明细</h3>
+              <p class="text-xs text-slate-400 mt-0.5">正在加载题目与答案...</p>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6 overflow-auto flex-1 flex items-center justify-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+          </div>
+        </div>`);
+
+      try {
+        const exam = _analyticsExamData && _analyticsExamData.exam;
+        if (!exam || !exam.questions || exam.questions.length === 0) {
+          toast('该考试未配置题目，无法查看作答明细', 'warning');
+          closeModal();
+          return;
+        }
+
+        const questionsRes = await fetch(API + '/questions');
+        const questionsResult = await questionsRes.json();
+        const allQuestions = questionsResult.data || [];
+        const questionMap = {};
+        allQuestions.forEach(q => { questionMap[String(q.id)] = q; });
+
+        const attempts = (userData.attempts || []).sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+        let attemptsHtml = '';
+        attempts.forEach((attempt, idx) => {
+          const answers = attempt.answers || {};
+          const attemptQuestionsHtml = exam.questions.map((pq, qidx) => {
+            const q = questionMap[String(pq.questionId)];
+            if (!q) return '';
+            const userAnswer = answers[String(pq.questionId)];
+            const isCorrect = isAnswerCorrect(q, userAnswer);
+            const answerText = renderUserAnswer(q, userAnswer);
+            const correctText = renderCorrectAnswer(q);
+            return `
+              <div class="border border-slate-100 rounded-xl p-4 mb-3 ${isCorrect ? 'bg-emerald-50/30' : 'bg-red-50/30'}">
+                <div class="flex items-start gap-3 mb-3">
+                  <span class="flex-shrink-0 w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm font-bold">${qidx + 1}</span>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-slate-800">${escHtml(q.content || q.title || '无题')}</p>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium mt-1 ${isCorrect ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}">${isCorrect ? '回答正确' : '回答错误'}</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div class="bg-white rounded-lg p-3 border border-slate-100">
+                    <p class="text-xs text-slate-400 mb-1">学员答案</p>
+                    <div class="text-slate-700">${answerText}</div>
+                  </div>
+                  <div class="bg-white rounded-lg p-3 border border-slate-100">
+                    <p class="text-xs text-slate-400 mb-1">参考答案</p>
+                    <div class="text-slate-700">${correctText}</div>
+                  </div>
+                </div>
+              </div>`;
+          }).join('');
+
+          attemptsHtml += `
+            <div class="mb-6">
+              <div class="flex items-center gap-3 mb-3 pb-2 border-b border-slate-100">
+                <span class="px-3 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-600">第 ${attempts.length - idx} 次</span>
+                <span class="text-sm font-semibold ${attempt.passed ? 'text-emerald-600' : 'text-red-500'}">${attempt.score ?? '-'} 分</span>
+                <span class="text-xs text-slate-400">${attempt.completedAt ? new Date(attempt.completedAt).toLocaleString('zh-CN') : '-'}</span>
+                ${attempt.durationUsed ? `<span class="text-xs text-slate-400">用时 ${Math.round(attempt.durationUsed / 60)} 分钟</span>` : ''}
+              </div>
+              ${attemptQuestionsHtml}
+            </div>`;
+        });
+
+        showModal(`
+          <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800">${userData.userName} 的作答明细</h3>
+                <p class="text-xs text-slate-400 mt-0.5">共 ${attempts.length} 次作答</p>
+              </div>
+              <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-auto">${attemptsHtml || '<p class="text-center text-slate-400 py-8">暂无作答数据</p>'}</div>
+          </div>`);
+      } catch (err) {
+        toast('加载作答明细失败', 'error');
+        closeModal();
+      }
+    }
+
+    function isChoiceType(type) {
+      return type === 'choice' || type === 'single' || type === 'multiple';
+    }
+
+    function normalizeAnswerToIndices(answer) {
+      if (answer === undefined || answer === null || answer === '') return [];
+      if (Array.isArray(answer)) return answer.map(x => parseInt(x)).filter(x => !isNaN(x));
+      if (typeof answer === 'number') return [answer];
+      const str = String(answer).trim().toUpperCase();
+      if (/^[A-Z]+$/.test(str)) return str.split('').map(ch => ch.charCodeAt(0) - 65);
+      const num = parseInt(str);
+      return isNaN(num) ? [] : [num];
+    }
+
+    function isAnswerCorrect(q, userAnswer) {
+      if (userAnswer === undefined || userAnswer === null || userAnswer === '') return false;
+      if (q.type === 'judge') {
+        const userVal = String(userAnswer).toLowerCase();
+        const correctVal = String(q.answer).toLowerCase();
+        const userBool = userVal === 'true' || userVal === '1' || userVal === '正确';
+        const correctBool = correctVal === 'true' || correctVal === '1' || correctVal === '正确';
+        return userBool === correctBool;
+      }
+      if (isChoiceType(q.type)) {
+        const userIndices = normalizeAnswerToIndices(userAnswer);
+        const correctIndices = normalizeAnswerToIndices(q.answer);
+        if (userIndices.length === 0 || correctIndices.length === 0) return false;
+        return userIndices.length === correctIndices.length && userIndices.every(idx => correctIndices.includes(idx));
+      }
+      // 填空/简答：简单文本对比
+      return String(userAnswer).trim() === String(q.answer || '').trim();
+    }
+
+    function renderUserAnswer(q, answer) {
+      if (answer === undefined || answer === null || answer === '') return '<span class="text-slate-400">未作答</span>';
+      if (isChoiceType(q.type)) {
+        const selected = normalizeAnswerToIndices(answer);
+        if (selected.length === 0) return escHtml(String(answer));
+        const labels = selected.map(idx => {
+          const opt = (q.options || [])[idx];
+          return opt !== undefined ? String.fromCharCode(65 + idx) + '. ' + escHtml(String(opt)) : '-';
+        });
+        return labels.join('<br>');
+      }
+      if (q.type === 'judge') {
+        const val = String(answer).toLowerCase();
+        return val === 'true' || val === '1' || val === '正确' ? '正确' : (val === 'false' || val === '0' || val === '错误' ? '错误' : escHtml(String(answer)));
+      }
+      return escHtml(String(answer));
+    }
+
+    function renderCorrectAnswer(q) {
+      if (isChoiceType(q.type)) {
+        const correct = normalizeAnswerToIndices(q.answer);
+        if (correct.length === 0) return escHtml(String(q.answer || ''));
+        const labels = correct.map(idx => {
+          const opt = (q.options || [])[idx];
+          return opt !== undefined ? String.fromCharCode(65 + idx) + '. ' + escHtml(String(opt)) : '-';
+        });
+        return labels.join('<br>');
+      }
+      if (q.type === 'judge') {
+        const val = String(q.answer).toLowerCase();
+        return val === 'true' || val === '1' || val === '正确' ? '正确' : (val === 'false' || val === '0' || val === '错误' ? '错误' : escHtml(String(q.answer)));
+      }
+      return escHtml(String(q.answer || ''));
     }
 
     // ========== 数据分析 - 考勤分析 ==========
@@ -5795,7 +6458,6 @@
               <div class="flex items-center justify-end gap-1">
                 <button onclick="openTrainingImageUpload(${e.id})" class="p-2 text-pink-500 hover:bg-pink-50 rounded-lg transition cursor-pointer" title="上传图片"><i class="fas fa-image"></i></button>
                 <button onclick="openTrainingAnalytics(${e.id})" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="数据分析"><i class="fas fa-chart-pie"></i></button>
-                <button onclick="openAssignStudentsModal(${e.id})" class="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition" title="指派学员"><i class="fas fa-user-plus"></i></button>
                 <button onclick="openTrainingShareModal(${e.id})" class="p-2 text-purple-500 hover:bg-purple-50 rounded-lg transition" title="分享"><i class="fas fa-share-alt"></i></button>
                 <button onclick="editTraining(${e.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit"></i></button>
                 <button onclick="deleteTraining(${e.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash"></i></button>
@@ -6201,10 +6863,15 @@
       ).join('');
 
       const surveyOptions = surveys.map(s => `<option value="${s.id}" ${training?.linkedSurveyId === s.id ? 'selected' : ''}>${escHtml(s.title)}</option>`).join('');
-      const examOptions = exams.map(e => `<option value="${e.id}" ${training?.linkedExamId === e.id ? 'selected' : ''}>${escHtml(e.name || e.title)}</option>`).join('');
 
       const signinEnabled = training?.signinEnabled || false;
       const signinCode = training?.signinCode || '';
+      const examEnabled = training?.examEnabled || false;
+      const surveyEnabled = training?.surveyEnabled || false;
+      const coursewareEnabled = training?.coursewareEnabled || false;
+      const linkedExam = examEnabled ? (exams.find(e => e.id === training.linkedExamId) || null) : null;
+      const signinStartValue = training?.signinStartTime || training?.startTime || startTimeValue;
+      const signinEndValue = training?.signinEndTime || training?.endTime || endTimeValue;
 
       // 任务指派回填
       let accessType = training?.accessType || 'none';
@@ -6225,51 +6892,56 @@
           </div>
           <form id="training-form" onsubmit="saveTraining(event, ${training?.id || 'null'})" class="flex-1 overflow-y-auto p-6 space-y-5">
 
-            <!-- 基本信息 -->
-            <div>
-              <h4 class="text-sm font-semibold text-slate-800 mb-3"><i class="fas fa-info-circle text-indigo-500 mr-2"></i>基本信息</h4>
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">培训项目 <span class="text-red-500">*</span></label>
-                  <select id="t-project" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                    <option value="">请选择</option>
-                    ${categoryOptions}
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">培训课题 <span class="text-red-500">*</span></label>
-                  <input type="text" id="t-name" value="${escHtml(training?.name || '')}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
+            <!-- 基本信息（折叠，默认展开） -->
+            <div class="border border-slate-200 rounded-xl overflow-hidden">
+              <div onclick="toggleTrainingPanel('basicInfo')" class="flex items-center justify-between px-4 py-3 bg-slate-50 cursor-pointer hover:bg-slate-100 transition">
+                <span class="text-sm font-semibold text-slate-800"><i class="fas fa-info-circle text-indigo-500 mr-2"></i>基本信息</span>
+                <i id="basicInfo-chevron" class="fas fa-chevron-down text-slate-400 transition-transform"></i>
               </div>
-              <div class="mt-4">
-                <label class="block text-sm font-medium text-slate-700 mb-1">培训内容</label>
-                <input type="text" id="t-content" value="${escHtml(training?.content || '')}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-              </div>
-              <div class="grid grid-cols-2 gap-4 mt-4">
-                <div class="relative">
-                  <label class="block text-sm font-medium text-slate-700 mb-1">培训讲师 <span class="text-red-500">*</span></label>
-                  <input type="text" id="t-instructor" value="${escHtml(training?.instructor || '')}" required
-                         onfocus="showLecturerDropdown()" oninput="filterLecturerDropdown(this.value)"
-                         class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
-                         placeholder="输入或选择讲师" autocomplete="off">
-                  <div id="t-instructor-dropdown" class="absolute left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto hidden z-50"></div>
+              <div id="basicInfo" class="p-4 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">培训项目 <span class="text-red-500">*</span></label>
+                    <select id="t-project" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                      <option value="">请选择</option>
+                      ${categoryOptions}
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">培训课题 <span class="text-red-500">*</span></label>
+                    <input type="text" id="t-name" value="${escHtml(training?.name || '')}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                  </div>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">培训地点 <span class="text-red-500">*</span></label>
-                  <input type="text" id="t-location" value="${escHtml(training?.location || '')}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                  <label class="block text-sm font-medium text-slate-700 mb-1">培训内容</label>
+                  <input type="text" id="t-content" value="${escHtml(training?.content || '')}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-              </div>
-              <div class="grid grid-cols-2 gap-4 mt-4">
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">开始时间 <span class="text-red-500">*</span></label>
-                  <input type="datetime-local" id="t-start" value="${toDatetimeLocal(startTimeValue, prefillDate, '09:00')}" required
-                         class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                  <p class="text-xs text-slate-400 mt-1">支持手动输入,如 2026-06-11 09:00</p>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="relative">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">培训讲师 <span class="text-red-500">*</span></label>
+                    <input type="text" id="t-instructor" value="${escHtml(training?.instructor || '')}" required
+                           onfocus="showLecturerDropdown()" oninput="filterLecturerDropdown(this.value)"
+                           class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                           placeholder="输入或选择讲师" autocomplete="off">
+                    <div id="t-instructor-dropdown" class="absolute left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto hidden z-50"></div>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">培训地点 <span class="text-red-500">*</span></label>
+                    <input type="text" id="t-location" value="${escHtml(training?.location || '')}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">结束时间 <span class="text-red-500">*</span></label>
-                  <input type="datetime-local" id="t-end" value="${toDatetimeLocal(endTimeValue, prefillDate, '17:00')}" required
-                         class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">开始时间 <span class="text-red-500">*</span></label>
+                    <input type="datetime-local" id="t-start" value="${toDatetimeLocal(startTimeValue, prefillDate, '09:00')}" required
+                           class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-xs text-slate-400 mt-1">支持手动输入,如 2026-06-11 09:00</p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">结束时间 <span class="text-red-500">*</span></label>
+                    <input type="datetime-local" id="t-end" value="${toDatetimeLocal(endTimeValue, prefillDate, '17:00')}" required
+                           class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                  </div>
                 </div>
               </div>
             </div>
@@ -6280,46 +6952,79 @@
                 <span class="text-sm font-semibold text-slate-800"><i class="fas fa-tasks text-emerald-500 mr-2"></i>项目内容</span>
                 <i id="projectContent-chevron" class="fas fa-chevron-down text-slate-400 transition-transform"></i>
               </div>
-              <div id="projectContent" class="hidden p-4 space-y-4">
-                <!-- 考勤 -->
-                <div class="bg-slate-50 rounded-xl p-4">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-semibold text-slate-700"><i class="fas fa-check-circle text-emerald-500 mr-2"></i>考勤签到</span>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" id="t-signin-enable" class="sr-only peer" ${signinEnabled ? 'checked' : ''} onchange="toggleSigninCode(this.checked)">
-                      <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                    </label>
+              <div id="projectContent" class="hidden p-4">
+                <input type="hidden" id="t-exam-id" value="${training?.linkedExamId || ''}">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <!-- 考勤卡片 -->
+                  <div id="card-attendance" class="project-card relative rounded-xl border-2 ${signinEnabled ? 'border-emerald-400 bg-emerald-50/40' : 'border-slate-200 bg-slate-50'} p-4 transition cursor-pointer hover:shadow-md" onclick="onCardClick('attendance')">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="w-9 h-9 rounded-lg ${signinEnabled ? 'bg-emerald-100' : 'bg-slate-200'} flex items-center justify-center">
+                        <i class="fas fa-check-circle ${signinEnabled ? 'text-emerald-500' : 'text-slate-400'} text-lg"></i>
+                      </div>
+                      <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="t-attendance-enable" class="sr-only peer" ${signinEnabled ? 'checked' : ''} onchange="onModuleToggle('attendance', this.checked)">
+                        <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                      </label>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-800">考勤</div>
+                    <div class="text-xs text-slate-400 mt-0.5">签到时间+二维码</div>
+                    <div class="mt-3 text-xs ${signinEnabled ? 'text-emerald-600' : 'text-slate-400'} font-medium flex items-center gap-1">
+                      <i class="fas fa-cog"></i><span>${signinEnabled ? '已配置' : '未启用'}</span>
+                    </div>
                   </div>
-                  <div id="t-signin-code-wrap" class="${signinEnabled ? '' : 'hidden'}">
-                    <label class="block text-xs text-slate-500 mb-1">签到码（4-6位数字，留空自动生成）</label>
-                    <input type="text" id="t-signin-code" value="${escHtml(signinCode)}" maxlength="6" placeholder="自动生成"
-                      class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+                  <!-- 调研卡片 -->
+                  <div id="card-survey" class="project-card relative rounded-xl border-2 ${surveyEnabled ? 'border-blue-400 bg-blue-50/40' : 'border-slate-200 bg-slate-50'} p-4 transition cursor-pointer hover:shadow-md" onclick="onCardClick('survey')">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="w-9 h-9 rounded-lg ${surveyEnabled ? 'bg-blue-100' : 'bg-slate-200'} flex items-center justify-center">
+                        <i class="fas fa-poll ${surveyEnabled ? 'text-blue-500' : 'text-slate-400'} text-lg"></i>
+                      </div>
+                      <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="t-survey-enable" class="sr-only peer" ${surveyEnabled ? 'checked' : ''} onchange="onModuleToggle('survey', this.checked)">
+                        <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                      </label>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-800">调研</div>
+                    <div class="text-xs text-slate-400 mt-0.5">选择调研问卷</div>
+                    <div class="mt-3 text-xs ${surveyEnabled ? 'text-blue-600' : 'text-slate-400'} font-medium flex items-center gap-1">
+                      <i class="fas fa-cog"></i><span id="survey-card-status">${surveyEnabled ? '已选择' : '未启用'}</span>
+                    </div>
+                  </div>
+                  <!-- 考试卡片 -->
+                  <div id="card-exam" class="project-card relative rounded-xl border-2 ${examEnabled ? 'border-amber-400 bg-amber-50/40' : 'border-slate-200 bg-slate-50'} p-4 transition cursor-pointer hover:shadow-md" onclick="onCardClick('exam')">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="w-9 h-9 rounded-lg ${examEnabled ? 'bg-amber-100' : 'bg-slate-200'} flex items-center justify-center">
+                        <i class="fas fa-file-alt ${examEnabled ? 'text-amber-500' : 'text-slate-400'} text-lg"></i>
+                      </div>
+                      <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="t-exam-enable" class="sr-only peer" ${examEnabled ? 'checked' : ''} onchange="onModuleToggle('exam', this.checked)">
+                        <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                      </label>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-800">考试</div>
+                    <div class="text-xs text-slate-400 mt-0.5">创建考试+试卷</div>
+                    <div class="mt-3 text-xs ${examEnabled ? 'text-amber-600' : 'text-slate-400'} font-medium flex items-center gap-1">
+                      <i class="fas fa-cog"></i><span id="exam-card-status">${examEnabled ? (linkedExam ? escHtml(linkedExam.title || '已关联') : '未配置') : '未启用'}</span>
+                    </div>
+                  </div>
+                  <!-- 课件卡片 -->
+                  <div id="card-courseware" class="project-card relative rounded-xl border-2 ${coursewareEnabled ? 'border-rose-400 bg-rose-50/40' : 'border-slate-200 bg-slate-50'} p-4 transition cursor-pointer hover:shadow-md" onclick="onCardClick('courseware')">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="w-9 h-9 rounded-lg ${coursewareEnabled ? 'bg-rose-100' : 'bg-slate-200'} flex items-center justify-center">
+                        <i class="fas fa-file-pdf ${coursewareEnabled ? 'text-rose-500' : 'text-slate-400'} text-lg"></i>
+                      </div>
+                      <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="t-courseware-enable" class="sr-only peer" ${coursewareEnabled ? 'checked' : ''} onchange="onModuleToggle('courseware', this.checked)">
+                        <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-500"></div>
+                      </label>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-800">课件</div>
+                    <div class="text-xs text-slate-400 mt-0.5">上传培训课件</div>
+                    <div class="mt-3 text-xs ${coursewareEnabled ? 'text-rose-600' : 'text-slate-400'} font-medium flex items-center gap-1">
+                      <i class="fas fa-cog"></i><span id="courseware-card-status">${coursewareEnabled ? ((training?.coursewareFiles?.length || 0) + '个文件') : '未启用'}</span>
+                    </div>
                   </div>
                 </div>
-                <!-- 考试 -->
-                <div class="bg-slate-50 rounded-xl p-4">
-                  <label class="block text-sm font-semibold text-slate-700 mb-2"><i class="fas fa-file-alt text-amber-500 mr-2"></i>关联考试</label>
-                  <select id="t-exam-id" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500 bg-white">
-                    <option value="">不关联</option>
-                    ${examOptions}
-                  </select>
-                </div>
-                <!-- 调研 -->
-                <div class="bg-slate-50 rounded-xl p-4">
-                  <label class="block text-sm font-semibold text-slate-700 mb-2"><i class="fas fa-poll text-blue-500 mr-2"></i>关联满意度调研</label>
-                  <select id="t-survey-id" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                    <option value="">不关联</option>
-                    ${surveyOptions}
-                  </select>
-                </div>
-                <!-- 课件 -->
-                <div class="bg-slate-50 rounded-xl p-4">
-                  <label class="block text-sm font-semibold text-slate-700 mb-2"><i class="fas fa-file-pdf text-rose-500 mr-2"></i>培训课件</label>
-                  <input type="file" id="t-courseware" multiple accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.zip,.rar"
-                    onchange="uploadTrainingCourseware(this, ${training?.id || 'null'})"
-                    class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
-                  <div id="t-courseware-list" class="mt-3 space-y-2">${renderTrainingCoursewareList(training?.coursewareFiles)}</div>
-                </div>
+                <p class="text-xs text-slate-400 mt-3">点击卡片或开启开关后，将打开右侧配置抽屉。关闭开关将禁用对应模块。</p>
               </div>
             </div>
 
@@ -6369,6 +7074,98 @@
       await loadExamUserPickerData();
       onTrainingAccessTypeChange();
       renderTrainingAllowedUsers();
+
+      // 回填项目内容抽屉字段
+      populateTrainingDrawers(training);
+    }
+
+    async function renderTrainingExamDisplay(examId) {
+      const display = document.getElementById('t-exam-display');
+      if (!display) return;
+      if (!examId) {
+        display.textContent = '不关联';
+        display.className = 'text-sm text-slate-500 truncate';
+        return;
+      }
+      try {
+        const res = await fetch('/api/exams');
+        const exams = await res.json();
+        const exam = exams.find(e => String(e.id) === String(examId));
+        if (exam) {
+          display.textContent = exam.title || exam.name || '未命名考试';
+          display.className = 'text-sm text-slate-800 truncate';
+        } else {
+          display.textContent = '考试不存在';
+          display.className = 'text-sm text-red-500 truncate';
+        }
+      } catch (e) {
+        display.textContent = '加载失败';
+        display.className = 'text-sm text-red-500 truncate';
+      }
+    }
+
+    function openTrainingExamPicker() {
+      openPaperPickerModal(async (paper) => {
+        toast('正在创建关联考试...');
+        const result = await createExamFromPaper(paper);
+        const exam = result?.exam;
+        if (exam && exam.id) {
+          document.getElementById('t-exam-id').value = exam.id;
+          renderTrainingExamDisplay(exam.id);
+          toast(`已关联考试：${exam.title || '未命名考试'}`);
+        } else {
+          toast('考试创建失败', 'error');
+        }
+      }, null);
+    }
+
+    async function createExamFromPaper(paper) {
+      const questions = (paper.questions || []).map((q, idx) => ({
+        questionId: q.questionId || q.id,
+        score: q.score || 5,
+        partialScore: q.partialScore !== undefined ? q.partialScore : (q.type === 'multiple' ? 0 : undefined),
+        order: q.order !== undefined ? q.order : idx,
+        content: q.content || '(题目内容)',
+        type: q.type || 'single',
+        options: q.options || [],
+        answer: q.answer || '',
+        explanation: q.explanation || ''
+      }));
+      const totalScore = questions.reduce((s, q) => s + (q.score || 0), 0) || 100;
+      const payload = {
+        title: paper.name || '未命名考试',
+        description: '',
+        duration: 60,
+        totalScore: totalScore,
+        passingScore: Math.max(1, Math.ceil(totalScore * 0.6)),
+        status: 'draft',
+        paperId: paper.id,
+        paperName: paper.name,
+        questions: questions,
+        attemptsPolicy: 'unlimited',
+        recordScore: 'highest',
+        screenSwitchPolicy: 'unlimited',
+        accessType: 'none',
+        allowedUsers: null,
+        showData: true,
+        answerDetail: 'after_grade',
+        viewQuestions: 'all',
+        showCorrect: 'show',
+        showAnalysis: 'show',
+        viewRank: 'after_submit'
+      };
+      try {
+        const res = await fetch('/api/exams', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('创建考试失败');
+        return await res.json();
+      } catch (e) {
+        console.error('createExamFromPaper error:', e);
+        return null;
+      }
     }
 
     async function saveTraining(e, id) {
@@ -6389,15 +7186,24 @@
 
       const dateVal = startVal.split('T')[0];
 
-      // 项目内容
-      const signinEnabled = document.getElementById('t-signin-enable').checked;
-      let signinCode = document.getElementById('t-signin-code')?.value.trim() || '';
-      if (signinEnabled && !signinCode) {
+      // 项目内容（4 模块开关）
+      const attendanceEnabled = document.getElementById('t-attendance-enable')?.checked || false;
+      const examEnabled = document.getElementById('t-exam-enable')?.checked || false;
+      const surveyEnabled = document.getElementById('t-survey-enable')?.checked || false;
+      const coursewareEnabled = document.getElementById('t-courseware-enable')?.checked || false;
+
+      const signinStart = document.getElementById('t-signin-start')?.value || '';
+      const signinEnd = document.getElementById('t-signin-end')?.value || '';
+
+      // 校验
+      if (attendanceEnabled && !signinStart) { toast('请在考勤抽屉中设置签到开始时间', 'error'); return; }
+      if (examEnabled && !document.getElementById('t-exam-id')?.value) { toast('请创建考试后再保存', 'error'); return; }
+      if (surveyEnabled && !document.getElementById('t-survey-id')?.value) { toast('请选择调研问卷', 'error'); return; }
+
+      // 签到码自动生成（向后兼容 training-signin.html）
+      let signinCode = '';
+      if (attendanceEnabled) {
         signinCode = String(Math.floor(1000 + Math.random() * 9000));
-      }
-      if (signinCode && !/^\d{4,6}$/.test(signinCode)) {
-        toast('签到码必须是4-6位数字', 'error');
-        return;
       }
 
       // 任务指派
@@ -6416,13 +7222,18 @@
         date: dateVal,
         startTime: startVal,
         endTime: endVal,
-        signinEnabled: signinEnabled,
-        signinCode: signinEnabled ? signinCode : null,
-        linkedSurveyId: document.getElementById('t-survey-id').value ? parseInt(document.getElementById('t-survey-id').value) : null,
-        linkedExamId: document.getElementById('t-exam-id').value ? parseInt(document.getElementById('t-exam-id').value) : null,
+        signinEnabled: attendanceEnabled,
+        signinCode: attendanceEnabled ? signinCode : null,
+        signinStartTime: attendanceEnabled ? signinStart.replace('T', ' ') : null,
+        signinEndTime: attendanceEnabled ? signinEnd.replace('T', ' ') : null,
+        examEnabled: examEnabled,
+        surveyEnabled: surveyEnabled,
+        coursewareEnabled: coursewareEnabled,
+        linkedSurveyId: surveyEnabled ? (document.getElementById('t-survey-id')?.value ? parseInt(document.getElementById('t-survey-id').value) : null) : null,
+        linkedExamId: examEnabled ? (document.getElementById('t-exam-id')?.value ? parseInt(document.getElementById('t-exam-id').value) : null) : null,
         accessType: accessType,
         allowedUsers: allowedUsers.length ? allowedUsers : null,
-        coursewareFiles: currentEditingTraining?.coursewareFiles || []
+        coursewareFiles: coursewareEnabled ? (currentEditingTraining?.coursewareFiles || []) : []
       };
 
       try {
@@ -6475,13 +7286,399 @@
       if (chevron) chevron.classList.toggle('rotate-180');
     }
 
-    function toggleSigninCode(enabled) {
-      const wrap = document.getElementById('t-signin-code-wrap');
-      if (wrap) wrap.classList.toggle('hidden', !enabled);
-      if (!enabled) {
-        const input = document.getElementById('t-signin-code');
-        if (input) input.value = '';
+    // ===== 项目内容模块抽屉相关函数 =====
+
+    const MODULE_COLORS = {
+      attendance: { active: 'border-emerald-400 bg-emerald-50/40', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-500', textColor: 'text-emerald-600', toggleColor: 'peer-checked:bg-emerald-500' },
+      exam:       { active: 'border-amber-400 bg-amber-50/40',    iconBg: 'bg-amber-100',    iconColor: 'text-amber-500',    textColor: 'text-amber-600',    toggleColor: 'peer-checked:bg-amber-500' },
+      survey:     { active: 'border-blue-400 bg-blue-50/40',      iconBg: 'bg-blue-100',     iconColor: 'text-blue-500',     textColor: 'text-blue-600',     toggleColor: 'peer-checked:bg-blue-500' },
+      courseware: { active: 'border-rose-400 bg-rose-50/40',      iconBg: 'bg-rose-100',     iconColor: 'text-rose-500',     textColor: 'text-rose-600',     toggleColor: 'peer-checked:bg-rose-500' }
+    };
+
+    function openModuleDrawer(module) {
+      const drawer = document.getElementById(module + 'Drawer');
+      const overlay = document.getElementById(module + 'DrawerOverlay');
+      if (!drawer || !overlay) return;
+      overlay.classList.remove('hidden');
+      drawer.classList.remove('translate-x-full');
+      if (module === 'attendance') refreshSigninQrcode();
+    }
+
+    function closeModuleDrawer(module) {
+      const drawer = document.getElementById(module + 'Drawer');
+      const overlay = document.getElementById(module + 'DrawerOverlay');
+      if (!drawer || !overlay) return;
+      drawer.classList.add('translate-x-full');
+      overlay.classList.add('hidden');
+      // 考勤：关闭抽屉时提示记得保存培训（仅在已设置签到时间时提示）
+      if (module === 'signin') {
+        const start = document.getElementById('t-signin-start')?.value;
+        const end = document.getElementById('t-signin-end')?.value;
+        if (start || end) {
+          showToast('考勤设置已暂存，请点击"保存培训"使设置生效', 'info');
+        }
       }
+      // 调研：关闭抽屉时同步卡片状态文字
+      if (module === 'survey') {
+        const status = document.getElementById('survey-card-status');
+        if (status) {
+          const surveyId = document.getElementById('t-survey-id')?.value;
+          status.textContent = surveyId ? '已选择' : '未启用';
+        }
+      }
+    }
+
+    function onModuleToggle(module, enabled) {
+      updateModuleCardVisual(module, enabled);
+      if (enabled) {
+        if (module === 'exam') {
+          // 考试模块：直接复用考试安排的 examModal
+          const existingExamId = document.getElementById('t-exam-id')?.value;
+          openExamModalFromTraining(existingExamId || null);
+        } else {
+          openModuleDrawer(module);
+          if (module === 'survey') populateSurveyOptions();
+          if (module === 'courseware') updateCoursewareUploadTip();
+        }
+      } else {
+        closeModuleDrawer(module);
+        clearModuleFields(module);
+      }
+    }
+
+    function onCardClick(module) {
+      const checkbox = document.getElementById('t-' + module + '-enable');
+      if (!checkbox) return;
+      if (!checkbox.checked) {
+        // 未启用时点击卡片 → 启用并打开抽屉/弹窗
+        checkbox.checked = true;
+        onModuleToggle(module, true);
+      } else {
+        // 已启用时点击卡片 → 仅打开抽屉/弹窗
+        if (module === 'exam') {
+          const existingExamId = document.getElementById('t-exam-id')?.value;
+          openExamModalFromTraining(existingExamId || null);
+        } else {
+          openModuleDrawer(module);
+        }
+      }
+    }
+
+    function updateModuleCardVisual(module, enabled) {
+      const card = document.getElementById('card-' + module);
+      if (!card) return;
+      const colors = MODULE_COLORS[module];
+      const iconWrapper = card.querySelector('.w-9.h-9');
+      const icon = card.querySelector('.w-9.h-9 i');
+      if (enabled) {
+        card.className = card.className.replace(/border-slate-200 bg-slate-50/, colors.active);
+        if (iconWrapper) iconWrapper.className = 'w-9 h-9 rounded-lg ' + colors.iconBg + ' flex items-center justify-center';
+        if (icon) icon.className = icon.className.replace('text-slate-400', colors.iconColor);
+      } else {
+        card.className = card.className.replace(colors.active, 'border-slate-200 bg-slate-50');
+        if (iconWrapper) iconWrapper.className = 'w-9 h-9 rounded-lg bg-slate-200 flex items-center justify-center';
+        if (icon) icon.className = icon.className.replace(colors.iconColor, 'text-slate-400');
+      }
+    }
+
+    function clearModuleFields(module) {
+      if (module === 'attendance') {
+        const s = document.getElementById('t-signin-start'); if (s) s.value = '';
+        const e = document.getElementById('t-signin-end'); if (e) e.value = '';
+      } else if (module === 'exam') {
+        const id = document.getElementById('t-exam-id'); if (id) id.value = '';
+        const status = document.getElementById('exam-card-status'); if (status) status.textContent = '未启用';
+      } else if (module === 'survey') {
+        const sel = document.getElementById('t-survey-id'); if (sel) sel.value = '';
+      } else if (module === 'courseware') {
+        const status = document.getElementById('courseware-card-status'); if (status) status.textContent = '未启用';
+      }
+    }
+
+    // 考勤：从课程时间同步签到时间
+    function syncSigninFromBasic() {
+      const startInput = document.getElementById('t-start');
+      const endInput = document.getElementById('t-end');
+      const signinStart = document.getElementById('t-signin-start');
+      const signinEnd = document.getElementById('t-signin-end');
+      if (!startInput || !endInput) { toast('未找到课程时间字段', 'error'); return; }
+      if (!startInput.value || !endInput.value) { toast('请先在基本信息中填写课程时间', 'error'); return; }
+      if (signinStart) signinStart.value = startInput.value;
+      if (signinEnd) signinEnd.value = endInput.value;
+      refreshSigninQrcode();
+      toast('已同步课程时间');
+    }
+
+    // 考勤：刷新签到二维码
+    function refreshSigninQrcode() {
+      const container = document.getElementById('t-signin-qrcode');
+      if (!container) return;
+      const trainingId = currentEditingTrainingId;
+      if (!trainingId) {
+        container.innerHTML = '<p class="text-xs text-slate-400">保存培训后自动生成</p>';
+        return;
+      }
+      const signinUrl = window.location.origin + '/training-signin.html?trainingId=' + trainingId;
+      container.innerHTML = '';
+      try {
+        new QRCode(container, { text: signinUrl, width: 200, height: 200, colorDark: '#1e293b', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+      } catch (e) {
+        container.innerHTML = '<p class="text-xs text-red-400">二维码生成失败</p>';
+      }
+    }
+
+    // 考勤：确认签到设置成功
+    function confirmSigninSettings() {
+      const start = document.getElementById('t-signin-start')?.value;
+      const end = document.getElementById('t-signin-end')?.value;
+      if (!start || !end) { toast('请先设置签到开始和结束时间', 'error'); return; }
+      toast('签到设置成功');
+      closeModuleDrawer('attendance');
+    }
+
+    // 考勤：下载签到海报（复用培训海报的高级样式）
+    function downloadSigninPoster(btn) {
+      const trainingId = currentEditingTrainingId;
+      if (!trainingId) { toast('请先保存培训', 'error'); return; }
+      const training = currentEditingTraining || {};
+      const signinStart = document.getElementById('t-signin-start')?.value || '';
+      const signinEnd = document.getElementById('t-signin-end')?.value || '';
+      const signinUrl = window.location.origin + '/training-signin.html?trainingId=' + trainingId;
+
+      // 按钮 loading 态（防止重复点击）
+      const trigger = btn || document.querySelector('button[onclick*="downloadSigninPoster"]');
+      const origHtml = trigger ? trigger.innerHTML : '';
+      if (trigger) {
+        trigger.disabled = true;
+        trigger.style.pointerEvents = 'none';
+        trigger.style.opacity = '0.7';
+        trigger.innerHTML = '<i class="fas fa-spinner fa-spin"></i>生成中...';
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 750; canvas.height = 1334;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+
+      // 背景（渐变）
+      const gradient = ctx.createLinearGradient(0, 0, W, H);
+      gradient.addColorStop(0, '#f0fdf4');
+      gradient.addColorStop(0.5, '#ffffff');
+      gradient.addColorStop(1, '#fff7ed');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, W, H);
+
+      // 装饰圆
+      ctx.beginPath();
+      ctx.arc(W * 0.85, H * 0.12, 120, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(W * 0.15, H * 0.88, 90, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
+      ctx.fill();
+
+      // Logo
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(70, 70, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('游', 70, 77);
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('游雁学院', 105, 80);
+
+      // 主卡片
+      const cardX = 60;
+      const cardY = 180;
+      const cardW = W - 120;
+      const cardH = H - 360;
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, cardX, cardY, cardW, cardH, 24);
+      ctx.fill();
+      ctx.shadowColor = 'rgba(0,0,0,0.06)';
+      ctx.shadowBlur = 30;
+      ctx.shadowOffsetY = 10;
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // 绿色标题栏
+      const headerH = 180;
+      ctx.fillStyle = '#10b981';
+      roundRect(ctx, cardX, cardY, cardW, headerH, { tl: 24, tr: 24, br: 0, bl: 0 });
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 42px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('签到码', W / 2, cardY + 80);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = '30px sans-serif';
+      const title = training.name || training.project || '未命名培训';
+      const maxTitleWidth = cardW - 80;
+      fillTextWithWrap(ctx, title, W / 2, cardY + 140, maxTitleWidth, 44, 'center');
+
+      // 签到时间
+      const fmt = (v) => { if (!v) return '未设置'; try { return new Date(v.replace(' ', 'T')).toLocaleString('zh-CN'); } catch { return v; } };
+      ctx.fillStyle = '#475569';
+      ctx.font = '24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('签到时间', W / 2, cardY + headerH + 50);
+      ctx.fillStyle = '#1e293b';
+      ctx.font = 'bold 26px sans-serif';
+      ctx.fillText(fmt(signinStart), W / 2, cardY + headerH + 90);
+      ctx.fillStyle = '#64748b';
+      ctx.font = '22px sans-serif';
+      ctx.fillText('至 ' + fmt(signinEnd), W / 2, cardY + headerH + 125);
+
+      // 生成二维码并绘制
+      const qrSize = 320;
+      const qrContainer = document.createElement('div');
+      qrContainer.style.position = 'fixed';
+      qrContainer.style.left = '-9999px';
+      document.body.appendChild(qrContainer);
+      try {
+        new QRCode(qrContainer, {
+          text: signinUrl,
+          width: qrSize,
+          height: qrSize,
+          colorDark: '#1e293b',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+        setTimeout(() => {
+          const qrCanvas = qrContainer.querySelector('canvas');
+          if (qrCanvas) {
+            const qrX = (W - qrSize) / 2;
+            const qrY = cardY + headerH + 160;
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 16);
+            ctx.fill();
+            ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+          }
+          document.body.removeChild(qrContainer);
+
+          // 底部提示
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '26px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('扫码完成签到', W / 2, H - 140);
+
+          // 触发下载
+          const a = document.createElement('a');
+          a.href = canvas.toDataURL('image/png');
+          a.download = '签到海报_' + (training.name || '培训') + '.png';
+          a.click();
+          toast('签到海报已下载');
+          if (trigger) { trigger.disabled = false; trigger.style.pointerEvents = ''; trigger.style.opacity = ''; trigger.innerHTML = origHtml; }
+        }, 100);
+      } catch (e) {
+        document.body.removeChild(qrContainer);
+        toast('海报生成失败', 'error');
+        if (trigger) { trigger.disabled = false; trigger.style.pointerEvents = ''; trigger.style.opacity = ''; trigger.innerHTML = origHtml; }
+      }
+    }
+
+    // 考试：从培训模块打开 examModal（复用考试安排的创建考试抽屉）
+    let examModalFromTraining = false;
+    function openExamModalFromTraining(examId = null) {
+      examModalFromTraining = true;
+      openExamModal(examId);
+      // 隐藏 examModal 中的任务指派区块（培训弹窗已有任务指派，避免重复）
+      const assignSection = document.getElementById('examAssignmentSection');
+      if (assignSection) assignSection.style.display = 'none';
+      // 从培训模块打开时，"发布"按钮改为"设置成功"（不触发考试通知，考试随培训项目走）
+      const publishBtn = document.querySelector('button[onclick="saveExamAsPublished()"]');
+      if (publishBtn) {
+        publishBtn.innerHTML = '<i class="fas fa-check mr-1.5"></i>设置成功';
+      }
+      // 从培训模块打开时隐藏"存草稿"按钮（培训关联的考试只允许设置成功，不允许独立存草稿）
+      const draftBtn = document.querySelector('button[onclick="saveExamAsDraft()"]');
+      if (draftBtn) draftBtn.style.display = 'none';
+      // 培训中的考试默认允许无限重考直到及格（用户可手动在考试设置里修改）
+      setBtnGroupValue('examAttempts', 'until_pass');
+    }
+
+    // 调研：填充问卷选项
+    function populateSurveyOptions() {
+      const select = document.getElementById('t-survey-id');
+      if (!select) return;
+      const currentVal = select.value;
+      const surveys = data.surveys || [];
+      select.innerHTML = '<option value="">不关联</option>' + surveys.map(s =>
+        `<option value="${s.id}">${escHtml(s.title)}</option>`
+      ).join('');
+      select.value = currentVal;
+    }
+
+    // 调研：确认选择问卷（替代原"完成"按钮，明确动作语义）
+    function confirmSurveySelection() {
+      const surveyId = document.getElementById('t-survey-id')?.value;
+      if (!surveyId) { toast('请选择调研问卷', 'error'); return; }
+      const surveys = data.surveys || [];
+      const survey = surveys.find(s => String(s.id) === String(surveyId));
+      toast('已选择调研：' + (survey ? survey.title : '未知问卷'));
+      closeModuleDrawer('survey');
+    }
+
+    // 课件：更新上传提示
+    function updateCoursewareUploadTip() {
+      const tip = document.getElementById('t-courseware-upload-tip');
+      if (!tip) return;
+      if (!currentEditingTrainingId) tip.classList.remove('hidden');
+      else tip.classList.add('hidden');
+    }
+
+    // 课件：更新卡片状态文字
+    function updateCoursewareCardStatus() {
+      const status = document.getElementById('courseware-card-status');
+      if (!status) return;
+      const count = currentEditingTraining?.coursewareFiles?.length || 0;
+      status.textContent = count > 0 ? (count + '个文件') : '未配置';
+    }
+
+    // 回填抽屉字段（在 openTrainingModal 末尾调用）
+    function populateTrainingDrawers(training) {
+      // 考勤
+      const signinStart = document.getElementById('t-signin-start');
+      const signinEnd = document.getElementById('t-signin-end');
+      const toDTLocal = (val) => {
+        if (!val) return '';
+        const n = String(val).trim().replace(' ', 'T');
+        return n.includes('T') ? n : n + 'T09:00';
+      };
+      if (signinStart) signinStart.value = toDTLocal(training?.signinStartTime || training?.startTime || '');
+      if (signinEnd) signinEnd.value = toDTLocal(training?.signinEndTime || training?.endTime || '');
+
+      // 考试（t-exam-id 已在模板中设置，这里仅更新卡片状态文字）
+      if (training?.linkedExamId) {
+        fetch(API + '/exams').then(r => r.json()).then(exams => {
+          const exam = exams.find(e => String(e.id) === String(training.linkedExamId));
+          if (exam) {
+            const status = document.getElementById('exam-card-status');
+            if (status) status.textContent = exam.title || '已关联';
+          }
+        }).catch(() => {});
+      }
+
+      // 调研
+      populateSurveyOptions();
+      const surveySelect = document.getElementById('t-survey-id');
+      if (surveySelect) surveySelect.value = training?.linkedSurveyId || '';
+
+      // 课件
+      const coursewareList = document.getElementById('t-courseware-list');
+      if (coursewareList) coursewareList.innerHTML = renderTrainingCoursewareList(training?.coursewareFiles);
+      updateCoursewareCardStatus();
+      updateCoursewareUploadTip();
     }
 
     async function uploadTrainingCourseware(input, trainingId) {
@@ -6502,6 +7699,7 @@
         if (result.success) {
           if (currentEditingTraining) currentEditingTraining.coursewareFiles = result.files;
           document.getElementById('t-courseware-list').innerHTML = renderTrainingCoursewareList(result.files);
+          updateCoursewareCardStatus();
           toast('课件上传成功');
         } else {
           toast(result.error || '上传失败', 'error');
@@ -6512,17 +7710,60 @@
       input.value = '';
     }
 
+    function formatFileSize(bytes) {
+      if (!bytes && bytes !== 0) return '';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
     function renderTrainingCoursewareList(files) {
       if (!files || !files.length) return '<p class="text-sm text-slate-400">暂无课件</p>';
-      return files.map((f, i) => `
+      return files.map((f, i) => {
+        const sizeText = formatFileSize(f.size);
+        return `
         <div class="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-200">
           <div class="flex items-center gap-2 min-w-0">
             <i class="fas fa-file text-slate-400"></i>
-            <span class="text-xs text-slate-700 truncate">${escHtml(f.name)}</span>
+            <div class="min-w-0">
+              <div class="text-xs text-slate-700 truncate">${escHtml(f.name)}</div>
+              ${sizeText ? `<div class="text-[10px] text-slate-400">${sizeText}</div>` : ''}
+            </div>
           </div>
-          <button type="button" onclick="deleteTrainingCourseware(${i})" class="text-slate-400 hover:text-red-500 text-xs"><i class="fas fa-trash"></i></button>
-        </div>
-      `).join('');
+          <div class="flex items-center gap-1.5" id="cw-del-wrap-${i}">
+            <button type="button" onclick="confirmDeleteCourseware(${i})" class="text-slate-400 hover:text-red-500 text-xs px-1.5 py-1 rounded transition" title="删除"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // 课件删除二次确认：点击后切换为"确认删除"按钮，3 秒内未点击则还原
+    let coursewareConfirmTimer = null;
+    function confirmDeleteCourseware(index) {
+      const wrap = document.getElementById('cw-del-wrap-' + index);
+      if (!wrap) return;
+      // 已是确认态 → 执行删除
+      if (wrap.dataset.confirming === '1') {
+        clearTimeout(coursewareConfirmTimer);
+        coursewareConfirmTimer = null;
+        deleteTrainingCourseware(index);
+        return;
+      }
+      // 切换为确认态
+      wrap.dataset.confirming = '1';
+      wrap.innerHTML = `<button type="button" onclick="confirmDeleteCourseware(${index})" class="text-red-500 bg-red-50 text-[11px] px-2 py-1 rounded transition">确认删除</button>`;
+      // 还原其他行的确认态
+      document.querySelectorAll('[id^="cw-del-wrap-"]').forEach(el => {
+        if (el !== wrap && el.dataset.confirming === '1') resetCoursewareConfirm(el.id.replace('cw-del-wrap-', ''));
+      });
+      coursewareConfirmTimer = setTimeout(() => resetCoursewareConfirm(index), 3000);
+    }
+
+    function resetCoursewareConfirm(index) {
+      const wrap = document.getElementById('cw-del-wrap-' + index);
+      if (!wrap) return;
+      wrap.dataset.confirming = '0';
+      wrap.innerHTML = `<button type="button" onclick="confirmDeleteCourseware(${index})" class="text-slate-400 hover:text-red-500 text-xs px-1.5 py-1 rounded transition" title="删除"><i class="fas fa-trash"></i></button>`;
     }
 
     async function deleteTrainingCourseware(index) {
@@ -6538,6 +7779,7 @@
         if (result.success) {
           currentEditingTraining.coursewareFiles = result.files;
           document.getElementById('t-courseware-list').innerHTML = renderTrainingCoursewareList(result.files);
+          updateCoursewareCardStatus();
           toast('课件已删除');
         } else {
           toast(result.error || '删除失败', 'error');
@@ -7055,34 +8297,253 @@
       const event = data.training.find(x => x.id === trainingId);
       if (!event) return;
       const shareUrl = window.location.origin + '/training-signin.html?id=' + trainingId;
+      const dingtalkUrl = 'dingtalk://page/link?url=' + encodeURIComponent(shareUrl);
       showModal(`
-        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-          <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fas fa-share-alt text-purple-500 mr-2"></i>分享培训任务</h3>
-          <div id="training-share-qrcode" class="flex justify-center mb-4"></div>
-          <div class="flex items-center gap-2 mb-4">
-            <input type="text" id="training-share-link" value="${shareUrl}" readonly class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50">
-            <button onclick="copyTrainingShareLink()" class="px-3 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">复制</button>
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh]">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-share-alt text-purple-500 mr-2"></i>分享</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
           </div>
-          <p class="text-xs text-slate-400">员工扫码或点击链接即可一站式完成签到、考试、调研、课件下载</p>
-          <button onclick="closeModal()" class="mt-4 px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+          <div class="p-6 overflow-y-auto">
+            <div class="mb-5">
+              <span class="inline-block px-4 py-1.5 text-sm font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg">企业内分享</span>
+            </div>
+            <div class="space-y-4 mb-6">
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1.5">钉钉内链</label>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="training-dingtalk-link" value="${dingtalkUrl}" readonly class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-600">
+                  <button onclick="copyTrainingShareLink('training-dingtalk-link')" class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600 transition">复制链接</button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1.5">分享链接</label>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="training-share-link" value="${shareUrl}" readonly class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-600">
+                  <button onclick="copyTrainingShareLink('training-share-link')" class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600 transition">复制链接</button>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-3">生成海报</label>
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div onclick="openTrainingPosterModal(${trainingId})" class="group cursor-pointer rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-md transition bg-slate-50">
+                  <div class="aspect-[9/16] bg-gradient-to-br from-indigo-50 via-white to-orange-50 relative p-3 flex flex-col items-center justify-center">
+                    <div class="absolute top-3 left-3 text-[10px] font-bold text-orange-500">游雁学院</div>
+                    <div class="w-full bg-orange-400 rounded-lg py-2 text-center mb-3">
+                      <p class="text-[10px] text-white font-medium">分享码</p>
+                      <p class="text-[8px] text-orange-100 truncate px-1">${escHtml(event.name || '培训分享')}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-white rounded-lg border border-slate-100 flex items-center justify-center">
+                      <i class="fas fa-qrcode text-slate-700 text-lg"></i>
+                    </div>
+                    <div class="mt-2 text-[8px] text-slate-400">长按或扫描查看</div>
+                  </div>
+                  <div class="px-3 py-2 bg-white text-center">
+                    <p class="text-xs font-medium text-slate-700">简约模板</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-slate-100 flex justify-end flex-shrink-0">
+            <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+          </div>
         </div>
       `);
-      new QRCode(document.getElementById('training-share-qrcode'), {
-        text: shareUrl,
-        width: 180,
-        height: 180,
-        colorDark: '#000000',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-      });
     }
 
-    function copyTrainingShareLink() {
-      const input = document.getElementById('training-share-link');
+    function copyTrainingShareLink(inputId) {
+      const input = document.getElementById(inputId || 'training-share-link');
       if (!input) return;
       input.select();
       document.execCommand('copy');
       toast('链接已复制');
+    }
+
+    // 海报生成与预览
+    function openTrainingPosterModal(trainingId) {
+      const event = data.training.find(x => x.id === trainingId);
+      if (!event) return;
+      const shareUrl = window.location.origin + '/training-signin.html?id=' + trainingId;
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800">海报预览</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6 overflow-y-auto flex flex-col items-center">
+            <div id="training-poster-wrap" class="rounded-xl overflow-hidden shadow-lg mb-5">
+              <canvas id="training-poster-canvas" width="750" height="1334" class="w-full max-w-[280px] h-auto"></canvas>
+            </div>
+            <button onclick="downloadTrainingPoster()" class="px-6 py-2.5 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition flex items-center gap-2">
+              <i class="fas fa-download"></i>保存到电脑
+            </button>
+          </div>
+        </div>
+      `);
+      generateTrainingPoster(event, shareUrl);
+    }
+
+    let currentTrainingPosterCanvas = null;
+
+    function generateTrainingPoster(event, shareUrl) {
+      const canvas = document.getElementById('training-poster-canvas');
+      if (!canvas) return;
+      currentTrainingPosterCanvas = canvas;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+
+      // 背景
+      const gradient = ctx.createLinearGradient(0, 0, W, H);
+      gradient.addColorStop(0, '#f8fafc');
+      gradient.addColorStop(0.5, '#ffffff');
+      gradient.addColorStop(1, '#fff7ed');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, W, H);
+
+      // 装饰圆
+      ctx.beginPath();
+      ctx.arc(W * 0.85, H * 0.12, 120, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(249, 115, 22, 0.08)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(W * 0.15, H * 0.88, 90, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
+      ctx.fill();
+
+      // Logo
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.arc(70, 70, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('游', 70, 77);
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('游雁学院', 105, 80);
+
+      // 主卡片
+      const cardX = 60;
+      const cardY = 180;
+      const cardW = W - 120;
+      const cardH = H - 360;
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, cardX, cardY, cardW, cardH, 24);
+      ctx.fill();
+      ctx.shadowColor = 'rgba(0,0,0,0.06)';
+      ctx.shadowBlur = 30;
+      ctx.shadowOffsetY = 10;
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // 橙色标题栏
+      const headerH = 180;
+      ctx.fillStyle = '#f97316';
+      roundRect(ctx, cardX, cardY, cardW, headerH, { tl: 24, tr: 24, br: 0, bl: 0 });
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 42px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('分享码', W / 2, cardY + 80);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = '30px sans-serif';
+      const title = event.name || '未命名培训';
+      const maxTitleWidth = cardW - 80;
+      fillTextWithWrap(ctx, title, W / 2, cardY + 140, maxTitleWidth, 44, 'center');
+
+      // 生成二维码并绘制
+      const qrSize = 360;
+      const qrContainer = document.createElement('div');
+      qrContainer.style.position = 'fixed';
+      qrContainer.style.left = '-9999px';
+      document.body.appendChild(qrContainer);
+      new QRCode(qrContainer, {
+        text: shareUrl,
+        width: qrSize,
+        height: qrSize,
+        colorDark: '#1e293b',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+
+      setTimeout(() => {
+        const qrCanvas = qrContainer.querySelector('canvas');
+        if (qrCanvas) {
+          const qrX = (W - qrSize) / 2;
+          const qrY = cardY + headerH + 90;
+          ctx.fillStyle = '#ffffff';
+          roundRect(ctx, qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 16);
+          ctx.fill();
+          ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+        }
+        document.body.removeChild(qrContainer);
+
+        // 底部提示
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '26px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('长按或扫描查看', W / 2, H - 140);
+      }, 100);
+    }
+
+    function roundRect(ctx, x, y, width, height, radius) {
+      let r = radius;
+      if (typeof radius === 'number') {
+        r = { tl: radius, tr: radius, br: radius, bl: radius };
+      }
+      ctx.beginPath();
+      ctx.moveTo(x + r.tl, y);
+      ctx.lineTo(x + width - r.tr, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + r.tr);
+      ctx.lineTo(x + width, y + height - r.br);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - r.br, y + height);
+      ctx.lineTo(x + r.bl, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - r.bl);
+      ctx.lineTo(x, y + r.tl);
+      ctx.quadraticCurveTo(x, y, x + r.tl, y);
+      ctx.closePath();
+    }
+
+    function fillTextWithWrap(ctx, text, x, y, maxWidth, lineHeight, align) {
+      const chars = text.split('');
+      let line = '';
+      const lines = [];
+      for (let i = 0; i < chars.length; i++) {
+        const testLine = line + chars[i];
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && line) {
+          lines.push(line);
+          line = chars[i];
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+      lines.slice(0, 2).forEach((l, i) => {
+        ctx.textAlign = align || 'left';
+        ctx.fillText(l, x, y + i * lineHeight);
+      });
+    }
+
+    function downloadTrainingPoster() {
+      const canvas = currentTrainingPosterCanvas;
+      if (!canvas) return;
+      const link = document.createElement('a');
+      link.download = '培训分享海报.png';
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast('海报已保存');
     }
 
     // 指派学员
@@ -8547,6 +10008,10 @@
       const container = document.getElementById('modal-container');
       container.innerHTML = '';
       container.classList.add('hidden');
+      // 关闭所有项目内容模块抽屉
+      ['attendance', 'survey', 'courseware'].forEach(m => closeModuleDrawer(m));
+      // 关闭考试创建抽屉（如果从培训模块打开）
+      if (examModalFromTraining) closeExamModal();
     }
 
     // ========== 考试管理 v2（酷学院三模块设计） ==========
@@ -9696,6 +11161,32 @@
       var container = document.getElementById('unifiedEditorContainer');
       if (container) container.style.display = 'none';
 
+      if (paperEditorReturnToPicker) {
+        // 从试卷选择器进入的编辑流程：关闭行内编辑器并返回选择器
+        const inlineModal = document.getElementById('inlinePaperEditorModal');
+        if (inlineModal) {
+          inlineModal.classList.add('hidden');
+          inlineModal.classList.remove('flex');
+        }
+        // 将编辑器容器移回试卷管理 tab，避免影响原有试卷管理功能
+        if (container) {
+          container.parentElement.removeChild(container);
+          document.getElementById('tab-paper-mgmt').appendChild(container);
+        }
+        const createdId = paperEditorCreatedPaperId;
+        paperEditorReturnToPicker = false;
+        paperEditorCreatedPaperId = null;
+        editingPaperId = null;
+        paperQuestions = [];
+        editorMode = null;
+        if (createdId) {
+          // 重新打开试卷选择器并选中新试卷，恢复之前的回调
+          openPaperPickerModal(paperPickerReturnCallback, createdId);
+          paperPickerReturnCallback = null;
+        }
+        return;
+      }
+
       if (editorMode === 'exam') {
         toggleExamListViews(false);
         examEditorData = null;
@@ -9869,8 +11360,8 @@
       if (isPaper) {
         var paper = papersAllData.find(function(p) { return p.id === editingPaperId; });
         drawerHtml = ''
-          + '<div id="paperInfoDrawerOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden transition-opacity" onclick="closePaperInfoDrawer()"></div>'
-          + '<div id="paperInfoDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">'
+          + '<div id="paperInfoDrawerOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80] hidden transition-opacity" onclick="closePaperInfoDrawer()"></div>'
+          + '<div id="paperInfoDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[80] transform translate-x-full transition-transform duration-300 flex flex-col">'
           + '  <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">'
           + '    <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-cog text-indigo-500 mr-2"></i>试卷信息</h3>'
           + '    <button onclick="closePaperInfoDrawer()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"><i class="fas fa-times"></i></button>'
@@ -10396,10 +11887,20 @@
       if (id) loadExamForEdit(id);
     }
 
-    // 加载试卷下拉选项
+    // 加载试卷显示文本
     async function loadExamPaperOptions() {
-      const select = document.getElementById('examPaperId');
-      select.innerHTML = '<option value="">请选择试卷</option>';
+      const paperId = document.getElementById('examPaperId').value;
+      renderExamPaperDisplay(paperId);
+    }
+
+    function renderExamPaperDisplay(paperId) {
+      const display = document.getElementById('exam-paper-display');
+      if (!display) return;
+      if (!paperId) {
+        display.textContent = '请选择试卷';
+        display.className = 'text-sm text-slate-500 truncate';
+        return;
+      }
       try {
         let papers = [];
         if (window.dataSync && window.dataSync.getData) {
@@ -10407,13 +11908,25 @@
         } else {
           papers = JSON.parse(localStorage.getItem('papers') || '[]');
         }
-        papers.forEach(p => {
-          const opt = document.createElement('option');
-          opt.value = p.id;
-          opt.textContent = p.name + ((p.questions || []).length ? ` (${(p.questions || []).length}题)` : '');
-          select.appendChild(opt);
-        });
-      } catch(e) { console.error('加载试卷选项失败:', e); }
+        const paper = papers.find(p => String(p.id) === String(paperId));
+        if (paper) {
+          const qCount = (paper.questions || []).length;
+          display.textContent = paper.name + (qCount ? ` (${qCount}题)` : '');
+          display.className = 'text-sm text-slate-800 truncate';
+        } else {
+          display.textContent = '试卷不存在';
+          display.className = 'text-sm text-red-500 truncate';
+        }
+      } catch(e) { console.error('加载试卷显示失败:', e); }
+    }
+
+    function openExamPaperPicker() {
+      const currentId = document.getElementById('examPaperId').value || null;
+      openPaperPickerModal((paper) => {
+        document.getElementById('examPaperId').value = paper.id;
+        renderExamPaperDisplay(paper.id);
+        onExamPaperChange();
+      }, currentId);
     }
 
     // 试卷变更时自动加载题目
@@ -10468,6 +11981,26 @@
       document.getElementById('examModal').classList.add('translate-x-full');
       editingExamId = null;
       selectedExamQuestions = [];
+      // 恢复任务指派区块显示（从培训模块打开时隐藏过）
+      const assignSection = document.getElementById('examAssignmentSection');
+      if (assignSection) assignSection.style.display = '';
+      // 恢复发布按钮文字（从培训模块打开时改成了"设置成功"）
+      const publishBtn = document.querySelector('button[onclick="saveExamAsPublished()"]');
+      if (publishBtn) {
+        publishBtn.innerHTML = '<i class="fas fa-paper-plane mr-1.5"></i>发布';
+      }
+      // 恢复"存草稿"按钮显示（从培训模块打开时隐藏过）
+      const draftBtn = document.querySelector('button[onclick="saveExamAsDraft()"]');
+      if (draftBtn) draftBtn.style.display = '';
+      // 从培训模块打开但未创建考试 → 回退 toggle 状态
+      if (examModalFromTraining) {
+        const examIdInput = document.getElementById('t-exam-id');
+        if (!examIdInput || !examIdInput.value) {
+          const toggle = document.getElementById('t-exam-enable');
+          if (toggle) { toggle.checked = false; updateModuleCardVisual('exam', false); }
+        }
+      }
+      examModalFromTraining = false;
     }
 
     // ========== 考试抽屉 - 任务指派 ==========
@@ -10600,6 +12133,8 @@
           // 恢复关联试卷
           if (exam.paperId) {
             document.getElementById('examPaperId').value = exam.paperId;
+            renderExamPaperDisplay(exam.paperId);
+            onExamPaperChange();
           }
           // 恢复已选题目
           if (exam.questions && exam.questions.length) {
@@ -10647,7 +12182,7 @@
       const container = document.getElementById('examSelectedQuestions');
       const hint = document.getElementById('examQuestionCountHint');
       if (!container) return;
-      hint.textContent = `已选 ${selectedExamQuestions.length} 题`;
+      if (hint) hint.textContent = `已选 ${selectedExamQuestions.length} 题`;
       if (!selectedExamQuestions.length) {
         container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">请选择关联试卷或手动添加题目</p>';
         return;
@@ -10724,13 +12259,25 @@
       }
       const attemptsPolicy = getBtnGroupValue('examAttempts') || 'unlimited';
       const screenSwitchPolicy = getBtnGroupValue('examScreenSwitch') || 'unlimited';
-      const accessTypeRaw = document.getElementById('examAccessType').value;
-      const startTime = document.getElementById('examStartTime').value;
-      const endTime = document.getElementById('examEndTime').value;
-      const accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
-      const allowedUsers = (accessTypeRaw === 'restricted' || accessTypeRaw === 'import')
-        ? Array.from(examUserPickerTemp).map(id => isNaN(Number(id)) ? id : Number(id))
-        : [];
+      let accessTypeRaw, startTime, endTime, accessType, allowedUsers;
+      if (examModalFromTraining) {
+        // 从培训弹窗读取指派设置，确保考试与培训的指派逻辑一致
+        accessTypeRaw = document.getElementById('t-access-type')?.value || 'none';
+        startTime = document.getElementById('t-start')?.value || '';
+        endTime = document.getElementById('t-end')?.value || '';
+        accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
+        allowedUsers = (accessTypeRaw === 'restricted' || accessTypeRaw === 'import')
+          ? Array.from(trainingUserPickerTemp).map(id => isNaN(Number(id)) ? id : Number(id))
+          : [];
+      } else {
+        accessTypeRaw = document.getElementById('examAccessType').value;
+        startTime = document.getElementById('examStartTime').value;
+        endTime = document.getElementById('examEndTime').value;
+        accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
+        allowedUsers = (accessTypeRaw === 'restricted' || accessTypeRaw === 'import')
+          ? Array.from(examUserPickerTemp).map(id => isNaN(Number(id)) ? id : Number(id))
+          : [];
+      }
       const payload = {
         title: document.getElementById('examTitle').value.trim(),
         description: document.getElementById('examDesc').value.trim(),
@@ -10761,7 +12308,8 @@
         startTime: startTime ? new Date(startTime).toISOString() : null,
         endTime: endTime ? new Date(endTime).toISOString() : null,
         accessType: accessType,
-        allowedUsers: allowedUsers.length ? allowedUsers : null
+        allowedUsers: allowedUsers.length ? allowedUsers : null,
+        fromTraining: !!examModalFromTraining
       };
       try {
         let res;
@@ -10781,9 +12329,18 @@
         const data = await res.json();
         if (data.success) {
           const newExamId = data.exam ? data.exam.id : editingExamId;
+          // 如果是从培训模块打开的，关联到培训
+          if (examModalFromTraining) {
+            const idInput = document.getElementById('t-exam-id');
+            if (idInput) idInput.value = newExamId;
+            const status = document.getElementById('exam-card-status');
+            if (status) status.textContent = document.getElementById('examTitle').value.trim() || '已关联';
+            toast(editingExamId ? '考试已更新，已关联到培训' : '考试创建成功，已关联到培训');
+          } else {
+            toast(editingExamId ? '考试已更新' : '考试创建成功');
+          }
           closeExamModal();
           loadExamMgmtList();
-          toast(editingExamId ? '考试已更新' : '考试创建成功');
         } else {
           toast(data.error || '保存失败', 'error');
         }
@@ -11684,6 +13241,9 @@
     function openPaperModal(id = null) {
       editingPaperId = id;
       paperQuestions = [];
+      // 重置从选择器进入编辑流程的状态，避免普通新建/编辑被错误路由回选择器
+      paperEditorReturnToPicker = false;
+      paperPickerReturnCallback = null;
       
       document.getElementById('paperId').value = id || '';
       document.getElementById('paperModalTitle').textContent = id ? '编辑试卷' : '新建试卷';
@@ -11711,6 +13271,167 @@
       modal.classList.remove('flex');
       editingPaperId = null;
       paperQuestions = [];
+    }
+
+    // 试卷选择器相关
+    let paperPickerCallback = null;
+    let paperPickerSelectedId = null;
+    let paperPickerPage = 1;
+    let paperPickerKeyword = '';
+    const paperPickerPageSize = 10;
+    let paperEditorReturnToPicker = false;
+    let paperEditorCreatedPaperId = null;
+    let paperPickerReturnCallback = null;
+
+    function openPaperPickerModal(onConfirm, selectedPaperId = null) {
+      paperPickerCallback = onConfirm;
+      paperPickerSelectedId = selectedPaperId;
+      paperPickerPage = 1;
+      paperPickerKeyword = '';
+      const searchInput = document.getElementById('paper-picker-search');
+      if (searchInput) searchInput.value = '';
+      const modal = document.getElementById('paperPickerModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      renderPaperPickerList();
+    }
+
+    function closePaperPickerModal() {
+      const modal = document.getElementById('paperPickerModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      paperPickerCallback = null;
+      paperPickerSelectedId = null;
+    }
+
+    function getPaperPickerList() {
+      let papers = [];
+      if (window.dataSync && window.dataSync.getData) {
+        papers = window.dataSync.getData('papers') || [];
+      } else {
+        papers = JSON.parse(localStorage.getItem('papers') || '[]');
+      }
+      if (paperPickerKeyword.trim()) {
+        const kw = paperPickerKeyword.trim().toLowerCase();
+        papers = papers.filter(p => (p.name || '').toLowerCase().includes(kw));
+      }
+      // 按创建时间倒序
+      return papers.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }
+
+    function renderPaperPickerList() {
+      const list = getPaperPickerList();
+      const total = list.length;
+      const totalPages = Math.max(1, Math.ceil(total / paperPickerPageSize));
+      if (paperPickerPage > totalPages) paperPickerPage = totalPages;
+      const start = (paperPickerPage - 1) * paperPickerPageSize;
+      const pageList = list.slice(start, start + paperPickerPageSize);
+
+      const tbody = document.getElementById('paper-picker-list');
+      const empty = document.getElementById('paper-picker-empty');
+      if (total === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+        renderPaperPickerPagination(0, 0);
+        return;
+      }
+      empty.classList.add('hidden');
+      tbody.innerHTML = pageList.map(p => {
+        const checked = String(paperPickerSelectedId) === String(p.id) ? 'checked' : '';
+        const typeLabel = p.type === 'random' ? '随机试卷' : '固定试卷';
+        const createdAt = formatPaperDate(p.createdAt);
+        return `
+          <tr class="hover:bg-slate-50 cursor-pointer" onclick="selectPaperPickerRow('${p.id}')">
+            <td class="px-5 py-3">
+              <input type="radio" name="paper-picker-radio" value="${p.id}" ${checked} onclick="event.stopPropagation(); selectPaperPickerRow('${p.id}')"
+                class="w-4 h-4 text-indigo-500 focus:ring-indigo-500 border-slate-300">
+            </td>
+            <td class="px-5 py-3 font-medium text-indigo-600">${escHtml(p.name || '未命名试卷')}</td>
+            <td class="px-5 py-3 text-slate-600">${typeLabel}</td>
+            <td class="px-5 py-3 text-slate-500">${createdAt}</td>
+            <td class="px-5 py-3 text-slate-500">${escHtml(p.creator || p.createdBy || '-')}</td>
+          </tr>
+        `;
+      }).join('');
+      renderPaperPickerPagination(totalPages, total);
+    }
+
+    function renderPaperPickerPagination(totalPages, total) {
+      const el = document.getElementById('paper-picker-pagination');
+      if (totalPages <= 1) {
+        el.innerHTML = `<span class="text-xs text-slate-400">共 ${total} 条</span>`;
+        return;
+      }
+      let html = `<button onclick="changePaperPickerPage(${paperPickerPage - 1})" ${paperPickerPage <= 1 ? 'disabled' : ''} class="px-2 py-1 rounded border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white">&lt;</button>`;
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === paperPickerPage) {
+          html += `<span class="px-2 py-1 rounded bg-indigo-500 text-white text-xs">${i}</span>`;
+        } else {
+          html += `<button onclick="changePaperPickerPage(${i})" class="px-2 py-1 rounded border border-slate-200 hover:bg-white text-xs">${i}</button>`;
+        }
+      }
+      html += `<button onclick="changePaperPickerPage(${paperPickerPage + 1})" ${paperPickerPage >= totalPages ? 'disabled' : ''} class="px-2 py-1 rounded border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white">&gt;</button>`;
+      html += `<span class="text-xs text-slate-400 ml-2">共 ${total} 条</span>`;
+      el.innerHTML = html;
+    }
+
+    function changePaperPickerPage(page) {
+      const list = getPaperPickerList();
+      const totalPages = Math.max(1, Math.ceil(list.length / paperPickerPageSize));
+      if (page < 1 || page > totalPages) return;
+      paperPickerPage = page;
+      renderPaperPickerList();
+    }
+
+    function onPaperPickerSearch(input) {
+      paperPickerKeyword = input.value;
+      paperPickerPage = 1;
+      renderPaperPickerList();
+    }
+
+    function selectPaperPickerRow(paperId) {
+      paperPickerSelectedId = paperId;
+      renderPaperPickerList();
+    }
+
+    function confirmPaperPicker() {
+      if (!paperPickerSelectedId) {
+        toast('请选择一份试卷', 'warning');
+        return;
+      }
+      let papers = [];
+      if (window.dataSync && window.dataSync.getData) {
+        papers = window.dataSync.getData('papers') || [];
+      } else {
+        papers = JSON.parse(localStorage.getItem('papers') || '[]');
+      }
+      const paper = papers.find(p => String(p.id) === String(paperPickerSelectedId));
+      if (paper && paperPickerCallback) {
+        paperPickerCallback(paper);
+      }
+      closePaperPickerModal();
+    }
+
+    function createPaperFromPicker() {
+      // 关闭选择器，打开新建试卷弹窗；保存后进入行内试卷编辑器，完成后返回选择器
+      const returnCb = paperPickerCallback;
+      closePaperPickerModal();
+      openPaperModal();
+      // 在 openPaperModal 重置状态后再标记：从选择器进入编辑流程
+      paperPickerReturnCallback = returnCb;
+      paperEditorReturnToPicker = true;
+    }
+
+    function formatPaperDate(dateStr) {
+      if (!dateStr) return '-';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
     }
 
     // 加载试卷数据用于编辑
@@ -11938,6 +13659,7 @@
         } else {
           localStorage.setItem('papers', JSON.stringify(papers));
         }
+        papersAllData = papers;
         
         const savedId = payload.id;
         closePaperModal();
@@ -11951,7 +13673,11 @@
               console.log('[savePaper] 准备打开编辑器, savedId:', savedId);
               console.log('[savePaper] papersAllData 长度:', papersAllData.length);
               console.log('[savePaper] 能否找到试卷:', papersAllData.some(function(p) { return p.id === savedId; }));
-              openPaperEditor(savedId);
+              if (paperEditorReturnToPicker) {
+                openInlinePaperEditor(savedId);
+              } else {
+                openPaperEditor(savedId);
+              }
               console.log('[savePaper] openPaperEditor 执行完毕');
             } catch (err) {
               console.error('[savePaper] 打开编辑器失败:', err);
@@ -12017,6 +13743,56 @@
       console.log('[openPaperEditor] renderUnifiedEditor 完成, container.innerHTML长度:', container.innerHTML.length);
 
       // 异步加载题库数据来补充题目详情
+      enrichQuestionDetails();
+    }
+
+    // 从试卷选择器内打开行内试卷编辑器
+    async function openInlinePaperEditor(id) {
+      console.log('[openInlinePaperEditor] 开始, id:', id);
+      editorMode = 'paper';
+      paperEditorCreatedPaperId = id;
+      var paper = papersAllData.find(function(p) { return p.id === id; });
+      if (!paper) {
+        console.error('[openInlinePaperEditor] 试卷不存在! id:', id);
+        toast('试卷不存在', 'error');
+        editorMode = null;
+        return;
+      }
+      editingPaperId = id;
+
+      // 构建 paperQuestions
+      paperQuestions = (paper.questions || []).map(function(pq, idx) {
+        return {
+          questionId: pq.questionId,
+          score: pq.score || 0,
+          partialScore: pq.partialScore || 0,
+          order: idx,
+          content: pq.content || '(题目内容)',
+          type: pq.type || 'single',
+          options: pq.options || [],
+          answer: pq.answer || '',
+          explanation: pq.explanation || ''
+        };
+      });
+
+      // 显示行内编辑器弹窗
+      const inlineModal = document.getElementById('inlinePaperEditorModal');
+      inlineModal.classList.remove('hidden');
+      inlineModal.classList.add('flex');
+
+      // 将统一编辑器容器移入行内弹窗
+      var container = document.getElementById('unifiedEditorContainer');
+      if (container) {
+        container.parentElement.removeChild(container);
+      } else {
+        container = document.createElement('div');
+        container.id = 'unifiedEditorContainer';
+      }
+      document.getElementById('inline-paper-editor-body').appendChild(container);
+      container.style.display = 'block';
+      container.classList.remove('hidden');
+
+      renderUnifiedEditor();
       enrichQuestionDetails();
     }
 
@@ -14351,6 +16127,110 @@
       updateTrainingRequestStats();
     });
   </script>
+
+  <!-- ===== 项目内容模块抽屉（z-[55]，位于培训弹窗 z-50 之上、试卷选择器 z-60 之下） ===== -->
+
+  <!-- 考勤抽屉 -->
+  <div id="attendanceDrawerOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55] hidden transition-opacity" onclick="closeModuleDrawer('attendance')"></div>
+  <div id="attendanceDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[55] transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 flex-shrink-0">
+      <h3 class="text-base font-semibold text-slate-800 flex items-center gap-2"><i class="fas fa-check-circle text-emerald-500"></i>考勤配置</h3>
+      <button onclick="closeModuleDrawer('attendance')" class="text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-5 space-y-5">
+      <div class="bg-emerald-50 rounded-xl p-3 text-xs text-emerald-700 flex items-start gap-2">
+        <i class="fas fa-info-circle mt-0.5"></i>
+        <span>设置签到时间窗口，员工在此时段内可扫码签到。点击「从课程时间同步」可自动识别基本信息中的课程时间。</span>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">签到开始时间</label>
+        <input type="datetime-local" id="t-signin-start" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">签到结束时间</label>
+        <input type="datetime-local" id="t-signin-end" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+      </div>
+      <button type="button" onclick="syncSigninFromBasic()" class="w-full px-3 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-100 transition flex items-center justify-center gap-2">
+        <i class="fas fa-sync-alt"></i>从课程时间同步
+      </button>
+      <div class="border-t border-slate-100 pt-4">
+        <label class="block text-sm font-medium text-slate-700 mb-2">签到二维码</label>
+        <div id="t-signin-qrcode" class="flex justify-center items-center bg-slate-50 rounded-xl py-6 min-h-[200px]">
+          <p class="text-xs text-slate-400">保存培训后自动生成</p>
+        </div>
+        <p class="text-xs text-slate-400 mt-2 text-center">员工使用钉钉扫码进入签到页面</p>
+      </div>
+      <div class="border-t border-slate-100 pt-4">
+        <div class="flex gap-2">
+          <button type="button" onclick="confirmSigninSettings()" class="flex-1 px-3 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition flex items-center justify-center gap-2">
+            <i class="fas fa-check"></i>设置成功
+          </button>
+          <button type="button" onclick="downloadSigninPoster(this)" class="flex-1 px-3 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition flex items-center justify-center gap-2">
+            <i class="fas fa-download"></i>下载海报
+          </button>
+        </div>
+        <p class="text-xs text-slate-400 mt-2">海报含培训名称、签到时间和二维码，可打印张贴</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 考试抽屉已移除：直接复用考试安排的 examModal（openExamModal） -->
+
+  <!-- 调研抽屉 -->
+  <div id="surveyDrawerOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55] hidden transition-opacity" onclick="closeModuleDrawer('survey')"></div>
+  <div id="surveyDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[55] transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 flex-shrink-0">
+      <h3 class="text-base font-semibold text-slate-800 flex items-center gap-2"><i class="fas fa-poll text-blue-500"></i>调研配置</h3>
+      <button onclick="closeModuleDrawer('survey')" class="text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-5 space-y-4">
+      <div class="bg-blue-50 rounded-xl p-3 text-xs text-blue-700 flex items-start gap-2">
+        <i class="fas fa-info-circle mt-0.5"></i>
+        <span>选择调研问卷后，问卷数据仅在培训数据分析中呈现，不会出现在调研管理列表中。</span>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">调研问卷</label>
+        <select id="t-survey-id" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+          <option value="">不关联</option>
+        </select>
+      </div>
+      <div id="t-survey-info" class="hidden bg-slate-50 rounded-xl p-3 text-xs text-slate-600"></div>
+    </div>
+    <div class="px-5 py-3 border-t border-slate-100 flex-shrink-0">
+      <button type="button" onclick="confirmSurveySelection()" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 flex items-center justify-center gap-2">
+        <i class="fas fa-check"></i>确认选择
+      </button>
+    </div>
+  </div>
+
+  <!-- 课件抽屉 -->
+  <div id="coursewareDrawerOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55] hidden transition-opacity" onclick="closeModuleDrawer('courseware')"></div>
+  <div id="coursewareDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[55] transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 flex-shrink-0">
+      <h3 class="text-base font-semibold text-slate-800 flex items-center gap-2"><i class="fas fa-file-pdf text-rose-500"></i>课件管理</h3>
+      <button onclick="closeModuleDrawer('courseware')" class="text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-5 space-y-4">
+      <div class="bg-rose-50 rounded-xl p-3 text-xs text-rose-700 flex items-start gap-2">
+        <i class="fas fa-info-circle mt-0.5"></i>
+        <span>上传的课件存储在培训的上传列表中。删除课件会同时从服务器移除文件，节省资源空间。</span>
+      </div>
+      <div id="t-courseware-upload-tip" class="hidden bg-amber-50 rounded-xl p-3 text-xs text-amber-700 flex items-start gap-2">
+        <i class="fas fa-exclamation-triangle mt-0.5"></i>
+        <span>请先保存培训基本信息，再上传课件。</span>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">上传课件</label>
+        <input type="file" id="t-courseware" multiple accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.zip,.rar"
+          onchange="uploadTrainingCourseware(this, currentEditingTrainingId)"
+          class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:bg-rose-50 file:text-rose-600 hover:file:bg-rose-100">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">已上传课件</label>
+        <div id="t-courseware-list" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

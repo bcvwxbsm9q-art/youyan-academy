@@ -6,7 +6,6 @@
     <title>课程中心 - 游雁学院</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="css/mobile-enhanced.css">
     <script>
         tailwind.config = {
@@ -39,7 +38,6 @@
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-dark text-gray-800 dark:text-gray-200">
-    <!--  -->
     <header class="bg-white/95 dark:bg-darkgray/95 backdrop-blur-md shadow-sm fixed w-full top-0 z-50">
         <div class="container-responsive">
             <div class="flex justify-between items-center py-3">
@@ -137,7 +135,7 @@
                     </aside>
 
                     <!-- 右侧课程区域 -->
-                    <main class="flex-1 min-w-0">
+                    <section class="flex-1 min-w-0">
                         <!-- 搜索和排序 -->
                         <div class="flex gap-4 mb-6">
                             <div class="search-enhanced flex-1 max-w-md">
@@ -165,7 +163,7 @@
                                 <div class="empty-state-desc">请调整搜索条件</div>
                             </div>
                         </div>
-                    </main>
+                    </section>
                 </div>
             </div>
         </section>
@@ -182,25 +180,6 @@
         function handleLogout() {
             AuthGuard.logout();
         }
-        
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = 'fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 shadow-lg ' + (type === 'success' ? 'bg-green-500' : 'bg-red-500');
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuthAndUpdateUI();
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
-            if (mobileMenuButton && mobileMenu) {
-                mobileMenuButton.addEventListener('click', () => {
-                    mobileMenu.classList.toggle('hidden');
-                });
-            }
-        });
     </script>
 </body>
 </html>

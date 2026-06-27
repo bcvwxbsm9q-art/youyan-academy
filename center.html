@@ -212,7 +212,6 @@
                         <div class="flex items-center gap-3 mb-2">
                             <h1 class="text-2xl md:text-3xl font-bold" id="profile-user-name">用户</h1>
                             <span class="px-3 py-1 bg-white/20 rounded-full text-xs font-medium backdrop-blur-sm" id="user-role-badge">学员</span>
-                            <span class="px-3 py-1 bg-yellow-400/90 text-yellow-900 rounded-full text-xs font-bold" id="vip-badge">VIP</span>
                         </div>
                         
                         <!-- 经验条 -->
@@ -352,7 +351,7 @@
                                         查看全部 <i class="fa fa-angle-right"></i>
                                     </button>
                                 </div>
-                                <div class="flex gap-4" id="recent-badges">
+                                <div class="flex gap-3" id="recent-badges">
                                     <!-- 动态渲染 -->
                                 </div>
                             </div>
@@ -801,10 +800,6 @@
         const api = window.DataAPI;
         let currentUser = null;
         let learningRecords = [];
-        let examRecords = [];
-        let certificates = [];
-        let myCourses = [];
-        let learningChart = null;
         let statsChart = null;
 
         // 徽章定义
@@ -1567,46 +1562,6 @@ const BADGES = [
         let previousUnlockedBadges = [];
         let badgeUnlockHistory = {};
         
-        // 检查是否有新徽章解锁
-        function checkNewBadges(currentUnlocked) {
-            const newBadges = currentUnlocked.filter(b => !previousUnlockedBadges.includes(b.id));
-            if (newBadges.length > 0 && previousUnlockedBadges.length > 0) {
-                // 有新徽章解锁，显示庆祝动画
-                newBadges.forEach((badge, index) => {
-                    setTimeout(() => {
-                        showBadgeUnlockToast(badge);
-                    }, index * 500);
-                });
-            }
-            previousUnlockedBadges = currentUnlocked.map(b => b.id);
-        }
-        
-        // 显示新徽章解锁提示
-        function showBadgeUnlockToast(badge) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 z-50 new-badge-toast';
-            toast.innerHTML = `
-                <div class="bg-white rounded-2xl shadow-2xl p-4 flex items-center gap-4 border-2 border-yellow-400 min-w-[300px]">
-                    <div class="w-14 h-14 rounded-full bg-${badge.color}-100 flex items-center justify-center text-${badge.color}-600 text-2xl badge-glow-effect">
-                        <i class="fa ${badge.icon}"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500">恭喜解锁新成就</p>
-                        <p class="font-bold text-gray-800">${badge.name}</p>
-                    </div>
-                    <div class="ml-auto">
-                        <i class="fa fa-star text-yellow-400 text-xl float-animation"></i>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.transition = 'all 0.5s ease';
-                toast.style.transform = 'translate(-50%, -100%)';
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
-        }
         
         // 加载徽章（个人中心顶部显示）
         function loadBadges() {
@@ -1639,26 +1594,27 @@ const BADGES = [
             // 使用合并后的解锁列表构建已解锁徽章数组（与成就页一致）
             const allUnlockedBadges = BADGES.filter(b => allUnlockedIds.includes(b.id));
             
-            // 按解锁时间排序获取最近获得的徽章（显示所有已解锁的）
+            // 按解锁时间排序获取最近获得的徽章（最多显示 10 个，避免页面被挤压）
             const recentBadges = [...allUnlockedBadges]
                 .sort((a, b) => {
                     const timeA = unlockTimes[a.id] || badgeUnlockHistory[a.id] || '';
                     const timeB = unlockTimes[b.id] || badgeUnlockHistory[b.id] || '';
                     return new Date(timeB) - new Date(timeA);
-                });
-            
-            // 渲染最近徽章（显示所有已解锁的，不再限制数量）
+                })
+                .slice(0, 10);
+
+            // 渲染最近徽章（最多 10 个，超出请到成就页查看全部）
             const recentContainer = document.getElementById('recent-badges');
             if (recentContainer) {
                 if (recentBadges.length === 0) {
                     recentContainer.innerHTML = '<p class="text-sm text-gray-400">开始学习解锁徽章</p>';
                 } else {
                     recentContainer.innerHTML = recentBadges.map((b, i) => `
-                        <div class="flex flex-col items-center p-3 bg-yellow-50 rounded-xl border border-yellow-200 hover:shadow-lg transition-all ${i === 0 && newBadges.length > 0 ? 'badge-unlock-animation' : ''}">
+                        <div class="flex flex-col items-center w-20 p-3 bg-yellow-50 rounded-xl border border-yellow-200 hover:shadow-lg transition-all ${i === 0 && newBadges.length > 0 ? 'badge-unlock-animation' : ''}">
                             <div class="w-12 h-12 rounded-full bg-${b.color}-100 flex items-center justify-center text-${b.color}-600 text-xl mb-1">
                                 <i class="fa ${b.icon}"></i>
                             </div>
-                            <span class="text-xs font-medium text-gray-700">${b.name}</span>
+                            <span class="text-xs font-medium text-gray-700 text-center leading-tight">${b.name}</span>
                         </div>
                     `).join('');
                 }
@@ -2552,16 +2508,6 @@ const BADGES = [
             closeEditProfileModal();
             showToast('资料已保存', 'success');
         }
-        
-        // 将文件转换为 base64
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
 
         // 修改密码
         function showChangePasswordModal() {
@@ -2646,20 +2592,33 @@ const BADGES = [
         // 绑定手机/邮箱
         function showBindPhoneModal() {
             const phone = prompt('请输入手机号：');
-            if (phone) {
-                currentUser.phone = phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
-                loadUserData();
-                alert('手机号已绑定');
+            if (!phone) return;
+            // 保存真实手机号到本地存储（显示时由 loadUserData 自动脱敏）
+            const user = getLoggedInUser();
+            if (user) {
+                user.phone = phone;
+                localStorage.setItem('user', JSON.stringify(user));
+                sessionStorage.setItem('user', JSON.stringify(user));
+            } else {
+                currentUser.phone = phone;
             }
+            loadUserData();
+            showToast('手机号已绑定', 'success');
         }
 
         function showBindEmailModal() {
             const email = prompt('请输入邮箱：');
-            if (email) {
+            if (!email) return;
+            const user = getLoggedInUser();
+            if (user) {
+                user.email = email;
+                localStorage.setItem('user', JSON.stringify(user));
+                sessionStorage.setItem('user', JSON.stringify(user));
+            } else {
                 currentUser.email = email;
-                loadUserData();
-                alert('邮箱已绑定');
             }
+            loadUserData();
+            showToast('邮箱已绑定', 'success');
         }
 
         // 导出数据
@@ -2668,8 +2627,7 @@ const BADGES = [
             const learningData = api.getUserLearningData(userId);
             const data = {
                 user: currentUser,
-                learningData: learningData,
-                myCourses: myCourses
+                learningData: learningData
             };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -2692,50 +2650,30 @@ const BADGES = [
 
         // 退出登录功能已统一为 handleLogout()
 
-        // 用户菜单
-        document.getElementById('user-menu-button')?.addEventListener('click', function() {
-            document.getElementById('user-menu').classList.toggle('hidden');
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('#user-menu-button') && !e.target.closest('#user-menu')) {
-                document.getElementById('user-menu')?.classList.add('hidden');
-            }
-        });
-
         // 移动端菜单
         document.getElementById('mobile-menu-button')?.addEventListener('click', function() {
             document.getElementById('mobile-menu').classList.toggle('hidden');
         });
 
-        // 用户认证状态检查
-        function getCurrentUser() {
-            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
-            return userStr ? JSON.parse(userStr) : null;
-        }
-        
+        // 用户认证状态检查（复用 getLoggedInUser，避免重复定义）
         function checkAuthAndUpdateUI() {
-            const user = getCurrentUser();
+            const user = getLoggedInUser();
             const token = localStorage.getItem('token') || sessionStorage.getItem('token');
             const userInfo = document.getElementById('user-info');
-            const loginBtn = document.getElementById('login-btn');
             const mobileUserInfo = document.getElementById('mobile-user-info');
-            
+
             if (user && token) {
                 // 已登录
                 if (userInfo) userInfo.classList.remove('hidden');
-                if (loginBtn) loginBtn.classList.add('hidden');
                 if (mobileUserInfo) mobileUserInfo.classList.remove('hidden');
-                
+
                 // 显示用户姓名（注意：后端返回的是 real_name 下划线格式）
                 const name = user.real_name || user.realName || user.username || '用户';
                 const displayName = document.getElementById('user-display-name');
                 const mobileUserName = document.getElementById('mobile-user-name');
-                const headerUserName = document.getElementById('header-user-name');
                 if (displayName) displayName.textContent = name;
                 if (mobileUserName) mobileUserName.textContent = name;
-                if (headerUserName) headerUserName.textContent = name;
-                
+
                 // 管理员显示管理端入口
                 const mobileAdminLink = document.getElementById('mobile-admin-link');
                 const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
@@ -2745,14 +2683,13 @@ const BADGES = [
                 }
                 if (mobileLogoutBtn) mobileLogoutBtn.classList.remove('hidden');
                 if (desktopLogoutBtn) desktopLogoutBtn.classList.remove('hidden');
-                
+
                 // 更新 currentUser
                 currentUser = { ...currentUser, ...user };
                 loadUserData(); // 重新加载用户数据以显示最新信息
             } else {
                 // 未登录
                 if (userInfo) userInfo.classList.add('hidden');
-                if (loginBtn) loginBtn.classList.remove('hidden');
                 if (mobileUserInfo) mobileUserInfo.classList.add('hidden');
             }
         }

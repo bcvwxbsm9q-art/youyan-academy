@@ -11,6 +11,7 @@
     <title>培训计划 - 游雁学院</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/mobile-enhanced.css">
     <script>
         tailwind.config = {
             theme: {
@@ -58,7 +59,222 @@
         .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
         .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .btn-primary:hover { background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%); }
-        
+
+        /* ===== 培训详情 - 项目内容任务卡片 ===== */
+        .tp-progress-top {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border: 1px solid #bbf7d0;
+            border-radius: 0.875rem;
+            padding: 0.875rem 1rem;
+            margin-bottom: 1rem;
+        }
+        .tp-progress-label { display:flex; align-items:center; justify-content:space-between; font-size:0.8125rem; color:#374151; margin-bottom:0.5rem; }
+        .tp-progress-label span:first-child { font-weight:600; color:#065f46; }
+        .tp-progress-count { font-weight:800; color:#10b981; background:#fff; padding:0.125rem 0.5rem; border-radius:999px; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+        .tp-progress-track { height:8px; background:#dcfce7; border-radius:999px; overflow:hidden; box-shadow:inset 0 1px 2px rgba(0,0,0,0.06); }
+        .tp-progress-fill {
+            height:100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            border-radius:999px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .tp-progress-fill::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+            animation: tp-progress-shine 2s infinite;
+        }
+        @keyframes tp-progress-shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .tp-progress-pct {
+            text-align: right;
+            font-size: 0.6875rem;
+            color: #10b981;
+            font-weight: 700;
+            margin-top: 0.25rem;
+        }
+
+        .tp-task-card {
+            display: flex; align-items: center; gap: 0.875rem;
+            padding: 0.875rem 1rem;
+            background: #ffffff;
+            border: 1px solid #f3f4f6;
+            border-radius: 1rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            margin-bottom: 0.625rem;
+            transition: all 0.2s ease;
+        }
+        .tp-task-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); border-color: #e5e7eb; transform: translateY(-1px); }
+        .tp-task-card.is-done { background: #f9fafb; }
+
+        .tp-task-icon {
+            width: 2.75rem; height: 2.75rem; min-width: 2.75rem;
+            border-radius: 0.875rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.125rem;
+        }
+        .tp-task-main { flex: 1; min-width: 0; }
+        .tp-task-title-row { display:flex; align-items:center; gap:0.375rem; margin-bottom:0.25rem; flex-wrap:wrap; }
+        .tp-task-title { font-size:0.9rem; font-weight:600; color:#1f2937; word-break:break-all; }
+        .tp-task-tag { font-size:0.65rem; padding:0.1rem 0.4rem; border-radius:0.25rem; font-weight:500; line-height:1rem; }
+        .tp-task-subtitle { font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem; display:flex; align-items:center; gap:0.375rem; }
+        .tp-status { font-size:0.75rem; font-weight:500; display:inline-flex; align-items:center; }
+
+        .tp-task-btn {
+            font-size: 0.75rem; font-weight: 600;
+            padding: 0.45rem 0.9rem;
+            border-radius: 0.625rem;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            display: inline-flex; align-items: center; gap: 0.25rem;
+        }
+        .tp-task-btn:disabled { cursor: default; opacity: 0.75; }
+        .tp-task-btn i { font-size: 0.7rem; }
+
+        .btn-action-signin { background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 2px 6px rgba(16,185,129,0.25); }
+        .btn-action-signin:hover:not(:disabled) { box-shadow: 0 4px 10px rgba(16,185,129,0.35); transform: translateY(-1px); }
+        .btn-action-survey { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; box-shadow: 0 2px 6px rgba(245,158,11,0.25); }
+        .btn-action-survey:hover:not(:disabled) { box-shadow: 0 4px 10px rgba(245,158,11,0.35); transform: translateY(-1px); }
+        .btn-action-exam { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; box-shadow: 0 2px 6px rgba(239,68,68,0.25); }
+        .btn-action-exam:hover:not(:disabled) { box-shadow: 0 4px 10px rgba(239,68,68,0.35); transform: translateY(-1px); }
+        .btn-action-courseware { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; box-shadow: 0 2px 6px rgba(139,92,246,0.25); }
+        .btn-action-courseware:hover:not(:disabled) { box-shadow: 0 4px 10px rgba(139,92,246,0.35); transform: translateY(-1px); }
+        .btn-state-done { background: #f0fdf4; color: #10b981; border: 1px solid #bbf7d0; }
+        .btn-action-locked { background: linear-gradient(135deg, #9ca3af, #6b7280); color: #fff; box-shadow: 0 2px 6px rgba(156,163,175,0.25); cursor: not-allowed; opacity: 0.8; }
+
+        /* 按钮 loading */
+        .tp-task-btn.is-loading { pointer-events: none; opacity: 0.75; }
+
+        /* ===== 培训详情 - 基本信息卡片 ===== */
+        .tp-info-card {
+            background: #ffffff;
+            border: 1px solid #f3f4f6;
+            border-radius: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+        }
+        .tp-info-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+            padding: 0.625rem 1rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .tp-info-back:hover { color: #667eea; }
+        .tp-info-back i { font-size: 0.7rem; }
+        .tp-info-section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: #374151;
+            padding: 0 1rem 0.625rem 1rem;
+            margin-top: -0.25rem;
+        }
+        .tp-info-section-title i { color: #667eea; font-size: 0.875rem; }
+        .tp-info-body { padding: 0 1rem 1rem 1rem; }
+        .tp-category-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .tp-course-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1.3;
+            margin: 0 0 1rem 0;
+            letter-spacing: -0.01em;
+        }
+        .tp-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.625rem;
+        }
+        .tp-info-mini-card {
+            background: #f9fafb;
+            border: 1px solid #f3f4f6;
+            border-radius: 0.75rem;
+            padding: 0.625rem 0.75rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+        }
+        .tp-info-mini-card:hover { background: #f3f4f6; border-color: #e5e7eb; }
+        .tp-info-mini-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 0.45rem;
+            background: #ffffff;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            flex-shrink: 0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .tp-info-mini-text { flex: 1; min-width: 0; }
+        .tp-info-mini-label {
+            font-size: 0.6875rem;
+            color: #9ca3af;
+            line-height: 1.2;
+            margin-bottom: 0.0625rem;
+        }
+        .tp-info-mini-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1.3;
+        }
+        .tp-intro-box {
+            margin-top: 1rem;
+            padding: 0.875rem;
+            background: #f8fafc;
+            border: 1px solid #f1f5f9;
+            border-radius: 0.75rem;
+        }
+        .tp-intro-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 0.375rem;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+        .tp-intro-title i { color: #667eea; }
+        .tp-intro-text {
+            font-size: 0.8125rem;
+            color: #4b5563;
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+        .tp-info-footer {
+            padding: 0.875rem 1rem;
+            background: #fafafa;
+            border-top: 1px solid #f3f4f6;
+        }
+
     </style>
 </head>
 <body class="bg-gray-50">
@@ -89,7 +305,28 @@
         </div>
     </div>
 
-
+    <!-- 调研问卷弹窗 -->
+    <div id="survey-modal" style="display: none; position: fixed; inset: 0; z-index: 56; align-items: center; justify-content: center; padding: 1rem;">
+        <div onclick="closeSurveyModal()" style="position: absolute; inset: 0; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(8px);"></div>
+        <div style="position: relative; background-color: white; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); width: 100%; max-width: 560px; max-height: 90vh; overflow: hidden; animation: modalIn 0.3s ease-out; display: flex; flex-direction: column;">
+            <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 1.25rem 1.5rem; color: white; flex-shrink: 0;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div id="survey-modal-subtitle" style="font-size: 0.8rem; opacity: 0.9; margin-bottom: 0.25rem;">满意度调研</div>
+                        <div id="survey-modal-title" style="font-size: 1.125rem; font-weight: 600;">培训满意度调研</div>
+                    </div>
+                    <button onclick="closeSurveyModal()" style="width: 2.25rem; height: 2.25rem; border-radius: 50%; background-color: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; border: none;">
+                        <i class="fa fa-times" style="font-size: 1.125rem;"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="survey-modal-body" style="padding: 1.5rem; flex: 1; overflow-y: auto;"></div>
+            <div id="survey-modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0;">
+                <button onclick="closeSurveyModal()" style="padding: 0.625rem 1.5rem; border: 1px solid #e5e7eb; background: white; color: #6b7280; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">取消</button>
+                <button id="survey-submit-btn" onclick="submitSurvey()" style="padding: 0.625rem 1.5rem; border: none; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">提交问卷</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 培训需求提交弹窗 -->
     <div id="training-request-modal" style="display: none; position: fixed; inset: 0; z-index: 50; align-items: center; justify-content: center; padding: 1rem;">
@@ -480,7 +717,11 @@
         async function loadTrainingSchedule() {
             try {
                 await loadLecturers();
-                const res = await fetch('/api/training/schedule');
+                // 带上认证 token，以便后端返回当前用户的签到/考试/调研完成状态
+                const token = (typeof AuthGuard !== 'undefined' && AuthGuard.getToken) ? AuthGuard.getToken() : null;
+                const headers = {};
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                const res = await fetch('/api/training/schedule', { headers });
                 const json = await res.json();
                 if (json.success && json.data && json.data.length > 0) {
                     courses = json.data;
@@ -603,22 +844,12 @@
             }
             renderCalendar();
             renderMonthlyCourses();
-            // 报名/取消后实时刷新培训进度和必修课程
+            // 报名/取消后实时刷新培训进度
             await loadTrainingProgress();
-            loadRequiredCourses();
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            const isError = type === 'error';
-            toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg text-sm z-50 animate-fade-in ' + (isError ? 'bg-red-500 text-white' : 'bg-gray-800 text-white');
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => { 
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, 2000);
+            // 若当前正打开课程详情弹窗，实时刷新项目内容按钮状态
+            if (currentModalCourseId) {
+                showCourseDetailInModal(currentModalCourseId);
+            }
         }
 
         // 检查用户是否已报名某课程
@@ -627,17 +858,18 @@
         }
 
         // 渲染报名者头像网格
-        function renderEnrolledAvatars(courseId) {
+        function renderEnrolledAvatars(courseId, compact) {
             const info = enrollMap[courseId];
             if (!info || !info.enrolledUsers || info.enrolledUsers.length === 0) {
+                if (compact) return '<div class="flex items-center text-xs text-gray-400"><i class="fa fa-user-o mr-1"></i>暂无人报名</div>';
                 return `<div class="flex items-center mt-2 text-xs text-gray-400"><i class="fa fa-user-o mr-1"></i>暂无人报名</div>`;
             }
             const users = info.enrolledUsers;
             const maxShow = 6;
             const showUsers = users.slice(0, maxShow);
             const remaining = users.length - maxShow;
-            let html = '<div class="mt-2.5 pt-2.5 border-t border-gray-200/60">';
-            html += '<div class="text-[11px] text-gray-400 mb-1.5"><i class="fa fa-users mr-1"></i>已报名 (' + info.enrollCount + '人)</div>';
+            let html = compact ? '<div>' : '<div class="mt-2.5 pt-2.5 border-t border-gray-200/60">';
+            html += '<div class="text-[11px] text-gray-500 mb-1.5 font-medium"><i class="fa fa-users mr-1"></i>已报名 (' + info.enrollCount + '人)</div>';
             html += '<div class="flex flex-wrap gap-1.5">';
             showUsers.forEach(u => {
                 html += `<span class="inline-flex items-center px-2 py-0.5 bg-white border border-gray-200 rounded-full text-xs text-gray-700 shadow-sm" title="${u.department || ''}">${u.name}</span>`;
@@ -1182,117 +1414,92 @@
         // 在弹窗中显示课程详情
         function showCourseDetailInModal(courseId) {
             currentModalCourseId = courseId;
-            const course = courses.find(c => c.id === courseId);
+            const course = courses.find(c => String(c.id) === String(courseId));
             if (!course) return;
 
             const d = new Date(course.date);
             const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-            const instructor = getInstructorInfo(course.instructor);
-            const gallery = getTrainingGallery(courseId);
-            const hasGallery = gallery.images && gallery.images.length > 0;
 
             document.getElementById('modal-date').textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${weekDays[d.getDay()]}`;
             document.getElementById('modal-title').textContent = '课程详情';
 
-            let content = `
-                <div class="animate-fade-in">
-                    <!-- 返回按钮 -->
-                    <button onclick="backToCourseList()" class="mb-4 flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600 transition-colors">
-                        <i class="fa fa-arrow-left"></i>
-                        <span>返回课程列表</span>
-                    </button>
-                    
-                    <!-- 课程标题区 -->
-                    <div class="mb-5">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="${getDayTypeClass(course.category)} text-[11px] px-2 py-0.5 rounded-full font-medium">${getDayTypeName(course.category)}</span>
-                            ${course.projectName ? '<span class="text-[11px] px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded">培训</span>' : ''}
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-800 leading-tight">${course.name}</h2>
+            const introHtml = course.content
+                ? `<div class="tp-intro-box">
+                    <div class="tp-intro-title"><i class="fa fa-info-circle"></i>课程介绍</div>
+                    <div class="tp-intro-text">${course.content}</div>
+                   </div>`
+                : '';
+
+            const infoItems = [
+                { icon: 'fa-calendar-o', label: '日期', value: `${d.getMonth() + 1}月${d.getDate()}日` },
+                { icon: 'fa-clock-o', label: '时间', value: course.time },
+                { icon: 'fa-user-o', label: '讲师', value: course.instructor },
+                { icon: 'fa-map-marker', label: '地点', value: course.location || '待定' }
+            ];
+            const infoGridHtml = infoItems.map(item => `
+                <div class="tp-info-mini-card" title="${item.label}：${item.value}">
+                    <div class="tp-info-mini-icon"><i class="fa ${item.icon}"></i></div>
+                    <div class="tp-info-mini-text">
+                        <div class="tp-info-mini-label">${item.label}</div>
+                        <div class="tp-info-mini-value">${item.value}</div>
                     </div>
-                    
-                    <!-- 信息卡片网格 -->
-                    <div class="grid grid-cols-2 gap-2.5 mb-5">
-                        <div class="flex items-center gap-2.5 p-3 bg-gray-50 rounded-lg">
-                            <div class="w-9 h-9 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                                <i class="fa fa-calendar-o text-gray-400 text-sm"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <div class="text-[11px] text-gray-400">日期</div>
-                                <div class="text-sm font-medium text-gray-800">${d.getMonth() + 1}月${d.getDate()}日</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2.5 p-3 bg-gray-50 rounded-lg">
-                            <div class="w-9 h-9 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                                <i class="fa fa-clock-o text-gray-400 text-sm"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <div class="text-[11px] text-gray-400">时间</div>
-                                <div class="text-sm font-medium text-gray-800">${course.time}</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2.5 p-3 bg-gray-50 rounded-lg">
-                            <div class="w-9 h-9 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                                <i class="fa fa-user-o text-gray-400 text-sm"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <div class="text-[11px] text-gray-400">讲师</div>
-                                <div class="text-sm font-medium text-gray-800 truncate">${course.instructor}</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2.5 p-3 bg-gray-50 rounded-lg">
-                            <div class="w-9 h-9 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                                <i class="fa fa-map-marker text-gray-400 text-sm"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <div class="text-[11px] text-gray-400">地点</div>
-                                <div class="text-sm font-medium text-gray-800">${course.location || '待定'}</div>
-                            </div>
-                        </div>
+                </div>
+            `).join('');
+
+            const basicInfoContent = `
+                <div class="tp-info-card">
+                    <div class="tp-info-body">
+                        <h2 class="tp-course-title">${course.name}</h2>
+                        ${introHtml}
+                        <div class="tp-info-grid">${infoGridHtml}</div>
                     </div>
-                    
-                    <!-- 报名人数 -->
-                    <div class="mb-5">
-                        ${renderEnrolledAvatars(courseId)}
-                    </div>
-                    
-                    <!-- 学习风采 -->
-                    ${hasGallery ? `
-                        <div class="mb-5">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa fa-camera text-indigo-500 text-sm"></i>
-                                    <span class="font-medium text-gray-800 text-sm">学习风采</span>
-                                </div>
-                                <span class="text-xs text-gray-400">${gallery.images.length} 张</span>
-                            </div>
-                            <div class="grid grid-cols-4 gap-2">
-                                ${gallery.images.slice(0, 7).map((img, idx) => `
-                                    <div class="relative aspect-square rounded-lg overflow-hidden cursor-pointer group" 
-                                         onclick="openGalleryLightbox(${courseId}, ${idx})">
-                                        <img src="${img}" class="w-full h-full object-cover transition group-hover:scale-110">
-                                    </div>
-                                `).join('')}
-                                ${gallery.images.length > 7 ? `
-                                    <div class="relative aspect-square rounded-lg overflow-hidden cursor-pointer bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition"
-                                         onclick="openGalleryLightbox(${courseId}, 7)">
-                                        <span class="text-gray-500 text-sm font-medium">+${gallery.images.length - 7}</span>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    <!-- 报名按钮 -->
-                    <div class="pt-2">
-                        ${getCourseDetailEnrollButton(courseId, course.date, course.time)}
+                    <div class="tp-info-footer">
+                        ${renderEnrolledAvatars(courseId, true)}
                     </div>
                 </div>
             `;
 
+            const projectContent = renderProjectContentList(course);
+            const gallery = getTrainingGallery(courseId);
+            const hasGallery = gallery.images && gallery.images.length > 0;
+            const galleryContent = hasGallery ? `
+                <div class="grid grid-cols-4 gap-2">
+                    ${gallery.images.slice(0, 7).map((img, idx) => `
+                        <div class="relative aspect-square rounded-lg overflow-hidden cursor-pointer group" onclick="openGalleryLightbox(${courseId}, ${idx})">
+                            <img src="${img}" class="w-full h-full object-cover transition group-hover:scale-110">
+                        </div>
+                    `).join('')}
+                    ${gallery.images.length > 7 ? `
+                        <div class="relative aspect-square rounded-lg overflow-hidden cursor-pointer bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition" onclick="openGalleryLightbox(${courseId}, 7)">
+                            <span class="text-gray-500 text-sm font-medium">+${gallery.images.length - 7}</span>
+                        </div>
+                    ` : ''}
+                </div>
+            ` : '<p class="text-sm text-gray-400 text-center py-4">暂无学习风采照片</p>';
+
+            let content = `
+                <div class="animate-fade-in">
+                    <button onclick="backToCourseList()" class="mb-3 flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600 transition-colors">
+                        <i class="fa fa-arrow-left"></i><span>返回课程列表</span>
+                    </button>
+                    <div class="mb-4">
+                        <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2.5"><i class="fa fa-info-circle text-purple-500"></i>基本信息</h3>
+                        ${basicInfoContent}
+                    </div>
+                    <div class="mb-4">
+                        <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2.5"><i class="fa fa-tasks text-emerald-500"></i>项目内容</h3>
+                        ${projectContent}
+                    </div>
+                    <div class="mb-4">
+                        <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2.5"><i class="fa fa-camera text-indigo-500"></i>学习风采</h3>
+                        ${galleryContent}
+                    </div>
+                    <div class="pt-2">${getCourseDetailEnrollButton(courseId, course.date, course.time)}</div>
+                </div>
+            `;
             document.getElementById('modal-content').innerHTML = content;
         }
-        
+
         // 返回课程列表
         function backToCourseList() {
             if (currentModalDateStr) {
@@ -1302,6 +1509,421 @@
                 currentModalCourseId = null;
                 document.getElementById('modal-title').textContent = dayCourses.length > 0 ? `${dayCourses.length} 门课程` : '课程安排';
             }
+        }
+
+        // 项目内容任务列表（与管理后台4个模块开关关联）
+        function renderProjectContentList(course) {
+            const items = [];
+            const isEnrolled = isUserEnrolled(course.id);
+            const fmtTime = (v) => {
+                if (!v) return '';
+                try {
+                    const d = new Date(String(v).replace(' ', 'T'));
+                    const y = d.getFullYear();
+                    const m = d.getMonth() + 1;
+                    const day = d.getDate();
+                    const h = String(d.getHours()).padStart(2, '0');
+                    const min = String(d.getMinutes()).padStart(2, '0');
+                    return `${y}/${m}/${day} ${h}:${min}`;
+                } catch { return v; }
+            };
+
+            // 1. 考勤签到
+            if (course.signinEnabled) {
+                const start = fmtTime(course.signinStartTime || course.startTime);
+                const end = fmtTime(course.signinEndTime || course.endTime);
+                const done = !!course.signinDone;
+                items.push({
+                    key: 'signin',
+                    icon: 'fa-check-circle', iconColor: '#10b981', iconBg: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', ringColor: '#10b981',
+                    title: '考勤签到', tag: '必修', tagColor: '#10b981', tagBg: '#f0fdf4',
+                    subtitle: `签到时间 ${start ? start : ''}${end ? ' 至 ' + end : ''}`,
+                    status: done ? '已完成' : '待签到', statusColor: done ? '#10b981' : '#f59e0b',
+                    actionText: done ? '已完成' : '去完成',
+                    actionClass: done ? 'btn-state-done' : 'btn-action-signin',
+                    actionOnclick: done ? '' : `doDirectSignin(${course.id}, this)`,
+                    actionDisabled: done
+                });
+            }
+            // 2. 调研
+            if (course.surveyEnabled && course.linkedSurveyId) {
+                const done = !!course.surveyDone;
+                items.push({
+                    key: 'survey',
+                    icon: 'fa-bar-chart', iconColor: '#f59e0b', iconBg: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)', ringColor: '#f59e0b',
+                    title: '培训满意度调研', tag: '必修', tagColor: '#f59e0b', tagBg: '#fffbeb',
+                    subtitle: '请根据本次培训真实感受填写',
+                    status: done ? '已完成' : '待完成', statusColor: done ? '#10b981' : '#f59e0b',
+                    actionText: done ? '已完成' : '去完成',
+                    actionClass: done ? 'btn-state-done' : 'btn-action-survey',
+                    actionOnclick: done ? '' : `openSurveyModal(${course.linkedSurveyId}, ${course.id})`,
+                    actionDisabled: done
+                });
+            }
+            // 3. 考试
+            if (course.examEnabled && course.linkedExamId) {
+                const done = !!course.examDone;
+                items.push({
+                    key: 'exam',
+                    icon: 'fa-file-text', iconColor: '#ef4444', iconBg: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)', ringColor: '#ef4444',
+                    title: `《${course.name}》培训考核`, tag: '必修', tagColor: '#ef4444', tagBg: '#fef2f2',
+                    subtitle: done ? '您已通过培训考核' : '完成培训考核以巩固学习成果（可重复考试直到及格）',
+                    status: done ? '已完成' : '待完成', statusColor: done ? '#10b981' : '#f59e0b',
+                    actionText: done ? '已完成' : '去完成',
+                    actionClass: done ? 'btn-state-done' : 'btn-action-exam',
+                    actionOnclick: done ? '' : `window.open('/exam.html?id=${course.linkedExamId}', '_blank')`,
+                    actionDisabled: done
+                });
+            }
+            // 4. 课件（非必修，自由下载）- 紫色系特殊显示
+            if (course.coursewareEnabled && course.coursewareFiles && course.coursewareFiles.length) {
+                const files = course.coursewareFiles;
+                items.push({
+                    key: 'courseware',
+                    icon: 'fa-folder-open-o', iconColor: '#8b5cf6', iconBg: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)', ringColor: '#8b5cf6',
+                    title: `培训课件（${files.length}个文件）`, tag: '资料', tagColor: '#8b5cf6', tagBg: '#f5f3ff',
+                    subtitle: '培训相关参考资料，可自由下载',
+                    status: '', statusColor: '#9ca3af',
+                    actionText: '立即下载',
+                    actionClass: 'btn-action-courseware',
+                    actionOnclick: `openCoursewareModal(${JSON.stringify(files).replace(/"/g, '&quot;')})`,
+                    actionDisabled: false
+                });
+            }
+            if (items.length === 0) return '<p class="text-sm text-gray-400 text-center py-4">暂无项目内容</p>';
+
+            // 未报名学员：所有项目内容置灰且不可点击
+            if (!isEnrolled) {
+                items.forEach(item => {
+                    item.actionClass = 'btn-action-locked';
+                    item.actionText = '未报名';
+                    item.actionOnclick = '';
+                    item.actionDisabled = true;
+                    item.status = '需先报名';
+                    item.statusColor = '#9ca3af';
+                });
+            }
+
+            const requiredItems = items.filter(i => i.tag === '必修');
+            const doneCount = items.filter(i => i.status === '已完成').length;
+            const progressPct = requiredItems.length > 0 ? Math.round(doneCount / requiredItems.length * 100) : 0;
+
+            const topInfo = `
+                <div class="tp-progress-top">
+                    <div class="tp-progress-label">
+                        <span>培训进度</span>
+                        <span class="tp-progress-count">${doneCount} / ${requiredItems.length}</span>
+                    </div>
+                    <div class="tp-progress-track"><div class="tp-progress-fill" style="width:${progressPct}%"></div></div>
+                    <div class="tp-progress-pct">已完成 ${progressPct}%</div>
+                </div>`;
+            const listHtml = items.map((item, idx) => {
+                // 状态统一在右侧按钮展示，不在卡片下方显示“待完成/待签到”等提醒
+                const statusHtml = '';
+                const actionAttr = item.actionOnclick ? `onclick="${item.actionOnclick}"` : '';
+                return `
+                <div class="tp-task-card${item.actionDisabled ? ' is-done' : ''}">
+                    <div class="tp-task-icon" style="background:${item.iconBg};color:${item.iconColor};box-shadow:0 0 0 3px ${item.ringColor}15;">
+                        <i class="fa ${item.icon}"></i>
+                    </div>
+                    <div class="tp-task-main">
+                        <div class="tp-task-title-row">
+                            <span class="tp-task-title">${item.title}</span>
+                            <span class="tp-task-tag" style="color:${item.tagColor};background:${item.tagBg};">${item.tag}</span>
+                        </div>
+                        <div class="tp-task-subtitle"><i class="fa ${item.key === 'signin' ? 'fa-clock-o' : item.key === 'survey' ? 'fa-file-text-o' : item.key === 'exam' ? 'fa-graduation-cap' : 'fa-folder-o'}"></i>${item.subtitle}</div>
+                        ${statusHtml}
+                    </div>
+                    <button type="button" class="tp-task-btn ${item.actionClass}" ${actionAttr} ${item.actionDisabled ? 'disabled' : ''}>${item.actionText}</button>
+                </div>`;
+            }).join('');
+            return topInfo + listHtml;
+        }
+
+        // ===== 直接签到（电脑端点击签到） =====
+        async function doDirectSignin(trainingId, btnEl) {
+            const user = (typeof AuthGuard !== 'undefined' && AuthGuard.getCurrentUser()) ? AuthGuard.getCurrentUser() : null;
+            if (!user) { showToast('请先登录', 'error'); return; }
+            const userId = user.id || user.userId;
+            if (btnEl) { setTaskBtnLoading(btnEl, true, '签到中...'); }
+            try {
+                const res = await fetch('/api/training/' + trainingId + '/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, direct: true, method: 'direct' })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    showToast('签到成功');
+                    // 同步本地完成状态
+                    const c = courses.find(x => String(x.id) === String(trainingId));
+                    if (c) c.signinDone = true;
+                    // 刷新课程详情弹窗以更新整体进度统计
+                    if (currentModalCourseId) showCourseDetailInModal(currentModalCourseId);
+                } else {
+                    showToast(json.error || '签到失败', 'error');
+                    if (btnEl) setTaskBtnLoading(btnEl, false, '点击签到');
+                }
+            } catch (e) {
+                showToast('签到失败：' + e.message, 'error');
+                if (btnEl) setTaskBtnLoading(btnEl, false, '点击签到');
+            }
+        }
+
+        function setTaskBtnLoading(btn, loading, text) {
+            if (!btn) return;
+            if (loading) {
+                btn.classList.add('is-loading');
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>' + text;
+            } else {
+                btn.classList.remove('is-loading');
+                btn.textContent = text;
+            }
+        }
+
+        // 安全解码课件文件名（兼容 latin1 乱码和正常 utf8 文件名）
+        function decodeCoursewareName(name) {
+            if (!name) return '未命名文件';
+            // 若已包含明显中文或常见中文标点，视为正常
+            if (/[\u4e00-\u9fa5]/.test(name)) return name;
+            try {
+                // 尝试按 latin1 → utf8 转码修复
+                const fixed = decodeURIComponent(escape(name));
+                return fixed || name;
+            } catch (e) {
+                return name;
+            }
+        }
+
+        // ===== 课件列表弹窗 =====
+        function openCoursewareModal(filesJson) {
+            let files = [];
+            try { files = typeof filesJson === 'string' ? JSON.parse(filesJson.replace(/&quot;/g, '"')) : filesJson; } catch { files = []; }
+            if (!files.length) { showToast('暂无课件文件', 'error'); return; }
+            const iconMap = { pdf: 'fa-file-pdf', ppt: 'fa-file-powerpoint-o', pptx: 'fa-file-powerpoint-o', doc: 'fa-file-word-o', docx: 'fa-file-word-o', xls: 'fa-file-excel-o', xlsx: 'fa-file-excel-o', zip: 'fa-file-archive-o', rar: 'fa-file-archive-o' };
+            const formatSize = (bytes) => {
+                if (!bytes && bytes !== 0) return '';
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+            };
+            const fileListHtml = files.map(f => {
+                const rawName = f.name || '未命名文件';
+                const displayName = decodeCoursewareName(rawName);
+                const ext = (displayName || '').split('.').pop().toLowerCase();
+                const icon = iconMap[ext] || 'fa-file';
+                const sizeText = formatSize(f.size);
+                return `<a href="${f.url || '#'}" target="_blank" style="display:flex;align-items:center;gap:0.75rem;padding:0.875rem;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:0.625rem;text-decoration:none;margin-bottom:0.5rem;transition:all 0.2s;">
+                    <div style="width:2.25rem;height:2.25rem;border-radius:0.5rem;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fa ${icon}" style="font-size:1.125rem;color:#8b5cf6;"></i>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:0.8125rem;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${displayName}">${displayName}</div>
+                        ${sizeText ? `<div style="font-size:0.7rem;color:#9ca3af;margin-top:0.125rem;">${sizeText}</div>` : ''}
+                    </div>
+                    <div style="width:2rem;height:2rem;border-radius:50%;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#8b5cf6;">
+                        <i class="fa fa-download" style="font-size:0.875rem;"></i>
+                    </div>
+                </a>`;
+            }).join('');
+            // 复用 survey-modal 的结构，临时替换内容
+            const modal = document.getElementById('survey-modal');
+            const titleEl = document.getElementById('survey-modal-title');
+            const subtitleEl = document.getElementById('survey-modal-subtitle');
+            const body = document.getElementById('survey-modal-body');
+            const footer = document.getElementById('survey-modal-footer');
+            const header = modal ? modal.querySelector('div > div > div') : null;
+            if (header) {
+                header.dataset.originBg = header.style.background || '';
+                header.style.background = 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)';
+            }
+            if (titleEl) titleEl.textContent = '培训课件';
+            if (subtitleEl) subtitleEl.textContent = `共 ${files.length} 个文件`;
+            body.innerHTML = `<div style="padding:0.25rem 0;">${fileListHtml}</div>`;
+            footer.style.display = 'none';
+            modal.style.display = 'flex';
+        }
+
+        // ===== 调研问卷弹窗 =====
+        let currentSurveyData = null;
+        let currentSurveyTrainingId = null;
+
+        async function openSurveyModal(surveyId, trainingId) {
+            currentSurveyTrainingId = trainingId;
+            const modal = document.getElementById('survey-modal');
+            const body = document.getElementById('survey-modal-body');
+            const footer = document.getElementById('survey-modal-footer');
+            modal.style.display = 'flex';
+            body.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:2rem;">加载中...</p>';
+            footer.style.display = 'flex';
+
+            try {
+                const res = await fetch('/api/surveys/' + surveyId);
+                const json = await res.json();
+                if (!json.success || !json.data) { body.innerHTML = '<p style="text-align:center;color:#ef4444;padding:2rem;">问卷加载失败</p>'; return; }
+                currentSurveyData = json.data;
+
+                // 检查是否已填写
+                const user = (typeof AuthGuard !== 'undefined' && AuthGuard.getCurrentUser()) ? AuthGuard.getCurrentUser() : null;
+                const userId = user ? (user.id || user.userId) : null;
+                let alreadyResponded = false;
+                if (userId) {
+                    const checkRes = await fetch('/api/surveys/' + surveyId + '/check-responded?userId=' + userId + '&trainingId=' + trainingId);
+                    const checkJson = await checkRes.json();
+                    alreadyResponded = checkJson.responded;
+                }
+
+                if (alreadyResponded) {
+                    body.innerHTML = `
+                        <div style="text-align:center;padding:2rem;">
+                            <div style="width:3.5rem;height:3.5rem;margin:0 auto 1rem;border-radius:50%;background:#f0fdf4;display:flex;align-items:center;justify-content:center;">
+                                <i class="fa fa-check" style="font-size:1.5rem;color:#10b981;"></i>
+                            </div>
+                            <h3 style="font-size:1.125rem;font-weight:600;color:#1f2937;margin-bottom:0.5rem;">您已填写过此问卷</h3>
+                            <p style="font-size:0.875rem;color:#6b7280;">感谢您的参与！</p>
+                        </div>
+                    `;
+                    footer.style.display = 'none';
+                    return;
+                }
+
+                document.getElementById('survey-modal-title').textContent = currentSurveyData.title || '满意度调研';
+                const surveySubtitleEl = document.getElementById('survey-modal-subtitle');
+                if (surveySubtitleEl) surveySubtitleEl.textContent = '满意度调研';
+                renderSurveyQuestions(currentSurveyData);
+            } catch (e) {
+                body.innerHTML = '<p style="text-align:center;color:#ef4444;padding:2rem;">加载失败：' + e.message + '</p>';
+            }
+        }
+
+        function renderSurveyQuestions(survey) {
+            const body = document.getElementById('survey-modal-body');
+            const questions = survey.questions || [];
+            let html = '';
+            if (survey.description) {
+                html += `<p style="font-size:0.8rem;color:#6b7280;margin-bottom:1rem;line-height:1.6;">${survey.description}</p>`;
+            }
+            questions.forEach((q, idx) => {
+                const required = q.required ? '<span style="color:#ef4444;">*</span>' : '';
+                html += `<div class="survey-q" data-qid="${q.id}" style="margin-bottom:1.25rem;">`;
+                html += `<div style="font-size:0.875rem;font-weight:600;color:#1f2937;margin-bottom:0.5rem;">${idx + 1}. ${q.title} ${required}</div>`;
+                if (q.type === 'rating') {
+                    html += `<div class="survey-rating" data-val="0" style="display:flex;gap:0.25rem;">`;
+                    for (let i = 1; i <= 5; i++) {
+                        html += `<i class="fa fa-star survey-star" data-val="${i}" style="font-size:1.5rem;color:#e5e7eb;cursor:pointer;transition:color 0.15s;"></i>`;
+                    }
+                    html += `</div>`;
+                } else if (q.type === 'radio') {
+                    (q.options || []).forEach(opt => {
+                        html += `<label style="display:flex;align-items:center;gap:0.5rem;padding:0.375rem 0;cursor:pointer;">
+                            <input type="radio" name="survey-q-${q.id}" value="${opt}" style="accent-color:#f59e0b;">
+                            <span style="font-size:0.8125rem;color:#374151;">${opt}</span>
+                        </label>`;
+                    });
+                } else {
+                    html += `<textarea name="survey-q-${q.id}" rows="3" placeholder="请输入您的回答" style="width:100%;padding:0.625rem;border:1px solid #e5e7eb;border-radius:0.5rem;font-size:0.8125rem;outline:none;resize:vertical;transition:border-color 0.2s;" onfocus="this.style.borderColor='#f59e0b'" onblur="this.style.borderColor='#e5e7eb'"></textarea>`;
+                }
+                html += `</div>`;
+            });
+            body.innerHTML = html;
+
+            // 星级评分交互
+            body.querySelectorAll('.survey-rating').forEach(ratingDiv => {
+                const stars = ratingDiv.querySelectorAll('.survey-star');
+                stars.forEach(star => {
+                    star.addEventListener('mouseenter', () => {
+                        const val = parseInt(star.dataset.val);
+                        stars.forEach((s, i) => { s.style.color = i < val ? '#f59e0b' : '#e5e7eb'; });
+                    });
+                    star.addEventListener('mouseleave', () => {
+                        const currentVal = parseInt(ratingDiv.dataset.val);
+                        stars.forEach((s, i) => { s.style.color = i < currentVal ? '#f59e0b' : '#e5e7eb'; });
+                    });
+                    star.addEventListener('click', () => {
+                        const val = parseInt(star.dataset.val);
+                        ratingDiv.dataset.val = val;
+                        stars.forEach((s, i) => { s.style.color = i < val ? '#f59e0b' : '#e5e7eb'; });
+                    });
+                });
+            });
+        }
+
+        async function submitSurvey() {
+            if (!currentSurveyData) return;
+            const questions = currentSurveyData.questions || [];
+            const answers = {};
+            let hasError = false;
+
+            questions.forEach(q => {
+                if (q.type === 'rating') {
+                    const ratingDiv = document.querySelector('.survey-q[data-qid="' + q.id + '"] .survey-rating');
+                    answers[q.id] = ratingDiv ? parseInt(ratingDiv.dataset.val) : 0;
+                    if (q.required && (!answers[q.id] || answers[q.id] === 0)) hasError = true;
+                } else if (q.type === 'radio') {
+                    const checked = document.querySelector('input[name="survey-q-' + q.id + '"]:checked');
+                    answers[q.id] = checked ? checked.value : '';
+                    if (q.required && !answers[q.id]) hasError = true;
+                } else {
+                    const textarea = document.querySelector('textarea[name="survey-q-' + q.id + '"]');
+                    answers[q.id] = textarea ? textarea.value.trim() : '';
+                    if (q.required && !answers[q.id]) hasError = true;
+                }
+            });
+
+            if (hasError) { showToast('请完成所有必填题目', 'error'); return; }
+
+            const btn = document.getElementById('survey-submit-btn');
+            btn.disabled = true; btn.textContent = '提交中...';
+            try {
+                const user = (typeof AuthGuard !== 'undefined' && AuthGuard.getCurrentUser()) ? AuthGuard.getCurrentUser() : null;
+                const userId = user ? (user.id || user.userId) : null;
+                const userName = user ? (user.realName || user.username) : '匿名用户';
+                const department = user ? (user.department || '') : '';
+
+                const res = await fetch('/api/surveys/' + currentSurveyData.id + '/responses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, userName, department, answers, trainingId: currentSurveyTrainingId })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    const body = document.getElementById('survey-modal-body');
+                    const footer = document.getElementById('survey-modal-footer');
+                    body.innerHTML = `
+                        <div style="text-align:center;padding:2rem;">
+                            <div style="width:3.5rem;height:3.5rem;margin:0 auto 1rem;border-radius:50%;background:#f0fdf4;display:flex;align-items:center;justify-content:center;">
+                                <i class="fa fa-check" style="font-size:1.5rem;color:#10b981;"></i>
+                            </div>
+                            <h3 style="font-size:1.125rem;font-weight:600;color:#1f2937;margin-bottom:0.5rem;">提交成功</h3>
+                            <p style="font-size:0.875rem;color:#6b7280;">感谢您的参与！</p>
+                        </div>
+                    `;
+                    footer.style.display = 'none';
+                    showToast('问卷提交成功');
+                    // 同步本地完成状态并刷新课程详情弹窗
+                    const c = courses.find(x => String(x.id) === String(currentSurveyTrainingId));
+                    if (c) c.surveyDone = true;
+                    if (currentModalCourseId) showCourseDetailInModal(currentModalCourseId);
+                } else {
+                    showToast(json.error || '提交失败', 'error');
+                    btn.disabled = false; btn.textContent = '提交问卷';
+                }
+            } catch (e) {
+                showToast('提交失败：' + e.message, 'error');
+                btn.disabled = false; btn.textContent = '提交问卷';
+            }
+        }
+
+        function closeSurveyModal() {
+            const modal = document.getElementById('survey-modal');
+            const header = modal ? modal.querySelector('div > div > div') : null;
+            if (header && header.dataset.originBg !== undefined) {
+                header.style.background = header.dataset.originBg;
+                delete header.dataset.originBg;
+            }
+            modal.style.display = 'none';
+            currentSurveyData = null;
+            currentSurveyTrainingId = null;
         }
         
         // 打开当日所有学习风采灯箱
@@ -1378,24 +2000,56 @@
 
         function filterByCategory(category) {
             currentCategoryFilter = category;
-            
+
+            // 清除所有按钮的主题色类和激活态（避免主题色与灰色/渐变冲突）
+            const themeClasses = [
+                'active', 'bg-gradient-primary', 'text-white', 'shadow-lg', 'shadow-purple-500/30',
+                'bg-gray-100', 'text-gray-600',
+                'bg-orange-100', 'text-orange-600', 'hover:bg-orange-200',
+                'bg-blue-100', 'text-blue-600', 'hover:bg-blue-200',
+                'bg-green-100', 'text-green-600', 'hover:bg-green-200',
+                'bg-amber-100', 'text-amber-600', 'hover:bg-amber-200',
+                'bg-red-100', 'text-red-600', 'hover:bg-red-200'
+            ];
             document.querySelectorAll('.filter-tag').forEach(tag => {
-                tag.classList.remove('active', 'bg-gradient-primary', 'text-white', 'shadow-lg', 'shadow-purple-500/30');
+                tag.classList.remove(...themeClasses);
                 tag.classList.add('bg-gray-100', 'text-gray-600');
             });
-            
+
             const activeTag = document.getElementById(`cat-${category}`);
             if (activeTag) {
                 activeTag.classList.add('active', 'bg-gradient-primary', 'text-white', 'shadow-lg', 'shadow-purple-500/30');
                 activeTag.classList.remove('bg-gray-100', 'text-gray-600');
             }
-            
+
+            // 同步下拉框选中状态，避免按钮与下拉脱节
+            const selectEl = document.getElementById('category-filter');
+            if (selectEl) selectEl.value = category;
+
             renderCalendar();
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
             await loadTrainingSchedule();
             renderCalendar();
+
+            // 从消息中心等跳转过来时自动打开指定培训弹窗
+            const urlParams = new URLSearchParams(window.location.search);
+            const openTrainingId = urlParams.get('openTrainingId');
+            if (openTrainingId) {
+                const course = courses.find(c => String(c.id) === String(openTrainingId));
+                if (course) showCourseDetailInModal(course.id);
+            }
+
+            // 页面重新可见时刷新数据（用户从考试窗口返回后能看到最新完成状态）
+            document.addEventListener('visibilitychange', async () => {
+                if (document.visibilityState === 'visible') {
+                    const keepCourseId = currentModalCourseId;
+                    await loadTrainingSchedule();
+                    renderCalendar();
+                    if (keepCourseId) showCourseDetailInModal(keepCourseId);
+                }
+            });
 
             document.getElementById('mobile-menu-button').addEventListener('click', () => {
                 document.getElementById('mobile-menu').classList.toggle('hidden');
@@ -1419,6 +2073,7 @@
                 if (e.key === 'Escape') {
                     closeDayModal();
                     closeTrainingRequestModal();
+                    closeSurveyModal();
                 }
             });
 
@@ -1597,116 +2252,6 @@
             let requests = JSON.parse(localStorage.getItem(storageKey) || '[]');
             requests.push(requestData);
             localStorage.setItem(storageKey, JSON.stringify(requests));
-            
-            // 触发数据同步事件
-            if (window.DataSync) {
-                window.DataSync.emit(window.DataSync.EventTypes.TRAINING_REQUEST, requestData);
-            }
-        }
-
-        // Toast 提示
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.style.cssText = `position: fixed; top: 20px; left: 50%; transform: translateX(-50%); 
-                padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; z-index: 9999;
-                animation: fadeIn 0.3s ease; ${type === 'success' ? 'background: #10b981; color: white;' : 'background: #ef4444; color: white;'}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        // ========== 必修课程功能 ==========
-        
-        // 加载必修课程（基于用户已报名的课程）
-        async function loadRequiredCourses() {
-            const currentUser = getCurrentUser();
-            if (!currentUser) return;
-
-            // 从已报名课程中筛选出作为"必修课程"
-            // 规则：用户已报名的课程即为必修课程
-            const requiredCourses = [];
-            
-            courses.forEach(course => {
-                const enrollInfo = enrollMap[course.id];
-                if (enrollInfo && enrollInfo.isEnrolled) {
-                    // 计算课程进度
-                    const isEnded = isCourseEnded(course.date, course.time);
-                    const progress = isEnded ? 100 : 0;
-                    
-                    requiredCourses.push({
-                        id: course.id,
-                        name: course.name,
-                        date: course.date,
-                        time: course.time,
-                        progress: progress,
-                        deadline: course.date, // 使用课程日期作为截止日期
-                        category: course.category
-                    });
-                }
-            });
-
-            renderRequiredCourses(requiredCourses);
-        }
-
-        // 渲染必修课程
-        function renderRequiredCourses(courses) {
-            const container = document.getElementById('required-courses-list');
-            const badge = document.getElementById('required-course-badge');
-            
-            if (!container) return;
-
-            // 更新徽章数量
-            if (badge) {
-                badge.textContent = courses.length;
-                badge.style.display = courses.length > 0 ? 'inline-block' : 'none';
-            }
-
-            if (courses.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-6 text-gray-400">
-                        <i class="fa fa-check-circle text-3xl mb-2 text-green-400"></i>
-                        <p class="text-sm">暂无必修课程</p>
-                        <p class="text-xs text-gray-300 mt-1">报名课程后将显示在这里</p>
-                    </div>
-                `;
-                return;
-            }
-
-            // 按日期排序（最近的在前）
-            courses.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            container.innerHTML = courses.map(course => {
-                const isCompleted = course.progress >= 100;
-                const isUrgent = !isCompleted && new Date(course.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-                const courseDate = new Date(course.date);
-                const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-                
-                return `
-                    <div class="flex items-center gap-3 p-3 ${isUrgent ? 'bg-red-50 border border-red-100' : 'bg-gray-50'} rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" 
-                         onclick="showDayCourses('${course.date}')">
-                        <div class="w-10 h-10 rounded-xl ${isCompleted ? 'bg-green-500' : 'bg-gradient-to-br from-red-400 to-red-600'} flex items-center justify-center flex-shrink-0">
-                            <i class="fa ${isCompleted ? 'fa-check text-white' : 'fa-graduation-cap text-white'}"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-medium text-gray-800 truncate flex items-center gap-1">
-                                ${course.name}
-                                ${isUrgent ? '<span class="px-1.5 py-0.5 bg-red-500 text-white text-[10px] rounded">即将开始</span>' : ''}
-                            </div>
-                            <div class="text-xs text-gray-400">
-                                ${courseDate.getMonth() + 1}月${courseDate.getDate()}日 ${weekDays[courseDate.getDay()]} ${course.time || ''}
-                            </div>
-                            <div class="mt-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                <div class="h-full ${isCompleted ? 'bg-green-500' : 'bg-primary'} rounded-full" style="width: ${course.progress}%"></div>
-                            </div>
-                        </div>
-                        <div class="text-xs font-medium ${isCompleted ? 'text-green-600' : 'text-primary'}">${course.progress}%</div>
-                    </div>
-                `;
-            }).join('');
         }
 
         // ========== 培训进度功能 ==========
@@ -1806,48 +2351,6 @@
                 console.error('[学习风采] 获取数据失败:', e);
                 return { images: [] };
             }
-        }
-        
-        // 调试用：检查 localStorage 中的学习风采数据
-        function debugGalleryData() {
-            const all = JSON.parse(localStorage.getItem('training_gallery') || '{}');
-            console.log('=== 学习风采调试数据 ===');
-            console.log('所有培训ID:', Object.keys(all));
-            Object.entries(all).forEach(([id, data]) => {
-                console.log(`培训 ${id}:`, data);
-            });
-            console.log('========================');
-            return all;
-        }
-        
-        // 渲染课程详情中的学习风采
-        function renderCourseGallery(courseId) {
-            const gallery = getTrainingGallery(courseId);
-            if (!gallery.images || gallery.images.length === 0) {
-                return '';
-            }
-            
-            return `
-                <div class="mt-4">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i class="fa fa-camera text-indigo-500"></i>
-                        <span class="font-medium text-gray-800">学习风采</span>
-                        <span class="text-xs text-gray-400">(${gallery.images.length}张)</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        ${gallery.images.slice(0, 6).map((img, idx) => `
-                            <div class="relative aspect-square rounded-xl overflow-hidden cursor-pointer group" onclick="openGalleryLightbox(${courseId}, ${idx})" data-course-id="${courseId}" data-img-idx="${idx}">
-                                <img src="${img}" class="w-full h-full object-cover transition group-hover:scale-110">
-                                ${idx === 5 && gallery.images.length > 6 ? `
-                                    <div class="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                        <span class="text-white font-medium">+${gallery.images.length - 6}</span>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
         }
         
         // 打开图片灯箱
@@ -1962,7 +2465,7 @@
         }
         
         // 显示提示消息
-        function showToast(message, type = 'info') {
+        function showToast(message, type = 'success') {
             const toast = document.createElement('div');
             toast.className = `fixed top-4 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-full text-white text-sm font-medium shadow-lg transition-all duration-300 transform translate-y-[-100%] opacity-0 ${
                 type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-gray-800'
@@ -2022,9 +2525,7 @@
             const carouselEl = document.getElementById('gallery-carousel');
             
             if (!emptyEl || !carouselEl) return;
-            
-            // 更新徽章（已隐藏）
-            
+
             if (galleryCarouselData.length === 0) {
                 emptyEl.classList.remove('hidden');
                 carouselEl.classList.add('hidden');

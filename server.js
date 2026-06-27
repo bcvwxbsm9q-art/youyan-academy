@@ -996,6 +996,12 @@ app.get('/api/training/schedule', (req, res) => {
   const events = data.training_events || [];
   const enrollments = data.training_enrollments || [];
   const users = data.registered_users || [];
+  const signins = data.training_signins || [];
+  const surveyResponses = data.survey_responses || [];
+
+  // 当前登录用户（用于计算签到/考试/调研完成状态）
+  const currentUser = getCurrentUser(req);
+  const currentUserId = currentUser ? currentUser.id : null;
 
   // 转换为前端需要的格式
   const schedule = events.map(event => {
@@ -1023,6 +1029,23 @@ app.get('/api/training/schedule', (req, res) => {
       };
     });
 
+    // 当前用户在该培训中的各项任务完成状态
+    const signinDone = currentUserId
+      ? signins.some(s => s.trainingId === event.id && String(s.userId) === String(currentUserId))
+      : false;
+    const surveyDone = currentUserId && event.linkedSurveyId
+      ? surveyResponses.some(r => r.surveyId === event.linkedSurveyId
+          && String(r.userId) === String(currentUserId)
+          && (r.trainingId === event.id || r.trainingId == null))
+      : false;
+    // 考试完成状态与数据分析总览保持一致：从 exam_attempts 判断是否有已通过记录
+    const examAttempts = data.exam_attempts || [];
+    const examDone = currentUserId && event.linkedExamId
+      ? examAttempts.some(a => a.examId === event.linkedExamId
+          && String(a.userId) === String(currentUserId)
+          && a.passed === true)
+      : false;
+
     return {
       id: event.id,
       name: event.name,
@@ -1037,7 +1060,20 @@ app.get('/api/training/schedule', (req, res) => {
       startTime: event.startTime,
       endTime: event.endTime,
       enrollCount: eventEnrollments.length,
-      enrolledUsers: enrolledUsers
+      enrolledUsers: enrolledUsers,
+      signinEnabled: event.signinEnabled || false,
+      signinStartTime: event.signinStartTime || null,
+      signinEndTime: event.signinEndTime || null,
+      examEnabled: event.examEnabled || false,
+      surveyEnabled: event.surveyEnabled || false,
+      coursewareEnabled: event.coursewareEnabled || false,
+      linkedExamId: event.linkedExamId || null,
+      linkedSurveyId: event.linkedSurveyId || null,
+      coursewareFiles: event.coursewareFiles || [],
+      // 当前用户完成状态
+      signinDone,
+      surveyDone,
+      examDone
     };
   });
 
@@ -1064,23 +1100,29 @@ app.get('/api/training/:id/signins', (req, res) => {
 app.post('/api/training/:id/signin', (req, res) => {
   const data = readData();
   const trainingId = parseInt(req.params.id);
-  const { userId, code } = req.body;
-  
-  if (!userId || !code) {
-    return res.status(400).json({ success: false, error: '缺少用户ID或签到码' });
+  const { userId, code, direct, method: reqMethod } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ success: false, error: '缺少用户ID' });
   }
-  
+
   const event = (data.training_events || []).find(e => e.id === trainingId);
   if (!event) {
     return res.status(404).json({ success: false, error: '培训事件不存在' });
   }
-  
+
   if (!event.signinEnabled) {
     return res.status(400).json({ success: false, error: '该培训未开启签到' });
   }
-  
-  if (event.signinCode && event.signinCode !== code) {
-    return res.status(400).json({ success: false, error: '签到码错误' });
+
+  // direct=true 时跳过签到码校验（电脑端直接点击签到）
+  if (!direct) {
+    if (!code) {
+      return res.status(400).json({ success: false, error: '缺少签到码' });
+    }
+    if (event.signinCode && event.signinCode !== code) {
+      return res.status(400).json({ success: false, error: '签到码错误' });
+    }
   }
   
   if (!data.training_signins) data.training_signins = [];
@@ -1099,7 +1141,7 @@ app.post('/api/training/:id/signin', (req, res) => {
     userName: user ? (user.realName || user.username) : '未知用户',
     department: user ? (user.department || '') : '',
     signedAt: new Date().toISOString(),
-    method: 'code'
+    method: direct ? (reqMethod || 'direct') : 'code'
   };
   data.training_signins.push(signin);
   
@@ -1149,15 +1191,24 @@ app.get('/api/training/:id/exam-results', (req, res) => {
   const trainingId = parseInt(req.params.id);
   const event = (data.training_events || []).find(e => e.id === trainingId);
   if (!event) return res.status(404).json({ success: false, error: '培训事件不存在' });
-  
+
   const examId = event.linkedExamId;
   if (!examId) {
     return res.json({ success: true, data: [], exam: null, total: 0 });
   }
-  
+
   const exam = (data.exams || []).find(e => e.id === examId);
-  const attempts = (data.exam_attempts || []).filter(a => a.examId === examId);
-  
+  const users = data.registered_users || [];
+  const attempts = (data.exam_attempts || []).filter(a => a.examId === examId).map(a => {
+    const user = users.find(u => String(u.id) === String(a.userId));
+    return {
+      ...a,
+      userName: user ? (user.realName || user.username || '未知用户') : (a.userName || '未知用户'),
+      department: user ? (user.department || '-') : (a.department || '-'),
+      position: user ? (user.position || '-') : (a.position || '-')
+    };
+  });
+
   res.json({ success: true, data: attempts, exam, total: attempts.length });
 });
 
@@ -1181,6 +1232,110 @@ app.get('/api/training/:id/service-status', (req, res) => {
     signin: { enabled: event.signinEnabled || false, count: signinCount },
     survey: { linkedId: event.linkedSurveyId || null, count: surveyCount },
     exam: { linkedId: event.linkedExamId || null, count: examCount }
+  });
+});
+
+// GET /api/training/:id/overview - 培训数据分析总览（按学员聚合完成率）
+app.get('/api/training/:id/overview', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const event = (data.training_events || []).find(e => e.id === trainingId);
+  if (!event) return res.status(404).json({ success: false, error: '培训事件不存在' });
+
+  const users = data.registered_users || [];
+  const enrollments = (data.training_enrollments || []).filter(e => e.trainingId === trainingId);
+  const signins = (data.training_signins || []).filter(s => s.trainingId === trainingId);
+  const surveyResponses = event.linkedSurveyId
+    ? (data.survey_responses || []).filter(r => r.surveyId === event.linkedSurveyId
+        && (r.trainingId == trainingId || r.trainingId == null))
+    : [];
+  const exam = event.linkedExamId ? (data.exams || []).find(e => e.id === event.linkedExamId) : null;
+  const examAttempts = exam ? (data.exam_attempts || []).filter(a => a.examId === event.linkedExamId) : [];
+
+  // 任务启用逻辑与前端弹窗保持一致：考勤/调研/考试开关开启且关联了对应资源
+  const signinEnabled = !!event.signinEnabled;
+  const surveyEnabled = !!event.surveyEnabled && !!event.linkedSurveyId;
+  const examEnabled = !!event.examEnabled && !!event.linkedExamId;
+  const enabledTasks = [signinEnabled, surveyEnabled, examEnabled].filter(Boolean).length;
+
+  // 合并所有参与学员：报名人员 + 有签到/调研/考试记录的人员（兼容历史数据）
+  const participantIds = new Set();
+  enrollments.forEach(e => participantIds.add(String(e.userId)));
+  signins.forEach(s => { if (s.userId !== undefined && s.userId !== null) participantIds.add(String(s.userId)); });
+  surveyResponses.forEach(r => { if (r.userId !== undefined && r.userId !== null) participantIds.add(String(r.userId)); });
+  examAttempts.forEach(a => { if (a.userId !== undefined && a.userId !== null) participantIds.add(String(a.userId)); });
+
+  const overviewUsers = Array.from(participantIds).map(uid => {
+    const userIdRaw = uid;
+    const user = users.find(u => String(u.id) === uid) || {};
+    const enroll = enrollments.find(e => String(e.userId) === uid);
+    const signed = signins.some(s => String(s.userId) === uid);
+    const surveyed = surveyResponses.some(r => String(r.userId) === uid);
+    const userAttempts = examAttempts.filter(a => String(a.userId) === uid);
+    const bestAttempt = userAttempts.sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+    const examPassed = bestAttempt && bestAttempt.passed;
+    const examFullScore = exam ? (exam.totalScore || 100) : 100;
+    const examScorePercent = bestAttempt ? Math.round(((bestAttempt.score || 0) / examFullScore) * 100) : 0;
+
+    const signinPct = signinEnabled ? (signed ? 100 : 0) : null;
+    const surveyPct = surveyEnabled ? (surveyed ? 100 : 0) : null;
+    const examPct = examEnabled ? (examPassed ? 100 : examScorePercent) : null;
+
+    let completedTasks = 0;
+    if (signinEnabled && signed) completedTasks++;
+    if (surveyEnabled && surveyed) completedTasks++;
+    if (examEnabled && examPassed) completedTasks++;
+    const completionRate = enabledTasks > 0 ? Math.round((completedTasks / enabledTasks) * 100) : 100;
+
+    let source = '-';
+    if (enroll) source = enroll.source === 'assigned' ? 'assigned' : 'self';
+
+    return {
+      userId: enroll ? enroll.userId : (user.id || userIdRaw),
+      userName: user.realName || user.username || enroll?.userName || '未知用户',
+      department: user.department || enroll?.userDepartment || '-',
+      position: user.position || '-',
+      avatar: user.avatar || enroll?.userAvatar || '',
+      source,
+      signinPct,
+      surveyPct,
+      examPct,
+      examScore: bestAttempt ? (bestAttempt.score ?? null) : null,
+      examPassed: !!examPassed,
+      completionRate
+    };
+  });
+
+  const total = overviewUsers.length;
+  const signinRate = total > 0 && signinEnabled
+    ? Math.round((overviewUsers.filter(u => u.signinPct === 100).length / total) * 100)
+    : null;
+  const surveyRate = total > 0 && surveyEnabled
+    ? Math.round((overviewUsers.filter(u => u.surveyPct === 100).length / total) * 100)
+    : null;
+  const examPassRate = total > 0 && examEnabled
+    ? Math.round((overviewUsers.filter(u => u.examPassed).length / total) * 100)
+    : null;
+  const avgCompletionRate = total > 0
+    ? Math.round(overviewUsers.reduce((sum, u) => sum + u.completionRate, 0) / total)
+    : 0;
+
+  res.json({
+    success: true,
+    data: {
+      training: { id: event.id, name: event.name, startTime: event.startTime, endTime: event.endTime },
+      summary: {
+        total,
+        signinEnabled,
+        surveyEnabled,
+        examEnabled,
+        signinRate,
+        surveyRate,
+        examPassRate,
+        avgCompletionRate
+      },
+      users: overviewUsers
+    }
   });
 });
 
@@ -1267,7 +1422,7 @@ app.post('/api/training/:id/courseware', coursewareUpload.array('courseware', 10
   }
   files.forEach(f => {
     data.training_events[idx].coursewareFiles.push({
-      name: f.originalname,
+      name: Buffer.from(f.originalname, 'latin1').toString('utf8'),
       url: `/uploads/training/${trainingId}/${f.filename}`,
       size: f.size,
       uploadedAt: new Date().toISOString()
@@ -1399,6 +1554,7 @@ app.post('/api/training/:id/assign', (req, res) => {
   if (!data.training_enrollments) data.training_enrollments = [];
 
   let addedCount = 0;
+  const addedUserIds = [];
   userIds.forEach(uid => {
     const existing = data.training_enrollments.find(e => e.trainingId === trainingId && e.userId === uid);
     if (!existing) {
@@ -1409,9 +1565,27 @@ app.post('/api/training/:id/assign', (req, res) => {
         enrolledAt: new Date().toISOString(),
         source: 'assigned'
       });
+      addedUserIds.push(Number(uid) || uid);
       addedCount++;
     }
   });
+
+  // 给新指派的学员发送消息中心通知，点击可直接打开培训弹窗
+  if (addedUserIds.length > 0) {
+    initNotificationsData(data);
+    addedUserIds.forEach(uid => {
+      data.notifications.push({
+        id: Date.now() + Math.floor(Math.random() * 1000000),
+        userId: uid,
+        title: '培训指派通知',
+        content: `您已被指派参加「${training.name || '未命名培训'}」培训，请尽快完成相关任务。`,
+        type: 'training_assign',
+        trainingId: trainingId,
+        read: false,
+        createdAt: new Date().toISOString()
+      });
+    });
+  }
 
   writeData(data);
   const totalCount = data.training_enrollments.filter(e => e.trainingId === trainingId).length;
@@ -1640,7 +1814,7 @@ app.post('/api/exams', (req, res) => {
     title, description, duration, passingScore, totalScore, bankId,
     shuffleQuestions, shuffleOptions, showAnswer, status, questions,
     startTime, endTime, maxAttempts, paperId, paperName, allowedUsers,
-    accessType,
+    accessType, fromTraining,
     // 考试设置
     attemptsPolicy, attemptsCount, recordScore, screenSwitchPolicy, screenSwitchCount,
     // 学员查看设置
@@ -1671,6 +1845,7 @@ app.post('/api/exams', (req, res) => {
     paperName: paperName || '',
     allowedUsers: allowedUsers || null,
     accessType: accessType || 'open',
+    fromTraining: !!fromTraining,
     // 考试设置
     attemptsPolicy: attemptsPolicy || 'unlimited',
     attemptsCount: attemptsPolicy === 'custom' ? (parseInt(attemptsCount) || 3) : null,
@@ -2259,12 +2434,20 @@ const takeExamHandler = (req, res) => {
     return res.status(404).json({ success: false, error: '考试不存在或未发布' });
   }
 
-  // 暂不指派的考试不允许参加
-  if (exam.accessType === 'none') {
+  // 若该考试被某个培训关联，则已报名该培训的用户（含主动报名/任务指派）均可参加
+  const linkedTrainingIds = (data.training_events || [])
+    .filter(t => t.linkedExamId === exam.id)
+    .map(t => t.id);
+  const isEnrolledInLinkedTraining = linkedTrainingIds.length > 0 && (data.training_enrollments || []).some(e =>
+    linkedTrainingIds.includes(e.trainingId) && String(e.userId) === String(userId)
+  );
+
+  // 暂不指派的考试不允许参加（但培训关联且已报名的除外）
+  if (exam.accessType === 'none' && !isEnrolledInLinkedTraining) {
     return res.status(403).json({ success: false, error: '该考试暂未指派学员' });
   }
-  // 如果是限制访问的考试，检查 userId 是否在 allowedUsers 中
-  if (exam.accessType === 'restricted') {
+  // 如果是限制访问的考试，检查 userId 是否在 allowedUsers 中（培训关联且已报名的除外）
+  if (exam.accessType === 'restricted' && !isEnrolledInLinkedTraining) {
     if (!exam.allowedUsers || exam.allowedUsers.length === 0) {
       return res.status(403).json({ success: false, error: '您未被指派参加此考试' });
     }
@@ -3274,6 +3457,8 @@ function initNotificationsData(data) {
 
 // 统一发送考试通知（支持指定学员和全员开放）
 function sendExamNotifications(data, exam) {
+  // 从培训模块创建的考试不单独发送考试通知（由培训通知统一处理）
+  if (exam.fromTraining) return 0;
   initNotificationsData(data);
   const users = data.registered_users || [];
   let targetUsers = [];

@@ -68,21 +68,6 @@
                 });
             }
 
-            // 用户菜单切换
-            const userMenuBtn = document.getElementById('user-menu-button');
-            const userMenu = document.getElementById('user-menu');
-            if (userMenuBtn && userMenu) {
-                userMenuBtn.addEventListener('click', function() {
-                    userMenu.classList.toggle('hidden');
-                });
-
-                document.addEventListener('click', function(event) {
-                    if (!userMenuBtn.contains(event.target) && !userMenu.contains(event.target)) {
-                        userMenu.classList.add('hidden');
-                    }
-                });
-            }
-
             // 监听数据同步事件
             if (window.DataSync) {
                 window.DataSync.listen(DataSync.EventTypes.ALL, async function(event) {
@@ -153,7 +138,6 @@
             await renderNotice();  // 现在是async函数，需要await
             renderFeaturedCourses();
             await renderFeaturedLecturers();
-            renderStats();
         }, 150);
     }
 
@@ -663,7 +647,7 @@
                         <div class="flex items-center space-x-4">
                             <div class="relative">
                                 <div class="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-indigo-50 to-purple-50 p-0.5">
-                                    <img src="${l.avatar || ''}" alt="${l.name}" class="w-full h-full rounded-full object-cover" onerror="this.src='https://placehold.co/64x64/f0f0f0/666?text=${encodeURIComponent(l.name.charAt(0))}'">
+                                    <img src="${l.avatar || ''}" alt="${l.name}" class="w-full h-full rounded-full object-cover" onerror="this.src='https://placehold.co/64x64/f0f0f0/666?text=${encodeURIComponent((l.name || '师').charAt(0))}'">
                                 </div>
                             </div>
                             <div class="flex-1 min-w-0">
@@ -682,53 +666,6 @@
                 }).join('')}
             </div>
         `;
-    }
-
-    /**
-     * 渲染统计数据
-     */
-    function renderStats() {
-        let courses = [];
-        let lecturers = [];
-        
-        if (window.DataAPI) {
-            courses = window.DataAPI.getCourses() || [];
-            lecturers = window.DataAPI.getEnabledLecturers() || [];
-        }
-
-        const courseCount = courses.length;
-        const lecturerCount = lecturers.length;
-        
-        // 模拟学习人数
-        const learnerCount = 1280;
-        const totalHours = Math.max(520, courses.reduce((sum, c) => sum + Math.floor((c.duration || 0) / 3600), 0));
-
-        animateNumber('stat-courses', courseCount, 0);
-        animateNumber('stat-teachers', lecturerCount, 0);
-        animateNumber('stat-learners', learnerCount, 0);
-        animateNumber('stat-hours', totalHours, 0);
-    }
-
-    /**
-     * 数字动画
-     */
-    function animateNumber(elementId, target, duration = 1500) {
-        const element = document.getElementById(elementId);
-        if (!element) return;
-
-        const start = 0;
-        const increment = target / (duration / 16);
-        let current = start;
-
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-                element.textContent = target.toLocaleString();
-                clearInterval(timer);
-            } else {
-                element.textContent = Math.floor(current).toLocaleString();
-            }
-        }, 16);
     }
 
     /**
@@ -807,7 +744,7 @@
                         <!-- 基本信息 -->
                         <div class="bg-gray-50 rounded-xl p-4 mb-4">
                             <div class="flex items-center gap-3">
-                                <img src="${lecturer.avatar || ''}" alt="${lecturer.name}" class="w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0" onerror="this.style.background='linear-gradient(135deg,#f97316,#ea580c)';this.innerHTML='<span class=\\'text-xl\\'>${lecturer.name.charAt(0)}</span>'">
+                                <img src="${lecturer.avatar || ''}" alt="${lecturer.name}" class="w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0" onerror="this.style.background='linear-gradient(135deg,#f97316,#ea580c)';this.innerHTML='<span class=\\'text-xl\\'>${(lecturer.name || '师').charAt(0)}</span>'">
                                 <div>
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <span class="font-semibold text-gray-800">${lecturer.name}</span>

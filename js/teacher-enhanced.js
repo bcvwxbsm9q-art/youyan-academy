@@ -110,22 +110,6 @@
             });
         }
 
-        // 用户菜单切换
-        const userMenuBtn = document.getElementById('user-menu-button');
-        const userMenu = document.getElementById('user-menu');
-        if (userMenuBtn && userMenu) {
-            userMenuBtn.addEventListener('click', function() {
-                userMenu.classList.toggle('hidden');
-            });
-
-            // 点击其他地方关闭用户菜单
-            document.addEventListener('click', function(event) {
-                if (!userMenuBtn.contains(event.target) && !userMenu.contains(event.target)) {
-                    userMenu.classList.add('hidden');
-                }
-            });
-        }
-
         // 搜索功能
         const searchInput = document.getElementById('teacher-search');
         if (searchInput) {

@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -677,255 +677,30 @@
 
             await markAsRead(msgId);
 
+            // 培训指派/考试通知直接跳转到对应页面并自动打开弹窗，复用培训页/考试页原生交互
+            if (msg.type === 'training_assign' && msg.trainingId) {
+                window.location.href = 'training-plan.html?openTrainingId=' + encodeURIComponent(msg.trainingId);
+                return;
+            } else if (msg.type === 'exam' && msg.examId) {
+                window.location.href = 'exam.html?id=' + encodeURIComponent(msg.examId);
+                return;
+            }
+
             document.getElementById('modal-title').textContent = msg.title || '消息详情';
             document.getElementById('modal-type-badge').innerHTML = getTypeBadge(msg.type);
             document.getElementById('modal-time').textContent = formatTime(msg.createdAt);
 
             const contentEl = document.getElementById('modal-content');
-
-            if (msg.type === 'training_assign' && msg.trainingId) {
-                contentEl.className = 'modal-body';
-                contentEl.innerHTML = '<div class="text-center text-gray-400 py-4"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>';
-                document.getElementById('msg-detail-modal').style.display = 'flex';
-                await loadTrainingDetail(msg.trainingId, msgId);
-            } else if (msg.type === 'exam' && msg.examId) {
-                contentEl.className = 'modal-body';
-                contentEl.innerHTML = '<div class="text-center text-gray-400 py-4"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>';
-                document.getElementById('msg-detail-modal').style.display = 'flex';
-                await loadExamDetail(msg.examId, msgId);
-            } else {
-                contentEl.className = 'modal-body ' + (msg.isHtml ? 'html-content' : 'plain-content');
-                contentEl.innerHTML = msg.isHtml ? (msg.fullContent || msg.content || '暂无内容') : escapeHtml(msg.content || '暂无内容');
-                document.getElementById('msg-detail-modal').style.display = 'flex';
-            }
+            contentEl.className = 'modal-body ' + (msg.isHtml ? 'html-content' : 'plain-content');
+            contentEl.innerHTML = msg.isHtml ? (msg.fullContent || msg.content || '暂无内容') : escapeHtml(msg.content || '暂无内容');
+            document.getElementById('msg-detail-modal').style.display = 'flex';
         };
 
         window.closeDetail = function () {
             document.getElementById('msg-detail-modal').style.display = 'none';
         };
 
-        async function loadTrainingDetail(trainingId, msgId) {
-            try {
-                const res = await fetch('/api/training/' + trainingId);
-                const result = await res.json();
-                if (result.success && result.data) {
-                    renderTrainingDetail(result.data, msgId);
-                } else {
-                    document.getElementById('modal-content').innerHTML = '<p class="text-gray-500">培训信息加载失败</p>';
-                }
-            } catch (e) {
-                document.getElementById('modal-content').innerHTML = '<p class="text-gray-500">网络错误</p>';
-            }
-        }
 
-        function renderTrainingDetail(project, msgId) {
-            const contentEl = document.getElementById('modal-content');
-            contentEl.className = 'modal-body html-content';
-
-            const statusMap = {
-                published: ['已发布', '#6366f1'],
-                pending: ['待开始', '#f59e0b'],
-                active: ['进行中', '#10b981'],
-                completed: ['已完成', '#3b82f6']
-            };
-            const [statusText, statusColor] = statusMap[project.status] || ['未知', '#6b7280'];
-
-            let html = '';
-            html += '<div style="padding-bottom:12px;border-bottom:1px solid #f1f5f9;margin-bottom:16px;">';
-            html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
-            html += '<span style="font-weight:700;color:#1e293b;font-size:16px">' + escapeHtml(project.name || '未命名培训') + '</span>';
-            html += '<span style="padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;color:' + statusColor + ';background:' + statusColor + '15">' + statusText + '</span>';
-            html += '</div>';
-            if (project.desc) {
-                html += '<p style="font-size:14px;color:#64748b;line-height:1.6">' + escapeHtml(project.desc) + '</p>';
-            }
-            html += '</div>';
-
-            const stages = project.stages || [];
-            const stagesCount = stages.length;
-
-            if (stagesCount > 0) {
-                html += '<div style="position:relative;padding-left:16px;">';
-                html += '<div style="position:absolute;left:8px;top:4px;bottom:4px;width:2px;background:#e2e8f0;"></div>';
-
-                stages.forEach(function (stage, idx) {
-                    html += '<div style="position:relative;margin-bottom:20px;padding-left:24px;">';
-                    if (idx < stagesCount - 1) {
-                        html += '<div style="position:absolute;left:-12px;top:2px;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(99,102,241,0.3)">' + (idx + 1) + '</div>';
-                    } else {
-                        html += '<div style="position:absolute;left:-12px;top:2px;width:24px;height:24px;border-radius:50%;background:#fff;border:2px dashed #cbd5e1;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;font-weight:700;">' + (idx + 1) + '</div>';
-                    }
-
-                    html += '<div>';
-                    html += '<span style="font-weight:700;color:#1e293b;font-size:15px">' + escapeHtml(stage.name || '未命名阶段') + '</span>';
-
-                    const otherItems = [];
-                    const offlineItems = [];
-
-                    if (stage.type === 'offline') {
-                        offlineItems.push({ courseName: stage.name, time: stage.schedule, location: stage.location });
-                    }
-
-                    if (stage.videos && stage.videos.length > 0) {
-                        stage.videos.forEach(function (v) {
-                            otherItems.push({ type: 'video', title: v.title, duration: v.duration });
-                        });
-                    }
-
-                    if (otherItems.length > 0) {
-                        html += '<div style="margin-top:8px;">';
-                        otherItems.forEach(function (item) {
-                            html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f8fafc;border-radius:8px;margin-bottom:4px;">';
-                            if (item.type === 'video') {
-                                html += '<i class="fa fa-video text-blue-500"></i>';
-                                html += '<span style="font-size:13px;color:#475569;flex:1">' + escapeHtml(item.title) + '</span>';
-                                if (item.duration) {
-                                    const mins = Math.floor(item.duration / 60);
-                                    html += '<span style="font-size:12px;color:#94a3b8">' + mins + '分钟</span>';
-                                }
-                            }
-                            html += '</div>';
-                        });
-                        html += '</div>';
-                    }
-
-                    if (offlineItems.length > 0) {
-                        html += '<div style="margin-top:8px;">';
-                        offlineItems.forEach(function(item) {
-                            html += '<div style="padding:12px;background:#fff3e0;border-radius:8px;border:1px solid #ffe0b2;">';
-                            html += '<span style="font-weight:600;color:#1e293b;font-size:14px">' + escapeHtml(item.courseName || '线下课') + '</span>';
-                            html += '<div style="margin-top:8px;display:flex;flex-wrap:gap-3;font-size:13px;color:#64748b;">';
-                            if (item.time) html += '<span><i class="fa fa-clock-o mr-1"></i>' + escapeHtml(item.time) + '</span>';
-                            if (item.location) html += '<span><i class="fa fa-map-marker-alt mr-1"></i>' + escapeHtml(item.location) + '</span>';
-                            html += '</div>';
-                            html += '</div>';
-                        });
-                        html += '</div>';
-                    }
-
-                    html += '</div>';
-                    html += '</div>';
-                });
-
-                html += '</div>';
-            }
-
-            html += '<button onclick="window.location.href=\'training-plan.html\';closeDetail()" style="width:100%;margin-top:16px;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-weight:500;cursor:pointer;transition:opacity 0.2s;hover:opacity 0.9;">';
-            html += '<i class="fa fa-calendar-check-o mr-2"></i>查看培训计划';
-            html += '</button>';
-
-            contentEl.innerHTML = html;
-        }
-
-        async function loadExamDetail(examId, msgId) {
-            try {
-                const res = await fetch('/api/exams/' + examId);
-                const result = await res.json();
-                if (result.success && result.data) {
-                    renderExamDetail(result.data, msgId);
-                } else {
-                    document.getElementById('modal-content').innerHTML = '<p class="text-gray-500">考试信息加载失败</p>';
-                }
-            } catch (e) {
-                document.getElementById('modal-content').innerHTML = '<p class="text-gray-500">网络错误</p>';
-            }
-        }
-
-        function renderExamDetail(exam, msgId) {
-            const contentEl = document.getElementById('modal-content');
-            contentEl.className = 'modal-body html-content';
-
-            const metaItems = [];
-            if (exam.duration) metaItems.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#f1f5f9;border-radius:20px;font-size:13px;color:#475569;"><i class="fa fa-clock-o" style="color:#667eea;"></i>' + exam.duration + '分钟</span>');
-            if (exam.totalScore) metaItems.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#f1f5f9;border-radius:20px;font-size:13px;color:#475569;"><i class="fa fa-star" style="color:#667eea;"></i>满分' + exam.totalScore + '分</span>');
-            if (exam.passingScore) metaItems.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#f1f5f9;border-radius:20px;font-size:13px;color:#475569;"><i class="fa fa-check-circle" style="color:#667eea;"></i>及格线' + exam.passingScore + '分</span>');
-            if (exam.questionCount) metaItems.push('<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#f1f5f9;border-radius:20px;font-size:13px;color:#475569;"><i class="fa fa-list-ol" style="color:#667eea;"></i>共' + exam.questionCount + '题</span>');
-
-            let html = '';
-
-            // 标题区
-            html += '<div style="text-align:center;margin-bottom:22px;">';
-            html += '<div style="width:68px;height:68px;border-radius:18px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 10px 25px rgba(102,126,234,0.32);">';
-            html += '<i class="fa fa-clipboard-check" style="color:#fff;font-size:30px;"></i>';
-            html += '</div>';
-            html += '<h2 style="font-size:20px;font-weight:700;color:#1e293b;margin-bottom:12px;line-height:1.4;">' + escapeHtml(exam.title || '未命名考试') + '</h2>';
-            html += '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;">' + metaItems.join('') + '</div>';
-            html += '</div>';
-
-            // 描述
-            if (exam.description) {
-                html += '<div style="padding:14px 16px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:12px;margin-bottom:20px;border-left:3px solid #667eea;">';
-                html += '<p style="font-size:14px;color:#475569;line-height:1.7;margin:0;">' + escapeHtml(exam.description) + '</p>';
-                html += '</div>';
-            }
-
-            // 考试操作卡片
-            html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:22px;box-shadow:0 4px 24px rgba(0,0,0,0.06);">';
-            html += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">';
-            html += '<div style="width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
-            html += '<i class="fa fa-file-text" style="color:#7c3aed;font-size:22px;"></i>';
-            html += '</div>';
-            html += '<div style="flex:1;min-width:0;">';
-            html += '<div style="font-weight:600;color:#1e293b;font-size:15px;margin-bottom:3px;">准备参加考试</div>';
-            html += '<div style="font-size:13px;color:#64748b;">请确认网络稳定后再开始作答</div>';
-            html += '</div>';
-            html += '</div>';
-
-            html += '<div id="exam-action-buttons">';
-            html += '<button type="button" onclick="event.stopPropagation();startExam(' + (exam.id || '') + ')" style="width:100%;padding:14px 20px;border:none;border-radius:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;font-weight:600;font-size:15px;cursor:pointer;box-shadow:0 6px 18px rgba(102,126,234,0.32);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.transform=\'translateY(-1px)\';this.style.boxShadow=\'0 8px 22px rgba(102,126,234,0.4)\'" onmouseout="this.style.transform=\'translateY(0)\';this.style.boxShadow=\'0 6px 18px rgba(102,126,234,0.32)\'">';
-            html += '<i class="fa fa-play-circle" style="font-size:18px;"></i>开始考试';
-            html += '</button>';
-            html += '</div>';
-
-            html += '<p style="text-align:center;margin-top:16px;margin-bottom:0;font-size:12px;color:#94a3b8;"><i class="fa fa-info-circle" style="margin-right:5px;color:#cbd5e1;"></i>点击按钮后将开始计时，中途请勿刷新或关闭页面</p>';
-            html += '</div>';
-
-            contentEl.innerHTML = html;
-
-            // 异步检查是否已有考试记录，有则追加“答题详情”按钮
-            loadExamAttemptButton(exam.id);
-        }
-
-        function getUser() {
-            const s = localStorage.getItem('user') || sessionStorage.getItem('user');
-            try { return s ? JSON.parse(s) : null; } catch(e) { return null; }
-        }
-
-        async function loadExamAttemptButton(examId) {
-            const user = getUser();
-            if (!user || !examId) return;
-            try {
-                const res = await fetch('/api/data');
-                const data = await res.json();
-                const attempts = (data.exam_attempts || []).filter(a =>
-                    String(a.userId) === String(user.id) &&
-                    a.examId === examId &&
-                    a.status === 'completed'
-                ).sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
-                if (attempts.length === 0) return;
-                const latestAttempt = attempts[0];
-                const container = document.getElementById('exam-action-buttons');
-                if (!container) return;
-                const detailBtn = document.createElement('button');
-                detailBtn.type = 'button';
-                detailBtn.onclick = function() { location.href = 'exam.html?attemptId=' + latestAttempt.id; };
-                detailBtn.style.cssText = 'width:100%;padding:14px 20px;border:1.5px solid #667eea;border-radius:12px;background:#fff;color:#667eea;font-weight:600;font-size:15px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;';
-                detailBtn.innerHTML = '<i class="fa fa-file-text-o" style="font-size:18px;"></i>答题详情';
-                container.insertBefore(detailBtn, container.firstChild);
-            } catch (e) {
-                console.error('[loadExamAttemptButton]', e);
-            }
-        }
-
-        function startExam(examId) {
-            window.location.href = 'exam.html?id=' + examId;
-        }
-
-        // 挂载到全局供 onclick 内联事件调用
-        window.startExam = startExam;
-        window.loadExamDetail = loadExamDetail;
-        window.renderExamDetail = renderExamDetail;
-        window.renderTrainingDetail = renderTrainingDetail;
 
         // 获取认证 Token
         function getAuthToken() {

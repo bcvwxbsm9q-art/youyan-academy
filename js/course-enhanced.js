@@ -48,21 +48,6 @@
             });
         }
 
-        // 用户菜单切换
-        const userMenuBtn = document.getElementById('user-menu-button');
-        const userMenu = document.getElementById('user-menu');
-        if (userMenuBtn && userMenu) {
-            userMenuBtn.addEventListener('click', function() {
-                userMenu.classList.toggle('hidden');
-            });
-
-            document.addEventListener('click', function(event) {
-                if (!userMenuBtn.contains(event.target) && !userMenu.contains(event.target)) {
-                    userMenu.classList.add('hidden');
-                }
-            });
-        }
-
         // 搜索功能
         const searchInput = document.getElementById('course-search');
         if (searchInput) {
@@ -356,7 +341,7 @@
                 case 'rating':
                     return (b.rating || 0) - (a.rating || 0);
                 case 'duration':
-                    return (b.duration || 0) - (a.duration || 0);
+                    return (a.duration || 0) - (b.duration || 0);
                 case 'latest':
                 default:
                     return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);

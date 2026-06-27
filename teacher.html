@@ -263,10 +263,7 @@
                     </div>
                 </div>
 
-                <!-- 分页 -->
-                <div id="pagination" class="mt-6 flex justify-center">
-                    <nav class="flex items-center space-x-2"></nav>
-                </div>
+
             </div>
         </section>
 
@@ -399,50 +396,7 @@
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuthAndUpdateUI();
-            loadNotificationCount();
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
-            if (mobileMenuButton && mobileMenu) {
-                mobileMenuButton.addEventListener('click', () => {
-                    mobileMenu.classList.toggle('hidden');
-                });
-            }
-        });
-        
-        // 加载未读通知数量
-        async function loadNotificationCount() {
-            try {
-                const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
-                const headers = {};
-                if (userStr) {
-                    try {
-                        const user = JSON.parse(userStr);
-                        if (user.token) headers['Authorization'] = 'Bearer ' + user.token;
-                    } catch(e) {}
-                }
-                const res = await fetch('/api/notifications', { headers });
-                if (!res.ok) return;
-                const result = await res.json();
-                const notifications = result.data || [];
-                const unreadCount = notifications.filter(n => !n.read).length;
-                
-                const badge = document.getElementById('notification-badge');
-                if (badge) {
-                    if (unreadCount > 0) {
-                        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                        badge.classList.remove('hidden');
-                    } else {
-                        badge.classList.add('hidden');
-                    }
-                }
-            } catch(e) {
-                console.error('加载通知数量失败:', e);
-            }
-        }
-        
+
         function openApplyModal() {
             const existing = document.querySelector('.apply-modal-overlay');
             if (existing) existing.remove();
@@ -524,17 +478,6 @@
                     this.value = '';
                 }
             });
-        }
-        
-        function renderSkillTags(skills) {
-            const container = document.getElementById('apply-skills-tags');
-            if (!container) return;
-            container.innerHTML = skills.map(s => `
-                <span class="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                    ${s}
-                    <button onclick="this.parentElement.remove(); removeSkill('${s}')" class="hover:text-red-500">&times;</button>
-                </span>
-            `).join('');
         }
         
         let applySkills = [];

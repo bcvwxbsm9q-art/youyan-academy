@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1782044069160-440027461.jpg",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/6/25 11:28:29",
+      "lastLogin": "2026/6/27 14:27:13",
       "status": "active",
       "position": "人事经理"
     },
@@ -26,7 +26,7 @@
       "role": "user",
       "avatar": "",
       "createdAt": "2026/6/10 18:23:41",
-      "lastLogin": "2026/6/25 11:00:58",
+      "lastLogin": "2026/6/27 14:25:06",
       "status": "active"
     }
   ],
@@ -40,7 +40,7 @@
       1781077900894
     ],
     "videoProgress": {
-      "1781087462994_0": 100,
+      "1781087462994_0": 27,
       "1781065453648_0": 100,
       "1781087427858_0": 5,
       "1781080411545_0": 100,
@@ -51,16 +51,17 @@
       "1781065485355_0": 1,
       "1781077900894_0": 100
     },
-    "lastStudyTime": "2026-06-24T06:15:46.943Z",
+    "lastStudyTime": "2026-06-26T14:05:20.860Z",
     "studyDates": [
       "2026-06-14",
       "2026-06-15",
       "2026-06-17",
       "2026-06-20",
       "2026-06-22",
-      "2026-06-24"
+      "2026-06-24",
+      "2026-06-26"
     ],
-    "totalSeconds": 242,
+    "totalSeconds": 591,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -448,6 +449,87 @@
         "duration": 1,
         "timestamp": "2026-06-24T06:15:46.943Z",
         "date": "2026-06-24"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-26T13:44:24.705Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 8,
+        "timestamp": "2026-06-26T13:59:17.201Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-26T13:59:34.678Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-26T14:00:40.944Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-26T14:01:40.951Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-26T14:02:40.960Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-26T14:03:40.955Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-26T14:04:41.018Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 39,
+        "timestamp": "2026-06-26T14:05:20.860Z",
+        "date": "2026-06-26"
       }
     ],
     "shares": 1,
@@ -519,6 +601,17 @@
         "totalQuestions": 3,
         "completedAt": "2026-06-24T09:27:43.467Z",
         "attemptId": 1782293258926
+      },
+      {
+        "examId": 1782468162514,
+        "examTitle": "123",
+        "score": 70,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 2,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-27T01:53:39.384Z",
+        "attemptId": 1782525210506
       }
     ]
   },
@@ -937,7 +1030,7 @@
       ],
       "attachments": [],
       "duration": 1909,
-      "views": 13,
+      "views": 14,
       "rating": 0,
       "id": 1781065281803,
       "createdAt": "2026/6/10 12:21:21"
@@ -961,7 +1054,7 @@
       ],
       "attachments": [],
       "duration": 2415,
-      "views": 16,
+      "views": 17,
       "rating": 0,
       "id": 1781065453648,
       "createdAt": "2026/6/10 12:24:13"
@@ -1073,7 +1166,7 @@
       ],
       "attachments": [],
       "duration": 1044,
-      "views": 14,
+      "views": 15,
       "rating": 5,
       "id": 1781087427858,
       "createdAt": "2026/6/10 18:30:27",
@@ -1098,7 +1191,7 @@
       ],
       "attachments": [],
       "duration": 2360,
-      "views": 19,
+      "views": 20,
       "rating": 5,
       "id": 1781087462994,
       "createdAt": "2026/6/10 18:31:02",
@@ -1123,7 +1216,7 @@
       ],
       "attachments": [],
       "duration": 2249,
-      "views": 13,
+      "views": 14,
       "rating": 5,
       "id": 1781506198054,
       "createdAt": "2026/6/15 14:49:58",
@@ -1151,14 +1244,31 @@
       "content": "",
       "instructor": "魏少银",
       "location": "B区培训室",
-      "date": "2026-06-12",
-      "startTime": "2026-06-12T17:30",
-      "endTime": "2026-06-12T18:30",
+      "date": "2026-06-27",
+      "startTime": "2026-06-27T08:30",
+      "endTime": "2026-06-27T18:30",
       "id": 1781148703132,
       "signinEnabled": true,
-      "signinCode": "4099",
+      "signinCode": "1196",
       "linkedSurveyId": 1781170180951,
-      "linkedExamId": null
+      "linkedExamId": 1782468162514,
+      "signinStartTime": "2026-06-26 17:30",
+      "signinEndTime": "2026-06-27 18:30",
+      "accessType": "restricted",
+      "allowedUsers": [
+        1780909174403
+      ],
+      "coursewareFiles": [
+        {
+          "name": "KMPç®æ³2025.6ï¼æå²¸ï¼.pptx",
+          "url": "/uploads/training/1781148703132/1782521879719-221650836.pptx",
+          "size": 1404075,
+          "uploadedAt": "2026-06-27T00:57:59.865Z"
+        }
+      ],
+      "examEnabled": true,
+      "surveyEnabled": true,
+      "coursewareEnabled": true
     },
     {
       "project": "鸿雁计划",
@@ -1222,8 +1332,8 @@
     "savedAt": "2026-06-10T04:11:05.732Z"
   },
   "video_pos_1780909174403_1781065281803_0": {
-    "position": 73,
-    "savedAt": "2026-06-20T11:30:23.338Z"
+    "position": 74,
+    "savedAt": "2026-06-26T13:44:24.659Z"
   },
   "video_pos_1780909174403_1781064630171_0": {
     "position": 868,
@@ -1300,7 +1410,7 @@
   },
   "video_pos_1780909174403_1781065453648_0": {
     "position": 2415,
-    "savedAt": "2026-06-22T06:49:22.524Z"
+    "savedAt": "2026-06-26T13:44:12.052Z"
   },
   "course_interaction_1781065453648": {
     "likes": 1,
@@ -1542,6 +1652,17 @@
         "totalQuestions": 3,
         "completedAt": "2026-06-25T03:01:43.675Z",
         "attemptId": 1782356499320
+      },
+      {
+        "examId": 1782468162514,
+        "examTitle": "123",
+        "score": 50,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 1,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-27T06:14:34.336Z",
+        "attemptId": 1782540869020
       }
     ]
   },
@@ -1641,7 +1762,7 @@
       "examId": 1782221347409,
       "read": true,
       "createdAt": "2026-06-23T13:29:07.419Z",
-      "readAt": "2026-06-25T03:33:28.355Z"
+      "readAt": "2026-06-26T10:27:56.358Z"
     },
     {
       "id": 1782221347420,
@@ -1663,7 +1784,7 @@
       "examId": 1782281099486,
       "read": true,
       "createdAt": "2026-06-24T06:06:09.738Z",
-      "readAt": "2026-06-25T03:20:04.401Z"
+      "readAt": "2026-06-27T00:52:54.124Z"
     },
     {
       "id": 1782281169739,
@@ -1697,6 +1818,89 @@
       "read": true,
       "createdAt": "2026-06-24T09:27:27.928Z",
       "readAt": "2026-06-25T03:01:00.416Z"
+    },
+    {
+      "id": 1782457067323,
+      "userId": 1780909174403,
+      "title": "新考试安排",
+      "content": "您有一场新考试「闭环测试试卷20260626」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782457067312,
+      "read": true,
+      "createdAt": "2026-06-26T06:57:47.323Z",
+      "readAt": "2026-06-26T07:18:30.557Z"
+    },
+    {
+      "id": 1782457067324,
+      "userId": 1781087021554,
+      "title": "新考试安排",
+      "content": "您有一场新考试「闭环测试试卷20260626」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782457067312,
+      "read": false,
+      "createdAt": "2026-06-26T06:57:47.323Z"
+    },
+    {
+      "id": 1782457101617,
+      "userId": 1780909174403,
+      "title": "新考试安排",
+      "content": "您有一场新考试「闭环测试试卷20260626」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782457101606,
+      "read": false,
+      "createdAt": "2026-06-26T06:58:21.617Z"
+    },
+    {
+      "id": 1782457101618,
+      "userId": 1781087021554,
+      "title": "新考试安排",
+      "content": "您有一场新考试「闭环测试试卷20260626」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782457101606,
+      "read": false,
+      "createdAt": "2026-06-26T06:58:21.617Z"
+    },
+    {
+      "id": 1782457155278,
+      "userId": 1780909174403,
+      "title": "新考试安排",
+      "content": "您有一场新考试「闭环测试试卷20260626」待参加，考试时长60分钟，及格分数20分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782457155268,
+      "read": true,
+      "createdAt": "2026-06-26T06:59:15.278Z",
+      "readAt": "2026-06-26T07:18:25.703Z"
+    },
+    {
+      "id": 1782457155279,
+      "userId": 1781087021554,
+      "title": "新考试安排",
+      "content": "您有一场新考试「闭环测试试卷20260626」待参加，考试时长60分钟，及格分数20分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782457155268,
+      "read": false,
+      "createdAt": "2026-06-26T06:59:15.278Z"
+    },
+    {
+      "id": 1782468162523,
+      "userId": 1780909174403,
+      "title": "新考试安排",
+      "content": "您有一场新考试「123」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782468162514,
+      "read": true,
+      "createdAt": "2026-06-26T10:02:42.524Z",
+      "readAt": "2026-06-27T04:49:23.620Z"
+    },
+    {
+      "id": 1782468162524,
+      "userId": 1781087021554,
+      "title": "新考试安排",
+      "content": "您有一场新考试「123」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
+      "type": "exam",
+      "examId": 1782468162514,
+      "read": false,
+      "createdAt": "2026-06-26T10:02:42.524Z"
     }
   ],
   "notification_reads": [
@@ -2438,6 +2642,68 @@
       "viewRank": "after_submit",
       "createdAt": "2026-06-24T06:04:59.486Z",
       "updatedAt": "2026-06-25T08:35:27.213Z"
+    },
+    {
+      "id": 1782468162514,
+      "title": "123",
+      "description": "",
+      "duration": 60,
+      "passingScore": 60,
+      "totalScore": 100,
+      "bankId": null,
+      "shuffleQuestions": false,
+      "shuffleOptions": false,
+      "showAnswer": false,
+      "status": "published",
+      "questions": [
+        {
+          "questionId": 1782111523712,
+          "score": 30,
+          "partialScore": 0,
+          "order": 0,
+          "content": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
+          "type": "single"
+        },
+        {
+          "questionId": 1782111523714,
+          "score": 30,
+          "partialScore": 0,
+          "order": 1,
+          "content": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
+          "type": "single"
+        },
+        {
+          "questionId": 1782111523716,
+          "score": 40,
+          "partialScore": 20,
+          "order": 2,
+          "content": "使用简单粒子所带来的问题有哪些？",
+          "type": "multiple"
+        }
+      ],
+      "startTime": "2026-06-26T09:30:00.000Z",
+      "endTime": "2026-06-27T10:30:00.000Z",
+      "maxAttempts": 0,
+      "paperId": "paper_1782113932466",
+      "paperName": "粒子系统",
+      "allowedUsers": [
+        1780909174403
+      ],
+      "accessType": "restricted",
+      "attemptsPolicy": "unlimited",
+      "attemptsCount": null,
+      "recordScore": "highest",
+      "screenSwitchPolicy": "unlimited",
+      "screenSwitchCount": null,
+      "showData": true,
+      "answerDetail": "after_grade",
+      "viewQuestions": "all",
+      "showCorrect": "show",
+      "showAnalysis": "show",
+      "viewRank": "after_submit",
+      "createdAt": "2026-06-26T10:02:42.514Z",
+      "updatedAt": "2026-06-27T00:57:50.321Z",
+      "fromTraining": true
     }
   ],
   "exam_attempts": [
@@ -2772,6 +3038,60 @@
       "correctCount": 1,
       "totalQuestions": 3,
       "durationUsed": 1100
+    },
+    {
+      "id": 1782525210506,
+      "examId": 1782468162514,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-06-27T01:53:30.506Z",
+      "answers": {
+        "1782111523712": "A",
+        "1782111523714": "B",
+        "1782111523716": "ABCD"
+      },
+      "score": 70,
+      "passed": true,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-27T01:53:39.384Z",
+      "correctCount": 2,
+      "totalQuestions": 3,
+      "durationUsed": 9
+    },
+    {
+      "id": 1782525647029,
+      "examId": 1782468162514,
+      "userId": "1780909174403",
+      "status": "abandoned",
+      "startedAt": "2026-06-27T02:00:47.029Z",
+      "answers": {},
+      "score": null,
+      "passed": null,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-27T03:50:45.178Z",
+      "durationUsed": 6598
+    },
+    {
+      "id": 1782540869020,
+      "examId": 1782468162514,
+      "userId": "1781087021554",
+      "status": "completed",
+      "startedAt": "2026-06-27T06:14:29.020Z",
+      "answers": {
+        "1782111523712": "A",
+        "1782111523714": "B",
+        "1782111523716": "A"
+      },
+      "score": 50,
+      "passed": false,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-27T06:14:34.336Z",
+      "correctCount": 1,
+      "totalQuestions": 3,
+      "durationUsed": 5
     }
   ],
   "survey_responses": [
@@ -2869,6 +3189,58 @@
       "trainingId": null,
       "stageIdx": null,
       "submittedAt": "2026-06-11T09:48:47.112Z"
+    },
+    {
+      "id": 1782469820120,
+      "surveyId": 1781170180951,
+      "userId": 1780909174403,
+      "userName": "许志坚",
+      "department": "人力资源部",
+      "answers": {
+        "1": 5,
+        "2": 5,
+        "3": 5,
+        "4": 5,
+        "5": 5,
+        "6": 5,
+        "7": 5,
+        "8": 5,
+        "9": 5,
+        "10": 5,
+        "11": "进阶/中等",
+        "12": "",
+        "13": "很棒",
+        "14": "很好"
+      },
+      "trainingId": 1781148746172,
+      "stageIdx": null,
+      "submittedAt": "2026-06-26T10:30:20.120Z"
+    },
+    {
+      "id": 1782522641993,
+      "surveyId": 1781170180951,
+      "userId": 1780909174403,
+      "userName": "许志坚",
+      "department": "人力资源部",
+      "answers": {
+        "1": 5,
+        "2": 5,
+        "3": 5,
+        "4": 5,
+        "5": 5,
+        "6": 5,
+        "7": 5,
+        "8": 5,
+        "9": 5,
+        "10": 5,
+        "11": "进阶/中等",
+        "12": "",
+        "13": "0",
+        "14": "2"
+      },
+      "trainingId": 1781148703132,
+      "stageIdx": null,
+      "submittedAt": "2026-06-27T01:10:41.993Z"
     }
   ],
   "course_ratings": [
@@ -2946,8 +3318,8 @@
     }
   ],
   "video_pos_1780909174403_1781087462994_0": {
-    "position": 2359,
-    "savedAt": "2026-06-17T01:54:49.834Z"
+    "position": 650,
+    "savedAt": "2026-06-26T14:05:20.932Z"
   },
   "lecturer_applications": [
     {
@@ -2966,7 +3338,7 @@
   ],
   "video_pos_1780909174403_1781087427858_0": {
     "position": 54,
-    "savedAt": "2026-06-22T03:40:39.144Z"
+    "savedAt": "2026-06-26T13:44:18.493Z"
   },
   "video_pos_1781087021554_1781080411545_1": {
     "position": 4,
@@ -3482,8 +3854,8 @@
     "studyDates": []
   },
   "video_pos_1780909174403_1781506198054_0": {
-    "position": 386,
-    "savedAt": "2026-06-20T13:08:45.591Z"
+    "position": 393,
+    "savedAt": "2026-06-26T13:59:17.163Z"
   },
   "course_interaction_1781506198054": {
     "likes": 0,
@@ -3523,18 +3895,18 @@
       "source": "assigned"
     },
     {
-      "id": 1781688058762,
+      "id": 1782523466437,
       "trainingId": 1781148703132,
       "userId": 1780909174403,
-      "enrolledAt": "2026-06-17T09:20:58.762Z",
-      "source": "assigned"
+      "enrolledAt": "2026-06-27T01:24:26.437Z",
+      "source": "self"
     },
     {
-      "id": 1781688058763,
+      "id": 1782540824444,
       "trainingId": 1781148703132,
       "userId": 1781087021554,
-      "enrolledAt": "2026-06-17T09:20:58.762Z",
-      "source": "assigned"
+      "enrolledAt": "2026-06-27T06:13:44.444Z",
+      "source": "self"
     }
   ],
   "user_shares_1781087021554": {
@@ -4140,11 +4512,11 @@
   },
   "papers": [
     {
-      "id": "paper_1782113932466",
-      "name": "粒子系统",
-      "category": "1780974142620",
-      "categoryId": "1780974142620",
-      "categoryName": "技术",
+      "id": "paper_1782444280361",
+      "name": "闭环测试试卷-001",
+      "category": "1780973996285",
+      "categoryId": "1780973996285",
+      "categoryName": "策划",
       "description": "",
       "duration": 60,
       "passScore": 60,
@@ -4152,33 +4524,13 @@
       "shuffle": false,
       "showAnswer": true,
       "uniformScore": 5,
-      "questions": [
-        {
-          "questionId": 1782111523712,
-          "score": 30,
-          "partialScore": 0,
-          "order": 0
-        },
-        {
-          "questionId": 1782111523714,
-          "score": 30,
-          "partialScore": 0,
-          "order": 1
-        },
-        {
-          "questionId": 1782111523716,
-          "score": 40,
-          "partialScore": 20,
-          "order": 2
-        }
-      ],
+      "questions": [],
       "status": "draft",
       "type": "fixed",
-      "createdAt": "2026-06-22T07:38:52.466Z",
-      "updatedAt": "2026-06-22T08:11:22.354Z",
+      "createdAt": "2026-06-26T03:24:40.361Z",
+      "updatedAt": "2026-06-26T03:24:40.361Z",
       "creator": "当前用户",
-      "createdBy": "当前用户",
-      "totalScore": 100
+      "createdBy": "当前用户"
     },
     {
       "id": "paper_1782182121955",
@@ -4220,6 +4572,47 @@
       "creator": "当前用户",
       "createdBy": "当前用户",
       "totalScore": 100
+    },
+    {
+      "id": "paper_1782113932466",
+      "name": "粒子系统",
+      "category": "1780974142620",
+      "categoryId": "1780974142620",
+      "categoryName": "技术",
+      "description": "",
+      "duration": 60,
+      "passScore": 60,
+      "maxAttempts": 0,
+      "shuffle": false,
+      "showAnswer": true,
+      "uniformScore": 5,
+      "questions": [
+        {
+          "questionId": 1782111523712,
+          "score": 30,
+          "partialScore": 0,
+          "order": 0
+        },
+        {
+          "questionId": 1782111523714,
+          "score": 30,
+          "partialScore": 0,
+          "order": 1
+        },
+        {
+          "questionId": 1782111523716,
+          "score": 40,
+          "partialScore": 20,
+          "order": 2
+        }
+      ],
+      "status": "draft",
+      "type": "fixed",
+      "createdAt": "2026-06-22T07:38:52.466Z",
+      "updatedAt": "2026-06-22T08:11:22.354Z",
+      "creator": "当前用户",
+      "createdBy": "当前用户",
+      "totalScore": 100
     }
   ],
   "user_likes_1780909174403": {
@@ -4233,7 +4626,27 @@
       "noticeId": 1782183780370,
       "userId": 1780909174403,
       "username": "15302206488",
-      "visitedAt": "2026-06-25T03:02:58.503Z"
+      "visitedAt": "2026-06-26T13:40:28.899Z"
+    }
+  ],
+  "training_signins": [
+    {
+      "id": 1782532231950,
+      "trainingId": 1781148703132,
+      "userId": 1780909174403,
+      "userName": "许志坚",
+      "department": "人力资源部",
+      "signedAt": "2026-06-27T03:50:31.950Z",
+      "method": "direct"
+    },
+    {
+      "id": 1782539908361,
+      "trainingId": 1781148703132,
+      "userId": 1781087021554,
+      "userName": "何银",
+      "department": "蜗牛工作室",
+      "signedAt": "2026-06-27T05:58:28.361Z",
+      "method": "direct"
     }
   ]
 }

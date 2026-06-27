@@ -110,7 +110,7 @@
       </div>
       <p id="error-msg" class="text-lg font-medium text-slate-700 mb-2">加载失败</p>
       <p id="error-detail" class="text-sm text-slate-400 mb-6"></p>
-      <button onclick="history.back()" class="px-6 py-2.5 bg-gradient-primary text-white rounded-xl text-sm font-medium hover:opacity-90 transition">返回</button>
+      <button onclick="location.href='training-plan.html'" class="px-6 py-2.5 bg-gradient-primary text-white rounded-xl text-sm font-medium hover:opacity-90 transition">返回</button>
     </div>
 
     <!-- 答题界面 -->
@@ -764,14 +764,14 @@
           async ()=>{
             clearInterval(timerHandle);
             await abandonExam(); // 未交卷退出时同步放弃/清理尝试记录
-            history.back();
+            location.href='training-plan.html';
           }
         );
         return;
       }
       // 非答题页直接返回
       clearInterval(timerHandle);
-      history.back();
+      location.href='training-plan.html';
     }
 
     // ========== 交卷 ==========

@@ -8,8 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <!-- 移动端增强样式 -->
     <link rel="stylesheet" href="css/mobile-enhanced.css">
     <!-- 统一的 Tailwind 配置 -->
@@ -248,36 +246,10 @@
     <script src="js/auth-guard.js?v=2024010801"></script>
     <script src="js/notification.js?v=20260623"></script>
     <script>
-        // API 基础 URL
-        const API_BASE = window.location.origin + '/api';
-
         // 退出登录（使用统一认证模块）
         function handleLogout() {
             AuthGuard.logout();
         }
-
-        // Toast 提示
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 shadow-lg ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-        
-        // 用户菜单切换
-        document.addEventListener('DOMContentLoaded', () => {
-            AuthGuard.updateUserInfo();
-            
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
-            
-            if (mobileMenuButton && mobileMenu) {
-                mobileMenuButton.addEventListener('click', () => {
-                    mobileMenu.classList.toggle('hidden');
-                });
-            }
-        });
     </script>
 </body>
 </html>
