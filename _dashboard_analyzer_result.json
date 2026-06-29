@@ -1,0 +1,978 @@
+{
+  "duplicates": [
+    {
+      "name": "escHtml",
+      "lines": [
+        3057,
+        15565
+      ]
+    },
+    {
+      "name": "formatDuration",
+      "lines": [
+        3348,
+        12653
+      ]
+    },
+    {
+      "name": "onExamAccessTypeChange",
+      "lines": [
+        11623,
+        12010
+      ]
+    },
+    {
+      "name": "inRange",
+      "lines": [
+        14625,
+        14724,
+        14784
+      ]
+    }
+  ],
+  "unused": [],
+  "htmlHandlerMissing": [
+    {
+      "name": "logout",
+      "lines": [
+        144
+      ]
+    },
+    {
+      "name": "if",
+      "lines": [
+        892,
+        2201,
+        2473
+      ]
+    },
+    {
+      "name": "getElementById",
+      "lines": [
+        1627,
+        1701,
+        1706,
+        3384,
+        3437,
+        3466,
+        4557,
+        6565,
+        9673,
+        10566
+      ]
+    },
+    {
+      "name": "closest",
+      "lines": [
+        3684,
+        3699,
+        3830,
+        3845,
+        15155,
+        15199,
+        15416,
+        15472,
+        15551,
+        15557,
+        15753,
+        15998
+      ]
+    },
+    {
+      "name": "stringify",
+      "lines": [
+        5873,
+        5883
+      ]
+    },
+    {
+      "name": "replace",
+      "lines": [
+        5873,
+        5883
+      ]
+    },
+    {
+      "name": "stopPropagation",
+      "lines": [
+        6964,
+        6981,
+        6998,
+        7015,
+        10054,
+        13346,
+        15149,
+        15408,
+        15545,
+        15710,
+        15943
+      ]
+    },
+    {
+      "name": "splice",
+      "lines": [
+        10562,
+        15214
+      ]
+    },
+    {
+      "name": "push",
+      "lines": [
+        15217
+      ]
+    }
+  ],
+  "debugPatterns": [
+    {
+      "line": 2596,
+      "text": "console.error('解析用户信息失败:', e);",
+      "match": "console.error"
+    },
+    {
+      "line": 2658,
+      "text": "console.error('初始化加载数据失败:', error);",
+      "match": "console.error"
+    },
+    {
+      "line": 2665,
+      "text": "console.error('切换标签页失败:', error);",
+      "match": "console.error"
+    },
+    {
+      "line": 2717,
+      "text": "console.warn('[Dashboard] 加载用户数据失败:', e);",
+      "match": "console.warn"
+    },
+    {
+      "line": 2740,
+      "text": "console.log('[Dashboard] loadAllData完成,准备广播分类变更');",
+      "match": "console.log"
+    },
+    {
+      "line": 2744,
+      "text": "console.log('[Dashboard] 已广播分类变更事件');",
+      "match": "console.log"
+    },
+    {
+      "line": 2746,
+      "text": "console.warn('[Dashboard] DataSync未加载,无法广播');",
+      "match": "console.warn"
+    },
+    {
+      "line": 2756,
+      "text": "console.error('加载数据失败', e);",
+      "match": "console.error"
+    },
+    {
+      "line": 2826,
+      "text": "if (!tbody) { (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#f87171\\\">lo",
+      "match": "dbg"
+    },
+    {
+      "line": 2828,
+      "text": "(function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#94a3b8\\\">loadCarousels: 开",
+      "match": "dbg"
+    },
+    {
+      "line": 2886,
+      "text": "(function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#4ade80\\\">loadCarousels: 成",
+      "match": "dbg"
+    },
+    {
+      "line": 2888,
+      "text": "console.error('加载轮播图失败:', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 2889,
+      "text": "(function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#f87171\\\">loadCarousels ER",
+      "match": "dbg"
+    },
+    {
+      "line": 2908,
+      "text": "const placeholder = document.getElementById('carousel-cover-placeholder');",
+      "match": "placeholder"
+    },
+    {
+      "line": 2908,
+      "text": "const placeholder = document.getElementById('carousel-cover-placeholder');",
+      "match": "placeholder"
+    },
+    {
+      "line": 2913,
+      "text": "placeholder.classList.add('hidden');",
+      "match": "placeholder"
+    },
+    {
+      "line": 2917,
+      "text": "placeholder.classList.remove('hidden');",
+      "match": "placeholder"
+    },
+    {
+      "line": 2934,
+      "text": "document.getElementById('carousel-cover-placeholder').classList.remove('hidden');",
+      "match": "placeholder"
+    },
+    {
+      "line": 2990,
+      "text": "document.getElementById('carousel-cover-placeholder').classList.add('hidden');",
+      "match": "placeholder"
+    },
+    {
+      "line": 3069,
+      "text": "function dbg(msg, color) {",
+      "match": "dbg"
+    },
+    {
+      "line": 3070,
+      "text": "console.log('[switchTab] ' + msg);",
+      "match": "console.log"
+    },
+    {
+      "line": 3071,
+      "text": "var el = document.getElementById('dbg-log');",
+      "match": "dbg"
+    },
+    {
+      "line": 3074,
+      "text": "dbg('>>> switchTab(\"' + name + '\") 触发', '#38bdf8');",
+      "match": "dbg"
+    },
+    {
+      "line": 3078,
+      "text": "dbg('找到 .tab-content 数量: ' + allTabs.length, '#94a3b8');",
+      "match": "dbg"
+    },
+    {
+      "line": 3085,
+      "text": "dbg('隐藏了 ' + allTabs.length + ' 个标签页', '#94a3b8');",
+      "match": "dbg"
+    },
+    {
+      "line": 3099,
+      "text": "dbg('tab-' + name + ' 已显示, display=' + tabEl.style.display + ' hidden=' + tabEl.classList.contains('hidden'), '#4ade80')",
+      "match": "dbg"
+    },
+    {
+      "line": 3101,
+      "text": "dbg('ERROR: 找不到 tab-' + name, '#f87171');",
+      "match": "dbg"
+    },
+    {
+      "line": 3105,
+      "text": "if (btnEl) { btnEl.classList.add('active'); dbg('侧边栏按钮已激活', '#94a3b8'); }",
+      "match": "dbg"
+    },
+    {
+      "line": 3106,
+      "text": "else dbg('WARN: 找不到侧边栏按钮 data-tab=' + name, '#fbbf24');",
+      "match": "dbg"
+    },
+    {
+      "line": 3110,
+      "text": "dbg('portal 标签页，自动切换到第一个子标签页', '#38bdf8');",
+      "match": "dbg"
+    },
+    {
+      "line": 3145,
+      "text": "dbg('调用加载器: ' + name, '#38bdf8');",
+      "match": "dbg"
+    },
+    {
+      "line": 3150,
+      "text": "dbg('加载器 ' + name + ' 完成 (耗时' + (Date.now()-startTime) + 'ms)', '#4ade80');",
+      "match": "dbg"
+    },
+    {
+      "line": 3152,
+      "text": "dbg('ERROR: 加载器 ' + name + ' 异步错误: ' + (err.message||err), '#f87171');",
+      "match": "dbg"
+    },
+    {
+      "line": 3156,
+      "text": "dbg('加载器 ' + name + ' 同步执行完成 (耗时' + (Date.now()-startTime) + 'ms)', '#4ade80');",
+      "match": "dbg"
+    },
+    {
+      "line": 3159,
+      "text": "dbg('ERROR: 加载器 ' + name + ' 同步错误: ' + (err.message||err), '#f87171');",
+      "match": "dbg"
+    },
+    {
+      "line": 3163,
+      "text": "dbg('WARN: 没有找到加载器 for ' + name, '#fbbf24');",
+      "match": "dbg"
+    },
+    {
+      "line": 3255,
+      "text": "<img src=\"${c.cover || 'https://via.placeholder.com/80x50'}\" class=\"w-full h-full object-cover\" onerror=\"this.src='https",
+      "match": "placeholder"
+    },
+    {
+      "line": 3255,
+      "text": "<img src=\"${c.cover || 'https://via.placeholder.com/80x50'}\" class=\"w-full h-full object-cover\" onerror=\"this.src='https",
+      "match": "placeholder"
+    },
+    {
+      "line": 3389,
+      "text": "<input type=\"text\" id=\"c-cover\" value=\"${coverUrl}\" class=\"w-full px-4 py-2 border border-slate-200 rounded-lg text-sm\" ",
+      "match": "placeholder"
+    },
+    {
+      "line": 3398,
+      "text": "<input type=\"text\" id=\"c-title\" value=\"${course?.title || ''}\" required class=\"w-full px-4 py-2.5 border border-slate-20",
+      "match": "placeholder"
+    },
+    {
+      "line": 3431,
+      "text": "<textarea id=\"c-desc\" rows=\"3\" class=\"w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indi",
+      "match": "placeholder"
+    },
+    {
+      "line": 3690,
+      "text": "console.error('上传失败', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 3836,
+      "text": "console.error('上传失败', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 3984,
+      "text": "cover: document.getElementById('c-cover').value.trim() || 'https://via.placeholder.com/400x225',",
+      "match": "placeholder"
+    },
+    {
+      "line": 4036,
+      "text": "console.error('保存课程失败:', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 4223,
+      "text": "<input type=\"text\" id=\"cat-key\" value=\"${child?.key || parentCat?.key || ''}\" class=\"w-full px-4 py-2.5 border border-sl",
+      "match": "placeholder"
+    },
+    {
+      "line": 4243,
+      "text": "<input type=\"text\" id=\"cat-child-key\" value=\"${child?.key || ''}\" class=\"w-full px-4 py-2.5 border border-slate-200 roun",
+      "match": "placeholder"
+    },
+    {
+      "line": 4346,
+      "text": "console.error('保存分类失败:', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 4406,
+      "text": "console.error('删除分类失败:', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 4414,
+      "text": "console.log('开始渲染讲师列表,讲师数量:', data.lecturers.length);",
+      "match": "console.log"
+    },
+    {
+      "line": 4425,
+      "text": "console.error('讲师列表tbody元素不存在');",
+      "match": "console.error"
+    },
+    {
+      "line": 4438,
+      "text": "console.log('讲师列表为空');",
+      "match": "console.log"
+    },
+    {
+      "line": 4464,
+      "text": "<img src=\"${lect.avatar || 'https://via.placeholder.com/40'}\" class=\"w-10 h-10 rounded-full object-cover border border-s",
+      "match": "placeholder"
+    },
+    {
+      "line": 4526,
+      "text": "console.log('讲师列表渲染完成');",
+      "match": "console.log"
+    },
+    {
+      "line": 4528,
+      "text": "console.error('渲染讲师列表失败:', error);",
+      "match": "console.error"
+    },
+    {
+      "line": 4565,
+      "text": "<input type=\"text\" id=\"l-avatar\" value=\"${avatarUrl}\" class=\"w-full px-4 py-2 border border-slate-200 rounded-lg text-sm",
+      "match": "placeholder"
+    },
+    {
+      "line": 4583,
+      "text": "<input type=\"text\" id=\"l-dept\" value=\"${lecturer?.department || ''}\" class=\"w-full px-4 py-2.5 border border-slate-200 r",
+      "match": "placeholder"
+    },
+    {
+      "line": 4587,
+      "text": "<input type=\"text\" id=\"l-title\" value=\"${lecturer?.title || ''}\" class=\"w-full px-4 py-2.5 border border-slate-200 round",
+      "match": "placeholder"
+    },
+    {
+      "line": 4593,
+      "text": "<input type=\"number\" id=\"l-payment\" value=\"${lecturer?.paymentRate || 0}\" min=\"0\" step=\"100\" class=\"w-full px-4 py-2.5 b",
+      "match": "placeholder"
+    },
+    {
+      "line": 4602,
+      "text": "<input type=\"text\" id=\"l-skill-input\" class=\"w-full px-2 py-1.5 border-0 outline-none text-sm\" placeholder=\"输入标签后按回车...\"",
+      "match": "placeholder"
+    },
+    {
+      "line": 4609,
+      "text": "<textarea id=\"l-intro\" rows=\"3\" class=\"w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 f",
+      "match": "placeholder"
+    },
+    {
+      "line": 4722,
+      "text": "avatar: document.getElementById('l-avatar').value.trim() || 'https://via.placeholder.com/60',",
+      "match": "placeholder"
+    },
+    {
+      "line": 4865,
+      "text": "<img src=\"${lect.avatar || 'https://via.placeholder.com/80'}\"",
+      "match": "placeholder"
+    },
+    {
+      "line": 6119,
+      "text": "if (/^[A-Z]+$/.test(str)) return str.split('').map(ch => ch.charCodeAt(0) - 65);",
+      "match": "test"
+    },
+    {
+      "line": 6925,
+      "text": "placeholder=\"输入或选择讲师\" autocomplete=\"off\">",
+      "match": "placeholder"
+    },
+    {
+      "line": 7166,
+      "text": "console.error('createExamFromPaper error:', e);",
+      "match": "console.error"
+    },
+    {
+      "line": 7922,
+      "text": "console.log(`[学习风采] 已同步删除培训 ${id} 的图片数据`);",
+      "match": "console.log"
+    },
+    {
+      "line": 8628,
+      "text": "<input type=\"text\" id=\"assign-search\" placeholder=\"搜索姓名...\" class=\"pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg t",
+      "match": "placeholder"
+    },
+    {
+      "line": 8752,
+      "text": "(function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#94a3b8\\\">loadUsers: 开始加载用",
+      "match": "dbg"
+    },
+    {
+      "line": 8753,
+      "text": "console.log('[User Management] 开始加载用户列表...');",
+      "match": "console.log"
+    },
+    {
+      "line": 8756,
+      "text": "console.log('[User Management] Token:', token ? '存在' : '不存在');",
+      "match": "console.log"
+    },
+    {
+      "line": 8759,
+      "text": "(function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#f87171\\\">loadUsers: 没有 to",
+      "match": "dbg"
+    },
+    {
+      "line": 8764,
+      "text": "console.log('[User Management] 请求API:', API + '/auth/users');",
+      "match": "console.log"
+    },
+    {
+      "line": 8771,
+      "text": "console.log('[User Management] 响应状态:', res.status);",
+      "match": "console.log"
+    },
+    {
+      "line": 8775,
+      "text": "console.log('[User Management] 获取到的用户数据:', result);",
+      "match": "console.log"
+    },
+    {
+      "line": 8777,
+      "text": "(function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#4ade80\\\">loadUsers: 获取到 '",
+      "match": "dbg"
+    },
+    {
+      "line": 8778,
+      "text": "console.log('[User Management] 用户数量:', allUsers.length);",
+      "match": "console.log"
+    },
+    {
+      "line": 8782,
+      "text": "(function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#f87171\\\">loadUsers: HTTP ",
+      "match": "dbg"
+    },
+    {
+      "line": 8783,
+      "text": "console.error('[User Management] 加载失败:', res.status, errorText);",
+      "match": "console.error"
+    },
+    {
+      "line": 8787,
+      "text": "(function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#f87171\\\">loadUsers ERROR:",
+      "match": "dbg"
+    },
+    {
+      "line": 8788,
+      "text": "console.error('[User Management] 网络错误:', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 8980,
+      "text": "<input type=\"tel\" id=\"new-user-phone\" required class=\"w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none",
+      "match": "placeholder"
+    },
+    {
+      "line": 8984,
+      "text": "<input type=\"password\" id=\"new-user-password\" required class=\"w-full px-4 py-2.5 border border-slate-200 rounded-xl outl",
+      "match": "placeholder"
+    },
+    {
+      "line": 9062,
+      "text": "console.error('添加用户错误:', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 9251,
+      "text": "console.error('删除用户失败:', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 9290,
+      "text": "console.error('切换权限失败:', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 9437,
+      "text": "<input type=\"text\" id=\"course-time\" placeholder=\"例:09:00-11:30\" class=\"w-full px-4 py-2.5 border border-slate-200 rounde",
+      "match": "placeholder"
+    },
+    {
+      "line": 9443,
+      "text": "<input type=\"text\" id=\"course-duration\" placeholder=\"例:2.5小时\" class=\"w-full px-4 py-2.5 border border-slate-200 rounded-",
+      "match": "placeholder"
+    },
+    {
+      "line": 9656,
+      "text": "<input type=\"text\" id=\"n-title\" value=\"${notice?.title || ''}\" required class=\"w-full px-4 py-2.5 border border-slate-20",
+      "match": "placeholder"
+    },
+    {
+      "line": 9684,
+      "text": "placeholder: '请输入公告内容...',",
+      "match": "placeholder"
+    },
+    {
+      "line": 9735,
+      "text": "console.log('[Dashboard] 保存公告数据:', formData);",
+      "match": "console.log"
+    },
+    {
+      "line": 9760,
+      "text": "console.log('[Dashboard] 已广播公告更新事件');",
+      "match": "console.log"
+    },
+    {
+      "line": 9764,
+      "text": "console.error('[Dashboard] 保存公告失败:', errorData);",
+      "match": "console.error"
+    },
+    {
+      "line": 9768,
+      "text": "console.error('[Dashboard] 保存公告异常:', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 9788,
+      "text": "console.warn('[Dashboard] 记录访问失败:', e.message);",
+      "match": "console.warn"
+    },
+    {
+      "line": 9858,
+      "text": "console.error('[Dashboard] 找不到公告 id:', numId);",
+      "match": "console.error"
+    },
+    {
+      "line": 9877,
+      "text": "console.error('[Dashboard] unpin-all 失败:', errText);",
+      "match": "console.error"
+    },
+    {
+      "line": 9896,
+      "text": "console.error('[Dashboard] PUT notices 失败:', errText);",
+      "match": "console.error"
+    },
+    {
+      "line": 9900,
+      "text": "console.error('[Dashboard] 切换置顶状态异常:', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 9928,
+      "text": "console.log('[Dashboard] 获取访问详情:', API + '/notices/' + noticeId + '/visits');",
+      "match": "console.log"
+    },
+    {
+      "line": 9932,
+      "text": "console.error('[Dashboard] 请求失败:', res.status, errText);",
+      "match": "console.error"
+    },
+    {
+      "line": 9939,
+      "text": "console.error('[Dashboard] visit-detail-body 未找到');",
+      "match": "console.error"
+    },
+    {
+      "line": 9972,
+      "text": "console.error('[Dashboard] 获取访问详情失败:', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 10557,
+      "text": "<input type=\"text\" value=\"${escHtml(opt)}\" onchange=\"qOptions[${i}]=this.value\" placeholder=\"请输入选项内容\" class=\"flex-1 px-3",
+      "match": "placeholder"
+    },
+    {
+      "line": 10771,
+      "text": "if (!tbody) { console.warn('examList 元素不存在,跳过加载'); return; }",
+      "match": "console.warn"
+    },
+    {
+      "line": 11112,
+      "text": "console.log('[openExamEditor] 开始, examId:', examId, typeof examId);",
+      "match": "console.log"
+    },
+    {
+      "line": 11115,
+      "text": "console.log('[openExamEditor] 正在加载考试数据...');",
+      "match": "console.log"
+    },
+    {
+      "line": 11117,
+      "text": "console.log('[openExamEditor] 加载完成, 题目数:', paperQuestions.length);",
+      "match": "console.log"
+    },
+    {
+      "line": 11121,
+      "text": "console.log('[openExamEditor] tab-exam-schedule:', !!tabContent);",
+      "match": "console.log"
+    },
+    {
+      "line": 11123,
+      "text": "console.log('[openExamEditor] tab display:', tabContent.style.display, 'hidden:', tabContent.classList.contains('hidden'",
+      "match": "console.log"
+    },
+    {
+      "line": 11128,
+      "text": "console.log('[openExamEditor] container 在错误的 tab 中, 当前父:', container.parentElement.id, '→ 移动到 exam-schedule');",
+      "match": "console.log"
+    },
+    {
+      "line": 11136,
+      "text": "console.log('[openExamEditor] 创建了新 container');",
+      "match": "console.log"
+    },
+    {
+      "line": 11141,
+      "text": "console.log('[openExamEditor] renderUnifiedEditor 完成, innerHTML长度:', container.innerHTML.length);",
+      "match": "console.log"
+    },
+    {
+      "line": 11144,
+      "text": "console.error('[openExamEditor] 渲染内容为空! editorMode:', editorMode, 'editorAdapter[editorMode]:', !!editorAdapter[editorMo",
+      "match": "console.error"
+    },
+    {
+      "line": 11145,
+      "text": "console.error('[openExamEditor] examEditorData:', examEditorData);",
+      "match": "console.error"
+    },
+    {
+      "line": 11146,
+      "text": "console.error('[openExamEditor] paperQuestions.length:', paperQuestions.length);",
+      "match": "console.error"
+    },
+    {
+      "line": 11153,
+      "text": "console.error('[openExamEditor] 打开考试编辑页失败:', e);",
+      "match": "console.error"
+    },
+    {
+      "line": 11229,
+      "text": ".catch(function(err) { console.warn('[UnifiedEditor] 题库详情补充加载失败（非致命）:', err); });",
+      "match": "console.warn"
+    },
+    {
+      "line": 11251,
+      "text": "if (/^\\d+$/.test(catName) || !catName) {",
+      "match": "test"
+    },
+    {
+      "line": 11316,
+      "text": "allQuestionsHtml += '<input type=\"number\" value=\"' + (q.score || '') + '\" min=\"0\" max=\"100\" onchange=\"updatePaperQuestio",
+      "match": "placeholder"
+    },
+    {
+      "line": 11371,
+      "text": "+ '    <input type=\"text\" id=\"peName\" class=\"w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ri",
+      "match": "placeholder"
+    },
+    {
+      "line": 11380,
+      "text": "+ '    <textarea id=\"peDescInput\" rows=\"3\" class=\"w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 foc",
+      "match": "placeholder"
+    },
+    {
+      "line": 11920,
+      "text": "} catch(e) { console.error('加载试卷显示失败:', e); }",
+      "match": "console.error"
+    },
+    {
+      "line": 11976,
+      "text": "} catch(e) { console.error('加载试卷题目失败:', e); }",
+      "match": "console.error"
+    },
+    {
+      "line": 12178,
+      "text": "} catch (e) { console.error(e); }",
+      "match": "console.error"
+    },
+    {
+      "line": 12198,
+      "text": "${q.type === 'multiple' ? `<input type=\"number\" value=\"${q.partialScore !== undefined ? q.partialScore : ''}\" min=\"0\" ma",
+      "match": "placeholder"
+    },
+    {
+      "line": 13027,
+      "text": "console.error('加载试卷失败:', e);",
+      "match": "console.error"
+    },
+    {
+      "line": 13046,
+      "text": "const deptName = p.department || (p.categoryName && !/^\\d+$/.test(p.categoryName) ? p.categoryName : '未分配');",
+      "match": "test"
+    },
+    {
+      "line": 13483,
+      "text": "console.error('加载试卷失败:', e);",
+      "match": "console.error"
+    },
+    {
+      "line": 13673,
+      "text": "console.log('[savePaper] 准备打开编辑器, savedId:', savedId);",
+      "match": "console.log"
+    },
+    {
+      "line": 13674,
+      "text": "console.log('[savePaper] papersAllData 长度:', papersAllData.length);",
+      "match": "console.log"
+    },
+    {
+      "line": 13675,
+      "text": "console.log('[savePaper] 能否找到试卷:', papersAllData.some(function(p) { return p.id === savedId; }));",
+      "match": "console.log"
+    },
+    {
+      "line": 13681,
+      "text": "console.log('[savePaper] openPaperEditor 执行完毕');",
+      "match": "console.log"
+    },
+    {
+      "line": 13683,
+      "text": "console.error('[savePaper] 打开编辑器失败:', err);",
+      "match": "console.error"
+    },
+    {
+      "line": 13695,
+      "text": "console.log('[openPaperEditor] 开始, id:', id);",
+      "match": "console.log"
+    },
+    {
+      "line": 13699,
+      "text": "console.error('[openPaperEditor] 试卷不存在! id:', id, 'papersAllData:', papersAllData.map(function(p){return p.id;}));",
+      "match": "console.error"
+    },
+    {
+      "line": 13705,
+      "text": "console.log('[openPaperEditor] 找到试卷:', paper.name, '题目数:', (paper.questions||[]).length);",
+      "match": "console.log"
+    },
+    {
+      "line": 13724,
+      "text": "console.log('[openPaperEditor] paperListView:', !!listView);",
+      "match": "console.log"
+    },
+    {
+      "line": 13727,
+      "text": "console.log('[openPaperEditor] 已有container:', !!container);",
+      "match": "console.log"
+    },
+    {
+      "line": 13730,
+      "text": "console.log('[openPaperEditor] container 在错误的 tab 中, 当前父:', container.parentElement.id, '→ 移动到 paper-mgmt');",
+      "match": "console.log"
+    },
+    {
+      "line": 13738,
+      "text": "console.log('[openPaperEditor] 创建了新container');",
+      "match": "console.log"
+    },
+    {
+      "line": 13743,
+      "text": "console.log('[openPaperEditor] renderUnifiedEditor 完成, container.innerHTML长度:', container.innerHTML.length);",
+      "match": "console.log"
+    },
+    {
+      "line": 13751,
+      "text": "console.log('[openInlinePaperEditor] 开始, id:', id);",
+      "match": "console.log"
+    },
+    {
+      "line": 13756,
+      "text": "console.error('[openInlinePaperEditor] 试卷不存在! id:', id);",
+      "match": "console.error"
+    },
+    {
+      "line": 13885,
+      "text": "console.log('[publishPaper] paperId:', paperId, 'editingPaperId:', editingPaperId);",
+      "match": "console.log"
+    },
+    {
+      "line": 13888,
+      "text": "console.error('[publishPaper] 找不到试卷, paperId:', paperId, 'papersAllData:', papersAllData);",
+      "match": "console.error"
+    },
+    {
+      "line": 13892,
+      "text": "console.log('[publishPaper] paper:', paper.name, 'paperQuestions:', paperQuestions.length);",
+      "match": "console.log"
+    },
+    {
+      "line": 13907,
+      "text": "console.log('[publishPaper] 准备保存, questions:', paper.questions.length, 'totalScore:', paper.totalScore);",
+      "match": "console.log"
+    },
+    {
+      "line": 13914,
+      "text": "console.log('[publishPaper] 保存成功');",
+      "match": "console.log"
+    },
+    {
+      "line": 13919,
+      "text": "console.error('[publishPaper] 保存失败:', e);",
+      "match": "console.error"
+    },
+    {
+      "line": 13989,
+      "text": "console.warn('加载题库列表失败:', e);",
+      "match": "console.warn"
+    },
+    {
+      "line": 14195,
+      "text": "placeholder=\"请输入\">",
+      "match": "placeholder"
+    },
+    {
+      "line": 14210,
+      "text": "placeholder=\"请输入\" ${count === 0 ? 'disabled' : ''}>",
+      "match": "placeholder"
+    },
+    {
+      "line": 14258,
+      "text": "placeholder=\"请输入\">",
+      "match": "placeholder"
+    },
+    {
+      "line": 14949,
+      "text": "if (!container) { (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#f87171\\",
+      "match": "dbg"
+    },
+    {
+      "line": 14951,
+      "text": "(function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#94a3b8\\\">loadSurveyList: ",
+      "match": "dbg"
+    },
+    {
+      "line": 15030,
+      "text": "(function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#4ade80\\\">loadSurveyList: ",
+      "match": "dbg"
+    },
+    {
+      "line": 15032,
+      "text": "console.error('加载调研列表失败:', e);",
+      "match": "console.error"
+    },
+    {
+      "line": 15033,
+      "text": "(function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\\\"color:#f87171\\\">loadSurveyList E",
+      "match": "dbg"
+    },
+    {
+      "line": 15143,
+      "text": "<input type=\"text\" value=\"${escHtml(q.title || '')}\" placeholder=\"请输入题目内容\" onchange=\"surveyQuestions[${idx}].title = thi",
+      "match": "placeholder"
+    },
+    {
+      "line": 15163,
+      "text": "<input type=\"text\" id=\"survey-title\" value=\"${escHtml(survey ? survey.title || '' : '')}\" class=\"w-full px-3.5 py-2.5 bo",
+      "match": "placeholder"
+    },
+    {
+      "line": 15175,
+      "text": "<textarea id=\"survey-desc\" rows=\"2\" class=\"w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none fo",
+      "match": "placeholder"
+    },
+    {
+      "line": 15213,
+      "text": "<input type=\"text\" value=\"${escHtml(typeof opt === 'string' ? opt : (opt.label || opt))}\" placeholder=\"选项 ${String.fromC",
+      "match": "placeholder"
+    },
+    {
+      "line": 15273,
+      "text": "<input type=\"text\" placeholder=\"请输入题目内容\" onchange=\"surveyQuestions[${idx}].title = this.value\" class=\"w-full px-3 py-2 b",
+      "match": "placeholder"
+    },
+    {
+      "line": 15307,
+      "text": "if (titleInput && titleInput.placeholder === '请输入题目内容') titleInput.setAttribute('onchange', 'surveyQuestions[' + newIdx ",
+      "match": "placeholder"
+    },
+    {
+      "line": 15635,
+      "text": "console.error('加载讲师报名列表失败:', e);",
+      "match": "console.error"
+    },
+    {
+      "line": 15793,
+      "text": "console.log('从服务器获取失败，使用本地数据:', e.message);",
+      "match": "console.log"
+    },
+    {
+      "line": 15817,
+      "text": "console.error('加载培训需求失败:', e);",
+      "match": "console.error"
+    },
+    {
+      "line": 16028,
+      "text": "console.log('服务器更新失败，使用本地存储:', e.message);",
+      "match": "console.log"
+    },
+    {
+      "line": 16060,
+      "text": "console.log('服务器删除失败，使用本地存储:', e.message);",
+      "match": "console.log"
+    }
+  ],
+  "totalJsLines": 13580
+}

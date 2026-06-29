@@ -1,0 +1,13579 @@
+
+    // dataSync 兼容层：将 window.dataSync.getData/setData 映射到 DataAPI
+    if (!window.dataSync) {
+      window.dataSync = {
+        getData(key) {
+          if (window.DataAPI && window.DataAPI.get) {
+            return window.DataAPI.get(key) || [];
+          }
+          return JSON.parse(localStorage.getItem(key) || '[]');
+        },
+        async setData(key, value) {
+          if (window.DataAPI && window.DataAPI.set) {
+            await window.DataAPI.set(key, value);
+          } else {
+            localStorage.setItem(key, JSON.stringify(value));
+          }
+        }
+      };
+    }
+    // ========== 全局配置 ==========
+    const API = window.location.origin + '/api';
+
+    // ========== 登录功能（统一认证） ==========
+
+    // 检查是否已登录（使用统一 token）
+    function checkLogin() {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const userInfo = document.getElementById('user-info');
+
+      if (token) {
+        // 已登录，显示用户信息
+        if (userInfo) {
+          userInfo.classList.remove('hidden');
+          userInfo.classList.add('flex');
+
+          // 显示用户名
+          const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+          if (userStr) {
+            try {
+              const user = JSON.parse(userStr);
+              const usernameEl = document.getElementById('admin-username');
+              if (usernameEl && user.realName) {
+                usernameEl.textContent = user.realName;
+              }
+            } catch(e) {
+              console.error('解析用户信息失败:', e);
+            }
+          }
+        }
+        return true;
+      } else {
+        // 未登录（AuthGuard 会处理重定向）
+        if (userInfo) {
+          userInfo.classList.add('hidden');
+          userInfo.classList.remove('flex');
+        }
+        return false;
+      }
+    }
+
+    // 退出登录（使用统一认证）
+    function handleLogout() {
+      if (AuthGuard) {
+        AuthGuard.logout();
+      } else {
+        if (confirm('确定要退出登录吗?')) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('user');
+          toast('已退出登录');
+          window.location.href = 'index.html';
+        }
+      }
+    }
+
+    // 页面加载时检查登录状态
+    document.addEventListener('DOMContentLoaded', () => {
+      checkLogin();
+    });
+
+    // 数据存储
+    let data = {
+      courses: [],
+      categories: [],
+      lecturers: [],
+      training: [],
+      notices: [],
+      users: []
+    };
+
+    let isInitialized = false;
+
+    // ========== 初始化 ==========
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (isInitialized) return;
+      isInitialized = true;
+
+      updateTime();
+      setInterval(updateTime, 1000);
+
+      // 初始化 DataAPI(读取 localStorage 中的互动数据)
+      if (window.DataAPI?.init) await window.DataAPI.init();
+
+      try {
+        await loadAllData();
+      } catch (error) {
+        console.error('初始化加载数据失败:', error);
+        toast('数据加载失败,部分功能可能受限', 'warning');
+      }
+
+      try {
+        switchTab('dashboard');
+      } catch (error) {
+        console.error('切换标签页失败:', error);
+      }
+
+      // 初始化用户管理筛选器
+      initUserFilters();
+
+      // 培训列表上传图片按钮已改为 onclick 直接绑定
+    });
+
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('current-time').textContent = now.toLocaleString('zh-CN', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+    }
+
+    async function loadAllData() {
+      try {
+        const [coursesRes, catsRes, lectRes, trainRes, noticesRes, surveysRes, examsRes] = await Promise.all([
+          fetch(API + '/courses'),
+          fetch(API + '/categories'),
+          fetch(API + '/lecturers'),
+          fetch(API + '/training'),
+          fetch(API + '/notices'),
+          fetch(API + '/surveys'),
+          fetch(API + '/exams')
+        ]);
+        data.courses = await coursesRes.json();
+        data.categories = await catsRes.json();
+        const lectJson = await lectRes.json();
+        data.lecturers = lectJson.data || lectJson;
+        data.training = await trainRes.json();
+        data.notices = await noticesRes.json();
+        
+        const surveysJson = await surveysRes.json();
+        data.surveys = surveysJson.data || surveysJson || [];
+        
+        const examsJson = await examsRes.json();
+        data.exams = examsJson || [];
+
+        // 加载用户数据(报表模块需要)
+        try {
+          const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+          const usersRes = await fetch(API + '/auth/users', {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (usersRes.ok) {
+            const usersJson = await usersRes.json();
+            allUsers = (usersJson.data && usersJson.data.users) ? usersJson.data.users : (usersJson.data || usersJson || []);
+          }
+        } catch(e) {
+          console.warn('[Dashboard] 加载用户数据失败:', e);
+        }
+
+        // 从 localStorage 同步最新的课程数据(浏览量等由播放页写入本地)
+        if (window.DataAPI) {
+          const localCourses = window.DataAPI.getCourses();
+          if (localCourses && localCourses.length > 0) {
+            // 用本地的浏览量覆盖服务器数据(因为浏览量只存本地)
+            data.courses.forEach(serverCourse => {
+              const localCourse = localCourses.find(c => String(c.id) === String(serverCourse.id));
+              if (localCourse && localCourse.views !== undefined) {
+                serverCourse.views = localCourse.views;
+              }
+            });
+          }
+        }
+
+        // 确保分类是数组格式
+        if (!Array.isArray(data.categories)) {
+          data.categories = [];
+        }
+
+        // 广播数据变更,通知其他页面(如课程中心)同步
+        console.log('[Dashboard] loadAllData完成,准备广播分类变更');
+        if (window.DataSync) {
+          localStorage.setItem('categories_sync_time', Date.now().toString());
+          window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+          console.log('[Dashboard] 已广播分类变更事件');
+        } else {
+          console.warn('[Dashboard] DataSync未加载,无法广播');
+        }
+
+        // 更新分类筛选下拉
+        updateCategoryFilter();
+        // 数据加载完成后刷新各面板(无论当前显示哪个 tab)
+        if (document.getElementById('notice-list')) renderNotices();
+        if (document.getElementById('portal-notice-list')) renderPortalNotices();
+        if (document.getElementById('portal-category-list')) renderPortalCategories();
+      } catch (e) {
+        console.error('加载数据失败', e);
+        toast('数据加载失败', 'error');
+      }
+    }
+
+    function updateCategoryFilter() {
+      const select = document.getElementById('course-category-filter');
+      if (!select) return;
+      const options = data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      select.innerHTML = '<option value="">全部分类</option>' + options;
+    }
+
+    // ========== 子菜单切换 ==========
+    function toggleSubMenu(menuId) {
+      const menu = document.getElementById(menuId);
+      if (menu) {
+        menu.classList.toggle('hidden');
+        const btn = menu.previousElementSibling;
+        if (btn) {
+          const icon = btn.querySelector('.fa-chevron-right');
+          if (icon) {
+            icon.style.transform = menu.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(90deg)';
+          }
+        }
+      }
+    }
+
+    // ========== 子标签页切换 ==========
+    function switchSubTab(tabName, subTabName) {
+      const subtabBtns = document.querySelectorAll('.subtab-btn');
+      subtabBtns.forEach(btn => btn.classList.remove('active', 'bg-indigo-600', 'text-white'));
+      subtabBtns.forEach(btn => btn.classList.add('text-slate-600', 'hover:bg-slate-100'));
+
+      const activeBtn = document.querySelector(`.subtab-btn:not([onclick*="${tabName}"])`);
+      const targetBtn = Array.from(subtabBtns).find(btn => btn.onclick && btn.onclick.toString().includes(tabName) && btn.onclick.toString().includes(subTabName));
+      if (targetBtn) {
+        targetBtn.classList.add('active', 'bg-indigo-600', 'text-white');
+        targetBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+      }
+
+      const subtabContents = document.querySelectorAll('.subtab-content');
+      subtabContents.forEach(content => content.classList.add('hidden'));
+
+      const targetContent = document.getElementById(`${tabName}-${subTabName}`);
+      if (targetContent) {
+        targetContent.classList.remove('hidden');
+      }
+
+      // 切换到轮播管理时加载数据
+      if (tabName === 'portal' && subTabName === 'carousel') {
+        loadCarousels();
+      }
+
+      // 切换到分类管理时渲染分类列表
+      if (tabName === 'portal' && subTabName === 'categories') {
+        renderPortalCategories();
+      }
+
+      // 切换到讲师报名时加载数据
+      if (tabName === 'portal' && subTabName === 'lecturer-apply') {
+        loadLecturerApplications();
+      }
+
+      // 考试相关功能已迁移至独立的题库管理和试卷管理页面
+
+    }
+
+    // ========== 轮播管理 ==========
+    async function loadCarousels() {
+      const tbody = document.getElementById('carousel-list');
+      if (!tbody) { (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadCarousels: carousel-list 不存在!</div>';})(); return; }
+
+      (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#94a3b8\">loadCarousels: 开始获取 /api/banners...</div>';})();
+      try {
+        const res = await fetch(API + '/banners');
+        const banners = await res.json();
+
+        if (!banners || banners.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                <i class="fas fa-images text-4xl mb-3 block"></i>
+                <p>暂无轮播图</p>
+                <p class="text-sm">点击上方按钮添加</p>
+              </td>
+            </tr>`;
+          return;
+        }
+
+        // 按排序号升序排列
+        const sortedBanners = [...banners].sort((a, b) => (a.order || 99) - (b.order || 99));
+
+        tbody.innerHTML = sortedBanners.map(b => `
+          <tr class="hover:bg-slate-50 transition">
+            <!-- 封面图 -->
+            <td class="px-6 py-4">
+              <div class="w-32 h-20 rounded-lg overflow-hidden bg-slate-100">
+                <img src="${escHtml(b.img)}" alt="${escHtml(b.courseTitle||'')}" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22128%22 height=%2280%22><rect fill=%22%23e2e8f0%22 width=%22128%22 height=%2280%22/><text x=%2264%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2212%22>暂无封面</text></svg>'">
+              </div>
+            </td>
+
+            <!-- 关联课程 -->
+            <td class="px-6 py-4 text-sm text-slate-700">
+              ${b.courseTitle ? escHtml(b.courseTitle) : '<span class="text-slate-400">未关联</span>'}
+            </td>
+
+            <!-- 排序 -->
+            <td class="px-6 py-4 text-center text-sm text-slate-600">
+              <span class="px-2 py-1 bg-slate-100 rounded-md font-medium">${b.order || '-'}</span>
+            </td>
+
+            <!-- 状态 -->
+            <td class="px-6 py-4 text-center">
+              ${b.status === 'draft'
+                ? '<span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium">草稿</span>'
+                : '<span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">已发布</span>'
+              }
+            </td>
+
+            <!-- 操作 -->
+            <td class="px-6 py-4 text-center">
+              <button onclick="editCarousel(${b.id})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs hover:bg-indigo-100 transition mr-2">
+                <i class="fas fa-edit mr-1"></i>编辑
+              </button>
+              <button onclick="deleteCarousel(${b.id})" class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs hover:bg-red-100 transition">
+                <i class="fas fa-trash mr-1"></i>删除
+              </button>
+            </td>
+          </tr>
+        `).join('');
+        (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#4ade80\">loadCarousels: 成功渲染 ' + sortedBanners.length + ' 个轮播图</div>';})();
+      } catch (err) {
+        console.error('加载轮播图失败:', err);
+        (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadCarousels ERROR: ' + (err.message||err) + '</div>';})();
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-6 py-12 text-center text-red-400">
+              <i class="fas fa-exclamation-circle text-3xl mb-2 block"></i>
+              <p>加载失败,请刷新重试</p>
+            </td>
+          </tr>`;
+      }
+    }
+
+    function openCarouselModal(banner = null) {
+      document.getElementById('carousel-id').value = banner ? banner.id : '';
+      document.getElementById('carousel-order').value = banner ? banner.order || '' : '';
+      document.getElementById('carousel-status').value = banner ? banner.status || 'published' : 'published';
+      document.getElementById('carousel-cover-url').value = banner ? banner.img || '' : '';
+      document.getElementById('carouselModalTitle').textContent = banner ? '编辑轮播图' : '添加轮播图';
+
+      // 封面预览
+      const placeholder = document.getElementById('carousel-cover-placeholder');
+      const img = document.getElementById('carousel-cover-img');
+      if (banner && banner.img) {
+        img.src = banner.img;
+        img.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+      } else {
+        img.src = '';
+        img.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+      }
+
+      // 加载课程列表到下拉框
+      loadCarouselCourseOptions();
+
+      const modal = document.getElementById('carouselModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeCarouselModal() {
+      const modal = document.getElementById('carouselModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.getElementById('carouselForm').reset();
+      document.getElementById('carousel-cover-img').classList.add('hidden');
+      document.getElementById('carousel-cover-placeholder').classList.remove('hidden');
+    }
+
+    async function loadCarouselCourseOptions() {
+      const select = document.getElementById('carousel-course');
+      const currentCourseId = document.getElementById('carousel-id').value ? '' : ''; // 编辑时从已有数据恢复
+      try {
+        const res = await fetch(API + '/courses');
+        const courses = await res.json();
+        const published = (courses || []).filter(c => c.status === 'published');
+        select.innerHTML = '<option value="">不关联课程</option>' +
+          published.map(c => `<option value="${c.id}">${escHtml(c.title)}</option>`).join('');
+        // 编辑时回填课程
+        if (currentCourseId) select.value = currentCourseId;
+      } catch (err) {
+        select.innerHTML = '<option value="">加载课程失败</option>';
+      }
+    }
+
+    // 编辑时回填关联课程
+    async function editCarousel(id) {
+      try {
+        const res = await fetch(API + '/banners');
+        const banners = await res.json();
+        const banner = banners.find(b => b.id === id);
+        if (banner) {
+          openCarouselModal(banner);
+          // 加载课程选项后再回填
+          setTimeout(() => {
+            document.getElementById('carousel-course').value = banner.courseId || '';
+          }, 300);
+        }
+      } catch (err) {
+        toast('获取轮播图信息失败', 'error');
+      }
+    }
+
+    async function handleCarouselCoverUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        input.disabled = true;
+        const res = await fetch(API + '/upload?type=covers', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await res.json();
+        if (result.success) {
+          document.getElementById('carousel-cover-url').value = result.url;
+          const img = document.getElementById('carousel-cover-img');
+          img.src = result.url;
+          img.classList.remove('hidden');
+          document.getElementById('carousel-cover-placeholder').classList.add('hidden');
+          toast('封面上传成功');
+        } else {
+          toast(result.error || '上传失败', 'error');
+        }
+      } catch (err) {
+        toast('上传失败', 'error');
+      } finally {
+        input.disabled = false;
+        input.value = '';
+      }
+    }
+
+    async function saveCarousel(e) {
+      e.preventDefault();
+      const id = document.getElementById('carousel-id').value;
+      const coverUrl = document.getElementById('carousel-cover-url').value.trim();
+
+      if (!coverUrl) {
+        toast('请上传封面图片', 'error');
+        return;
+      }
+
+      const bannerData = {
+        img: coverUrl,
+        courseId: document.getElementById('carousel-course').value ? parseInt(document.getElementById('carousel-course').value) : null,
+        order: parseInt(document.getElementById('carousel-order').value) || 99,
+        status: document.getElementById('carousel-status').value
+      };
+
+      try {
+        const url = id ? `${API}/banners/${id}` : `${API}/banners`;
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bannerData)
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast(id ? '轮播图已更新' : '轮播图已添加');
+          closeCarouselModal();
+          loadCarousels();
+        } else {
+          toast(result.error || '保存失败', 'error');
+        }
+      } catch (err) {
+        toast('保存失败', 'error');
+      }
+    }
+
+    async function deleteCarousel(id) {
+      if (!confirm('确定要删除这个轮播图吗?')) return;
+      try {
+        const res = await fetch(`${API}/banners/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) {
+          toast('轮播图已删除');
+          loadCarousels();
+        } else {
+          toast(result.error || '删除失败', 'error');
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+
+    function escHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function escJs(str) {
+      return escHtml(str).replace(/'/g, "\\'");
+    }
+
+    // ========== 标签切换 ==========
+    function switchTab(name) {
+      const startTime = Date.now();
+      function dbg(msg, color) {
+        console.log('[switchTab] ' + msg);
+        var el = document.getElementById('dbg-log');
+        if (el) el.innerHTML += '<div style="color:' + (color||'#e2e8f0') + ';padding:1px 0;">' + msg + '</div>';
+      }
+      dbg('>>> switchTab("' + name + '") 触发', '#38bdf8');
+
+      // 隐藏所有标签页（同时使用 class 和 style 双重保障）
+      var allTabs = document.querySelectorAll('.tab-content');
+      dbg('找到 .tab-content 数量: ' + allTabs.length, '#94a3b8');
+      allTabs.forEach(function(el) {
+        el.classList.add('hidden');
+        el.style.setProperty('display', 'none', 'important');
+      });
+      var sidebarItems = document.querySelectorAll('.sidebar-item');
+      sidebarItems.forEach(function(el) { el.classList.remove('active'); });
+      dbg('隐藏了 ' + allTabs.length + ' 个标签页', '#94a3b8');
+
+      // 显示目标标签页
+      var tabEl = document.getElementById('tab-' + name);
+      if (tabEl) {
+        tabEl.classList.remove('hidden');
+        tabEl.style.setProperty('display', 'block', 'important');
+        // 同时确保所有父元素可见
+        var p = tabEl.parentElement;
+        while (p && p !== document.body) {
+          if (p.style.display === 'none') p.style.setProperty('display', '', 'important');
+          if (p.classList.contains('hidden')) p.classList.remove('hidden');
+          p = p.parentElement;
+        }
+        dbg('tab-' + name + ' 已显示, display=' + tabEl.style.display + ' hidden=' + tabEl.classList.contains('hidden'), '#4ade80');
+      } else {
+        dbg('ERROR: 找不到 tab-' + name, '#f87171');
+        return;
+      }
+      var btnEl = document.querySelector('[data-tab="' + name + '"]');
+      if (btnEl) { btnEl.classList.add('active'); dbg('侧边栏按钮已激活', '#94a3b8'); }
+      else dbg('WARN: 找不到侧边栏按钮 data-tab=' + name, '#fbbf24');
+
+      // 对于有子标签页的标签，自动切换到第一个子标签页
+      if (name === 'portal') {
+        dbg('portal 标签页，自动切换到第一个子标签页', '#38bdf8');
+        switchSubTab('portal', 'carousel');
+      }
+
+      // 切换到其他标签页时，关闭编辑器
+      if (name !== 'exam-schedule') {
+        const editorContainer = document.getElementById('unifiedEditorContainer');
+        if (editorContainer && editorContainer.style.display !== 'none' && editorMode === 'exam') {
+          closeUnifiedEditor();
+        }
+      }
+      if (name !== 'paper-mgmt') {
+        const editorContainer = document.getElementById('unifiedEditorContainer');
+        if (editorContainer && editorContainer.style.display !== 'none' && editorMode === 'paper') {
+          closeUnifiedEditor();
+        }
+      }
+
+      // 加载对应标签页数据（带错误处理）
+      var loaders = {
+        dashboard: async function() { await loadAllData(); loadDashboard(); },
+        courses: renderCourses,
+        categories: renderCategories,
+        lecturers: renderLecturers,
+        training: renderTraining,
+        notices: renderNotices,
+        users: loadUsers,
+        portal: loadCarousels,
+        'question-bank': loadBankList,
+        'paper-mgmt': loadPapers,
+        'exam-schedule': loadExamMgmtList,
+        survey: loadSurveyList,
+        reports: loadReports
+      };
+      if (loaders[name]) {
+        dbg('调用加载器: ' + name, '#38bdf8');
+        try {
+          var result = loaders[name]();
+          if (result && typeof result.then === 'function') {
+            result.then(function() {
+              dbg('加载器 ' + name + ' 完成 (耗时' + (Date.now()-startTime) + 'ms)', '#4ade80');
+            }).catch(function(err) {
+              dbg('ERROR: 加载器 ' + name + ' 异步错误: ' + (err.message||err), '#f87171');
+              toast('加载' + name + '数据失败: ' + err.message, 'error');
+            });
+          } else {
+            dbg('加载器 ' + name + ' 同步执行完成 (耗时' + (Date.now()-startTime) + 'ms)', '#4ade80');
+          }
+        } catch(err) {
+          dbg('ERROR: 加载器 ' + name + ' 同步错误: ' + (err.message||err), '#f87171');
+          toast('加载' + name + '数据失败: ' + err.message, 'error');
+        }
+      } else {
+        dbg('WARN: 没有找到加载器 for ' + name, '#fbbf24');
+      }
+    }
+
+    // ========== Toast 提示 ==========
+    function toast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      const colors = {
+        success: 'bg-emerald-500 text-white',
+        error: 'bg-red-500 text-white',
+        warning: 'bg-amber-500 text-white'
+      };
+      t.className = `fixed bottom-6 right-6 px-6 py-3 rounded-xl shadow-lg z-50 transform transition-all duration-300 ${colors[type] || colors.success}`;
+      t.innerHTML = `<i class="fas ${type === 'error' ? 'fa-times-circle' : 'fa-check-circle'} mr-2"></i>${msg}`;
+      t.classList.remove('hidden', 'translate-y-4', 'opacity-0');
+      setTimeout(() => {
+        t.classList.add('translate-y-4', 'opacity-0');
+        setTimeout(() => t.classList.add('hidden'), 300);
+      }, 3000);
+    }
+
+    // ========== 数据统计 ==========
+    async function loadDashboard() {
+      document.getElementById('stat-courses').textContent = data.courses.length;
+      document.getElementById('stat-lecturers').textContent = data.lecturers.length;
+      // 修复用户总数显示
+      const userCount = (allUsers || []).length || (data.users || []).length || (data.registered_users || []).length;
+      document.getElementById('stat-users').textContent = userCount;
+      // 改为培训总数（与培训管理模块数据源一致）
+      const trainingCount = (data.training || []).length;
+      document.getElementById('stat-categories').textContent = trainingCount;
+
+      document.getElementById('stat-categories-child').textContent = trainingCount;
+
+      // 随机增长数据(实际项目中从后端获取)
+      document.getElementById('stat-courses-growth').textContent = Math.floor(Math.random() * 20 + 5);
+      document.getElementById('stat-lecturers-growth').textContent = Math.floor(Math.random() * 10 + 2);
+      document.getElementById('stat-users-growth').textContent = Math.floor(Math.random() * 15 + 3);
+    }
+
+    // ========== 课程管理 ==========
+    function renderCourses() {
+      // 刷新缓存以获取最新的互动数据(浏览量、点赞、评分)
+      if (window.DataAPI && typeof window.DataAPI.refreshFromLocalStorage === 'function') {
+        window.DataAPI.refreshFromLocalStorage();
+      }
+
+      const search = document.getElementById('course-search').value.toLowerCase();
+      const status = document.getElementById('course-status-filter').value;
+      const categoryId = document.getElementById('course-category-filter').value;
+
+      let filtered = data.courses.filter(c => {
+        const matchSearch = !search || c.title.toLowerCase().includes(search);
+        const matchStatus = !status || c.status === status;
+        const matchCategory = !categoryId || c.categoryId == categoryId;
+        return matchSearch && matchStatus && matchCategory;
+      });
+
+      document.getElementById('course-count').textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        document.getElementById('course-list').innerHTML = `
+          <tr>
+            <td colspan="9" class="px-6 py-12 text-center text-slate-400">
+              <i class="fas fa-inbox text-3xl mb-3"></i>
+              <p>暂无课程数据</p>
+            </td>
+          </tr>`;
+        return;
+      }
+
+      const statusMap = {
+        published: { class: 'bg-emerald-100 text-emerald-700', text: '已发布' },
+        draft: { class: 'bg-amber-100 text-amber-700', text: '草稿' },
+        offline: { class: 'bg-slate-100 text-slate-600', text: '已下架' }
+      };
+
+      document.getElementById('course-list').innerHTML = filtered.map(c => {
+        const cat = data.categories.find(x => x.id == c.categoryId);
+        const subcat = cat?.children?.find(s => s.id == c.subcategoryId);
+        const lect = data.lecturers.find(x => x.id == c.lecturerId);
+        const st = statusMap[c.status] || statusMap.draft;
+        const videoCount = c.videos?.length || 0;
+        const attachmentCount = c.attachments?.length || 0;
+        const durationMin = Math.floor((c.duration || 0) / 60);
+
+        return `
+          <tr class="hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
+            <!-- 课程信息 -->
+            <td class="px-5 py-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-16 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
+                  <img src="${c.cover || 'https://via.placeholder.com/80x50'}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/80x50'">
+                </div>
+                <div class="min-w-0">
+                  <p class="font-medium text-slate-800 truncate text-sm" style="max-width: 180px;" title="${c.title}">${c.title}</p>
+                  <p class="text-xs text-slate-400 mt-0.5">ID: ${c.id}</p>
+                </div>
+              </div>
+            </td>
+            <!-- 分类 -->
+            <td class="px-5 py-4">
+              <p class="text-sm text-slate-700">${cat?.name || '-'}${subcat ? ' / ' + subcat.name : ''}</p>
+            </td>
+            <!-- 讲师 -->
+            <td class="px-5 py-4">
+              <p class="text-sm text-slate-700">${lect?.name || '-'}</p>
+            </td>
+            <!-- 时长 -->
+            <td class="px-5 py-4 text-center">
+              <div class="flex flex-col items-center gap-0.5">
+                <span class="text-sm text-slate-700">${durationMin > 0 ? durationMin + '分钟' : '0分钟'}</span>
+                ${videoCount > 0 ? `<span class="text-xs text-blue-500"><i class="fas fa-video mr-0.5"></i>${videoCount}</span>` : ''}
+              </div>
+            </td>
+            <!-- 观看 -->
+            <td class="px-5 py-4 text-center text-sm text-slate-700">${(c.views || 0).toLocaleString()}</td>
+            <!-- 点赞 -->
+            <td class="px-5 py-4 text-center text-sm text-slate-700">${(function(){
+                var ik = 'course_interaction_' + c.id;
+                var id = window.DataAPI ? window.DataAPI.get(ik) : null;
+
+                // 如果内存缓存中没有,尝试从 localStorage 直接读取
+                if (!id) {
+                    try {
+                        var stored = localStorage.getItem('learning_platform_data');
+                        if (stored) {
+                            var parsed = JSON.parse(stored);
+                            if (parsed[ik]) {
+                                id = parsed[ik];
+                            }
+                        }
+                    } catch(e) {}
+                }
+
+                return (id && id.likes) ? id.likes : (c.likes || 0);
+            })()}</td>
+            <!-- 评分 -->
+            <td class="px-5 py-4 text-center text-sm text-slate-700">${(function(){
+                var ik = 'course_interaction_' + c.id;
+                var id = window.DataAPI ? window.DataAPI.get(ik) : null;
+
+                // 如果内存缓存中没有,尝试从 localStorage 直接读取
+                if (!id) {
+                    try {
+                        var stored = localStorage.getItem('learning_platform_data');
+                        if (stored) {
+                            var parsed = JSON.parse(stored);
+                            if (parsed[ik]) {
+                                id = parsed[ik];
+                            }
+                        }
+                    } catch(e) {}
+                }
+
+                if (id && id.ratingCount > 0) return (id.ratingSum / id.ratingCount).toFixed(1);
+                return (c.rating || 0).toFixed(1);
+            })()}</td>
+            <!-- 状态 -->
+            <td class="px-5 py-4 text-center">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${st.class}">${st.text}</span>
+            </td>
+            <!-- 创建时间 -->
+            <td class="px-5 py-4 text-center text-xs text-slate-500">${c.createdAt || '-'}</td>
+            <!-- 更新时间 -->
+            <td class="px-5 py-4 text-center text-xs text-slate-500">${c.updatedAt || '-'}</td>
+            <!-- 操作 -->
+            <td class="px-5 py-4 text-center">
+              <div class="flex items-center justify-center space-x-1">
+                <button onclick="editCourse(${c.id})" class="p-1.5 text-blue-500 hover:bg-blue-50 rounded-md transition" title="编辑">
+                  <i class="fas fa-edit text-sm"></i>
+                </button>
+                ${attachmentCount > 0 ? `<span class="text-xs text-emerald-500 px-1" title="${attachmentCount}个附件"><i class="fas fa-paperclip"></i></span>` : ''}
+                <button onclick="toggleCourseStatus(${c.id})" class="p-1.5 ${c.status === 'published' ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'} rounded-md transition" title="${c.status === 'published' ? '下架' : '发布'}">
+                  <i class="fas ${c.status === 'published' ? 'fa-arrow-down' : 'fa-arrow-up'} text-sm"></i>
+                </button>
+                <button onclick="deleteCourse(${c.id})" class="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition" title="删除">
+                  <i class="fas fa-trash text-sm"></i>
+                </button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function formatDuration(seconds) {
+      if (!seconds) return '0分钟';
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      return h > 0 ? `${h}小时${m}分钟` : `${m}分钟`;
+    }
+
+    function openCourseModal(course = null) {
+      const isEdit = !!course;
+      const parentOptions = data.categories.map(c => `<option value="${c.id}" ${course?.categoryId == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+      const lectOptions = data.lecturers.map(l => `<option value="${l.id}" ${course?.lecturerId == l.id ? 'selected' : ''}>${l.name}</option>`).join('');
+      const coverUrl = course?.cover || '';
+      const selectedCategoryId = course?.categoryId || '';
+      const selectedSubcategoryId = course?.subcategoryId || '';
+
+      // 获取当前选中的一级分类下的二级分类
+      const selectedCategory = data.categories.find(c => c.id == selectedCategoryId);
+      const subcategoryOptions = selectedCategory?.children?.map(s =>
+        `<option value="${s.id}" ${course?.subcategoryId == s.id ? 'selected' : ''}>${s.name}</option>`
+      ).join('') || '';
+
+      // 已上传的附件
+      const attachments = course?.attachments || [];
+      const videos = course?.videos || [];
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑课程' : '添加课程'}</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveCourse(event, ${course?.id || 'null'})" class="p-6 space-y-5">
+            <!-- 课程封面 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">课程封面 <span class="text-red-500">*</span></label>
+              <div class="flex items-start space-x-4">
+                <div id="cover-preview" class="w-40 h-24 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-50 cursor-pointer hover:border-indigo-400 transition overflow-hidden" onclick="document.getElementById('c-cover-file').click()">
+                  ${coverUrl ? `<img src="${coverUrl}" class="w-full h-full object-cover">` : `<div class="text-center"><i class="fas fa-image text-slate-300 text-2xl mb-1"></i><p class="text-xs text-slate-400">点击上传</p></div>`}
+                </div>
+                <div class="flex-1">
+                  <input type="file" id="c-cover-file" accept="image/*" class="hidden" onchange="handleCoverUpload(this)">
+                  <input type="text" id="c-cover" value="${coverUrl}" class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm" placeholder="或输入封面URL">
+                  <p class="text-xs text-slate-400 mt-1">支持 JPG、PNG 格式,建议尺寸 400x225</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 课程名称 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">课程名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="c-title" value="${course?.title || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="输入课程名称">
+            </div>
+
+            <!-- 分类联动 -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">一级分类 <span class="text-red-500">*</span></label>
+                <select id="c-category" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" onchange="onCategoryChange(this.value)">
+                  <option value="">请选择一级分类</option>
+                  ${parentOptions}
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">二级分类</label>
+                <select id="c-subcategory" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <option value="">请选择二级分类</option>
+                  ${subcategoryOptions}
+                </select>
+              </div>
+            </div>
+
+            <!-- 讲师 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">讲师 <span class="text-red-500">*</span></label>
+              <select id="c-lecturer" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="">请选择讲师</option>
+                ${lectOptions}
+              </select>
+            </div>
+
+            <!-- 课程描述 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">课程描述</label>
+              <textarea id="c-desc" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="输入课程描述">${course?.description || ''}</textarea>
+            </div>
+
+            <!-- 视频上传 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">课程视频</label>
+              <div id="video-upload-area" class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-indigo-400 transition cursor-pointer" onclick="document.getElementById('c-video-file').click()">
+                <i class="fas fa-video text-slate-400 text-2xl mb-2"></i>
+                <p class="text-sm text-slate-500">点击或拖拽上传视频</p>
+                <p class="text-xs text-slate-400 mt-1">支持 MP4、MOV、AVI 格式</p>
+              </div>
+              <input type="file" id="c-video-file" accept="video/*" class="hidden" multiple onchange="handleVideoUpload(this)">
+              <div id="video-list" class="mt-3 space-y-2">
+                ${videos.map((v, i) => `
+                  <div class="flex items-center justify-between bg-slate-50 rounded-lg p-3">
+                    <div class="flex items-center space-x-3">
+                      <i class="fas fa-play-circle text-blue-500"></i>
+                      <span class="text-sm text-slate-700 truncate max-w-xs">${v.title || v.url}</span>
+                      ${v.duration ? `<span class="text-xs text-slate-400 ml-1">${formatDuration(Math.round(v.duration))}</span>` : ''}
+                    </div>
+                    <button type="button" onclick="removeVideo(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+                  </div>
+                `).join('')}
+              </div>
+              <!-- 总时长自动统计 -->
+              <div id="video-duration-summary" class="mt-2 px-3 py-2 bg-indigo-50 rounded-lg flex items-center justify-between ${videos.length > 0 ? '' : 'hidden'}">
+                <span class="text-sm text-indigo-700"><i class="fas fa-clock mr-1.5"></i>课程总时长</span>
+                <span id="total-duration-text" class="text-sm font-semibold text-indigo-700">${formatDuration(videos.reduce((sum, v) => sum + (v.duration || 0), 0))}</span>
+              </div>
+              <input type="hidden" id="c-videos" value='${JSON.stringify(videos)}'>
+            </div>
+
+            <!-- 文档/资料上传 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">课程资料(文档、图片等)</label>
+              <div id="doc-upload-area" class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-indigo-400 transition cursor-pointer" onclick="document.getElementById('c-doc-file').click()">
+                <i class="fas fa-file-alt text-slate-400 text-2xl mb-2"></i>
+                <p class="text-sm text-slate-500">点击或拖拽上传资料</p>
+                <p class="text-xs text-slate-400 mt-1">支持 PDF、Word、Excel、图片等(可多选)</p>
+              </div>
+              <input type="file" id="c-doc-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif" multiple class="hidden" onchange="handleDocUpload(this)">
+              <div id="doc-list" class="mt-3 space-y-2">
+                ${attachments.map((a, i) => `
+                  <div class="flex items-center justify-between bg-slate-50 rounded-lg p-3">
+                    <div class="flex items-center space-x-3">
+                      <i class="fas ${getDocIcon(a.type)} text-emerald-500"></i>
+                      <span class="text-sm text-slate-700 truncate max-w-xs">${a.name || a.url}</span>
+                    </div>
+                    <button type="button" onclick="removeAttachment(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+                  </div>
+                `).join('')}
+              </div>
+              <input type="hidden" id="c-attachments" value='${JSON.stringify(attachments)}'>
+            </div>
+
+            <!-- 状态 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">状态</label>
+              <div class="flex space-x-4">
+                <label class="flex items-center"><input type="radio" name="c-status" value="published" ${(course?.status || 'published') === 'published' ? 'checked' : ''} class="mr-2">发布</label>
+                <label class="flex items-center"><input type="radio" name="c-status" value="draft" ${course?.status === 'draft' ? 'checked' : ''} class="mr-2">草稿</label>
+                <label class="flex items-center"><input type="radio" name="c-status" value="offline" ${course?.status === 'offline' ? 'checked' : ''} class="mr-2">下架</label>
+              </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">保存</button>
+            </div>
+          </form>
+        </div>
+      `);
+
+      // 初始化拖拽上传
+      initDragDrop();
+    }
+
+    // 分类联动 - 一级分类变化时更新二级分类
+    function onCategoryChange(categoryId) {
+      const subcategorySelect = document.getElementById('c-subcategory');
+      subcategorySelect.innerHTML = '<option value="">请选择二级分类</option>';
+
+      if (!categoryId) return;
+
+      const category = data.categories.find(c => c.id == categoryId);
+      if (category && category.children && category.children.length > 0) {
+        category.children.forEach(child => {
+          const option = document.createElement('option');
+          option.value = child.id;
+          option.textContent = child.name;
+          subcategorySelect.appendChild(option);
+        });
+      }
+    }
+
+    // 获取文档图标
+    function getDocIcon(type) {
+      if (!type) return 'fa-file';
+      if (type.includes('pdf')) return 'fa-file-pdf text-red-500';
+      if (type.includes('word') || type.includes('doc')) return 'fa-file-word text-blue-500';
+      if (type.includes('excel') || type.includes('sheet') || type.includes('xls')) return 'fa-file-excel text-green-500';
+      if (type.includes('image') || type.includes('jpg') || type.includes('png') || type.includes('gif')) return 'fa-file-image text-purple-500';
+      return 'fa-file-alt text-slate-500';
+    }
+
+    // 处理课程封面上传
+    async function handleCoverUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        input.disabled = true;
+        const response = await fetch(API + '/upload?type=covers', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          document.getElementById('c-cover').value = result.url;
+          document.getElementById('cover-preview').innerHTML = `<img src="${result.url}" class="w-full h-full object-cover">`;
+          toast('封面上传成功');
+        } else {
+          toast(result.error || '上传失败', 'error');
+        }
+      } catch (err) {
+        toast('上传失败', 'error');
+      } finally {
+        input.disabled = false;
+      }
+    }
+
+    // 获取视频文件的时长(通过 HTML5 Video API)
+    function getVideoDuration(file) {
+      return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.muted = true;
+
+        const url = URL.createObjectURL(file);
+        video.src = url;
+
+        video.onloadedmetadata = () => {
+          const duration = video.duration;
+          URL.revokeObjectURL(url);
+          resolve(isFinite(duration) ? Math.round(duration) : 0);
+        };
+
+        video.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve(0);
+        };
+
+        // 超时保护:5秒内无法读取则返回0
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+          resolve(0);
+        }, 5000);
+      });
+    }
+
+    // 更新总时长显示
+    function updateDurationSummary() {
+      const videos = JSON.parse(document.getElementById('c-videos').value || '[]');
+      const totalDuration = videos.reduce((sum, v) => sum + (v.duration || 0), 0);
+      const summaryEl = document.getElementById('video-duration-summary');
+      const textEl = document.getElementById('total-duration-text');
+      if (summaryEl) {
+        if (videos.length > 0) {
+          summaryEl.classList.remove('hidden');
+        } else {
+          summaryEl.classList.add('hidden');
+        }
+      }
+      if (textEl) {
+        textEl.textContent = formatDuration(totalDuration);
+      }
+    }
+
+    // 处理视频上传(带进度条)
+    async function handleVideoUpload(input) {
+      const files = Array.from(input.files);
+      if (files.length === 0) return;
+
+      const videoList = document.getElementById('video-list');
+      const videos = JSON.parse(document.getElementById('c-videos').value || '[]');
+
+      for (const file of files) {
+        // 为每个文件创建进度条 UI
+        const progressId = 'video-progress-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+        const progressItem = document.createElement('div');
+        progressItem.className = 'bg-slate-50 rounded-lg p-3';
+        progressItem.id = progressId;
+        progressItem.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center space-x-3">
+              <i class="fas fa-cloud-upload-alt text-indigo-500 animate-pulse"></i>
+              <span class="text-sm text-slate-700 truncate max-w-xs">${file.name}</span>
+            </div>
+            <span class="text-xs text-slate-400 progress-percent">0%</span>
+          </div>
+          <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+            <div class="progress-bar h-full rounded-full transition-all duration-300 ease-out" style="width: 0%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+          </div>
+          <p class="text-xs text-slate-400 mt-1 progress-status">正在上传...</p>
+        `;
+        videoList.appendChild(progressItem);
+
+        try {
+          const result = await uploadWithProgress(file, 'videos', progressId);
+
+          if (result.success) {
+            // 自动识别视频时长
+            const videoDuration = await getVideoDuration(file);
+
+            videos.push({
+              url: result.url,
+              title: file.name,
+              size: result.size,
+              type: result.mimetype,
+              duration: videoDuration
+            });
+
+            const index = videos.length - 1;
+            const durationStr = videoDuration > 0 ? formatDuration(videoDuration) : '';
+            // 替换进度条为完成状态
+            const item = document.getElementById(progressId);
+            if (item) {
+              item.innerHTML = `
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span class="text-sm text-slate-700 truncate max-w-xs">${file.name}</span>
+                    ${durationStr ? `<span class="text-xs text-slate-400 ml-1">⏱ ${durationStr}</span>` : ''}
+                  </div>
+                  <button type="button" onclick="removeVideo(${index})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+                </div>
+              `;
+              item.id = `video-item-${index}`;
+            }
+          } else {
+            // 上传失败
+            const item = document.getElementById(progressId);
+            if (item) {
+              item.innerHTML = `
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <i class="fas fa-exclamation-circle text-red-500"></i>
+                    <span class="text-sm text-red-600 truncate max-w-xs">${file.name} 上传失败</span>
+                  </div>
+                  <button type="button" onclick="this.closest('.bg-slate-50').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+                </div>
+              `;
+            }
+          }
+        } catch (err) {
+          console.error('上传失败', err);
+          const item = document.getElementById(progressId);
+          if (item) {
+            item.innerHTML = `
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <i class="fas fa-exclamation-circle text-red-500"></i>
+                  <span class="text-sm text-red-600 truncate max-w-xs">${file.name} 上传失败</span>
+                </div>
+                <button type="button" onclick="this.closest('.bg-slate-50').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+              </div>
+            `;
+          }
+        }
+      }
+
+      document.getElementById('c-videos').value = JSON.stringify(videos);
+      input.value = '';
+      updateDurationSummary();
+    }
+
+    // 带 XHR 进度追踪的文件上传
+    function uploadWithProgress(file, type, progressId) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // 进度追踪
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            const item = document.getElementById(progressId);
+            if (item) {
+              const bar = item.querySelector('.progress-bar');
+              const pct = item.querySelector('.progress-percent');
+              const status = item.querySelector('.progress-status');
+              if (bar) bar.style.width = percent + '%';
+              if (pct) pct.textContent = percent + '%';
+              if (status) {
+                if (percent >= 100) {
+                  status.textContent = '正在处理...';
+                } else {
+                  const loadedMB = (e.loaded / 1024 / 1024).toFixed(1);
+                  const totalMB = (e.total / 1024 / 1024).toFixed(1);
+                  status.textContent = `${loadedMB}MB / ${totalMB}MB`;
+                }
+              }
+            }
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              resolve(JSON.parse(xhr.responseText));
+            } catch (e) {
+              reject(new Error('解析响应失败'));
+            }
+          } else {
+            reject(new Error('上传失败: ' + xhr.status));
+          }
+        });
+
+        xhr.addEventListener('error', () => reject(new Error('网络错误')));
+        xhr.addEventListener('abort', () => reject(new Error('上传已取消')));
+
+        xhr.open('POST', API + '/upload?type=' + type);
+        xhr.send(formData);
+      });
+    }
+
+    // 处理文档上传(支持批量,带进度条)
+    async function handleDocUpload(input) {
+      const files = Array.from(input.files);
+      if (files.length === 0) return;
+
+      const docList = document.getElementById('doc-list');
+      const attachments = JSON.parse(document.getElementById('c-attachments').value || '[]');
+
+      for (const file of files) {
+        // 根据文件类型选择上传目录
+        let uploadType = 'documents';
+        if (file.type.startsWith('image/')) {
+          uploadType = 'images';
+        }
+
+        // 为每个文件创建进度条 UI
+        const progressId = 'doc-progress-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+        const progressItem = document.createElement('div');
+        progressItem.className = 'bg-slate-50 rounded-lg p-3';
+        progressItem.id = progressId;
+        progressItem.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center space-x-3">
+              <i class="fas fa-cloud-upload-alt text-emerald-500 animate-pulse"></i>
+              <span class="text-sm text-slate-700 truncate max-w-xs">${file.name}</span>
+            </div>
+            <span class="text-xs text-slate-400 progress-percent">0%</span>
+          </div>
+          <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+            <div class="progress-bar h-full rounded-full transition-all duration-300 ease-out" style="width: 0%; background: linear-gradient(135deg, #34d399 0%, #10b981 100%);"></div>
+          </div>
+        `;
+        docList.appendChild(progressItem);
+
+        try {
+          const result = await uploadWithProgress(file, uploadType, progressId);
+
+          if (result.success) {
+            attachments.push({
+              url: result.url,
+              name: file.name,
+              size: result.size,
+              type: result.mimetype
+            });
+
+            const index = attachments.length - 1;
+            const item = document.getElementById(progressId);
+            if (item) {
+              item.innerHTML = `
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <i class="fas ${getDocIcon(file.type)}"></i>
+                    <span class="text-sm text-slate-700 truncate max-w-xs">${file.name}</span>
+                  </div>
+                  <button type="button" onclick="removeAttachment(${index})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+                </div>
+              `;
+              item.id = `doc-item-${index}`;
+            }
+          } else {
+            const item = document.getElementById(progressId);
+            if (item) {
+              item.innerHTML = `
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <i class="fas fa-exclamation-circle text-red-500"></i>
+                    <span class="text-sm text-red-600 truncate max-w-xs">${file.name} 上传失败</span>
+                  </div>
+                  <button type="button" onclick="this.closest('.bg-slate-50').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+                </div>
+              `;
+            }
+          }
+        } catch (err) {
+          console.error('上传失败', err);
+          const item = document.getElementById(progressId);
+          if (item) {
+            item.innerHTML = `
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <i class="fas fa-exclamation-circle text-red-500"></i>
+                  <span class="text-sm text-red-600 truncate max-w-xs">${file.name} 上传失败</span>
+                </div>
+                <button type="button" onclick="this.closest('.bg-slate-50').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+              </div>
+            `;
+          }
+        }
+      }
+
+      document.getElementById('c-attachments').value = JSON.stringify(attachments);
+      input.value = '';
+    }
+
+    // 删除视频
+    function removeVideo(index) {
+      const videos = JSON.parse(document.getElementById('c-videos').value || '[]');
+      videos.splice(index, 1);
+      document.getElementById('c-videos').value = JSON.stringify(videos);
+      const item = document.getElementById(`video-item-${index}`);
+      if (item) item.remove();
+      // 重新渲染列表
+      renderVideoList(videos);
+      updateDurationSummary();
+    }
+
+    // 删除附件
+    function removeAttachment(index) {
+      const attachments = JSON.parse(document.getElementById('c-attachments').value || '[]');
+      attachments.splice(index, 1);
+      document.getElementById('c-attachments').value = JSON.stringify(attachments);
+      const item = document.getElementById(`doc-item-${index}`);
+      if (item) item.remove();
+      // 重新渲染列表
+      renderAttachmentList(attachments);
+    }
+
+    // 渲染视频列表
+    function renderVideoList(videos) {
+      const videoList = document.getElementById('video-list');
+      if (!videoList) return;
+      videoList.innerHTML = videos.map((v, i) => `
+        <div class="flex items-center justify-between bg-slate-50 rounded-lg p-3" id="video-item-${i}">
+          <div class="flex items-center space-x-3">
+            <i class="fas fa-play-circle text-blue-500"></i>
+            <span class="text-sm text-slate-700 truncate max-w-xs">${v.title || v.url}</span>
+            ${v.duration ? `<span class="text-xs text-slate-400 ml-1">⏱ ${formatDuration(Math.round(v.duration))}</span>` : ''}
+          </div>
+          <button type="button" onclick="removeVideo(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+        </div>
+      `).join('');
+    }
+
+    // 渲染附件列表
+    function renderAttachmentList(attachments) {
+      const docList = document.getElementById('doc-list');
+      if (!docList) return;
+      docList.innerHTML = attachments.map((a, i) => `
+        <div class="flex items-center justify-between bg-slate-50 rounded-lg p-3" id="doc-item-${i}">
+          <div class="flex items-center space-x-3">
+            <i class="fas ${getDocIcon(a.type)} text-emerald-500"></i>
+            <span class="text-sm text-slate-700 truncate max-w-xs">${a.name || a.url}</span>
+          </div>
+          <button type="button" onclick="removeAttachment(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+        </div>
+      `).join('');
+    }
+
+    // 初始化拖拽上传
+    function initDragDrop() {
+      ['video-upload-area', 'doc-upload-area'].forEach(areaId => {
+        const area = document.getElementById(areaId);
+        if (!area) return;
+
+        area.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          area.classList.add('border-indigo-400', 'bg-indigo-50');
+        });
+
+        area.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          area.classList.remove('border-indigo-400', 'bg-indigo-50');
+        });
+
+        area.addEventListener('drop', (e) => {
+          e.preventDefault();
+          area.classList.remove('border-indigo-400', 'bg-indigo-50');
+
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            const inputId = areaId === 'video-upload-area' ? 'c-video-file' : 'c-doc-file';
+            const input = document.getElementById(inputId);
+            const dataTransfer = new DataTransfer();
+            files.forEach(f => dataTransfer.items.add(f));
+            input.files = dataTransfer.files;
+
+            if (areaId === 'video-upload-area') {
+              handleVideoUpload(input);
+            } else {
+              handleDocUpload(input);
+            }
+          }
+        });
+      });
+    }
+
+    async function saveCourse(e, id) {
+      e.preventDefault();
+      const categorySelect = document.getElementById('c-category');
+      const subcategorySelect = document.getElementById('c-subcategory');
+      const lecturerSelect = document.getElementById('c-lecturer');
+
+      const title = document.getElementById('c-title').value.trim();
+      if (!title) {
+        toast('请输入课程名称', 'error');
+        return;
+      }
+
+      const categoryId = categorySelect.value ? parseInt(categorySelect.value) : null;
+      if (!categoryId) {
+        toast('请选择一级分类', 'error');
+        return;
+      }
+
+      const subcategoryId = subcategorySelect.value ? parseInt(subcategorySelect.value) : null;
+      const lecturerId = lecturerSelect.value ? parseInt(lecturerSelect.value) : null;
+      if (!lecturerId) {
+        toast('请选择讲师', 'error');
+        return;
+      }
+
+      // 安全解析 videos 和 attachments
+      let videos = [];
+      try { videos = JSON.parse(document.getElementById('c-videos').value || '[]'); } catch(e) { videos = []; }
+      let attachments = [];
+      try { attachments = JSON.parse(document.getElementById('c-attachments').value || '[]'); } catch(e) { attachments = []; }
+
+      // 自动计算课程总时长(所有视频时长之和)
+      const totalDuration = videos.reduce((sum, v) => sum + (v.duration || 0), 0);
+
+      const formData = {
+        title,
+        cover: document.getElementById('c-cover').value.trim() || 'https://via.placeholder.com/400x225',
+        categoryId,
+        subcategoryId,
+        lecturerId,
+        description: document.getElementById('c-desc').value.trim(),
+        status: document.querySelector('input[name="c-status"]:checked')?.value || 'draft',
+        videos,
+        attachments,
+        duration: totalDuration,
+        views: 0,
+        rating: 0
+      };
+
+      // 禁用保存按钮,防止重复提交
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>保存中...';
+      }
+
+      try {
+        let res, result;
+        if (id) {
+          res = await fetch(API + '/courses/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        } else {
+          res = await fetch(API + '/courses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        }
+        result = await res.json();
+
+        if (result.success || res.ok) {
+          toast(id ? '课程已更新' : '课程已添加');
+          closeModal();
+          await loadAllData();
+          renderCourses();
+          // 广播课程变更,通知其他页面(如播放页)刷新数据
+          try {
+            localStorage.setItem('youyan_academy_sync', JSON.stringify({
+              type: 'courses', timestamp: Date.now(), source: '/dashboard.html'
+            }));
+          } catch(e) {}
+        } else {
+          toast(result.error || '操作失败', 'error');
+        }
+      } catch (err) {
+        console.error('保存课程失败:', err);
+        toast('保存失败: ' + (err.message || '网络错误'), 'error');
+      } finally {
+        // 恢复按钮
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '保存';
+        }
+      }
+    }
+
+    function editCourse(id) {
+      const course = data.courses.find(c => c.id === id);
+      if (course) openCourseModal(course);
+    }
+
+    async function toggleCourseStatus(id) {
+      const course = data.courses.find(c => c.id === id);
+      if (!course) return;
+      const newStatus = course.status === 'published' ? 'offline' : 'published';
+      try {
+        const res = await fetch(API + '/courses/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...course, status: newStatus })
+        });
+        const result = await res.json();
+        if (result.success || res.ok) {
+          toast(newStatus === 'published' ? '课程已发布' : '课程已下架');
+          await loadAllData();
+          renderCourses();
+          try { localStorage.setItem('youyan_academy_sync', JSON.stringify({ type: 'courses', timestamp: Date.now(), source: '/dashboard.html' })); } catch(e) {}
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+
+    async function deleteCourse(id) {
+      if (!confirm('确定要删除这门课程吗?')) return;
+      try {
+        const res = await fetch(API + '/courses/' + id, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success || res.ok) {
+          toast('课程已删除');
+          await loadAllData();
+          renderCourses();
+          try { localStorage.setItem('youyan_academy_sync', JSON.stringify({ type: 'courses', timestamp: Date.now(), source: '/dashboard.html' })); } catch(e) {}
+        } else {
+          toast(result.error || '删除失败', 'error');
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+
+    // ========== 分类管理 ==========
+    function renderCategories() {
+      document.getElementById('cat-parent-count').textContent = data.categories.length;
+      const childCount = data.categories.reduce((sum, c) => sum + (c.children?.length || 0), 0);
+      document.getElementById('cat-child-count').textContent = childCount;
+      document.getElementById('cat-course-count').textContent = data.courses.length;
+
+      if (data.categories.length === 0) {
+        document.getElementById('category-list').innerHTML = `
+          <div class="col-span-2 bg-white rounded-2xl p-12 text-center text-slate-400">
+            <i class="fas fa-folder-open text-4xl mb-4"></i>
+            <p>暂无分类数据</p>
+          </div>`;
+        return;
+      }
+
+      document.getElementById('category-list').innerHTML = data.categories.map(cat => `
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="p-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <i class="fas ${cat.icon || 'fa-folder'} text-xl"></i>
+                <div>
+                  <span class="font-semibold">${cat.name}</span>
+                  <span class="text-xs opacity-75 ml-2">${cat.key || ''}</span>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <button onclick="openCategoryModal('child', ${cat.id})" class="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition" title="添加子分类">
+                  <i class="fas fa-plus"></i>
+                </button>
+                <button onclick="editCategory(${cat.id})" class="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition" title="编辑">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="deleteCategory(${cat.id})" class="p-2 bg-white/20 hover:bg-red-500 rounded-lg transition" title="删除">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="p-4">
+            <p class="text-xs text-slate-400 mb-3">子分类 (${cat.children?.length || 0})</p>
+            <div class="flex flex-wrap gap-2">
+              ${(cat.children || []).map(child => `
+                <span class="inline-flex items-center px-3 py-1.5 bg-slate-100 rounded-lg text-sm">
+                  ${child.name}
+                  <button onclick="editCategory(${cat.id}, ${child.id})" class="ml-2 text-slate-400 hover:text-blue-500"><i class="fas fa-edit text-xs"></i></button>
+                  <button onclick="deleteCategory(${cat.id}, ${child.id})" class="ml-1 text-slate-400 hover:text-red-500"><i class="fas fa-times text-xs"></i></button>
+                </span>
+              `).join('') || '<span class="text-slate-400 text-sm">暂无子分类</span>'}
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // 同步更新站点管理子标签的分类列表
+      renderPortalCategories();
+    }
+
+    // renderPortalCategories - 站点管理子标签用(精简列表风格)
+    function renderPortalCategories() {
+      const container = document.getElementById('portal-category-list');
+      if (!container) return;
+
+      if (data.categories.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-xl shadow-sm p-8 text-center text-slate-400">
+            <i class="fas fa-folder-open text-3xl mb-2 block"></i>
+            <p>暂无分类,点击右上角按钮添加</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = data.categories.map((cat, idx) => {
+        const colorMap = ['indigo', 'pink', 'emerald', 'orange', 'purple', 'blue', 'teal', 'red'];
+        const color = colorMap[idx % colorMap.length];
+        const childCount = cat.children?.length || 0;
+        return `
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 bg-${color}-100 rounded-lg flex items-center justify-center text-${color}-600 font-bold text-sm">${idx + 1}</span>
+                <span class="font-medium text-slate-800">${cat.name}</span>
+                ${cat.key ? `<span class="text-xs text-slate-400">(${cat.key})</span>` : ''}
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="openCategoryModal('child', ${cat.id})" class="w-7 h-7 bg-green-50 hover:bg-green-100 rounded-full flex items-center justify-center text-green-600 transition" title="添加二级分类">
+                  <i class="fas fa-plus text-xs"></i>
+                </button>
+                <button onclick="editCategory(${cat.id})" class="w-7 h-7 bg-slate-50 hover:bg-slate-100 rounded-full flex items-center justify-center text-slate-600 transition" title="编辑分类">
+                  <i class="fas fa-edit text-xs"></i>
+                </button>
+                <button onclick="deleteCategory(${cat.id})" class="w-7 h-7 bg-red-50 hover:bg-red-100 rounded-full flex items-center justify-center text-red-600 transition" title="删除分类">
+                  <i class="fas fa-trash text-xs"></i>
+                </button>
+              </div>
+            </div>
+            ${childCount > 0 ? `
+              <div class="flex flex-wrap gap-2 pl-11">
+                ${cat.children.map(child => `
+                  <span class="inline-flex items-center px-2.5 py-0.5 bg-${color}-50 text-${color}-600 rounded-full text-xs">
+                    ${child.name}
+                    <button onclick="editCategory(${cat.id}, ${child.id})" class="ml-1.5 hover:text-${color}-800"><i class="fas fa-edit text-[10px]"></i></button>
+                    <button onclick="deleteCategory(${cat.id}, ${child.id})" class="ml-0.5 hover:text-red-500"><i class="fas fa-times text-[10px]"></i></button>
+                  </span>
+                `).join('')}
+              </div>
+            ` : '<p class="pl-11 text-xs text-slate-400">暂无子分类</p>'}
+          </div>`;
+      }).join('');
+    }
+
+    function openCategoryModal(type, parentId = null, child = null) {
+      const isChild = type === 'child';
+      const parentCat = parentId ? data.categories.find(c => c.id === parentId) : null;
+
+      let modalContent = `
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">${child ? '编辑' : '添加'}${isChild ? '二级' : '一级'}分类</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveCategory(event, '${type}', ${parentId || 'null'}, ${child?.id || 'null'})" class="p-6 space-y-4">
+            ${isChild && parentCat ? `<div><label class="block text-sm text-slate-500 mb-1">父分类</label><p class="font-medium">${parentCat.name}</p></div>` : ''}
+            ${!isChild ? `
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">分类名称 <span class="text-red-500">*</span></label>
+                <input type="text" id="cat-name" value="${child?.name || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">标识(key)</label>
+                <input type="text" id="cat-key" value="${child?.key || parentCat?.key || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="如: frontend">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">图标</label>
+                <div class="flex flex-wrap gap-2">
+                  ${['fa-sitemap', 'fa-code', 'fa-paint-brush', 'fa-line-chart', 'fa-users', 'fa-book', 'fa-gamepad', 'fa-chart-bar'].map(icon => `
+                    <button type="button" onclick="selectIcon(this, '${icon}')" class="icon-btn w-10 h-10 rounded-lg border ${(child?.key || parentCat?.icon) === icon ? 'bg-indigo-100 border-indigo-500' : 'border-slate-200'} flex items-center justify-center hover:border-indigo-300">
+                      <i class="fas ${icon}"></i>
+                    </button>
+                  `).join('')}
+                </div>
+                <input type="hidden" id="cat-icon" value="${parentCat?.icon || 'fa-folder'}">
+              </div>
+            ` : `
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">分类名称 <span class="text-red-500">*</span></label>
+                <input type="text" id="cat-child-name" value="${child?.name || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">标识(key)</label>
+                <input type="text" id="cat-child-key" value="${child?.key || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="如: game-planning">
+              </div>
+            `}
+            <div class="flex justify-end space-x-3 pt-4">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">保存</button>
+            </div>
+          </form>
+        </div>`;
+
+      showModal(modalContent);
+    }
+
+    function selectIcon(btn, icon) {
+      document.querySelectorAll('.icon-btn').forEach(b => {
+        b.classList.remove('bg-indigo-100', 'border-indigo-500');
+        b.classList.add('border-slate-200');
+      });
+      btn.classList.add('bg-indigo-100', 'border-indigo-500');
+      btn.classList.remove('border-slate-200');
+      document.getElementById('cat-icon').value = icon;
+    }
+
+    async function saveCategory(e, type, parentId, childId) {
+      e.preventDefault();
+
+      try {
+        if (type === 'parent') {
+          const name = document.getElementById('cat-name').value.trim();
+          const key = document.getElementById('cat-key').value.trim();
+          const icon = document.getElementById('cat-icon').value;
+
+          if (childId) {
+            // 编辑一级分类
+            const cat = data.categories.find(c => c.id === parentId);
+            if (!cat) return;
+            const res = await fetch(API + '/categories/' + parentId, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...cat, name, key, icon })
+            });
+            if (res.ok) {
+              toast('分类已更新');
+              closeModal();
+              await loadAllData();
+              renderCategories();
+              // 额外广播一次,确保其他页面收到通知
+              if (window.DataSync) {
+                window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+              }
+            }
+          } else {
+            // 新增一级分类
+            const res = await fetch(API + '/categories', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name, key, icon, children: [] })
+            });
+            if (res.ok) {
+              toast('分类已添加');
+              closeModal();
+              await loadAllData();
+              renderCategories();
+              // 额外广播一次,确保其他页面收到通知
+              if (window.DataSync) {
+                window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+              }
+            }
+          }
+        } else {
+          // 子分类
+          const name = document.getElementById('cat-child-name').value.trim();
+          const key = document.getElementById('cat-child-key').value.trim();
+          const parent = data.categories.find(c => c.id === parentId);
+          if (!parent) return;
+
+          if (childId) {
+            // 编辑子分类
+            const child = parent.children.find(c => c.id === childId);
+            if (child) { child.name = name; child.key = key; }
+          } else {
+            // 新增子分类
+            parent.children = parent.children || [];
+            parent.children.push({ id: Date.now(), name, key });
+          }
+
+          const res = await fetch(API + '/categories/' + parentId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(parent)
+          });
+          if (res.ok) {
+            toast('子分类已保存');
+            closeModal();
+            await loadAllData();
+            renderCategories();
+            // 额外广播一次,确保其他页面收到通知
+            if (window.DataSync) {
+              window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('保存分类失败:', err);
+        toast('操作失败', 'error');
+      }
+    }
+
+    function editCategory(parentId, childId) {
+      if (!childId) {
+        const cat = data.categories.find(c => c.id === parentId);
+        if (cat) openCategoryModal('parent', parentId, cat);
+      } else {
+        const parent = data.categories.find(c => c.id === parentId);
+        const child = parent?.children?.find(c => c.id === childId);
+        if (child) openCategoryModal('child', parentId, child);
+      }
+    }
+
+    async function deleteCategory(parentId, childId) {
+      if (!confirm('确定要删除吗?')) return;
+
+      try {
+        if (!childId) {
+          // 删除一级分类
+          if (data.courses.some(c => c.categoryId === parentId)) {
+            toast('该分类下有课程,不能删除', 'error');
+            return;
+          }
+          const res = await fetch(API + '/categories/' + parentId, { method: 'DELETE' });
+          if (res.ok) {
+            toast('分类已删除');
+            await loadAllData();
+            renderCategories();
+            // 广播通知其他页面
+            if (window.DataSync) {
+              window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+            }
+          }
+        } else {
+          // 删除子分类
+          const parent = data.categories.find(c => c.id === parentId);
+          if (data.courses.some(c => c.subcategoryId === childId)) {
+            toast('该分类下有课程,不能删除', 'error');
+            return;
+          }
+          parent.children = parent.children.filter(c => c.id !== childId);
+          const res = await fetch(API + '/categories/' + parentId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(parent)
+          });
+          if (res.ok) {
+            toast('子分类已删除');
+            await loadAllData();
+            renderCategories();
+            // 广播通知其他页面
+            if (window.DataSync) {
+              window.DataSync.broadcast(DataSync.EventTypes.CATEGORIES);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('删除分类失败:', err);
+        toast('删除失败', 'error');
+      }
+    }
+
+    // ========== 讲师管理 ==========
+    function renderLecturers() {
+      try {
+        console.log('开始渲染讲师列表,讲师数量:', data.lecturers.length);
+
+        document.getElementById('lect-total').textContent = data.lecturers.length;
+        document.getElementById('lect-enabled').textContent = data.lecturers.filter(l => l.status === 'enabled').length;
+        document.getElementById('lect-chief').textContent = data.lecturers.filter(l => l.level === 'chief').length;
+        document.getElementById('lect-courses').textContent = data.courses.length;
+
+        const tbody = document.getElementById('lecturer-list');
+        const countEl = document.getElementById('lecturer-count');
+
+        if (!tbody) {
+          console.error('讲师列表tbody元素不存在');
+          return;
+        }
+
+        if (data.lecturers.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                <i class="fas fa-chalkboard-teacher text-4xl mb-4"></i>
+                <p>暂无讲师数据</p>
+              </td>
+            </tr>`;
+          countEl.textContent = '0';
+          console.log('讲师列表为空');
+          return;
+        }
+
+      const levelMap = {
+        chief: { class: 'bg-purple-100 text-purple-700', text: '首席讲师' },
+        senior: { class: 'bg-blue-100 text-blue-700', text: '高级讲师' },
+        intermediate: { class: 'bg-emerald-100 text-emerald-700', text: '中级讲师' },
+        junior: { class: 'bg-slate-100 text-slate-600', text: '初级讲师' },
+        intern: { class: 'bg-orange-100 text-orange-700', text: '实习讲师' }
+      };
+
+      tbody.innerHTML = data.lecturers.map(lect => {
+        const lv = levelMap[lect.level] || levelMap.junior;
+        const courseCount = data.courses.filter(c => c.lecturerId === lect.id).length;
+        const paymentRate = lect.paymentRate || 0;
+        const totalPayment = courseCount * paymentRate;
+        const skills = lect.skills || [];
+        const skillsHtml = skills.length > 0 ?
+          skills.map(skill => `<span class="inline-block px-2 py-0.5 rounded text-xs bg-indigo-50 text-indigo-600 mr-1 mb-1">${skill}</span>`).join('') :
+          '<span class="text-xs text-slate-400">-</span>';
+
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-3 cursor-pointer" onclick="showLecturerDetail(${lect.id})">
+                <img src="${lect.avatar || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover border border-slate-200">
+                <span class="font-medium text-slate-800 hover:text-indigo-600">${lect.name}</span>
+              </div>
+            </td>
+            <td class="px-4 py-4 text-sm text-slate-600">
+              ${lect.department || '-'}
+            </td>
+            <td class="px-4 py-4 text-sm text-slate-600">
+              ${lect.title || '-'}
+            </td>
+            <td class="px-4 py-4 text-center">
+              <span class="px-3 py-1 rounded-full text-xs font-medium ${lv.class}">${lv.text}</span>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex flex-wrap gap-1 max-w-[200px]">
+                ${skillsHtml}
+              </div>
+            </td>
+            <td class="px-4 py-4 text-center text-sm text-slate-600">
+              <span class="font-medium">${courseCount}</span>
+            </td>
+            <td class="px-4 py-4 text-center text-sm">
+              <span class="font-medium text-emerald-600">¥${totalPayment.toLocaleString()}</span>
+            </td>
+            <td class="px-4 py-4 text-center text-sm text-slate-600">
+              ${lect.regDate || '-'}
+            </td>
+            <td class="px-4 py-4 text-center">
+              <span class="px-3 py-1 rounded-full text-xs font-medium ${
+                lect.status === 'enabled'
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-red-100 text-red-700'
+              }">
+                ${lect.status === 'enabled' ? '启用' : '禁用'}
+              </span>
+            </td>
+            <td class="px-4 py-4 text-center">
+              <div class="flex items-center justify-center gap-2">
+                <button onclick="toggleFeaturedLecturer(${lect.id})"
+                  class="p-2 ${data.index_featured_lecturers?.includes(lect.id) ? 'text-yellow-500 hover:bg-yellow-50' : 'text-slate-400 hover:bg-slate-100'} rounded-lg transition"
+                  title="${data.index_featured_lecturers?.includes(lect.id) ? '取消明星' : '设为明星讲师'}">
+                  <i class="fas fa-star ${data.index_featured_lecturers?.includes(lect.id) ? '' : 'far'}"></i>
+                </button>
+                <button onclick="editLecturer(${lect.id})"
+                  class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="toggleLecturerStatus(${lect.id})"
+                  class="p-2 ${lect.status === 'enabled' ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'} rounded-lg transition"
+                  title="${lect.status === 'enabled' ? '禁用' : '启用'}">
+                  <i class="fas ${lect.status === 'enabled' ? 'fa-ban' : 'fa-check'}"></i>
+                </button>
+                <button onclick="deleteLecturer(${lect.id})"
+                  class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+
+      countEl.textContent = data.lecturers.length;
+      console.log('讲师列表渲染完成');
+    } catch (error) {
+      console.error('渲染讲师列表失败:', error);
+      toast('讲师列表渲染失败: ' + error.message, 'error');
+    }
+    }
+
+    function openLecturerModal(lecturer = null) {
+      const isEdit = !!lecturer;
+      const levelOptions = ['chief', 'senior', 'intermediate', 'junior', 'intern'].map(l =>
+        `<option value="${l}" ${lecturer?.level === l ? 'selected' : ''}>${l === 'chief' ? '首席讲师' : l === 'senior' ? '高级讲师' : l === 'intermediate' ? '中级讲师' : l === 'junior' ? '初级讲师' : '实习讲师'}</option>`
+      ).join('');
+      const avatarUrl = lecturer?.avatar || '';
+      const skills = lecturer?.skills || [];
+      const skillsHtml = skills.map(skill =>
+        `<span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-100 text-indigo-700 mr-2 mb-2 skill-tag">
+          ${skill}
+          <button type="button" onclick="removeSkillTag(this)" class="ml-1 text-indigo-500 hover:text-indigo-900"><i class="fas fa-times"></i></button>
+        </span>`
+      ).join('');
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑讲师' : '添加讲师'}</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveLecturer(event, ${lecturer?.id || 'null'})" class="p-6 space-y-4">
+            <!-- 头像上传区域 -->
+            <div class="flex items-center space-x-6">
+              <div class="flex-shrink-0">
+                <div id="avatar-preview" class="w-24 h-24 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-50 overflow-hidden cursor-pointer hover:border-indigo-400 transition" onclick="document.getElementById('l-avatar-file').click()">
+                  ${avatarUrl ? `<img src="${avatarUrl}" class="w-full h-full object-cover">` : `<i class="fas fa-user text-slate-300 text-3xl"></i>`}
+                </div>
+                <input type="file" id="l-avatar-file" accept="image/*" class="hidden" onchange="handleAvatarUpload(this)">
+              </div>
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-slate-700 mb-1">头像</label>
+                <p class="text-xs text-slate-400 mb-2">支持 JPG、PNG、GIF 格式,点击图片区域上传</p>
+                <input type="text" id="l-avatar" value="${avatarUrl}" class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm" placeholder="或输入头像URL">
+              </div>
+            </div>
+            <!-- 姓名和等级 -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">姓名 <span class="text-red-500">*</span></label>
+                <input type="text" id="l-name" value="${lecturer?.name || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">等级</label>
+                <select id="l-level" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">${levelOptions}</select>
+              </div>
+            </div>
+            <!-- 部门和岗位 -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">部门</label>
+                <input type="text" id="l-dept" value="${lecturer?.department || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="技术部">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">岗位</label>
+                <input type="text" id="l-title" value="${lecturer?.title || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="前端工程师">
+              </div>
+            </div>
+            <!-- 课酬 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">课酬(元/课)</label>
+              <input type="number" id="l-payment" value="${lecturer?.paymentRate || 0}" min="0" step="100" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="每节课的课酬">
+            </div>
+            <!-- 标签 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">标签 <span class="text-xs text-slate-400">(最多5个,按回车添加)</span></label>
+              <div class="border border-slate-200 rounded-xl p-3 bg-white">
+                <div id="skills-container" class="flex flex-wrap gap-2 mb-2 min-h-[32px]">
+                  ${skillsHtml}
+                </div>
+                <input type="text" id="l-skill-input" class="w-full px-2 py-1.5 border-0 outline-none text-sm" placeholder="输入标签后按回车..." onkeydown="handleSkillInput(event)">
+              </div>
+              <input type="hidden" id="l-skills" value='${JSON.stringify(skills)}'>
+            </div>
+            <!-- 简介 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">简介</label>
+              <textarea id="l-intro" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none" placeholder="讲师简介">${lecturer?.intro || ''}</textarea>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">保存</button>
+            </div>
+          </form>
+        </div>
+      `);
+    }
+
+    // 处理讲师头像上传
+    async function handleAvatarUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        input.disabled = true;
+        const response = await fetch(API + '/upload?type=avatars', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          document.getElementById('l-avatar').value = result.url;
+          document.getElementById('avatar-preview').innerHTML = `<img src="${result.url}" class="w-full h-full object-cover">`;
+          toast('头像上传成功');
+        } else {
+          toast(result.error || '上传失败', 'error');
+        }
+      } catch (err) {
+        toast('上传失败', 'error');
+      } finally {
+        input.disabled = false;
+      }
+    }
+
+    // 处理标签输入
+    function handleSkillInput(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const input = document.getElementById('l-skill-input');
+        const skill = input.value.trim();
+
+        if (!skill) return;
+
+        const container = document.getElementById('skills-container');
+        const currentSkills = Array.from(container.querySelectorAll('.skill-tag')).map(tag =>
+          tag.textContent.trim().replace('×', '').trim()
+        );
+
+        // 检查是否超过5个
+        if (currentSkills.length >= 5) {
+          toast('最多只能添加5个标签', 'error');
+          return;
+        }
+
+        // 检查是否重复
+        if (currentSkills.includes(skill)) {
+          toast('该标签已存在', 'error');
+          return;
+        }
+
+        // 添加标签
+        const tagHtml = `
+          <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-100 text-indigo-700 mr-2 mb-2 skill-tag">
+            ${skill}
+            <button type="button" onclick="removeSkillTag(this)" class="ml-1 text-indigo-500 hover:text-indigo-900"><i class="fas fa-times"></i></button>
+          </span>
+        `;
+        container.insertAdjacentHTML('beforeend', tagHtml);
+        input.value = '';
+
+        // 更新隐藏字段
+        updateSkillsHiddenField();
+      }
+    }
+
+    // 删除标签
+    function removeSkillTag(button) {
+      button.parentElement.remove();
+      updateSkillsHiddenField();
+    }
+
+    // 更新隐藏字段的值
+    function updateSkillsHiddenField() {
+      const container = document.getElementById('skills-container');
+      const skills = Array.from(container.querySelectorAll('.skill-tag')).map(tag =>
+        tag.childNodes[0].textContent.trim()
+      );
+      document.getElementById('l-skills').value = JSON.stringify(skills);
+    }
+
+    async function saveLecturer(e, id) {
+      e.preventDefault();
+      const levelNames = { chief: '首席讲师', senior: '高级讲师', intermediate: '中级讲师', junior: '初级讲师', intern: '实习讲师' };
+      const skills = JSON.parse(document.getElementById('l-skills').value || '[]');
+      // 动态计算该讲师的课程数
+      const tempName = document.getElementById('l-name').value.trim();
+      const existingLecturer = id ? (data.lecturers || []).find(l => l.id === id) : null;
+      const lecturerIdForCount = id || (existingLecturer ? existingLecturer.id : Date.now());
+      const dynamicCourseCount = (data.management_courses || []).filter(c => String(c.lecturerId) === String(existingLecturer ? existingLecturer.id : lecturerIdForCount)).length;
+
+      const formData = {
+        name: tempName,
+        department: document.getElementById('l-dept').value.trim(),
+        title: document.getElementById('l-title').value.trim(),
+        level: document.getElementById('l-level').value,
+        levelName: levelNames[document.getElementById('l-level').value],
+        avatar: document.getElementById('l-avatar').value.trim() || 'https://via.placeholder.com/60',
+        intro: document.getElementById('l-intro').value.trim(),
+        paymentRate: parseInt(document.getElementById('l-payment').value) || 0,
+        status: 'enabled',
+        type: 'internal',
+        skills: skills,
+        courseCount: dynamicCourseCount,
+        regDate: existingLecturer ? (existingLecturer.regDate || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0]
+      };
+
+      try {
+        let res;
+        if (id) {
+          res = await fetch(API + '/lecturers/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...formData, id })
+          });
+        } else {
+          res = await fetch(API + '/lecturers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        }
+        if (res.ok) {
+          toast(id ? '讲师已更新' : '讲师已添加');
+          closeModal();
+          await loadAllData();
+          renderLecturers();
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+
+    function editLecturer(id) {
+      const lect = data.lecturers.find(l => l.id === id);
+      if (lect) openLecturerModal(lect);
+    }
+
+    // 切换明星讲师状态
+    async function toggleFeaturedLecturer(id) {
+      if (!data.index_featured_lecturers) data.index_featured_lecturers = [];
+      const MAX_FEATURED = 6;
+      const idx = data.index_featured_lecturers.indexOf(id);
+      let msg = '';
+      if (idx >= 0) {
+        data.index_featured_lecturers.splice(idx, 1);
+        msg = '已取消明星讲师';
+      } else {
+        if (data.index_featured_lecturers.length >= MAX_FEATURED) {
+          toast('明星讲师最多只能选择 ' + MAX_FEATURED + ' 位,请先取消其他讲师', 'error');
+          return;
+        }
+        data.index_featured_lecturers.push(id);
+        msg = '已设为明星讲师';
+      }
+      try {
+        const res = await fetch(API + '/sync/index_featured_lecturers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data.index_featured_lecturers)
+        });
+        if (res.ok) {
+          toast(msg);
+          await loadAllData();
+          renderLecturers();
+        } else {
+          toast('同步失败', 'error');
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+
+    async function toggleLecturerStatus(id) {
+      const lect = data.lecturers.find(l => l.id === id);
+      if (!lect) return;
+      const newStatus = lect.status === 'enabled' ? 'disabled' : 'enabled';
+      try {
+        const res = await fetch(API + '/lecturers/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...lect, status: newStatus })
+        });
+        if (res.ok) {
+          toast(newStatus === 'enabled' ? '讲师已启用' : '讲师已禁用');
+          await loadAllData();
+          renderLecturers();
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+
+    async function deleteLecturer(id) {
+      if (!confirm('确定要删除这位讲师吗?')) return;
+      try {
+        const res = await fetch(API + '/lecturers/' + id, { method: 'DELETE' });
+        if (res.ok) {
+          toast('讲师已删除');
+          await loadAllData();
+          renderLecturers();
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+
+    // 显示讲师详情弹窗
+    function showLecturerDetail(id) {
+      const lect = data.lecturers.find(l => l.id === id);
+      if (!lect) return;
+
+      const lv = levelMap[lect.level] || levelMap.junior;
+      const lectCourses = data.courses.filter(c => c.lecturerId === lect.id);
+      const courseCount = lectCourses.length;
+
+      // 学员数：该讲师参与的培训活动次数（作为教学活跃度指标）
+      const studentCount = (data.training || []).filter(t => t.instructor === lect.name).length;
+
+      // 评分：该讲师所有课程的平均评分
+      let rating = '--';
+      const ratedCourses = lectCourses.filter(c => (c.ratingCount || 0) > 0);
+      if (ratedCourses.length > 0) {
+        const avgRating = ratedCourses.reduce((sum, c) => {
+          const cr = c.ratingSum || 0;
+          const cc = c.ratingCount || 1;
+          return sum + (cr / cc);
+        }, 0) / ratedCourses.length;
+        rating = avgRating.toFixed(1);
+      }
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-[400px]">
+          <div class="relative h-24 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-t-2xl flex items-center justify-center">
+            <button onclick="closeModal()" class="absolute top-3 right-3 text-white/80 hover:text-white transition">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="flex justify-center -mt-14">
+            <img src="${lect.avatar || 'https://via.placeholder.com/80'}"
+              class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg">
+          </div>
+
+          <div class="px-6 pt-3 pb-6 text-center">
+            <h3 class="text-lg font-bold text-slate-800 mb-2">${lect.name}</h3>
+            <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${lv.class} mb-4">${lv.text}</span>
+
+            <div class="flex items-center justify-center gap-8 mt-4 mb-5">
+              <div class="text-center">
+                <p class="text-2xl font-bold text-slate-800">${courseCount}</p>
+                <p class="text-xs text-slate-500">门课程</p>
+              </div>
+              <div class="text-center">
+                <p class="text-2xl font-bold text-slate-800">${studentCount}</p>
+                <p class="text-xs text-slate-500">学员数</p>
+              </div>
+              <div class="text-center">
+                <p class="text-2xl font-bold text-slate-800">${rating}</p>
+                <p class="text-xs text-slate-500">评分</p>
+              </div>
+            </div>
+
+            <div class="text-left border-t border-slate-100 pt-4">
+              <h4 class="text-sm font-semibold text-slate-700 mb-2">
+                <i class="fas fa-user mr-1 text-indigo-500"></i>个人简介
+              </h4>
+              <p class="text-sm text-slate-600 leading-relaxed line-clamp-3">${lect.intro || '暂无简介'}</p>
+            </div>
+
+            <div class="text-left border-t border-slate-100 pt-4 mt-4">
+              <h4 class="text-sm font-semibold text-slate-700 mb-2">
+                <i class="fas fa-book mr-1 text-indigo-500"></i>授课课程
+              </h4>
+              ${courseCount > 0 ?
+                `<p class="text-sm text-slate-600">共 ${courseCount} 门课程</p>` :
+                '<p class="text-sm text-slate-400">暂无课程</p>'
+              }
+            </div>
+          </div>
+
+          <div class="px-6 pb-5">
+            <button onclick="closeModal()" class="w-full py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-medium transition">
+              关闭
+            </button>
+          </div>
+        </div>
+      `);
+    }
+
+    // ========== 培训管理 ==========
+    let trainingViewMode = 'list';
+    let trainingCurrentYear = new Date().getFullYear();
+    let trainingCurrentMonth = new Date().getMonth();
+
+    const trainingCategories = {
+      '新雁计划': { color: 'bg-orange-100 text-orange-700', icon: 'fa-rocket' },
+      '游雁学堂': { color: 'bg-blue-100 text-blue-700', icon: 'fa-graduation-cap' },
+      '鸿雁计划': { color: 'bg-green-100 text-green-700', icon: 'fa-users' },
+      'AI实践分享': { color: 'bg-amber-100 text-amber-700', icon: 'fa-laptop' },
+      '雏雁训练营': { color: 'bg-pink-100 text-pink-700', icon: 'fa-building' }
+    };
+
+    // 2026年国家法定节假日
+    const trainingHolidays = {
+      '2026-01-01': '元旦',
+      '2026-01-28': '春节',
+      '2026-01-29': '春节',
+      '2026-01-30': '春节',
+      '2026-01-31': '春节',
+      '2026-02-01': '春节',
+      '2026-02-02': '春节',
+      '2026-02-03': '春节',
+      '2026-04-04': '清明',
+      '2026-04-05': '清明',
+      '2026-05-01': '劳动节',
+      '2026-05-02': '劳动节',
+      '2026-05-03': '劳动节',
+      '2026-06-19': '端午',
+      '2026-06-20': '端午',
+      '2026-09-25': '中秋',
+      '2026-10-01': '国庆',
+      '2026-10-02': '国庆',
+      '2026-10-03': '国庆',
+      '2026-10-04': '国庆',
+      '2026-10-05': '国庆',
+      '2026-10-06': '国庆',
+      '2026-10-07': '国庆',
+    };
+
+    let analyticsTrainingId = null;
+    let analyticsCurrentTab = 'overview';
+    let _analyticsEnrollData = null;
+    let _analyticsOverviewData = null;
+    let _analyticsSurveyData = null;
+    let _analyticsExamData = null;
+    let _analyticsAttendanceData = null;
+
+    function switchTrainingView(mode) {
+      trainingViewMode = mode;
+      document.getElementById('view-btn-calendar').classList.toggle('active', mode === 'calendar');
+      document.getElementById('view-btn-list').classList.toggle('active', mode === 'list');
+      document.getElementById('training-calendar-view').classList.toggle('hidden', mode !== 'calendar');
+      document.getElementById('training-list-view').classList.toggle('hidden', mode !== 'list');
+      document.getElementById('training-analytics-view').classList.toggle('hidden', mode !== 'analytics');
+      document.getElementById('training-add-btn').style.display = (mode === 'list') ? 'flex' : 'none';
+      // 隐藏顶部切换按钮的高亮（analytics模式下两个都不active）
+      if (mode === 'analytics') {
+        document.getElementById('view-btn-calendar').classList.remove('active');
+        document.getElementById('view-btn-list').classList.remove('active');
+      }
+      renderTraining();
+    }
+
+    function renderTraining() {
+      if (trainingViewMode === 'calendar') {
+        renderTrainingCalendar();
+      } else if (trainingViewMode === 'list') {
+        renderTrainingList();
+      }
+      // analytics模式下不需要渲染列表/日历
+    }
+
+    function exitAnalytics() {
+      switchTrainingView('list');
+    }
+
+    function openTrainingAnalytics(trainingId) {
+      analyticsTrainingId = trainingId;
+      analyticsCurrentTab = 'overview';
+      const event = data.training.find(x => x.id === trainingId);
+      const name = event ? event.name : '培训';
+      const project = event ? event.project : '';
+      const instructor = event ? (event.instructor || '') : '';
+      document.getElementById('analytics-training-name').textContent = name;
+      document.getElementById('analytics-training-sub').textContent = [project, instructor].filter(Boolean).join(' · ');
+      switchTrainingView('analytics');
+      switchAnalyticsTab('overview');
+    }
+
+    function switchAnalyticsTab(tab) {
+      analyticsCurrentTab = tab;
+      // 更新标签按钮样式
+      document.querySelectorAll('.analytics-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.classList.add('text-slate-600');
+      });
+      const activeBtn = document.getElementById('analytics-tab-' + tab);
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.classList.remove('text-slate-600');
+      }
+      // 渲染对应内容
+      const tid = analyticsTrainingId;
+      if (tab === 'overview') renderAnalyticsOverview(tid);
+      else if (tab === 'enroll') renderAnalyticsEnroll(tid);
+      else if (tab === 'survey') renderAnalyticsSurvey(tid);
+      else if (tab === 'exam') renderAnalyticsExam(tid);
+      else if (tab === 'attendance') renderAnalyticsAttendance(tid);
+    }
+
+    // ========== 数据分析 - 数据总览 ==========
+    function renderOverviewPct(pct) {
+      if (pct === null || pct === undefined) return '<span class="text-slate-300">-</span>';
+      const cls = pct >= 100 ? 'bg-emerald-50 text-emerald-600' : (pct > 0 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-500');
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${cls}">${pct}%</span>`;
+    }
+
+    async function renderAnalyticsOverview(trainingId) {
+      const container = document.getElementById('analytics-content');
+      container.innerHTML = '<div class="flex items-center justify-center py-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div><span class="ml-3 text-slate-500">加载数据总览...</span></div>';
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/overview');
+        const result = await res.json();
+        const overview = result.data || {};
+        const summary = overview.summary || {};
+        const users = overview.users || [];
+        const training = overview.training || {};
+        _analyticsOverviewData = { overview, trainingId };
+
+        const total = summary.total || 0;
+        const avgCompletionRate = summary.avgCompletionRate ?? 0;
+        const signinRate = summary.signinRate ?? 0;
+        const surveyRate = summary.surveyRate ?? 0;
+        const examPassRate = summary.examPassRate ?? 0;
+        const signinEnabled = summary.signinEnabled;
+        const surveyEnabled = summary.surveyEnabled;
+        const examEnabled = summary.examEnabled;
+
+        // 汇总卡片
+        const summaryCards = `
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center"><i class="fas fa-users text-indigo-500 text-sm"></i></div>
+                <span class="text-xs text-indigo-600/70">参与人数</span>
+              </div>
+              <p class="text-2xl font-bold text-indigo-700">${total}</p>
+            </div>
+            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i class="fas fa-chart-line text-emerald-500 text-sm"></i></div>
+                <span class="text-xs text-emerald-600/70">平均完成率</span>
+              </div>
+              <p class="text-2xl font-bold text-emerald-700">${avgCompletionRate}%</p>
+            </div>
+            ${signinEnabled ? `
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><i class="fas fa-clipboard-check text-blue-500 text-sm"></i></div>
+                <span class="text-xs text-blue-600/70">考勤完成率</span>
+              </div>
+              <p class="text-2xl font-bold text-blue-700">${signinRate}%</p>
+            </div>` : ''}
+            ${surveyEnabled ? `
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center"><i class="fas fa-poll text-purple-500 text-sm"></i></div>
+                <span class="text-xs text-purple-600/70">调研完成率</span>
+              </div>
+              <p class="text-2xl font-bold text-purple-700">${surveyRate}%</p>
+            </div>` : ''}
+            ${examEnabled ? `
+            <div class="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><i class="fas fa-file-alt text-amber-500 text-sm"></i></div>
+                <span class="text-xs text-amber-600/70">考试通过率</span>
+              </div>
+              <p class="text-2xl font-bold text-amber-700">${examPassRate}%</p>
+            </div>` : ''}
+          </div>`;
+
+        // 学员明细行
+        const rows = users.length > 0
+          ? users.map((u, i) => {
+            const seed = encodeURIComponent(u.userName || u.userId);
+            const avatarUrl = u.avatar && u.avatar.startsWith('http') ? u.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+            const sourceLabel = u.source === 'assigned'
+              ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-cyan-50 text-cyan-600">任务指派</span>'
+              : (u.source === 'self'
+                ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-600">主动报名</span>'
+                : '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500">未报名</span>');
+            const isIncomplete = u.completionRate < 100;
+            const examTitle = u.examPassed ? '已通过' : (u.examScore !== null ? `得分 ${u.examScore}，未通过` : '未参加');
+            return `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+              <td class="px-4 py-3 text-sm text-slate-500">${i + 1}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2.5">
+                  <img src="${avatarUrl}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm" />
+                  <span class="text-sm font-medium text-slate-800">${u.userName || '-'}</span>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-600">${u.department || '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${u.position || '-'}</td>
+              <td class="px-4 py-3">${sourceLabel}</td>
+              <td class="px-4 py-3">${renderOverviewPct(u.signinPct)}</td>
+              <td class="px-4 py-3">${renderOverviewPct(u.surveyPct)}</td>
+              <td class="px-4 py-3" title="${examTitle}">${renderOverviewPct(u.examPct)}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-16 bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div class="h-full ${u.completionRate >= 100 ? 'bg-emerald-500' : (u.completionRate > 0 ? 'bg-amber-500' : 'bg-red-400')} rounded-full transition-all duration-500" style="width: ${u.completionRate}%"></div>
+                  </div>
+                  <span class="text-xs font-medium ${u.completionRate >= 100 ? 'text-emerald-600' : (u.completionRate > 0 ? 'text-amber-600' : 'text-red-500')}">${u.completionRate}%</span>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-end gap-2">
+                  <button onclick="remindUserTraining(${trainingId}, ${u.userId}, '${(u.userName || '').replace(/'/g, '\\\'')}')" class="px-2.5 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-medium hover:bg-indigo-100 transition" title="发送消息中心提醒">
+                    <i class="fas fa-bell mr-1"></i>催促
+                  </button>
+                  ${isIncomplete ? `
+                  <button onclick="delayUserTraining(${trainingId}, ${u.userId}, '${(u.userName || '').replace(/'/g, '\\\'')}')" class="px-2.5 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-medium hover:bg-amber-100 transition" title="延期并提醒">
+                    <i class="fas fa-clock mr-1"></i>延期
+                  </button>` : ''}
+                </div>
+              </td>
+            </tr>`;
+          }).join('')
+          : `<tr><td colspan="10" class="px-4 py-12 text-center text-slate-400">
+              <i class="fas fa-chart-pie text-3xl mb-3 block text-slate-300"></i>
+              <p>暂无参与人员</p>
+            </td></tr>`;
+
+        // 未完成的学员数量
+        const incompleteCount = users.filter(u => u.completionRate < 100).length;
+
+        container.innerHTML = `
+          <div class="p-6">
+            <!-- 汇总卡片 -->
+            ${summaryCards}
+
+            <!-- 学员明细 -->
+            <div class="mt-6">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <h4 class="text-sm font-semibold text-slate-700"><i class="fas fa-list-ul text-indigo-400 mr-2"></i>学员完成明细</h4>
+                  ${incompleteCount > 0 ? `<span class="px-2 py-0.5 rounded-full bg-red-50 text-red-500 text-[10px] font-medium">${incompleteCount} 人未完成</span>` : ''}
+                </div>
+                <div class="flex items-center gap-2">
+                  ${incompleteCount > 0 ? `
+                  <button onclick="remindAllIncomplete(${trainingId})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-100 transition">
+                    <i class="fas fa-bullhorn mr-1"></i>批量催促
+                  </button>
+                  <button onclick="delayAllTraining(${trainingId})" class="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-xs font-medium hover:bg-amber-100 transition">
+                    <i class="fas fa-calendar-plus mr-1"></i>批量延期
+                  </button>` : ''}
+                  <button onclick="exportAnalyticsOverview()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
+                    <i class="fas fa-file-excel mr-1"></i>导出
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full">
+                  <thead class="bg-slate-50"><tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">岗位</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">报名情况</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">考勤</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">调研</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">考试</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">完成率</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500">操作</th>
+                  </tr></thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      } catch (err) {
+        container.innerHTML = '<div class="text-center py-20 text-slate-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p>加载数据总览失败</p></div>';
+      }
+    }
+
+    async function sendTrainingNotification(trainingId, userIds, type = 'remind') {
+      const event = data.training.find(x => x.id === trainingId);
+      const name = event ? event.name : '培训';
+      const title = type === 'delay' ? '培训学习时间延期' : '培训学习提醒';
+      const content = type === 'delay'
+        ? `您参与的「${name}」学习时间已延期，请合理安排时间尽快完成学习任务。`
+        : `您报名的「${name}」尚未完成，请尽快完成学习任务。`;
+      let sent = 0;
+      for (const userId of userIds) {
+        try {
+          const res = await fetch(API + '/notifications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, title, content, type: 'training', trainingId })
+          });
+          if (res.ok) sent++;
+        } catch (e) { /* ignore */ }
+      }
+      return sent;
+    }
+
+    async function remindUserTraining(trainingId, userId, userName) {
+      const sent = await sendTrainingNotification(trainingId, [userId], 'remind');
+      toast(sent > 0 ? `已向 ${userName || '该学员'} 发送催促提醒` : '发送提醒失败', sent > 0 ? 'success' : 'error');
+    }
+
+    async function remindAllIncomplete(trainingId) {
+      if (!_analyticsOverviewData || !_analyticsOverviewData.overview) return;
+      const users = _analyticsOverviewData.overview.users || [];
+      const incomplete = users.filter(u => u.completionRate < 100);
+      if (incomplete.length === 0) { toast('没有未完成的学员', 'warning'); return; }
+      if (!confirm(`确定向 ${incomplete.length} 名未完成学员发送催促提醒？`)) return;
+      const sent = await sendTrainingNotification(trainingId, incomplete.map(u => u.userId), 'remind');
+      toast(`已向 ${sent} 名学员发送催促提醒`);
+    }
+
+    function openDelayModal(trainingId, userIds) {
+      const event = data.training.find(x => x.id === trainingId);
+      const name = event ? event.name : '培训';
+      const currentEnd = event && event.endTime ? new Date(event.endTime).toLocaleString('zh-CN', { hour12: false }) : '未设置';
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">延期学习</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="confirmDelayTraining(event, ${trainingId})" class="p-6 space-y-4">
+            <div class="bg-slate-50 rounded-xl p-4 text-sm">
+              <p class="text-slate-500 mb-1">培训名称</p>
+              <p class="font-medium text-slate-800">${name}</p>
+              <p class="text-slate-500 mt-2 mb-1">当前截止时间</p>
+              <p class="font-medium text-slate-800">${currentEnd}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">延期天数 <span class="text-red-500">*</span></label>
+              <div class="flex items-center gap-2">
+                <input type="number" id="delay-days" min="1" max="365" value="3" required class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500">
+                <span class="text-sm text-slate-500">天</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="delay-notify" checked class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500">
+              <label for="delay-notify" class="text-sm text-slate-600">同时发送延期通知给学员</label>
+            </div>
+            <input type="hidden" id="delay-target-ids" value="${userIds.join(',')}">
+            <div class="flex justify-end space-x-3 pt-2">
+              <button type="button" onclick="closeModal()" class="px-5 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 text-sm">取消</button>
+              <button type="submit" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-medium transition">确认延期</button>
+            </div>
+          </form>
+        </div>`);
+    }
+
+    function delayUserTraining(trainingId, userId, userName) {
+      openDelayModal(trainingId, [userId]);
+    }
+
+    function delayAllTraining(trainingId) {
+      if (!_analyticsOverviewData || !_analyticsOverviewData.overview) return;
+      const users = _analyticsOverviewData.overview.users || [];
+      const incomplete = users.filter(u => u.completionRate < 100);
+      if (incomplete.length === 0) { toast('没有需要延期的学员', 'warning'); return; }
+      openDelayModal(trainingId, incomplete.map(u => u.userId));
+    }
+
+    async function confirmDelayTraining(e, trainingId) {
+      e.preventDefault();
+      const days = parseInt(document.getElementById('delay-days').value) || 0;
+      if (days <= 0) { toast('请输入有效的延期天数', 'error'); return; }
+      const event = data.training.find(x => x.id === trainingId);
+      const currentEnd = event && event.endTime ? event.endTime : new Date().toISOString().slice(0, 16);
+      const newEnd = new Date(new Date(currentEnd).getTime() + days * 24 * 60 * 60 * 1000);
+      const newEndStr = newEnd.toISOString().slice(0, 16);
+      try {
+        const res = await fetch(API + '/training/' + trainingId, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endTime: newEndStr })
+        });
+        const result = await res.json();
+        if (!result.success) { toast(result.error || '延期失败', 'error'); return; }
+        if (event) event.endTime = newEndStr;
+        const notify = document.getElementById('delay-notify').checked;
+        const idsStr = document.getElementById('delay-target-ids').value;
+        const userIds = idsStr ? idsStr.split(',').map(id => id.trim()).filter(Boolean) : [];
+        if (notify && userIds.length > 0) {
+          const sent = await sendTrainingNotification(trainingId, userIds, 'delay');
+          toast(`已延期 ${days} 天，并通知 ${sent} 名学员`);
+        } else {
+          toast(`已延期 ${days} 天`);
+        }
+        closeModal();
+      } catch (err) {
+        toast('延期操作失败', 'error');
+      }
+    }
+
+    function exportAnalyticsOverview() {
+      if (!_analyticsOverviewData || !_analyticsOverviewData.overview) { toast('暂无数据可导出', 'warning'); return; }
+      const event = data.training.find(x => x.id === _analyticsOverviewData.trainingId);
+      const name = event ? event.name : '培训';
+      const users = _analyticsOverviewData.overview.users || [];
+      const headers = ['序号', '姓名', '部门', '岗位', '报名来源', '考勤', '调研', '考试', '完成率'];
+      const rows = users.map((u, i) => [
+        i + 1,
+        u.userName || '-',
+        u.department || '-',
+        u.position || '-',
+        u.source === 'assigned' ? '任务指派' : (u.source === 'self' ? '主动报名' : '未报名'),
+        u.signinPct === null ? '未启用' : (u.signinPct + '%'),
+        u.surveyPct === null ? '未启用' : (u.surveyPct + '%'),
+        u.examPct === null ? '未启用' : (u.examPct + '%'),
+        u.completionRate + '%'
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '数据总览');
+      XLSX.writeFile(wb, name + '_数据总览_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('数据总览导出成功');
+    }
+
+    // ========== 数据分析 - 报名分析 ==========
+    async function renderAnalyticsEnroll(trainingId) {
+      const container = document.getElementById('analytics-content');
+      container.innerHTML = '<div class="flex items-center justify-center py-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div><span class="ml-3 text-slate-500">加载报名数据...</span></div>';
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/enrollments');
+        const result = await res.json();
+        const enrollments = result.data || [];
+        _analyticsEnrollData = { enrollments, trainingId };
+
+        // 部门统计
+        const deptStats = {};
+        enrollments.forEach(e => {
+          const dept = e.userDepartment || '未知部门';
+          deptStats[dept] = (deptStats[dept] || 0) + 1;
+        });
+        const sortedDepts = Object.entries(deptStats).sort((a, b) => b[1] - a[1]);
+        const maxDeptCount = sortedDepts.length > 0 ? sortedDepts[0][1] : 1;
+
+        const deptBars = sortedDepts.map(([dept, count]) => {
+          const pct = Math.round((count / maxDeptCount) * 100);
+          return `
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-slate-600 w-24 truncate text-right">${dept}</span>
+              <div class="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-indigo-400 to-indigo-600 rounded-full transition-all duration-500 flex items-center justify-end pr-2" style="width: ${pct}%">
+                  ${pct > 20 ? `<span class="text-[10px] text-white font-medium">${count}</span>` : ''}
+                </div>
+              </div>
+              ${pct <= 20 ? `<span class="text-xs text-slate-500 w-6">${count}</span>` : '<span class="w-6"></span>'}
+            </div>`;
+        }).join('') || '<p class="text-sm text-slate-400 text-center py-4">暂无报名数据</p>';
+
+        // 报名人员表格
+        const rows = enrollments.length > 0
+          ? enrollments.map((e, i) => {
+            const seed = encodeURIComponent(e.userName || e.userId);
+            const avatarUrl = e.userAvatar && e.userAvatar.startsWith('http') ? e.userAvatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+            return `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+              <td class="px-4 py-3 text-sm text-slate-500">${i + 1}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2.5">
+                  <img src="${avatarUrl}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm" />
+                  <span class="text-sm font-medium text-slate-800">${e.userName || '-'}</span>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-600">${e.userDepartment || '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${e.userPhone || '-'}</td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${e.source === 'assigned' ? 'bg-cyan-50 text-cyan-600' : 'bg-indigo-50 text-indigo-600'}">${e.source === 'assigned' ? '指派' : '自主报名'}</span>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-500">${e.enrolledAt ? new Date(e.enrolledAt).toLocaleString('zh-CN') : '-'}</td>
+              <td class="px-4 py-3 text-right">
+                <button onclick="removeEnrollmentAndRefresh(${e.id}, ${trainingId})" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="移除"><i class="fas fa-times text-xs"></i></button>
+              </td>
+            </tr>`;
+          }).join('')
+          : `<tr><td colspan="7" class="px-4 py-12 text-center text-slate-400">
+              <i class="fas fa-users text-3xl mb-3 block text-slate-300"></i>
+              <p>暂无报名人员</p>
+            </td></tr>`;
+
+        // 来源统计
+        const selfCount = enrollments.filter(e => e.source !== 'assigned').length;
+        const assignedCount = enrollments.filter(e => e.source === 'assigned').length;
+
+        container.innerHTML = `
+          <div class="p-6">
+            <!-- 概览卡片 -->
+            <div class="grid grid-cols-4 gap-4 mb-6">
+              <div class="bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center"><i class="fas fa-users text-indigo-500 text-sm"></i></div>
+                  <span class="text-xs text-indigo-600/70">报名总人数</span>
+                </div>
+                <p class="text-2xl font-bold text-indigo-700">${enrollments.length}</p>
+              </div>
+              <div class="bg-gradient-to-br from-cyan-50 to-cyan-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center"><i class="fas fa-user-plus text-cyan-500 text-sm"></i></div>
+                  <span class="text-xs text-cyan-600/70">指派人数</span>
+                </div>
+                <p class="text-2xl font-bold text-cyan-700">${assignedCount}</p>
+              </div>
+              <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i class="fas fa-hand-pointer text-emerald-500 text-sm"></i></div>
+                  <span class="text-xs text-emerald-600/70">自主报名</span>
+                </div>
+                <p class="text-2xl font-bold text-emerald-700">${selfCount}</p>
+              </div>
+              <div class="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><i class="fas fa-building text-amber-500 text-sm"></i></div>
+                  <span class="text-xs text-amber-600/70">涉及部门</span>
+                </div>
+                <p class="text-2xl font-bold text-amber-700">${sortedDepts.length}</p>
+              </div>
+            </div>
+            <!-- 部门分布 -->
+            <div class="mb-6">
+              <h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-chart-bar text-indigo-400 mr-2"></i>部门分布</h4>
+              <div class="space-y-2">${deptBars}</div>
+            </div>
+            <!-- 报名人员明细 -->
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-sm font-semibold text-slate-700"><i class="fas fa-list-ul text-indigo-400 mr-2"></i>报名人员明细</h4>
+                <div class="flex items-center gap-2">
+                  <button onclick="exportAnalyticsEnroll()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
+                    <i class="fas fa-file-excel mr-1"></i>导出
+                  </button>
+                  <button onclick="openAssignStudentsModal(${trainingId})" class="px-3 py-1.5 bg-cyan-50 text-cyan-600 rounded-lg text-xs font-medium hover:bg-cyan-100 transition">
+                    <i class="fas fa-user-plus mr-1"></i>指派学员
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full">
+                  <thead class="bg-slate-50"><tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">电话</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">来源</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">报名时间</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500">操作</th>
+                  </tr></thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      } catch (err) {
+        container.innerHTML = '<div class="text-center py-20 text-slate-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p>加载报名数据失败</p></div>';
+      }
+    }
+
+    // ========== 数据分析 - 导出Excel ==========
+    function exportAnalyticsEnroll() {
+      if (!_analyticsEnrollData || !_analyticsEnrollData.enrollments) { toast('暂无数据可导出', 'warning'); return; }
+      const event = data.training.find(x => x.id === _analyticsEnrollData.trainingId);
+      const name = event ? event.name : '培训';
+      const enrollments = _analyticsEnrollData.enrollments;
+
+      const headers = ['序号', '姓名', '部门', '电话', '来源', '报名时间'];
+      const rows = enrollments.map((e, i) => [
+        i + 1,
+        e.userName || '-',
+        e.userDepartment || '-',
+        e.userPhone || '-',
+        e.source === 'assigned' ? '指派' : '自主报名',
+        e.enrolledAt ? new Date(e.enrolledAt).toLocaleString('zh-CN') : '-'
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      // 设置列宽
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 10 }, { wch: 22 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '报名数据');
+      XLSX.writeFile(wb, name + '_报名分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('报名数据导出成功');
+    }
+
+    // 兼容两种 answers 格式：数组 [{questionId, value}] 和对象 {"1": value}
+    function getSurveyAnswerValue(answers, questionId) {
+      if (!answers) return null;
+      if (Array.isArray(answers)) {
+        const ans = answers.find(a => a.questionId === questionId);
+        if (!ans) return null;
+        return ans.value !== undefined ? ans.value : (ans.text || null);
+      }
+      return answers[questionId] ?? answers[String(questionId)] ?? null;
+    }
+
+    function exportAnalyticsSurvey() {
+      if (!_analyticsSurveyData || !_analyticsSurveyData.survey) { toast('暂无数据可导出', 'warning'); return; }
+      const event = data.training.find(x => x.id === _analyticsSurveyData.trainingId);
+      const name = event ? event.name : '培训';
+      const { survey, responses } = _analyticsSurveyData;
+
+      // 构建表头：序号 + 姓名 + 部门 + 提交时间 + 各题目
+      const questionTitles = (survey.questions || []).map(q => q.title || q.text || '题目');
+      const headers = ['序号', '填写人', '部门', '提交时间', ...questionTitles];
+      const rows = responses.map((r, i) => {
+        const answers = (survey.questions || []).map(q => {
+          const val = getSurveyAnswerValue(r.answers, q.id);
+          return val !== null && val !== undefined ? String(val) : '-';
+        });
+        return [
+          i + 1,
+          r.userName || '匿名',
+          r.department || '-',
+          r.submittedAt ? new Date(r.submittedAt).toLocaleString('zh-CN') : '-',
+          ...answers
+        ];
+      });
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 22 }, ...questionTitles.map(() => ({ wch: 20 }))];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '调研数据');
+      XLSX.writeFile(wb, name + '_调研分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('调研数据导出成功');
+    }
+
+    function exportAnalyticsExam() {
+      if (!_analyticsExamData || !_analyticsExamData.exam) { toast('暂无数据可导出', 'warning'); return; }
+      const event = data.training.find(x => x.id === _analyticsExamData.trainingId);
+      const name = event ? event.name : '培训';
+      const { exam, attempts } = _analyticsExamData;
+
+      const headers = ['序号', '姓名', '部门', '考试次数', '最高分', '是否通过', '最近提交时间'];
+      // 按学员聚合
+      const userMap = {};
+      attempts.forEach(a => {
+        const uid = String(a.userId);
+        if (!userMap[uid]) {
+          userMap[uid] = {
+            userName: a.userName || a.userId || '-',
+            department: a.department || '-',
+            attempts: []
+          };
+        }
+        userMap[uid].attempts.push(a);
+      });
+      const users = Object.values(userMap).map(u => {
+        u.attempts.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+        const completedAttempts = u.attempts.filter(a => a.status === 'completed' && a.score !== null);
+        u.bestScore = completedAttempts.length > 0 ? Math.max(...completedAttempts.map(a => a.score || 0)) : '-';
+        u.passed = completedAttempts.some(a => a.passed);
+        u.latestCompletedAt = completedAttempts[0]?.completedAt || u.attempts[0]?.completedAt;
+        return u;
+      });
+
+      const rows = users.map((u, i) => [
+        i + 1,
+        u.userName,
+        u.department,
+        u.attempts.length,
+        u.bestScore,
+        u.passed ? '通过' : '未通过',
+        u.latestCompletedAt ? new Date(u.latestCompletedAt).toLocaleString('zh-CN') : '-'
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 22 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '考试数据');
+      XLSX.writeFile(wb, name + '_考试分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('考试数据导出成功');
+    }
+
+    function exportAnalyticsAttendance() {
+      if (!_analyticsAttendanceData || !_analyticsAttendanceData.signins) { toast('暂无数据可导出', 'warning'); return; }
+      const { signins, event, absentNames, expectedCount, actualCount } = _analyticsAttendanceData;
+      const name = event ? event.name : '培训';
+
+      // Sheet 1: 签到明细
+      const headers = ['序号', '姓名', '部门', '签到时间', '状态'];
+      const rows = signins.map((s, i) => [
+        i + 1,
+        s.userName || '-',
+        s.department || '-',
+        s.signedAt ? new Date(s.signedAt).toLocaleString('zh-CN') : '-',
+        '已签到'
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 22 }, { wch: 8 }];
+
+      // Sheet 2: 考勤汇总
+      const summaryHeaders = ['项目', '数值'];
+      const absentCount = Math.max(0, (expectedCount || 0) - (actualCount || 0));
+      const rate = expectedCount > 0 ? Math.round((actualCount / expectedCount) * 100) + '%' : '-';
+      const summaryRows = [
+        ['培训课题', name],
+        ['讲师', event ? (event.instructor || '-') : '-'],
+        ['应到人数', expectedCount || 0],
+        ['实到人数', actualCount || 0],
+        ['缺卡人数', absentCount],
+        ['签到率', rate],
+        ['缺卡人员', (absentNames || []).join('、') || '无']
+      ];
+      const ws2 = XLSX.utils.aoa_to_sheet([summaryHeaders, ...summaryRows]);
+      ws2['!cols'] = [{ wch: 12 }, { wch: 40 }];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '签到明细');
+      XLSX.utils.book_append_sheet(wb, ws2, '考勤汇总');
+      XLSX.writeFile(wb, name + '_考勤分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('考勤数据导出成功');
+    }
+
+    async function removeEnrollmentAndRefresh(enrollId, trainingId) {
+      if (!confirm('确定移除该学员的报名?')) return;
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/enrollments/' + enrollId, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) {
+          toast('已移除报名');
+          renderAnalyticsEnroll(trainingId);
+        } else {
+          toast(result.error || '移除失败', 'error');
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+
+    // ========== 数据分析 - 调研分析 ==========
+    async function renderAnalyticsSurvey(trainingId) {
+      const container = document.getElementById('analytics-content');
+      container.innerHTML = '<div class="flex items-center justify-center py-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div><span class="ml-3 text-slate-500">加载调研数据...</span></div>';
+      try {
+        const [statusRes, respRes] = await Promise.all([
+          fetch(API + '/training/' + trainingId + '/service-status'),
+          fetch(API + '/training/' + trainingId + '/survey-responses')
+        ]);
+        const status = await statusRes.json();
+        const respResult = await respRes.json();
+        const survey = respResult.survey;
+        const responses = respResult.data || [];
+        _analyticsSurveyData = { survey, responses, trainingId };
+
+        if (!survey) {
+          container.innerHTML = `
+            <div class="text-center py-20 text-slate-400">
+              <i class="fas fa-poll text-4xl mb-4 block text-slate-300"></i>
+              <p class="text-lg font-medium text-slate-600 mb-2">未关联满意度调研</p>
+              <p class="text-sm mb-4">请先为该培训配置关联的满意度调研</p>
+              <button onclick="editTraining(${trainingId})" class="px-5 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition text-sm font-medium">去配置调研</button>
+            </div>`;
+          return;
+        }
+
+        // 评分统计
+        const ratingQuestions = (survey.questions || []).filter(q => q.type === 'rating');
+        const ratingStats = ratingQuestions.map(q => {
+          const values = responses.map(r => getSurveyAnswerValue(r.answers, q.id))
+            .filter(v => v !== null && v !== undefined && v !== '');
+          const avg = values.length > 0 ? (values.reduce((a, b) => a + parseFloat(b), 0) / values.length) : 0;
+          return { title: q.title, avg: avg.toFixed(1), count: values.length };
+        });
+
+        const overallAvg = ratingStats.length > 0
+          ? (ratingStats.reduce((s, r) => s + parseFloat(r.avg), 0) / ratingStats.length).toFixed(1)
+          : '-';
+
+        const ratingCards = ratingStats.map(r => `
+          <div class="bg-slate-50 rounded-xl p-4">
+            <p class="text-xs text-slate-500 mb-2 truncate" title="${r.title}">${r.title}</p>
+            <div class="flex items-end gap-2">
+              <p class="text-2xl font-bold text-slate-800">${r.avg}</p>
+              <span class="text-xs text-slate-400 pb-1">/ 5分</span>
+            </div>
+            <div class="mt-2 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full" style="width: ${(parseFloat(r.avg) / 5 * 100)}%"></div>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1">${r.count} 人评分</p>
+          </div>`).join('');
+
+        // 文本题统计
+        const textQuestions = (survey.questions || []).filter(q => q.type !== 'rating');
+        const textBlocks = textQuestions.map(q => {
+          const answers = responses.map(r => getSurveyAnswerValue(r.answers, q.id))
+            .filter(v => v !== null && v !== undefined && v !== '');
+          const answerItems = answers.slice(0, 10).map(a => `<div class="p-2 bg-slate-50 rounded-lg text-xs text-slate-600">${a}</div>`).join('');
+          return `
+            <div class="mb-4">
+              <h5 class="text-sm font-medium text-slate-700 mb-2">${q.title} <span class="text-xs text-slate-400">(${answers.length}条回答)</span></h5>
+              <div class="space-y-1.5 max-h-40 overflow-y-auto">${answerItems || '<p class="text-xs text-slate-400">暂无回答</p>'}</div>
+            </div>`;
+        }).join('');
+
+        // 填写人列表
+        const responseRows = responses.length > 0
+          ? responses.map((r, i) => `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+              <td class="px-4 py-2.5 text-sm text-slate-500">${i + 1}</td>
+              <td class="px-4 py-2.5 text-sm font-medium text-slate-800">${r.userName || '匿名'}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-600">${r.department || '-'}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-500">${new Date(r.submittedAt).toLocaleString('zh-CN')}</td>
+            </tr>`).join('')
+          : `<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-sm">暂无人填写</td></tr>`;
+
+        container.innerHTML = `
+          <div class="p-6">
+            <div class="grid grid-cols-3 gap-4 mb-6">
+              <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><i class="fas fa-star text-blue-500 text-sm"></i></div>
+                  <span class="text-xs text-blue-600/70">综合评分</span>
+                </div>
+                <p class="text-2xl font-bold text-blue-700">${overallAvg}</p>
+              </div>
+              <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i class="fas fa-user-check text-emerald-500 text-sm"></i></div>
+                  <span class="text-xs text-emerald-600/70">填写人数</span>
+                </div>
+                <p class="text-2xl font-bold text-emerald-700">${responses.length}</p>
+              </div>
+              <div class="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center"><i class="fas fa-question-circle text-purple-500 text-sm"></i></div>
+                  <span class="text-xs text-purple-600/70">题目数量</span>
+                </div>
+                <p class="text-2xl font-bold text-purple-700">${(survey.questions || []).length}</p>
+              </div>
+            </div>
+            ${ratingCards ? `<div class="mb-6"><h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-chart-line text-blue-400 mr-2"></i>评分统计</h4><div class="grid grid-cols-2 md:grid-cols-3 gap-3">${ratingCards}</div></div>` : ''}
+            ${textBlocks ? `<div class="mb-6"><h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-comments text-blue-400 mr-2"></i>文字回答</h4>${textBlocks}</div>` : ''}
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-sm font-semibold text-slate-700"><i class="fas fa-list-ul text-blue-400 mr-2"></i>填写人员明细</h4>
+                <button onclick="exportAnalyticsSurvey()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
+                  <i class="fas fa-file-excel mr-1"></i>导出
+                </button>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full">
+                  <thead class="bg-slate-50"><tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">填写人</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">提交时间</th>
+                  </tr></thead>
+                  <tbody>${responseRows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      } catch (err) {
+        container.innerHTML = '<div class="text-center py-20 text-slate-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p>加载调研数据失败</p></div>';
+      }
+    }
+
+    // ========== 数据分析 - 考试分析 ==========
+    async function renderAnalyticsExam(trainingId) {
+      const container = document.getElementById('analytics-content');
+      container.innerHTML = '<div class="flex items-center justify-center py-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div><span class="ml-3 text-slate-500">加载考试数据...</span></div>';
+      try {
+        const [statusRes, resultRes] = await Promise.all([
+          fetch(API + '/training/' + trainingId + '/service-status'),
+          fetch(API + '/training/' + trainingId + '/exam-results')
+        ]);
+        const status = await statusRes.json();
+        const result = await resultRes.json();
+        const exam = result.exam;
+        const attempts = result.data || [];
+        _analyticsExamData = { exam, attempts, trainingId };
+
+        if (!exam) {
+          container.innerHTML = `
+            <div class="text-center py-20 text-slate-400">
+              <i class="fas fa-file-alt text-4xl mb-4 block text-slate-300"></i>
+              <p class="text-lg font-medium text-slate-600 mb-2">未关联考试</p>
+              <p class="text-sm mb-4">请先为该培训配置关联的考试</p>
+              <button onclick="editTraining(${trainingId})" class="px-5 py-2 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition text-sm font-medium">去配置考试</button>
+            </div>`;
+          return;
+        }
+
+        // 按学员聚合考试记录
+        const userMap = {};
+        attempts.forEach(a => {
+          const uid = String(a.userId);
+          if (!userMap[uid]) {
+            userMap[uid] = {
+              userId: a.userId,
+              userName: a.userName || '未知用户',
+              department: a.department || '-',
+              position: a.position || '-',
+              attempts: []
+            };
+          }
+          userMap[uid].attempts.push(a);
+        });
+        const users = Object.values(userMap).map(u => {
+          u.attempts.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+          const completedAttempts = u.attempts.filter(a => a.status === 'completed' && a.score !== null);
+          u.bestScore = completedAttempts.length > 0 ? Math.max(...completedAttempts.map(a => a.score || 0)) : '-';
+          u.passed = completedAttempts.some(a => a.passed);
+          u.attemptCount = u.attempts.length;
+          u.latestCompletedAt = completedAttempts[0]?.completedAt || u.attempts[0]?.completedAt;
+          return u;
+        });
+
+        const passedCount = users.filter(u => u.passed).length;
+        const completedAll = attempts.filter(a => a.status === 'completed' && a.score !== null);
+        const avgScore = completedAll.length > 0
+          ? (completedAll.reduce((s, a) => s + (a.score || 0), 0) / completedAll.length).toFixed(1)
+          : '-';
+        const maxScore = completedAll.length > 0 ? Math.max(...completedAll.map(a => a.score || 0)) : '-';
+        const minScore = completedAll.length > 0 ? Math.min(...completedAll.map(a => a.score || 0)) : '-';
+        const passRate = users.length > 0 ? Math.round((passedCount / users.length) * 100) : 0;
+
+        // 分数段分布（按人次）
+        const scoreRanges = { '90-100': 0, '80-89': 0, '70-79': 0, '60-69': 0, '60以下': 0 };
+        attempts.forEach(a => {
+          const s = a.score || 0;
+          if (s >= 90) scoreRanges['90-100']++;
+          else if (s >= 80) scoreRanges['80-89']++;
+          else if (s >= 70) scoreRanges['70-79']++;
+          else if (s >= 60) scoreRanges['60-69']++;
+          else scoreRanges['60以下']++;
+        });
+        const maxRange = Math.max(...Object.values(scoreRanges), 1);
+
+        const rangeBars = Object.entries(scoreRanges).map(([range, count]) => {
+          const pct = Math.round((count / maxRange) * 100);
+          const color = range === '60以下' ? 'from-red-400 to-red-500' : range.startsWith('6') ? 'from-amber-400 to-amber-500' : 'from-emerald-400 to-emerald-500';
+          return `
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-slate-600 w-16 text-right">${range}</span>
+              <div class="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                <div class="h-full bg-gradient-to-r ${color} rounded-full flex items-center justify-end pr-2" style="width: ${pct}%">
+                  ${pct > 20 ? `<span class="text-[10px] text-white font-medium">${count}</span>` : ''}
+                </div>
+              </div>
+              ${pct <= 20 ? `<span class="text-xs text-slate-500 w-6">${count}</span>` : '<span class="w-6"></span>'}
+            </div>`;
+        }).join('');
+
+        const rows = users.length > 0
+          ? users.map((u, i) => `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+              <td class="px-4 py-2.5 text-sm text-slate-500">${i + 1}</td>
+              <td class="px-4 py-2.5 text-sm font-medium text-slate-800">${u.userName}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-600">${u.department}</td>
+              <td class="px-4 py-2.5">
+                <button onclick='openUserAttemptsModal(${JSON.stringify(u).replace(/'/g, "&#39;")})' class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition" title="查看每次考试记录">
+                  <i class="fas fa-history mr-1"></i>${u.attemptCount} 次
+                </button>
+              </td>
+              <td class="px-4 py-2.5 text-sm font-semibold ${u.passed ? 'text-emerald-600' : 'text-red-500'}">${u.bestScore}</td>
+              <td class="px-4 py-2.5">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${u.passed ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}">${u.passed ? '通过' : '未通过'}</span>
+              </td>
+              <td class="px-4 py-2.5 text-sm text-slate-500">${u.latestCompletedAt ? new Date(u.latestCompletedAt).toLocaleString('zh-CN') : '-'}</td>
+              <td class="px-4 py-2.5">
+                <button onclick='openUserAttemptDetailModal(${JSON.stringify(u).replace(/'/g, "&#39;")})' class="px-2.5 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-medium hover:bg-amber-100 transition" title="查看每次作答明细">
+                  <i class="fas fa-eye mr-1"></i>查看详情
+                </button>
+              </td>
+            </tr>`).join('')
+          : `<tr><td colspan="8" class="px-4 py-12 text-center text-slate-400 text-sm">暂无人参加考试</td></tr>`;
+
+        container.innerHTML = `
+          <div class="p-6">
+            <div class="grid grid-cols-5 gap-4 mb-6">
+              <div class="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><i class="fas fa-users text-amber-500 text-sm"></i></div>
+                  <span class="text-xs text-amber-600/70">参与人数</span>
+                </div>
+                <p class="text-2xl font-bold text-amber-700">${users.length}</p>
+              </div>
+              <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><i class="fas fa-chart-line text-blue-500 text-sm"></i></div>
+                  <span class="text-xs text-blue-600/70">平均分</span>
+                </div>
+                <p class="text-2xl font-bold text-blue-700">${avgScore}</p>
+              </div>
+              <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i class="fas fa-check-circle text-emerald-500 text-sm"></i></div>
+                  <span class="text-xs text-emerald-600/70">通过率</span>
+                </div>
+                <p class="text-2xl font-bold text-emerald-700">${passRate}%</p>
+              </div>
+              <div class="bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center"><i class="fas fa-trophy text-green-500 text-sm"></i></div>
+                  <span class="text-xs text-green-600/70">最高分</span>
+                </div>
+                <p class="text-2xl font-bold text-green-700">${maxScore}</p>
+              </div>
+              <div class="bg-gradient-to-br from-red-50 to-red-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center"><i class="fas fa-arrow-down text-red-500 text-sm"></i></div>
+                  <span class="text-xs text-red-600/70">最低分</span>
+                </div>
+                <p class="text-2xl font-bold text-red-700">${minScore}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-6 mb-6">
+              <div>
+                <h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-chart-bar text-amber-400 mr-2"></i>分数段分布</h4>
+                <div class="space-y-2">${rangeBars}</div>
+              </div>
+              <div class="flex items-center justify-center">
+                <div class="relative w-36 h-36">
+                  <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <path class="text-slate-200" stroke="currentColor" stroke-width="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="text-emerald-500" stroke="currentColor" stroke-width="3.5" fill="none" stroke-dasharray="${passRate}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  </svg>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span class="text-2xl font-bold text-slate-800">${passRate}%</span>
+                    <span class="text-[10px] text-slate-400">通过率</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-sm font-semibold text-slate-700"><i class="fas fa-list-ul text-amber-400 mr-2"></i>考试成绩明细</h4>
+                <button onclick="exportAnalyticsExam()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
+                  <i class="fas fa-file-excel mr-1"></i>导出
+                </button>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full">
+                  <thead class="bg-slate-50"><tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">考试次数</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">最高分</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">状态</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">最近提交时间</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500">操作</th>
+                  </tr></thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      } catch (err) {
+        container.innerHTML = '<div class="text-center py-20 text-slate-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p>加载考试数据失败</p></div>';
+      }
+    }
+
+    function openUserAttemptsModal(userData) {
+      const attempts = (userData.attempts || []).sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+      const rows = attempts.length > 0
+        ? attempts.map((a, idx) => `
+          <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+            <td class="px-4 py-3 text-sm text-slate-500">第 ${attempts.length - idx} 次</td>
+            <td class="px-4 py-3 text-sm font-semibold ${a.passed ? 'text-emerald-600' : 'text-red-500'}">${a.score ?? '-'}</td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${a.passed ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}">${a.passed ? '通过' : '未通过'}</span>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-600">${a.correctCount ?? '-'}/${a.totalQuestions ?? '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-500">${a.completedAt ? new Date(a.completedAt).toLocaleString('zh-CN') : '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-500">${a.durationUsed ? Math.round(a.durationUsed / 60) + ' 分钟' : '-'}</td>
+          </tr>`).join('')
+        : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400 text-sm">暂无考试记录</td></tr>';
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-800">${userData.userName} 的考试记录</h3>
+              <p class="text-xs text-slate-400 mt-0.5">共 ${attempts.length} 次考试，最佳分数 ${userData.bestScore ?? '-'} 分</p>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6 overflow-auto">
+            <div class="overflow-x-auto rounded-xl border border-slate-100">
+              <table class="w-full">
+                <thead class="bg-slate-50"><tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">次数</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">分数</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">状态</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">正确题数</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">提交时间</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">用时</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>`);
+    }
+
+    async function openUserAttemptDetailModal(userData) {
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-800">${userData.userName} 的作答明细</h3>
+              <p class="text-xs text-slate-400 mt-0.5">正在加载题目与答案...</p>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6 overflow-auto flex-1 flex items-center justify-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+          </div>
+        </div>`);
+
+      try {
+        const exam = _analyticsExamData && _analyticsExamData.exam;
+        if (!exam || !exam.questions || exam.questions.length === 0) {
+          toast('该考试未配置题目，无法查看作答明细', 'warning');
+          closeModal();
+          return;
+        }
+
+        const questionsRes = await fetch(API + '/questions');
+        const questionsResult = await questionsRes.json();
+        const allQuestions = questionsResult.data || [];
+        const questionMap = {};
+        allQuestions.forEach(q => { questionMap[String(q.id)] = q; });
+
+        const attempts = (userData.attempts || []).sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+        let attemptsHtml = '';
+        attempts.forEach((attempt, idx) => {
+          const answers = attempt.answers || {};
+          const attemptQuestionsHtml = exam.questions.map((pq, qidx) => {
+            const q = questionMap[String(pq.questionId)];
+            if (!q) return '';
+            const userAnswer = answers[String(pq.questionId)];
+            const isCorrect = isAnswerCorrect(q, userAnswer);
+            const answerText = renderUserAnswer(q, userAnswer);
+            const correctText = renderCorrectAnswer(q);
+            return `
+              <div class="border border-slate-100 rounded-xl p-4 mb-3 ${isCorrect ? 'bg-emerald-50/30' : 'bg-red-50/30'}">
+                <div class="flex items-start gap-3 mb-3">
+                  <span class="flex-shrink-0 w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-sm font-bold">${qidx + 1}</span>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-slate-800">${escHtml(q.content || q.title || '无题')}</p>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium mt-1 ${isCorrect ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}">${isCorrect ? '回答正确' : '回答错误'}</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div class="bg-white rounded-lg p-3 border border-slate-100">
+                    <p class="text-xs text-slate-400 mb-1">学员答案</p>
+                    <div class="text-slate-700">${answerText}</div>
+                  </div>
+                  <div class="bg-white rounded-lg p-3 border border-slate-100">
+                    <p class="text-xs text-slate-400 mb-1">参考答案</p>
+                    <div class="text-slate-700">${correctText}</div>
+                  </div>
+                </div>
+              </div>`;
+          }).join('');
+
+          attemptsHtml += `
+            <div class="mb-6">
+              <div class="flex items-center gap-3 mb-3 pb-2 border-b border-slate-100">
+                <span class="px-3 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-600">第 ${attempts.length - idx} 次</span>
+                <span class="text-sm font-semibold ${attempt.passed ? 'text-emerald-600' : 'text-red-500'}">${attempt.score ?? '-'} 分</span>
+                <span class="text-xs text-slate-400">${attempt.completedAt ? new Date(attempt.completedAt).toLocaleString('zh-CN') : '-'}</span>
+                ${attempt.durationUsed ? `<span class="text-xs text-slate-400">用时 ${Math.round(attempt.durationUsed / 60)} 分钟</span>` : ''}
+              </div>
+              ${attemptQuestionsHtml}
+            </div>`;
+        });
+
+        showModal(`
+          <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800">${userData.userName} 的作答明细</h3>
+                <p class="text-xs text-slate-400 mt-0.5">共 ${attempts.length} 次作答</p>
+              </div>
+              <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-auto">${attemptsHtml || '<p class="text-center text-slate-400 py-8">暂无作答数据</p>'}</div>
+          </div>`);
+      } catch (err) {
+        toast('加载作答明细失败', 'error');
+        closeModal();
+      }
+    }
+
+    function isChoiceType(type) {
+      return type === 'choice' || type === 'single' || type === 'multiple';
+    }
+
+    function normalizeAnswerToIndices(answer) {
+      if (answer === undefined || answer === null || answer === '') return [];
+      if (Array.isArray(answer)) return answer.map(x => parseInt(x)).filter(x => !isNaN(x));
+      if (typeof answer === 'number') return [answer];
+      const str = String(answer).trim().toUpperCase();
+      if (/^[A-Z]+$/.test(str)) return str.split('').map(ch => ch.charCodeAt(0) - 65);
+      const num = parseInt(str);
+      return isNaN(num) ? [] : [num];
+    }
+
+    function isAnswerCorrect(q, userAnswer) {
+      if (userAnswer === undefined || userAnswer === null || userAnswer === '') return false;
+      if (q.type === 'judge') {
+        const userVal = String(userAnswer).toLowerCase();
+        const correctVal = String(q.answer).toLowerCase();
+        const userBool = userVal === 'true' || userVal === '1' || userVal === '正确';
+        const correctBool = correctVal === 'true' || correctVal === '1' || correctVal === '正确';
+        return userBool === correctBool;
+      }
+      if (isChoiceType(q.type)) {
+        const userIndices = normalizeAnswerToIndices(userAnswer);
+        const correctIndices = normalizeAnswerToIndices(q.answer);
+        if (userIndices.length === 0 || correctIndices.length === 0) return false;
+        return userIndices.length === correctIndices.length && userIndices.every(idx => correctIndices.includes(idx));
+      }
+      // 填空/简答：简单文本对比
+      return String(userAnswer).trim() === String(q.answer || '').trim();
+    }
+
+    function renderUserAnswer(q, answer) {
+      if (answer === undefined || answer === null || answer === '') return '<span class="text-slate-400">未作答</span>';
+      if (isChoiceType(q.type)) {
+        const selected = normalizeAnswerToIndices(answer);
+        if (selected.length === 0) return escHtml(String(answer));
+        const labels = selected.map(idx => {
+          const opt = (q.options || [])[idx];
+          return opt !== undefined ? String.fromCharCode(65 + idx) + '. ' + escHtml(String(opt)) : '-';
+        });
+        return labels.join('<br>');
+      }
+      if (q.type === 'judge') {
+        const val = String(answer).toLowerCase();
+        return val === 'true' || val === '1' || val === '正确' ? '正确' : (val === 'false' || val === '0' || val === '错误' ? '错误' : escHtml(String(answer)));
+      }
+      return escHtml(String(answer));
+    }
+
+    function renderCorrectAnswer(q) {
+      if (isChoiceType(q.type)) {
+        const correct = normalizeAnswerToIndices(q.answer);
+        if (correct.length === 0) return escHtml(String(q.answer || ''));
+        const labels = correct.map(idx => {
+          const opt = (q.options || [])[idx];
+          return opt !== undefined ? String.fromCharCode(65 + idx) + '. ' + escHtml(String(opt)) : '-';
+        });
+        return labels.join('<br>');
+      }
+      if (q.type === 'judge') {
+        const val = String(q.answer).toLowerCase();
+        return val === 'true' || val === '1' || val === '正确' ? '正确' : (val === 'false' || val === '0' || val === '错误' ? '错误' : escHtml(String(q.answer)));
+      }
+      return escHtml(String(q.answer || ''));
+    }
+
+    // ========== 数据分析 - 考勤分析 ==========
+    async function renderAnalyticsAttendance(trainingId) {
+      const container = document.getElementById('analytics-content');
+      container.innerHTML = '<div class="flex items-center justify-center py-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div><span class="ml-3 text-slate-500">加载考勤数据...</span></div>';
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/signins');
+        const result = await res.json();
+        const signins = result.data || [];
+        const event = data.training.find(x => x.id === trainingId);
+        _analyticsAttendanceData = { signins, event, trainingId };
+
+        // 获取报名人数作为应到人数
+        let expectedCount = 0;
+        try {
+          const enrollRes = await fetch(API + '/training/' + trainingId + '/enroll-count');
+          const enrollData = await enrollRes.json();
+          expectedCount = enrollData.count || 0;
+        } catch(e) { /* ignore */ }
+
+        const actualCount = signins.length;
+        const absentCount = Math.max(0, expectedCount - actualCount);
+        const attendanceRate = expectedCount > 0 ? Math.round((actualCount / expectedCount) * 100) : 0;
+
+        // 签到时间分布
+        let earliestSignin = '-', latestSignin = '-';
+        if (signins.length > 0) {
+          const sorted = [...signins].sort((a, b) => new Date(a.signedAt) - new Date(b.signedAt));
+          earliestSignin = new Date(sorted[0].signedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+          latestSignin = new Date(sorted[sorted.length - 1].signedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // 获取报名人员列表来计算缺卡人员
+        let absentNames = [];
+        try {
+          const enrollRes = await fetch(API + '/training/' + trainingId + '/enrollments');
+          const enrollData = await enrollRes.json();
+          const enrolledUsers = (enrollData.data || []).map(e => e.userId);
+          const signedUserIds = new Set(signins.map(s => s.userId));
+          const enrollments = enrollData.data || [];
+          absentNames = enrollments.filter(e => !signedUserIds.has(e.userId)).map(e => e.userName || '未知');
+        } catch(e) { /* ignore */ }
+        _analyticsAttendanceData.absentNames = absentNames;
+        _analyticsAttendanceData.expectedCount = expectedCount;
+        _analyticsAttendanceData.actualCount = actualCount;
+
+        const rows = signins.length > 0
+          ? signins.map((s, i) => {
+            const seed = encodeURIComponent(s.userName || s.userId);
+            const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+            return `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+              <td class="px-4 py-2.5 text-sm text-slate-500">${i + 1}</td>
+              <td class="px-4 py-2.5">
+                <div class="flex items-center gap-2">
+                  <img src="${avatarUrl}" class="w-7 h-7 rounded-full object-cover" />
+                  <span class="text-sm font-medium text-slate-800">${s.userName || '-'}</span>
+                </div>
+              </td>
+              <td class="px-4 py-2.5 text-sm text-slate-600">${s.department || '-'}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-500">${new Date(s.signedAt).toLocaleString('zh-CN')}</td>
+              <td class="px-4 py-2.5">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-600">已签到</span>
+              </td>
+            </tr>`;
+          }).join('')
+          : `<tr><td colspan="5" class="px-4 py-12 text-center text-slate-400 text-sm">暂无签到记录</td></tr>`;
+
+        container.innerHTML = `
+          <div class="p-6">
+            <div class="grid grid-cols-4 gap-4 mb-6">
+              <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i class="fas fa-clipboard-check text-emerald-500 text-sm"></i></div>
+                  <span class="text-xs text-emerald-600/70">签到率</span>
+                </div>
+                <p class="text-2xl font-bold text-emerald-700">${expectedCount > 0 ? attendanceRate + '%' : '-'}</p>
+              </div>
+              <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><i class="fas fa-user-clock text-blue-500 text-sm"></i></div>
+                  <span class="text-xs text-blue-600/70">应到人数</span>
+                </div>
+                <p class="text-2xl font-bold text-blue-700">${expectedCount}</p>
+              </div>
+              <div class="bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center"><i class="fas fa-check text-green-500 text-sm"></i></div>
+                  <span class="text-xs text-green-600/70">实到人数</span>
+                </div>
+                <p class="text-2xl font-bold text-green-700">${actualCount}</p>
+              </div>
+              <div class="bg-gradient-to-br from-red-50 to-red-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center"><i class="fas fa-user-times text-red-500 text-sm"></i></div>
+                  <span class="text-xs text-red-600/70">缺卡人数</span>
+                </div>
+                <p class="text-2xl font-bold text-red-700">${absentCount}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-6 mb-6">
+              <div>
+                <h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-info-circle text-emerald-400 mr-2"></i>签到概况</h4>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">培训课题</span><span class="font-medium text-slate-800">${event ? event.name : '-'}</span></div>
+                  <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">讲师</span><span class="font-medium text-slate-800">${event ? (event.instructor || '-') : '-'}</span></div>
+                  <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">最早签到</span><span class="font-medium text-emerald-600">${earliestSignin}</span></div>
+                  <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">最晚签到</span><span class="font-medium text-amber-600">${latestSignin}</span></div>
+                </div>
+              </div>
+              ${absentNames.length > 0 ? `
+              <div>
+                <h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-user-times text-red-400 mr-2"></i>缺卡人员</h4>
+                <div class="flex flex-wrap gap-2">
+                  ${absentNames.map(name => `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-600"><i class="fas fa-user text-[8px]"></i>${name}</span>`).join('')}
+                </div>
+              </div>` : ''}
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-sm font-semibold text-slate-700"><i class="fas fa-list-ul text-emerald-400 mr-2"></i>签到明细</h4>
+                <button onclick="exportAnalyticsAttendance()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
+                  <i class="fas fa-file-excel mr-1"></i>导出
+                </button>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full">
+                  <thead class="bg-slate-50"><tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">签到时间</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">状态</th>
+                  </tr></thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      } catch (err) {
+        container.innerHTML = '<div class="text-center py-20 text-slate-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p>加载考勤数据失败</p></div>';
+      }
+    }
+
+    function getTrainingTypeClass(project) {
+      const classes = {
+        '新雁计划': 'from-orange-400 to-orange-600',
+        '游雁学堂': 'from-blue-400 to-blue-600',
+        '鸿雁计划': 'from-green-400 to-green-600',
+        'AI实践分享': 'from-amber-400 to-amber-600',
+        '雏雁训练营': 'from-red-400 to-red-600'
+      };
+      return classes[project] || 'from-gray-400 to-gray-600';
+    }
+
+    function getTrainingTypeName(project) {
+      return project;
+    }
+
+    function renderTrainingCalendar() {
+      const grid = document.getElementById('training-calendar-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const firstDay = new Date(trainingCurrentYear, trainingCurrentMonth, 1);
+      const lastDay = new Date(trainingCurrentYear, trainingCurrentMonth + 1, 0);
+      const startDay = firstDay.getDay();
+      const events = data.training || [];
+
+      for (let i = 0; i < startDay; i++) {
+        grid.innerHTML += '<div class="aspect-square"></div>';
+      }
+
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const dateStr = `${trainingCurrentYear}-${String(trainingCurrentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEvents = events.filter(e => e.date === dateStr);
+        const todayLocal = new Date();
+        const todayStr = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth()+1).padStart(2,'0')}-${String(todayLocal.getDate()).padStart(2,'0')}`;
+        const isToday = dateStr === todayStr;
+        const holidayName = trainingHolidays[dateStr];
+        const weekDay = new Date(trainingCurrentYear, trainingCurrentMonth, day).getDay();
+        const isWeekend = weekDay === 0 || weekDay === 6;
+
+        let cellClass = 'aspect-square rounded-lg p-2 cursor-pointer transition-all duration-300 border border-gray-100 overflow-hidden';
+        if (holidayName) {
+          cellClass += ' bg-gradient-to-br from-red-50 to-red-100 hover:shadow-md hover:-translate-y-0.5';
+        } else if (isWeekend) {
+          cellClass += ' bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-md hover:-translate-y-0.5';
+        } else {
+          cellClass += ' bg-gradient-to-br from-white to-gray-50 hover:shadow-md hover:-translate-y-0.5';
+        }
+        if (isToday) {
+          cellClass += ' ring-2 ring-primary/40 ring-offset-2';
+        }
+
+        let eventsHtml = '';
+        if (dayEvents.length > 0) {
+          eventsHtml = dayEvents.slice(0, 2).map(e => {
+            const cat = trainingCategories[e.project] || { color: 'bg-gray-100 text-gray-600' };
+            return `
+              <div class="mt-1 truncate">
+                <span class="${cat.color} inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-semibold">
+                  ${e.project}
+                </span>
+                <div class="mt-0.5 text-gray-800 text-sm font-medium truncate leading-tight">${e.name}</div>
+                <div class="text-gray-400 text-xs truncate leading-tight">${e.instructor || ''}</div>
+              </div>
+            `;
+          }).join('');
+          if (dayEvents.length > 2) {
+            eventsHtml += `<div class="mt-0.5 text-gray-400 text-[10px] text-center">+${dayEvents.length - 2}</div>`;
+          }
+        } else if (holidayName) {
+          eventsHtml = `<div class="mt-1 text-red-500 text-xs font-medium text-center">${holidayName}</div>`;
+        }
+
+        grid.innerHTML += `
+          <div class="${cellClass}" onclick="handleTrainingDayClick('${dateStr}')">
+            <div class="flex flex-col h-full relative overflow-hidden">
+              ${holidayName ? '<span class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded flex items-center justify-center shadow-sm">休</span>' : ''}
+              <div class="flex justify-between items-start">
+                <span class="${isToday ? 'bg-primary text-white' : 'bg-purple-100 text-purple-600'} rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium shadow-sm">${day}</span>
+                <span class="text-gray-400 text-[10px]">${dayEvents.length > 0 ? dayEvents.length + '场' : ''}</span>
+              </div>
+              ${eventsHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('training-current-month').textContent = `${trainingCurrentYear}年${trainingCurrentMonth + 1}月`;
+    }
+
+    async function renderTrainingList() {
+      const tbody = document.getElementById('training-table-body');
+      const emptyState = document.getElementById('training-list-empty');
+      const events = data.training || [];
+
+      if (events.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+
+      // 批量获取报名人数
+      const enrollCounts = {};
+      try {
+        const results = await Promise.all(events.map(e =>
+          fetch(API + '/training/' + e.id + '/enroll-count').then(r => r.json()).then(d => ({ id: e.id, count: d.count || 0 }))
+        ));
+        results.forEach(r => { enrollCounts[r.id] = r.count; });
+      } catch(e) { /* 获取失败不影响列表展示 */ }
+
+      tbody.innerHTML = events.map(e => {
+        const cat = trainingCategories[e.project] || { color: 'bg-slate-100 text-slate-600' };
+        const start = e.startTime ? (e.startTime.includes('T') ? e.startTime.replace('T', ' ') : e.startTime) : '-';
+        const end = e.endTime ? (e.endTime.includes('T') ? e.endTime.replace('T', ' ') : e.endTime) : '-';
+        // 集成服务状态
+        const hasSignin = e.signinEnabled;
+        const hasSurvey = e.linkedSurveyId;
+        const hasExam = e.linkedExamId;
+        const serviceBadges = [];
+        if (hasSignin) serviceBadges.push(`<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-600"><i class="fas fa-check-circle text-[8px]"></i>签到</span>`);
+        if (hasSurvey) serviceBadges.push(`<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-600"><i class="fas fa-poll text-[8px]"></i>调研</span>`);
+        if (hasExam) serviceBadges.push(`<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-600"><i class="fas fa-file-alt text-[8px]"></i>考试</span>`);
+        const serviceHtml = serviceBadges.length > 0 ? `<div class="flex flex-wrap gap-1 justify-center">${serviceBadges.join('')}</div>` : '<span class="text-xs text-slate-300">-</span>';
+        const enrollCount = enrollCounts[e.id] || 0;
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-6 py-4"><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${cat.color}"><i class="fas ${cat.icon || 'fa-tag'} text-[10px]"></i>${e.project}</span></td>
+            <td class="px-6 py-4 text-sm font-medium text-slate-800">${e.name}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${e.instructor || '-'}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${e.location || '-'}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${start}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${end}</td>
+            <td class="px-6 py-4 text-center">${serviceHtml}</td>
+            <td class="px-6 py-4 text-center">
+              <span class="inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-full text-xs font-semibold ${enrollCount > 0 ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}">${enrollCount}</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <div class="flex items-center justify-end gap-1">
+                <button onclick="openTrainingImageUpload(${e.id})" class="p-2 text-pink-500 hover:bg-pink-50 rounded-lg transition cursor-pointer" title="上传图片"><i class="fas fa-image"></i></button>
+                <button onclick="openTrainingAnalytics(${e.id})" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="数据分析"><i class="fas fa-chart-pie"></i></button>
+                <button onclick="openTrainingShareModal(${e.id})" class="p-2 text-purple-500 hover:bg-purple-50 rounded-lg transition" title="分享"><i class="fas fa-share-alt"></i></button>
+                <button onclick="editTraining(${e.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit"></i></button>
+                <button onclick="deleteTraining(${e.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function handleTrainingDayClick(dateStr) {
+      const events = (data.training || []).filter(e => e.date === dateStr);
+      if (events.length === 0) {
+        // 无培训时直接打开添加弹窗,并预填日期
+        openTrainingModal(null, dateStr);
+      } else {
+        // 有培训时显示详情弹窗
+        showTrainingDayModal(dateStr, events);
+      }
+    }
+
+    function showTrainingDayModal(dateStr, events) {
+      const d = new Date(dateStr);
+      const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+      const dateText = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${weekDays[d.getDay()]}`;
+
+      const eventsHtml = events.map(e => {
+        const cat = trainingCategories[e.project] || { color: 'bg-slate-100 text-slate-600', icon: 'fa-tag' };
+        const start = e.startTime ? (e.startTime.includes('T') ? e.startTime.split('T')[1].slice(0, 5) : e.startTime) : '-';
+        const end = e.endTime ? (e.endTime.includes('T') ? e.endTime.split('T')[1].slice(0, 5) : e.endTime) : '-';
+        return `
+          <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
+              <i class="fas ${cat.icon} text-white text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-medium px-2 py-0.5 rounded-full ${cat.color}">${e.project}</span>
+              </div>
+              <h4 class="font-semibold text-slate-800 text-sm">${e.name}</h4>
+              <p class="text-xs text-slate-500 mt-1 line-clamp-2">${e.content || ''}</p>
+              <div class="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                <span><i class="fas fa-user mr-1"></i>${e.instructor || '-'}</span>
+                <span><i class="fas fa-map-marker-alt mr-1"></i>${e.location || '-'}</span>
+                <span><i class="fas fa-clock mr-1"></i>${start}-${end}</span>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1">
+              <button onclick="closeModal(); editTraining(${e.id})" class="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit text-xs"></i></button>
+              <button onclick="closeModal(); deleteTraining(${e.id})" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash text-xs"></i></button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-800">当天培训安排</h3>
+              <p class="text-sm text-slate-500">${dateText}</p>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6 space-y-3 max-h-[60vh] overflow-y-auto">
+            ${eventsHtml}
+          </div>
+          <div class="px-6 pb-6 pt-2 border-t border-slate-100">
+            <button onclick="closeModal(); openTrainingModal(null, '${dateStr}')" class="w-full py-2.5 btn-primary text-white rounded-xl font-medium transition">
+              <i class="fas fa-plus mr-2"></i>添加新培训
+            </button>
+          </div>
+        </div>
+      `);
+    }
+
+    function openTrainingImageUpload(trainingId) {
+      const event = data.training.find(x => x.id === trainingId);
+      if (!event) {
+        toast('培训记录不存在', 'error');
+        return;
+      }
+
+      // 从 localStorage 读取已有图片（兼容数字和字符串两种 key）
+      const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+      let galleryData = gallery[trainingId];
+      if (!galleryData && typeof trainingId === 'number') {
+        galleryData = gallery[String(trainingId)];
+      }
+      if (!galleryData && typeof trainingId === 'string') {
+        galleryData = gallery[parseInt(trainingId)];
+      }
+      const existingImages = (galleryData && galleryData.images) ? galleryData.images : [];
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-image text-pink-500 mr-2"></i>上传培训图片</h3>
+              <p class="text-sm text-slate-500">${event.name}</p>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6">
+            <div id="upload-dropzone" class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-pink-300 hover:bg-pink-50/30 transition cursor-pointer" onclick="document.getElementById('training-image-input').click()">
+              <i class="fas fa-cloud-upload-alt text-4xl text-slate-300 mb-3"></i>
+              <p class="text-sm text-slate-600 font-medium">点击或拖拽上传图片</p>
+              <p class="text-xs text-slate-400 mt-1">支持 JPG、PNG、GIF，单张不超过 5MB</p>
+              <input type="file" id="training-image-input" accept="image/*" multiple class="hidden" onchange="handleTrainingImageUpload(${trainingId}, this.files)">
+            </div>
+            <div id="upload-preview-area" class="mt-4 hidden">
+              <p class="text-sm font-medium text-slate-700 mb-2">待上传图片：</p>
+              <div id="upload-preview-list" class="grid grid-cols-4 gap-2"></div>
+            </div>
+            <div id="upload-existing-area" class="mt-4 ${existingImages.length > 0 ? '' : 'hidden'}">
+              <p class="text-sm font-medium text-slate-700 mb-2">已有图片：</p>
+              <div id="upload-existing-list" class="grid grid-cols-4 gap-2">
+                ${existingImages.map((img, i) => `
+                  <div class="relative group aspect-square rounded-lg overflow-hidden border border-slate-200">
+                    <img src="${img}" class="w-full h-full object-cover">
+                    <button onclick="deleteTrainingImage(${trainingId}, ${i})" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+            <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+            <button id="upload-submit-btn" onclick="submitTrainingImages(${trainingId})" class="px-5 py-2 btn-primary text-white rounded-xl font-medium transition opacity-50 cursor-not-allowed" disabled>开始上传</button>
+          </div>
+        </div>
+      `);
+
+      // 拖拽上传支持
+      setTimeout(() => {
+        const dropzone = document.getElementById('upload-dropzone');
+        if (dropzone) {
+          dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-pink-400', 'bg-pink-50'); });
+          dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('border-pink-400', 'bg-pink-50'); });
+          dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('border-pink-400', 'bg-pink-50');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+              document.getElementById('training-image-input').files = files;
+              handleTrainingImageUpload(trainingId, files);
+            }
+          });
+        }
+      }, 100);
+    }
+
+    let pendingUploadFiles = [];
+
+    function handleTrainingImageUpload(trainingId, files) {
+      pendingUploadFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+      if (pendingUploadFiles.length === 0) {
+        toast('请选择图片文件', 'warning');
+        return;
+      }
+
+      const previewArea = document.getElementById('upload-preview-area');
+      const previewList = document.getElementById('upload-preview-list');
+      const submitBtn = document.getElementById('upload-submit-btn');
+
+      previewArea.classList.remove('hidden');
+      previewList.innerHTML = pendingUploadFiles.map((file, i) => {
+        const url = URL.createObjectURL(file);
+        return `
+          <div class="relative aspect-square rounded-lg overflow-hidden border border-slate-200">
+            <img src="${url}" class="w-full h-full object-cover">
+            <button onclick="removePendingImage(${i})" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
+    function removePendingImage(index) {
+      pendingUploadFiles.splice(index, 1);
+      if (pendingUploadFiles.length === 0) {
+        document.getElementById('upload-preview-area').classList.add('hidden');
+        const submitBtn = document.getElementById('upload-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        handleTrainingImageUpload(null, pendingUploadFiles);
+      }
+    }
+
+    async function submitTrainingImages(trainingId) {
+      if (pendingUploadFiles.length === 0) {
+        toast('没有待上传的图片', 'warning');
+        return;
+      }
+
+      const submitBtn = document.getElementById('upload-submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>处理中...';
+
+      const uploadedUrls = [];
+      for (const file of pendingUploadFiles) {
+        try {
+          // 读取文件为 base64 存储到 localStorage
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          uploadedUrls.push(base64);
+        } catch (err) {
+          toast(`处理失败: ${file.name}`, 'error');
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        // 存储到 localStorage 的 training_gallery
+        const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+        
+        // 兼容数字和字符串两种 key
+        let data = gallery[trainingId];
+        if (!data && typeof trainingId === 'number') {
+          data = gallery[String(trainingId)];
+        }
+        if (!data && typeof trainingId === 'string') {
+          data = gallery[parseInt(trainingId)];
+        }
+        
+        if (!data) {
+          data = { images: [] };
+          gallery[trainingId] = data;
+        }
+        
+        data.images = [...(data.images || []), ...uploadedUrls];
+        localStorage.setItem('training_gallery', JSON.stringify(gallery));
+
+        // 更新本地数据
+        const event = data.training.find(x => x.id === trainingId || x.id === parseInt(trainingId) || x.id === String(trainingId));
+        if (event) {
+          event.images = data.images;
+        }
+
+        toast(`成功添加 ${uploadedUrls.length} 张图片`, 'success');
+        closeModal();
+        renderTrainingList();
+      } else {
+        toast('处理失败，请重试', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '开始上传';
+      }
+
+      pendingUploadFiles = [];
+    }
+
+    async function deleteTrainingImage(trainingId, imageIndex) {
+      if (!confirm('确定要删除这张图片吗？')) return;
+
+      const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+      
+      // 兼容数字和字符串两种 key
+      let data = gallery[trainingId];
+      if (!data && typeof trainingId === 'number') {
+        data = gallery[String(trainingId)];
+      }
+      if (!data && typeof trainingId === 'string') {
+        data = gallery[parseInt(trainingId)];
+      }
+      
+      if (!data || !data.images || !data.images[imageIndex]) {
+        toast('图片不存在', 'error');
+        return;
+      }
+
+      // 从 localStorage 删除
+      data.images.splice(imageIndex, 1);
+      localStorage.setItem('training_gallery', JSON.stringify(gallery));
+
+      // 更新本地数据
+      const event = data.training.find(x => x.id === trainingId || x.id === parseInt(trainingId) || x.id === String(trainingId));
+      if (event) {
+        event.images = data.images;
+      }
+
+      toast('图片已删除', 'success');
+      // 刷新弹窗
+      openTrainingImageUpload(trainingId);
+      renderTrainingList();
+    }
+
+    function prevTrainingMonth() {
+      if (trainingCurrentMonth === 0) {
+        trainingCurrentMonth = 11;
+        trainingCurrentYear--;
+      } else {
+        trainingCurrentMonth--;
+      }
+      renderTrainingCalendar();
+    }
+
+    function nextTrainingMonth() {
+      if (trainingCurrentMonth === 11) {
+        trainingCurrentMonth = 0;
+        trainingCurrentYear++;
+      } else {
+        trainingCurrentMonth++;
+      }
+      renderTrainingCalendar();
+    }
+
+    function goToTrainingToday() {
+      const today = new Date();
+      trainingCurrentYear = today.getFullYear();
+      trainingCurrentMonth = today.getMonth();
+      renderTrainingCalendar();
+    }
+
+    // ========== 讲师下拉选择 ==========
+    function showLecturerDropdown() {
+      const dropdown = document.getElementById('t-instructor-dropdown');
+      if (!dropdown) return;
+      const list = data.lecturers || [];
+      const html = list.map(l => `
+        <div onclick="selectLecturer('${l.name.replace(/'/g, "\\'")}')" class="px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm text-slate-700 border-b border-slate-50 last:border-0">
+          <div class="font-medium">${l.name}</div>
+          <div class="text-xs text-slate-400">${l.department || ''} ${l.levelName || ''}</div>
+        </div>
+      `).join('');
+      dropdown.innerHTML = html || '<div class="px-4 py-3 text-sm text-slate-400 text-center">暂无讲师数据</div>';
+      dropdown.classList.remove('hidden');
+    }
+
+    function filterLecturerDropdown(val) {
+      const dropdown = document.getElementById('t-instructor-dropdown');
+      if (!dropdown) return;
+      const list = data.lecturers || [];
+      const keyword = val.trim().toLowerCase();
+      const filtered = keyword ? list.filter(l => l.name.toLowerCase().includes(keyword) || (l.department || '').toLowerCase().includes(keyword)) : list;
+      const html = filtered.map(l => `
+        <div onclick="selectLecturer('${l.name.replace(/'/g, "\\'")}')" class="px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm text-slate-700 border-b border-slate-50 last:border-0">
+          <div class="font-medium">${l.name}</div>
+          <div class="text-xs text-slate-400">${l.department || ''} ${l.levelName || ''}</div>
+        </div>
+      `).join('');
+      dropdown.innerHTML = html || '<div class="px-4 py-3 text-sm text-slate-400 text-center">无匹配讲师</div>';
+      dropdown.classList.remove('hidden');
+    }
+
+    function selectLecturer(name) {
+      const input = document.getElementById('t-instructor');
+      const dropdown = document.getElementById('t-instructor-dropdown');
+      if (input) input.value = name;
+      if (dropdown) dropdown.classList.add('hidden');
+    }
+
+    // 点击外部关闭讲师下拉
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('t-instructor-dropdown');
+      const input = document.getElementById('t-instructor');
+      if (dropdown && !dropdown.contains(e.target) && e.target !== input) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    // 培训弹窗全局状态
+    let currentEditingTraining = null;
+    let currentEditingTrainingId = null;
+    let trainingUserPickerData = [];
+    let trainingUserPickerTemp = new Set();
+
+    async function openTrainingModal(training = null, prefillDate = null) {
+      const isEdit = !!training;
+      currentEditingTraining = training;
+      currentEditingTrainingId = training?.id || null;
+
+      // 确保 surveys / exams 已加载
+      await loadAllData();
+      const surveys = data.surveys || [];
+      const exams = data.exams || [];
+
+      const startTimeValue = training?.startTime || '';
+      const endTimeValue = training?.endTime || '';
+
+      // 处理 datetime-local 格式,支持手动输入
+      const toDatetimeLocal = (val, fallbackDate, fallbackTime) => {
+        if (!val) {
+          if (fallbackDate) return `${fallbackDate}T${fallbackTime || '09:00'}`;
+          return '';
+        }
+        const normalized = val.trim().replace(' ', 'T');
+        if (normalized.includes('T')) return normalized;
+        return normalized + 'T09:00';
+      };
+
+      const categoryOptions = Object.keys(trainingCategories).map(cat =>
+        `<option value="${cat}" ${(training?.project || '') === cat ? 'selected' : ''}>${cat}</option>`
+      ).join('');
+
+      const surveyOptions = surveys.map(s => `<option value="${s.id}" ${training?.linkedSurveyId === s.id ? 'selected' : ''}>${escHtml(s.title)}</option>`).join('');
+
+      const signinEnabled = training?.signinEnabled || false;
+      const signinCode = training?.signinCode || '';
+      const examEnabled = training?.examEnabled || false;
+      const surveyEnabled = training?.surveyEnabled || false;
+      const coursewareEnabled = training?.coursewareEnabled || false;
+      const linkedExam = examEnabled ? (exams.find(e => e.id === training.linkedExamId) || null) : null;
+      const signinStartValue = training?.signinStartTime || training?.startTime || startTimeValue;
+      const signinEndValue = training?.signinEndTime || training?.endTime || endTimeValue;
+
+      // 任务指派回填
+      let accessType = training?.accessType || 'none';
+      if (accessType === 'open' || accessType === 'public') accessType = 'public';
+      else if (accessType === 'restricted') accessType = (training?.allowedUsers && training.allowedUsers.length) ? 'restricted' : 'none';
+      else accessType = 'none';
+
+      trainingUserPickerTemp = new Set();
+      if (training?.allowedUsers && Array.isArray(training.allowedUsers)) {
+        training.allowedUsers.forEach(uid => trainingUserPickerTemp.add(String(uid)));
+      }
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑' : '添加'}培训</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form id="training-form" onsubmit="saveTraining(event, ${training?.id || 'null'})" class="flex-1 overflow-y-auto p-6 space-y-5">
+
+            <!-- 基本信息（折叠，默认展开） -->
+            <div class="border border-slate-200 rounded-xl overflow-hidden">
+              <div onclick="toggleTrainingPanel('basicInfo')" class="flex items-center justify-between px-4 py-3 bg-slate-50 cursor-pointer hover:bg-slate-100 transition">
+                <span class="text-sm font-semibold text-slate-800"><i class="fas fa-info-circle text-indigo-500 mr-2"></i>基本信息</span>
+                <i id="basicInfo-chevron" class="fas fa-chevron-down text-slate-400 transition-transform"></i>
+              </div>
+              <div id="basicInfo" class="p-4 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">培训项目 <span class="text-red-500">*</span></label>
+                    <select id="t-project" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                      <option value="">请选择</option>
+                      ${categoryOptions}
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">培训课题 <span class="text-red-500">*</span></label>
+                    <input type="text" id="t-name" value="${escHtml(training?.name || '')}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1">培训内容</label>
+                  <input type="text" id="t-content" value="${escHtml(training?.content || '')}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="relative">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">培训讲师 <span class="text-red-500">*</span></label>
+                    <input type="text" id="t-instructor" value="${escHtml(training?.instructor || '')}" required
+                           onfocus="showLecturerDropdown()" oninput="filterLecturerDropdown(this.value)"
+                           class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                           placeholder="输入或选择讲师" autocomplete="off">
+                    <div id="t-instructor-dropdown" class="absolute left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto hidden z-50"></div>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">培训地点 <span class="text-red-500">*</span></label>
+                    <input type="text" id="t-location" value="${escHtml(training?.location || '')}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">开始时间 <span class="text-red-500">*</span></label>
+                    <input type="datetime-local" id="t-start" value="${toDatetimeLocal(startTimeValue, prefillDate, '09:00')}" required
+                           class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-xs text-slate-400 mt-1">支持手动输入,如 2026-06-11 09:00</p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">结束时间 <span class="text-red-500">*</span></label>
+                    <input type="datetime-local" id="t-end" value="${toDatetimeLocal(endTimeValue, prefillDate, '17:00')}" required
+                           class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 项目内容（折叠） -->
+            <div class="border border-slate-200 rounded-xl overflow-hidden">
+              <div onclick="toggleTrainingPanel('projectContent')" class="flex items-center justify-between px-4 py-3 bg-slate-50 cursor-pointer hover:bg-slate-100 transition">
+                <span class="text-sm font-semibold text-slate-800"><i class="fas fa-tasks text-emerald-500 mr-2"></i>项目内容</span>
+                <i id="projectContent-chevron" class="fas fa-chevron-down text-slate-400 transition-transform"></i>
+              </div>
+              <div id="projectContent" class="hidden p-4">
+                <input type="hidden" id="t-exam-id" value="${training?.linkedExamId || ''}">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <!-- 考勤卡片 -->
+                  <div id="card-attendance" class="project-card relative rounded-xl border-2 ${signinEnabled ? 'border-emerald-400 bg-emerald-50/40' : 'border-slate-200 bg-slate-50'} p-4 transition cursor-pointer hover:shadow-md" onclick="onCardClick('attendance')">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="w-9 h-9 rounded-lg ${signinEnabled ? 'bg-emerald-100' : 'bg-slate-200'} flex items-center justify-center">
+                        <i class="fas fa-check-circle ${signinEnabled ? 'text-emerald-500' : 'text-slate-400'} text-lg"></i>
+                      </div>
+                      <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="t-attendance-enable" class="sr-only peer" ${signinEnabled ? 'checked' : ''} onchange="onModuleToggle('attendance', this.checked)">
+                        <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                      </label>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-800">考勤</div>
+                    <div class="text-xs text-slate-400 mt-0.5">签到时间+二维码</div>
+                    <div class="mt-3 text-xs ${signinEnabled ? 'text-emerald-600' : 'text-slate-400'} font-medium flex items-center gap-1">
+                      <i class="fas fa-cog"></i><span>${signinEnabled ? '已配置' : '未启用'}</span>
+                    </div>
+                  </div>
+                  <!-- 调研卡片 -->
+                  <div id="card-survey" class="project-card relative rounded-xl border-2 ${surveyEnabled ? 'border-blue-400 bg-blue-50/40' : 'border-slate-200 bg-slate-50'} p-4 transition cursor-pointer hover:shadow-md" onclick="onCardClick('survey')">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="w-9 h-9 rounded-lg ${surveyEnabled ? 'bg-blue-100' : 'bg-slate-200'} flex items-center justify-center">
+                        <i class="fas fa-poll ${surveyEnabled ? 'text-blue-500' : 'text-slate-400'} text-lg"></i>
+                      </div>
+                      <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="t-survey-enable" class="sr-only peer" ${surveyEnabled ? 'checked' : ''} onchange="onModuleToggle('survey', this.checked)">
+                        <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                      </label>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-800">调研</div>
+                    <div class="text-xs text-slate-400 mt-0.5">选择调研问卷</div>
+                    <div class="mt-3 text-xs ${surveyEnabled ? 'text-blue-600' : 'text-slate-400'} font-medium flex items-center gap-1">
+                      <i class="fas fa-cog"></i><span id="survey-card-status">${surveyEnabled ? '已选择' : '未启用'}</span>
+                    </div>
+                  </div>
+                  <!-- 考试卡片 -->
+                  <div id="card-exam" class="project-card relative rounded-xl border-2 ${examEnabled ? 'border-amber-400 bg-amber-50/40' : 'border-slate-200 bg-slate-50'} p-4 transition cursor-pointer hover:shadow-md" onclick="onCardClick('exam')">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="w-9 h-9 rounded-lg ${examEnabled ? 'bg-amber-100' : 'bg-slate-200'} flex items-center justify-center">
+                        <i class="fas fa-file-alt ${examEnabled ? 'text-amber-500' : 'text-slate-400'} text-lg"></i>
+                      </div>
+                      <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="t-exam-enable" class="sr-only peer" ${examEnabled ? 'checked' : ''} onchange="onModuleToggle('exam', this.checked)">
+                        <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                      </label>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-800">考试</div>
+                    <div class="text-xs text-slate-400 mt-0.5">创建考试+试卷</div>
+                    <div class="mt-3 text-xs ${examEnabled ? 'text-amber-600' : 'text-slate-400'} font-medium flex items-center gap-1">
+                      <i class="fas fa-cog"></i><span id="exam-card-status">${examEnabled ? (linkedExam ? escHtml(linkedExam.title || '已关联') : '未配置') : '未启用'}</span>
+                    </div>
+                  </div>
+                  <!-- 课件卡片 -->
+                  <div id="card-courseware" class="project-card relative rounded-xl border-2 ${coursewareEnabled ? 'border-rose-400 bg-rose-50/40' : 'border-slate-200 bg-slate-50'} p-4 transition cursor-pointer hover:shadow-md" onclick="onCardClick('courseware')">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="w-9 h-9 rounded-lg ${coursewareEnabled ? 'bg-rose-100' : 'bg-slate-200'} flex items-center justify-center">
+                        <i class="fas fa-file-pdf ${coursewareEnabled ? 'text-rose-500' : 'text-slate-400'} text-lg"></i>
+                      </div>
+                      <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="t-courseware-enable" class="sr-only peer" ${coursewareEnabled ? 'checked' : ''} onchange="onModuleToggle('courseware', this.checked)">
+                        <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-500"></div>
+                      </label>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-800">课件</div>
+                    <div class="text-xs text-slate-400 mt-0.5">上传培训课件</div>
+                    <div class="mt-3 text-xs ${coursewareEnabled ? 'text-rose-600' : 'text-slate-400'} font-medium flex items-center gap-1">
+                      <i class="fas fa-cog"></i><span id="courseware-card-status">${coursewareEnabled ? ((training?.coursewareFiles?.length || 0) + '个文件') : '未启用'}</span>
+                    </div>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-3">点击卡片或开启开关后，将打开右侧配置抽屉。关闭开关将禁用对应模块。</p>
+              </div>
+            </div>
+
+            <!-- 任务指派（折叠） -->
+            <div class="border border-slate-200 rounded-xl overflow-hidden">
+              <div onclick="toggleTrainingPanel('taskAssignment')" class="flex items-center justify-between px-4 py-3 bg-slate-50 cursor-pointer hover:bg-slate-100 transition">
+                <span class="text-sm font-semibold text-slate-800"><i class="fas fa-user-cog text-cyan-500 mr-2"></i>任务指派</span>
+                <i id="taskAssignment-chevron" class="fas fa-chevron-down text-slate-400 transition-transform"></i>
+              </div>
+              <div id="taskAssignment" class="hidden p-4 space-y-4">
+                <div class="flex items-center justify-between">
+                  <label class="text-sm font-medium text-slate-700">指派范围</label>
+                  <select id="t-access-type" onchange="onTrainingAccessTypeChange()" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="none" ${accessType === 'none' ? 'selected' : ''}>暂不指派</option>
+                    <option value="public" ${accessType === 'public' ? 'selected' : ''}>全员开放</option>
+                    <option value="restricted" ${accessType === 'restricted' ? 'selected' : ''}>指定学员</option>
+                    <option value="import" ${accessType === 'import' ? 'selected' : ''}>导入学员</option>
+                  </select>
+                </div>
+                <div id="t-allowed-users-wrap" class="${accessType === 'restricted' || accessType === 'import' ? '' : 'hidden'}">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-slate-600">已选 <span id="t-allowed-users-count">0</span> 人</span>
+                    <button type="button" onclick="openTrainingUserPicker()" class="text-sm px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition"><i class="fas fa-plus mr-1"></i>选择学员</button>
+                  </div>
+                  <div id="t-allowed-users-list" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto"><p class="text-sm text-slate-400 w-full">未选择学员</p></div>
+                </div>
+                <div id="t-import-users-wrap" class="${accessType === 'import' ? '' : 'hidden'}">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">导入 Excel（包含学员姓名列）</label>
+                  <input type="file" id="t-import-users-file" accept=".xlsx,.xls" onchange="onTrainingImportUsersFile()"
+                    class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+                  <p class="text-xs text-slate-400 mt-1">上传后会自动读取表格中的学员姓名并完成匹配导入</p>
+                  <div id="t-import-users-result" class="mt-2 hidden"></div>
+                </div>
+              </div>
+            </div>
+
+          </form>
+          <div class="flex justify-end items-center gap-3 p-6 border-t border-slate-100 flex-shrink-0 bg-slate-50">
+            <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+            <button type="submit" form="training-form" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium transition">保存</button>
+          </div>
+        </div>
+      `);
+
+      // 初始化指派学员列表显示
+      userPickerMode = 'training';
+      await loadExamUserPickerData();
+      onTrainingAccessTypeChange();
+      renderTrainingAllowedUsers();
+
+      // 回填项目内容抽屉字段
+      populateTrainingDrawers(training);
+    }
+
+    async function renderTrainingExamDisplay(examId) {
+      const display = document.getElementById('t-exam-display');
+      if (!display) return;
+      if (!examId) {
+        display.textContent = '不关联';
+        display.className = 'text-sm text-slate-500 truncate';
+        return;
+      }
+      try {
+        const res = await fetch('/api/exams');
+        const exams = await res.json();
+        const exam = exams.find(e => String(e.id) === String(examId));
+        if (exam) {
+          display.textContent = exam.title || exam.name || '未命名考试';
+          display.className = 'text-sm text-slate-800 truncate';
+        } else {
+          display.textContent = '考试不存在';
+          display.className = 'text-sm text-red-500 truncate';
+        }
+      } catch (e) {
+        display.textContent = '加载失败';
+        display.className = 'text-sm text-red-500 truncate';
+      }
+    }
+
+    function openTrainingExamPicker() {
+      openPaperPickerModal(async (paper) => {
+        toast('正在创建关联考试...');
+        const result = await createExamFromPaper(paper);
+        const exam = result?.exam;
+        if (exam && exam.id) {
+          document.getElementById('t-exam-id').value = exam.id;
+          renderTrainingExamDisplay(exam.id);
+          toast(`已关联考试：${exam.title || '未命名考试'}`);
+        } else {
+          toast('考试创建失败', 'error');
+        }
+      }, null);
+    }
+
+    async function createExamFromPaper(paper) {
+      const questions = (paper.questions || []).map((q, idx) => ({
+        questionId: q.questionId || q.id,
+        score: q.score || 5,
+        partialScore: q.partialScore !== undefined ? q.partialScore : (q.type === 'multiple' ? 0 : undefined),
+        order: q.order !== undefined ? q.order : idx,
+        content: q.content || '(题目内容)',
+        type: q.type || 'single',
+        options: q.options || [],
+        answer: q.answer || '',
+        explanation: q.explanation || ''
+      }));
+      const totalScore = questions.reduce((s, q) => s + (q.score || 0), 0) || 100;
+      const payload = {
+        title: paper.name || '未命名考试',
+        description: '',
+        duration: 60,
+        totalScore: totalScore,
+        passingScore: Math.max(1, Math.ceil(totalScore * 0.6)),
+        status: 'draft',
+        paperId: paper.id,
+        paperName: paper.name,
+        questions: questions,
+        attemptsPolicy: 'unlimited',
+        recordScore: 'highest',
+        screenSwitchPolicy: 'unlimited',
+        accessType: 'none',
+        allowedUsers: null,
+        showData: true,
+        answerDetail: 'after_grade',
+        viewQuestions: 'all',
+        showCorrect: 'show',
+        showAnalysis: 'show',
+        viewRank: 'after_submit'
+      };
+      try {
+        const res = await fetch('/api/exams', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('创建考试失败');
+        return await res.json();
+      } catch (e) {
+        console.error('createExamFromPaper error:', e);
+        return null;
+      }
+    }
+
+    async function saveTraining(e, id) {
+      e.preventDefault();
+      // 规范化 id:字符串 'null' 或空值都转为 null,确保新增时走 POST 路径
+      id = (id === 'null' || id === null || id === undefined || id === '') ? null : Number(id);
+      let startVal = document.getElementById('t-start').value.trim().replace(' ', 'T');
+      let endVal = document.getElementById('t-end').value.trim().replace(' ', 'T');
+
+      if (!startVal || !endVal) {
+        toast('请填写开始时间和结束时间', 'error');
+        return;
+      }
+      if (new Date(startVal) >= new Date(endVal)) {
+        toast('结束时间必须晚于开始时间', 'error');
+        return;
+      }
+
+      const dateVal = startVal.split('T')[0];
+
+      // 项目内容（4 模块开关）
+      const attendanceEnabled = document.getElementById('t-attendance-enable')?.checked || false;
+      const examEnabled = document.getElementById('t-exam-enable')?.checked || false;
+      const surveyEnabled = document.getElementById('t-survey-enable')?.checked || false;
+      const coursewareEnabled = document.getElementById('t-courseware-enable')?.checked || false;
+
+      const signinStart = document.getElementById('t-signin-start')?.value || '';
+      const signinEnd = document.getElementById('t-signin-end')?.value || '';
+
+      // 校验
+      if (attendanceEnabled && !signinStart) { toast('请在考勤抽屉中设置签到开始时间', 'error'); return; }
+      if (examEnabled && !document.getElementById('t-exam-id')?.value) { toast('请创建考试后再保存', 'error'); return; }
+      if (surveyEnabled && !document.getElementById('t-survey-id')?.value) { toast('请选择调研问卷', 'error'); return; }
+
+      // 签到码自动生成（向后兼容 training-signin.html）
+      let signinCode = '';
+      if (attendanceEnabled) {
+        signinCode = String(Math.floor(1000 + Math.random() * 9000));
+      }
+
+      // 任务指派
+      const accessTypeRaw = document.getElementById('t-access-type').value;
+      const accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
+      const allowedUsers = (accessTypeRaw === 'restricted' || accessTypeRaw === 'import')
+        ? Array.from(trainingUserPickerTemp).map(uid => isNaN(Number(uid)) ? uid : Number(uid))
+        : [];
+
+      const formData = {
+        project: document.getElementById('t-project').value,
+        name: document.getElementById('t-name').value.trim(),
+        content: document.getElementById('t-content').value.trim(),
+        instructor: document.getElementById('t-instructor').value.trim(),
+        location: document.getElementById('t-location').value.trim(),
+        date: dateVal,
+        startTime: startVal,
+        endTime: endVal,
+        signinEnabled: attendanceEnabled,
+        signinCode: attendanceEnabled ? signinCode : null,
+        signinStartTime: attendanceEnabled ? signinStart.replace('T', ' ') : null,
+        signinEndTime: attendanceEnabled ? signinEnd.replace('T', ' ') : null,
+        examEnabled: examEnabled,
+        surveyEnabled: surveyEnabled,
+        coursewareEnabled: coursewareEnabled,
+        linkedSurveyId: surveyEnabled ? (document.getElementById('t-survey-id')?.value ? parseInt(document.getElementById('t-survey-id').value) : null) : null,
+        linkedExamId: examEnabled ? (document.getElementById('t-exam-id')?.value ? parseInt(document.getElementById('t-exam-id').value) : null) : null,
+        accessType: accessType,
+        allowedUsers: allowedUsers.length ? allowedUsers : null,
+        coursewareFiles: coursewareEnabled ? (currentEditingTraining?.coursewareFiles || []) : []
+      };
+
+      try {
+        let res;
+        if (id) {
+          res = await fetch(API + '/training/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        } else {
+          res = await fetch(API + '/training', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        }
+        if (res.ok) {
+          const result = await res.json();
+          const savedId = id || result.event?.id;
+
+          // 保存指派学员
+          if (savedId && allowedUsers.length > 0) {
+            await fetch(API + '/training/' + savedId + '/assign', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userIds: allowedUsers })
+            });
+          }
+
+          toast(id ? '培训已更新' : '培训已添加');
+          closeModal();
+          await loadAllData();
+          renderTraining();
+        } else {
+          const err = await res.json();
+          toast(err.error || '操作失败', 'error');
+        }
+      } catch (err) {
+        toast('操作失败: ' + err.message, 'error');
+      }
+    }
+
+    // ========== 培训弹窗 - 折叠面板与项目内容 ==========
+
+    function toggleTrainingPanel(id) {
+      const panel = document.getElementById(id);
+      const chevron = document.getElementById(id + '-chevron');
+      if (panel) panel.classList.toggle('hidden');
+      if (chevron) chevron.classList.toggle('rotate-180');
+    }
+
+    // ===== 项目内容模块抽屉相关函数 =====
+
+    const MODULE_COLORS = {
+      attendance: { active: 'border-emerald-400 bg-emerald-50/40', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-500', textColor: 'text-emerald-600', toggleColor: 'peer-checked:bg-emerald-500' },
+      exam:       { active: 'border-amber-400 bg-amber-50/40',    iconBg: 'bg-amber-100',    iconColor: 'text-amber-500',    textColor: 'text-amber-600',    toggleColor: 'peer-checked:bg-amber-500' },
+      survey:     { active: 'border-blue-400 bg-blue-50/40',      iconBg: 'bg-blue-100',     iconColor: 'text-blue-500',     textColor: 'text-blue-600',     toggleColor: 'peer-checked:bg-blue-500' },
+      courseware: { active: 'border-rose-400 bg-rose-50/40',      iconBg: 'bg-rose-100',     iconColor: 'text-rose-500',     textColor: 'text-rose-600',     toggleColor: 'peer-checked:bg-rose-500' }
+    };
+
+    function openModuleDrawer(module) {
+      const drawer = document.getElementById(module + 'Drawer');
+      const overlay = document.getElementById(module + 'DrawerOverlay');
+      if (!drawer || !overlay) return;
+      overlay.classList.remove('hidden');
+      drawer.classList.remove('translate-x-full');
+      if (module === 'attendance') refreshSigninQrcode();
+    }
+
+    function closeModuleDrawer(module) {
+      const drawer = document.getElementById(module + 'Drawer');
+      const overlay = document.getElementById(module + 'DrawerOverlay');
+      if (!drawer || !overlay) return;
+      drawer.classList.add('translate-x-full');
+      overlay.classList.add('hidden');
+      // 考勤：关闭抽屉时提示记得保存培训（仅在已设置签到时间时提示）
+      if (module === 'signin') {
+        const start = document.getElementById('t-signin-start')?.value;
+        const end = document.getElementById('t-signin-end')?.value;
+        if (start || end) {
+          showToast('考勤设置已暂存，请点击"保存培训"使设置生效', 'info');
+        }
+      }
+      // 调研：关闭抽屉时同步卡片状态文字
+      if (module === 'survey') {
+        const status = document.getElementById('survey-card-status');
+        if (status) {
+          const surveyId = document.getElementById('t-survey-id')?.value;
+          status.textContent = surveyId ? '已选择' : '未启用';
+        }
+      }
+    }
+
+    function onModuleToggle(module, enabled) {
+      updateModuleCardVisual(module, enabled);
+      if (enabled) {
+        if (module === 'exam') {
+          // 考试模块：直接复用考试安排的 examModal
+          const existingExamId = document.getElementById('t-exam-id')?.value;
+          openExamModalFromTraining(existingExamId || null);
+        } else {
+          openModuleDrawer(module);
+          if (module === 'survey') populateSurveyOptions();
+          if (module === 'courseware') updateCoursewareUploadTip();
+        }
+      } else {
+        closeModuleDrawer(module);
+        clearModuleFields(module);
+      }
+    }
+
+    function onCardClick(module) {
+      const checkbox = document.getElementById('t-' + module + '-enable');
+      if (!checkbox) return;
+      if (!checkbox.checked) {
+        // 未启用时点击卡片 → 启用并打开抽屉/弹窗
+        checkbox.checked = true;
+        onModuleToggle(module, true);
+      } else {
+        // 已启用时点击卡片 → 仅打开抽屉/弹窗
+        if (module === 'exam') {
+          const existingExamId = document.getElementById('t-exam-id')?.value;
+          openExamModalFromTraining(existingExamId || null);
+        } else {
+          openModuleDrawer(module);
+        }
+      }
+    }
+
+    function updateModuleCardVisual(module, enabled) {
+      const card = document.getElementById('card-' + module);
+      if (!card) return;
+      const colors = MODULE_COLORS[module];
+      const iconWrapper = card.querySelector('.w-9.h-9');
+      const icon = card.querySelector('.w-9.h-9 i');
+      if (enabled) {
+        card.className = card.className.replace(/border-slate-200 bg-slate-50/, colors.active);
+        if (iconWrapper) iconWrapper.className = 'w-9 h-9 rounded-lg ' + colors.iconBg + ' flex items-center justify-center';
+        if (icon) icon.className = icon.className.replace('text-slate-400', colors.iconColor);
+      } else {
+        card.className = card.className.replace(colors.active, 'border-slate-200 bg-slate-50');
+        if (iconWrapper) iconWrapper.className = 'w-9 h-9 rounded-lg bg-slate-200 flex items-center justify-center';
+        if (icon) icon.className = icon.className.replace(colors.iconColor, 'text-slate-400');
+      }
+    }
+
+    function clearModuleFields(module) {
+      if (module === 'attendance') {
+        const s = document.getElementById('t-signin-start'); if (s) s.value = '';
+        const e = document.getElementById('t-signin-end'); if (e) e.value = '';
+      } else if (module === 'exam') {
+        const id = document.getElementById('t-exam-id'); if (id) id.value = '';
+        const status = document.getElementById('exam-card-status'); if (status) status.textContent = '未启用';
+      } else if (module === 'survey') {
+        const sel = document.getElementById('t-survey-id'); if (sel) sel.value = '';
+      } else if (module === 'courseware') {
+        const status = document.getElementById('courseware-card-status'); if (status) status.textContent = '未启用';
+      }
+    }
+
+    // 考勤：从课程时间同步签到时间
+    function syncSigninFromBasic() {
+      const startInput = document.getElementById('t-start');
+      const endInput = document.getElementById('t-end');
+      const signinStart = document.getElementById('t-signin-start');
+      const signinEnd = document.getElementById('t-signin-end');
+      if (!startInput || !endInput) { toast('未找到课程时间字段', 'error'); return; }
+      if (!startInput.value || !endInput.value) { toast('请先在基本信息中填写课程时间', 'error'); return; }
+      if (signinStart) signinStart.value = startInput.value;
+      if (signinEnd) signinEnd.value = endInput.value;
+      refreshSigninQrcode();
+      toast('已同步课程时间');
+    }
+
+    // 考勤：刷新签到二维码
+    function refreshSigninQrcode() {
+      const container = document.getElementById('t-signin-qrcode');
+      if (!container) return;
+      const trainingId = currentEditingTrainingId;
+      if (!trainingId) {
+        container.innerHTML = '<p class="text-xs text-slate-400">保存培训后自动生成</p>';
+        return;
+      }
+      const signinUrl = window.location.origin + '/training-signin.html?trainingId=' + trainingId;
+      container.innerHTML = '';
+      try {
+        new QRCode(container, { text: signinUrl, width: 200, height: 200, colorDark: '#1e293b', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+      } catch (e) {
+        container.innerHTML = '<p class="text-xs text-red-400">二维码生成失败</p>';
+      }
+    }
+
+    // 考勤：确认签到设置成功
+    function confirmSigninSettings() {
+      const start = document.getElementById('t-signin-start')?.value;
+      const end = document.getElementById('t-signin-end')?.value;
+      if (!start || !end) { toast('请先设置签到开始和结束时间', 'error'); return; }
+      toast('签到设置成功');
+      closeModuleDrawer('attendance');
+    }
+
+    // 考勤：下载签到海报（复用培训海报的高级样式）
+    function downloadSigninPoster(btn) {
+      const trainingId = currentEditingTrainingId;
+      if (!trainingId) { toast('请先保存培训', 'error'); return; }
+      const training = currentEditingTraining || {};
+      const signinStart = document.getElementById('t-signin-start')?.value || '';
+      const signinEnd = document.getElementById('t-signin-end')?.value || '';
+      const signinUrl = window.location.origin + '/training-signin.html?trainingId=' + trainingId;
+
+      // 按钮 loading 态（防止重复点击）
+      const trigger = btn || document.querySelector('button[onclick*="downloadSigninPoster"]');
+      const origHtml = trigger ? trigger.innerHTML : '';
+      if (trigger) {
+        trigger.disabled = true;
+        trigger.style.pointerEvents = 'none';
+        trigger.style.opacity = '0.7';
+        trigger.innerHTML = '<i class="fas fa-spinner fa-spin"></i>生成中...';
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 750; canvas.height = 1334;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+
+      // 背景（渐变）
+      const gradient = ctx.createLinearGradient(0, 0, W, H);
+      gradient.addColorStop(0, '#f0fdf4');
+      gradient.addColorStop(0.5, '#ffffff');
+      gradient.addColorStop(1, '#fff7ed');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, W, H);
+
+      // 装饰圆
+      ctx.beginPath();
+      ctx.arc(W * 0.85, H * 0.12, 120, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(W * 0.15, H * 0.88, 90, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
+      ctx.fill();
+
+      // Logo
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(70, 70, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('游', 70, 77);
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('游雁学院', 105, 80);
+
+      // 主卡片
+      const cardX = 60;
+      const cardY = 180;
+      const cardW = W - 120;
+      const cardH = H - 360;
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, cardX, cardY, cardW, cardH, 24);
+      ctx.fill();
+      ctx.shadowColor = 'rgba(0,0,0,0.06)';
+      ctx.shadowBlur = 30;
+      ctx.shadowOffsetY = 10;
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // 绿色标题栏
+      const headerH = 180;
+      ctx.fillStyle = '#10b981';
+      roundRect(ctx, cardX, cardY, cardW, headerH, { tl: 24, tr: 24, br: 0, bl: 0 });
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 42px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('签到码', W / 2, cardY + 80);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = '30px sans-serif';
+      const title = training.name || training.project || '未命名培训';
+      const maxTitleWidth = cardW - 80;
+      fillTextWithWrap(ctx, title, W / 2, cardY + 140, maxTitleWidth, 44, 'center');
+
+      // 签到时间
+      const fmt = (v) => { if (!v) return '未设置'; try { return new Date(v.replace(' ', 'T')).toLocaleString('zh-CN'); } catch { return v; } };
+      ctx.fillStyle = '#475569';
+      ctx.font = '24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('签到时间', W / 2, cardY + headerH + 50);
+      ctx.fillStyle = '#1e293b';
+      ctx.font = 'bold 26px sans-serif';
+      ctx.fillText(fmt(signinStart), W / 2, cardY + headerH + 90);
+      ctx.fillStyle = '#64748b';
+      ctx.font = '22px sans-serif';
+      ctx.fillText('至 ' + fmt(signinEnd), W / 2, cardY + headerH + 125);
+
+      // 生成二维码并绘制
+      const qrSize = 320;
+      const qrContainer = document.createElement('div');
+      qrContainer.style.position = 'fixed';
+      qrContainer.style.left = '-9999px';
+      document.body.appendChild(qrContainer);
+      try {
+        new QRCode(qrContainer, {
+          text: signinUrl,
+          width: qrSize,
+          height: qrSize,
+          colorDark: '#1e293b',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+        setTimeout(() => {
+          const qrCanvas = qrContainer.querySelector('canvas');
+          if (qrCanvas) {
+            const qrX = (W - qrSize) / 2;
+            const qrY = cardY + headerH + 160;
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 16);
+            ctx.fill();
+            ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+          }
+          document.body.removeChild(qrContainer);
+
+          // 底部提示
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '26px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('扫码完成签到', W / 2, H - 140);
+
+          // 触发下载
+          const a = document.createElement('a');
+          a.href = canvas.toDataURL('image/png');
+          a.download = '签到海报_' + (training.name || '培训') + '.png';
+          a.click();
+          toast('签到海报已下载');
+          if (trigger) { trigger.disabled = false; trigger.style.pointerEvents = ''; trigger.style.opacity = ''; trigger.innerHTML = origHtml; }
+        }, 100);
+      } catch (e) {
+        document.body.removeChild(qrContainer);
+        toast('海报生成失败', 'error');
+        if (trigger) { trigger.disabled = false; trigger.style.pointerEvents = ''; trigger.style.opacity = ''; trigger.innerHTML = origHtml; }
+      }
+    }
+
+    // 考试：从培训模块打开 examModal（复用考试安排的创建考试抽屉）
+    let examModalFromTraining = false;
+    function openExamModalFromTraining(examId = null) {
+      examModalFromTraining = true;
+      openExamModal(examId);
+      // 隐藏 examModal 中的任务指派区块（培训弹窗已有任务指派，避免重复）
+      const assignSection = document.getElementById('examAssignmentSection');
+      if (assignSection) assignSection.style.display = 'none';
+      // 从培训模块打开时，"发布"按钮改为"设置成功"（不触发考试通知，考试随培训项目走）
+      const publishBtn = document.querySelector('button[onclick="saveExamAsPublished()"]');
+      if (publishBtn) {
+        publishBtn.innerHTML = '<i class="fas fa-check mr-1.5"></i>设置成功';
+      }
+      // 从培训模块打开时隐藏"存草稿"按钮（培训关联的考试只允许设置成功，不允许独立存草稿）
+      const draftBtn = document.querySelector('button[onclick="saveExamAsDraft()"]');
+      if (draftBtn) draftBtn.style.display = 'none';
+      // 培训中的考试默认允许无限重考直到及格（用户可手动在考试设置里修改）
+      setBtnGroupValue('examAttempts', 'until_pass');
+    }
+
+    // 调研：填充问卷选项
+    function populateSurveyOptions() {
+      const select = document.getElementById('t-survey-id');
+      if (!select) return;
+      const currentVal = select.value;
+      const surveys = data.surveys || [];
+      select.innerHTML = '<option value="">不关联</option>' + surveys.map(s =>
+        `<option value="${s.id}">${escHtml(s.title)}</option>`
+      ).join('');
+      select.value = currentVal;
+    }
+
+    // 调研：确认选择问卷（替代原"完成"按钮，明确动作语义）
+    function confirmSurveySelection() {
+      const surveyId = document.getElementById('t-survey-id')?.value;
+      if (!surveyId) { toast('请选择调研问卷', 'error'); return; }
+      const surveys = data.surveys || [];
+      const survey = surveys.find(s => String(s.id) === String(surveyId));
+      toast('已选择调研：' + (survey ? survey.title : '未知问卷'));
+      closeModuleDrawer('survey');
+    }
+
+    // 课件：更新上传提示
+    function updateCoursewareUploadTip() {
+      const tip = document.getElementById('t-courseware-upload-tip');
+      if (!tip) return;
+      if (!currentEditingTrainingId) tip.classList.remove('hidden');
+      else tip.classList.add('hidden');
+    }
+
+    // 课件：更新卡片状态文字
+    function updateCoursewareCardStatus() {
+      const status = document.getElementById('courseware-card-status');
+      if (!status) return;
+      const count = currentEditingTraining?.coursewareFiles?.length || 0;
+      status.textContent = count > 0 ? (count + '个文件') : '未配置';
+    }
+
+    // 回填抽屉字段（在 openTrainingModal 末尾调用）
+    function populateTrainingDrawers(training) {
+      // 考勤
+      const signinStart = document.getElementById('t-signin-start');
+      const signinEnd = document.getElementById('t-signin-end');
+      const toDTLocal = (val) => {
+        if (!val) return '';
+        const n = String(val).trim().replace(' ', 'T');
+        return n.includes('T') ? n : n + 'T09:00';
+      };
+      if (signinStart) signinStart.value = toDTLocal(training?.signinStartTime || training?.startTime || '');
+      if (signinEnd) signinEnd.value = toDTLocal(training?.signinEndTime || training?.endTime || '');
+
+      // 考试（t-exam-id 已在模板中设置，这里仅更新卡片状态文字）
+      if (training?.linkedExamId) {
+        fetch(API + '/exams').then(r => r.json()).then(exams => {
+          const exam = exams.find(e => String(e.id) === String(training.linkedExamId));
+          if (exam) {
+            const status = document.getElementById('exam-card-status');
+            if (status) status.textContent = exam.title || '已关联';
+          }
+        }).catch(() => {});
+      }
+
+      // 调研
+      populateSurveyOptions();
+      const surveySelect = document.getElementById('t-survey-id');
+      if (surveySelect) surveySelect.value = training?.linkedSurveyId || '';
+
+      // 课件
+      const coursewareList = document.getElementById('t-courseware-list');
+      if (coursewareList) coursewareList.innerHTML = renderTrainingCoursewareList(training?.coursewareFiles);
+      updateCoursewareCardStatus();
+      updateCoursewareUploadTip();
+    }
+
+    async function uploadTrainingCourseware(input, trainingId) {
+      if (!input.files || !input.files.length) return;
+      if (!trainingId || trainingId === 'null') {
+        toast('请先保存培训基本信息，再上传课件', 'error');
+        input.value = '';
+        return;
+      }
+      const formData = new FormData();
+      Array.from(input.files).forEach(f => formData.append('courseware', f));
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/courseware', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await res.json();
+        if (result.success) {
+          if (currentEditingTraining) currentEditingTraining.coursewareFiles = result.files;
+          document.getElementById('t-courseware-list').innerHTML = renderTrainingCoursewareList(result.files);
+          updateCoursewareCardStatus();
+          toast('课件上传成功');
+        } else {
+          toast(result.error || '上传失败', 'error');
+        }
+      } catch (e) {
+        toast('上传失败', 'error');
+      }
+      input.value = '';
+    }
+
+    function formatFileSize(bytes) {
+      if (!bytes && bytes !== 0) return '';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function renderTrainingCoursewareList(files) {
+      if (!files || !files.length) return '<p class="text-sm text-slate-400">暂无课件</p>';
+      return files.map((f, i) => {
+        const sizeText = formatFileSize(f.size);
+        return `
+        <div class="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-200">
+          <div class="flex items-center gap-2 min-w-0">
+            <i class="fas fa-file text-slate-400"></i>
+            <div class="min-w-0">
+              <div class="text-xs text-slate-700 truncate">${escHtml(f.name)}</div>
+              ${sizeText ? `<div class="text-[10px] text-slate-400">${sizeText}</div>` : ''}
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5" id="cw-del-wrap-${i}">
+            <button type="button" onclick="confirmDeleteCourseware(${i})" class="text-slate-400 hover:text-red-500 text-xs px-1.5 py-1 rounded transition" title="删除"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // 课件删除二次确认：点击后切换为"确认删除"按钮，3 秒内未点击则还原
+    let coursewareConfirmTimer = null;
+    function confirmDeleteCourseware(index) {
+      const wrap = document.getElementById('cw-del-wrap-' + index);
+      if (!wrap) return;
+      // 已是确认态 → 执行删除
+      if (wrap.dataset.confirming === '1') {
+        clearTimeout(coursewareConfirmTimer);
+        coursewareConfirmTimer = null;
+        deleteTrainingCourseware(index);
+        return;
+      }
+      // 切换为确认态
+      wrap.dataset.confirming = '1';
+      wrap.innerHTML = `<button type="button" onclick="confirmDeleteCourseware(${index})" class="text-red-500 bg-red-50 text-[11px] px-2 py-1 rounded transition">确认删除</button>`;
+      // 还原其他行的确认态
+      document.querySelectorAll('[id^="cw-del-wrap-"]').forEach(el => {
+        if (el !== wrap && el.dataset.confirming === '1') resetCoursewareConfirm(el.id.replace('cw-del-wrap-', ''));
+      });
+      coursewareConfirmTimer = setTimeout(() => resetCoursewareConfirm(index), 3000);
+    }
+
+    function resetCoursewareConfirm(index) {
+      const wrap = document.getElementById('cw-del-wrap-' + index);
+      if (!wrap) return;
+      wrap.dataset.confirming = '0';
+      wrap.innerHTML = `<button type="button" onclick="confirmDeleteCourseware(${index})" class="text-slate-400 hover:text-red-500 text-xs px-1.5 py-1 rounded transition" title="删除"><i class="fas fa-trash"></i></button>`;
+    }
+
+    async function deleteTrainingCourseware(index) {
+      if (!currentEditingTraining || !currentEditingTraining.coursewareFiles) return;
+      const file = currentEditingTraining.coursewareFiles[index];
+      if (!file) return;
+      const fileName = file.url.split('/').pop();
+      try {
+        const res = await fetch(API + '/training/' + currentEditingTrainingId + '/courseware/' + encodeURIComponent(fileName), {
+          method: 'DELETE'
+        });
+        const result = await res.json();
+        if (result.success) {
+          currentEditingTraining.coursewareFiles = result.files;
+          document.getElementById('t-courseware-list').innerHTML = renderTrainingCoursewareList(result.files);
+          updateCoursewareCardStatus();
+          toast('课件已删除');
+        } else {
+          toast(result.error || '删除失败', 'error');
+        }
+      } catch (e) {
+        toast('删除失败', 'error');
+      }
+    }
+
+    // ========== 培训弹窗 - 任务指派 ==========
+
+    function onTrainingAccessTypeChange() {
+      const accessType = document.getElementById('t-access-type').value;
+      const allowedWrap = document.getElementById('t-allowed-users-wrap');
+      const importWrap = document.getElementById('t-import-users-wrap');
+      if (allowedWrap) allowedWrap.classList.toggle('hidden', accessType !== 'restricted' && accessType !== 'import');
+      if (importWrap) importWrap.classList.toggle('hidden', accessType !== 'import');
+    }
+
+    async function openTrainingUserPicker() {
+      userPickerMode = 'training';
+      const modal = document.getElementById('examUserPickerModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('examUserPickerSearch').value = '';
+      await loadExamUserPickerData();
+      renderExamUserPicker();
+    }
+
+    async function onTrainingImportUsersFile() {
+      const input = document.getElementById('t-import-users-file');
+      const resultEl = document.getElementById('t-import-users-result');
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      try {
+        const buf = await file.arrayBuffer();
+        const workbook = XLSX.read(buf, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const names = [];
+        rows.forEach(row => {
+          row.forEach(cell => {
+            const v = cell !== undefined && cell !== null ? String(cell).trim() : '';
+            if (v) names.push(v);
+          });
+        });
+        if (!names.length) {
+          resultEl.innerHTML = '<p class="text-xs text-red-500">未读取到任何姓名</p>';
+          resultEl.classList.remove('hidden');
+          return;
+        }
+        const res = await fetch('/api/data/users');
+        const users = await res.json();
+        const matched = [];
+        const unmatched = [];
+        const seen = new Set();
+        names.forEach(name => {
+          if (seen.has(name)) return;
+          seen.add(name);
+          const user = users.find(u => {
+            const n = (u.real_name || u.username || '').trim();
+            return n === name;
+          });
+          if (user) matched.push({ id: String(user.id), name: user.real_name || user.username });
+          else unmatched.push(name);
+        });
+        matched.forEach(u => trainingUserPickerTemp.add(u.id));
+        trainingUserPickerData.forEach(u => {
+          u.selected = trainingUserPickerTemp.has(String(u.id));
+        });
+        renderTrainingAllowedUsers();
+        let html = `<p class="text-xs text-emerald-600">成功导入 ${matched.length} 人</p>`;
+        if (unmatched.length) {
+          html += `<p class="text-xs text-amber-600 mt-0.5">未匹配 ${unmatched.length} 人：${escHtml(unmatched.slice(0, 5).join('、'))}${unmatched.length > 5 ? ' 等' : ''}</p>`;
+        }
+        resultEl.innerHTML = html;
+        resultEl.classList.remove('hidden');
+      } catch (e) {
+        resultEl.innerHTML = '<p class="text-xs text-red-500">读取失败：' + escHtml(e.message) + '</p>';
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    function renderTrainingAllowedUsers() {
+      const selected = trainingUserPickerData.filter(u => u.selected);
+      const countEl = document.getElementById('t-allowed-users-count');
+      const listEl = document.getElementById('t-allowed-users-list');
+      if (countEl) countEl.textContent = selected.length;
+      if (listEl) {
+        if (selected.length === 0) {
+          listEl.innerHTML = '<p class="text-sm text-slate-400 w-full">未选择学员</p>';
+        } else {
+          listEl.innerHTML = selected.map(u => `
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs">
+              ${escHtml(u.name)}
+              <button type="button" onclick="removeTrainingAllowedUser('${u.id}')" class="text-indigo-400 hover:text-red-500">&times;</button>
+            </span>
+          `).join('');
+        }
+      }
+    }
+
+    function removeTrainingAllowedUser(id) {
+      const sid = String(id);
+      const user = trainingUserPickerData.find(u => String(u.id) === sid);
+      if (user) user.selected = false;
+      trainingUserPickerTemp.delete(id);
+      trainingUserPickerTemp.delete(sid);
+      trainingUserPickerTemp.delete(Number(id));
+      renderTrainingAllowedUsers();
+    }
+
+    function editTraining(id) {
+      const t = data.training.find(x => x.id === id);
+      if (t) openTrainingModal(t);
+    }
+
+    async function deleteTraining(id) {
+      if (!confirm('确定要删除这个培训吗?')) return;
+      try {
+        const res = await fetch(API + '/training/' + id, { method: 'DELETE' });
+        if (res.ok) {
+          // 同步删除 localStorage 中的学习风采图片
+          const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+          const strId = String(id);
+          const numId = Number(id);
+          let deleted = false;
+          
+          if (gallery[strId]) {
+            delete gallery[strId];
+            deleted = true;
+          }
+          if (gallery[numId]) {
+            delete gallery[numId];
+            deleted = true;
+          }
+          
+          if (deleted) {
+            localStorage.setItem('training_gallery', JSON.stringify(gallery));
+            console.log(`[学习风采] 已同步删除培训 ${id} 的图片数据`);
+          }
+          
+          toast('培训已删除');
+          await loadAllData();
+          renderTraining();
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+
+    // ========== 培训集成服务 (签到 + 满意度调研 + 考试) ==========
+
+    async function viewTrainingSignins(trainingId) {
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/signins');
+        const result = await res.json();
+        const signins = result.data || [];
+        const event = data.training.find(x => x.id === trainingId);
+        const title = event ? event.name : '培训签到';
+
+        const rows = signins.length > 0
+          ? signins.map((s, i) => `
+            <tr class="border-b border-slate-100">
+              <td class="px-4 py-3 text-sm text-slate-600">${i + 1}</td>
+              <td class="px-4 py-3 text-sm font-medium text-slate-800">${s.userName || '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${s.department || '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${new Date(s.signedAt).toLocaleString('zh-CN')}</td>
+              <td class="px-4 py-3 text-right">
+                <button onclick="deleteSignin(${s.id}, ${trainingId})" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash text-xs"></i></button>
+              </td>
+            </tr>`).join('')
+          : `<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400"><i class="fas fa-inbox text-2xl mb-2"></i><p>暂无签到记录</p></td></tr>`;
+
+        showModal(`
+          <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-check-circle text-emerald-500 mr-2"></i>签到数据</h3>
+                <p class="text-sm text-slate-500">${title} · 共 ${signins.length} 人签到</p>
+              </div>
+              <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+              <table class="w-full">
+                <thead class="bg-slate-50"><tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">签到时间</th>
+                  <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500">操作</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-100 flex justify-between items-center">
+              <p class="text-sm text-slate-500">签到人数：<strong class="text-slate-800">${signins.length}</strong></p>
+              <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+            </div>
+          </div>
+        `);
+      } catch (err) {
+        toast('加载签到数据失败', 'error');
+      }
+    }
+
+    async function deleteSignin(signinId, trainingId) {
+      if (!confirm('确定删除这条签到记录?')) return;
+      try {
+        const res = await fetch(API + '/training/signins/' + signinId, { method: 'DELETE' });
+        if (res.ok) {
+          toast('签到记录已删除');
+          closeModal();
+          viewTrainingSignins(trainingId);
+        } else {
+          toast('删除失败', 'error');
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+
+    async function viewTrainingSurvey(trainingId) {
+      try {
+        const [statusRes, respRes] = await Promise.all([
+          fetch(API + '/training/' + trainingId + '/service-status'),
+          fetch(API + '/training/' + trainingId + '/survey-responses')
+        ]);
+        const status = await statusRes.json();
+        const respResult = await respRes.json();
+        const event = data.training.find(x => x.id === trainingId);
+        const title = event ? event.name : '满意度调研';
+        const survey = respResult.survey;
+        const responses = respResult.data || [];
+
+        if (!survey) {
+          showModal(`
+            <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+              <div class="text-center py-8">
+                <i class="fas fa-poll text-4xl text-slate-300 mb-4"></i>
+                <p class="text-lg font-medium text-slate-700 mb-2">未关联满意度调研</p>
+                <p class="text-sm text-slate-400">请先为该培训配置关联的满意度调研</p>
+                <button onclick="closeModal()" class="mt-4 px-6 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+              </div>
+            </div>
+          `);
+          return;
+        }
+
+        // 统计评分题
+        const ratingStats = {};
+        (survey.questions || []).forEach(q => {
+          if (q.type === 'rating') {
+            const values = responses.map(r => {
+              const ans = r.answers.find(a => a.questionId === q.id);
+              return ans ? ans.value : null;
+            }).filter(v => v !== null);
+            const avg = values.length > 0 ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) : '-';
+            ratingStats[q.id] = { avg, count: values.length };
+          }
+        });
+
+        const statsHtml = (survey.questions || []).filter(q => q.type === 'rating').map(q => {
+          const st = ratingStats[q.id] || { avg: '-', count: 0 };
+          return `
+            <div class="bg-slate-50 rounded-xl p-3">
+              <p class="text-xs text-slate-500 mb-1">${q.title}</p>
+              <p class="text-lg font-bold text-slate-800">${st.avg} <span class="text-xs font-normal text-slate-400">/ 5分 · ${st.count}人</span></p>
+            </div>`;
+        }).join('');
+
+        const responseRows = responses.length > 0
+          ? responses.map((r, i) => `
+            <tr class="border-b border-slate-100">
+              <td class="px-4 py-3 text-sm text-slate-600">${i + 1}</td>
+              <td class="px-4 py-3 text-sm font-medium text-slate-800">${r.userName || '匿名'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${r.department || '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${new Date(r.submittedAt).toLocaleString('zh-CN')}</td>
+            </tr>`).join('')
+          : `<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400"><i class="fas fa-inbox text-2xl mb-2"></i><p>暂无人填写</p></td></tr>`;
+
+        showModal(`
+          <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-poll text-blue-500 mr-2"></i>满意度调研数据</h3>
+                <p class="text-sm text-slate-500">${title} · ${survey.title} · 共 ${responses.length} 人填写</p>
+              </div>
+              <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+              ${statsHtml ? `<div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">${statsHtml}</div>` : ''}
+              <table class="w-full">
+                <thead class="bg-slate-50"><tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">填写人</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">提交时间</th>
+                </tr></thead>
+                <tbody>${responseRows}</tbody>
+              </table>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-100 flex justify-between items-center">
+              <p class="text-sm text-slate-500">填写人数：<strong class="text-slate-800">${responses.length}</strong></p>
+              <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+            </div>
+          </div>
+        `);
+      } catch (err) {
+        toast('加载调研数据失败', 'error');
+      }
+    }
+
+    async function viewTrainingExam(trainingId) {
+      try {
+        const [statusRes, resultRes] = await Promise.all([
+          fetch(API + '/training/' + trainingId + '/service-status'),
+          fetch(API + '/training/' + trainingId + '/exam-results')
+        ]);
+        const status = await statusRes.json();
+        const result = await resultRes.json();
+        const event = data.training.find(x => x.id === trainingId);
+        const title = event ? event.name : '考试';
+        const exam = result.exam;
+        const attempts = result.data || [];
+
+        if (!exam) {
+          showModal(`
+            <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+              <div class="text-center py-8">
+                <i class="fas fa-file-alt text-4xl text-slate-300 mb-4"></i>
+                <p class="text-lg font-medium text-slate-700 mb-2">未关联考试</p>
+                <p class="text-sm text-slate-400">请先为该培训配置关联的考试</p>
+                <button onclick="closeModal()" class="mt-4 px-6 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+              </div>
+            </div>
+          `);
+          return;
+        }
+
+        const passedCount = attempts.filter(a => a.passed).length;
+        const avgScore = attempts.length > 0
+          ? (attempts.reduce((s, a) => s + (a.score || 0), 0) / attempts.length).toFixed(1)
+          : '-';
+
+        const rows = attempts.length > 0
+          ? attempts.map((a, i) => `
+            <tr class="border-b border-slate-100">
+              <td class="px-4 py-3 text-sm text-slate-600">${i + 1}</td>
+              <td class="px-4 py-3 text-sm font-medium text-slate-800">${a.userName || a.userId || '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${a.score ?? '-'}</td>
+              <td class="px-4 py-3 text-sm">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${a.passed ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}">
+                  ${a.passed ? '通过' : '未通过'}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-600">${a.correctCount ?? '-'}/${a.totalQuestions ?? '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${a.submittedAt ? new Date(a.submittedAt).toLocaleString('zh-CN') : '-'}</td>
+            </tr>`).join('')
+          : `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400"><i class="fas fa-inbox text-2xl mb-2"></i><p>暂无人参加</p></td></tr>`;
+
+        showModal(`
+          <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-file-alt text-amber-500 mr-2"></i>考试数据</h3>
+                <p class="text-sm text-slate-500">${title} · ${exam.name} · 及格线 ${exam.passingScore || 60}%</p>
+              </div>
+              <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+              <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="bg-slate-50 rounded-xl p-4 text-center">
+                  <p class="text-2xl font-bold text-slate-800">${attempts.length}</p>
+                  <p class="text-xs text-slate-500">参与人数</p>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-4 text-center">
+                  <p class="text-2xl font-bold text-slate-800">${avgScore}</p>
+                  <p class="text-xs text-slate-500">平均分</p>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-4 text-center">
+                  <p class="text-2xl font-bold text-slate-800">${passedCount}</p>
+                  <p class="text-xs text-slate-500">通过人数</p>
+                </div>
+              </div>
+              <table class="w-full">
+                <thead class="bg-slate-50"><tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">考生</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">得分</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">状态</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">正确/总数</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">提交时间</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-100 flex justify-between items-center">
+              <p class="text-sm text-slate-500">参与人数：<strong class="text-slate-800">${attempts.length}</strong> · 通过率：<strong class="text-slate-800">${attempts.length > 0 ? Math.round(passedCount / attempts.length * 100) : 0}%</strong></p>
+              <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+            </div>
+          </div>
+        `);
+      } catch (err) {
+        toast('加载考试数据失败', 'error');
+      }
+    }
+
+    // ========== 培训报名管理 ==========
+
+    // 查看报名人员（数据统计）
+    async function viewTrainingEnrollments(trainingId) {
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/enrollments');
+        const result = await res.json();
+        const enrollments = result.data || [];
+        const event = data.training.find(x => x.id === trainingId);
+        const title = event ? event.name : '培训报名';
+
+        const rows = enrollments.length > 0
+          ? enrollments.map((e, i) => {
+            const seed = encodeURIComponent(e.userName || e.userId);
+            const avatarUrl = e.userAvatar && e.userAvatar.startsWith('http') ? e.userAvatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+            return `
+            <tr class="border-b border-slate-100 hover:bg-slate-50">
+              <td class="px-4 py-3 text-sm text-slate-600">${i + 1}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <img src="${avatarUrl}" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm" />
+                  <span class="text-sm font-medium text-slate-800">${e.userName || '-'}</span>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-600">${e.userDepartment || '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${e.userPhone || '-'}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${e.enrolledAt ? new Date(e.enrolledAt).toLocaleString('zh-CN') : '-'}</td>
+              <td class="px-4 py-3 text-right">
+                <button onclick="removeEnrollment(${e.id}, ${trainingId})" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition" title="移除"><i class="fas fa-times text-xs"></i></button>
+              </td>
+            </tr>`;
+          }).join('')
+          : `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">
+              <i class="fas fa-users text-2xl mb-2 block"></i>
+              <p>暂无报名人员</p>
+              <p class="text-xs mt-1">点击"指派学员"按钮添加学员</p>
+            </td></tr>`;
+
+        // 部门统计
+        const deptStats = {};
+        enrollments.forEach(e => {
+          const dept = e.userDepartment || '未知部门';
+          deptStats[dept] = (deptStats[dept] || 0) + 1;
+        });
+        const deptBadges = Object.entries(deptStats).map(([dept, count]) =>
+          `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">${dept}: ${count}</span>`
+        ).join('');
+
+        showModal(`
+          <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-users text-indigo-500 mr-2"></i>报名数据统计</h3>
+                <p class="text-sm text-slate-500">${title}</p>
+              </div>
+              <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="px-6 py-3 border-b border-slate-50 flex items-center justify-between">
+              <div class="flex items-center gap-2 flex-wrap">${deptBadges || '<span class="text-xs text-slate-400">暂无数据</span>'}</div>
+              <button onclick="openAssignStudentsModal(${trainingId})" class="px-3 py-1.5 bg-cyan-50 text-cyan-600 rounded-lg text-xs font-medium hover:bg-cyan-100 transition">
+                <i class="fas fa-user-plus mr-1"></i>指派学员
+              </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+              <table class="w-full">
+                <thead class="bg-slate-50"><tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">电话</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">报名时间</th>
+                  <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500">操作</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-100 flex justify-between items-center">
+              <p class="text-sm text-slate-500">报名总人数：<strong class="text-indigo-600">${enrollments.length}</strong></p>
+              <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+            </div>
+          </div>
+        `);
+      } catch (err) {
+        toast('加载报名数据失败', 'error');
+      }
+    }
+
+    // 移除单个报名
+    async function removeEnrollment(enrollId, trainingId) {
+      if (!confirm('确定移除该学员的报名?')) return;
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/enrollments/' + enrollId, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) {
+          toast('已移除报名');
+          viewTrainingEnrollments(trainingId); // 刷新
+        } else {
+          toast(result.error || '移除失败', 'error');
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+
+    // 分享培训任务
+    function openTrainingShareModal(trainingId) {
+      const event = data.training.find(x => x.id === trainingId);
+      if (!event) return;
+      const shareUrl = window.location.origin + '/training-signin.html?id=' + trainingId;
+      const dingtalkUrl = 'dingtalk://page/link?url=' + encodeURIComponent(shareUrl);
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh]">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-share-alt text-purple-500 mr-2"></i>分享</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6 overflow-y-auto">
+            <div class="mb-5">
+              <span class="inline-block px-4 py-1.5 text-sm font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg">企业内分享</span>
+            </div>
+            <div class="space-y-4 mb-6">
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1.5">钉钉内链</label>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="training-dingtalk-link" value="${dingtalkUrl}" readonly class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-600">
+                  <button onclick="copyTrainingShareLink('training-dingtalk-link')" class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600 transition">复制链接</button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1.5">分享链接</label>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="training-share-link" value="${shareUrl}" readonly class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-600">
+                  <button onclick="copyTrainingShareLink('training-share-link')" class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600 transition">复制链接</button>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-3">生成海报</label>
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div onclick="openTrainingPosterModal(${trainingId})" class="group cursor-pointer rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-md transition bg-slate-50">
+                  <div class="aspect-[9/16] bg-gradient-to-br from-indigo-50 via-white to-orange-50 relative p-3 flex flex-col items-center justify-center">
+                    <div class="absolute top-3 left-3 text-[10px] font-bold text-orange-500">游雁学院</div>
+                    <div class="w-full bg-orange-400 rounded-lg py-2 text-center mb-3">
+                      <p class="text-[10px] text-white font-medium">分享码</p>
+                      <p class="text-[8px] text-orange-100 truncate px-1">${escHtml(event.name || '培训分享')}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-white rounded-lg border border-slate-100 flex items-center justify-center">
+                      <i class="fas fa-qrcode text-slate-700 text-lg"></i>
+                    </div>
+                    <div class="mt-2 text-[8px] text-slate-400">长按或扫描查看</div>
+                  </div>
+                  <div class="px-3 py-2 bg-white text-center">
+                    <p class="text-xs font-medium text-slate-700">简约模板</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-slate-100 flex justify-end flex-shrink-0">
+            <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function copyTrainingShareLink(inputId) {
+      const input = document.getElementById(inputId || 'training-share-link');
+      if (!input) return;
+      input.select();
+      document.execCommand('copy');
+      toast('链接已复制');
+    }
+
+    // 海报生成与预览
+    function openTrainingPosterModal(trainingId) {
+      const event = data.training.find(x => x.id === trainingId);
+      if (!event) return;
+      const shareUrl = window.location.origin + '/training-signin.html?id=' + trainingId;
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800">海报预览</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6 overflow-y-auto flex flex-col items-center">
+            <div id="training-poster-wrap" class="rounded-xl overflow-hidden shadow-lg mb-5">
+              <canvas id="training-poster-canvas" width="750" height="1334" class="w-full max-w-[280px] h-auto"></canvas>
+            </div>
+            <button onclick="downloadTrainingPoster()" class="px-6 py-2.5 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition flex items-center gap-2">
+              <i class="fas fa-download"></i>保存到电脑
+            </button>
+          </div>
+        </div>
+      `);
+      generateTrainingPoster(event, shareUrl);
+    }
+
+    let currentTrainingPosterCanvas = null;
+
+    function generateTrainingPoster(event, shareUrl) {
+      const canvas = document.getElementById('training-poster-canvas');
+      if (!canvas) return;
+      currentTrainingPosterCanvas = canvas;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+
+      // 背景
+      const gradient = ctx.createLinearGradient(0, 0, W, H);
+      gradient.addColorStop(0, '#f8fafc');
+      gradient.addColorStop(0.5, '#ffffff');
+      gradient.addColorStop(1, '#fff7ed');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, W, H);
+
+      // 装饰圆
+      ctx.beginPath();
+      ctx.arc(W * 0.85, H * 0.12, 120, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(249, 115, 22, 0.08)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(W * 0.15, H * 0.88, 90, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
+      ctx.fill();
+
+      // Logo
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.arc(70, 70, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('游', 70, 77);
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('游雁学院', 105, 80);
+
+      // 主卡片
+      const cardX = 60;
+      const cardY = 180;
+      const cardW = W - 120;
+      const cardH = H - 360;
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, cardX, cardY, cardW, cardH, 24);
+      ctx.fill();
+      ctx.shadowColor = 'rgba(0,0,0,0.06)';
+      ctx.shadowBlur = 30;
+      ctx.shadowOffsetY = 10;
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // 橙色标题栏
+      const headerH = 180;
+      ctx.fillStyle = '#f97316';
+      roundRect(ctx, cardX, cardY, cardW, headerH, { tl: 24, tr: 24, br: 0, bl: 0 });
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 42px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('分享码', W / 2, cardY + 80);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = '30px sans-serif';
+      const title = event.name || '未命名培训';
+      const maxTitleWidth = cardW - 80;
+      fillTextWithWrap(ctx, title, W / 2, cardY + 140, maxTitleWidth, 44, 'center');
+
+      // 生成二维码并绘制
+      const qrSize = 360;
+      const qrContainer = document.createElement('div');
+      qrContainer.style.position = 'fixed';
+      qrContainer.style.left = '-9999px';
+      document.body.appendChild(qrContainer);
+      new QRCode(qrContainer, {
+        text: shareUrl,
+        width: qrSize,
+        height: qrSize,
+        colorDark: '#1e293b',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+
+      setTimeout(() => {
+        const qrCanvas = qrContainer.querySelector('canvas');
+        if (qrCanvas) {
+          const qrX = (W - qrSize) / 2;
+          const qrY = cardY + headerH + 90;
+          ctx.fillStyle = '#ffffff';
+          roundRect(ctx, qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 16);
+          ctx.fill();
+          ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+        }
+        document.body.removeChild(qrContainer);
+
+        // 底部提示
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '26px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('长按或扫描查看', W / 2, H - 140);
+      }, 100);
+    }
+
+    function roundRect(ctx, x, y, width, height, radius) {
+      let r = radius;
+      if (typeof radius === 'number') {
+        r = { tl: radius, tr: radius, br: radius, bl: radius };
+      }
+      ctx.beginPath();
+      ctx.moveTo(x + r.tl, y);
+      ctx.lineTo(x + width - r.tr, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + r.tr);
+      ctx.lineTo(x + width, y + height - r.br);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - r.br, y + height);
+      ctx.lineTo(x + r.bl, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - r.bl);
+      ctx.lineTo(x, y + r.tl);
+      ctx.quadraticCurveTo(x, y, x + r.tl, y);
+      ctx.closePath();
+    }
+
+    function fillTextWithWrap(ctx, text, x, y, maxWidth, lineHeight, align) {
+      const chars = text.split('');
+      let line = '';
+      const lines = [];
+      for (let i = 0; i < chars.length; i++) {
+        const testLine = line + chars[i];
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && line) {
+          lines.push(line);
+          line = chars[i];
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+      lines.slice(0, 2).forEach((l, i) => {
+        ctx.textAlign = align || 'left';
+        ctx.fillText(l, x, y + i * lineHeight);
+      });
+    }
+
+    function downloadTrainingPoster() {
+      const canvas = currentTrainingPosterCanvas;
+      if (!canvas) return;
+      const link = document.createElement('a');
+      link.download = '培训分享海报.png';
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast('海报已保存');
+    }
+
+    // 指派学员
+    async function openAssignStudentsModal(trainingId) {
+      try {
+        // 获取当前报名用户ID列表
+        const enrollRes = await fetch(API + '/training/' + trainingId + '/enrollments');
+        const enrollData = await enrollRes.json();
+        const enrolledIds = new Set((enrollData.data || []).map(e => String(e.userId)));
+
+        // 确保 allUsers 已加载
+        if (!allUsers || allUsers.length === 0) {
+          try {
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const usersRes = await fetch(API + '/auth/users', {
+              headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (usersRes.ok) {
+              const usersJson = await usersRes.json();
+              allUsers = (usersJson.data && usersJson.data.users) ? usersJson.data.users : (usersJson.data || usersJson || []);
+            }
+          } catch(e) { /* ignore */ }
+        }
+
+        const users = allUsers || [];
+        if (users.length === 0) {
+          toast('暂无可用用户，请先添加用户', 'warning');
+          return;
+        }
+
+        const event = data.training.find(x => x.id === trainingId);
+        const title = event ? event.name : '培训指派';
+
+        // 按部门分组
+        const departments = {};
+        users.forEach(u => {
+          const dept = u.department || '未分组';
+          if (!departments[dept]) departments[dept] = [];
+          departments[dept].push(u);
+        });
+
+        let usersHtml = '';
+        Object.entries(departments).sort((a, b) => a[0].localeCompare(b[0])).forEach(([dept, deptUsers]) => {
+          const deptEnrolledCount = deptUsers.filter(u => enrolledIds.has(String(u.id))).length;
+          usersHtml += `
+            <div class="mb-4">
+              <div class="flex items-center justify-between mb-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="dept-check rounded text-indigo-600 focus:ring-indigo-500" data-dept="${dept}" onchange="toggleDeptUsers('${dept}', this.checked)" />
+                  <span class="text-sm font-semibold text-slate-700">${dept}</span>
+                </label>
+                <span class="text-xs text-slate-400">${deptEnrolledCount}/${deptUsers.length} 已报名</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pl-6">
+                ${deptUsers.map(u => {
+                  const checked = enrolledIds.has(String(u.id));
+                  const seed = encodeURIComponent(u.realName || u.username);
+                  const avatarUrl = u.avatar && u.avatar.startsWith('http') ? u.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+                  return `
+                    <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer ${checked ? 'bg-indigo-50' : ''}">
+                      <input type="checkbox" class="user-check rounded text-indigo-600 focus:ring-indigo-500" data-user-id="${u.id}" data-dept="${dept}" ${checked ? 'checked' : ''} onchange="updateAssignCount(); syncDeptCheckbox('${dept}')" />
+                      <img src="${avatarUrl}" class="w-6 h-6 rounded-full object-cover" />
+                      <span class="text-xs text-slate-700 truncate">${u.realName || u.username}</span>
+                    </label>`;
+                }).join('')}
+              </div>
+            </div>`;
+        });
+
+        showModal(`
+          <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-user-plus text-cyan-500 mr-2"></i>指派学员</h3>
+                <p class="text-sm text-slate-500">${title}</p>
+              </div>
+              <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="px-6 py-3 border-b border-slate-50 flex items-center justify-between">
+              <div class="relative flex-1 max-w-xs">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="assign-search" placeholder="搜索姓名..." class="pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 w-full" oninput="filterAssignUsers(this.value)" />
+              </div>
+              <span class="text-xs text-slate-400 ml-3" id="assign-count">已选: ${enrolledIds.size} 人</span>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1" id="assign-users-list">${usersHtml}</div>
+            <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+              <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+              <button onclick="submitAssignStudents(${trainingId})" class="px-5 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-medium">确认指派</button>
+            </div>
+          </div>
+        `);
+      } catch (err) {
+        toast('加载失败', 'error');
+      }
+    }
+
+    // 部门全选/取消
+    function toggleDeptUsers(dept, checked) {
+      const checkboxes = document.querySelectorAll(`.user-check[data-dept="${dept}"]`);
+      checkboxes.forEach(cb => { cb.checked = checked; });
+      updateAssignCount();
+    }
+
+    // 同步部门复选框状态
+    function syncDeptCheckbox(dept) {
+      const checkboxes = document.querySelectorAll(`.user-check[data-dept="${dept}"]`);
+      const deptCb = document.querySelector(`.dept-check[data-dept="${dept}"]`);
+      if (deptCb) {
+        const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+        deptCb.checked = allChecked;
+      }
+    }
+
+    // 搜索过滤
+    function filterAssignUsers(keyword) {
+      const labels = document.querySelectorAll('#assign-users-list label');
+      const kw = keyword.trim().toLowerCase();
+      labels.forEach(label => {
+        const nameSpan = label.querySelector('span.text-xs');
+        if (nameSpan) {
+          const name = nameSpan.textContent.toLowerCase();
+          label.style.display = (!kw || name.includes(kw)) ? '' : 'none';
+        }
+      });
+      // 部门标题也做显隐处理
+      document.querySelectorAll('#assign-users-list > div').forEach(deptDiv => {
+        const visibleUsers = deptDiv.querySelectorAll('.grid label:not([style*="display: none"])');
+        const deptHeader = deptDiv.querySelector('.flex.items-center.justify-between');
+        if (deptHeader) {
+          deptHeader.style.display = (kw && visibleUsers.length === 0) ? 'none' : '';
+        }
+      });
+    }
+
+    // 更新已选计数
+    function updateAssignCount() {
+      const count = document.querySelectorAll('#assign-users-list .user-check:checked').length;
+      const el = document.getElementById('assign-count');
+      if (el) el.textContent = `已选: ${count} 人`;
+    }
+
+    // 提交指派
+    async function submitAssignStudents(trainingId) {
+      const checkedIds = Array.from(document.querySelectorAll('#assign-users-list .user-check:checked'))
+        .map(cb => parseInt(cb.dataset.userId));
+
+      // 获取当前已报名ID
+      try {
+        const enrollRes = await fetch(API + '/training/' + trainingId + '/enrollments');
+        const enrollData = await enrollRes.json();
+        const currentEnrolledIds = new Set((enrollData.data || []).map(e => e.userId));
+
+        const toAdd = checkedIds.filter(id => !currentEnrolledIds.has(id));
+        const toRemove = Array.from(currentEnrolledIds).filter(id => !checkedIds.includes(id));
+
+        // 批量添加
+        if (toAdd.length > 0) {
+          const res = await fetch(API + '/training/' + trainingId + '/assign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userIds: toAdd })
+          });
+          const result = await res.json();
+          if (!result.success) {
+            toast(result.error || '指派失败', 'error');
+            return;
+          }
+        }
+
+        // 批量移除取消勾选的
+        for (const userId of toRemove) {
+          await fetch(API + '/training/' + trainingId + '/enroll', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
+          });
+        }
+
+        const msgs = [];
+        if (toAdd.length > 0) msgs.push(`新增 ${toAdd.length} 人`);
+        if (toRemove.length > 0) msgs.push(`移除 ${toRemove.length} 人`);
+        toast(msgs.length > 0 ? msgs.join('，') : '无变更');
+
+        closeModal();
+        // 刷新数据
+        await loadAllData();
+        renderTrainingList();
+        // 如果当前在数据分析视图，也刷新当前标签页
+        if (trainingViewMode === 'analytics' && analyticsTrainingId === trainingId) {
+          switchAnalyticsTab(analyticsCurrentTab);
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+      }
+    }
+
+    // ========== 用户管理 ==========
+    let allUsers = [];
+    let filteredUsers = [];
+    let userCurrentPage = 1;
+    const userPageSize = 10;
+
+    // 加载用户列表
+    async function loadUsers() {
+      (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#94a3b8\">loadUsers: 开始加载用户...</div>';})();
+      console.log('[User Management] 开始加载用户列表...');
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        console.log('[User Management] Token:', token ? '存在' : '不存在');
+
+        if (!token) {
+          (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadUsers: 没有 token!</div>';})();
+          toast('请先登录', 'error');
+          return;
+        }
+
+        console.log('[User Management] 请求API:', API + '/auth/users');
+        const res = await fetch(API + '/auth/users', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        console.log('[User Management] 响应状态:', res.status);
+
+        if (res.ok) {
+          const result = await res.json();
+          console.log('[User Management] 获取到的用户数据:', result);
+          allUsers = result.data.users || [];
+          (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#4ade80\">loadUsers: 获取到 ' + allUsers.length + ' 个用户</div>';})();
+          console.log('[User Management] 用户数量:', allUsers.length);
+          filterAndRenderUsers();
+        } else {
+          const errorText = await res.text();
+          (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadUsers: HTTP ' + res.status + ' - ' + errorText + '</div>';})();
+          console.error('[User Management] 加载失败:', res.status, errorText);
+          toast('加载用户失败: ' + res.status, 'error');
+        }
+      } catch (err) {
+        (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadUsers ERROR: ' + (err.message||err) + '</div>';})();
+        console.error('[User Management] 网络错误:', err);
+        toast('网络错误', 'error');
+      }
+    }
+
+    // 过滤并渲染用户
+    function filterAndRenderUsers() {
+      const searchTerm = document.getElementById('user-search-input')?.value.toLowerCase() || '';
+      const roleFilter = document.getElementById('user-role-filter')?.value || 'all';
+      const statusFilter = document.getElementById('user-status-filter')?.value || 'all';
+
+      filteredUsers = allUsers.filter(user => {
+        // 搜索过滤
+        const matchSearch = !searchTerm ||
+          (user.username && user.username.toLowerCase().includes(searchTerm)) ||
+          (user.realName && user.realName.toLowerCase().includes(searchTerm)) ||
+          (user.phone && user.phone.includes(searchTerm));
+
+        // 角色过滤
+        const matchRole = roleFilter === 'all' || user.role === roleFilter;
+
+        // 状态过滤
+        const matchStatus = statusFilter === 'all' || user.status === statusFilter;
+
+        return matchSearch && matchRole && matchStatus;
+      });
+
+      // 更新统计
+      updateUserStats();
+
+      // 渲染列表
+      userCurrentPage = 1;
+      renderUserList();
+    }
+
+    // 更新用户统计
+    function updateUserStats() {
+      const total = allUsers.length;
+      const active = allUsers.filter(u => u.status === 'active').length;
+      const disabled = allUsers.filter(u => u.status === 'disabled').length;
+
+      const today = new Date().toLocaleDateString('zh-CN');
+      const todayCount = allUsers.filter(u => {
+        if (!u.createdAt) return false;
+        const createDate = new Date(u.createdAt.replace(/\//g, '-'));
+        return createDate.toLocaleDateString('zh-CN') === today;
+      }).length;
+
+      document.getElementById('user-stat-total').textContent = total;
+      document.getElementById('user-stat-active').textContent = active;
+      document.getElementById('user-stat-disabled').textContent = disabled;
+      document.getElementById('user-stat-today').textContent = todayCount;
+    }
+
+    // 渲染用户列表
+    function renderUserList() {
+      const tbody = document.getElementById('user-list');
+      if (!tbody) return;
+
+      const totalPages = Math.ceil(filteredUsers.length / userPageSize);
+      const start = (userCurrentPage - 1) * userPageSize;
+      const end = start + userPageSize;
+      const pageUsers = filteredUsers.slice(start, end);
+
+      if (pageUsers.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="px-6 py-12 text-center text-slate-400">
+              <i class="fas fa-inbox text-4xl mb-3 block"></i>
+              <p>暂无用户数据</p>
+            </td>
+          </tr>
+        `;
+      } else {
+        const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+        const currentUserId = currentUser.id;
+        tbody.innerHTML = pageUsers.map(user => {
+          const isCurrentUser = user.id === currentUserId;
+          const roleMap = {
+            admin: { text: '管理员', class: 'bg-red-100 text-red-700' },
+            teacher: { text: '讲师', class: 'bg-blue-100 text-blue-700' },
+            user: { text: '学员', class: 'bg-gray-100 text-gray-700' }
+          };
+          const roleInfo = roleMap[user.role] || roleMap.user;
+
+          const statusInfo = user.status === 'active'
+            ? { text: '正常', class: 'bg-green-100 text-green-700' }
+            : { text: '禁用', class: 'bg-yellow-100 text-yellow-700' };
+
+          // 完整显示手机号(管理员可见)
+          const phone = user.phone || '-';
+
+          return `
+            <tr class="hover:bg-slate-50 transition">
+              <!-- 手机号 -->
+              <td class="px-6 py-4 text-sm text-slate-700">${phone}</td>
+              <!-- 姓名 -->
+              <td class="px-6 py-4">
+                <p class="font-medium text-slate-800">${user.realName || user.username}</p>
+              </td>
+              <!-- 部门 -->
+              <td class="px-6 py-4 text-center text-sm text-slate-600">${user.department || '-'}</td>
+              <!-- 岗位 -->
+              <td class="px-6 py-4 text-center text-sm text-slate-600">${user.position || '-'}</td>
+              <!-- 角色 -->
+              <td class="px-6 py-4 text-center">
+                <span class="px-2 py-1 ${roleInfo.class} rounded-full text-xs">${roleInfo.text}</span>
+              </td>
+              <!-- 状态 -->
+              <td class="px-6 py-4 text-center">
+                <span class="px-2 py-1 ${statusInfo.class} rounded-full text-xs">${statusInfo.text}</span>
+              </td>
+              <!-- 注册时间 -->
+              <td class="px-6 py-4 text-center text-sm text-slate-500">${user.createdAt ? user.createdAt.split(' ')[0] : '-'}</td>
+              <!-- 最后登录时间 -->
+              <td class="px-6 py-4 text-center text-sm text-slate-500">${user.lastLogin || '-'}</td>
+              <!-- 操作 -->
+              <td class="px-6 py-4 text-center">
+                <button onclick="editUser(${user.id})" class="text-indigo-600 hover:text-indigo-800 mr-2" title="编辑资料"><i class="fas fa-edit"></i></button>
+                <button onclick="resetUserPassword(${user.id})" class="text-orange-600 hover:text-orange-800 mr-2" title="重置密码"><i class="fas fa-key"></i></button>
+                <button onclick="toggleUserRole(${user.id})" class="${user.role === 'admin' ? 'text-purple-600 hover:text-purple-800' : 'text-emerald-600 hover:text-emerald-800'} mr-2" title="${user.role === 'admin' ? '取消管理员' : '设为管理员'}" ${isCurrentUser ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>
+                  <i class="fas fa-${user.role === 'admin' ? 'user-shield' : 'user-plus'}"></i>
+                </button>
+                <button onclick="toggleUserStatus(${user.id})" class="${user.status === 'active' ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'} mr-2" title="${user.status === 'active' ? '禁用' : '启用'}">
+                  <i class="fas fa-${user.status === 'active' ? 'ban' : 'check'}"></i>
+                </button>
+                <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-800" title="删除用户"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 更新分页
+      renderUserPagination(totalPages);
+    }
+
+    // 渲染分页
+    function renderUserPagination(totalPages) {
+      const infoEl = document.getElementById('user-pagination-info');
+      const buttonsEl = document.getElementById('user-pagination-buttons');
+
+      if (infoEl) {
+        infoEl.textContent = `共 ${filteredUsers.length} 条记录`;
+      }
+
+      if (buttonsEl) {
+        if (totalPages <= 1) {
+          buttonsEl.innerHTML = '';
+          return;
+        }
+
+        let html = '';
+
+        // 上一页
+        html += `<button onclick="changeUserPage(${userCurrentPage - 1})" class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm ${userCurrentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}" ${userCurrentPage === 1 ? 'disabled' : ''}>上一页</button>`;
+
+        // 页码
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= userCurrentPage - 1 && i <= userCurrentPage + 1)) {
+            html += `<button onclick="changeUserPage(${i})" class="px-3 py-1.5 ${i === userCurrentPage ? 'bg-indigo-600 text-white' : 'border border-slate-200 hover:bg-slate-50'} rounded-lg transition text-sm">${i}</button>`;
+          } else if (i === userCurrentPage - 2 || i === userCurrentPage + 2) {
+            html += `<span class="px-2 text-slate-400">...</span>`;
+          }
+        }
+
+        // 下一页
+        html += `<button onclick="changeUserPage(${userCurrentPage + 1})" class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition text-sm ${userCurrentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}" ${userCurrentPage === totalPages ? 'disabled' : ''}>下一页</button>`;
+
+        buttonsEl.innerHTML = html;
+      }
+    }
+
+    // 切换页码
+    function changeUserPage(page) {
+      const totalPages = Math.ceil(filteredUsers.length / userPageSize);
+      if (page < 1 || page > totalPages) return;
+      userCurrentPage = page;
+      renderUserList();
+    }
+
+    // 打开添加用户弹窗
+    function openUserModal() {
+      const content = `
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">添加新用户</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveNewUser(event)" class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">手机号 <span class="text-red-500">*</span></label>
+              <input type="tel" id="new-user-phone" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入手机号">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">密码 <span class="text-red-500">*</span></label>
+              <input type="password" id="new-user-password" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="至少6位">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">真实姓名</label>
+              <input type="text" id="new-user-realname" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">部门</label>
+              <input type="text" id="new-user-department" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">角色</label>
+              <select id="new-user-role" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="user">学员</option>
+                <option value="teacher">讲师</option>
+                <option value="admin">管理员</option>
+              </select>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">添加</button>
+            </div>
+          </form>
+        </div>
+      `;
+      showModal(content);
+    }
+
+    // 保存新用户
+    async function saveNewUser(event) {
+      event.preventDefault();
+
+      const phone = document.getElementById('new-user-phone').value.trim();
+      const userData = {
+        username: phone,
+        password: document.getElementById('new-user-password').value,
+        realName: document.getElementById('new-user-realname').value.trim(),
+        phone: phone,
+        department: document.getElementById('new-user-department').value.trim(),
+        role: document.getElementById('new-user-role').value
+      };
+
+      if (!userData.phone || !userData.password) {
+        toast('手机号和密码不能为空', 'error');
+        return;
+      }
+
+      if (userData.username.length < 3 || userData.username.length > 20) {
+        toast('用户名长度必须在3-20个字符之间', 'error');
+        return;
+      }
+
+      if (userData.password.length < 6) {
+        toast('密码长度至少6个字符', 'error');
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const res = await fetch(`${API}/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(userData)
+        });
+
+        const result = await res.json();
+
+        if (res.ok && result.success) {
+          toast('用户添加成功');
+          closeModal();
+          await loadUsers();
+        } else {
+          toast(result.error || '添加失败', 'error');
+        }
+      } catch (err) {
+        console.error('添加用户错误:', err);
+        toast('网络错误', 'error');
+      }
+    }
+
+    // 编辑用户
+    async function editUser(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) {
+        toast('用户不存在', 'error');
+        return;
+      }
+
+      const content = `
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">编辑用户资料</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveUserEdit(event, ${userId})" class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">真实姓名</label>
+              <input type="text" id="edit-user-realname" value="${user.realName || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">手机号</label>
+              <input type="tel" id="edit-user-phone" value="${user.phone || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">部门</label>
+              <input type="text" id="edit-user-department" value="${user.department || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">角色</label>
+              <select id="edit-user-role" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="user" ${user.role === 'user' ? 'selected' : ''}>学员</option>
+                <option value="teacher" ${user.role === 'teacher' ? 'selected' : ''}>讲师</option>
+                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>管理员</option>
+              </select>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">保存</button>
+            </div>
+          </form>
+        </div>
+      `;
+      showModal(content);
+    }
+
+    // 保存用户编辑
+    async function saveUserEdit(event, userId) {
+      event.preventDefault();
+
+      const updateData = {
+        realName: document.getElementById('edit-user-realname').value.trim(),
+        phone: document.getElementById('edit-user-phone').value.trim(),
+        department: document.getElementById('edit-user-department').value.trim(),
+        role: document.getElementById('edit-user-role').value
+      };
+
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const res = await fetch(`${API}/auth/users/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(updateData)
+        });
+
+        if (res.ok) {
+          toast('用户资料已更新');
+          closeModal();
+          await loadUsers();
+        } else {
+          const error = await res.json();
+          toast(error.error || '更新失败', 'error');
+        }
+      } catch (err) {
+        toast('网络错误', 'error');
+      }
+    }
+
+    // 重置密码
+    async function resetUserPassword(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) {
+        toast('用户不存在', 'error');
+        return;
+      }
+
+      const newPassword = prompt(`请输入用户 "${user.realName || user.username}" 的新密码（至少6位）：`);
+      if (newPassword === null) return;
+      if (newPassword.trim().length < 6) {
+        toast('密码不能少于6位', 'error');
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const res = await fetch(`${API}/auth/users/${userId}/reset-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ newPassword: newPassword.trim() })
+        });
+
+        if (res.ok) {
+          toast('密码重置成功');
+        } else {
+          const error = await res.json();
+          toast(error.error || '重置失败', 'error');
+        }
+      } catch (err) {
+        toast('网络错误', 'error');
+      }
+    }
+
+    // 切换用户状态(禁用/启用)
+    async function toggleUserStatus(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) {
+        toast('用户不存在', 'error');
+        return;
+      }
+
+      const newStatus = user.status === 'active' ? 'disabled' : 'active';
+      const actionText = newStatus === 'active' ? '启用' : '禁用';
+
+      if (!confirm(`确定要${actionText}用户 "${user.realName || user.username}" 吗?`)) {
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const res = await fetch(`${API}/auth/users/${userId}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        if (res.ok) {
+          toast(`用户已${actionText}`);
+          await loadUsers();
+        } else {
+          const error = await res.json();
+          toast(error.error || '操作失败', 'error');
+        }
+      } catch (err) {
+        toast('网络错误', 'error');
+      }
+    }
+
+    // 删除用户
+    async function deleteUser(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) {
+        toast('用户不存在', 'error');
+        return;
+      }
+
+      if (!confirm(`确定要删除用户 "${user.realName || user.username}" 吗?\n\n此操作不可恢复!`)) {
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const res = await fetch(`${API}/auth/users/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (res.ok) {
+          toast('用户已删除');
+          await loadUsers();
+        } else {
+          const error = await res.json();
+          toast(error.error || '删除失败', 'error');
+        }
+      } catch (err) {
+        console.error('删除用户失败:', err);
+        toast('网络错误', 'error');
+      }
+    }
+
+    // 切换用户管理员权限
+    async function toggleUserRole(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) return;
+
+      const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+      if (currentUser.id === userId) {
+        toast('不能修改自己的权限', 'error');
+        return;
+      }
+
+      const actionText = user.role === 'admin' ? '撤销管理员权限' : '授予管理员权限';
+      if (!confirm(`确定要${actionText}给用户 "${user.realName || user.username}" 吗?`)) {
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const res = await fetch(`${API}/auth/users/${userId}/toggle-role`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          toast(result.message);
+          await loadUsers();
+        } else {
+          const error = await res.json();
+          toast(error.error || '操作失败', 'error');
+        }
+      } catch (err) {
+        console.error('切换权限失败:', err);
+        toast('网络错误', 'error');
+      }
+    }
+
+    // 搜索和筛选事件绑定
+    function initUserFilters() {
+      const searchInput = document.getElementById('user-search-input');
+      const roleFilter = document.getElementById('user-role-filter');
+      const statusFilter = document.getElementById('user-status-filter');
+
+      if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', () => {
+          clearTimeout(searchTimeout);
+          searchTimeout = setTimeout(() => {
+            filterAndRenderUsers();
+          }, 300);
+        });
+      }
+
+      if (roleFilter) {
+        roleFilter.addEventListener('change', filterAndRenderUsers);
+      }
+
+      if (statusFilter) {
+        statusFilter.addEventListener('change', filterAndRenderUsers);
+      }
+    }
+
+    // ========== 培训课程管理 ==========
+    let currentManageProjectId = null;
+
+    async function manageCourses(projectId) {
+      currentManageProjectId = projectId;
+      const project = data.training.find(t => t.id === projectId);
+      if (!project) {
+        toast('培训项目不存在', 'error');
+        return;
+      }
+
+      // 直接使用本地数据
+      renderCourseManagement(project);
+    }
+
+    function renderCourseManagement(project) {
+      const courses = project.courses || [];
+
+      let content = `
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800">${project.name} - 课程管理</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="flex-1 overflow-y-auto p-6">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-sm text-slate-500">共 ${courses.length} 门课程</span>
+              <button onclick="openAddCourseModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition text-sm">
+                <i class="fas fa-plus mr-1"></i>添加课程
+              </button>
+            </div>
+      `;
+
+      if (courses.length === 0) {
+        content += `
+          <div class="text-center py-12 text-slate-400">
+            <i class="fas fa-inbox text-4xl mb-4 block"></i>
+            <p>暂无课程</p>
+            <button onclick="openAddCourseModal()" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">添加第一个课程</button>
+          </div>
+        `;
+      } else {
+        content += '<div class="space-y-3">';
+        courses.forEach((course, idx) => {
+          content += `
+            <div class="flex items-start gap-4 p-4 bg-slate-50 rounded-xl">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                ${idx + 1}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <h4 class="font-medium text-slate-800">${course.name}</h4>
+                    <p class="text-sm text-slate-500 mt-0.5">
+                      <i class="fas fa-user mr-1"></i>${course.instructor || '待定'}
+                      <span class="mx-2">|</span>
+                      <i class="fas fa-calendar mr-1"></i>${course.date || '待定'}
+                      ${course.time ? `<span class="mx-2">|</span><i class="fas fa-clock mr-1"></i>${course.time}` : ''}
+                    </p>
+                    ${course.location ? `<p class="text-xs text-slate-400 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${course.location}</p>` : ''}
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button onclick="deleteTrainingCourse(${course.id})" class="text-red-500 hover:bg-red-50 p-1.5 rounded" title="删除">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        content += '</div>';
+      }
+
+      content += `
+          </div>
+        </div>
+      `;
+
+      showModal(content);
+    }
+
+    function openAddCourseModal() {
+      const content = `
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">添加课程</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="saveTrainingCourse(event)" class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">课程名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="course-name" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">讲师</label>
+                <input type="text" id="course-instructor" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">分类</label>
+                <select id="course-category" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="新雁计划">新雁计划</option>
+                  <option value="游雁学堂">游雁学堂</option>
+                  <option value="鸿雁计划">鸿雁计划</option>
+                  <option value="AI实践分享">AI实践分享</option>
+                  <option value="雏雁训练营">雏雁训练营</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">日期 <span class="text-red-500">*</span></label>
+                <input type="date" id="course-date" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">时间</label>
+                <input type="text" id="course-time" placeholder="例:09:00-11:30" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">时长</label>
+                <input type="text" id="course-duration" placeholder="例:2.5小时" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">地点</label>
+                <input type="text" id="course-location" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">添加</button>
+            </div>
+          </form>
+        </div>
+      `;
+      showModal(content);
+    }
+
+    async function saveTrainingCourse(event) {
+      event.preventDefault();
+
+      const courseData = {
+        name: document.getElementById('course-name').value.trim(),
+        instructor: document.getElementById('course-instructor').value.trim(),
+        category: document.getElementById('course-category').value,
+        date: document.getElementById('course-date').value,
+        time: document.getElementById('course-time').value.trim(),
+        duration: document.getElementById('course-duration').value.trim(),
+        location: document.getElementById('course-location').value.trim()
+      };
+
+      try {
+        const res = await fetch(API + '/training/' + currentManageProjectId + '/courses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(courseData)
+        });
+
+        if (res.ok) {
+          toast('课程已添加');
+          closeModal();
+          await loadAllData();
+          renderTraining();
+          // 重新打开课程管理
+          manageCourses(currentManageProjectId);
+        } else {
+          toast('添加失败', 'error');
+        }
+      } catch (err) {
+        toast('添加失败', 'error');
+      }
+    }
+
+    async function deleteTrainingCourse(courseId) {
+      if (!confirm('确定要删除这门课程吗?')) return;
+
+      try {
+        const res = await fetch(API + '/training/courses/' + courseId, { method: 'DELETE' });
+        if (res.ok) {
+          toast('课程已删除');
+          await loadAllData();
+          renderTraining();
+          // 重新打开课程管理
+          manageCourses(currentManageProjectId);
+        } else {
+          toast('删除失败', 'error');
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+
+    // ========== 公告管理 ==========
+    function renderNotices() {
+      const tbody = document.getElementById('notice-list');
+      if (!tbody) return;
+
+      if (data.notices.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+              <i class="fas fa-bullhorn text-4xl mb-3 block"></i>
+              <p>暂无公告</p>
+              <button onclick="openNoticeModal()" class="mt-4 btn-primary px-6 py-2.5 text-white rounded-xl font-medium">发布公告</button>
+            </td>
+          </tr>`;
+        return;
+      }
+
+      // 按置顶和发布时间排序
+      const sortedNotices = [...data.notices].sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(b.publishedAt || b.createdAt) - new Date(a.publishedAt || a.createdAt);
+      });
+
+      tbody.innerHTML = sortedNotices.map(n => `
+        <tr class="hover:bg-slate-50 transition">
+          <!-- 封面图 -->
+          <td class="px-6 py-4">
+            ${n.cover ? `
+              <div class="w-24 h-16 rounded-lg overflow-hidden bg-slate-100">
+                <img src="${n.cover}" class="w-full h-full object-cover">
+              </div>
+            ` : '<span class="text-slate-400 text-sm">无封面</span>'}
+          </td>
+
+          <!-- 标题 -->
+          <td class="px-6 py-4">
+            <div class="text-sm font-medium text-slate-800">${n.title}</div>
+            <div class="text-xs text-slate-400 mt-1 line-clamp-1">
+              ${n.content ? n.content.replace(/<[^>]+>/g, '').substring(0, 80) + '...' : '无内容'}
+            </div>
+          </td>
+
+          <!-- 发布时间 -->
+          <td class="px-6 py-4 text-sm text-slate-600">
+            ${n.publishedAt || n.createdAt || '-'}
+          </td>
+
+          <!-- 访问量 -->
+          <td class="px-6 py-4 text-sm">
+            <button onclick="showNoticeVisits(${n.id}, decodeURIComponent('${encodeURIComponent(n.title || '公告')}'))" class="text-indigo-600 hover:text-indigo-800 font-medium underline cursor-pointer" title="点击查看访问详情">
+              ${n.visitCount || 0} 人
+            </button>
+          </td>
+
+          <!-- 操作 -->
+          <td class="px-6 py-4">
+            <button onclick="togglePinNotice(${n.id})" class="px-3 py-1.5 rounded-lg text-xs font-medium transition mr-2 ${n.pinned ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}" title="${n.pinned ? '取消置顶' : '设为置顶'}">
+              <i class="fas fa-thumbtack mr-1"></i>${n.pinned ? '已置顶' : '置顶'}
+            </button>
+            <button onclick="viewNotice(${n.id})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs hover:bg-indigo-100 transition mr-2">
+              <i class="fas fa-eye mr-1"></i>查看
+            </button>
+            <button onclick="editNotice(${n.id})" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs hover:bg-blue-100 transition mr-2">
+              <i class="fas fa-edit mr-1"></i>编辑
+            </button>
+            <button onclick="deleteNotice(${n.id})" class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs hover:bg-red-100 transition">
+              <i class="fas fa-trash mr-1"></i>删除
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      // 同步更新站点管理子标签的公告列表
+      renderPortalNotices();
+    }
+
+    // renderPortalNotices - 站点管理子标签用(精简表格风格)
+    function renderPortalNotices() {
+      const tbody = document.getElementById('portal-notice-list');
+      if (!tbody) return;
+
+      if (!data.notices || data.notices.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-bullhorn text-2xl mb-2 block"></i><p>暂无公告</p></td></tr>`;
+        return;
+      }
+
+      // 按置顶和发布时间排序
+      const sorted = [...data.notices].sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(b.publishedAt || b.createdAt) - new Date(a.publishedAt || a.createdAt);
+      });
+
+      tbody.innerHTML = sorted.map(n => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-6 py-4">
+            <div class="text-sm font-medium text-slate-800">${n.title}</div>
+          </td>
+          <td class="px-6 py-4 text-sm text-slate-600">
+            ${n.publishedAt || n.createdAt || '-'}
+          </td>
+          <td class="px-6 py-4 text-sm">
+            <button onclick="showNoticeVisits(${n.id}, decodeURIComponent('${encodeURIComponent(n.title || '公告')}'))" class="text-indigo-600 hover:text-indigo-800 font-medium underline cursor-pointer" title="点击查看访问详情">
+              ${n.visitCount || 0} 人
+            </button>
+          </td>
+          <td class="px-6 py-4">
+            <button onclick="togglePinNotice(${n.id})" class="px-2.5 py-1 rounded text-xs font-medium transition mr-1 ${n.pinned ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}" title="${n.pinned ? '取消置顶' : '设为置顶'}">
+              <i class="fas fa-thumbtack"></i>
+            </button>
+            <button onclick="viewNotice(${n.id})" class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded text-xs hover:bg-indigo-100 mr-1" title="查看">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button onclick="editNotice(${n.id})" class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded text-xs hover:bg-blue-100 mr-1" title="编辑">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="deleteNotice(${n.id})" class="px-2.5 py-1 bg-red-50 text-red-600 rounded text-xs hover:bg-red-100" title="删除">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openNoticeModal(notice = null) {
+      const isEdit = !!notice;
+      const content = notice?.content || '';
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+          <!-- 头部 - 固定 -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑' : '发布'}公告</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+
+          <!-- 表单内容 - 可滚动 -->
+          <form id="notice-form" onsubmit="saveNotice(event, ${notice?.id ?? 'null'})" class="flex-1 overflow-y-auto p-6 space-y-4">
+            <!-- 标题 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">标题 <span class="text-red-500">*</span></label>
+              <input type="text" id="n-title" value="${notice?.title || ''}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入公告标题">
+            </div>
+
+            <!-- 富文本编辑器 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">内容 <span class="text-red-500">*</span></label>
+              <div class="border border-slate-200 rounded-xl overflow-hidden" style="height: 400px; display: flex; flex-direction: column;">
+                <div id="n-editor" class="bg-white flex-1" style="overflow-y: auto;"></div>
+              </div>
+              <input type="hidden" id="n-content" value="${content.replace(/"/g, '&quot;')}">
+              <p class="text-xs text-slate-400 mt-1">支持文字、图片、标题、列表等格式(编辑器固定高度400px,内容过多时可滚动)</p>
+            </div>
+          </form>
+
+          <!-- 底部按钮 - 固定 -->
+          <div class="px-6 py-4 border-t border-slate-100 flex justify-end space-x-3 flex-shrink-0 bg-white">
+            <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+            <button type="button" onclick="document.getElementById('notice-form').requestSubmit()" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition">
+              <i class="fas fa-paper-plane mr-2"></i>${notice?.status === 'draft' ? '发布' : (isEdit ? '保存' : '发布')}
+            </button>
+          </div>
+        </div>
+      `);
+
+      // 初始化 Quill 编辑器
+      setTimeout(() => {
+        const quill = new Quill('#n-editor', {
+          theme: 'snow',
+          placeholder: '请输入公告内容...',
+          modules: {
+            toolbar: [
+              [{ 'header': [1, 2, 3, false] }],
+              ['bold', 'italic', 'underline', 'strike'],
+              [{ 'color': [] }, { 'background': [] }],
+              [{ 'font': [] }],
+              [{ 'size': ['small', false, 'large', 'huge'] }],
+              [{ 'align': [] }],
+              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+              ['blockquote', 'code-block'],
+              ['link', 'image', 'video'],
+              ['clean']
+            ]
+          }
+        });
+
+        // 设置初始内容
+        if (content) {
+          quill.clipboard.dangerouslyPasteHTML(content);
+        }
+
+        // 监听内容变化,同步到隐藏字段
+        quill.on('text-change', () => {
+          const html = quill.root.innerHTML;
+          document.getElementById('n-content').value = html;
+        });
+
+        // 将 quill 实例保存到全局变量
+        window.noticeQuill = quill;
+      }, 100);
+    }
+
+    async function saveNotice(e, id) {
+      e.preventDefault();
+
+      // 从 Quill 编辑器获取内容
+      const content = document.getElementById('n-content').value;
+      if (!content || content === '<p><br></p>') {
+        toast('请输入公告内容', 'error');
+        return;
+      }
+
+      const formData = {
+        title: document.getElementById('n-title').value.trim(),
+        content: content,
+        status: 'published',  // 公告发布后直接为已发布状态
+        pinned: 0,  // 默认不置顶，通过操作栏的置顶按钮控制
+        publishedAt: new Date().toISOString().split('T')[0]
+      };
+
+      console.log('[Dashboard] 保存公告数据:', formData);
+
+      try {
+        let res;
+        // id 为 null、undefined 或字符串 'null' 时走新建
+        if (id && id !== 'null') {
+          res = await fetch(API + '/notices/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        } else {
+          res = await fetch(API + '/notices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+        }
+        if (res.ok) {
+          toast(id ? '公告已更新' : '公告已发布');
+          closeModal();
+          await loadAllData();
+          renderNotices();
+          // 广播通知首页刷新
+          if (window.DataSync) window.DataSync.broadcast('notices');
+          console.log('[Dashboard] 已广播公告更新事件');
+        } else {
+          const errorData = await res.json();
+          toast('操作失败: ' + (errorData.error || '未知错误'), 'error');
+          console.error('[Dashboard] 保存公告失败:', errorData);
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+        console.error('[Dashboard] 保存公告异常:', err);
+      }
+    }
+
+    async function viewNotice(id) {
+      const n = data.notices.find(x => x.id === id);
+      if (!n) return;
+
+      // 记录访问
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+        await fetch(API + '/notices/' + id + '/visit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.id || currentUser.username || 'admin',
+            username: currentUser.displayName || currentUser.username || '管理员'
+          })
+        });
+      } catch (e) {
+        console.warn('[Dashboard] 记录访问失败:', e.message);
+      }
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+          <!-- 头部 - 固定 -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800">${n.title}</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+
+          <!-- 内容区 - 可滚动 -->
+          <div class="flex-1 overflow-y-auto p-6">
+            <!-- 封面图 -->
+            ${n.cover ? `
+              <div class="mb-6 rounded-xl overflow-hidden">
+                <img src="${n.cover}" class="w-full h-64 object-cover">
+              </div>
+            ` : ''}
+
+            <!-- 元信息 -->
+            <div class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+              ${n.pinned ? '<span class="px-3 py-1 bg-red-100 text-red-600 rounded-full text-sm font-medium"><i class="fas fa-thumbtack mr-1"></i>置顶</span>' : ''}
+              <span class="text-sm text-slate-400">
+                <i class="far fa-clock mr-1"></i>${n.publishedAt || n.createdAt}
+              </span>
+            </div>
+
+            <!-- 内容 -->
+            <div class="prose max-w-none">
+              <div class="text-slate-700 leading-relaxed">
+                ${n.content || '<p class="text-slate-400">暂无内容</p>'}
+              </div>
+            </div>
+          </div>
+
+          <!-- 底部按钮 - 固定 -->
+          <div class="px-6 py-4 border-t border-slate-100 flex justify-end flex-shrink-0">
+            <button onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function editNotice(id) {
+      const n = data.notices.find(x => x.id === id);
+      if (n) openNoticeModal(n);
+    }
+
+    async function deleteNotice(id) {
+      if (!confirm('确定要删除这条公告吗?')) return;
+      try {
+        const res = await fetch(API + '/notices/' + id, { method: 'DELETE' });
+        if (res.ok) {
+          toast('公告已删除');
+          await loadAllData();
+          renderNotices();
+          if (window.DataSync) window.DataSync.broadcast('notices');
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+      }
+    }
+
+    // 切换公告置顶状态（互斥置顶：同时只能有一条公告置顶）
+    async function togglePinNotice(id) {
+      // 确保 id 为数字类型
+      const numId = parseInt(id);
+      const notice = data.notices.find(n => n.id === numId);
+      if (!notice) {
+        console.error('[Dashboard] 找不到公告 id:', numId);
+        return;
+      }
+
+      // 如果要取消置顶，直接设为0
+      // 如果要设为置顶，需要先将其他公告的pinned设为0，再将当前公告设为1
+      const newPinned = notice.pinned ? 0 : 1;
+      const actionText = newPinned ? '置顶' : '取消置顶';
+
+      try {
+        // 如果设为置顶，先取消其他公告的置顶（确保互斥）
+        if (newPinned === 1) {
+          const unpinRes = await fetch(API + '/notices/unpin-all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          if (!unpinRes.ok) {
+            const errText = await unpinRes.text();
+            toast('取消其他公告置顶失败: ' + errText, 'error');
+            console.error('[Dashboard] unpin-all 失败:', errText);
+            return;
+          }
+        }
+
+        // 设置当前公告的置顶状态
+        const res = await fetch(API + '/notices/' + numId, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pinned: newPinned })
+        });
+        if (res.ok) {
+          toast(`公告已${actionText}`);
+          await loadAllData();
+          renderNotices();
+          if (window.DataSync) window.DataSync.broadcast('notices');
+        } else {
+          const errText = await res.text();
+          toast('操作失败: ' + errText, 'error');
+          console.error('[Dashboard] PUT notices 失败:', errText);
+        }
+      } catch (err) {
+        toast('操作失败', 'error');
+        console.error('[Dashboard] 切换置顶状态异常:', err);
+      }
+    }
+
+    // 显示公告访问详情弹窗
+    async function showNoticeVisits(noticeId, noticeTitle) {
+      // 安全转义标题中的 HTML 特殊字符
+      const safeTitle = String(noticeTitle || '公告').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <h3 class="text-lg font-semibold text-slate-800">访问详情 - ${safeTitle}</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div id="visit-detail-body" class="flex-1 overflow-y-auto p-6">
+            <div class="text-center text-slate-400 py-8"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>
+          </div>
+          <div class="px-6 py-4 border-t border-slate-100 flex justify-end flex-shrink-0">
+            <button onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+          </div>
+        </div>
+      `);
+
+      // 等待一帧确保 DOM 渲染完成
+      await new Promise(r => requestAnimationFrame(r));
+
+      try {
+        console.log('[Dashboard] 获取访问详情:', API + '/notices/' + noticeId + '/visits');
+        const res = await fetch(API + '/notices/' + noticeId + '/visits');
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error('[Dashboard] 请求失败:', res.status, errText);
+          throw new Error(res.status + ' ' + errText);
+        }
+        const respData = await res.json();
+        const visits = respData.visits || [];
+        const body = document.getElementById('visit-detail-body');
+        if (!body) {
+          console.error('[Dashboard] visit-detail-body 未找到');
+          return;
+        }
+
+        if (visits.length === 0) {
+          body.innerHTML = '<div class="text-center text-slate-400 py-8"><i class="fas fa-user-slash text-3xl mb-3 block"></i><p>暂无访问记录</p></div>';
+          return;
+        }
+
+        body.innerHTML = `
+          <div class="text-sm text-slate-500 mb-4">共 <span class="font-semibold text-slate-700">${visits.length}</span> 人访问</div>
+          <table class="w-full">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">用户</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">访问时间</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              ${visits.map(v => `
+                <tr class="hover:bg-slate-50">
+                  <td class="px-4 py-3 text-sm text-slate-700">
+                    <i class="fas fa-user-circle text-slate-400 mr-2"></i>${v.username || v.userId}
+                  </td>
+                  <td class="px-4 py-3 text-sm text-slate-500">
+                    <i class="far fa-clock mr-1"></i>${new Date(v.visitedAt).toLocaleString('zh-CN')}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (err) {
+        console.error('[Dashboard] 获取访问详情失败:', err);
+        const body = document.getElementById('visit-detail-body');
+        if (body) body.innerHTML = '<div class="text-center text-red-400 py-8"><i class="fas fa-exclamation-triangle text-3xl mb-3 block"></i><p>加载失败: ' + err.message + '</p></div>';
+      }
+    }
+
+    // ========== 数据导出 ==========
+    function exportData(type) {
+      const baseUrl = API + '/export';
+      const filenames = {
+        courses: 'courses',
+        lecturers: 'lecturers',
+        users: 'users',
+        categories: 'categories',
+        learning: 'learning-records',
+        all: 'all_data'
+      };
+      window.location.href = `${baseUrl}/${filenames[type]}`;
+      toast(`${type === 'all' ? 'JSON' : 'CSV'} 文件开始下载`);
+    }
+
+    // ========== 模态框工具 ==========
+    function showModal(content) {
+      const container = document.getElementById('modal-container');
+      container.innerHTML = `
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="handleModalClick(event)">
+          ${content}
+        </div>`;
+      container.classList.remove('hidden');
+    }
+
+    function handleModalClick(e) {
+      if (e.target.classList.contains('fixed')) closeModal();
+    }
+
+    function closeModal() {
+      const container = document.getElementById('modal-container');
+      container.innerHTML = '';
+      container.classList.add('hidden');
+      // 关闭所有项目内容模块抽屉
+      ['attendance', 'survey', 'courseware'].forEach(m => closeModuleDrawer(m));
+      // 关闭考试创建抽屉（如果从培训模块打开）
+      if (examModalFromTraining) closeExamModal();
+    }
+
+    // ========== 考试管理 v2（酷学院三模块设计） ==========
+    let editingExamId = null;
+    let selectedExamQuestions = [];
+
+    // ========== 试题管理 ==========
+    let currentBankId = null;
+    
+    async function loadBankList() {
+      const tbody = document.getElementById('bankListBody');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+      try {
+        const res = await fetch('/api/question-banks');
+        const result = await res.json();
+        const banks = result.data || [];
+        if (!banks.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-16 text-center text-slate-400"><i class="fas fa-database text-4xl mb-3 block opacity-30"></i><p>暂无题库，点击右上角"新建题库"开始</p></td></tr>';
+          return;
+        }
+        tbody.innerHTML = banks.map(bank => {
+          const tc = bank.typeCounts || {};
+          const totalCount = (tc.single || 0) + (tc.multiple || 0) + (tc.judge || 0) + (tc.fill || 0) + (tc.essay || 0);
+          const statusBadge = bank.status === 'active' ? '<span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-medium">启用</span>' : '<span class="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-full text-xs font-medium">停用</span>';
+          return `<tr class="hover:bg-slate-50/80 transition cursor-pointer group" onclick="openBankDetail(${bank.id})">
+            <td class="px-5 py-4 whitespace-nowrap">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0">
+                  <i class="fas fa-database text-indigo-500 text-sm"></i>
+                </div>
+                <p class="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition">${escHtml(bank.name)}</p>
+              </div>
+            </td>
+            <td class="px-5 py-4 whitespace-nowrap"><span class="text-sm text-slate-600">${getCategoryName(bank.categoryId)}</span></td>
+            <td class="px-5 py-4 text-center whitespace-nowrap"><span class="text-sm font-semibold text-slate-700">${totalCount}</span> <span class="text-xs text-slate-400">题</span></td>
+            <td class="px-5 py-4 text-center whitespace-nowrap text-sm text-slate-500">${escHtml(bank.createdBy || '管理员')}</td>
+            <td class="px-5 py-4 text-center whitespace-nowrap">${statusBadge}</td>
+            <td class="px-5 py-4 text-center whitespace-nowrap text-sm text-slate-500">${bank.createdAt || '-'}</td>
+            <td class="px-5 py-4 text-center whitespace-nowrap" onclick="event.stopPropagation()">
+              <div class="flex items-center justify-center gap-1">
+                <button onclick="editBank(${bank.id})" class="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit text-sm"></i></button>
+                <button onclick="deleteBank(${bank.id})" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash text-sm"></i></button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-red-500">加载失败: ' + e.message + '</td></tr>';
+      }
+    }
+
+    function getCategoryName(catId) {
+      const cats = data.categories || [];
+      for (const p of cats) {
+        if (p.id === catId) return p.name;
+        if (p.children) { const c = p.children.find(x => x.id === catId); if (c) return c.name; }
+      }
+      return catId > 10 && catId < 60 ? (cats.find(c => c.id === Math.floor(catId / 10) * 10)?.children?.find(x => x.id === catId)?.name || '未分类') : '未分类';
+    }
+
+    // ====== 新建题库 ======
+    function openNewBankModal() {
+      fillCategorySelect('newBankCategory');
+      document.getElementById('newBankModal').classList.remove('hidden');
+      document.getElementById('newBankModal').classList.add('flex');
+    }
+    function closeNewBankModal() {
+      document.getElementById('newBankModal').classList.add('hidden');
+      document.getElementById('newBankModal').classList.remove('flex');
+    }
+    async function createBank(e) {
+      e.preventDefault();
+      const name = document.getElementById('newBankName').value.trim();
+      const categoryId = document.getElementById('newBankCategory').value;
+      if (!name || !categoryId) return toast('请填写完整信息', 'warning');
+      try {
+        const res = await fetch('/api/question-banks', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, categoryId: parseInt(categoryId) })
+        });
+        const result = await res.json();
+        if (result.success) {
+          closeNewBankModal();
+          document.getElementById('newBankName').value = '';
+          toast('题库创建成功！');
+          loadBankList();
+          // 刷新试卷导入弹窗的题库下拉（如果弹窗处于打开状态）
+          const paperImportSel = document.getElementById('paperImportBankSelect');
+          if (paperImportSel) {
+            fetch('/api/question-banks')
+              .then(res => res.json())
+              .then(r => {
+                const banks = r.data || [];
+                paperImportSel.innerHTML = '<option value="">请选择目标题库</option>' +
+                  banks.map(b => `<option value="${b.id}" ${b.id === result.data.id ? 'selected' : ''}>${escHtml(b.name)}</option>`).join('');
+              })
+              .catch(() => {});
+          }
+          setTimeout(() => openBankDetail(result.data.id), 300);
+        } else { toast(result.error || '创建失败', 'error'); }
+      } catch (e) { toast('网络错误', 'error'); }
+    }
+
+    // ====== 编辑题库弹窗 ======
+    function openEditBankModal() {
+      fillCategorySelect('editBankCategory');
+      document.getElementById('editBankModal').classList.remove('hidden');
+      document.getElementById('editBankModal').classList.add('flex');
+    }
+    function closeEditBankModal() {
+      document.getElementById('editBankModal').classList.add('hidden');
+      document.getElementById('editBankModal').classList.remove('flex');
+    }
+    async function editBank(id) {
+      try {
+        const res = await fetch('/api/question-banks/' + id);
+        const result = await res.json();
+        const bank = result.data;
+        if (!bank) return toast('题库不存在', 'error');
+        document.getElementById('editBankId').value = bank.id;
+        document.getElementById('editBankName').value = bank.name || '';
+        fillCategorySelect('editBankCategory');
+        setTimeout(() => {
+          document.getElementById('editBankCategory').value = bank.categoryId || '';
+        }, 100);
+        openEditBankModal();
+      } catch (e) { toast('加载题库失败', 'error'); }
+    }
+    async function saveEditBank(e) {
+      e.preventDefault();
+      const id = document.getElementById('editBankId').value;
+      const name = document.getElementById('editBankName').value.trim();
+      const categoryId = document.getElementById('editBankCategory').value;
+      if (!name || !categoryId) return toast('请填写完整信息', 'warning');
+      try {
+        const res = await fetch('/api/question-banks/' + id, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, categoryId: parseInt(categoryId) })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeEditBankModal();
+          toast('题库已更新');
+          loadBankList();
+        } else { toast(data.error || '更新失败', 'error'); }
+      } catch (e) { toast('更新失败', 'error'); }
+    }
+
+    // ====== 删除题库 ======
+    async function deleteBank(id) {
+      if (!confirm('删除题库将同时删除其中所有试题，确定继续？')) return;
+      try {
+        await fetch('/api/question-banks/' + id, { method: 'DELETE' });
+        toast('题库已删除');
+        loadBankList();
+        if (currentBankId === id) closeBankDetail();
+      } catch (e) { toast('删除失败', 'error'); }
+    }
+
+    // ====== 导入题库：上传文件后自动识别名称 ======
+    function onImportFileChange() {
+      const file = document.getElementById('importFile').files[0];
+      if (!file) return;
+      const name = file.name.replace(/\.[^.]+$/, '');
+      document.getElementById('importBankName').value = name;
+    }
+
+    // ====== 导入题库(Excel) ======
+    function openImportBankModal() {
+      fillCategorySelect('importBankCategory');
+      document.getElementById('importFile').value = '';
+      document.getElementById('importBankName').value = '';
+      document.getElementById('importBankModal').classList.remove('hidden');
+      document.getElementById('importBankModal').classList.add('flex');
+    }
+    function closeImportBankModal() {
+      document.getElementById('importBankModal').classList.add('hidden');
+      document.getElementById('importBankModal').classList.remove('flex');
+    }
+    async function doImportBank() {
+      const name = document.getElementById('importBankName').value.trim();
+      const categoryId = document.getElementById('importBankCategory').value;
+      const file = document.getElementById('importFile').files[0];
+      if (!name || !categoryId || !file) return toast('请填写完整信息并选择文件', 'warning');
+      
+      try {
+        // 先创建题库
+        const bankRes = await fetch('/api/question-banks', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, categoryId: parseInt(categoryId) })
+        });
+        const bankResult = await bankRes.json();
+        if (!bankResult.success) return toast(bankResult.error || '创建题库失败', 'error');
+        const bankId = bankResult.data.id;
+
+        // 上传Excel
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('bankId', bankId);
+        const importRes = await fetch('/api/questions/import', { method: 'POST', body: formData });
+        const importResult = await importRes.json();
+        
+        if (importResult.success) {
+          closeImportBankModal();
+          toast(`导入完成：成功 ${importResult.imported} 题` + (importResult.failed ? `，失败 ${importResult.failed} 题` : ''));
+          loadBankList();
+        } else {
+          toast(importResult.error || '导入失败', 'error');
+        }
+      } catch (e) { toast('导入失败: ' + e.message, 'error'); }
+    }
+
+    // ====== 打开/关闭试题详情子页面 ======
+    async function openBankDetail(bankId) {
+      currentBankId = bankId;
+      try {
+        const res = await fetch('/api/question-banks/' + bankId);
+        const result = await res.json();
+        const bank = result.data;
+        if (!bank) return toast('题库不存在', 'error');
+        document.getElementById('bankDetailName').textContent = '《' + bank.name + '》';
+        document.getElementById('bankDetailCategory').textContent = getCategoryName(bank.categoryId);
+        document.getElementById('bankListView').classList.add('hidden');
+        document.getElementById('bankDetailView').classList.remove('hidden');
+        loadBankQuestions(1);
+      } catch (e) { toast('加载题库失败', 'error'); }
+    }
+    function closeBankDetail() {
+      document.getElementById('bankDetailView').classList.add('hidden');
+      document.getElementById('bankListView').classList.remove('hidden');
+      currentBankId = null;
+    }
+
+    // ====== 题库内试题管理 ======
+    let qbCurrentPage = 1;
+    let qbTotalPages = 1;
+
+    async function loadBankQuestions(page = 1) {
+      qbCurrentPage = page;
+      const tbody = document.getElementById('questionBankBody');
+      if (!tbody || !currentBankId) return;
+      tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+      try {
+        const params = new URLSearchParams({ bankId: currentBankId, page, pageSize: 20 });
+        const kw = document.getElementById('qbSearch')?.value?.trim();
+        const type = document.getElementById('qbTypeFilter')?.value;
+        const diff = document.getElementById('qbDiffFilter')?.value;
+        if (kw) params.set('keyword', kw);
+        if (type && type !== 'all') params.set('type', type);
+        if (diff && diff !== 'all') params.set('difficulty', diff);
+
+        const res = await fetch('/api/questions?' + params);
+        const result = await res.json();
+        const questions = result.data || [];
+        qbTotalPages = result.totalPages || 1;
+
+        document.getElementById('qbPageInfo').textContent = `共 ${result.total || 0} 题，第 ${page}/${qbTotalPages} 页`;
+        let pageBtns = '';
+        for (let p = 1; p <= qbTotalPages; p++) {
+          pageBtns += `<button onclick="loadBankQuestions(${p})" class="px-2.5 py-1 rounded text-xs ${p === qbCurrentPage ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${p}</button>`;
+        }
+        document.getElementById('qbPageBtns').innerHTML = pageBtns;
+
+        if (!questions.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-database text-3xl mb-3 block opacity-50"></i><p>暂未添加试题，点击"添加试题"开始</p></td></tr>';
+          return;
+        }
+        const typeName = t => ({ single:'单选题', multiple:'多选题', judge:'判断题', fill:'填空题', essay:'简答题' })[t] || t;
+        const typeCls = t => ({ single:'bg-blue-50 text-blue-600', multiple:'bg-purple-50 text-purple-600', judge:'bg-amber-50 text-amber-600', fill:'bg-teal-50 text-teal-600', essay:'bg-rose-50 text-rose-600' })[t] || 'bg-slate-100 text-slate-600';
+        const diffName = d => ({ easy:'简单', medium:'中等', hard:'困难' })[d] || d;
+        const diffCls = d => ({ easy:'bg-green-100 text-green-700', medium:'bg-yellow-100 text-yellow-700', hard:'bg-red-100 text-red-700' })[d] || 'bg-slate-100 text-slate-600';
+
+        tbody.innerHTML = questions.map(q => `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="px-5 py-3"><input type="checkbox" class="qb-cb" data-qid="${q.id}" onchange="updateQbBatchBtn()"></td>
+            <td class="px-5 py-3 text-sm text-slate-700" style="min-width:0;"><div class="flex items-center gap-1.5 min-w-0">${(q.image || (q.optionImages && Object.keys(q.optionImages).length > 0)) ? ('<span class="text-indigo-400 flex-shrink-0" title="' + (q.image ? '含题干配图' : '') + ((q.image && q.optionImages && Object.keys(q.optionImages).length > 0) ? '；' : '') + (q.optionImages && Object.keys(q.optionImages).length > 0 ? '含选项配图(' + Object.keys(q.optionImages).length + ')' : '') + '"><i class="fas fa-image"></i></span>') : ''}<span class="truncate" title="${escHtml(q.title || '')}">${escHtml((q.title || '').substring(0, 80))}</span></div></td>
+            <td class="px-5 py-3 text-center whitespace-nowrap"><span class="px-2.5 py-1 rounded-full text-xs font-medium ${typeCls(q.type)}">${typeName(q.type)}</span></td>
+            <td class="px-5 py-3 text-center whitespace-nowrap"><span class="px-2.5 py-1 rounded-full text-xs font-medium ${diffCls(q.difficulty)}">${diffName(q.difficulty)}</span></td>
+            <td class="px-5 py-3 text-center whitespace-nowrap">
+              <div class="flex items-center justify-center gap-1">
+                <button onclick="editQuestion(${q.id})" class="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit text-sm"></i></button>
+                <button onclick="copyQuestion(${q.id})" class="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition" title="复制"><i class="fas fa-copy text-sm"></i></button>
+                <button onclick="deleteQuestion(${q.id})" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash text-sm"></i></button>
+              </div>
+            </td>
+          </tr>`).join('');
+        
+        if (document.getElementById('qbSelectAll')) document.getElementById('qbSelectAll').checked = false;
+        updateQbBatchBtn();
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-red-500">加载失败: ' + e.message + '</td></tr>';
+      }
+    }
+
+    function toggleQbSelectAll() {
+      const checked = document.getElementById('qbSelectAll').checked;
+      document.querySelectorAll('#questionBankBody .qb-cb').forEach(cb => { cb.checked = checked; });
+      updateQbBatchBtn();
+    }
+    function updateQbBatchBtn() {
+      const count = document.querySelectorAll('#questionBankBody .qb-cb:checked').length;
+      const btn = document.getElementById('qbBatchDeleteBtn');
+      if (btn) {
+        if (count > 0) { btn.classList.remove('hidden'); btn.innerHTML = `<i class="fas fa-trash mr-1"></i>批量删除(${count})`; }
+        else btn.classList.add('hidden');
+      }
+    }
+    async function batchDeleteQuestions() {
+      const checked = document.querySelectorAll('#questionBankBody .qb-cb:checked');
+      if (!checked.length) return;
+      if (!confirm(`确定要删除选中的 ${checked.length} 道题目吗？`)) return;
+      const ids = Array.from(checked).map(cb => parseInt(cb.dataset.qid));
+      try {
+        const res = await fetch('/api/questions/batch', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) });
+        const data = await res.json();
+        if (data.success) { toast(`已删除 ${data.deleted} 道题目`); loadBankQuestions(qbCurrentPage); }
+        else { toast(data.error || '删除失败', 'error'); }
+      } catch (e) { toast('删除失败', 'error'); }
+    }
+
+    // ====== 试题编辑(复用原有模态，增加bankId) ======
+    // ====== 试题编辑（弹窗模式） ======
+    let qOptions = [];
+    let qOptionImages = {};
+    let qAnswer = '';
+    let qAnswerMulti = [];
+
+    // ====== 题目图片上传 ======
+    function handleQImageSelect(input) {
+      const file = input.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { toast('图片不能超过 5MB', 'warning'); input.value = ''; return; }
+      previewQImage(file);
+      uploadQImage(file);
+    }
+
+    function handleQImageDrop(e) {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { toast('请上传图片文件', 'warning'); return; }
+      if (file.size > 5 * 1024 * 1024) { toast('图片不能超过 5MB', 'warning'); return; }
+      previewQImage(file);
+      uploadQImage(file);
+    }
+
+    function handleQImagePaste(e) {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file && file.size <= 5 * 1024 * 1024) {
+            e.preventDefault();
+            previewQImage(file);
+            uploadQImage(file);
+          }
+          break;
+        }
+      }
+    }
+
+    function previewQImage(file) {
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        document.getElementById('qImagePreviewImg').src = ev.target.result;
+        document.getElementById('qImagePreview').classList.remove('hidden');
+        document.getElementById('qImageBtnText').textContent = '更换图片';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearQImage() {
+      document.getElementById('qImageInput').value = '';
+      document.getElementById('qImageUrl').value = '';
+      document.getElementById('qImagePreviewImg').src = '';
+      document.getElementById('qImagePreview').classList.add('hidden');
+      document.getElementById('qImageBtnText').textContent = '添加图片';
+    }
+
+    function showExistingQImage(url) {
+      if (!url) return;
+      document.getElementById('qImagePreviewImg').src = url;
+      document.getElementById('qImagePreview').classList.remove('hidden');
+      document.getElementById('qImageBtnText').textContent = '更换图片';
+      document.getElementById('qImageUrl').value = url;
+    }
+
+    async function uploadQImage(file) {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch(API + '/upload/image', { method: 'POST', body: formData });
+        const result = await res.json();
+        if (result.success || result.url) {
+          document.getElementById('qImageUrl').value = result.url || result.data?.url || '';
+          toast('图片上传成功', 'success');
+        } else {
+          // 后端可能未实现，回退到 base64 本地存储
+          const reader = new FileReader();
+          reader.onload = function(ev) {
+            document.getElementById('qImageUrl').value = ev.target.result;
+            toast('图片已本地存储');
+          };
+          reader.readAsDataURL(file);
+        }
+      } catch (err) {
+        // 上传失败时用 base64 兜底
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          document.getElementById('qImageUrl').value = ev.target.result;
+          toast('图片已本地存储');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function openQuestionModal(id = null) {
+      qOptions = []; qOptionImages = {}; qAnswer = ''; qAnswerMulti = [];
+      document.getElementById('qEditId').value = id || '';
+      // 重置图片区域
+      document.getElementById('qImageInput').value = '';
+      document.getElementById('qImageUrl').value = '';
+      document.getElementById('qImagePreview').classList.add('hidden');
+      document.getElementById('qImageBtnText').textContent = '添加图片';
+      const modal = document.getElementById('questionModal');
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      if (id) { loadQuestionForEdit(id); }
+      else { qOptions = ['', '', '', '']; onQTypeChange(); }
+    }
+
+    function closeQuestionModal() {
+      document.getElementById('questionModal').classList.add('hidden');
+      document.getElementById('questionModal').classList.remove('flex');
+    }
+
+    async function loadQuestionForEdit(id) {
+      try {
+        const res = await fetch('/api/questions/' + id);
+        const result = await res.json();
+        const q = result.data;
+        if (!q) { toast('题目不存在', 'error'); return; }
+        document.getElementById('qTitle').value = q.title || '';
+        document.getElementById('qType').value = q.type || 'single';
+        document.getElementById('qDifficulty').value = q.difficulty || 'medium';
+        document.getElementById('qExplanation').value = q.explanation || '';
+        // 加载已有图片
+        if (q.image) { showExistingQImage(q.image); } else { clearQImage(); }
+        qOptions = (q.options && q.options.length > 0) ? q.options : ['', '', '', ''];
+        qOptionImages = (q.optionImages && typeof q.optionImages === 'object') ? { ...q.optionImages } : {};
+        if (q.type === 'multiple') {
+          qAnswerMulti = Array.isArray(q.answer) ? q.answer : (q.answer ? [q.answer] : []);
+          qAnswer = '';
+        } else if (q.type === 'judge') {
+          qOptions = ['正确', '错误'];
+          qAnswer = q.answer;
+        } else {
+          qAnswer = typeof q.answer === 'string' ? q.answer : (Array.isArray(q.answer) ? q.answer.join('/') : JSON.stringify(q.answer));
+        }
+        onQTypeChange();
+      } catch (e) { toast('加载题目失败', 'error'); }
+    }
+
+    function onQTypeChange() {
+      const type = document.getElementById('qType').value;
+      const optionsArea = document.getElementById('qOptionsArea');
+      const answerText = document.getElementById('qAnswerText');
+      const addOptBtn = document.getElementById('qAddOptionBtn');
+      answerText.classList.add('hidden');
+      optionsArea.classList.remove('hidden');
+      if (type === 'judge') {
+        qOptions = ['正确', '错误']; addOptBtn.classList.add('hidden');
+        renderQOptions('single');
+      } else if (type === 'single') {
+        addOptBtn.classList.remove('hidden'); renderQOptions('single');
+      } else if (type === 'multiple') {
+        addOptBtn.classList.remove('hidden'); renderQOptions('multiple');
+      } else {
+        optionsArea.classList.add('hidden'); answerText.classList.remove('hidden');
+        document.getElementById('qAnswerTextarea').value = qAnswer || '';
+      }
+    }
+
+    function addQOption() { qOptions.push(''); onQTypeChange(); }
+
+    // 处理选项图片上传
+    function handleOptionImage(idx, input) {
+      const file = input.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { toast('图片不能超过 5MB', 'warning'); input.value = ''; return; }
+      if (!file.type.startsWith('image/')) { toast('请上传图片文件', 'warning'); return; }
+      // 先本地预览
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        qOptionImages[idx] = ev.target.result;
+        onQTypeChange();
+        // 尝试上传到服务器
+        uploadOptionImageToServer(idx, file);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function uploadOptionImageToServer(idx, file) {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch(API + '/upload/image', { method: 'POST', body: formData });
+        const result = await res.json();
+        if (result.success || result.url) {
+          qOptionImages[idx] = result.url || result.data?.url || '';
+          onQTypeChange();
+        }
+      } catch (e) { /* 保持 base64 */ }
+    }
+
+    // 预览选项大图
+    function previewOptionImage(url) {
+      showModal(`
+        <div class="bg-white rounded-2xl shadow-2xl max-w-[90vw] max-h-[90vh] overflow-hidden">
+          <div class="flex justify-end p-2">
+            <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-slate-800/60 text-white hover:bg-slate-800 flex items-center justify-center transition">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <img src="${url}" class="max-w-[90vw] max-h-[80vh] object-contain p-4">
+        </div>
+      `);
+    }
+
+    function renderQOptions(mode) {
+      const list = document.getElementById('qOptionsList');
+      list.innerHTML = qOptions.map((opt, i) => {
+        const letter = String.fromCharCode(65 + i);
+        const optImg = qOptionImages[i] || '';
+        const isAnswer = mode === 'multiple' ? qAnswerMulti.includes(letter) : (qAnswer === letter);
+        const toggleHtml = mode === 'multiple'
+          ? `<input type="checkbox" ${isAnswer?'checked':''} onchange="toggleMultiAnswer('${letter}',this.checked)" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">`
+          : `<input type="radio" name="qAnswerRadio" ${isAnswer?'checked':''} onchange="qAnswer='${letter}'" class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">`;
+        return `<div class="p-3 rounded-lg hover:bg-slate-50 group border border-transparent hover:border-slate-200">
+          <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-bold flex-shrink-0">${letter}</span>
+            <input type="text" value="${escHtml(opt)}" onchange="qOptions[${i}]=this.value" placeholder="请输入选项内容" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <label class="flex items-center gap-1.5 cursor-pointer flex-shrink-0 px-2">
+              ${toggleHtml}
+              <span class="text-xs font-medium text-slate-500 whitespace-nowrap">正确答案</span>
+            </label>
+            ${qOptions.length>2?`<button type="button" onclick="qOptions.splice(${i},1);delete qOptionImages[${i}];onQTypeChange()" class="p-1.5 text-orange-400 hover:text-orange-500 hover:bg-orange-50 rounded transition flex-shrink-0 text-xs"><i class="fas fa-trash-alt mr-1"></i>删除</button>`:'<span class="w-16 flex-shrink-0"></span>'}
+          </div>
+          <div class="flex items-center gap-2 mt-2 pl-11">
+            ${optImg ? `<img src="${optImg}" class="w-10 h-10 rounded object-cover border border-slate-200 cursor-pointer" onclick="previewOptionImage('${optImg}')" title="点击查看大图">` : ''}
+            <button type="button" onclick="document.getElementById('optImgInput-${i}').click()" class="flex items-center gap-1.5 px-2 py-1 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded transition text-xs" title="${optImg ? '更换图片' : '添加图片'}">
+              <i class="far fa-image"></i>
+              <span>${optImg ? '更换图片' : '添加图片'}</span>
+            </button>
+            <input type="file" id="optImgInput-${i}" accept="image/*" onchange="handleOptionImage(${i}, this)" class="hidden">
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function toggleMultiAnswer(letter, checked) {
+      if (checked) { if (!qAnswerMulti.includes(letter)) qAnswerMulti.push(letter); }
+      else { qAnswerMulti = qAnswerMulti.filter(a => a !== letter); }
+    }
+
+    async function saveQuestion() {
+      const type = document.getElementById('qType').value;
+      const id = document.getElementById('qEditId').value;
+      let answer;
+      if (type === 'multiple') answer = qAnswerMulti;
+      else if (type === 'single' || type === 'judge') answer = qAnswer;
+      else answer = document.getElementById('qAnswerTextarea').value.trim();
+
+      if (!answer || (Array.isArray(answer) && answer.length === 0)) {
+        toast('请设置正确答案', 'warning'); return;
+      }
+      const title = document.getElementById('qTitle').value.trim();
+      if (!title) { toast('请输入题目内容', 'warning'); return; }
+
+      const payload = {
+        bankId: currentBankId,
+        title,
+        type,
+        difficulty: document.getElementById('qDifficulty').value,
+        options: (type === 'fill' || type === 'essay') ? [] : qOptions.filter(o => o.trim()),
+        answer,
+        explanation: document.getElementById('qExplanation').value.trim(),
+        image: document.getElementById('qImageUrl').value || null,
+        optionImages: Object.keys(qOptionImages).length > 0 ? qOptionImages : null,
+        knowledge: ''
+      };
+
+      try {
+        let res;
+        if (id) {
+          res = await fetch('/api/questions/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        } else {
+          res = await fetch('/api/questions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        }
+        const data = await res.json();
+        if (data.success) {
+          closeQuestionModal();
+          loadBankQuestions(qbCurrentPage);
+          toast(id ? '试题已更新' : '试题添加成功');
+        } else { toast(data.error || '保存失败', 'error'); }
+      } catch (e) { toast('网络错误', 'error'); }
+    }
+
+    async function editQuestion(id) { openQuestionModal(id); }
+
+    async function deleteQuestion(id) {
+      if (!confirm('确定要删除这道题目吗？已关联的考试也会移除该题。')) return;
+      try {
+        const res = await fetch('/api/questions/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) { toast('题目已删除'); loadBankQuestions(qbCurrentPage); }
+        else { toast(data.error || '删除失败', 'error'); }
+      } catch (e) { toast('删除失败', 'error'); }
+    }
+
+    async function copyQuestion(id) {
+      try {
+        const res = await fetch(`${API}/questions/${id}`);
+        const result = await res.json();
+        const q = result.data;
+        if (!q) return;
+        const payload = {
+          bankId: currentBankId,
+          title: q.title + '（复制）',
+          type: q.type,
+          difficulty: q.difficulty,
+          options: q.options || [],
+          answer: q.answer,
+          image: q.image || null,
+          optionImages: q.optionImages || null,
+          knowledge: q.knowledge || '',
+          explanation: q.explanation || q.analysis || ''
+        };
+        await fetch(`${API}/questions`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        toast('试题已复制');
+        loadBankQuestions(qbCurrentPage);
+      } catch (e) { toast('复制失败', 'error'); }
+    }
+
+    // ====== 导入试题（已有题库内追加） ======
+    function openImportQuestionsModal() {
+      document.getElementById('importQuestionsFile').value = '';
+      const modal = document.getElementById('importQuestionsModal');
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+    function closeImportQuestionsModal() {
+      document.getElementById('importQuestionsModal').classList.add('hidden');
+      document.getElementById('importQuestionsModal').classList.remove('flex');
+    }
+    async function doImportQuestions() {
+      const file = document.getElementById('importQuestionsFile').files[0];
+      if (!file || !currentBankId) return toast('请选择Excel文件', 'warning');
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bankId', currentBankId);
+      try {
+        const res = await fetch('/api/questions/import', { method: 'POST', body: formData });
+        const result = await res.json();
+        if (result.success) {
+          closeImportQuestionsModal();
+          toast(`导入完成：成功 ${result.imported} 题` + (result.failed ? `，失败 ${result.failed} 题` : ''));
+          loadBankQuestions(qbCurrentPage);
+        } else { toast(result.error || '导入失败', 'error'); }
+      } catch (e) { toast('导入失败: ' + e.message, 'error'); }
+    }
+
+    // ====== 试卷导入试题 ======
+    function openPaperImportQuestionsModal() {
+      document.getElementById('paperImportQuestionsFile').value = '';
+      // 加载题库下拉列表
+      const sel = document.getElementById('paperImportBankSelect');
+      if (sel) {
+        fetch('/api/question-banks')
+          .then(res => res.json())
+          .then(result => {
+            const banks = result.data || [];
+            sel.innerHTML = '<option value="">请选择目标题库</option>' +
+              banks.map(b => `<option value="${b.id}">${escHtml(b.name)}</option>`).join('');
+          })
+          .catch(() => { /* 静默失败，保持默认选项 */ });
+      }
+      const modal = document.getElementById('paperImportQuestionsModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closePaperImportQuestionsModal() {
+      const modal = document.getElementById('paperImportQuestionsModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function doPaperImportQuestions() {
+      const file = document.getElementById('paperImportQuestionsFile').files[0];
+      if (!file) return toast('请选择Excel文件', 'warning');
+      const bankId = document.getElementById('paperImportBankSelect')?.value;
+      if (!bankId) return toast('请先选择目标题库', 'warning');
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bankId', bankId);
+
+      try {
+        const res = await fetch('/api/questions/import', { method: 'POST', body: formData });
+        const result = await res.json();
+        if (result.success) {
+          closePaperImportQuestionsModal();
+          toast(`导入完成：成功 ${result.imported} 题` + (result.failed ? `，失败 ${result.failed} 题` : ''));
+
+          // 将导入的题目添加到当前试卷
+          const importedQuestions = result.importedData || [];
+          importedQuestions.forEach((q) => {
+            paperQuestions.push({
+              questionId: q.id,
+              score: q.score || 0,
+              order: paperQuestions.length,
+              content: q.title || q.content || '(题目内容)',
+              type: q.type || 'single',
+              options: q.options || [],
+              answer: q.answer || '',
+              explanation: q.explanation || ''
+            });
+          });
+
+          // 更新试卷编辑页显示
+          if (editorMode) { renderUnifiedEditor(); } else { renderPaperQuestions(); }
+        } else {
+          toast(result.error || '导入失败', 'error');
+        }
+      } catch (e) {
+        toast('导入失败: ' + e.message, 'error');
+      }
+    }
+
+    function fillCategorySelect(selectId) {
+      const sel = document.getElementById(selectId);
+      if (!sel) return;
+      const cats = data.categories || [];
+      let html = '<option value="">请选择分类</option>';
+      cats.forEach(p => {
+        html += `<option value="${p.id}">${p.name}</option>`;
+      });
+      sel.innerHTML = html;
+    }
+
+    async function loadExams() {
+      const tbody = document.getElementById('examList');
+      if (!tbody) { console.warn('examList 元素不存在,跳过加载'); return; }
+
+      tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+      try {
+        const res = await fetch('/api/exams');
+        const exams = await res.json();
+
+        const statExamTotal = document.getElementById('examStatTotal');
+        const statExamPublished = document.getElementById('examStatPublished');
+        const statExamDraft = document.getElementById('examStatDraft');
+        const statExamAttempts = document.getElementById('examStatAttempts');
+
+        if (statExamTotal) statExamTotal.textContent = exams.length;
+        if (statExamPublished) statExamPublished.textContent = exams.filter(e => e.status === 'published').length;
+        if (statExamDraft) statExamDraft.textContent = exams.filter(e => e.status === 'draft').length;
+        if (statExamAttempts) statExamAttempts.textContent = exams.reduce((s, e) => s + (e.attemptCount || 0), 0);
+
+        if (!exams.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-file-alt text-3xl mb-3 block"></i><p>暂无考试,点击右上角"创建考试"开始</p></td></tr>';
+          return;
+        }
+        const statusMap = {
+          draft: { cls: 'bg-slate-100 text-slate-600', text: '草稿' },
+          published: { cls: 'bg-emerald-100 text-emerald-700', text: '已发布' },
+          closed: { cls: 'bg-red-100 text-red-600', text: '已结束' }
+        };
+
+        const formatTime = t => t ? new Date(t).toLocaleDateString('zh-CN') + ' ' + new Date(t).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : '-';
+
+        tbody.innerHTML = exams.map(exam => {
+          const st = statusMap[exam.status] || statusMap.draft;
+          const attemptInfo = exam.maxAttempts ? `${exam.attemptCount || 0}/${exam.maxAttempts}` : `${exam.attemptCount || 0}`;
+
+          return `<tr class="hover:bg-slate-50/80 transition">
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0">
+                  <i class="fas fa-file-alt text-indigo-500 text-sm"></i>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-slate-800">${escHtml(exam.title)}</p>
+                  <p class="text-xs text-slate-400 mt-0.5">${exam.description ? escHtml(exam.description.substring(0, 40)) : '暂无描述'}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-4 text-center text-sm text-slate-600">${exam.duration}分钟</td>
+            <td class="px-5 py-4 text-center"><span class="text-sm font-semibold text-slate-700">${exam.questionCount || 0}</span> <span class="text-xs text-slate-400">题</span></td>
+            <td class="px-5 py-4 text-center text-sm text-slate-600">${exam.passingScore}/${exam.totalScore}</td>
+            <td class="px-5 py-4 text-center text-sm text-slate-600">${attemptInfo}</td>
+            <td class="px-5 py-4 text-center">
+              <span class="px-2.5 py-1 text-xs rounded-full font-medium ${st.cls}">${st.text}</span>
+            </td>
+            <td class="px-5 py-4 text-center">
+              <div class="flex items-center justify-center gap-1">
+                <button onclick="editExam(${exam.id})" class="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit text-sm"></i></button>
+                <button onclick="previewExam(${exam.id})" class="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition" title="预览"><i class="fas fa-eye text-sm"></i></button>
+                ${exam.status === 'draft' ? `<button onclick="publishExam(${exam.id})" class="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition" title="发布"><i class="fas fa-paper-plane text-sm"></i></button>` : ''}
+                ${exam.status === 'published' ? `<button onclick="closeExam(${exam.id})" class="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition" title="结束"><i class="fas fa-stop-circle text-sm"></i></button>` : ''}
+                <button onclick="openExamDetailView(${exam.id}, 'students')" class="p-2 text-slate-400 hover:text-purple-500 hover:bg-purple-50 rounded-lg transition" title="成绩"><i class="fas fa-chart-bar text-sm"></i></button>
+                <button onclick="deleteExam(${exam.id})" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash text-sm"></i></button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-red-500">加载失败</td></tr>';
+      }
+    }
+
+    // ====== 考试管理列表（酷学院风格） ======
+    let examMgmtAllData = [];
+    let examSelectedIds = new Set();
+    let examSearchTimer = null;
+    let examCurrentPage = 1;
+    let examTotalPages = 1;
+    let examPageSize = 10;
+    let examSortField = '';
+    let examSortOrder = 'asc';
+
+    async function loadExamMgmtList() {
+      const tbody = document.getElementById('examMgmtList');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+      try {
+        const res = await fetch('/api/exams');
+        examMgmtAllData = await res.json();
+        // 更新统计卡片
+        const total = examMgmtAllData.length;
+        const published = examMgmtAllData.filter(e => e.status === 'published').length;
+        const totalAttempts = examMgmtAllData.reduce((s, e) => s + (e.attemptCount || 0), 0);
+        // 通过率需从 attempts 数据中计算
+        let passCount = 0, attemptTotal = 0;
+        try {
+          const attRes = await fetch('/api/data');
+          const d = await attRes.json();
+          const attempts = d.exam_attempts || [];
+          attemptTotal = attempts.length;
+          passCount = attempts.filter(a => a.passed).length;
+        } catch(e) {}
+        el('exam-stat-total', total);
+        el('exam-stat-published', published);
+        el('exam-stat-attempts', totalAttempts);
+        el('exam-stat-passrate', attemptTotal > 0 ? Math.round(passCount / attemptTotal * 100) + '%' : '0%');
+
+        renderExamMgmtList();
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-red-500">加载失败</td></tr>';
+      }
+    }
+
+    function applyExamFilters() {
+      const search = (document.getElementById('examSearchInput')?.value || '').trim().toLowerCase();
+      const status = document.getElementById('examFilterStatus')?.value || 'all';
+      let filtered = examMgmtAllData.filter(e => {
+        if (search && !(e.title || '').toLowerCase().includes(search)) return false;
+        if (status !== 'all' && e.status !== status) return false;
+        return true;
+      });
+      // 排序
+      if (examSortField) {
+        filtered.sort((a, b) => {
+          let av = a[examSortField] || 0;
+          let bv = b[examSortField] || 0;
+          if (examSortField === 'title') { av = av || ''; bv = bv || ''; }
+          if (typeof av === 'string') av = av.toLowerCase();
+          if (typeof bv === 'string') bv = bv.toLowerCase();
+          if (av < bv) return examSortOrder === 'asc' ? -1 : 1;
+          if (av > bv) return examSortOrder === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+      return filtered;
+    }
+
+    function renderExamMgmtList() {
+      const tbody = document.getElementById('examMgmtList');
+      const countEl = document.getElementById('examCount');
+      const filtered = applyExamFilters();
+      if (countEl) countEl.textContent = `共 ${filtered.length} 场考试`;
+
+      // 分页计算
+      examTotalPages = Math.max(1, Math.ceil(filtered.length / examPageSize));
+      if (examCurrentPage > examTotalPages) examCurrentPage = examTotalPages;
+      const start = (examCurrentPage - 1) * examPageSize;
+      const end = start + examPageSize;
+      const pageData = filtered.slice(start, end);
+
+      // 更新分页控件
+      const pagination = document.getElementById('examPagination');
+      if (pagination) {
+        if (filtered.length > examPageSize) {
+          pagination.classList.remove('hidden');
+          document.getElementById('examTotalCount').textContent = filtered.length;
+          document.getElementById('examCurrentPageNum').textContent = examCurrentPage;
+          document.getElementById('examTotalPageNum').textContent = examTotalPages;
+          document.getElementById('examFirstPage').disabled = examCurrentPage <= 1;
+          document.getElementById('examPrevPage').disabled = examCurrentPage <= 1;
+          document.getElementById('examNextPage').disabled = examCurrentPage >= examTotalPages;
+          document.getElementById('examLastPage').disabled = examCurrentPage >= examTotalPages;
+        } else {
+          pagination.classList.add('hidden');
+        }
+      }
+
+      if (!pageData.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-16 text-center text-slate-400"><i class="fas fa-clipboard-list text-4xl mb-3 block opacity-30"></i><p>暂无考试</p><p class="text-xs mt-1">点击右上角“创建考试”开始安排考试</p></td></tr>';
+        return;
+      }
+
+      const statusMap = {
+        draft: { cls: 'bg-slate-100 text-slate-600', text: '未发布' },
+        published: { cls: 'bg-emerald-100 text-emerald-700', text: '已发布' },
+        closed: { cls: 'bg-red-100 text-red-600', text: '已结束' }
+      };
+      tbody.innerHTML = pageData.map(exam => {
+        const checked = examSelectedIds.has(exam.id) ? 'checked' : '';
+        const st = statusMap[exam.status] || statusMap.draft;
+        const statusCls = st.cls;
+        const statusText = st.text;
+        let toggleBtn = '';
+        if (exam.status === 'draft') {
+          toggleBtn = `<button onclick="publishExam(${exam.id})" class="p-1.5 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition flex-shrink-0" title="发布"><i class="fas fa-paper-plane text-xs"></i></button>`;
+        } else if (exam.status === 'published') {
+          toggleBtn = `<button onclick="closeExam(${exam.id})" class="p-1.5 text-amber-400 hover:text-amber-600 hover:bg-amber-50 rounded transition flex-shrink-0" title="结束"><i class="fas fa-stop-circle text-xs"></i></button>`;
+        } else if (exam.status === 'closed') {
+          toggleBtn = `<button onclick="publishExam(${exam.id})" class="p-1.5 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition flex-shrink-0" title="重新发布"><i class="fas fa-redo text-xs"></i></button>`;
+        }
+        const total = exam.attemptCount || 0;
+        const completed = exam.completedCount || 0;
+        const passed = exam.passCount || 0;
+        const failed = exam.failCount || 0;
+        const absent = exam.absentCount || 0;
+        const unstarted = exam.unstartedCount || 0;
+        const assigned = (exam.allowedUsers && Array.isArray(exam.allowedUsers)) ? exam.allowedUsers.length : 0;
+        const denominator = assigned > 0 ? assigned : (completed + unstarted + absent);
+        const joinRate = denominator > 0 ? Math.round(completed / denominator * 100) : 0;
+        const passRate = completed > 0 ? Math.round(passed / completed * 100) : 0;
+        const absentRate = denominator > 0 ? Math.round((absent + unstarted) / denominator * 100) : 0;
+        const createdAt = exam.createdAt || exam.created_at;
+        const timeStr = createdAt ? new Date(createdAt).toLocaleDateString('zh-CN') : '—';
+        return `<tr class="hover:bg-indigo-50/30 transition" data-exam-id="${exam.id}">
+          <td class="pl-5 pr-2 py-3 text-center">
+            <input type="checkbox" ${checked} onchange="toggleExamSelect('${exam.id}')" class="exam-row-check rounded border-slate-300 text-indigo-500 focus:ring-indigo-500 cursor-pointer">
+          </td>
+          <td class="px-2 py-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-clipboard-check text-indigo-500 text-xs"></i>
+              </div>
+              <div class="min-w-0">
+                <a href="javascript:;" onclick="openExamDetailView(${exam.id})" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700 truncate block">${escHtml(exam.title)}</a>
+                <p class="text-xs text-slate-400 mt-0.5">${exam.questionCount || 0} 道题</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-2 py-3 text-center text-sm text-slate-600">${total}</td>
+          <td class="px-2 py-3 text-center">
+            <a href="javascript:;" onclick="openExamDetailView(${exam.id}, 'students')" class="text-sm font-medium text-indigo-600 hover:text-indigo-700">${completed}/${passed}/${failed}</a>
+          </td>
+          <td class="px-2 py-3 text-center text-sm text-slate-600">${unstarted}/${absent}</td>
+          <td class="px-2 py-3 text-center text-sm text-slate-600">${joinRate}%/${passRate}%/${absentRate}%</td>
+          <td class="px-2 py-3 text-center text-sm text-slate-500">${timeStr}</td>
+          <td class="px-2 py-3 text-center">
+            <span class="px-2 py-1 text-xs rounded-full font-medium ${statusCls}">${statusText}</span>
+          </td>
+          <td class="pr-4 pl-2 py-3">
+            <div class="flex items-center justify-end gap-0.5 flex-nowrap">
+              <button onclick="copyExam(${exam.id})" class="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded transition flex-shrink-0" title="复制"><i class="fas fa-copy text-xs"></i></button>
+              <button onclick="openExamModal(${exam.id})" class="p-1.5 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition flex-shrink-0" title="编辑"><i class="fas fa-edit text-xs"></i></button>
+              ${toggleBtn}
+              <button onclick="openExamDetailView(${exam.id}, 'students')" class="p-1.5 text-purple-400 hover:text-purple-600 hover:bg-purple-50 rounded transition flex-shrink-0" title="成绩"><i class="fas fa-chart-bar text-xs"></i></button>
+              <button onclick="deleteExam(${exam.id})" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition flex-shrink-0" title="删除"><i class="fas fa-trash text-xs"></i></button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ========== 统一编辑器（考试 + 试卷共用） ==========
+    let editorMode = null; // 'exam' | 'paper' | null
+    let examEditorData = null;
+
+    // 编辑器适配器：封装考试/试卷两种模式的加载、保存差异
+    const editorAdapter = {
+      exam: {
+        async load(id) {
+          const examRes = await fetch('/api/exams');
+          const allExams = await examRes.json();
+          examEditorData = allExams.find(e => e.id === id || e.id === Number(id) || String(e.id) === String(id));
+          if (!examEditorData) throw new Error('考试不存在');
+          const qRes = await fetch('/api/exams/' + id + '/questions');
+          const qResult = await qRes.json();
+          return (qResult.questions || []).sort((a, b) => (a.order || 0) - (b.order || 0)).map(function(q) {
+            var qd = q.questionDetail || q;
+            return {
+              questionId: q.questionId || q.id,
+              score: q.score || qd.score || 5,
+              partialScore: q.partialScore || 0,
+              order: q.order || 0,
+              content: qd.title || qd.content || '(无标题)',
+              type: qd.type || 'single',
+              options: qd.options || [],
+              answer: qd.answer || '',
+              explanation: qd.explanation || ''
+            };
+          });
+        },
+        async save(questions) {
+          var payload = questions.map(function(q, i) {
+            return { questionId: q.questionId || q.id, score: q.score || 5, order: i };
+          });
+          await fetch('/api/exams/' + examEditorData.id + '/questions', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ questions: payload })
+          });
+        },
+        getTitle: function() { return examEditorData ? examEditorData.title : ''; },
+        isPublish: false
+      },
+      paper: {
+        async load(id) {
+          var paper = papersAllData.find(function(p) { return p.id === id; });
+          if (!paper) throw new Error('试卷不存在');
+          editingPaperId = id;
+          return (paper.questions || []).map(function(pq, idx) {
+            return {
+              questionId: pq.questionId,
+              score: pq.score || 0,
+              partialScore: pq.partialScore || 0,
+              order: idx,
+              content: pq.content || '(题目内容)',
+              type: pq.type || 'single',
+              options: pq.options || [],
+              answer: pq.answer || '',
+              explanation: pq.explanation || ''
+            };
+          });
+        },
+        async save(questions) {
+          var paper = papersAllData.find(function(p) { return p.id === editingPaperId; });
+          if (!paper) throw new Error('试卷不存在');
+          paper.questions = questions.map(function(q, i) {
+            return { questionId: q.questionId, score: q.score || 5, partialScore: q.partialScore || 0, order: i };
+          });
+          paper.totalScore = questions.reduce(function(s, q) { return s + (q.score || 0); }, 0);
+          paper.updatedAt = new Date().toISOString();
+          if (window.dataSync && window.dataSync.setData) {
+            window.dataSync.setData('papers', papersAllData);
+          } else {
+            localStorage.setItem('papers', JSON.stringify(papersAllData));
+          }
+        },
+        getTitle: function() {
+          var p = papersAllData.find(function(pp) { return pp.id === editingPaperId; });
+          return p ? p.name : '';
+        },
+        isPublish: true
+      }
+    };
+
+    // 隐藏/显示考试列表元素
+    function toggleExamListViews(hide) {
+      var tabContent = document.getElementById('tab-exam-schedule');
+      var examList = document.getElementById('examListView');
+      if (examList) examList.style.display = hide ? 'none' : '';
+      var statCards = tabContent ? tabContent.querySelector('.grid.grid-cols-4') : null;
+      if (statCards) statCards.style.display = hide ? 'none' : '';
+      var filterBar = tabContent ? tabContent.querySelector('.flex.items-center.justify-between.mb-4') : null;
+      if (filterBar) filterBar.style.display = hide ? 'none' : '';
+      var filterRow = tabContent ? tabContent.querySelector('.flex.items-center.gap-3.mb-4') : null;
+      if (filterRow) filterRow.style.display = hide ? 'none' : '';
+      var batchBar = document.getElementById('examBatchActionBar');
+      if (batchBar) batchBar.style.display = hide ? 'none' : '';
+      var examTable = tabContent ? tabContent.querySelector('.bg-white.rounded-lg.border') : null;
+      if (examTable) examTable.style.display = hide ? 'none' : '';
+      var pagination = document.getElementById('examPagination');
+      if (pagination) pagination.style.display = hide ? 'none' : '';
+    }
+
+    async function openExamEditor(examId) {
+      console.log('[openExamEditor] 开始, examId:', examId, typeof examId);
+      try {
+        editorMode = 'exam';
+        console.log('[openExamEditor] 正在加载考试数据...');
+        paperQuestions = await editorAdapter.exam.load(examId);
+        console.log('[openExamEditor] 加载完成, 题目数:', paperQuestions.length);
+        toggleExamListViews(true);
+
+        var tabContent = document.getElementById('tab-exam-schedule');
+        console.log('[openExamEditor] tab-exam-schedule:', !!tabContent);
+        if (tabContent) {
+          console.log('[openExamEditor] tab display:', tabContent.style.display, 'hidden:', tabContent.classList.contains('hidden'));
+        }
+        // 确保 container 在正确的 tab 中（可能之前被试卷编辑器创建在了 paper-mgmt tab）
+        var container = document.getElementById('unifiedEditorContainer');
+        if (container && container.parentElement && container.parentElement.id !== 'tab-exam-schedule') {
+          console.log('[openExamEditor] container 在错误的 tab 中, 当前父:', container.parentElement.id, '→ 移动到 exam-schedule');
+          container.parentElement.removeChild(container);
+          container = null;
+        }
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'unifiedEditorContainer';
+          tabContent.appendChild(container);
+          console.log('[openExamEditor] 创建了新 container');
+        }
+        container.style.display = 'block';
+        container.classList.remove('hidden');
+        renderUnifiedEditor();
+        console.log('[openExamEditor] renderUnifiedEditor 完成, innerHTML长度:', container.innerHTML.length);
+        // 诊断：如果容器为空，输出详细信息
+        if (!container.innerHTML || container.innerHTML.length < 50) {
+          console.error('[openExamEditor] 渲染内容为空! editorMode:', editorMode, 'editorAdapter[editorMode]:', !!editorAdapter[editorMode]);
+          console.error('[openExamEditor] examEditorData:', examEditorData);
+          console.error('[openExamEditor] paperQuestions.length:', paperQuestions.length);
+          container.innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444;"><p style="font-size:16px;font-weight:600;">编辑器加载异常</p><p style="font-size:13px;color:#94a3b8;margin-top:8px;">请刷新页面重试，或查看控制台(F12)获取详细信息</p></div>';
+        }
+        enrichQuestionDetails();
+        // 滚动到顶部确保编辑器可见
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (e) {
+        console.error('[openExamEditor] 打开考试编辑页失败:', e);
+        toast('加载失败: ' + e.message, 'error');
+        editorMode = null;
+      }
+    }
+
+    // 统一关闭编辑器
+    function closeUnifiedEditor() {
+      var container = document.getElementById('unifiedEditorContainer');
+      if (container) container.style.display = 'none';
+
+      if (paperEditorReturnToPicker) {
+        // 从试卷选择器进入的编辑流程：关闭行内编辑器并返回选择器
+        const inlineModal = document.getElementById('inlinePaperEditorModal');
+        if (inlineModal) {
+          inlineModal.classList.add('hidden');
+          inlineModal.classList.remove('flex');
+        }
+        // 将编辑器容器移回试卷管理 tab，避免影响原有试卷管理功能
+        if (container) {
+          container.parentElement.removeChild(container);
+          document.getElementById('tab-paper-mgmt').appendChild(container);
+        }
+        const createdId = paperEditorCreatedPaperId;
+        paperEditorReturnToPicker = false;
+        paperEditorCreatedPaperId = null;
+        editingPaperId = null;
+        paperQuestions = [];
+        editorMode = null;
+        if (createdId) {
+          // 重新打开试卷选择器并选中新试卷，恢复之前的回调
+          openPaperPickerModal(paperPickerReturnCallback, createdId);
+          paperPickerReturnCallback = null;
+        }
+        return;
+      }
+
+      if (editorMode === 'exam') {
+        toggleExamListViews(false);
+        examEditorData = null;
+        loadExamMgmtList();
+      } else if (editorMode === 'paper') {
+        var listView = document.getElementById('paperListView');
+        if (listView) listView.classList.remove('hidden');
+        editingPaperId = null;
+      }
+      paperQuestions = [];
+      editorMode = null;
+    }
+    // 兼容旧调用
+    function closeExamEditor() { closeUnifiedEditor(); }
+    function closePaperEditor() { closeUnifiedEditor(); }
+
+    // 异步补充题目详情（从题库获取选项、答案等）
+    function enrichQuestionDetails() {
+      fetch(API + '/questions?pageSize=9999')
+        .then(function(res) { return res.json(); })
+        .then(function(result) {
+          var allQuestions = result.data || [];
+          var updated = paperQuestions.map(function(pq) {
+            var q = allQuestions.find(function(qq) { return qq.id === pq.questionId; });
+            if (!q) return pq;
+            return Object.assign({}, pq, {
+              content: q.title || q.content || pq.content,
+              type: q.type || pq.type,
+              options: (q.options && q.options.length > 0) ? q.options : pq.options,
+              answer: q.answer || pq.answer,
+              explanation: q.explanation || pq.explanation
+            });
+          });
+          var changed = updated.some(function(u, i) {
+            return u.content !== paperQuestions[i].content || u.type !== paperQuestions[i].type ||
+              (u.options || []).length !== (paperQuestions[i].options || []).length || u.answer !== paperQuestions[i].answer;
+          });
+          if (changed) { paperQuestions = updated; renderUnifiedEditor(); }
+        })
+        .catch(function(err) { console.warn('[UnifiedEditor] 题库详情补充加载失败（非致命）:', err); });
+    }
+
+    function renderUnifiedEditor() {
+      var container = document.getElementById('unifiedEditorContainer');
+      if (!container) return;
+      var adapter = editorAdapter[editorMode];
+      if (!adapter) return;
+      var title = adapter.getTitle();
+      var totalScore = paperQuestions.reduce(function(s, q) { return s + (q.score || 0); }, 0);
+      var qCount = paperQuestions.length;
+      var typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
+      var typeColors = { single: 'bg-blue-100 text-blue-700', multiple: 'bg-purple-100 text-purple-700', judge: 'bg-amber-100 text-amber-700', fill: 'bg-emerald-100 text-emerald-700', essay: 'bg-rose-100 text-rose-700' };
+      var optLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+      var isPaper = editorMode === 'paper';
+
+      // 试卷模式：获取分类名
+      var categoryBadge = '';
+      if (isPaper) {
+        var paper = papersAllData.find(function(p) { return p.id === editingPaperId; });
+        if (paper) {
+          var catName = paper.categoryName || paper.category || '';
+          if (/^\d+$/.test(catName) || !catName) {
+            var cat = (data.categories || []).find(function(c) { return String(c.id) === String(paper.category || paper.categoryId); });
+            catName = cat ? cat.name : (paper.categoryName || paper.category || '未分类');
+          }
+          categoryBadge = '<span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-xs rounded-full font-medium">' + escHtml(catName || '未分类') + '</span>';
+        }
+      }
+
+      // 渲染所有题目卡片
+      var allQuestionsHtml = '';
+      if (qCount === 0) {
+        allQuestionsHtml = '<div class="text-center py-20 text-slate-400"><i class="fas fa-inbox text-5xl mb-4 block opacity-30"></i><p class="text-lg">暂无题目</p><p class="text-sm mt-2">请从左侧点击"题库选题"添加试题</p></div>';
+      } else {
+        for (var qi = 0; qi < paperQuestions.length; qi++) {
+          var q = paperQuestions[qi];
+          var options = q.options || [];
+          var answer = q.answer;
+          var score = q.score || 1;
+          var answerArr = Array.isArray(answer) ? answer : (answer != null ? [String(answer)] : []);
+
+          allQuestionsHtml += '<div id="exam-question-' + qi + '" class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 mb-4 group hover:border-indigo-200 transition">';
+          // 题目头部
+          allQuestionsHtml += '<div class="flex items-start gap-3">';
+          // 序号徽章
+          allQuestionsHtml += '<div class="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 flex items-center justify-center text-sm font-bold">' + (qi + 1) + '</div>';
+          // 题目内容区
+          allQuestionsHtml += '<div class="flex-1 min-w-0">';
+          allQuestionsHtml += '<div class="flex items-center gap-2 flex-wrap mb-2">';
+          allQuestionsHtml += '<span class="px-2 py-0.5 text-xs rounded-full font-medium ' + (typeColors[q.type] || 'bg-slate-100 text-slate-600') + '">' + (typeNames[q.type] || q.type) + '</span>';
+          allQuestionsHtml += '<span class="font-medium text-slate-800 text-sm">' + escHtml(q.content || '(无标题)') + '</span>';
+          allQuestionsHtml += '<span class="text-slate-400 text-xs ml-1">（' + score + ' 分）</span>';
+          allQuestionsHtml += '</div>';
+
+          // 选项渲染（单选/多选）
+          if (options.length > 0 && (q.type === 'single' || q.type === 'multiple')) {
+            allQuestionsHtml += '<div class="space-y-2 mt-2">';
+            for (var oi = 0; oi < options.length; oi++) {
+              var letter = String.fromCharCode(65 + oi);
+              var isCorrect = answerArr.indexOf(letter) !== -1;
+              var optBg = isCorrect ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-600';
+              var badgeBg = isCorrect ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-600';
+              allQuestionsHtml += '<div class="flex items-center gap-3 p-2.5 rounded-lg border ' + optBg + ' text-sm">';
+              allQuestionsHtml += '<span class="font-bold flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ' + badgeBg + ' text-xs">' + letter + '</span>';
+              allQuestionsHtml += '<span class="flex-1">' + escHtml(options[oi]) + '</span>';
+              if (isCorrect) allQuestionsHtml += '<i class="fas fa-check-circle text-indigo-500"></i>';
+              allQuestionsHtml += '</div>';
+            }
+            allQuestionsHtml += '</div>';
+          } else if (q.type === 'judge') {
+            var judgeAnswer = String(answer);
+            allQuestionsHtml += '<div class="space-y-1.5 mt-2">';
+            allQuestionsHtml += '<div class="p-2.5 rounded-lg border text-sm ' + (judgeAnswer === 'true' || judgeAnswer === '1' || judgeAnswer === '正确' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500') + '"><i class="fas fa-check mr-2"></i>正确</div>';
+            allQuestionsHtml += '<div class="p-2.5 rounded-lg border text-sm ' + (judgeAnswer === 'false' || judgeAnswer === '0' || judgeAnswer === '错误' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500') + '"><i class="fas fa-times mr-2"></i>错误</div>';
+            allQuestionsHtml += '</div>';
+          } else if (q.type === 'fill') {
+            allQuestionsHtml += '<div class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm"><strong>参考答案：</strong>' + escHtml(Array.isArray(answer) ? answer.join(', ') : String(answer || '')) + '</div>';
+          } else if (q.type === 'essay') {
+            allQuestionsHtml += '<div class="mt-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-sm"><strong>参考答案：</strong><br>' + escHtml(String(answer || '')) + '</div>';
+          }
+
+          allQuestionsHtml += '</div>'; // end content area
+
+          // 操作控件（分值、上移、下移、删除）
+          allQuestionsHtml += '<div class="flex items-center gap-2 flex-shrink-0 ml-2">';
+          allQuestionsHtml += '<div class="flex items-center gap-1"><span class="text-xs text-slate-400">分值</span>';
+          allQuestionsHtml += '<input type="number" value="' + (q.score || '') + '" min="0" max="100" onchange="updatePaperQuestionScore(' + qi + ', this.value)" class="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="分值"></div>';
+          allQuestionsHtml += '<button type="button" onclick="movePaperQuestion(' + qi + ', -1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition" title="上移"' + (qi === 0 ? ' disabled style="pointer-events:none;opacity:0.3"' : '') + '><i class="fas fa-chevron-up text-xs"></i></button>';
+          allQuestionsHtml += '<button type="button" onclick="movePaperQuestion(' + qi + ', 1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition" title="下移"' + (qi === qCount - 1 ? ' disabled style="pointer-events:none;opacity:0.3"' : '') + '><i class="fas fa-chevron-down text-xs"></i></button>';
+          allQuestionsHtml += '<button type="button" onclick="removePaperQuestion(' + qi + ')" class="w-7 h-7 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash-alt text-xs"></i></button>';
+          allQuestionsHtml += '</div>';
+
+          allQuestionsHtml += '</div>'; // end flex items-start
+          allQuestionsHtml += '</div>'; // end question card
+        }
+      }
+
+      // 题号按钮
+      var numButtons = '';
+      for (var i = 0; i < qCount; i++) {
+        numButtons += '<button onclick="scrollToExamQuestion(' + i + ')" class="w-10 h-10 rounded-lg text-sm font-medium transition hover:bg-indigo-100 hover:text-indigo-600 bg-slate-100 text-slate-600">' + (i + 1) + '</button>';
+      }
+
+      // 导入按钮：考试模式用 examImportModal，试卷模式用 paperImportQuestionsModal
+      var importOnclick = isPaper ? 'openPaperImportQuestionsModal()' : 'openExamEditorImport()';
+      // 选题按钮
+      var pickOnclick = 'openPaperQuestionPicker()';
+      // 设置按钮
+      var settingsOnclick = 'openScoreSettingsModal()';
+
+      // 顶栏右侧按钮
+      var topRightBtns = '';
+      topRightBtns += '<div class="flex items-center gap-1.5 px-3 py-2 bg-slate-100 rounded-full text-sm">';
+      topRightBtns += '<span class="text-slate-400">总分：</span><span class="font-semibold text-slate-700" id="ueTotalScore">' + totalScore.toFixed(1) + '</span>';
+      topRightBtns += '<span class="text-slate-300 mx-1">|</span>';
+      topRightBtns += '<span class="text-slate-400">试题：</span><span class="font-semibold text-slate-700" id="ueQCount">' + qCount + '</span>';
+      topRightBtns += '</div>';
+
+      if (isPaper) {
+        topRightBtns += '<button onclick="openPaperInfoDrawer()" class="px-4 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"><i class="fas fa-cog mr-1.5"></i>设置</button>';
+        var pubDisabled = qCount === 0 ? ' disabled' : '';
+        var pubClass = qCount > 0 ? 'btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition' : 'px-4 py-2 text-sm border border-slate-200 rounded-lg text-slate-400 font-medium transition';
+        topRightBtns += '<button onclick="publishPaper()" id="pePublishBtn" class="' + pubClass + '"' + pubDisabled + '><i class="fas fa-paper-plane mr-1.5"></i>发布</button>';
+      } else {
+        topRightBtns += '<button onclick="' + settingsOnclick + '" class="px-4 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition border border-slate-200"><i class="fas fa-cog mr-1.5"></i>设置</button>';
+        topRightBtns += '<button onclick="saveUnifiedEditor()" class="px-5 py-2 text-sm bg-indigo-500 text-white rounded-lg font-semibold hover:bg-indigo-600 transition shadow-sm"><i class="fas fa-check mr-1.5"></i>更新</button>';
+      }
+
+      // 试卷模式：信息抽屉 HTML
+      var drawerHtml = '';
+      if (isPaper) {
+        var paper = papersAllData.find(function(p) { return p.id === editingPaperId; });
+        drawerHtml = ''
+          + '<div id="paperInfoDrawerOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80] hidden transition-opacity" onclick="closePaperInfoDrawer()"></div>'
+          + '<div id="paperInfoDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[80] transform translate-x-full transition-transform duration-300 flex flex-col">'
+          + '  <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">'
+          + '    <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-cog text-indigo-500 mr-2"></i>试卷信息</h3>'
+          + '    <button onclick="closePaperInfoDrawer()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"><i class="fas fa-times"></i></button>'
+          + '  </div>'
+          + '  <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">'
+          + '    <div><label class="block text-sm font-medium text-slate-700 mb-1.5">试卷名称 <span class="text-red-500">*</span></label>'
+          + '    <input type="text" id="peName" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm" placeholder="请输入试卷名称" value="' + escHtml(paper ? paper.name : '') + '"></div>'
+          + '    <div><label class="block text-sm font-medium text-slate-700 mb-1.5">试卷分类</label>'
+          + '    <select id="peCategoryInput" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm bg-white"><option value="">请选择分类</option></select></div>'
+          + '    <div><label class="block text-sm font-medium text-slate-700 mb-1.5">试卷类型</label>'
+          + '    <select id="peType" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm bg-white">'
+          + '      <option value="fixed"' + (paper && paper.type === 'fixed' ? ' selected' : '') + '>固定试卷</option>'
+          + '      <option value="random"' + (paper && paper.type === 'random' ? ' selected' : '') + '>随机试卷</option>'
+          + '    </select></div>'
+          + '    <div><label class="block text-sm font-medium text-slate-700 mb-1.5">试卷说明</label>'
+          + '    <textarea id="peDescInput" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm resize-none" placeholder="请输入试卷说明...">' + escHtml(paper ? paper.description || '' : '') + '</textarea></div>'
+          + '    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-sm text-indigo-700 flex items-start gap-2">'
+          + '      <i class="fas fa-info-circle mt-0.5"></i>'
+          + '      <p>考试时长与及格分请在“考试安排”中设置，此处不再重复配置。</p>'
+          + '    </div>'
+          + '  </div>'
+          + '  <div class="px-6 py-4 border-t border-slate-100 flex-shrink-0 flex gap-3">'
+          + '    <button onclick="closePaperInfoDrawer()" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition">取消</button>'
+          + '    <button onclick="savePaperInfoFromDrawer()" class="flex-1 py-2.5 btn-primary text-white rounded-xl text-sm font-medium shadow-sm hover:shadow-md transition"><i class="fas fa-check mr-1.5"></i>保存</button>'
+          + '  </div>'
+          + '</div>';
+
+        // 填充分类下拉（延迟到 DOM 渲染后）
+        setTimeout(function() {
+          if (typeof fillCategorySelect === 'function') fillCategorySelect('peCategoryInput');
+          var catId = paper ? (paper.categoryId || paper.category || '') : '';
+          var sel = document.getElementById('peCategoryInput');
+          if (sel) sel.value = catId;
+        }, 50);
+      }
+
+      // 构建完整 HTML
+      var html = '';
+      html += '<div style="display:flex;flex-direction:column;">';
+      // 粘性顶栏
+      html += '<div style="background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;">';
+      html += '  <div style="display:flex;align-items:center;gap:16px;flex:1;">';
+      html += '    <button onclick="closeUnifiedEditor()" style="display:flex;align-items:center;gap:6px;font-size:14px;color:#64748b;background:none;border:none;cursor:pointer;padding:6px 12px;border-radius:8px;" onmouseover="this.style.background=\'#f1f5f9\'" onmouseout="this.style.background=\'none\'"><i class="fas fa-arrow-left"></i> 返回</button>';
+      html += '    <div style="width:1px;height:24px;background:#e2e8f0;"></div>';
+      html += '    <div>';
+      html += '      <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin:0;">' + escHtml(title) + '</h2>';
+      if (categoryBadge) {
+        html += '      <div class="flex items-center gap-2 mt-1">' + categoryBadge + '</div>';
+      }
+      html += '    </div>';
+      html += '  </div>';
+      html += '  <div style="display:flex;align-items:center;gap:12px;">' + topRightBtns + '</div>';
+      html += '</div>';
+      // 内容区：侧栏 + 题目列表
+      html += '<div style="display:flex;padding:24px;gap:24px;max-width:1200px;width:100%;margin:0 auto;">';
+      // 左侧栏
+      html += '  <div style="width:220px;flex-shrink:0;">';
+      html += '    <div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:20px;position:sticky;top:80px;">';
+      html += '      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">';
+      html += '        <h4 style="font-size:14px;font-weight:600;color:#334155;margin:0;">试题列表 (' + qCount + ')</h4>';
+      html += '        <button onclick="' + settingsOnclick + '" style="font-size:12px;color:#6366f1;background:none;border:none;cursor:pointer;"><i class="fas fa-sliders-h" style="margin-right:4px;"></i>分数设置</button>';
+      html += '      </div>';
+      html += '      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;max-height:200px;overflow-y:auto;">' + numButtons + '</div>';
+      html += '      <div style="display:flex;flex-direction:column;gap:8px;">';
+      html += '        <button onclick="' + pickOnclick + '" style="width:100%;padding:10px;font-size:13px;border:1px solid #c7d2fe;color:#4f46e5;border-radius:8px;background:#fff;cursor:pointer;font-weight:600;" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'"><i class="fas fa-plus" style="margin-right:6px;"></i>题库选题</button>';
+      html += '        <button onclick="' + importOnclick + '" style="width:100%;padding:10px;font-size:13px;border:1px solid #e2e8f0;color:#64748b;border-radius:8px;background:#fff;cursor:pointer;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'"><i class="fas fa-file-import" style="margin-right:6px;"></i>导入试题</button>';
+      html += '      </div>';
+      html += '    </div>';
+      html += '  </div>';
+      // 主内容区
+      html += '  <div style="flex:1;min-width:0;">' + allQuestionsHtml + '</div>';
+      html += '</div>';
+      html += '</div>';
+      // 抽屉（仅试卷模式）
+      html += drawerHtml;
+
+      container.innerHTML = html;
+    }
+
+    function saveUnifiedEditor() {
+      if (!editorMode || !editorAdapter[editorMode]) return;
+      editorAdapter[editorMode].save(paperQuestions).then(function() {
+        toast(editorMode === 'exam' ? '更新成功' : '保存成功');
+      }).catch(function() {
+        toast('保存失败', 'error');
+      });
+    }
+
+    function scrollToExamQuestion(idx) {
+      var el = document.getElementById('exam-question-' + idx);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function openExamEditorImport() {
+      var fileInput = document.getElementById('examImportFile');
+      if (fileInput) fileInput.value = '';
+      var modal = document.getElementById('examImportModal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeExamImportModal() {
+      var modal = document.getElementById('examImportModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function doExamImport() {
+      var file = document.getElementById('examImportFile').files[0];
+      if (!file) return toast('请选择Excel文件', 'warning');
+      if (editorMode === 'exam' && !examEditorData) return toast('考试数据丢失，请重新打开', 'error');
+
+      var formData = new FormData();
+      formData.append('file', file);
+      formData.append('bankId', '0');
+
+      try {
+        var res = await fetch('/api/questions/import', { method: 'POST', body: formData });
+        var result = await res.json();
+        if (result.success) {
+          closeExamImportModal();
+          toast('导入完成：成功 ' + result.imported + ' 题' + (result.failed ? '，失败 ' + result.failed + ' 题' : ''));
+          var importedQuestions = result.importedData || [];
+          importedQuestions.forEach(function(q) {
+            paperQuestions.push({
+              questionId: q.id,
+              score: q.score || 5,
+              order: paperQuestions.length,
+              content: q.title || q.content || '(导入题目)',
+              type: q.type || 'single',
+              options: q.options || [],
+              answer: q.answer || '',
+              explanation: q.explanation || ''
+            });
+          });
+          renderUnifiedEditor();
+        } else {
+          toast(result.error || '导入失败', 'error');
+        }
+      } catch (e) {
+        toast('导入失败: ' + e.message, 'error');
+      }
+    }
+
+    function sortExamList(field) {
+      if (examSortField === field) {
+        examSortOrder = examSortOrder === 'asc' ? 'desc' : 'asc';
+      } else {
+        examSortField = field;
+        examSortOrder = 'asc';
+      }
+      examCurrentPage = 1;
+      renderExamMgmtList();
+    }
+
+    function goExamPage(page) {
+      if (page < 1 || page > examTotalPages) return;
+      examCurrentPage = page;
+      renderExamMgmtList();
+    }
+
+    function onExamPageSizeChange() {
+      examPageSize = parseInt(document.getElementById('examPageSize').value) || 10;
+      examCurrentPage = 1;
+      renderExamMgmtList();
+    }
+
+    function onExamSearch() {
+      clearTimeout(examSearchTimer);
+      examSearchTimer = setTimeout(() => renderExamMgmtList(), 250);
+    }
+    function onExamFilterChange() { renderExamMgmtList(); }
+    function resetExamFilters() {
+      document.getElementById('examSearchInput').value = '';
+      document.getElementById('examFilterStatus').value = 'all';
+      renderExamMgmtList();
+    }
+    function toggleExamSelect(id) {
+      if (examSelectedIds.has(id)) examSelectedIds.delete(id); else examSelectedIds.add(id);
+      updateBatchActionBar();
+    }
+    function toggleExamSelectAll() {
+      const checked = document.getElementById('examSelectAll').checked;
+      const visible = applyExamFilters();
+      if (checked) visible.forEach(e => examSelectedIds.add(e.id));
+      else visible.forEach(e => examSelectedIds.delete(e.id));
+      renderExamMgmtList();
+      updateBatchActionBar();
+    }
+
+    function updateBatchActionBar() {
+      const bar = document.getElementById('examBatchActionBar');
+      const count = document.getElementById('examBatchCount');
+      if (!bar || !count) return;
+      if (examSelectedIds.size > 0) {
+        bar.classList.remove('hidden');
+        count.textContent = `已选 ${examSelectedIds.size} 项`;
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+
+    function clearExamSelection() {
+      examSelectedIds.clear();
+      document.getElementById('examSelectAll').checked = false;
+      renderExamMgmtList();
+      updateBatchActionBar();
+    }
+
+    async function batchDeleteExams() {
+      if (examSelectedIds.size === 0) return;
+      if (!confirm(`确定删除选中的 ${examSelectedIds.size} 场考试吗？此操作不可恢复。`)) return;
+      let success = 0, failed = 0;
+      for (const id of examSelectedIds) {
+        try {
+          const res = await fetch('/api/exams/' + id, { method: 'DELETE' });
+          if (res.ok) success++; else failed++;
+        } catch (e) { failed++; }
+      }
+      toast(`批量删除完成：成功 ${success} 场，失败 ${failed} 场`);
+      clearExamSelection();
+      loadExamMgmtList();
+    }
+
+    async function batchPublishExams() {
+      if (examSelectedIds.size === 0) return;
+      if (!confirm(`确定发布选中的 ${examSelectedIds.size} 场考试吗？`)) return;
+      let success = 0, failed = 0;
+      for (const id of examSelectedIds) {
+        try {
+          const res = await fetch('/api/exams/' + id + '/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'published' }) });
+          if (res.ok) success++; else failed++;
+        } catch (e) { failed++; }
+      }
+      toast(`批量发布完成：成功 ${success} 场，失败 ${failed} 场`);
+      clearExamSelection();
+      loadExamMgmtList();
+    }
+
+    async function batchCloseExams() {
+      if (examSelectedIds.size === 0) return;
+      if (!confirm(`确定结束选中的 ${examSelectedIds.size} 场考试吗？`)) return;
+      let success = 0, failed = 0;
+      for (const id of examSelectedIds) {
+        try {
+          const res = await fetch('/api/exams/' + id + '/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'closed' }) });
+          if (res.ok) success++; else failed++;
+        } catch (e) { failed++; }
+      }
+      toast(`批量结束完成：成功 ${success} 场，失败 ${failed} 场`);
+      clearExamSelection();
+      loadExamMgmtList();
+    }
+
+    let examUserPickerData = [];
+    let examUserPickerTemp = new Set();
+
+    function onExamAccessTypeChange() {
+      const type = document.getElementById('examAccessType').value;
+      const container = document.getElementById('examAllowedUsersContainer');
+      if (type === 'restricted') {
+        container.classList.remove('hidden');
+      } else {
+        container.classList.add('hidden');
+      }
+    }
+
+    function toggleBtn(btn) {
+      const group = btn.getAttribute('data-group');
+      const buttons = document.querySelectorAll(`.btn-toggle[data-group="${group}"]`);
+      buttons.forEach(b => {
+        b.classList.remove('bg-indigo-500', 'text-white');
+        b.classList.add('bg-white', 'text-slate-600');
+      });
+      btn.classList.remove('bg-white', 'text-slate-600');
+      btn.classList.add('bg-indigo-500', 'text-white');
+      // 处理自定义输入框显示/隐藏
+      if (group === 'examAttempts') {
+        const customInput = document.getElementById('examAttemptsCustom');
+        if (btn.getAttribute('data-value') === 'custom') {
+          customInput.classList.remove('hidden');
+        } else {
+          customInput.classList.add('hidden');
+        }
+      } else if (group === 'examScreenSwitch') {
+        const customInput = document.getElementById('examScreenSwitchCustom');
+        if (btn.getAttribute('data-value') === 'custom') {
+          customInput.classList.remove('hidden');
+        } else {
+          customInput.classList.add('hidden');
+        }
+      }
+    }
+
+    function toggleSwitch(name) {
+      const checkbox = document.getElementById('examShowData');
+      const toggle = document.getElementById('examDataToggle');
+      const dot = document.getElementById('examDataDot');
+      const label = document.getElementById('examDataLabel');
+      if (checkbox.checked) {
+        toggle.classList.remove('bg-slate-300');
+        toggle.classList.add('bg-indigo-500');
+        dot.style.left = '20px';
+        label.textContent = '显示';
+      } else {
+        toggle.classList.remove('bg-indigo-500');
+        toggle.classList.add('bg-slate-300');
+        dot.style.left = '2px';
+        label.textContent = '隐藏';
+      }
+    }
+
+    function getBtnGroupValue(group) {
+      const active = document.querySelector(`.btn-toggle[data-group="${group}"].bg-indigo-500`);
+      return active ? active.getAttribute('data-value') : null;
+    }
+
+    function setBtnGroupValue(group, value) {
+      const buttons = document.querySelectorAll(`.btn-toggle[data-group="${group}"]`);
+      buttons.forEach(b => {
+        if (b.getAttribute('data-value') === value) {
+          b.classList.remove('bg-white', 'text-slate-600');
+          b.classList.add('bg-indigo-500', 'text-white');
+        } else {
+          b.classList.remove('bg-indigo-500', 'text-white');
+          b.classList.add('bg-white', 'text-slate-600');
+        }
+      });
+    }
+
+    let userPickerMode = 'exam'; // 'exam' / 'assign' / 'training'
+
+    async function openExamUserPicker(mode) {
+      userPickerMode = mode || 'exam';
+      const modal = document.getElementById('examUserPickerModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('examUserPickerSearch').value = '';
+      await loadExamUserPickerData();
+      renderExamUserPicker();
+    }
+
+    function closeExamUserPicker() {
+      const modal = document.getElementById('examUserPickerModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function loadExamUserPickerData() {
+      try {
+        const res = await fetch('/api/data/users');
+        const users = await res.json();
+        let targetData, targetTemp;
+        if (userPickerMode === 'assign') {
+          targetData = assignExamUserPickerData;
+          targetTemp = assignExamUserPickerTemp;
+        } else if (userPickerMode === 'training') {
+          targetData = trainingUserPickerData;
+          targetTemp = trainingUserPickerTemp;
+        } else {
+          targetData = examUserPickerData;
+          targetTemp = examUserPickerTemp;
+        }
+
+        targetData.length = 0;
+        users.forEach(u => {
+          const uid = u.id;
+          const selected = targetTemp.has(uid) || targetTemp.has(String(uid)) || targetTemp.has(Number(uid));
+          targetData.push({
+            id: uid,
+            name: u.real_name || u.username || '未知',
+            avatar: u.avatar || '',
+            selected: selected
+          });
+        });
+      } catch (e) {
+        if (userPickerMode === 'assign') assignExamUserPickerData = [];
+        else if (userPickerMode === 'training') trainingUserPickerData = [];
+        else examUserPickerData = [];
+      }
+    }
+
+    function renderExamUserPicker() {
+      let sourceData;
+      if (userPickerMode === 'assign') sourceData = assignExamUserPickerData;
+      else if (userPickerMode === 'training') sourceData = trainingUserPickerData;
+      else sourceData = examUserPickerData;
+      const search = document.getElementById('examUserPickerSearch').value.toLowerCase();
+      const list = document.getElementById('examUserPickerList');
+      const filtered = sourceData.filter(u => u.name.toLowerCase().includes(search));
+      if (filtered.length === 0) {
+        list.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">无匹配学员</p>';
+      } else {
+        list.innerHTML = filtered.map(u => `
+          <label class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition">
+            <input type="checkbox" ${u.selected ? 'checked' : ''} onchange="toggleExamUserSelect(${u.id})"
+              class="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500">
+            <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs font-bold">
+              ${u.name.charAt(0)}
+            </div>
+            <span class="text-sm text-slate-700">${escHtml(u.name)}</span>
+          </label>
+        `).join('');
+      }
+      document.getElementById('examUserPickerCount').textContent = sourceData.filter(u => u.selected).length;
+    }
+
+    function toggleExamUserSelect(id) {
+      let sourceData, targetTemp;
+      if (userPickerMode === 'assign') {
+        sourceData = assignExamUserPickerData;
+        targetTemp = assignExamUserPickerTemp;
+      } else if (userPickerMode === 'training') {
+        sourceData = trainingUserPickerData;
+        targetTemp = trainingUserPickerTemp;
+      } else {
+        sourceData = examUserPickerData;
+        targetTemp = examUserPickerTemp;
+      }
+      const user = sourceData.find(u => String(u.id) === String(id));
+      if (user) {
+        user.selected = !user.selected;
+        if (user.selected) targetTemp.add(String(id));
+        else targetTemp.delete(String(id));
+      }
+      renderExamUserPicker();
+    }
+
+    function confirmExamUserPicker() {
+      if (userPickerMode === 'assign') {
+        renderAssignAllowedUsers();
+      } else if (userPickerMode === 'training') {
+        renderTrainingAllowedUsers();
+      } else {
+        renderExamAllowedUsers();
+      }
+      closeExamUserPicker();
+    }
+
+    function renderExamAllowedUsers() {
+      const sourceData = userPickerMode === 'assign' ? assignExamUserPickerData : examUserPickerData;
+      const countId = userPickerMode === 'assign' ? 'assignAllowedUsersCount' : 'examAllowedUsersCount';
+      const listId = userPickerMode === 'assign' ? 'assignAllowedUsersList' : 'examAllowedUsersList';
+
+      const selected = sourceData.filter(u => u.selected);
+      const count = document.getElementById(countId);
+      const list = document.getElementById(listId);
+      if (count) count.textContent = selected.length;
+      if (list) {
+        if (selected.length === 0) {
+          list.innerHTML = '<p class="text-sm text-slate-400 w-full">未选择学员</p>';
+        } else {
+          list.innerHTML = selected.map(u => `
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs">
+              ${escHtml(u.name)}
+              <button type="button" onclick="removeExamAllowedUser('${u.id}')" class="text-indigo-400 hover:text-red-500">&times;</button>
+            </span>
+          `).join('');
+        }
+      }
+    }
+
+    function removeExamAllowedUser(id) {
+      const sourceData = userPickerMode === 'assign' ? assignExamUserPickerData : examUserPickerData;
+      const targetTemp = userPickerMode === 'assign' ? assignExamUserPickerTemp : examUserPickerTemp;
+      const sid = String(id);
+      const user = sourceData.find(u => String(u.id) === sid);
+      if (user) user.selected = false;
+      targetTemp.delete(id);
+      targetTemp.delete(sid);
+      targetTemp.delete(Number(id));
+      if (userPickerMode === 'assign') renderAssignAllowedUsers();
+      else renderExamAllowedUsers();
+    }
+
+    function openExamModal(id = null) {
+      editingExamId = id;
+      selectedExamQuestions = [];
+      pendingExamStatus = 'draft';
+      document.getElementById('examId').value = id || '';
+      document.getElementById('examModalTitle').textContent = id ? '编辑考试' : '创建考试';
+      document.getElementById('examTitle').value = '';
+      document.getElementById('examDesc').value = '';
+      document.getElementById('examDuration').value = '60';
+      document.getElementById('examPassingScore').value = '60';
+      var _maxAttempts = document.getElementById('examMaxAttempts'); if (_maxAttempts) _maxAttempts.value = '0';
+      document.getElementById('examPaperId').value = '';
+      // 重置考试设置
+      setBtnGroupValue('examAttempts', 'unlimited');
+      var _attemptsCustom = document.getElementById('examAttemptsCustom'); if (_attemptsCustom) { _attemptsCustom.classList.add('hidden'); _attemptsCustom.value = '3'; }
+      setBtnGroupValue('examRecordScore', 'highest');
+      setBtnGroupValue('examScreenSwitch', 'unlimited');
+      var _switchCustom = document.getElementById('examScreenSwitchCustom'); if (_switchCustom) { _switchCustom.classList.add('hidden'); _switchCustom.value = '3'; }
+      var _shuffleQ = document.getElementById('examShuffleQuestions'); if (_shuffleQ) _shuffleQ.checked = false;
+      var _shuffleO = document.getElementById('examShuffleOptions'); if (_shuffleO) _shuffleO.checked = false;
+      // 重置学员查看设置
+      var _showData = document.getElementById('examShowData'); if (_showData) _showData.checked = true;
+      var _dataLabel = document.getElementById('examDataLabel'); if (_dataLabel) _dataLabel.textContent = '显示';
+      var _dataToggle = document.getElementById('examDataToggle');
+      if (_dataToggle) { _dataToggle.classList.remove('bg-slate-300'); _dataToggle.classList.add('bg-indigo-500'); }
+      var _dataDot = document.getElementById('examDataDot'); if (_dataDot) _dataDot.style.left = '20px';
+      setBtnGroupValue('examAnswerDetail', 'after_grade');
+      setBtnGroupValue('examViewQuestions', 'all');
+      setBtnGroupValue('examShowCorrect', 'show');
+      setBtnGroupValue('examShowAnalysis', 'show');
+      setBtnGroupValue('examViewRank', 'after_submit');
+      // 重置任务指派
+      document.getElementById('examStartTime').value = '';
+      document.getElementById('examEndTime').value = '';
+      document.getElementById('examAccessType').value = 'none';
+      onExamAccessTypeChange();
+      document.getElementById('examImportUsersFile').value = '';
+      document.getElementById('examImportUsersResult').classList.add('hidden');
+      examUserPickerData = [];
+      examUserPickerTemp = new Set();
+      renderExamAllowedUsers();
+      renderSelectedQuestions();
+      // 加载试卷下拉
+      loadExamPaperOptions();
+      document.getElementById('examDrawerOverlay').classList.remove('hidden');
+      document.getElementById('examModal').classList.remove('translate-x-full');
+      if (id) loadExamForEdit(id);
+    }
+
+    // 加载试卷显示文本
+    async function loadExamPaperOptions() {
+      const paperId = document.getElementById('examPaperId').value;
+      renderExamPaperDisplay(paperId);
+    }
+
+    function renderExamPaperDisplay(paperId) {
+      const display = document.getElementById('exam-paper-display');
+      if (!display) return;
+      if (!paperId) {
+        display.textContent = '请选择试卷';
+        display.className = 'text-sm text-slate-500 truncate';
+        return;
+      }
+      try {
+        let papers = [];
+        if (window.dataSync && window.dataSync.getData) {
+          papers = window.dataSync.getData('papers') || [];
+        } else {
+          papers = JSON.parse(localStorage.getItem('papers') || '[]');
+        }
+        const paper = papers.find(p => String(p.id) === String(paperId));
+        if (paper) {
+          const qCount = (paper.questions || []).length;
+          display.textContent = paper.name + (qCount ? ` (${qCount}题)` : '');
+          display.className = 'text-sm text-slate-800 truncate';
+        } else {
+          display.textContent = '试卷不存在';
+          display.className = 'text-sm text-red-500 truncate';
+        }
+      } catch(e) { console.error('加载试卷显示失败:', e); }
+    }
+
+    function openExamPaperPicker() {
+      const currentId = document.getElementById('examPaperId').value || null;
+      openPaperPickerModal((paper) => {
+        document.getElementById('examPaperId').value = paper.id;
+        renderExamPaperDisplay(paper.id);
+        onExamPaperChange();
+      }, currentId);
+    }
+
+    // 试卷变更时自动加载题目
+    async function onExamPaperChange() {
+      const paperId = document.getElementById('examPaperId').value;
+      if (!paperId) {
+        selectedExamQuestions = [];
+        renderSelectedQuestions();
+        return;
+      }
+      try {
+        let paper = null;
+        if (window.dataSync && window.dataSync.getData) {
+          const papers = window.dataSync.getData('papers') || [];
+          paper = papers.find(p => p.id === paperId);
+        } else {
+          const papers = JSON.parse(localStorage.getItem('papers') || '[]');
+          paper = papers.find(p => p.id === paperId);
+        }
+        // 自动填充考试名称为试卷名称
+        if (paper && !document.getElementById('examTitle').value.trim()) {
+          document.getElementById('examTitle').value = paper.name;
+        }
+        if (paper && paper.questions) {
+          // 从题库中加载题目详情
+          let allQuestions = [];
+          if (window.dataSync && window.dataSync.getData) {
+            allQuestions = window.dataSync.getData('questions') || [];
+          } else {
+            allQuestions = JSON.parse(localStorage.getItem('questions') || '[]');
+          }
+          selectedExamQuestions = paper.questions.map((pq, idx) => {
+            const q = allQuestions.find(qq => qq.id === pq.questionId);
+            return {
+              questionId: pq.questionId,
+              score: pq.score || 5,
+              partialScore: pq.partialScore !== undefined ? pq.partialScore : (q && q.type === 'multiple' ? 0 : undefined),
+              order: idx,
+              content: q ? (q.title || q.content) : '(题目未找到)',
+              type: q ? q.type : 'single'
+            };
+          });
+          // 自动计算总分（用于保存时传递）
+          const totalScore = selectedExamQuestions.reduce((s, q) => s + (q.score || 0), 0);
+          renderSelectedQuestions();
+        }
+      } catch(e) { console.error('加载试卷题目失败:', e); }
+    }
+
+    function closeExamModal() {
+      document.getElementById('examDrawerOverlay').classList.add('hidden');
+      document.getElementById('examModal').classList.add('translate-x-full');
+      editingExamId = null;
+      selectedExamQuestions = [];
+      // 恢复任务指派区块显示（从培训模块打开时隐藏过）
+      const assignSection = document.getElementById('examAssignmentSection');
+      if (assignSection) assignSection.style.display = '';
+      // 恢复发布按钮文字（从培训模块打开时改成了"设置成功"）
+      const publishBtn = document.querySelector('button[onclick="saveExamAsPublished()"]');
+      if (publishBtn) {
+        publishBtn.innerHTML = '<i class="fas fa-paper-plane mr-1.5"></i>发布';
+      }
+      // 恢复"存草稿"按钮显示（从培训模块打开时隐藏过）
+      const draftBtn = document.querySelector('button[onclick="saveExamAsDraft()"]');
+      if (draftBtn) draftBtn.style.display = '';
+      // 从培训模块打开但未创建考试 → 回退 toggle 状态
+      if (examModalFromTraining) {
+        const examIdInput = document.getElementById('t-exam-id');
+        if (!examIdInput || !examIdInput.value) {
+          const toggle = document.getElementById('t-exam-enable');
+          if (toggle) { toggle.checked = false; updateModuleCardVisual('exam', false); }
+        }
+      }
+      examModalFromTraining = false;
+    }
+
+    // ========== 考试抽屉 - 任务指派 ==========
+    let assignExamUserPickerData = [];
+    let assignExamUserPickerTemp = new Set();
+
+    function onExamAccessTypeChange() {
+      const accessType = document.getElementById('examAccessType').value;
+      document.getElementById('examAllowedUsersContainer').classList.toggle('hidden', accessType !== 'restricted' && accessType !== 'import');
+      document.getElementById('examImportUsersContainer').classList.toggle('hidden', accessType !== 'import');
+    }
+
+    async function onExamImportUsersFile() {
+      const input = document.getElementById('examImportUsersFile');
+      const resultEl = document.getElementById('examImportUsersResult');
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      try {
+        const buf = await file.arrayBuffer();
+        const workbook = XLSX.read(buf, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const names = [];
+        rows.forEach(row => {
+          row.forEach(cell => {
+            const v = cell !== undefined && cell !== null ? String(cell).trim() : '';
+            if (v) names.push(v);
+          });
+        });
+        if (!names.length) {
+          resultEl.innerHTML = '<p class="text-xs text-red-500">未读取到任何姓名</p>';
+          resultEl.classList.remove('hidden');
+          return;
+        }
+        const res = await fetch('/api/data/users');
+        const users = await res.json();
+        const matched = [];
+        const unmatched = [];
+        const seen = new Set();
+        names.forEach(name => {
+          if (seen.has(name)) return;
+          seen.add(name);
+          const user = users.find(u => {
+            const n = (u.real_name || u.username || '').trim();
+            return n === name;
+          });
+          if (user) matched.push({ id: String(user.id), name: user.real_name || user.username });
+          else unmatched.push(name);
+        });
+        matched.forEach(u => examUserPickerTemp.add(u.id));
+        examUserPickerData.forEach(u => {
+          u.selected = examUserPickerTemp.has(String(u.id));
+        });
+        renderExamAllowedUsers();
+        let html = `<p class="text-xs text-emerald-600">成功导入 ${matched.length} 人</p>`;
+        if (unmatched.length) {
+          html += `<p class="text-xs text-amber-600 mt-0.5">未匹配 ${unmatched.length} 人：${escHtml(unmatched.slice(0, 5).join('、'))}${unmatched.length > 5 ? ' 等' : ''}</p>`;
+        }
+        resultEl.innerHTML = html;
+        resultEl.classList.remove('hidden');
+      } catch (e) {
+        resultEl.innerHTML = '<p class="text-xs text-red-500">读取失败：' + escHtml(e.message) + '</p>';
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    async function loadExamForEdit(id) {
+      try {
+        const examRes = await fetch('/api/exams');
+        const allExams = await examRes.json();
+        const exam = allExams.find(e => e.id === id || e.id === Number(id) || String(e.id) === String(id));
+        if (exam) {
+          document.getElementById('examTitle').value = exam.title || '';
+          document.getElementById('examDesc').value = exam.description || '';
+          document.getElementById('examDuration').value = exam.duration || 60;
+          document.getElementById('examPassingScore').value = exam.passingScore || 60;
+          var _ma = document.getElementById('examMaxAttempts'); if (_ma) _ma.value = exam.maxAttempts || 0;
+          var _sq = document.getElementById('examShuffleQuestions'); if (_sq) _sq.checked = !!exam.shuffleQuestions;
+          // 恢复考试设置
+          if (exam.attemptsPolicy) {
+            setBtnGroupValue('examAttempts', exam.attemptsPolicy);
+            var _ac = document.getElementById('examAttemptsCustom');
+            if (_ac) {
+              if (exam.attemptsPolicy === 'custom') {
+                _ac.classList.remove('hidden');
+                _ac.value = exam.attemptsCount || 3;
+              } else {
+                _ac.classList.add('hidden');
+              }
+            }
+          }
+          if (exam.recordScore) setBtnGroupValue('examRecordScore', exam.recordScore);
+          if (exam.screenSwitchPolicy) {
+            setBtnGroupValue('examScreenSwitch', exam.screenSwitchPolicy);
+            var _sc = document.getElementById('examScreenSwitchCustom');
+            if (_sc) {
+              if (exam.screenSwitchPolicy === 'custom') {
+                _sc.classList.remove('hidden');
+                _sc.value = exam.screenSwitchCount || 3;
+              } else {
+                _sc.classList.add('hidden');
+              }
+            }
+          }
+          var _sq = document.getElementById('examShuffleQuestions'); if (_sq) _sq.checked = !!exam.shuffleQuestions;
+          var _so = document.getElementById('examShuffleOptions'); if (_so) _so.checked = !!exam.shuffleOptions;
+          // 恢复学员查看设置
+          if (exam.showData !== undefined) {
+            var _sd = document.getElementById('examShowData'); if (_sd) _sd.checked = !!exam.showData;
+            var _dl = document.getElementById('examDataLabel'); if (_dl) _dl.textContent = exam.showData ? '显示' : '隐藏';
+            var _dt = document.getElementById('examDataToggle');
+            var _dd = document.getElementById('examDataDot');
+            if (_dt) {
+              if (exam.showData) {
+                _dt.classList.remove('bg-slate-300');
+                _dt.classList.add('bg-indigo-500');
+                if (_dd) _dd.style.left = '20px';
+              } else {
+                _dt.classList.remove('bg-indigo-500');
+                _dt.classList.add('bg-slate-300');
+                if (_dd) _dd.style.left = '2px';
+              }
+            }
+          }
+          if (exam.answerDetail) setBtnGroupValue('examAnswerDetail', exam.answerDetail);
+          if (exam.viewQuestions) setBtnGroupValue('examViewQuestions', exam.viewQuestions);
+          if (exam.showCorrect) setBtnGroupValue('examShowCorrect', exam.showCorrect);
+          if (exam.showAnalysis) setBtnGroupValue('examShowAnalysis', exam.showAnalysis);
+          if (exam.viewRank) setBtnGroupValue('examViewRank', exam.viewRank);
+          // 恢复关联试卷
+          if (exam.paperId) {
+            document.getElementById('examPaperId').value = exam.paperId;
+            renderExamPaperDisplay(exam.paperId);
+            onExamPaperChange();
+          }
+          // 恢复已选题目
+          if (exam.questions && exam.questions.length) {
+            selectedExamQuestions = exam.questions.map((q, idx) => ({
+              questionId: q.questionId,
+              score: q.score || 5,
+              partialScore: q.partialScore !== undefined ? q.partialScore : (q.type === 'multiple' ? 0 : undefined),
+              order: q.order !== undefined ? q.order : idx,
+              content: q.content || '(题目未找到)',
+              type: q.type || 'single'
+            }));
+            renderSelectedQuestions();
+          }
+          // 恢复任务指派
+          if (exam.startTime) document.getElementById('examStartTime').value = new Date(exam.startTime).toISOString().slice(0, 16);
+          if (exam.endTime) document.getElementById('examEndTime').value = new Date(exam.endTime).toISOString().slice(0, 16);
+          let accessType = exam.accessType || 'none';
+          if (accessType === 'open' || accessType === 'public') accessType = 'public';
+          else if (accessType === 'restricted') accessType = exam.allowedUsers && exam.allowedUsers.length ? 'restricted' : 'none';
+          else accessType = 'none';
+          document.getElementById('examAccessType').value = accessType;
+          onExamAccessTypeChange();
+          if (exam.allowedUsers && Array.isArray(exam.allowedUsers)) {
+            examUserPickerTemp = new Set(exam.allowedUsers.map(uid => String(uid)));
+            fetch('/api/data/users')
+              .then(r => r.json())
+              .then(users => {
+                const userMap = new Map(users.map(u => [String(u.id), u.real_name || u.username || '未知']));
+                examUserPickerData = exam.allowedUsers.map(uId => ({
+                  id: uId,
+                  name: userMap.get(String(uId)) || ('学员' + uId),
+                  selected: true
+                }));
+                renderExamAllowedUsers();
+              }).catch(() => {
+                examUserPickerData = exam.allowedUsers.map(uId => ({ id: uId, name: '学员' + uId, selected: true }));
+                renderExamAllowedUsers();
+              });
+          }
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    function renderSelectedQuestions() {
+      const container = document.getElementById('examSelectedQuestions');
+      const hint = document.getElementById('examQuestionCountHint');
+      if (!container) return;
+      if (hint) hint.textContent = `已选 ${selectedExamQuestions.length} 题`;
+      if (!selectedExamQuestions.length) {
+        container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">请选择关联试卷或手动添加题目</p>';
+        return;
+      }
+      const typeNames = { single: '单选', multiple: '多选', judge: '判断', fill: '填空', essay: '问答' };
+      container.innerHTML = selectedExamQuestions.map((q, i) => `
+        <div class="flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-100 text-sm">
+          <span class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">${i + 1}</span>
+          <span class="flex-1 line-clamp-1">${escHtml(q.content)}</span>
+          <span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">${typeNames[q.type] || ''}</span>
+          <input type="number" value="${q.score}" min="1" max="100" onchange="updateQuestionScore(${i}, this.value)"
+            class="w-14 px-1 border border-slate-200 rounded text-center text-xs focus:ring-1 focus:ring-indigo-500 outline-none" title="分值">
+          ${q.type === 'multiple' ? `<input type="number" value="${q.partialScore !== undefined ? q.partialScore : ''}" min="0" max="100" placeholder="漏选" onchange="updateQuestionPartialScore(${i}, this.value)"
+            class="w-14 px-1 border border-slate-200 rounded text-center text-xs focus:ring-1 focus:ring-indigo-500 outline-none" title="漏选得分">` : ''}
+          <button type="button" onclick="removeSelectedQuestion(${i})" class="text-red-400 hover:text-red-600 transition" title="移除"><i class="fas fa-times"></i></button>
+        </div>`).join('');
+    }
+
+    function updateQuestionScore(idx, val) {
+      if (selectedExamQuestions[idx]) selectedExamQuestions[idx].score = parseInt(val) || 1;
+    }
+
+    function updateQuestionPartialScore(idx, val) {
+      if (selectedExamQuestions[idx]) selectedExamQuestions[idx].partialScore = parseFloat(val) || 0;
+    }
+
+    function removeSelectedQuestion(idx) {
+      selectedExamQuestions.splice(idx, 1);
+      selectedExamQuestions.forEach((q, i) => q.order = i);
+      renderSelectedQuestions();
+    }
+
+    let pendingExamStatus = 'draft';
+
+    function saveExamAsDraft() {
+      pendingExamStatus = 'draft';
+      saveExam(null);
+    }
+
+    function saveExamAsPublished() {
+      pendingExamStatus = 'published';
+      saveExam(null);
+    }
+
+    async function saveExam(e) {
+      if (e) e.preventDefault();
+      const paperId = document.getElementById('examPaperId').value;
+      const totalScore = selectedExamQuestions.reduce((s, q) => s + (q.score || 0), 0) || 100;
+      const passingScore = parseInt(document.getElementById('examPassingScore').value) || 0;
+
+      // 表单校验
+      if (!paperId && selectedExamQuestions.length === 0) {
+        toast('请选择关联试卷或手动添加题目', 'warning');
+        return;
+      }
+      if (passingScore > totalScore) {
+        toast('及格分数不能大于总分', 'warning');
+        return;
+      }
+
+      // 获取试卷名称
+      let paperName = '';
+      if (paperId) {
+        try {
+          let papers = [];
+          if (window.dataSync && window.dataSync.getData) {
+            papers = window.dataSync.getData('papers') || [];
+          } else {
+            papers = JSON.parse(localStorage.getItem('papers') || '[]');
+          }
+          const paper = papers.find(p => p.id === paperId);
+          if (paper) paperName = paper.name;
+        } catch(e) {}
+      }
+      const attemptsPolicy = getBtnGroupValue('examAttempts') || 'unlimited';
+      const screenSwitchPolicy = getBtnGroupValue('examScreenSwitch') || 'unlimited';
+      let accessTypeRaw, startTime, endTime, accessType, allowedUsers;
+      if (examModalFromTraining) {
+        // 从培训弹窗读取指派设置，确保考试与培训的指派逻辑一致
+        accessTypeRaw = document.getElementById('t-access-type')?.value || 'none';
+        startTime = document.getElementById('t-start')?.value || '';
+        endTime = document.getElementById('t-end')?.value || '';
+        accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
+        allowedUsers = (accessTypeRaw === 'restricted' || accessTypeRaw === 'import')
+          ? Array.from(trainingUserPickerTemp).map(id => isNaN(Number(id)) ? id : Number(id))
+          : [];
+      } else {
+        accessTypeRaw = document.getElementById('examAccessType').value;
+        startTime = document.getElementById('examStartTime').value;
+        endTime = document.getElementById('examEndTime').value;
+        accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
+        allowedUsers = (accessTypeRaw === 'restricted' || accessTypeRaw === 'import')
+          ? Array.from(examUserPickerTemp).map(id => isNaN(Number(id)) ? id : Number(id))
+          : [];
+      }
+      const payload = {
+        title: document.getElementById('examTitle').value.trim(),
+        description: document.getElementById('examDesc').value.trim(),
+        duration: parseInt(document.getElementById('examDuration').value),
+        totalScore: totalScore,
+        passingScore: passingScore,
+        status: pendingExamStatus,
+        maxAttempts: (function(){ var _e = document.getElementById('examMaxAttempts'); return _e ? (parseInt(_e.value) || 0) : 0; })(),
+        shuffleQuestions: (function(){ var _e = document.getElementById('examShuffleQuestions'); return _e ? _e.checked : false; })(),
+        shuffleOptions: (function(){ var _e = document.getElementById('examShuffleOptions'); return _e ? _e.checked : false; })(),
+        // 考试设置
+        attemptsPolicy: attemptsPolicy,
+        attemptsCount: (function(){ var _e = document.getElementById('examAttemptsCustom'); return attemptsPolicy === 'custom' && _e ? (parseInt(_e.value) || 3) : null; })(),
+        recordScore: getBtnGroupValue('examRecordScore') || 'highest',
+        screenSwitchPolicy: screenSwitchPolicy,
+        screenSwitchCount: (function(){ var _e = document.getElementById('examScreenSwitchCustom'); return screenSwitchPolicy === 'custom' && _e ? (parseInt(_e.value) || 3) : null; })(),
+        // 学员查看设置
+        showData: (function(){ var _e = document.getElementById('examShowData'); return _e ? _e.checked : true; })(),
+        answerDetail: getBtnGroupValue('examAnswerDetail') || 'after_grade',
+        viewQuestions: getBtnGroupValue('examViewQuestions') || 'all',
+        showCorrect: getBtnGroupValue('examShowCorrect') || 'show',
+        showAnalysis: getBtnGroupValue('examShowAnalysis') || 'show',
+        viewRank: getBtnGroupValue('examViewRank') || 'after_submit',
+        questions: selectedExamQuestions,
+        paperId: paperId || null,
+        paperName: paperName,
+        // 任务指派
+        startTime: startTime ? new Date(startTime).toISOString() : null,
+        endTime: endTime ? new Date(endTime).toISOString() : null,
+        accessType: accessType,
+        allowedUsers: allowedUsers.length ? allowedUsers : null,
+        fromTraining: !!examModalFromTraining
+      };
+      try {
+        let res;
+        if (editingExamId) {
+          res = await fetch('/api/exams/' + editingExamId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } else {
+          res = await fetch('/api/exams', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
+        const data = await res.json();
+        if (data.success) {
+          const newExamId = data.exam ? data.exam.id : editingExamId;
+          // 如果是从培训模块打开的，关联到培训
+          if (examModalFromTraining) {
+            const idInput = document.getElementById('t-exam-id');
+            if (idInput) idInput.value = newExamId;
+            const status = document.getElementById('exam-card-status');
+            if (status) status.textContent = document.getElementById('examTitle').value.trim() || '已关联';
+            toast(editingExamId ? '考试已更新，已关联到培训' : '考试创建成功，已关联到培训');
+          } else {
+            toast(editingExamId ? '考试已更新' : '考试创建成功');
+          }
+          closeExamModal();
+          loadExamMgmtList();
+        } else {
+          toast(data.error || '保存失败', 'error');
+        }
+      } catch (err) {
+        toast('网络错误: ' + err.message, 'error');
+      }
+    }
+
+    async function previewExam(id) {
+      try {
+        const res = await fetch('/api/exams/' + id + '/questions');
+        const data = await res.json();
+        const examRes = await fetch('/api/exams');
+        const allExams = await examRes.json();
+        const exam = allExams.find(e => e.id === id);
+        document.getElementById('previewExamTitle').textContent = exam ? exam.title : '考试';
+        const questions = data.questions || [];
+        const typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '问答题' };
+        if (questions.length === 0) {
+          document.getElementById('examPreviewContent').innerHTML = '<p class="text-sm text-slate-400 text-center py-4">暂无题目</p>';
+        } else {
+          document.getElementById('examPreviewContent').innerHTML = questions.map((q, i) => {
+            const detail = q.questionDetail || {};
+            let optionsHtml = '';
+            if (detail.options && Array.isArray(detail.options)) {
+              optionsHtml = detail.options.map((opt, idx) => {
+                const isCorrect = (Array.isArray(detail.answer) ? detail.answer : [detail.answer]).includes(String.fromCharCode(65 + idx));
+                return `<div class="flex items-start gap-2 py-1 ${isCorrect ? 'text-emerald-700 font-medium' : 'text-slate-600'}">
+                  <span class="flex-shrink-0 w-6 h-6 rounded-full border ${isCorrect ? 'border-emerald-500 bg-emerald-50 text-emerald-600' : 'border-slate-300 text-slate-500'} flex items-center justify-center text-xs font-bold">${String.fromCharCode(65 + idx)}</span>
+                  <span class="text-sm">${escHtml(opt)}${isCorrect ? ' <i class="fas fa-check-circle text-emerald-500 ml-1"></i>' : ''}</span>
+                </div>`;
+              }).join('');
+            }
+            return `
+              <div class="border border-slate-200 rounded-xl p-5 bg-white">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-bold">${i + 1}</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-500">${typeNames[detail.type] || ''}</span>
+                  <span class="text-xs text-slate-400 ml-auto">${q.score || 1} 分</span>
+                </div>
+                <div class="text-sm text-slate-800 mb-3 font-medium">${escHtml(detail.title || detail.content || '(无内容)')}</div>
+                ${optionsHtml ? `<div class="space-y-1 pl-2">${optionsHtml}</div>` : ''}
+                ${detail.type === 'judge' ? `<div class="space-y-1 pl-2">
+                  <div class="flex items-center gap-2 text-sm ${detail.answer === '正确' || detail.answer === 'true' || detail.answer === 'A' ? 'text-emerald-700 font-medium' : 'text-slate-600'}">
+                    <span class="w-5 h-5 rounded-full border ${detail.answer === '正确' || detail.answer === 'true' || detail.answer === 'A' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300'} flex items-center justify-center text-xs">对</span>
+                    正确${detail.answer === '正确' || detail.answer === 'true' || detail.answer === 'A' ? ' <i class="fas fa-check-circle text-emerald-500 ml-1"></i>' : ''}
+                  </div>
+                  <div class="flex items-center gap-2 text-sm ${detail.answer === '错误' || detail.answer === 'false' || detail.answer === 'B' ? 'text-emerald-700 font-medium' : 'text-slate-600'}">
+                    <span class="w-5 h-5 rounded-full border ${detail.answer === '错误' || detail.answer === 'false' || detail.answer === 'B' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300'} flex items-center justify-center text-xs">错</span>
+                    错误${detail.answer === '错误' || detail.answer === 'false' || detail.answer === 'B' ? ' <i class="fas fa-check-circle text-emerald-500 ml-1"></i>' : ''}
+                  </div>
+                </div>` : ''}
+                ${detail.type === 'fill' || detail.type === 'essay' ? `<div class="mt-2 p-3 bg-emerald-50 rounded-lg text-sm text-emerald-700">
+                  <i class="fas fa-check-circle mr-1.5"></i>参考答案：${escHtml(detail.answer || '无')}
+                </div>` : ''}
+              </div>
+            `;
+          }).join('');
+        }
+        const modal = document.getElementById('examPreviewModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      } catch (e) {
+        toast('加载预览失败', 'error');
+      }
+    }
+
+    function closeExamPreview() {
+      const modal = document.getElementById('examPreviewModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function editExam(id) { openExamModal(id); }
+
+    async function deleteExam(id) {
+      if (!confirm('确定要删除这个考试吗?相关成绩记录也将被清除。')) return;
+      try {
+        const res = await fetch('/api/exams/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) { loadExamMgmtList(); toast('考试已删除'); }
+        else toast(data.error || '删除失败', 'error');
+      } catch (e) { toast('删除失败', 'error'); }
+    }
+
+    async function copyExam(id) {
+      try {
+        const res = await fetch('/api/exams/' + id);
+        const resJson = await res.json();
+        const exam = resJson.data || resJson;
+        if (!exam || exam.error) { toast('获取原考试数据失败', 'error'); return; }
+        const { id: _, createdAt: __, updatedAt: ___, questionCount, attemptCount, completedCount, passCount, failCount, absentCount, unstartedCount, ...copyData } = exam;
+        copyData.title = (exam.title || '考试') + '副本';
+        copyData.status = 'draft';
+        const createRes = await fetch('/api/exams', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(copyData)
+        });
+        const result = await createRes.json();
+        if (result.success || result.id) { loadExamMgmtList(); toast('考试已复制'); }
+        else toast(result.error || '复制失败', 'error');
+      } catch (e) { toast('复制失败: ' + e.message, 'error'); }
+    }
+
+    async function unpublishExam(id) {
+      try {
+        const res = await fetch('/api/exams/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'draft' })
+        });
+        const data = await res.json();
+        if (data.success) { loadExamMgmtList(); toast('已撤回发布'); }
+        else toast(data.error || '操作失败', 'error');
+      } catch (e) { toast('操作失败', 'error'); }
+    }
+
+    async function publishExam(id) {
+      try {
+        const res = await fetch('/api/exams/' + id + '/status', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'published' })
+        });
+        const data = await res.json();
+        if (data.success) { loadExamMgmtList(); toast('考试已发布'); }
+        else toast(data.error, 'error');
+      } catch (e) { toast('发布失败', 'error'); }
+    }
+
+    async function closeExam(id) {
+      try {
+        const res = await fetch('/api/exams/' + id + '/status', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'closed' })
+        });
+        const data = await res.json();
+        if (data.success) { loadExamMgmtList(); toast('考试已结束'); }
+        else toast(data.error, 'error');
+      } catch (e) { toast('操作失败', 'error'); }
+    }
+
+    let currentExamResults = [];
+    let currentExamResultTitle = '';
+
+    async function viewExamResults(id, title) {
+      document.getElementById('resultsExamTitle').textContent = title;
+      currentExamResultTitle = title;
+      const tbody = document.getElementById('examResultsBody');
+      tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+      const modal = document.getElementById('examResultsModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      try {
+        const res = await fetch('/api/exams/' + id + '/results');
+        const data = await res.json();
+        const results = data.results || [];
+        currentExamResults = results;
+        if (!results.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">暂无成绩记录</td></tr>';
+          return;
+        }
+        tbody.innerHTML = results.map(r => `
+          <tr class="${r.passed ? '' : 'bg-red-50'}">
+            <td class="px-3 py-3 font-medium text-slate-800">${escHtml(r.userName)}</td>
+            <td class="px-3 py-3 font-bold ${r.passed ? 'text-green-600' : 'text-red-600'}">${r.score}分</td>
+            <td class="px-3 py-3 text-slate-600">${r.correctCount || '-'}/${r.totalQuestions || '-'}</td>
+            <td class="px-3 py-3">
+              <span class="px-2 py-0.5 text-xs rounded-full font-medium ${r.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}">
+                ${r.passed ? '通过' : '未通过'}
+              </span>
+            </td>
+            <td class="px-3 py-3 text-slate-500 text-xs">${r.completedAt ? new Date(r.completedAt).toLocaleString() : '-'}</td>
+          </tr>`).join('');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-red-500">加载失败</td></tr>';
+      }
+    }
+
+    function exportExamResults() {
+      if (!currentExamResults || currentExamResults.length === 0) {
+        toast('没有可导出的成绩数据', 'warning');
+        return;
+      }
+      const headers = ['学员姓名', '得分', '正确题数', '总题数', '是否通过', '提交时间'];
+      const rows = currentExamResults.map(r => [
+        r.userName || '未知',
+        r.score || 0,
+        r.correctCount || 0,
+        r.totalQuestions || 0,
+        r.passed ? '通过' : '未通过',
+        r.completedAt ? new Date(r.completedAt).toLocaleString('zh-CN') : '-'
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '考试成绩');
+      XLSX.writeFile(wb, (currentExamResultTitle || '考试') + '_成绩_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('成绩导出成功');
+    }
+
+    function closeExamResults() {
+      const modal = document.getElementById('examResultsModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // ========== 考试详情内嵌窗格 ==========
+    let currentExamDetailId = null;
+    let currentExamDetailTitle = '';
+    let currentExamDetailData = { students: [], questions: [], exam: {} };
+    let currentExamDetailStudentFilter = 'all';
+    let currentExamDetailQuestionFilter = 'all';
+    let currentExamStudentRecords = [];
+    let currentExamStudentRecordTitle = '';
+
+    function openExamDetailView(examId, tab) {
+      currentExamDetailId = examId;
+      currentExamDetailStudentFilter = 'all';
+      currentExamDetailQuestionFilter = 'all';
+      document.getElementById('examDetailStudentSearch').value = '';
+      const listView = document.getElementById('examListView');
+      listView.classList.add('hidden');
+      listView.style.display = 'none';
+      document.getElementById('examDetailView').classList.remove('hidden');
+      loadExamDetailData(tab || 'students');
+    }
+
+    function closeExamDetailView() {
+      document.getElementById('examDetailView').classList.add('hidden');
+      const listView = document.getElementById('examListView');
+      listView.classList.remove('hidden');
+      listView.style.display = '';
+      currentExamDetailId = null;
+      currentExamDetailTitle = '';
+      currentExamDetailData = { students: [], questions: [], exam: {} };
+    }
+
+    function switchExamDetailTab(tab) {
+      const studentsPanel = document.getElementById('examDetailStudentsPanel');
+      const questionsPanel = document.getElementById('examDetailQuestionsPanel');
+      const studentsTab = document.getElementById('examDetailTabStudents');
+      const questionsTab = document.getElementById('examDetailTabQuestions');
+      if (tab === 'students') {
+        studentsPanel.classList.remove('hidden');
+        questionsPanel.classList.add('hidden');
+        studentsTab.className = 'py-3 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600 transition';
+        questionsTab.className = 'py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition';
+        renderExamDetailStudents();
+      } else {
+        studentsPanel.classList.add('hidden');
+        questionsPanel.classList.remove('hidden');
+        studentsTab.className = 'py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition';
+        questionsTab.className = 'py-3 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600 transition';
+        renderExamDetailQuestions();
+      }
+    }
+
+    async function loadExamDetailData(tab) {
+      if (!currentExamDetailId) return;
+      try {
+        const [studentsRes, questionsRes] = await Promise.all([
+          fetch('/api/exams/' + currentExamDetailId + '/students'),
+          fetch('/api/exams/' + currentExamDetailId + '/question-stats')
+        ]);
+        const studentsData = await studentsRes.json();
+        const questionsData = await questionsRes.json();
+        currentExamDetailData.exam = studentsData.exam || {};
+        currentExamDetailData.students = studentsData.students || [];
+        currentExamDetailData.questions = questionsData.stats || [];
+        currentExamDetailTitle = currentExamDetailData.exam.title || '考试详情';
+        document.getElementById('examDetailTitle').textContent = currentExamDetailTitle;
+        renderExamDetailStudentFilters();
+        renderExamDetailQuestionFilters();
+        switchExamDetailTab(tab);
+      } catch (e) {
+        toast('加载考试详情失败', 'error');
+      }
+    }
+
+    function renderExamDetailStudentFilters() {
+      const students = currentExamDetailData.students || [];
+      const counts = {
+        all: students.length,
+        passed: students.filter(s => s.status === 'passed').length,
+        failed: students.filter(s => s.status === 'failed').length,
+        unstarted: students.filter(s => s.status === 'unstarted').length,
+        absent: students.filter(s => s.status === 'absent' || s.status === 'taking').length
+      };
+      const labels = {
+        all: `全部(${counts.all})`,
+        passed: `及格(${counts.passed})`,
+        failed: `不及格(${counts.failed})`,
+        unstarted: `未考/缺考(${counts.unstarted + counts.absent})`,
+        taking: `待阅卷(${counts.absent})`
+      };
+      const filters = ['all', 'passed', 'failed', 'unstarted', 'taking'];
+      const container = document.getElementById('examDetailStudentFilters');
+      container.innerHTML = filters.map(f => {
+        const active = currentExamDetailStudentFilter === f ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300';
+        return `<button onclick="setExamDetailStudentFilter('${f}')" class="px-3 py-1.5 text-xs border rounded-lg transition ${active}">${labels[f]}</button>`;
+      }).join('');
+    }
+
+    function setExamDetailStudentFilter(filter) {
+      currentExamDetailStudentFilter = filter;
+      renderExamDetailStudentFilters();
+      renderExamDetailStudents();
+    }
+
+    function formatDuration(seconds) {
+      if (!seconds || seconds <= 0) return '-';
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      return `${m}分${s}秒`;
+    }
+
+    function renderExamDetailStudents() {
+      const tbody = document.getElementById('examDetailStudentsBody');
+      const search = (document.getElementById('examDetailStudentSearch').value || '').trim().toLowerCase();
+      let students = currentExamDetailData.students || [];
+      if (search) students = students.filter(s => (s.userName || '').toLowerCase().includes(search));
+      if (currentExamDetailStudentFilter !== 'all') {
+        if (currentExamDetailStudentFilter === 'unstarted') {
+          students = students.filter(s => s.status === 'unstarted' || s.status === 'absent' || s.status === 'taking');
+        } else if (currentExamDetailStudentFilter === 'taking') {
+          students = students.filter(s => s.status === 'taking' || s.status === 'absent');
+        } else {
+          students = students.filter(s => s.status === currentExamDetailStudentFilter);
+        }
+      }
+      if (!students.length) {
+        tbody.innerHTML = '<tr><td colspan="10" class="py-8 text-center text-slate-400">暂无学员数据</td></tr>';
+        return;
+      }
+      tbody.innerHTML = students.map(s => {
+        const statusClass = {
+          passed: 'bg-emerald-100 text-emerald-700',
+          failed: 'bg-rose-100 text-rose-600',
+          unstarted: 'bg-slate-100 text-slate-500',
+          taking: 'bg-blue-100 text-blue-600',
+          absent: 'bg-indigo-100 text-indigo-600'
+        }[s.status] || 'bg-slate-100 text-slate-500';
+        const scoreDisplay = s.status === 'passed' || s.status === 'failed' ? s.score : '-';
+        const rateDisplay = s.status === 'passed' || s.status === 'failed' ? s.scoreRate + '%' : '-';
+        return `<tr>
+          <td class="px-3 py-3 text-slate-800">${escHtml(s.userName)}</td>
+          <td class="px-3 py-3 text-slate-600">${escHtml(s.department)}</td>
+          <td class="px-3 py-3 text-slate-600">${escHtml(s.phone)}</td>
+          <td class="px-3 py-3 text-slate-500 text-xs">${s.joinTime}</td>
+          <td class="px-3 py-3 text-center">
+            <button onclick="openExamStudentRecords(${currentExamDetailId}, ${s.userId}, '${escJs(s.userName)}')" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">${s.attemptCount} <i class="fas fa-chevron-right text-xs"></i></button>
+          </td>
+          <td class="px-3 py-3 text-center font-medium text-slate-700">${scoreDisplay}</td>
+          <td class="px-3 py-3 text-center text-slate-600">${rateDisplay}</td>
+          <td class="px-3 py-3 text-center text-slate-600">${formatDuration(s.duration)}</td>
+          <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 text-xs rounded-full font-medium ${statusClass}">${s.statusText}</span></td>
+          <td class="px-3 py-3 text-center">
+            <button onclick="openExamStudentRecords(${currentExamDetailId}, ${s.userId}, '${escJs(s.userName)}')" class="text-indigo-600 hover:text-indigo-700 text-xs font-medium">查看详情</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderExamDetailQuestionFilters() {
+      const questions = currentExamDetailData.questions || [];
+      const typeMap = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
+      const counts = { all: questions.length };
+      Object.keys(typeMap).forEach(type => { counts[type] = questions.filter(q => q.type === type).length; });
+      const filters = [['all', `全部试题(${counts.all})`], ['single', `单选题(${counts.single})`], ['multiple', `多选题(${counts.multiple})`], ['judge', `判断题(${counts.judge})`]];
+      const container = document.getElementById('examDetailQuestionFilters');
+      container.innerHTML = filters.map(([type, label]) => {
+        const active = currentExamDetailQuestionFilter === type ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300';
+        return `<button onclick="setExamDetailQuestionFilter('${type}')" class="px-3 py-1.5 text-xs border rounded-lg transition ${active}">${label}</button>`;
+      }).join('');
+    }
+
+    function setExamDetailQuestionFilter(filter) {
+      currentExamDetailQuestionFilter = filter;
+      renderExamDetailQuestionFilters();
+      renderExamDetailQuestions();
+    }
+
+    function renderExamDetailQuestions() {
+      const tbody = document.getElementById('examDetailQuestionsBody');
+      let questions = currentExamDetailData.questions || [];
+      if (currentExamDetailQuestionFilter !== 'all') {
+        questions = questions.filter(q => q.type === currentExamDetailQuestionFilter);
+      }
+      if (!questions.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400">暂无答题数据</td></tr>';
+        return;
+      }
+      tbody.innerHTML = questions.map(q => `
+        <tr>
+          <td class="px-3 py-3 text-slate-600">${q.order}</td>
+          <td class="px-3 py-3 text-slate-800 max-w-xs truncate" title="${escHtml(q.title)}">${escHtml(q.title)}</td>
+          <td class="px-3 py-3 text-slate-600">${escHtml(q.bankName)}</td>
+          <td class="px-3 py-3 text-slate-600">${q.typeText}</td>
+          <td class="px-3 py-3 text-slate-600">${escHtml(q.knowledge)}</td>
+          <td class="px-3 py-3 text-slate-700 font-medium">${escHtml(q.correctAnswer)}</td>
+          <td class="px-3 py-3 text-center">
+            <span class="px-2 py-0.5 text-xs rounded-full font-medium ${q.correctRate >= 80 ? 'bg-emerald-100 text-emerald-700' : q.correctRate >= 60 ? 'bg-indigo-100 text-indigo-700' : 'bg-rose-100 text-rose-600'}">${q.correctRate}%</span>
+          </td>
+          <td class="px-3 py-3 text-center">
+            <button onclick="showExamQuestionDetail(${q.questionId})" class="text-indigo-600 hover:text-indigo-700 text-xs font-medium">数据</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    let currentExamAttemptDetail = null;
+    let currentExamQuestionAnswers = null;
+
+    async function showExamQuestionDetail(questionId) {
+      const question = (currentExamDetailData.questions || []).find(q => q.questionId === questionId);
+      if (!question) return;
+      const modal = document.getElementById('examQuestionAnswersModal');
+      const body = document.getElementById('examQuestionAnswersBody');
+      const subtitle = document.getElementById('examQuestionAnswersSubtitle');
+      subtitle.textContent = `第${question.order}题 · ${question.typeText} · 正确率 ${question.correctRate}%`;
+      body.innerHTML = '<div class="py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>';
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      try {
+        const res = await fetch('/api/exams/' + currentExamDetailId + '/questions/' + questionId + '/answers');
+        const data = await res.json();
+        currentExamQuestionAnswers = data;
+        const answers = data.answers || [];
+        if (!answers.length) {
+          body.innerHTML = '<div class="py-12 text-center text-slate-400">暂无答题数据</div>';
+          return;
+        }
+        body.innerHTML = answers.map(a => {
+          const resultClass = a.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600';
+          const resultText = a.isCorrect ? '正确' : '错误';
+          return `
+          <div class="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-sm transition">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 text-xs font-bold">${escHtml(a.userName.charAt(0))}</div>
+                <div>
+                  <p class="text-sm font-semibold text-slate-800">${escHtml(a.userName)}</p>
+                  <p class="text-xs text-slate-500">${escHtml(a.department)} · ${escHtml(a.phone)}</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 text-xs rounded-full font-medium ${resultClass}">${resultText}</span>
+            </div>
+            <div class="flex flex-wrap gap-4 text-sm">
+              <div><span class="text-slate-400">学员答案：</span><span class="font-medium text-slate-700">${a.userAnswer ? escHtml(a.userAnswer) : '<span class="text-slate-400">未作答</span>'}</span></div>
+              <div><span class="text-slate-400">正确答案：</span><span class="font-medium text-emerald-600">${escHtml(a.correctAnswer)}</span></div>
+              <div><span class="text-slate-400">交卷时间：</span><span class="text-slate-600">${a.completedAt ? new Date(a.completedAt).toLocaleString('zh-CN') : '-'}</span></div>
+            </div>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        body.innerHTML = '<div class="py-12 text-center text-red-500">加载失败</div>';
+      }
+    }
+
+    function closeExamQuestionAnswersModal() {
+      const modal = document.getElementById('examQuestionAnswersModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentExamQuestionAnswers = null;
+    }
+
+    function exportExamQuestionAnswers() {
+      if (!currentExamQuestionAnswers || !currentExamQuestionAnswers.answers || !currentExamQuestionAnswers.answers.length) {
+        toast('没有可导出的答题数据', 'warning');
+        return;
+      }
+      const q = currentExamQuestionAnswers.question || {};
+      const headers = ['学员姓名', '部门', '手机号', '学员答案', '正确答案', '是否正确', '交卷时间'];
+      const rows = currentExamQuestionAnswers.answers.map(a => [
+        a.userName, a.department, a.phone, a.userAnswer || '未作答', a.correctAnswer,
+        a.isCorrect ? '正确' : '错误',
+        a.completedAt ? new Date(a.completedAt).toLocaleString('zh-CN') : '-'
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '答题数据');
+      XLSX.writeFile(wb, (currentExamDetailTitle || '考试') + '_第' + (q.order || '') + '题答题数据_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('答题数据导出成功');
+    }
+
+    async function openExamStudentRecords(examId, userId, userName) {
+      currentExamStudentRecordTitle = `${escHtml(userName)} - ${currentExamDetailTitle || '考试记录'}`;
+      document.getElementById('examStudentRecordsTitle').textContent = currentExamStudentRecordTitle;
+      const tbody = document.getElementById('examStudentRecordsBody');
+      tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+      const modal = document.getElementById('examStudentRecordsModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      try {
+        const res = await fetch('/api/exams/' + examId + '/students/' + userId + '/records');
+        const data = await res.json();
+        const records = data.records || [];
+        currentExamStudentRecords = records;
+        if (!records.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">暂无考试记录</td></tr>';
+          return;
+        }
+        tbody.innerHTML = records.map(r => {
+          const resultClass = r.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600';
+          const resultText = r.status === 'completed' ? (r.passed ? '及格' : '不及格') : (r.status === 'abandoned' ? '缺考' : '进行中');
+          const badge = r.isHighest ? '<span class="ml-1 px-1 py-0.5 text-[10px] border border-indigo-300 text-indigo-600 rounded">最高</span>' : '';
+          return `<tr>
+            <td class="px-3 py-3 text-slate-600">${r.completedAt ? new Date(r.completedAt).toLocaleString('zh-CN') : '-'}</td>
+            <td class="px-3 py-3 text-center text-slate-600">${formatDuration(r.durationUsed)}</td>
+            <td class="px-3 py-3 text-center text-slate-700 font-medium">${r.fullScore}/${r.score}${badge}</td>
+            <td class="px-3 py-3 text-center text-slate-600">${r.scoreRate}%</td>
+            <td class="px-3 py-3 text-center text-slate-600">系统</td>
+            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 text-xs rounded-full font-medium ${resultClass}">${resultText}</span></td>
+            <td class="px-3 py-3 text-center"><button onclick="openExamAttemptDetail(${r.id})" class="text-indigo-600 hover:text-indigo-700 text-xs font-medium">作答详情</button></td>
+          </tr>`;
+        }).join('');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-red-500">加载失败</td></tr>';
+      }
+    }
+
+    function closeExamStudentRecordsModal() {
+      const modal = document.getElementById('examStudentRecordsModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentExamStudentRecords = [];
+    }
+
+    function exportExamDetailStudents() {
+      const students = currentExamDetailData.students || [];
+      if (!students.length) { toast('没有可导出的学员数据', 'warning'); return; }
+      const headers = ['姓名', '部门', '登录手机号', '加入时间', '考试记录', '考试得分', '得分率', '作答时长', '状态'];
+      const rows = students.map(s => [
+        s.userName, s.department, s.phone, s.joinTime, s.attemptCount,
+        s.status === 'passed' || s.status === 'failed' ? s.score : '-',
+        s.status === 'passed' || s.status === 'failed' ? s.scoreRate + '%' : '-',
+        formatDuration(s.duration),
+        s.statusText
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '学员数据');
+      XLSX.writeFile(wb, (currentExamDetailTitle || '考试') + '_学员数据_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('学员数据导出成功');
+    }
+
+    function exportExamDetailQuestions() {
+      const questions = currentExamDetailData.questions || [];
+      if (!questions.length) { toast('没有可导出的答题数据', 'warning'); return; }
+      const headers = ['序号', '题目', '题库', '题型', '知识点', '正确答案', '正确人数', '答题人数', '正确率'];
+      const rows = questions.map(q => [q.order, q.title, q.bankName, q.typeText, q.knowledge, q.correctAnswer, q.correctCount, q.totalCount, q.correctRate + '%']);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '答题数据');
+      XLSX.writeFile(wb, (currentExamDetailTitle || '考试') + '_答题数据_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('答题数据导出成功');
+    }
+
+    function exportExamStudentRecords() {
+      if (!currentExamStudentRecords.length) { toast('没有可导出的考试记录', 'warning'); return; }
+      const headers = ['交卷时间', '作答时长', '总分', '得分', '得分率', '阅卷人', '考试结果'];
+      const rows = currentExamStudentRecords.map(r => [
+        r.completedAt ? new Date(r.completedAt).toLocaleString('zh-CN') : '-',
+        formatDuration(r.durationUsed),
+        r.fullScore,
+        r.score,
+        r.scoreRate + '%',
+        '系统',
+        r.status === 'completed' ? (r.passed ? '及格' : '不及格') : (r.status === 'abandoned' ? '缺考' : '进行中')
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '考试记录');
+      XLSX.writeFile(wb, currentExamStudentRecordTitle + '_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('考试记录导出成功');
+    }
+
+    async function openExamAttemptDetail(attemptId) {
+      const modal = document.getElementById('examAttemptDetailModal');
+      const body = document.getElementById('examAttemptDetailBody');
+      const subtitle = document.getElementById('examAttemptDetailSubtitle');
+      body.innerHTML = '<div class="py-12 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>';
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      try {
+        const res = await fetch('/api/exams/attempts/' + attemptId + '/detail');
+        const data = await res.json();
+        currentExamAttemptDetail = data;
+        const attempt = data.attempt || {};
+        const user = data.user || {};
+        const exam = data.exam || {};
+        subtitle.textContent = `${escHtml(user.userName || '')} · ${escHtml(exam.title || '')} · 得分 ${attempt.score || 0}/${exam.fullScore || exam.totalScore || 0}`;
+        const details = data.details || [];
+        if (!details.length) {
+          body.innerHTML = '<div class="py-12 text-center text-slate-400">暂无作答数据</div>';
+          return;
+        }
+        body.innerHTML = details.map(d => {
+          const resultClass = d.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600';
+          const resultText = d.userAnswer ? (d.isCorrect ? '正确' : '错误') : '未作答';
+          const optionsHtml = Object.entries(d.options || {}).map(([k, v]) => `<div class="text-sm ${k === d.correctAnswer ? 'text-emerald-600 font-medium' : (k === d.userAnswer ? 'text-rose-600' : 'text-slate-600')}"><span class="inline-block w-5 text-xs">${k}.</span>${escHtml(v)}</div>`).join('');
+          return `
+          <div class="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-sm transition">
+            <div class="flex items-start justify-between gap-4 mb-3">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 text-[10px] font-semibold rounded bg-indigo-50 text-indigo-600">第${d.order}题</span>
+                  <span class="px-2 py-0.5 text-[10px] font-semibold rounded bg-slate-100 text-slate-600">${d.typeText}</span>
+                  <span class="text-xs text-slate-400">${escHtml(d.knowledge)}</span>
+                </div>
+                <p class="text-sm font-medium text-slate-800">${escHtml(d.title)}</p>
+              </div>
+              <span class="px-2 py-0.5 text-xs rounded-full font-medium ${resultClass}">${resultText}</span>
+            </div>
+            <div class="space-y-1.5 mb-3 pl-1">${optionsHtml || '<div class="text-sm text-slate-400">非客观题，无选项</div>'}</div>
+            <div class="flex flex-wrap gap-4 text-sm bg-slate-50 rounded-lg p-3">
+              <div><span class="text-slate-400">学员答案：</span><span class="font-medium ${d.userAnswer ? (d.isCorrect ? 'text-emerald-600' : 'text-rose-600') : 'text-slate-400'}">${d.userAnswer ? escHtml(d.userAnswer) : '未作答'}</span></div>
+              <div><span class="text-slate-400">正确答案：</span><span class="font-medium text-emerald-600">${escHtml(d.correctAnswer)}</span></div>
+              <div><span class="text-slate-400">分值：</span><span class="text-slate-600">${d.score}分</span></div>
+            </div>
+            ${d.analysis ? `<div class="mt-3 text-sm text-slate-600 bg-indigo-50/50 border-l-2 border-indigo-400 pl-3 py-2 rounded-r-lg"><span class="text-indigo-600 font-medium">解析：</span>${escHtml(d.analysis)}</div>` : ''}
+          </div>`;
+        }).join('');
+      } catch (e) {
+        body.innerHTML = '<div class="py-12 text-center text-red-500">加载失败</div>';
+      }
+    }
+
+    function closeExamAttemptDetailModal() {
+      const modal = document.getElementById('examAttemptDetailModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentExamAttemptDetail = null;
+    }
+
+    function exportExamAttemptDetail() {
+      if (!currentExamAttemptDetail || !currentExamAttemptDetail.details || !currentExamAttemptDetail.details.length) {
+        toast('没有可导出的作答数据', 'warning');
+        return;
+      }
+      const attempt = currentExamAttemptDetail.attempt || {};
+      const user = currentExamAttemptDetail.user || {};
+      const exam = currentExamAttemptDetail.exam || {};
+      const headers = ['题号', '题型', '题目', '学员答案', '正确答案', '结果', '分值', '知识点'];
+      const rows = currentExamAttemptDetail.details.map(d => [
+        d.order, d.typeText, d.title, d.userAnswer || '未作答', d.correctAnswer,
+        d.userAnswer ? (d.isCorrect ? '正确' : '错误') : '未作答',
+        d.score, d.knowledge
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '作答详情');
+      XLSX.writeFile(wb, (user.userName || '学员') + '_' + (exam.title || '考试') + '_作答详情_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('作答详情导出成功');
+    }
+
+    // ========== 试卷管理 ==========
+    let editingPaperId = null;
+    let paperQuestions = []; // 当前试卷的题目列表
+    let paperQpAllQuestions = []; // 题目选择器中的题目列表
+    let paperQpSelectedIds = new Set();
+    let papersAllData = []; // 全部试卷数据缓存
+    let paperSelectedIds = new Set(); // 列表中选中的试卷ID
+
+    // 加载试卷列表
+    async function loadPapers() {
+      const tbody = document.getElementById('paperList');
+      tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-16 text-center text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+      
+      try {
+        // 从本地存储或API获取试卷数据
+        if (window.dataSync && window.dataSync.getData) {
+          papersAllData = window.dataSync.getData('papers') || [];
+        } else {
+          papersAllData = JSON.parse(localStorage.getItem('papers') || '[]');
+        }
+        
+        // 应用筛选
+        const filtered = applyPaperFilters();
+        renderPaperList(filtered);
+      } catch (e) {
+        console.error('加载试卷失败:', e);
+        tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-16 text-center text-red-500">加载失败，请重试</td></tr>';
+      }
+    }
+
+    // 渲染试卷列表
+    function renderPaperList(papers) {
+      const tbody = document.getElementById('paperList');
+      const countEl = document.getElementById('paperCount');
+      countEl.textContent = `共 ${papers.length} 份试卷`;
+      
+      if (!papers.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-16 text-center text-slate-400"><i class="fas fa-folder-open text-4xl mb-3 block opacity-30"></i><p>暂无试卷</p><p class="text-xs mt-1">点击右上角"新建试卷"开始创建</p></td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = papers.map(p => {
+        const qCount = (p.questions || []).length;
+        const isEnabled = p.status !== 'disabled' && p.status !== 'closed';
+        const deptName = p.department || (p.categoryName && !/^\d+$/.test(p.categoryName) ? p.categoryName : '未分配');
+        const paperType = p.type || 'fixed';
+        const typeText = paperType === 'fixed' ? '固定试卷' : '随机试卷';
+        const creator = p.creator || p.createdBy || '—';
+        const createdAt = p.createdAt ? formatDateTime(p.createdAt) : '—';
+        const updatedAt = p.updatedAt ? new Date(p.updatedAt).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-') : '—';
+        const checked = paperSelectedIds.has(p.id) ? 'checked' : '';
+        
+        return `
+          <tr class="hover:bg-indigo-50/30 transition" data-id="${p.id}">
+            <td class="pl-5 pr-3 py-4">
+              <input type="checkbox" ${checked} onchange="togglePaperSelect('${p.id}')" class="paper-row-check rounded border-slate-300 text-indigo-500 focus:ring-indigo-500 cursor-pointer">
+            </td>
+            <td class="px-3 py-4">
+              <a href="javascript:;" onclick="editPaper('${p.id}')" class="text-indigo-600 hover:text-indigo-700 font-medium line-clamp-1">${escHtml(p.name)}</a>
+            </td>
+            <td class="px-3 py-4">
+              <span class="px-2.5 py-1 text-xs rounded-md bg-slate-100 text-slate-600 whitespace-nowrap">${escHtml(deptName)}</span>
+            </td>
+            <td class="px-3 py-4 text-sm text-slate-600">${typeText}</td>
+            <td class="px-3 py-4 text-sm text-slate-700">${qCount}</td>
+            <td class="px-3 py-4 text-sm text-slate-600">${escHtml(creator)}</td>
+            <td class="px-3 py-4 text-sm text-slate-500 whitespace-nowrap">${updatedAt}</td>
+            <td class="px-3 py-4">
+              <span class="inline-flex items-center gap-1.5 text-sm">
+                <span class="w-1.5 h-1.5 rounded-full ${isEnabled ? 'bg-emerald-500' : 'bg-indigo-500'}"></span>
+                <span class="${isEnabled ? 'text-emerald-600' : 'text-indigo-500'}">${isEnabled ? '启用' : '停用'}</span>
+              </span>
+            </td>
+            <td class="pl-3 pr-5 py-4">
+              <div class="flex items-center gap-1">
+                <button onclick="editPaper('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 transition" title="编辑">
+                  <i class="fas fa-pen text-sm"></i>
+                </button>
+                <button onclick="togglePaperStatus('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition" title="停用/启用">
+                  <i class="fas fa-power-off text-sm"></i>
+                </button>
+                <button onclick="duplicatePaper('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 transition" title="复制试卷">
+                  <i class="fas fa-copy text-sm"></i>
+                </button>
+                <button onclick="deletePaper('${p.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition" title="删除">
+                  <i class="fas fa-trash-alt text-sm"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 应用筛选
+    function applyPaperFilters() {
+      const search = (document.getElementById('paperSearchInput')?.value || '').trim().toLowerCase();
+      const status = document.getElementById('paperFilterStatus')?.value || 'all';
+      const type = document.getElementById('paperFilterType')?.value || 'all';
+      
+      return papersAllData.filter(p => {
+        if (search && !(p.name || '').toLowerCase().includes(search)) return false;
+        if (status === 'enabled' && (p.status === 'disabled' || p.status === 'closed')) return false;
+        if (status === 'disabled' && p.status !== 'disabled' && p.status !== 'closed') return false;
+        if (type !== 'all' && (p.type || 'fixed') !== type) return false;
+        return true;
+      });
+    }
+
+    // 搜索输入
+    let paperSearchTimer = null;
+    function onPaperSearch() {
+      clearTimeout(paperSearchTimer);
+      paperSearchTimer = setTimeout(() => {
+        renderPaperList(applyPaperFilters());
+      }, 250);
+    }
+
+    // 筛选变更
+    function onPaperFilterChange() {
+      renderPaperList(applyPaperFilters());
+    }
+
+    // 重置筛选
+    function resetPaperFilters() {
+      document.getElementById('paperSearchInput').value = '';
+      document.getElementById('paperFilterStatus').value = 'all';
+      document.getElementById('paperFilterType').value = 'all';
+      renderPaperList(applyPaperFilters());
+    }
+
+    // 选中切换
+    function togglePaperSelect(id) {
+      if (paperSelectedIds.has(id)) paperSelectedIds.delete(id);
+      else paperSelectedIds.add(id);
+      updatePaperSelectAllState();
+    }
+
+    // 全选
+    function togglePaperSelectAll() {
+      const checked = document.getElementById('paperSelectAll').checked;
+      const visible = applyPaperFilters();
+      if (checked) {
+        visible.forEach(p => paperSelectedIds.add(p.id));
+      } else {
+        visible.forEach(p => paperSelectedIds.delete(p.id));
+      }
+      renderPaperList(visible);
+    }
+
+    function updatePaperSelectAllState() {
+      const visible = applyPaperFilters();
+      const allChecked = visible.length > 0 && visible.every(p => paperSelectedIds.has(p.id));
+      const el = document.getElementById('paperSelectAll');
+      if (el) el.checked = allChecked;
+    }
+
+    // 更多下拉菜单
+    function togglePaperMoreMenu(id, e) {
+      e?.stopPropagation();
+      // 关闭其他菜单
+      document.querySelectorAll('.paper-more-menu').forEach(m => m.remove());
+      
+      const row = document.querySelector(`tr[data-id="${id}"]`);
+      if (!row) return;
+      const moreCell = row.querySelector('td:last-child .relative');
+      
+      const menu = document.createElement('div');
+      menu.className = 'paper-more-menu';
+      menu.style.cssText = 'position:absolute;top:100%;right:0;margin-top:4px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.08);z-index:50;min-width:120px;padding:4px 0;';
+      menu.innerHTML = `
+        <a href="javascript:;" onclick="togglePaperStatus('${id}')" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">停用/启用</a>
+        <a href="javascript:;" onclick="duplicatePaper('${id}')" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">复制试卷</a>
+        <a href="javascript:;" onclick="deletePaper('${id}')" class="block px-4 py-2 text-sm text-red-500 hover:bg-red-50">删除</a>
+      `;
+      moreCell.style.position = 'relative';
+      moreCell.appendChild(menu);
+      
+      // 点击外部关闭
+      setTimeout(() => {
+        document.addEventListener('click', function close() {
+          menu.remove();
+          document.removeEventListener('click', close);
+        }, { once: true });
+      }, 0);
+    }
+
+    // 停用/启用
+    async function togglePaperStatus(id) {
+      const paper = papersAllData.find(p => p.id === id);
+      if (!paper) return;
+      const newStatus = paper.status === 'disabled' ? 'draft' : 'disabled';
+      paper.status = newStatus;
+      paper.updatedAt = new Date().toISOString();
+      try {
+        if (window.dataSync && window.dataSync.setData) {
+          window.dataSync.setData('papers', papersAllData);
+        } else {
+          localStorage.setItem('papers', JSON.stringify(papersAllData));
+        }
+        renderPaperList(applyPaperFilters());
+        toast(newStatus === 'disabled' ? '已停用' : '已启用');
+      } catch (e) {
+        toast('操作失败', 'error');
+      }
+    }
+
+    // 复制试卷
+    function duplicatePaper(id) {
+      const paper = papersAllData.find(p => p.id === id);
+      if (!paper) return;
+      const copy = JSON.parse(JSON.stringify(paper));
+      copy.id = 'paper_' + Date.now();
+      copy.name = paper.name + ' - 副本';
+      copy.status = 'draft';
+      copy.createdAt = new Date().toISOString();
+      copy.updatedAt = new Date().toISOString();
+      papersAllData.unshift(copy);
+      try {
+        if (window.dataSync && window.dataSync.setData) {
+          window.dataSync.setData('papers', papersAllData);
+        } else {
+          localStorage.setItem('papers', JSON.stringify(papersAllData));
+        }
+        renderPaperList(applyPaperFilters());
+        toast('已复制');
+      } catch (e) {
+        toast('复制失败', 'error');
+      }
+    }
+
+    // 格式化日期时间
+    function formatDateTime(d) {
+      const dt = new Date(d);
+      const pad = n => String(n).padStart(2, '0');
+      return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    }
+
+    // 打开试卷弹窗
+    function openPaperModal(id = null) {
+      editingPaperId = id;
+      paperQuestions = [];
+      // 重置从选择器进入编辑流程的状态，避免普通新建/编辑被错误路由回选择器
+      paperEditorReturnToPicker = false;
+      paperPickerReturnCallback = null;
+      
+      document.getElementById('paperId').value = id || '';
+      document.getElementById('paperModalTitle').textContent = id ? '编辑试卷' : '新建试卷';
+      document.getElementById('paperName').value = '';
+      document.getElementById('paperCategory').value = '';
+      document.getElementById('paperDesc').value = '';
+      // 重置出卷方式为固定试卷
+      const fixedRadio = document.querySelector('input[name="paperType"][value="fixed"]');
+      if (fixedRadio) fixedRadio.checked = true;
+      
+      // 加载分类下拉（与试题管理使用相同数据源）
+      fillCategorySelect('paperCategory');
+      
+      const modal = document.getElementById('paperModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      
+      if (id) loadPaperForEdit(id);
+    }
+
+    // 关闭试卷弹窗
+    function closePaperModal() {
+      const modal = document.getElementById('paperModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      editingPaperId = null;
+      paperQuestions = [];
+    }
+
+    // 试卷选择器相关
+    let paperPickerCallback = null;
+    let paperPickerSelectedId = null;
+    let paperPickerPage = 1;
+    let paperPickerKeyword = '';
+    const paperPickerPageSize = 10;
+    let paperEditorReturnToPicker = false;
+    let paperEditorCreatedPaperId = null;
+    let paperPickerReturnCallback = null;
+
+    function openPaperPickerModal(onConfirm, selectedPaperId = null) {
+      paperPickerCallback = onConfirm;
+      paperPickerSelectedId = selectedPaperId;
+      paperPickerPage = 1;
+      paperPickerKeyword = '';
+      const searchInput = document.getElementById('paper-picker-search');
+      if (searchInput) searchInput.value = '';
+      const modal = document.getElementById('paperPickerModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      renderPaperPickerList();
+    }
+
+    function closePaperPickerModal() {
+      const modal = document.getElementById('paperPickerModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      paperPickerCallback = null;
+      paperPickerSelectedId = null;
+    }
+
+    function getPaperPickerList() {
+      let papers = [];
+      if (window.dataSync && window.dataSync.getData) {
+        papers = window.dataSync.getData('papers') || [];
+      } else {
+        papers = JSON.parse(localStorage.getItem('papers') || '[]');
+      }
+      if (paperPickerKeyword.trim()) {
+        const kw = paperPickerKeyword.trim().toLowerCase();
+        papers = papers.filter(p => (p.name || '').toLowerCase().includes(kw));
+      }
+      // 按创建时间倒序
+      return papers.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }
+
+    function renderPaperPickerList() {
+      const list = getPaperPickerList();
+      const total = list.length;
+      const totalPages = Math.max(1, Math.ceil(total / paperPickerPageSize));
+      if (paperPickerPage > totalPages) paperPickerPage = totalPages;
+      const start = (paperPickerPage - 1) * paperPickerPageSize;
+      const pageList = list.slice(start, start + paperPickerPageSize);
+
+      const tbody = document.getElementById('paper-picker-list');
+      const empty = document.getElementById('paper-picker-empty');
+      if (total === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+        renderPaperPickerPagination(0, 0);
+        return;
+      }
+      empty.classList.add('hidden');
+      tbody.innerHTML = pageList.map(p => {
+        const checked = String(paperPickerSelectedId) === String(p.id) ? 'checked' : '';
+        const typeLabel = p.type === 'random' ? '随机试卷' : '固定试卷';
+        const createdAt = formatPaperDate(p.createdAt);
+        return `
+          <tr class="hover:bg-slate-50 cursor-pointer" onclick="selectPaperPickerRow('${p.id}')">
+            <td class="px-5 py-3">
+              <input type="radio" name="paper-picker-radio" value="${p.id}" ${checked} onclick="event.stopPropagation(); selectPaperPickerRow('${p.id}')"
+                class="w-4 h-4 text-indigo-500 focus:ring-indigo-500 border-slate-300">
+            </td>
+            <td class="px-5 py-3 font-medium text-indigo-600">${escHtml(p.name || '未命名试卷')}</td>
+            <td class="px-5 py-3 text-slate-600">${typeLabel}</td>
+            <td class="px-5 py-3 text-slate-500">${createdAt}</td>
+            <td class="px-5 py-3 text-slate-500">${escHtml(p.creator || p.createdBy || '-')}</td>
+          </tr>
+        `;
+      }).join('');
+      renderPaperPickerPagination(totalPages, total);
+    }
+
+    function renderPaperPickerPagination(totalPages, total) {
+      const el = document.getElementById('paper-picker-pagination');
+      if (totalPages <= 1) {
+        el.innerHTML = `<span class="text-xs text-slate-400">共 ${total} 条</span>`;
+        return;
+      }
+      let html = `<button onclick="changePaperPickerPage(${paperPickerPage - 1})" ${paperPickerPage <= 1 ? 'disabled' : ''} class="px-2 py-1 rounded border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white">&lt;</button>`;
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === paperPickerPage) {
+          html += `<span class="px-2 py-1 rounded bg-indigo-500 text-white text-xs">${i}</span>`;
+        } else {
+          html += `<button onclick="changePaperPickerPage(${i})" class="px-2 py-1 rounded border border-slate-200 hover:bg-white text-xs">${i}</button>`;
+        }
+      }
+      html += `<button onclick="changePaperPickerPage(${paperPickerPage + 1})" ${paperPickerPage >= totalPages ? 'disabled' : ''} class="px-2 py-1 rounded border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white">&gt;</button>`;
+      html += `<span class="text-xs text-slate-400 ml-2">共 ${total} 条</span>`;
+      el.innerHTML = html;
+    }
+
+    function changePaperPickerPage(page) {
+      const list = getPaperPickerList();
+      const totalPages = Math.max(1, Math.ceil(list.length / paperPickerPageSize));
+      if (page < 1 || page > totalPages) return;
+      paperPickerPage = page;
+      renderPaperPickerList();
+    }
+
+    function onPaperPickerSearch(input) {
+      paperPickerKeyword = input.value;
+      paperPickerPage = 1;
+      renderPaperPickerList();
+    }
+
+    function selectPaperPickerRow(paperId) {
+      paperPickerSelectedId = paperId;
+      renderPaperPickerList();
+    }
+
+    function confirmPaperPicker() {
+      if (!paperPickerSelectedId) {
+        toast('请选择一份试卷', 'warning');
+        return;
+      }
+      let papers = [];
+      if (window.dataSync && window.dataSync.getData) {
+        papers = window.dataSync.getData('papers') || [];
+      } else {
+        papers = JSON.parse(localStorage.getItem('papers') || '[]');
+      }
+      const paper = papers.find(p => String(p.id) === String(paperPickerSelectedId));
+      if (paper && paperPickerCallback) {
+        paperPickerCallback(paper);
+      }
+      closePaperPickerModal();
+    }
+
+    function createPaperFromPicker() {
+      // 关闭选择器，打开新建试卷弹窗；保存后进入行内试卷编辑器，完成后返回选择器
+      const returnCb = paperPickerCallback;
+      closePaperPickerModal();
+      openPaperModal();
+      // 在 openPaperModal 重置状态后再标记：从选择器进入编辑流程
+      paperPickerReturnCallback = returnCb;
+      paperEditorReturnToPicker = true;
+    }
+
+    function formatPaperDate(dateStr) {
+      if (!dateStr) return '-';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+    }
+
+    // 加载试卷数据用于编辑
+    async function loadPaperForEdit(id) {
+      try {
+        let paper = null;
+        if (window.dataSync && window.dataSync.getData) {
+          const papers = window.dataSync.getData('papers') || [];
+          paper = papers.find(p => p.id === id);
+        } else {
+          const papers = JSON.parse(localStorage.getItem('papers') || '[]');
+          paper = papers.find(p => p.id === id);
+        }
+        
+        if (!paper) {
+          toast('试卷不存在', 'error');
+          return;
+        }
+        
+        document.getElementById('paperName').value = paper.name || '';
+        document.getElementById('paperCategory').value = paper.category || '';
+        document.getElementById('paperDesc').value = paper.description || '';
+        // 回填出卷方式
+        const typeRadio = document.querySelector(`input[name="paperType"][value="${paper.type || 'fixed'}"]`);
+        if (typeRadio) typeRadio.checked = true;
+        // 弹窗已精简，duration/passScore 等字段在编辑页设置
+        const elDuration = document.getElementById('paperDuration');
+        if (elDuration) elDuration.value = paper.duration || 60;
+        const elPassScore = document.getElementById('paperPassScore');
+        if (elPassScore) elPassScore.value = paper.passScore || 60;
+        const elMaxAttempts = document.getElementById('paperMaxAttempts');
+        if (elMaxAttempts) elMaxAttempts.value = paper.maxAttempts || 0;
+        const elShuffle = document.getElementById('paperShuffle');
+        if (elShuffle) elShuffle.checked = !!paper.shuffle;
+        const elShowAnswer = document.getElementById('paperShowAnswer');
+        if (elShowAnswer) elShowAnswer.checked = paper.showAnswer !== false;
+        
+        // 加载题目
+        paperQuestions = (paper.questions || []).map((q, idx) => ({
+          questionId: q.questionId,
+          score: q.score || 5,
+          order: q.order !== undefined ? q.order : idx,
+          content: q.content || '(题目内容)',
+          type: q.type || 'single'
+        }));
+        
+        renderPaperQuestions();
+      } catch (e) {
+        console.error('加载试卷失败:', e);
+        toast('加载试卷失败', 'error');
+      }
+    }
+
+    // 渲染试卷题目列表（弹窗内，已弃用，改用编辑页）
+    function renderPaperQuestions() {
+      // 如果在统一编辑器模式下，同步更新编辑器
+      if (editorMode && document.getElementById('unifiedEditorContainer') && document.getElementById('unifiedEditorContainer').style.display !== 'none') {
+        renderUnifiedEditor();
+        return;
+      }
+      const container = document.getElementById('paperQuestionList');
+      const statsEl = document.getElementById('paperQuestionStats');
+      if (!container) return;
+      
+      const totalScore = paperQuestions.reduce((sum, q) => sum + (q.score || 0), 0);
+      statsEl.textContent = `共 ${paperQuestions.length} 题，总分 ${totalScore} 分`;
+      
+      if (!paperQuestions.length) {
+        container.innerHTML = '<p class="text-sm text-slate-400 text-center py-8">暂未添加题目，请点击上方按钮从题库选择</p>';
+        return;
+      }
+      
+      const typeNames = { single: '单选', multiple: '多选', judge: '判断', fill: '填空', essay: '问答' };
+      
+      container.innerHTML = paperQuestions.map((q, i) => `
+        <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 text-sm group hover:border-indigo-300 transition">
+          <div class="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold cursor-move" title="拖拽排序">
+            ${i + 1}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="line-clamp-1 font-medium text-slate-700">${escHtml(q.content)}</div>
+            <div class="text-xs text-slate-400 mt-0.5">${typeNames[q.type] || q.type}</div>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <span class="text-xs text-slate-400">分值</span>
+            <input type="number" value="${q.score}" min="1" max="100" onchange="updatePaperQuestionScore(${i}, this.value)"
+              class="w-14 px-2 py-1 border border-slate-200 rounded-lg text-center text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+            <button type="button" onclick="movePaperQuestion(${i}, -1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition" title="上移" ${i === 0 ? 'disabled' : ''}>
+              <i class="fas fa-chevron-up text-xs"></i>
+            </button>
+            <button type="button" onclick="movePaperQuestion(${i}, 1)" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition" title="下移" ${i === paperQuestions.length - 1 ? 'disabled' : ''}>
+              <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <button type="button" onclick="removePaperQuestion(${i})" class="w-7 h-7 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="删除">
+              <i class="fas fa-times text-xs"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 更新题目分值
+    function updatePaperQuestionScore(idx, val) {
+      if (paperQuestions[idx]) {
+        paperQuestions[idx].score = parseInt(val) || 1;
+        if (editorMode) {
+          renderUnifiedEditor();
+        } else {
+          renderPaperQuestions();
+        }
+      }
+    }
+
+    // 移动题目位置
+    function movePaperQuestion(idx, direction) {
+      const newIdx = idx + direction;
+      if (newIdx < 0 || newIdx >= paperQuestions.length) return;
+
+      const temp = paperQuestions[idx];
+      paperQuestions[idx] = paperQuestions[newIdx];
+      paperQuestions[newIdx] = temp;
+
+      // 更新order
+      paperQuestions.forEach((q, i) => q.order = i);
+      if (editorMode) {
+        renderUnifiedEditor();
+      } else {
+        renderPaperQuestions();
+      }
+    }
+
+    // 删除题目
+    function removePaperQuestion(idx) {
+      paperQuestions.splice(idx, 1);
+      paperQuestions.forEach((q, i) => q.order = i);
+      if (editorMode) {
+        renderUnifiedEditor();
+      } else {
+        renderPaperQuestions();
+      }
+    }
+
+    // 应用统一分数
+    function applyUniformScore() {
+      const score = parseInt(document.getElementById('paperUniformScore').value) || 5;
+      paperQuestions.forEach(q => q.score = score);
+      renderPaperQuestions();
+      toast(`已将所有题目分值设为 ${score} 分`);
+    }
+
+    // 保存试卷
+    async function savePaper(e) {
+      if (e) e.preventDefault();
+      
+      const name = document.getElementById('paperName').value.trim();
+      if (!name) {
+        toast('请输入试卷名称', 'error');
+        return;
+      }
+      if (name.length > 50) {
+        toast('试卷名称不能超过 50 字', 'error');
+        return;
+      }
+      
+      const category = document.getElementById('paperCategory').value;
+      if (!category) {
+        toast('请选择试卷分类', 'error');
+        return;
+      }
+      
+      // 准备 payload。新建时只存基本信息，默认值后续在编辑页修改
+      const isNew = !editingPaperId;
+      const payload = {
+        id: editingPaperId || 'paper_' + Date.now(),
+        name: name,
+        category: category,
+        categoryId: category,
+        categoryName: (data.categories || []).find(c => String(c.id) === String(category))?.name || '',
+        description: document.getElementById('paperDesc').value.trim(),
+        // 保留旧字段（编辑模式）默认值
+        duration: 60,
+        passScore: 60,
+        maxAttempts: 0,
+        shuffle: false,
+        showAnswer: true,
+        uniformScore: 5,
+        // 保留旧题目数据（编辑模式）
+        questions: isNew ? [] : (paperQuestions || []).map((q, i) => ({
+          questionId: q.questionId || q.id,
+          score: q.score || 0,
+          order: i,
+          content: q.content,
+          type: q.type,
+          options: q.options || [],
+          answer: q.answer || '',
+          explanation: q.explanation || ''
+        })),
+        status: 'draft',
+        type: document.querySelector('input[name="paperType"]:checked')?.value || 'fixed',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        creator: '当前用户',
+        createdBy: '当前用户'
+      };
+      
+      try {
+        let papers = [];
+        if (window.dataSync && window.dataSync.getData) {
+          papers = window.dataSync.getData('papers') || [];
+        } else {
+          papers = JSON.parse(localStorage.getItem('papers') || '[]');
+        }
+        
+        const idx = papers.findIndex(p => p.id === payload.id);
+        if (idx >= 0) {
+          // 保留原 createdAt
+          payload.createdAt = papers[idx].createdAt || payload.createdAt;
+          papers[idx] = { ...papers[idx], ...payload };
+        } else {
+          papers.push(payload);
+        }
+        
+        if (window.dataSync && window.dataSync.setData) {
+          window.dataSync.setData('papers', papers);
+        } else {
+          localStorage.setItem('papers', JSON.stringify(papers));
+        }
+        papersAllData = papers;
+        
+        const savedId = payload.id;
+        closePaperModal();
+        loadPapers();
+        toast(isNew ? '试卷创建成功，正在进入编辑页面...' : '试卷已更新');
+        
+        // 新建后跳转到编辑页面
+        if (isNew) {
+          setTimeout(function() {
+            try {
+              console.log('[savePaper] 准备打开编辑器, savedId:', savedId);
+              console.log('[savePaper] papersAllData 长度:', papersAllData.length);
+              console.log('[savePaper] 能否找到试卷:', papersAllData.some(function(p) { return p.id === savedId; }));
+              if (paperEditorReturnToPicker) {
+                openInlinePaperEditor(savedId);
+              } else {
+                openPaperEditor(savedId);
+              }
+              console.log('[savePaper] openPaperEditor 执行完毕');
+            } catch (err) {
+              console.error('[savePaper] 打开编辑器失败:', err);
+              toast('打开编辑器失败: ' + err.message, 'error');
+            }
+          }, 400);
+        }
+      } catch (err) {
+        toast('保存失败: ' + err.message, 'error');
+      }
+    }
+
+    // 打开试卷编辑页面（内联全屏编辑）
+    async function openPaperEditor(id) {
+      console.log('[openPaperEditor] 开始, id:', id);
+      editorMode = 'paper';
+      var paper = papersAllData.find(function(p) { return p.id === id; });
+      if (!paper) {
+        console.error('[openPaperEditor] 试卷不存在! id:', id, 'papersAllData:', papersAllData.map(function(p){return p.id;}));
+        toast('试卷不存在', 'error');
+        editorMode = null;
+        return;
+      }
+      editingPaperId = id;
+      console.log('[openPaperEditor] 找到试卷:', paper.name, '题目数:', (paper.questions||[]).length);
+
+      // 先用本地数据构建 paperQuestions
+      paperQuestions = (paper.questions || []).map(function(pq, idx) {
+        return {
+          questionId: pq.questionId,
+          score: pq.score || 0,
+          partialScore: pq.partialScore || 0,
+          order: idx,
+          content: pq.content || '(题目内容)',
+          type: pq.type || 'single',
+          options: pq.options || [],
+          answer: pq.answer || '',
+          explanation: pq.explanation || ''
+        };
+      });
+
+      // 隐藏试卷列表，显示编辑器
+      var listView = document.getElementById('paperListView');
+      console.log('[openPaperEditor] paperListView:', !!listView);
+      if (listView) listView.classList.add('hidden');
+      var container = document.getElementById('unifiedEditorContainer');
+      console.log('[openPaperEditor] 已有container:', !!container);
+      // 确保 container 在正确的 tab 中
+      if (container && container.parentElement && container.parentElement.id !== 'tab-paper-mgmt') {
+        console.log('[openPaperEditor] container 在错误的 tab 中, 当前父:', container.parentElement.id, '→ 移动到 paper-mgmt');
+        container.parentElement.removeChild(container);
+        container = null;
+      }
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'unifiedEditorContainer';
+        document.getElementById('tab-paper-mgmt').appendChild(container);
+        console.log('[openPaperEditor] 创建了新container');
+      }
+      container.style.display = 'block';
+      container.classList.remove('hidden');
+      renderUnifiedEditor();
+      console.log('[openPaperEditor] renderUnifiedEditor 完成, container.innerHTML长度:', container.innerHTML.length);
+
+      // 异步加载题库数据来补充题目详情
+      enrichQuestionDetails();
+    }
+
+    // 从试卷选择器内打开行内试卷编辑器
+    async function openInlinePaperEditor(id) {
+      console.log('[openInlinePaperEditor] 开始, id:', id);
+      editorMode = 'paper';
+      paperEditorCreatedPaperId = id;
+      var paper = papersAllData.find(function(p) { return p.id === id; });
+      if (!paper) {
+        console.error('[openInlinePaperEditor] 试卷不存在! id:', id);
+        toast('试卷不存在', 'error');
+        editorMode = null;
+        return;
+      }
+      editingPaperId = id;
+
+      // 构建 paperQuestions
+      paperQuestions = (paper.questions || []).map(function(pq, idx) {
+        return {
+          questionId: pq.questionId,
+          score: pq.score || 0,
+          partialScore: pq.partialScore || 0,
+          order: idx,
+          content: pq.content || '(题目内容)',
+          type: pq.type || 'single',
+          options: pq.options || [],
+          answer: pq.answer || '',
+          explanation: pq.explanation || ''
+        };
+      });
+
+      // 显示行内编辑器弹窗
+      const inlineModal = document.getElementById('inlinePaperEditorModal');
+      inlineModal.classList.remove('hidden');
+      inlineModal.classList.add('flex');
+
+      // 将统一编辑器容器移入行内弹窗
+      var container = document.getElementById('unifiedEditorContainer');
+      if (container) {
+        container.parentElement.removeChild(container);
+      } else {
+        container = document.createElement('div');
+        container.id = 'unifiedEditorContainer';
+      }
+      document.getElementById('inline-paper-editor-body').appendChild(container);
+      container.style.display = 'block';
+      container.classList.remove('hidden');
+
+      renderUnifiedEditor();
+      enrichQuestionDetails();
+    }
+
+    // [已统一到 renderUnifiedEditor] createPaperEditorView 和 renderPaperEditorQuestions 已合并到统一编辑器
+
+    // 应用统一分数（编辑页）
+    function applyUniformScoreEditor() {
+      const el = document.getElementById('peUniformScore');
+      const score = el ? (parseInt(el.value) || 5) : 5;
+      paperQuestions.forEach(q => q.score = score);
+      renderUnifiedEditor();
+      toast(`已将所有题目分值设为 ${score} 分`);
+    }
+
+    // 保存试卷编辑设置
+    // 打开试卷信息抽屉
+    function openPaperInfoDrawer() {
+      const overlay = document.getElementById('paperInfoDrawerOverlay');
+      const drawer = document.getElementById('paperInfoDrawer');
+      if (overlay) overlay.classList.remove('hidden');
+      if (drawer) drawer.classList.remove('translate-x-full');
+    }
+
+    // 关闭试卷信息抽屉
+    function closePaperInfoDrawer() {
+      const overlay = document.getElementById('paperInfoDrawerOverlay');
+      const drawer = document.getElementById('paperInfoDrawer');
+      if (overlay) overlay.classList.add('hidden');
+      if (drawer) drawer.classList.add('translate-x-full');
+    }
+
+    // 从抽屉保存试卷信息
+    async function savePaperInfoFromDrawer() {
+      const paper = papersAllData.find(p => p.id === editingPaperId);
+      if (!paper) { toast('试卷不存在', 'error'); return; }
+      const name = document.getElementById('peName').value.trim();
+      if (!name) { toast('请输入试卷名称', 'error'); return; }
+      paper.name = name;
+      const catSelect = document.getElementById('peCategoryInput');
+      const catId = catSelect ? catSelect.value : '';
+      paper.category = catId;
+      paper.categoryId = catId;
+      paper.categoryName = catSelect && catSelect.selectedIndex > 0 ? catSelect.options[catSelect.selectedIndex].text : '';
+      paper.type = document.getElementById('peType').value;
+      paper.description = document.getElementById('peDescInput').value.trim();
+      paper.updatedAt = new Date().toISOString();
+      // 同步更新标题显示
+      var peTitle = document.getElementById('peTitle');
+      var peCategory = document.getElementById('peCategory');
+      if (peTitle) peTitle.textContent = paper.name;
+      if (peCategory) peCategory.textContent = paper.categoryName || '未分类';
+      // 如果在统一编辑器中，重新渲染以更新顶栏标题
+      if (editorMode === 'paper') renderUnifiedEditor();
+      try {
+        if (window.dataSync && window.dataSync.setData) {
+          window.dataSync.setData('papers', papersAllData);
+        } else {
+          localStorage.setItem('papers', JSON.stringify(papersAllData));
+        }
+        toast('试卷信息已保存');
+        closePaperInfoDrawer();
+      } catch(e) { toast('保存失败', 'error'); }
+    }
+
+    async function savePaperEditorSettings() {
+      const paper = papersAllData.find(p => p.id === editingPaperId);
+      if (!paper) { toast('试卷不存在', 'error'); return; }
+      paper.questions = paperQuestions.map((q, i) => ({
+        questionId: q.questionId,
+        score: q.score || 5,
+        partialScore: q.partialScore || 0,
+        order: i
+      }));
+      paper.totalScore = paperQuestions.reduce((s, q) => s + (q.score || 0), 0);
+      paper.updatedAt = new Date().toISOString();
+      try {
+        if (window.dataSync && window.dataSync.setData) {
+          window.dataSync.setData('papers', papersAllData);
+        } else {
+          localStorage.setItem('papers', JSON.stringify(papersAllData));
+        }
+        toast('设置已保存');
+        renderPaperList(applyPaperFilters());
+      } catch(e) { toast('保存失败', 'error'); }
+    }
+
+    // 发布试卷
+    async function publishPaper(id) {
+      const paperId = id || editingPaperId;
+      console.log('[publishPaper] paperId:', paperId, 'editingPaperId:', editingPaperId);
+      const paper = papersAllData.find(p => p.id === paperId);
+      if (!paper) {
+        console.error('[publishPaper] 找不到试卷, paperId:', paperId, 'papersAllData:', papersAllData);
+        toast('试卷数据异常，请刷新后重试', 'error');
+        return;
+      }
+      console.log('[publishPaper] paper:', paper.name, 'paperQuestions:', paperQuestions.length);
+      if ((paper.questions || []).length === 0 && paperQuestions.length === 0) {
+        toast('请先添加题目再发布', 'error');
+        return;
+      }
+      // 先保存题目
+      paper.questions = paperQuestions.map((q, i) => ({
+        questionId: q.questionId,
+        score: q.score || 5,
+        partialScore: q.partialScore || 0,
+        order: i
+      }));
+      paper.status = 'published';
+      paper.totalScore = paperQuestions.reduce((s, q) => s + (q.score || 0), 0);
+      paper.updatedAt = new Date().toISOString();
+      console.log('[publishPaper] 准备保存, questions:', paper.questions.length, 'totalScore:', paper.totalScore);
+      try {
+        if (window.dataSync && window.dataSync.setData) {
+          window.dataSync.setData('papers', papersAllData);
+        } else {
+          localStorage.setItem('papers', JSON.stringify(papersAllData));
+        }
+        console.log('[publishPaper] 保存成功');
+        toast('试卷已发布');
+        closePaperEditor();
+        loadPapers();
+      } catch(e) {
+        console.error('[publishPaper] 保存失败:', e);
+        toast('发布失败', 'error');
+      }
+    }
+
+    // [closePaperEditor / 题目操作函数已统一到上方]
+
+    // 保存草稿（可选操作，保留兼容）
+    function savePaperDraft() {
+      // 新版弹窗只有一个提交按钮，调用 savePaper 即可
+      savePaper({ preventDefault: () => {} });
+    }
+
+    // 编辑试卷
+    async function editPaper(id) {
+      openPaperEditor(id);
+    }
+
+    // 删除试卷
+    async function deletePaper(id) {
+      if (!confirm('确定要删除这份试卷吗？此操作不可恢复。')) return;
+      
+      try {
+        let papers = [];
+        if (window.dataSync && window.dataSync.getData) {
+          papers = window.dataSync.getData('papers') || [];
+        } else {
+          papers = JSON.parse(localStorage.getItem('papers') || '[]');
+        }
+        
+        papers = papers.filter(p => p.id !== id);
+        
+        if (window.dataSync && window.dataSync.setData) {
+          window.dataSync.setData('papers', papers);
+        } else {
+          localStorage.setItem('papers', JSON.stringify(papers));
+        }
+        
+        loadPapers();
+        toast('试卷已删除');
+      } catch (e) {
+        toast('删除失败', 'error');
+      }
+    }
+
+    // ========== 试卷题目选择器 ==========
+    function openPaperQuestionPicker() {
+      document.getElementById('paperQpSearch').value = '';
+      document.getElementById('paperQpTypeFilter').value = 'all';
+      document.getElementById('paperQpDiffFilter').value = '';
+      document.getElementById('paperQpBankFilter').value = '';
+      paperQpSelectedIds.clear();
+      
+      const modal = document.getElementById('paperQuestionPickerModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      // 加载题库列表到下拉框
+      loadBankFilterOptions();
+      loadPaperQuestionPool();
+    }
+
+    async function loadBankFilterOptions() {
+      const sel = document.getElementById('paperQpBankFilter');
+      try {
+        const res = await fetch('/api/question-banks');
+        const result = await res.json();
+        const banks = result.data || [];
+        sel.innerHTML = '<option value="">全部题库</option>' + 
+          banks.map(b => `<option value="${b.id}">${escHtml(b.name)}${b.questionCount ? ' (' + b.questionCount + '题)' : ''}</option>`).join('');
+      } catch (e) {
+        console.warn('加载题库列表失败:', e);
+      }
+    }
+
+    function closePaperQuestionPicker() {
+      const modal = document.getElementById('paperQuestionPickerModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      paperQpSelectedIds.clear();
+    }
+
+    async function loadPaperQuestionPool() {
+      const tbody = document.getElementById('paperQuestionPoolBody');
+      tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-slate-400">加载中...</td></tr>';
+      
+      const bankFilter = document.getElementById('paperQpBankFilter').value;
+      const typeFilter = document.getElementById('paperQpTypeFilter').value;
+      const diffFilter = document.getElementById('paperQpDiffFilter').value;
+      const search = document.getElementById('paperQpSearch').value.trim().toLowerCase();
+      
+      try {
+        // 构建API查询参数
+        const params = new URLSearchParams({ pageSize: '9999' });
+        if (bankFilter) params.set('bankId', bankFilter);
+        if (typeFilter !== 'all') params.set('type', typeFilter);
+        if (diffFilter) params.set('difficulty', diffFilter);
+        if (search) params.set('keyword', search);
+
+        const res = await fetch('/api/questions?' + params);
+        const result = await res.json();
+        let questions = result.data || [];
+        
+        // 过滤已添加的题目
+        const existingIds = new Set(paperQuestions.map(q => Number(q.questionId)));
+        
+        paperQpAllQuestions = questions.filter(q => {
+          if (existingIds.has(q.id)) return false;
+          return true;
+        });
+        
+        if (!paperQpAllQuestions.length) {
+          tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-slate-400">暂无符合条件的题目</td></tr>';
+          return;
+        }
+        
+        const typeNames = { single: '单选', multiple: '多选', judge: '判断', fill: '填空', essay: '问答' };
+        
+        tbody.innerHTML = paperQpAllQuestions.map(q => `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3">
+              <input type="checkbox" value="${q.id}" onchange="togglePaperQpSelection('${q.id}')" 
+                ${paperQpSelectedIds.has(q.id) ? 'checked' : ''} class="rounded border-slate-300 text-indigo-500 focus:ring-indigo-500">
+            </td>
+            <td class="py-3">
+              <div class="text-sm text-slate-700 line-clamp-2">${escHtml(q.title || q.content || '(无标题)')}</div>
+            </td>
+            <td class="py-3 text-center">
+              <span class="px-2 py-0.5 text-xs rounded bg-slate-100 text-slate-600">${typeNames[q.type] || q.type}</span>
+            </td>
+            <td class="py-3 text-center">
+              <span class="text-xs ${q.difficulty === 'easy' ? 'text-green-500' : q.difficulty === 'hard' ? 'text-red-500' : 'text-amber-500'}">
+                ${q.difficulty === 'easy' ? '简单' : q.difficulty === 'hard' ? '困难' : '中等'}
+              </span>
+            </td>
+          </tr>
+        `).join('');
+        
+        updatePaperQpCheckedCount();
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-red-500">加载失败</td></tr>';
+      }
+    }
+
+    function togglePaperQpSelection(id) {
+      const numId = Number(id);
+      if (paperQpSelectedIds.has(numId)) {
+        paperQpSelectedIds.delete(numId);
+      } else {
+        paperQpSelectedIds.add(numId);
+      }
+      updatePaperQpCheckedCount();
+    }
+
+    function togglePaperQpSelectAll() {
+      const checked = document.getElementById('paperQpSelectAll').checked;
+      if (checked) {
+        paperQpAllQuestions.forEach(q => paperQpSelectedIds.add(q.id));
+      } else {
+        paperQpSelectedIds.clear();
+      }
+      loadPaperQuestionPool();
+    }
+
+    function updatePaperQpCheckedCount() {
+      document.getElementById('paperQpCheckedCount').textContent = paperQpSelectedIds.size;
+    }
+
+    function confirmPaperQuestionPick() {
+      if (!paperQpSelectedIds.size) {
+        toast('请至少选择一道题目', 'error');
+        return;
+      }
+      
+      const uniformScoreEl = document.getElementById('peUniformScore');
+      const defaultScore = uniformScoreEl ? (parseInt(uniformScoreEl.value) || 0) : 0;
+      
+      paperQpAllQuestions.forEach(q => {
+        if (paperQpSelectedIds.has(q.id)) {
+          paperQuestions.push({
+            questionId: q.id,
+            score: defaultScore,
+            order: paperQuestions.length,
+            content: q.title || q.content || '(无标题)',
+            type: q.type,
+            options: q.options || [],
+            answer: q.answer || '',
+            explanation: q.explanation || ''
+          });
+        }
+      });
+      
+      // paperQuestions 是两种模式的唯一数据源，直接重新渲染
+      if (editorMode) {
+        renderUnifiedEditor();
+      } else {
+        renderPaperQuestions();
+      }
+      closePaperQuestionPicker();
+      toast(`已添加 ${paperQpSelectedIds.size} 道题目`);
+    }
+
+    // ========== 分数设置弹窗 ==========
+    let ssCurrentTab = 'type';
+    let ssTypeScores = {}; // { single: 5, multiple: 10, ... }
+
+    function openScoreSettingsModal() {
+      if (!paperQuestions.length) {
+        toast('请先添加题目再设置分数', 'error');
+        return;
+      }
+      ssCurrentTab = 'type';
+      switchScoreSettingsTab('type');
+      const modal = document.getElementById('scoreSettingsModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeScoreSettingsModal() {
+      const modal = document.getElementById('scoreSettingsModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function switchScoreSettingsTab(tab) {
+      ssCurrentTab = tab;
+      const typeTab = document.getElementById('ssTabType');
+      const qTab = document.getElementById('ssTabQuestion');
+      const typePanel = document.getElementById('ssTypePanel');
+      const qPanel = document.getElementById('ssQuestionPanel');
+
+      if (tab === 'type') {
+        typeTab.className = 'px-4 py-3 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600 transition';
+        qTab.className = 'px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition';
+        typePanel.classList.remove('hidden');
+        qPanel.classList.add('hidden');
+        renderScoreSettingsByType();
+      } else {
+        qTab.className = 'px-4 py-3 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600 transition';
+        typeTab.className = 'px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition';
+        qPanel.classList.remove('hidden');
+        typePanel.classList.add('hidden');
+        renderScoreSettingsByQuestion();
+      }
+      updateSsTotalScore();
+    }
+
+    function renderScoreSettingsByType() {
+      const typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
+      const typeCounts = {};
+      paperQuestions.forEach(q => {
+        typeCounts[q.type] = (typeCounts[q.type] || 0) + 1;
+      });
+
+      // 读取当前各题型的分值（从已有题目中取第一个该类型的分值）
+      const currentScores = {};
+      paperQuestions.forEach(q => {
+        if (!(q.type in currentScores)) currentScores[q.type] = q.score || 0;
+      });
+      ssTypeScores = { ...currentScores };
+
+      // 读取多选题漏选得分
+      const multipleQ = paperQuestions.find(q => q.type === 'multiple');
+      const multiplePartial = multipleQ ? (multipleQ.partialScore || 0) : 0;
+
+      const container = document.getElementById('ssTypeList');
+      container.innerHTML = Object.keys(typeNames).map(type => {
+        const count = typeCounts[type] || 0;
+        const score = ssTypeScores[type] || 0;
+        const total = (count * score).toFixed(1);
+        
+        let extraField = '';
+        if (type === 'multiple') {
+          extraField = `
+            <span class="text-sm text-slate-500 ml-4 whitespace-nowrap">漏选得分</span>
+            <input type="number" id="ssPartialScore_multiple" value="${multiplePartial}" min="0" max="100" step="0.5"
+              class="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none flex-shrink-0"
+              placeholder="请输入">
+          `;
+        }
+
+        return `
+          <div class="flex items-center gap-3 py-4 border-b border-slate-100 flex-nowrap">
+            <div class="w-24 text-sm font-semibold text-slate-700 whitespace-nowrap">[${typeNames[type]}]</div>
+            <div class="flex items-center gap-1 text-sm text-slate-600 whitespace-nowrap">
+              <span class="font-medium">${count}</span>
+              <span>题 ×</span>
+            </div>
+            <span class="text-sm text-slate-500 ml-2 whitespace-nowrap">每题分值：</span>
+            <input type="number" value="${count > 0 ? score : ''}" min="0" max="100" step="0.5"
+              onchange="onSsTypeScoreChange('${type}', this.value)"
+              class="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none flex-shrink-0"
+              placeholder="请输入" ${count === 0 ? 'disabled' : ''}>
+            <span class="text-sm text-slate-400 whitespace-nowrap">分/题</span>
+            ${extraField && type === 'multiple' ? extraField : ''}
+            <span class="text-sm text-slate-500 ml-auto whitespace-nowrap flex items-center gap-1">共<strong class="text-slate-700 font-semibold" id="ssTypeTotal_${type}">${total}</strong>分</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function onSsTypeScoreChange(type, value) {
+      ssTypeScores[type] = parseFloat(value) || 0;
+      const typeCounts = {};
+      paperQuestions.forEach(q => { typeCounts[q.type] = (typeCounts[q.type] || 0) + 1; });
+      const count = typeCounts[type] || 0;
+      const total = (count * ssTypeScores[type]).toFixed(1);
+      const el = document.getElementById('ssTypeTotal_' + type);
+      if (el) el.textContent = total;
+      updateSsTotalScore();
+    }
+
+    function renderScoreSettingsByQuestion() {
+      const typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
+      const tbody = document.getElementById('ssQuestionList');
+      const emptyEl = document.getElementById('ssQuestionEmpty');
+
+      if (!paperQuestions.length) {
+        tbody.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+
+      tbody.innerHTML = paperQuestions.map((q, i) => {
+        const partialScore = q.partialScore || 0;
+        const isMultiple = q.type === 'multiple';
+        return `
+        <tr class="hover:bg-slate-50">
+          <td class="py-3 pr-4">
+            <div class="text-sm text-slate-700 line-clamp-1">${escHtml(q.content || '(无标题)')}</div>
+          </td>
+          <td class="py-3 text-center">
+            <span class="text-xs text-slate-500">${typeNames[q.type] || q.type}</span>
+          </td>
+          <td class="py-3 text-center text-sm text-slate-600">${q.score || '-'}</td>
+          <td class="py-3 text-center">
+            <input type="number" value="${q.score || ''}" min="0" max="100" step="0.5"
+              data-idx="${i}" onchange="onSsQuestionScoreChange(${i}, this.value)"
+              class="w-20 px-2 py-1 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="请输入">
+          </td>
+          <td class="py-3 text-center">
+            ${isMultiple ? `
+              <input type="number" value="${partialScore}" min="0" max="100" step="0.5"
+                data-idx="${i}" onchange="onSsPartialScoreChange(${i}, this.value)"
+                class="w-20 px-2 py-1 border border-slate-200 rounded-lg text-center text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            ` : '<span class="text-slate-400">/</span>'}
+          </td>
+        </tr>
+      `}).join('');
+    }
+
+    function onSsQuestionScoreChange(idx, value) {
+      if (paperQuestions[idx]) {
+        paperQuestions[idx].score = parseFloat(value) || 0;
+      }
+      updateSsTotalScore();
+    }
+
+    function onSsPartialScoreChange(idx, value) {
+      if (paperQuestions[idx]) {
+        paperQuestions[idx].partialScore = parseFloat(value) || 0;
+      }
+    }
+
+    function updateSsTotalScore() {
+      let total = 0;
+      if (ssCurrentTab === 'type') {
+        const typeCounts = {};
+        paperQuestions.forEach(q => { typeCounts[q.type] = (typeCounts[q.type] || 0) + 1; });
+        Object.keys(typeCounts).forEach(type => {
+          total += typeCounts[type] * (ssTypeScores[type] || 0);
+        });
+      } else {
+        total = paperQuestions.reduce((sum, q) => sum + (q.score || 0), 0);
+      }
+      document.getElementById('ssTotalScore').textContent = total.toFixed(1);
+    }
+
+    function applyScoreSettings() {
+      if (ssCurrentTab === 'type') {
+        // 按题型批量设置
+        paperQuestions.forEach(q => {
+          if (ssTypeScores[q.type] !== undefined) {
+            q.score = ssTypeScores[q.type];
+          }
+        });
+        // 保存多选题漏选得分
+        const partialInput = document.getElementById('ssPartialScore_multiple');
+        if (partialInput) {
+          const partialVal = parseFloat(partialInput.value) || 0;
+          paperQuestions.forEach(q => {
+            if (q.type === 'multiple') q.partialScore = partialVal;
+          });
+        }
+      }
+      // 按试题设分已在 onchange 中实时更新
+      // paperQuestions 是两种模式的唯一数据源
+      if (editorMode) {
+        renderUnifiedEditor();
+      } else {
+        renderPaperQuestions();
+      }
+      closeScoreSettingsModal();
+      toast('分数设置已应用');
+    }
+
+    // ========== 题目选择器 ==========
+    let qpAllQuestions = [];
+
+    function openQuestionPicker() {
+      document.getElementById('qpSearch').value = '';
+      document.getElementById('qpTypeFilter').value = 'all';
+      document.getElementById('qpDiffFilter').value = '';
+      const modal = document.getElementById('questionPickerModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      loadQuestionPool();
+    }
+
+    function closeQuestionPicker() {
+      const modal = document.getElementById('questionPickerModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function loadQuestionPool() {
+      const tbody = document.getElementById('questionPoolBody');
+      tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">加载中...</td></tr>';
+      try {
+        const params = new URLSearchParams({ pageSize: 200 });
+        const typeFilter = document.getElementById('qpTypeFilter').value;
+        const diffFilter = document.getElementById('qpDiffFilter').value;
+        const search = document.getElementById('qpSearch').value.trim();
+        if (typeFilter && typeFilter !== 'all') params.set('type', typeFilter);
+        if (diffFilter && diffFilter !== 'all') params.set('difficulty', diffFilter);
+        if (search) params.set('keyword', search);
+
+        const res = await fetch('/api/questions?' + params);
+        const result = await res.json();
+        const questions = result.data || [];
+        qpAllQuestions = questions;
+        updateQpCheckState();
+        if (!questions.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">没有符合条件的题目</td></tr>';
+          return;
+        }
+        const typeName = t => ({ single:'单选题', multiple:'多选题', judge:'判断题', fill:'填空题', essay:'问答题' })[t] || t;
+        const diffName = d => ({ easy:'简单', medium:'中等', hard:'困难' })[d] || d;
+        tbody.innerHTML = questions.map((q, i) => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2"><input type="checkbox" class="qp-cb" data-idx="${i}" onchange="updateQpCheckedCount()" ${isQpSelected(q.id) ? 'checked disabled' : ''}></td>
+            <td class="py-2 pr-4"><span class="line-clamp-2">${escHtml(q.title || q.content || '')}</span></td>
+            <td class="py-2"><span class="px-1.5 py-0.5 bg-slate-100 rounded text-xs">${typeName(q.type)}</span></td>
+            <td class="py-2"><span class="px-1.5 py-0.5 rounded text-xs ${q.difficulty==='hard'?'bg-red-100 text-red-600':q.difficulty==='easy'?'bg-green-100 text-green-600':'bg-yellow-100 text-yellow-700'}">${diffName(q.difficulty)}</span></td>
+            <td class="py-2"><input type="number" value="${getQpScore(q.id)}" min="1" max="100" class="w-12 px-1 border border-slate-200 rounded text-center text-xs qp-score" data-qid="${q.id}" ${!isQpSelected(q.id)?'disabled':''}></td>
+          </tr>`).join('');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-red-500">加载失败</td></tr>';
+      }
+    }
+
+    function isQpSelected(questionId) {
+      return selectedExamQuestions.some(sq => sq.questionId === questionId);
+    }
+
+    function getQpScore(questionId) {
+      const found = selectedExamQuestions.find(sq => sq.questionId === questionId);
+      return found ? found.score : 1;
+    }
+
+    function toggleQpSelectAll() {
+      const checked = document.getElementById('qpSelectAll').checked;
+      document.querySelectorAll('.qp-cb:not(:disabled)').forEach(cb => { cb.checked = checked; });
+      updateQpCheckedCount();
+    }
+
+    function updateQpCheckState() {
+      const cbs = Array.from(document.querySelectorAll('.qp-cb:not(:disabled)'));
+      const allChecked = cbs.length > 0 && cbs.every(cb => cb.checked);
+      document.getElementById('qpSelectAll').checked = allChecked;
+      document.getElementById('qpSelectAll').indeterminate = !allChecked && cbs.some(cb => cb.checked);
+      updateQpCheckedCount();
+    }
+
+    function updateQpCheckedCount() {
+      const count = Array.from(document.querySelectorAll('.qp-cb:checked')).length;
+      document.getElementById('qpCheckedCount').textContent = count;
+    }
+
+    function confirmQuestionPick() {
+      const checkedCbs = document.querySelectorAll('.qp-cb:checked');
+      if (!checkedCbs.length) { toast('请先勾选要添加的题目', 'warning'); return; }
+      const isPaperEditor = editorMode === 'paper' || (document.getElementById('unifiedEditorContainer') && document.getElementById('unifiedEditorContainer').style.display !== 'none');
+      checkedCbs.forEach(cb => {
+        const idx = parseInt(cb.dataset.idx);
+        const q = qpAllQuestions[idx];
+        if (q) {
+          const scoreInput = document.querySelector(`.qp-score[data-qid="${q.id}"]`);
+          const score = scoreInput ? parseInt(scoreInput.value) || 5 : 5;
+          const qObj = {
+            questionId: q.id,
+            score: score,
+            partialScore: q.type === 'multiple' ? 0 : undefined,
+            content: q.title || q.content,
+            type: q.type || 'single'
+          };
+          if (isPaperEditor) {
+            if (!paperQuestions.some(pq => pq.questionId === q.id)) {
+              qObj.order = paperQuestions.length;
+              paperQuestions.push(qObj);
+            }
+          } else {
+            if (!selectedExamQuestions.some(eq => eq.questionId === q.id)) {
+              qObj.order = selectedExamQuestions.length;
+              selectedExamQuestions.push(qObj);
+            }
+          }
+        }
+      });
+      if (isPaperEditor) {
+        if (editorMode) { renderUnifiedEditor(); } else { renderPaperQuestions(); }
+      } else {
+        renderSelectedQuestions();
+      }
+      closeQuestionPicker();
+      toast(`已添加 ${checkedCbs.length} 道题目`);
+    }
+
+    // ========== 跨页面数据同步 ==========
+    // 页面可见性变化时刷新课程列表(用户从播放页切换回来时)
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden && typeof renderCourses === 'function') {
+        renderCourses();
+      }
+    });
+    // 监听 localStorage 变化(其他标签页写入数据时:浏览量/点赞/评分)
+    window.addEventListener('storage', function(e) {
+      if ((e.key && e.key.indexOf('course_interaction') === 0) || e.key === 'learning_platform_data') {
+        if (typeof renderCourses === 'function') renderCourses();
+      }
+    });
+
+    // ========== 报表管理（酷学院风格 5 大模块）==========
+    let rptTrendDays = 7; // 趋势图天数
+
+    /* 切换报表 Tab */
+    function switchReportTab(tab) {
+      document.querySelectorAll('.rpt-tab-btn').forEach(b => {
+        b.classList.remove('active');
+      });
+      const btn = document.querySelector(`.rpt-tab-btn[data-tab="${tab}"]`);
+      if (btn) {
+        btn.classList.add('active');
+      }
+      document.querySelectorAll('.rpt-tab-content').forEach(c => c.classList.add('hidden'));
+      const content = document.getElementById('rpt-' + tab);
+      if (content) content.classList.remove('hidden');
+
+      // 进入对应报表时渲染数据
+      if (tab === 'overview') renderOverview();
+      if (tab === 'course')   renderCourseReport();
+      if (tab === 'student')  renderStudentReport();
+      if (tab === 'exam')     renderExamReport();
+      if (tab === 'training')  renderTrainingReport();
+    }
+
+    /* 入口：加载报表 */
+    function loadReports() {
+      // 填充分类下拉（课程报表 + 培训报表）
+      const crCat = document.getElementById('rpt-cr-cat');
+      const trCat = document.getElementById('rpt-tr-cat');
+      if (crCat) {
+        crCat.innerHTML = '<option value="">全部分类</option>' +
+          (data.categories || []).map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+      }
+      if (trCat) {
+        // 培训报表使用 training_events 的 project 作为分类
+        const trainings = data.training_events || data.training || [];
+        const projects = [...new Set(trainings.map(t => t.project).filter(Boolean))];
+        trCat.innerHTML = '<option value="">全部分类</option>' +
+          projects.map(p => `<option value="${escHtml(p)}">${escHtml(p)}</option>`).join('');
+      }
+      // 填充部门下拉（学员报表）
+      const stDept = document.getElementById('rpt-st-dept');
+      if (stDept) {
+        const depts = [...new Set((allUsers || []).map(u => u.department).filter(Boolean))];
+        stDept.innerHTML = '<option value="">全部部门</option>' + depts.map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+      }
+      switchReportTab('overview');
+    }
+
+    /* ============================================================
+       1. 学习概览
+       ============================================================ */
+    function renderOverview() {
+      const courses   = data.courses   || [];
+      const lecturers = data.lecturers || [];
+      const users     = allUsers       || [];
+      const trainings = data.training  || [];
+      const exams     = data.exams     || [];
+
+      // 统计卡片
+      el('rpt-ov-courses',   courses.length);
+      el('rpt-ov-lecturers', lecturers.filter(l => l.status === 'enabled').length);
+      el('rpt-ov-users',     users.length);
+      el('rpt-ov-trainings', trainings.length);
+      el('rpt-ov-exams',     exams.length);
+      const totalViews = courses.reduce((s, c) => s + (parseInt(c.views) || 0), 0);
+      el('rpt-ov-hours',     (totalViews * 0.5).toFixed(1) + 'h'); // 假设每播放1次=0.5学时
+
+      // 趋势图（SVG 柱状图）
+      renderTrendChart();
+
+      // 热门课程 TOP5
+      const top5 = [...courses].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
+      const maxViews = top5.length ? Math.max(...top5.map(c => c.views || 0), 1) : 1;
+      const topEl = document.getElementById('rpt-top-courses');
+      if (topEl) {
+        topEl.innerHTML = top5.map((c, i) => {
+          const pct = Math.round(((c.views || 0) / maxViews) * 100);
+          return `<div class="flex items-center gap-3">
+            <span class="w-5 h-5 rounded-full ${i < 3 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'} text-xs flex items-center justify-center font-bold">${i + 1}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-slate-700 truncate">${escHtml(c.title)}</p>
+              <div class="w-full bg-slate-100 rounded-full h-1.5 mt-1">
+                <div class="bg-indigo-500 h-1.5 rounded-full" style="width:${pct}%"></div>
+              </div>
+            </div>
+            <span class="text-xs text-slate-400">${(c.views || 0)}</span>
+          </div>`;
+        }).join('') || '<p class="text-sm text-slate-400">暂无数据</p>';
+      }
+
+      // 部门学习排行
+      const deptMap = {};
+      users.forEach(u => {
+        const d = u.department || '未分配';
+        deptMap[d] = (deptMap[d] || 0) + 1;
+      });
+      const deptRanking = Object.entries(deptMap).sort((a, b) => b[1] - a[1]);
+      const rankEl = document.getElementById('rpt-dept-ranking');
+      if (rankEl) {
+        rankEl.innerHTML = deptRanking.map(([d, cnt], i) => `
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full ${i < 3 ? 'bg-indigo-600 text-white' : 'bg-slate-300 text-white'} text-xs flex items-center justify-center font-bold">${i + 1}</span>
+              <span class="text-sm text-slate-700">${escHtml(d)}</span>
+            </div>
+            <span class="text-sm font-semibold text-slate-800">${cnt} 人</span>
+          </div>`).join('') || '<p class="text-sm text-slate-400 col-span-full">暂无部门数据</p>';
+      }
+    }
+
+    /* 趋势图：SVG 柱状图 */
+    function renderTrendChart() {
+      const chartEl = document.getElementById('rpt-trend-chart');
+      if (!chartEl) return;
+      const days = rptTrendDays;
+      const labels = [];
+      const values = [];
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        labels.push((d.getMonth() + 1) + '/' + d.getDate());
+        // 用课程创建日期模拟趋势（创建于当天的课程数）
+        const dateStr = d.toISOString().split('T')[0];
+        const cnt = (data.courses || []).filter(c => (c.createdAt || '').startsWith(dateStr)).length;
+        values.push(cnt);
+      }
+      const maxV = Math.max(...values, 1);
+      const w = 100 / days; // 每根柱子宽度 %
+      chartEl.innerHTML = values.map((v, i) => {
+        const h = maxV ? Math.max((v / maxV) * 100, 3) : 3;
+        return `<div class="flex-1 flex flex-col items-center justify-end h-full" title="${labels[i]}: ${v}">
+          <span class="text-[10px] text-slate-400 mb-1">${v || ''}</span>
+          <div class="w-full max-w-[32px] bg-gradient-to-t from-indigo-600 to-purple-400 rounded-t" style="height:${h}%"></div>
+          ${i % Math.ceil(days / 7) === 0 ? `<span class="text-[10px] text-slate-400 mt-1">${labels[i]}</span>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    function setTrendDays(days) {
+      rptTrendDays = days;
+      document.querySelectorAll('.rpt-trend-btn').forEach(b => {
+        b.classList.remove('active');
+      });
+      const target = document.querySelector(`.rpt-trend-btn[onclick="setTrendDays(${days})"]`);
+      if (target) {
+        target.classList.add('active');
+      }
+      renderTrendChart();
+    }
+
+    /* ============================================================
+       2. 课程报表
+       ============================================================ */
+    function renderCourseReport() {
+      const courses   = data.courses   || [];
+      const lecturers = data.lecturers || [];
+      const categories = data.categories || [];
+      const timeVal   = document.getElementById('rpt-cr-time')?.value || 'all';
+      const catVal    = document.getElementById('rpt-cr-cat')?.value || '';
+      const kw        = (document.getElementById('rpt-cr-search')?.value || '').toLowerCase();
+
+      // 时间过滤
+      const now = new Date();
+      function inRange(dateStr) {
+        if (timeVal === 'all') return true;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        const diff = (now - d) / (1000 * 60 * 60 * 24);
+        if (timeVal === 'today')  return d.toDateString() === now.toDateString();
+        if (timeVal === '7d')    return diff <= 7;
+        if (timeVal === '30d')   return diff <= 30;
+        if (timeVal === '180d')  return diff <= 180;
+        if (timeVal === '365d')  return diff <= 365;
+        return true;
+      }
+
+      let filtered = courses.filter(c => {
+        if (!inRange(c.createdAt)) return false;
+        if (catVal && String(c.categoryId) !== String(catVal)) return false;
+        if (kw && !(c.title || '').toLowerCase().includes(kw)) return false;
+        return true;
+      });
+
+      // 统计卡片
+      const totalViews = filtered.reduce((s, c) => s + (parseInt(c.views) || 0), 0);
+      el('rpt-cr-total',     filtered.length);
+      el('rpt-cr-views',     totalViews);
+      el('rpt-cr-avg',       filtered.length ? Math.round(totalViews / filtered.length) : 0);
+      el('rpt-cr-published', filtered.filter(c => c.status === 'published').length);
+
+      // 表格
+      const tbody = document.getElementById('rpt-cr-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = filtered.map(c => {
+        const lect = lecturers.find(l => l.id == c.lecturerId);
+        const cat  = categories.find(ct => ct.id == c.categoryId);
+        return `<tr class="hover:bg-indigo-50/50 transition">
+          <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(c.title)}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${escHtml(cat?.name || '-')}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${escHtml(lect?.name || '-')}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${(c.views || 0)}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-500">${c.duration || '-'}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-400">${(c.createdAt || '').split(' ')[0] || '-'}</td>
+          <td class="px-4 py-3 text-sm text-center">
+            <span class="px-2 py-0.5 rounded-full text-xs ${c.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
+              ${c.status === 'published' ? '已发布' : '草稿'}</span>
+          </td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
+    }
+
+    /* ============================================================
+       3. 学员报表
+       ============================================================ */
+    function renderStudentReport() {
+      const users    = allUsers || [];
+      const deptVal  = document.getElementById('rpt-st-dept')?.value || '';
+      const statusVal = document.getElementById('rpt-st-status')?.value || '';
+      const kw       = (document.getElementById('rpt-st-search')?.value || '').toLowerCase();
+
+      let filtered = users.filter(u => {
+        if (deptVal && u.department !== deptVal) return false;
+        if (statusVal && u.status !== statusVal) return false;
+        if (kw && !(u.realName || u.username || '').toLowerCase().includes(kw) && !(u.phone || '').includes(kw)) return false;
+        return true;
+      });
+
+      // 统计卡片
+      const activeUsers = users.filter(u => u.status === 'active').length;
+      const depts = [...new Set(users.map(u => u.department).filter(Boolean))];
+      el('rpt-st-total',  filtered.length);
+      el('rpt-st-active', activeUsers);
+      el('rpt-st-avghours', (filtered.length ? (filtered.reduce((s, u) => s + (parseInt(u.learningHours) || 0), 0) / filtered.length).toFixed(1) : '0') + 'h');
+      el('rpt-st-depts', depts.length);
+
+      // 表格
+      const tbody = document.getElementById('rpt-st-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = filtered.map(u => `
+        <tr class="hover:bg-indigo-50/50 transition">
+          <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(u.realName || u.username)}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${escHtml(u.department || '-')}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${escHtml(u.position || '-')}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-500">${escHtml({admin:'管理员',teacher:'讲师',user:'学员'}[u.role] || u.role || '-')}</td>
+          <td class="px-4 py-3 text-sm text-center">
+            <span class="w-2 h-2 rounded-full inline-block ${u.status === 'active' ? 'bg-green-500' : 'bg-red-500'}"></span>
+            <span class="ml-1 text-xs ${u.status === 'active' ? 'text-green-600' : 'text-red-600'}">${u.status === 'active' ? '启用' : '禁用'}</span>
+          </td>
+          <td class="px-4 py-3 text-sm text-center text-slate-400">${(u.createdAt || '').split(' ')[0] || '-'}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-400">${u.lastLogin || '-'}</td>
+        </tr>`).join('') || '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
+    }
+
+    /* ============================================================
+       4. 考试报表
+       ============================================================ */
+    function renderExamReport() {
+      const exams   = data.exams || [];
+      const timeVal = document.getElementById('rpt-ex-time')?.value || 'all';
+      const kw      = (document.getElementById('rpt-ex-search')?.value || '').toLowerCase();
+
+      const now = new Date();
+      function inRange(dateStr) {
+        if (timeVal === 'all') return true;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        const diff = (now - d) / (1000 * 60 * 60 * 24);
+        if (timeVal === 'today')  return d.toDateString() === now.toDateString();
+        if (timeVal === '7d')    return diff <= 7;
+        if (timeVal === '30d')   return diff <= 30;
+        if (timeVal === '180d')  return diff <= 180;
+        if (timeVal === '365d')  return diff <= 365;
+        return true;
+      }
+
+      let filtered = exams.filter(e => {
+        if (!inRange(e.createdAt || e.startTime)) return false;
+        if (kw && !(e.title || '').toLowerCase().includes(kw)) return false;
+        return true;
+      });
+
+      // 统计卡片
+      const allScores = filtered.flatMap(e => e.scores || e.results || []);
+      const avgScore  = allScores.length ? (allScores.reduce((s, v) => s + v, 0) / allScores.length).toFixed(1) : '-';
+      const passCount = allScores.filter(v => v >= 60).length;
+      const passRate  = allScores.length ? Math.round(passCount / allScores.length * 100) + '%' : '-';
+      el('rpt-ex-total',      filtered.length);
+      el('rpt-ex-participants', filtered.reduce((s, e) => s + (e.participantCount || 0), 0));
+      el('rpt-ex-avgscore',    avgScore);
+      el('rpt-ex-passrate',    passRate);
+
+      // 表格
+      const tbody = document.getElementById('rpt-ex-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = filtered.map(e => {
+        const scores = e.scores || e.results || [];
+        const avg  = scores.length ? (scores.reduce((s, v) => s + v, 0) / scores.length).toFixed(1) : '-';
+        const max  = scores.length ? Math.max(...scores) : '-';
+        const pcnt = scores.filter(v => v >= 60).length;
+        const prate = scores.length ? Math.round(pcnt / scores.length * 100) + '%' : '-';
+        return `<tr class="hover:bg-indigo-50/50 transition">
+          <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(e.title)}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${e.participantCount || 0}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${avg}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${max}</td>
+          <td class="px-4 py-3 text-sm text-center text-green-600 font-medium">${prate}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-400">${(e.startTime || e.createdAt || '').split(' ')[0] || '-'}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
+    }
+
+    /* ============================================================
+       5. 培训报表
+       ============================================================ */
+    function renderTrainingReport() {
+      // 使用 training_events 数据源（与培训管理模块一致）
+      const trainings  = data.training_events || data.training || [];
+      const timeVal    = document.getElementById('rpt-tr-time')?.value || 'all';
+      const catVal     = document.getElementById('rpt-tr-cat')?.value || '';
+      const kw         = (document.getElementById('rpt-tr-search')?.value || '').toLowerCase();
+
+      const now = new Date();
+      function inRange(dateStr) {
+        if (timeVal === 'all') return true;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        const diff = (now - d) / (1000 * 60 * 60 * 24);
+        if (timeVal === 'today')  return d.toDateString() === now.toDateString();
+        if (timeVal === '7d')    return diff <= 7;
+        if (timeVal === '30d')   return diff <= 30;
+        if (timeVal === '180d')  return diff <= 180;
+        if (timeVal === '365d')  return diff <= 365;
+        return true;
+      }
+
+      let filtered = trainings.filter(t => {
+        // 兼容字段：startTime/date/createdAt
+        const dateStr = t.startTime || t.date || t.createdAt;
+        if (!inRange(dateStr)) return false;
+        // 兼容字段：project/categoryId
+        const category = t.project || t.categoryId || '';
+        if (catVal && String(category) !== String(catVal)) return false;
+        // 兼容字段：name/title
+        const name = t.name || t.title || '';
+        if (kw && !name.toLowerCase().includes(kw)) return false;
+        return true;
+      });
+
+      // 根据日期判断状态（培训管理模块没有 status 字段）
+      function getTrainingStatus(t) {
+        if (t.status) return t.status;
+        const endDate = t.endTime || t.date;
+        if (!endDate) return 'scheduled';
+        const end = new Date(endDate);
+        if (end < now) return 'completed';
+        const start = new Date(t.startTime || t.date);
+        if (start <= now && end >= now) return 'ongoing';
+        return 'scheduled';
+      }
+
+      const doneCount = filtered.filter(t => getTrainingStatus(t) === 'completed').length;
+      const rate = filtered.length ? Math.round(doneCount / filtered.length * 100) + '%' : '0%';
+      
+      // 获取报名人数（异步）
+      let totalPeople = 0;
+      
+      el('rpt-tr-total',  filtered.length);
+      el('rpt-tr-done',   doneCount);
+      el('rpt-tr-rate',   rate);
+
+      const tbody = document.getElementById('rpt-tr-tbody');
+      if (!tbody) return;
+      
+      // 异步获取每个培训的报名人数
+      async function renderWithEnrollCount() {
+        const enrollCounts = {};
+        try {
+          const results = await Promise.all(filtered.map(t =>
+            fetch(API + '/training/' + t.id + '/enroll-count')
+              .then(r => r.json())
+              .then(d => ({ id: t.id, count: d.count || 0 }))
+              .catch(() => ({ id: t.id, count: 0 }))
+          ));
+          results.forEach(r => { enrollCounts[r.id] = r.count; });
+        } catch(e) { /* 获取失败使用0 */ }
+        
+        totalPeople = Object.values(enrollCounts).reduce((s, c) => s + c, 0);
+        el('rpt-tr-people', totalPeople);
+        
+        tbody.innerHTML = filtered.map(t => {
+          // 兼容字段：name/title, instructor/lecturerId, project/categoryId
+          const name = t.name || t.title || '-';
+          const instructor = t.instructor || '-';
+          const project = t.project || '-';
+          const enrollCount = enrollCounts[t.id] || 0;
+          const dateStr = (t.startTime || t.date || '').split(' ')[0] || '-';
+          const status = getTrainingStatus(t);
+          const statusMap = {scheduled:'待开始',ongoing:'进行中',completed:'已完成',cancelled:'已取消'};
+          return `<tr class="hover:bg-indigo-50/50 transition">
+            <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(name)}</td>
+            <td class="px-4 py-3 text-sm text-slate-500">${escHtml(project)}</td>
+            <td class="px-4 py-3 text-sm text-slate-500">${escHtml(instructor)}</td>
+            <td class="px-4 py-3 text-sm text-center text-slate-600">${enrollCount}</td>
+            <td class="px-4 py-3 text-sm text-center text-slate-400">${dateStr}</td>
+            <td class="px-4 py-3 text-sm text-center">
+              <span class="px-2 py-0.5 rounded-full text-xs ${status === 'completed' ? 'bg-green-100 text-green-700' : status === 'ongoing' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}">
+                ${statusMap[status] || status || '-'}</span>
+            </td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
+      }
+      
+      renderWithEnrollCount();
+    }
+
+    /* ============================================================
+       通用：CSV 导出（含 BOM 防止中文乱码）
+       ============================================================ */
+    function exportReportCSV(type) {
+      let headers = [];
+      let rows    = [];
+      let filename = '';
+
+      if (type === 'course') {
+        headers = ['课程名称', '分类', '讲师', '播放量', '学时', '创建时间', '状态'];
+        (data.courses || []).forEach(c => {
+          const lect = (data.lecturers || []).find(l => l.id == c.lecturerId);
+          const cat  = (data.categories || []).find(ct => ct.id == c.categoryId);
+          rows.push([c.title, cat?.name || '', lect?.name || '', c.views || 0, c.duration || '', (c.createdAt || '').split(' ')[0], c.status === 'published' ? '已发布' : '草稿']);
+        });
+        filename = '课程报表_' + new Date().toISOString().split('T')[0] + '.csv';
+      }
+      if (type === 'student') {
+        headers = ['姓名', '部门', '岗位', '角色', '状态', '创建时间', '最后登录'];
+        (allUsers || []).forEach(u => {
+          rows.push([u.realName || u.username, u.department || '', u.position || '', {admin:'管理员',teacher:'讲师',user:'学员'}[u.role] || u.role || '', u.status === 'active' ? '启用' : '禁用', (u.createdAt || '').split(' ')[0], u.lastLogin || '']);
+        });
+        filename = '学员报表_' + new Date().toISOString().split('T')[0] + '.csv';
+      }
+      if (type === 'exam') {
+        headers = ['考试名称', '参与人数', '平均分', '最高分', '通过率', '考试时间'];
+        (data.exams || []).forEach(e => {
+          const scores = e.scores || e.results || [];
+          const avg = scores.length ? (scores.reduce((s, v) => s + v, 0) / scores.length).toFixed(1) : '';
+          const max = scores.length ? Math.max(...scores) : '';
+          const prate = scores.length ? Math.round(scores.filter(v => v >= 60).length / scores.length * 100) + '%' : '';
+          rows.push([e.title, e.participantCount || 0, avg, max, prate, (e.startTime || e.createdAt || '').split(' ')[0]]);
+        });
+        filename = '考试报表_' + new Date().toISOString().split('T')[0] + '.csv';
+      }
+      if (type === 'training') {
+        headers = ['培训名称', '分类', '讲师', '参训人数', '时间', '状态'];
+        (data.training_events || data.training || []).forEach(t => {
+          const name = t.name || t.title || '';
+          const project = t.project || '';
+          const instructor = t.instructor || '';
+          // 获取报名人数（导出时无法异步，暂用0）
+          rows.push([name, project, instructor, 0, (t.startTime || t.date || '').split(' ')[0], t.status || '']);
+        });
+        filename = '培训报表_' + new Date().toISOString().split('T')[0] + '.csv';
+      }
+
+      // 生成 CSV（含 BOM）
+      const BOM = '\uFEFF';
+      const csvContent = BOM + [headers.join(','), ...rows.map(r => r.map(c => `"${String(c || '').replace(/"/g, '""')}"`).join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      toast('导出成功：' + filename, 'success');
+    }
+
+    /* 工具：设置元素文本（id 存在时才操作） */
+    function el(id, v) {
+      const e = document.getElementById(id);
+      if (e) e.textContent = v;
+    }
+
+    // ========== 调研管理 ==========
+    let surveyQuestions = [];
+    let currentSurveyId = null;
+    let surveyStats = {};
+
+    async function loadSurveyList() {
+      const container = document.getElementById('survey-list-container');
+      if (!container) { (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadSurveyList: survey-list-container 不存在!</div>';})(); return; }
+
+      (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#94a3b8\">loadSurveyList: 开始获取 /api/surveys...</div>';})();
+      try {
+        const [surveysRes, statsRes] = await Promise.all([
+          fetch('/api/surveys'),
+          fetch('/api/surveys/stats')
+        ]);
+        const json = await surveysRes.json();
+        const surveys = (json.success && json.data) ? json.data : (Array.isArray(json) ? json : []);
+
+        if (statsRes.ok) {
+          const statsJson = await statsRes.json();
+          surveyStats = (statsJson.success && statsJson.data) ? statsJson.data : {};
+        }
+        const totalEl = document.getElementById('stat-total-surveys');
+        const activeEl = document.getElementById('stat-active-surveys');
+        const draftEl = document.getElementById('stat-draft-surveys');
+        const responsesEl = document.getElementById('stat-total-responses');
+        if (totalEl) totalEl.textContent = surveyStats.totalSurveys || surveys.length;
+        if (activeEl) activeEl.textContent = surveyStats.activeSurveys || 0;
+        if (draftEl) draftEl.textContent = surveyStats.draftSurveys || 0;
+        if (responsesEl) responsesEl.textContent = surveyStats.totalResponses || 0;
+
+        const surveyCountEl = document.getElementById('survey-count');
+        if (surveyCountEl) surveyCountEl.textContent = surveys.length;
+
+        if (!surveys.length) {
+          container.innerHTML = `
+            <tr>
+              <td colspan="7" class="px-6 py-16 text-center text-slate-400">
+                <i class="fas fa-poll text-4xl mb-3 block"></i>
+                <p>暂未创建调研问卷</p>
+                <button onclick="openSurveyModal()" class="mt-4 btn-primary px-6 py-2.5 text-white rounded-xl font-medium">创建第一个调研</button>
+              </td>
+            </tr>`;
+          return;
+        }
+
+        const responsesBySurvey = surveyStats.responsesBySurvey || {};
+
+        container.innerHTML = surveys.map(s => {
+          const statusMap = { draft: '未发布', active: '已发布', published: '已发布', ended: '未发布' };
+          const statusColor = { draft: 'bg-slate-100 text-slate-600', active: 'bg-emerald-100 text-emerald-700', published: 'bg-emerald-100 text-emerald-700', ended: 'bg-slate-100 text-slate-600' };
+          const qCount = s.questions ? s.questions.length : 0;
+          const rCount = responsesBySurvey[s.id] || 0;
+
+          return `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="px-5 py-4">
+                <p class="text-sm font-semibold text-slate-800">${escHtml(s.title || '未命名调研')}</p>
+              </td>
+              <td class="px-5 py-4">
+                <p class="text-sm text-slate-500 max-w-xs truncate">${escHtml(s.description || '暂无描述')}</p>
+              </td>
+              <td class="px-5 py-4 text-center">
+                <span class="text-sm text-slate-700 font-medium">${qCount}</span>
+                <span class="text-xs text-slate-400 ml-0.5">题</span>
+              </td>
+              <td class="px-5 py-4 text-center">
+                <span class="text-sm text-slate-700 font-medium">${rCount}</span>
+                <span class="text-xs text-slate-400 ml-0.5">人</span>
+              </td>
+              <td class="px-5 py-4 text-center">
+                <span class="px-2 py-1 ${statusColor[s.status] || 'bg-gray-100 text-gray-600'} rounded text-xs whitespace-nowrap">${statusMap[s.status] || s.status}</span>
+              </td>
+              <td class="px-5 py-4 text-center text-sm text-slate-500">
+                ${s.createdAt ? new Date(s.createdAt).toLocaleDateString('zh-CN') : '未知'}
+              </td>
+              <td class="px-5 py-4 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button onclick="toggleSurveyPublish(${s.id}, '${s.status}')" class="${s.status === 'active' || s.status === 'published' ? 'text-amber-500 hover:text-amber-700' : 'text-emerald-500 hover:text-emerald-700'} transition" title="${s.status === 'active' || s.status === 'published' ? '取消发布' : '发布'}"><i class="fas ${s.status === 'active' || s.status === 'published' ? 'fa-pause-circle' : 'fa-play-circle'}"></i></button>
+                  <button onclick="editSurvey(${s.id})" class="text-indigo-500 hover:text-indigo-700 transition" title="编辑"><i class="fas fa-edit"></i></button>
+                  <button onclick="copySurveyLink(${s.id})" class="text-sky-500 hover:text-sky-700 transition" title="复制链接"><i class="fas fa-link"></i></button>
+                  <button onclick="viewSurveyResponses(${s.id})" class="text-teal-500 hover:text-teal-700 transition" title="数据"><i class="fas fa-chart-bar"></i></button>
+                  <button onclick="duplicateSurvey(${s.id})" class="text-slate-400 hover:text-slate-600 transition" title="复制"><i class="fas fa-copy"></i></button>
+                  <button onclick="deleteSurvey(${s.id})" class="text-red-500 hover:text-red-700 transition" title="删除"><i class="fas fa-trash"></i></button>
+                </div>
+              </td>
+            </tr>`;
+        }).join('');
+        (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#4ade80\">loadSurveyList: 成功渲染 ' + surveys.length + ' 个调研</div>';})();
+      } catch (e) {
+        console.error('加载调研列表失败:', e);
+        (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadSurveyList ERROR: ' + (e.message||e) + '</div>';})();
+        container.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-exclamation-triangle text-2xl mb-2 block"></i>加载失败</td></tr>';
+      }
+    }
+
+    function copySurveyLink(id) {
+      const url = window.location.origin + '/survey.html?id=' + id;
+      navigator.clipboard.writeText(url).then(() => {
+        toast('问卷链接已复制');
+      }).catch(() => {
+        const input = document.createElement('input');
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        input.remove();
+        toast('问卷链接已复制');
+      });
+    }
+
+    async function toggleSurveyPublish(id, currentStatus) {
+      const newStatus = (currentStatus === 'active' || currentStatus === 'published') ? 'draft' : 'published';
+      try {
+        const res = await fetch('/api/surveys/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+        if (res.ok) {
+          toast(newStatus === 'published' ? '调研已发布' : '已取消发布');
+          loadSurveyList();
+        } else {
+          toast('操作失败', 'error');
+        }
+      } catch (e) {
+        toast('操作失败: ' + e.message, 'error');
+      }
+    }
+
+    async function duplicateSurvey(id) {
+      try {
+        const res = await fetch('/api/surveys/' + id);
+        const json = await res.json();
+        if (!json.success) { toast('获取调研失败', 'error'); return; }
+        const original = json.data;
+        const copyRes = await fetch('/api/surveys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: (original.title || '未命名') + ' (副本)',
+            description: original.description || '',
+            status: 'draft',
+            questions: (original.questions || []).map((q, idx) => ({ ...q, id: idx + 1 }))
+          })
+        });
+        if (copyRes.ok) {
+          toast('已复制为新调研');
+          loadSurveyList();
+        } else {
+          toast('复制失败', 'error');
+        }
+      } catch (e) {
+        toast('复制失败: ' + e.message, 'error');
+      }
+    }
+
+    function openSurveyModal(id = null) {
+      surveyQuestions = [];
+      currentSurveyId = null;
+      const isEdit = id !== null;
+      if (isEdit) {
+        editSurvey(id);
+        return;
+      }
+      renderSurveyModal(null, isEdit);
+    }
+
+    function renderSurveyModal(survey, isEdit) {
+      if (survey) {
+        surveyQuestions = (survey.questions || []).map((q, idx) => ({
+          ...q,
+          id: q.id || idx + 1,
+          options: (q.options || ['']).map(opt => typeof opt === 'string' ? opt : (opt.label || ''))
+        }));
+      } else {
+        surveyQuestions = [];
+      }
+
+      document.querySelectorAll('.survey-modal-overlay').forEach(el => el.remove());
+
+      const modal = document.createElement('div');
+      modal.className = 'survey-modal-overlay fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center pt-8 pb-8';
+      modal.onclick = function(e) { if (e.target === this) this.remove(); };
+
+      const questionsHtml = surveyQuestions.map((q, idx) => `
+        <div class="bg-white rounded-xl border border-slate-200 p-4 mb-3 question-item shadow-sm hover:shadow-md transition" data-idx="${idx}">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="q-number flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 text-white text-xs font-bold flex items-center justify-center">${idx + 1}</span>
+            <select onchange="surveyQuestions[${idx}].type = this.value; renderSurveyQuestionItem(${idx})" class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:ring-2 focus:ring-indigo-300 outline-none">
+              <option value="radio" ${q.type === 'radio' ? 'selected' : ''}>单选题</option>
+              <option value="checkbox" ${q.type === 'checkbox' ? 'selected' : ''}>多选题</option>
+              <option value="text" ${q.type === 'text' ? 'selected' : ''}>填空题</option>
+              <option value="rating" ${q.type === 'rating' ? 'selected' : ''}>评分题</option>
+            </select>
+            <label class="flex items-center gap-1 text-xs ml-auto cursor-pointer select-none">
+              <input type="checkbox" ${q.required ? 'checked' : ''} onchange="surveyQuestions[${idx}].required = this.checked" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+              <span class="text-slate-600">必答</span>
+            </label>
+            <button onclick="removeSurveyQuestion(${idx})" class="w-7 h-7 rounded-lg flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition text-sm"><i class="fas fa-trash-alt"></i></button>
+          </div>
+          <input type="text" value="${escHtml(q.title || '')}" placeholder="请输入题目内容" onchange="surveyQuestions[${idx}].title = this.value" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+          <div id="q-options-${idx}">${renderQuestionOptions(idx, q)}</div>
+        </div>
+      `).join('');
+
+      modal.innerHTML = `
+        <div class="bg-slate-50 rounded-2xl w-full max-w-2xl max-h-[calc(100vh-4rem)] flex flex-col shadow-2xl relative overflow-hidden" onclick="event.stopPropagation()">
+          <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 px-6 py-5 flex-shrink-0 flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-white">${isEdit ? '编辑调研' : '创建调研'}</h2>
+              <p class="text-white/60 text-sm mt-0.5">${isEdit ? '修改调研内容和题目' : '设计新的调研问卷'}</p>
+            </div>
+            <button onclick="this.closest('.survey-modal-overlay').remove()" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+              <h3 class="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2"><i class="fas fa-info-circle text-indigo-400"></i>基本信息</h3>
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1.5">调研标题 <span class="text-red-500">*</span></label>
+                  <input type="text" id="survey-title" value="${escHtml(survey ? survey.title || '' : '')}" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm" placeholder="如:培训满意度调研">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1.5">发布状态</label>
+                  <select id="survey-status" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-sm">
+                    <option value="draft" ${survey && survey.status === 'draft' ? 'selected' : ''}>未发布</option>
+                    <option value="published" ${survey && (survey.status === 'active' || survey.status === 'published') ? 'selected' : ''}>已发布</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1.5">调研描述</label>
+                <textarea id="survey-desc" rows="2" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm resize-none" placeholder="简要描述调研目的(选填)">${escHtml(survey ? survey.description || '' : '')}</textarea>
+              </div>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+              <div class="flex items-center mb-4">
+                <h3 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <i class="fas fa-list-ol text-purple-400"></i>题目列表
+                  <span class="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full text-xs font-bold">${surveyQuestions.length}</span>
+                </h3>
+              </div>
+              <div id="questions-container">
+                ${questionsHtml || `
+                  <div class="text-center py-8 text-slate-400">
+                    <i class="fas fa-inbox text-2xl mb-2 block"></i>
+                    <p class="text-sm">暂无题目,点击下方按钮添加</p>
+                  </div>`}
+              </div>
+            </div>
+          </div>
+          <div class="px-6 pb-5 pt-4 flex items-center gap-3 bg-white border-t border-slate-100">
+            <button onclick="addSurveyQuestion()" class="px-4 py-3 rounded-xl border-2 border-dashed border-indigo-300 text-indigo-600 font-medium hover:bg-indigo-50 hover:border-indigo-400 transition text-sm flex items-center gap-2">
+              <i class="fas fa-plus"></i>添加题目
+            </button>
+            <div class="flex-1"></div>
+            <button onclick="this.closest('.survey-modal-overlay').remove()" class="px-5 py-3 rounded-xl bg-slate-100 text-slate-600 font-medium hover:bg-slate-200 transition text-sm">取消</button>
+            <button onclick="saveSurvey()" class="px-5 py-3 rounded-xl btn-primary text-white font-medium hover:opacity-90 transition text-sm shadow-lg"><i class="fas fa-save mr-2"></i>${isEdit ? '保存修改' : '创建调研'}</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    function renderQuestionOptions(idx, q) {
+      if (q.type === 'radio' || q.type === 'checkbox') {
+        const options = q.options || [''];
+        return options.map((opt, oi) => `
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-slate-100 text-xs text-slate-500 font-medium flex items-center justify-center">${String.fromCharCode(65 + oi)}</span>
+            <input type="text" value="${escHtml(typeof opt === 'string' ? opt : (opt.label || opt))}" placeholder="选项 ${String.fromCharCode(65 + oi)}" onchange="surveyQuestions[${idx}].options[${oi}] = this.value" class="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+            ${options.length > 1 ? `<button onclick="surveyQuestions[${idx}].options.splice(${oi},1); renderSurveyQuestionItem(${idx})" class="w-6 h-6 rounded flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition text-xs"><i class="fas fa-times"></i></button>` : ''}
+          </div>
+        `).join('') + `
+          <button onclick="surveyQuestions[${idx}].options.push(''); renderSurveyQuestionItem(${idx})" class="text-xs text-indigo-600 hover:text-indigo-800 mt-2 flex items-center gap-1 px-2 py-1 rounded hover:bg-indigo-50 transition"><i class="fas fa-plus"></i>添加选项</button>`;
+      } else if (q.type === 'rating') {
+        const max = q.maxRating || 5;
+        return `<div class="flex items-center gap-1.5 py-1">
+          ${Array.from({length: max}, (_, i) => `<i class="fas fa-star text-lg ${i < max ? 'text-amber-400' : 'text-slate-200'}"></i>`).join('')}
+          <span class="text-xs text-slate-400 ml-2 bg-amber-50 px-2 py-0.5 rounded-full">${max} 分制</span>
+        </div>`;
+      } else {
+        return '<div class="py-1"><span class="text-xs text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg"><i class="fas fa-align-left mr-1"></i>用户将看到文本输入框</span></div>';
+      }
+    }
+
+    function renderSurveyQuestionItem(idx) {
+      const container = document.getElementById('q-options-' + idx);
+      if (container && surveyQuestions[idx]) {
+        container.innerHTML = renderQuestionOptions(idx, surveyQuestions[idx]);
+      }
+    }
+
+    function getCurrentSurveyData() {
+      return {
+        title: document.getElementById('survey-title')?.value || '',
+        description: document.getElementById('survey-desc')?.value || '',
+        status: document.getElementById('survey-status')?.value || 'draft',
+        questions: surveyQuestions.map((q, idx) => ({ ...q, id: q.id || idx + 1 }))
+      };
+    }
+
+    function addSurveyQuestion() {
+      const maxId = surveyQuestions.reduce((max, q) => Math.max(max, q.id || 0), 0);
+      const newQ = { id: maxId + 1, type: 'radio', title: '', required: false, options: [''] };
+      surveyQuestions.push(newQ);
+      const idx = surveyQuestions.length - 1;
+
+      const container = document.getElementById('questions-container');
+      if (!container) return;
+      const emptyHint = container.querySelector('.text-center');
+      if (emptyHint && container.children.length === 1) emptyHint.remove();
+
+      const div = document.createElement('div');
+      div.className = 'bg-white rounded-xl border border-slate-200 p-4 mb-3 question-item shadow-sm hover:shadow-md transition';
+      div.innerHTML = `
+        <div class="flex items-center gap-2 mb-3">
+          <span class="q-number flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 text-white text-xs font-bold flex items-center justify-center">${idx + 1}</span>
+          <select onchange="surveyQuestions[${idx}].type = this.value; renderSurveyQuestionItem(${idx})" class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:ring-2 focus:ring-indigo-300 outline-none">
+            <option value="radio" selected>单选题</option>
+            <option value="checkbox">多选题</option>
+            <option value="text">填空题</option>
+            <option value="rating">评分题</option>
+          </select>
+          <label class="flex items-center gap-1 text-xs ml-auto cursor-pointer select-none">
+            <input type="checkbox" onchange="surveyQuestions[${idx}].required = this.checked" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+            <span class="text-slate-600">必答</span>
+          </label>
+          <button onclick="removeSurveyQuestion(${idx})" class="w-7 h-7 rounded-lg flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition text-sm"><i class="fas fa-trash-alt"></i></button>
+        </div>
+        <input type="text" placeholder="请输入题目内容" onchange="surveyQuestions[${idx}].title = this.value" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+        <div id="q-options-${idx}">${renderQuestionOptions(idx, newQ)}</div>
+      `;
+      container.appendChild(div);
+
+      const badge = container.closest('.bg-white')?.querySelector('.bg-indigo-50');
+      if (badge) badge.textContent = surveyQuestions.length;
+
+      div.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function removeSurveyQuestion(idx) {
+      surveyQuestions.splice(idx, 1);
+
+      const container = document.getElementById('questions-container');
+      if (!container) return;
+
+      const items = container.querySelectorAll('.question-item');
+      if (items[idx]) items[idx].remove();
+
+      if (surveyQuestions.length === 0) {
+        container.innerHTML = '<div class="text-center py-8 text-slate-400"><i class="fas fa-inbox text-2xl mb-2 block"></i><p class="text-sm">暂无题目，点击下方按钮添加</p></div>';
+      } else {
+        const remaining = container.querySelectorAll('.question-item');
+        remaining.forEach((item, newIdx) => {
+          const numEl = item.querySelector('.q-number');
+          if (numEl) numEl.textContent = newIdx + 1;
+          const sel = item.querySelector('select');
+          if (sel) sel.setAttribute('onchange', 'surveyQuestions[' + newIdx + '].type = this.value; renderSurveyQuestionItem(' + newIdx + ')');
+          const cb = item.querySelector('input[type="checkbox"]');
+          if (cb) cb.setAttribute('onchange', 'surveyQuestions[' + newIdx + '].required = this.checked');
+          const delBtn = item.querySelector('.fa-trash-alt')?.closest('button');
+          if (delBtn) delBtn.setAttribute('onclick', 'removeSurveyQuestion(' + newIdx + ')');
+          const titleInput = item.querySelector('input[type="text"]');
+          if (titleInput && titleInput.placeholder === '请输入题目内容') titleInput.setAttribute('onchange', 'surveyQuestions[' + newIdx + '].title = this.value');
+          const optDiv = item.querySelector('[id^="q-options-"]');
+          if (optDiv) {
+            optDiv.id = 'q-options-' + newIdx;
+            optDiv.innerHTML = renderQuestionOptions(newIdx, surveyQuestions[newIdx]);
+          }
+        });
+      }
+
+      const badge = container.closest('.bg-white')?.querySelector('.bg-indigo-50');
+      if (badge) badge.textContent = surveyQuestions.length;
+    }
+    async function saveSurvey() {
+      const title = document.getElementById('survey-title').value.trim();
+      const description = document.getElementById('survey-desc').value.trim();
+      const status = document.getElementById('survey-status').value;
+
+      if (!title) { toast('请输入调研标题', 'warning'); return; }
+      if (surveyQuestions.length === 0) { toast('请至少添加一个题目', 'warning'); return; }
+
+      const normalizedQuestions = surveyQuestions.map((q, idx) => ({
+        ...q,
+        id: q.id || idx + 1,
+        options: (q.options || []).map(opt => typeof opt === 'string' ? opt : (opt.label || opt))
+      }));
+
+      const body = { title, description, status, questions: normalizedQuestions };
+      const isEdit = currentSurveyId !== null && currentSurveyId !== undefined;
+      const url = isEdit ? '/api/surveys/' + currentSurveyId : '/api/surveys';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (res.ok) {
+          toast(isEdit ? '调研已更新' : '调研已创建');
+          document.querySelectorAll('.survey-modal-overlay').forEach(el => el.remove());
+          currentSurveyId = null;
+          loadSurveyList();
+        } else {
+          toast('保存失败', 'error');
+        }
+      } catch (e) {
+        toast('保存失败: ' + e.message, 'error');
+      }
+    }
+
+    async function editSurvey(id) {
+      currentSurveyId = id;
+      try {
+        const res = await fetch('/api/surveys/' + id);
+        const json = await res.json();
+        const survey = json.success ? json.data : json;
+        renderSurveyModal(survey, true);
+      } catch (e) {
+        toast('获取调研信息失败', 'error');
+        currentSurveyId = null;
+      }
+    }
+
+    async function deleteSurvey(id) {
+      if (!confirm('确定要删除这个调研吗?此操作不可恢复。')) return;
+      try {
+        const res = await fetch('/api/surveys/' + id, { method: 'DELETE' });
+        if (res.ok) { toast('调研已删除'); loadSurveyList(); }
+        else { toast('删除失败', 'error'); }
+      } catch (e) { toast('删除失败: ' + e.message, 'error'); }
+    }
+
+    async function viewSurveyResponses(surveyId) {
+      try {
+        const [res, surveyRes] = await Promise.all([
+          fetch('/api/surveys/' + surveyId + '/responses'),
+          fetch('/api/surveys/' + surveyId)
+        ]);
+        const json = await res.json();
+        const responses = json.data || [];
+        const surveyJson = await surveyRes.json();
+        const survey = surveyJson.data || {};
+        const questions = survey.questions || [];
+
+        // 缓存数据供导出使用
+        window._surveyExportData = { survey, questions, responses };
+
+        const modal = document.createElement('div');
+        modal.className = 'survey-modal-overlay fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center pt-8 pb-8';
+        modal.onclick = function(e) { if (e.target === this) this.remove(); };
+
+        // 题目统计
+        const questionStats = questions.map(q => {
+          const stats = { question: q, answers: {} };
+          responses.forEach(r => {
+            const answer = (r.answers || []).find(a => a.questionId === q.id);
+            if (answer) {
+              const key = Array.isArray(answer.value) ? answer.value.join(', ') : (answer.value || '未回答');
+              stats.answers[key] = (stats.answers[key] || 0) + 1;
+            }
+          });
+          return stats;
+        });
+
+        modal.innerHTML = `
+          <div class="bg-slate-50 rounded-2xl w-full max-w-4xl max-h-[calc(100vh-4rem)] flex flex-col shadow-2xl relative overflow-hidden" onclick="event.stopPropagation()">
+            <div class="bg-gradient-to-r from-teal-600 to-emerald-600 px-6 py-5 flex-shrink-0 flex items-center justify-between">
+              <div>
+                <h2 class="text-xl font-bold text-white">调研数据</h2>
+                <p class="text-white/60 text-sm mt-0.5">${escHtml(survey.title || '')} · ${responses.length} 人提交</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="exportSurveyExcel()" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm font-medium transition flex items-center gap-1.5"><i class="fas fa-download"></i>导出表格</button>
+                <button onclick="this.closest('.survey-modal-overlay').remove()" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition"><i class="fas fa-times"></i></button>
+              </div>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+              <!-- 题目统计 -->
+              ${questionStats.length > 0 ? `
+                <div class="bg-white rounded-xl border border-slate-200 p-5">
+                  <h3 class="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2"><i class="fas fa-chart-pie text-teal-500"></i>题目统计</h3>
+                  <div class="space-y-4">
+                    ${questionStats.map((qs, i) => `
+                      <div class="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                        <p class="text-sm font-medium text-slate-700 mb-2"><span class="text-indigo-500 mr-1">${i+1}.</span> ${escHtml(qs.question.title || '未命名题目')}</p>
+                        ${Object.keys(qs.answers).length > 0 ? `
+                          <div class="space-y-1.5">
+                            ${Object.entries(qs.answers).sort((a,b) => b[1]-a[1]).map(([key, count]) => {
+                              const pct = responses.length > 0 ? Math.round(count / responses.length * 100) : 0;
+                              return '<div class="flex items-center gap-2">' +
+                                '<span class="text-xs text-slate-600 w-28 truncate flex-shrink-0">' + escHtml(key) + '</span>' +
+                                '<div class="flex-1 h-5 bg-slate-100 rounded-full overflow-hidden">' +
+                                '<div class="h-full bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full" style="width:' + pct + '%"></div>' +
+                                '</div>' +
+                                '<span class="text-xs text-slate-500 w-16 text-right flex-shrink-0">' + count + '人 ' + pct + '%</span>' +
+                              '</div>';
+                            }).join('')}
+                          </div>
+                        ` : '<p class="text-xs text-slate-400">暂无作答数据</p>'}
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+
+              <!-- 填写记录 -->
+              <div class="bg-white rounded-xl border border-slate-200 p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2"><i class="fas fa-clipboard-list text-indigo-500"></i>填写记录 <span class="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full text-xs font-bold">${responses.length}</span></h3>
+                ${responses.length === 0 ? '<p class="text-center text-slate-400 py-8 text-sm">暂无作答记录</p>' : `
+                  <div class="divide-y divide-slate-100">
+                    ${responses.map((r, i) => {
+                      return '<div class="flex items-center justify-between py-3 px-2 hover:bg-slate-50 rounded-lg transition">' +
+                        '<div class="flex items-center gap-3">' +
+                          '<div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center flex-shrink-0">' +
+                            '<i class="fas fa-user text-white text-xs"></i>' +
+                          '</div>' +
+                          '<div>' +
+                            '<p class="text-sm font-medium text-slate-700">' + escHtml(r.userName || '匿名用户') + '</p>' +
+                            '<p class="text-xs text-slate-400">' + (r.department ? escHtml(r.department) + ' · ' : '') + new Date(r.submittedAt).toLocaleString('zh-CN') + '</p>' +
+                          '</div>' +
+                        '</div>' +
+                        '<button onclick="viewResponseDetail(' + i + ')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-medium transition">查看详情</button>' +
+                      '</div>';
+                    }).join('')}
+                  </div>
+                `}
+              </div>
+            </div>
+            <div class="px-6 pb-5 pt-3 bg-white border-t border-slate-100">
+              <button onclick="this.closest('.survey-modal-overlay').remove()" class="w-full py-3 rounded-xl bg-slate-100 text-slate-600 font-medium hover:bg-slate-200 transition text-sm">关闭</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      } catch (e) { toast('获取数据失败: ' + e.message, 'error'); }
+    }
+
+    function exportSurveyExcel() {
+      const data = window._surveyExportData;
+      if (!data || !data.responses || !data.responses.length) {
+        toast('暂无数据可导出', 'warning');
+        return;
+      }
+      const { survey, questions, responses } = data;
+      const headers = ['序号', '姓名', '部门', '提交时间', ...questions.map((q, i) => (i+1) + '.' + (q.title || '题目' + (i+1)))];
+      const rows = responses.map((r, i) => {
+        const answers = r.answers || [];
+        return [
+          i + 1,
+          r.userName || '匿名用户',
+          r.department || '',
+          new Date(r.submittedAt).toLocaleString('zh-CN'),
+          ...questions.map(q => {
+            const a = answers.find(x => x.questionId === q.id);
+            if (!a) return '';
+            return Array.isArray(a.value) ? a.value.join('; ') : String(a.value || '');
+          })
+        ];
+      });
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      // 设置列宽
+      ws['!cols'] = [
+        { wch: 6 }, { wch: 12 }, { wch: 15 }, { wch: 20 },
+        ...questions.map(() => ({ wch: 25 }))
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '调研数据');
+      XLSX.writeFile(wb, (survey.title || '调研数据') + '_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+      toast('Excel 已导出');
+    }
+
+
+    function viewResponseDetail(responseIdx) {
+      const data = window._surveyExportData;
+      if (!data) return;
+      const { questions, responses } = data;
+      const r = responses[responseIdx];
+      if (!r) return;
+      const answers = r.answers || [];
+
+      const detailModal = document.createElement('div');
+      detailModal.className = 'survey-modal-overlay fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-start justify-center pt-8 pb-8';
+      detailModal.onclick = function(e) { if (e.target === this) this.remove(); };
+
+      const answerHtml = questions.map((q, qi) => {
+        const a = answers.find(x => x.questionId === q.id);
+        let val = '未回答';
+        if (a) {
+          if (q.type === 'rating') {
+            const labels = {1:'很不满意',2:'不满意',3:'一般',4:'满意',5:'很满意'};
+            val = a.value + '星 ' + (labels[a.value] || '');
+          } else {
+            val = Array.isArray(a.value) ? a.value.join(', ') : (a.value || '未回答');
+          }
+        }
+        return '<div class="py-3 border-b border-slate-100 last:border-0">' +
+          '<p class="text-xs text-slate-400 mb-1">' + (qi+1) + '. ' + escHtml(q.title || '') + '</p>' +
+          '<p class="text-sm text-slate-800 font-medium">' + escHtml(val) + '</p>' +
+        '</div>';
+      }).join('');
+
+      detailModal.innerHTML = `
+        <div class="bg-white rounded-2xl w-full max-w-lg max-h-[calc(100vh-4rem)] flex flex-col shadow-2xl" onclick="event.stopPropagation()">
+          <div class="bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-4 flex items-center justify-between flex-shrink-0">
+            <div>
+              <h3 class="text-lg font-bold text-white">填写详情</h3>
+              <p class="text-white/60 text-sm">${escHtml(r.userName || '匿名用户')}${r.department ? ' · ' + escHtml(r.department) : ''} · ${new Date(r.submittedAt).toLocaleString('zh-CN')}</p>
+            </div>
+            <button onclick="this.closest('.survey-modal-overlay').remove()" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="flex-1 overflow-y-auto px-6 py-4">
+            ${answerHtml}
+          </div>
+          <div class="px-6 pb-4 pt-3 border-t border-slate-100">
+            <button onclick="this.closest('.survey-modal-overlay').remove()" class="w-full py-2.5 rounded-xl bg-slate-100 text-slate-600 font-medium hover:bg-slate-200 transition text-sm">关闭</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(detailModal);
+    }
+
+    // ========== 工具函数 ==========
+    function escHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ========== 讲师报名管理 ==========
+    
+    // 加载讲师报名列表
+    async function loadLecturerApplications() {
+      try {
+        const res = await fetch('/api/lecturer-applications');
+        if (!res.ok) throw new Error('加载失败');
+        const result = await res.json();
+        const applications = result.data || [];
+        
+        const tbody = document.getElementById('lecturer-apply-list');
+        if (!tbody) return;
+        
+        if (applications.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-inbox text-4xl mb-3 block"></i><p>暂无讲师报名申请</p></td></tr>';
+          return;
+        }
+        
+        const experienceMap = {
+          'none': '暂无',
+          '1-2': '1-2次',
+          '3-4': '3-4次',
+          '5+': '5次及以上'
+        };
+        
+        const statusMap = {
+          'pending': '<span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">待审核</span>',
+          'approved': '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">已通过</span>',
+          'rejected': '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">已拒绝</span>'
+        };
+        
+        tbody.innerHTML = applications.map(app => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-3 text-sm text-slate-800">${escHtml(app.name)}</td>
+            <td class="px-4 py-3 text-sm text-slate-600">${escHtml(app.department)}</td>
+            <td class="px-4 py-3 text-sm text-slate-600">
+              <div class="flex flex-wrap gap-1 max-w-[150px]">
+                ${(app.skills || []).map(s => `<span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-xs">${escHtml(s)}</span>`).join('') || '<span class="text-slate-400 text-xs">无</span>'}
+              </div>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-600">${experienceMap[app.experience] || app.experience || '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-600 max-w-[150px] truncate" title="${escHtml(app.intro)}">${escHtml(app.intro) || '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-600 max-w-[200px] truncate" title="${escHtml(app.reason)}">${escHtml(app.reason) || '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">${app.createdAt ? new Date(app.createdAt).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+            <td class="px-4 py-3">${statusMap[app.status] || app.status}</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center justify-center gap-2">
+                ${app.status === 'pending' ? `
+                  <button onclick="approveApplication(${app.id}, 'approved')" class="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg text-xs font-medium transition">
+                    <i class="fas fa-check mr-1"></i>通过
+                  </button>
+                  <button onclick="approveApplication(${app.id}, 'rejected')" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-medium transition">
+                    <i class="fas fa-times mr-1"></i>拒绝
+                  </button>
+                ` : ''}
+                <button onclick="deleteApplication(${app.id})" class="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-lg text-xs font-medium transition">
+                  <i class="fas fa-trash mr-1"></i>删除
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error('加载讲师报名列表失败:', e);
+        toast('加载失败: ' + e.message, 'error');
+      }
+    }
+    
+    // 审批申请
+    async function approveApplication(id, status) {
+      const actionText = status === 'approved' ? '通过' : '拒绝';
+      if (!confirm(`确定要${actionText}该申请吗？`)) return;
+      
+      try {
+        const res = await fetch(`/api/lecturer-applications/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+        
+        if (!res.ok) throw new Error('操作失败');
+        
+        toast(`申请已${actionText}`);
+        loadLecturerApplications();
+      } catch (e) {
+        toast('操作失败: ' + e.message, 'error');
+      }
+    }
+    
+    // 删除申请
+    async function deleteApplication(id) {
+      if (!confirm('确定要删除该申请吗？此操作不可恢复。')) return;
+      
+      try {
+        const res = await fetch(`/api/lecturer-applications/${id}`, {
+          method: 'DELETE'
+        });
+        
+        if (!res.ok) throw new Error('删除失败');
+        
+        toast('申请已删除');
+        loadLecturerApplications();
+      } catch (e) {
+        toast('删除失败: ' + e.message, 'error');
+      }
+    }
+    
+    // 查看申请详情
+    async function viewApplicationDetail(id) {
+      try {
+        const res = await fetch('/api/lecturer-applications');
+        if (!res.ok) throw new Error('加载失败');
+        const result = await res.json();
+        const app = (result.data || []).find(a => a.id === id);
+        
+        if (!app) {
+          toast('申请不存在', 'error');
+          return;
+        }
+        
+        const experienceMap = {
+          'none': '暂无',
+          '1-2': '1-2次',
+          '3-4': '3-4次',
+          '5+': '5次及以上'
+        };
+        
+        const statusMap = {
+          'pending': '待审核',
+          'approved': '已通过',
+          'rejected': '已拒绝'
+        };
+        
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center';
+        modal.onclick = function(e) { if (e.target === this) this.remove(); };
+        
+        modal.innerHTML = `
+          <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-xl m-4" onclick="event.stopPropagation()">
+            <div class="bg-gradient-primary px-6 py-4 flex-shrink-0">
+              <h2 class="text-xl font-bold text-white"><i class="fa fa-file-alt mr-2"></i>申请详情</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs text-slate-500 mb-1">姓名</label>
+                  <p class="text-sm font-medium text-slate-800">${escHtml(app.name)}</p>
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-500 mb-1">部门</label>
+                  <p class="text-sm font-medium text-slate-800">${escHtml(app.department)}</p>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">擅长领域</label>
+                <div class="flex flex-wrap gap-2">
+                  ${(app.skills || []).map(s => `<span class="px-2 py-1 bg-indigo-50 text-indigo-600 rounded text-xs">${escHtml(s)}</span>`).join('') || '<span class="text-slate-400 text-sm">无</span>'}
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">授课经验</label>
+                <p class="text-sm font-medium text-slate-800">${experienceMap[app.experience] || app.experience || '未填写'}</p>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">个人简介</label>
+                <p class="text-sm text-slate-700 whitespace-pre-wrap">${escHtml(app.intro) || '未填写'}</p>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">申请原因</label>
+                <p class="text-sm text-slate-700 whitespace-pre-wrap">${escHtml(app.reason) || '未填写'}</p>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">申请状态</label>
+                <p class="text-sm font-medium">${statusMap[app.status] || app.status}</p>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">申请时间</label>
+                <p class="text-sm text-slate-700">${new Date(app.createdAt).toLocaleString('zh-CN')}</p>
+              </div>
+            </div>
+            <div class="px-6 pb-5 pt-2 border-t flex gap-3">
+              <button onclick="this.closest('.fixed').remove()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition">关闭</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+      } catch (e) {
+        toast('加载详情失败: ' + e.message, 'error');
+      }
+    }
+    
+    // 监听运营管理标签页切换，加载讲师报名数据
+    const originalSwitchSubTab = window.switchSubTab;
+    if (originalSwitchSubTab) {
+      window.switchSubTab = function(parent, child) {
+        originalSwitchSubTab(parent, child);
+        if (parent === 'portal' && child === 'lecturer-apply') {
+          loadLecturerApplications();
+        }
+        if (parent === 'portal' && child === 'training-requests') {
+          loadTrainingRequests();
+        }
+      };
+    }
+
+    // ========== 培训需求管理功能 ==========
+
+    // 加载培训需求列表
+    async function loadTrainingRequests() {
+      try {
+        let requests = [];
+        
+        // 尝试从服务器获取
+        try {
+          const res = await fetch('/api/training-requests');
+          if (res.ok) {
+            const result = await res.json();
+            requests = result.data || [];
+          }
+        } catch (e) {
+          console.log('从服务器获取失败，使用本地数据:', e.message);
+        }
+        
+        // 如果服务器没有数据，从 localStorage 获取
+        if (requests.length === 0) {
+          requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        }
+        
+        // 按状态筛选
+        const statusFilter = document.getElementById('training-request-status-filter')?.value || 'all';
+        if (statusFilter !== 'all') {
+          requests = requests.filter(r => r.status === statusFilter);
+        }
+        
+        // 按时间倒序排列
+        requests.sort((a, b) => new Date(b.submitTime) - new Date(a.submitTime));
+        
+        // 更新统计
+        updateTrainingRequestStats();
+        
+        // 渲染列表
+        renderTrainingRequestList(requests);
+        
+      } catch (e) {
+        console.error('加载培训需求失败:', e);
+        toast('加载培训需求失败: ' + e.message, 'error');
+      }
+    }
+
+    // 更新培训需求统计
+    function updateTrainingRequestStats() {
+      let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+      
+      // 尝试合并服务器数据
+      try {
+        const serverData = localStorage.getItem('training_requests_server');
+        if (serverData) {
+          const serverRequests = JSON.parse(serverData);
+          requests = [...requests, ...serverRequests];
+        }
+      } catch (e) {}
+      
+      const stats = {
+        total: requests.length,
+        pending: requests.filter(r => r.status === 'pending').length,
+        approved: requests.filter(r => r.status === 'approved').length,
+        rejected: requests.filter(r => r.status === 'rejected').length,
+        completed: requests.filter(r => r.status === 'completed').length
+      };
+      
+      document.getElementById('req-stat-total').textContent = stats.total;
+      document.getElementById('req-stat-pending').textContent = stats.pending;
+      document.getElementById('req-stat-approved').textContent = stats.approved;
+      document.getElementById('req-stat-rejected').textContent = stats.rejected;
+      document.getElementById('req-stat-completed').textContent = stats.completed;
+      
+      // 更新徽章
+      const badge = document.getElementById('training-request-badge');
+      if (badge) {
+        if (stats.pending > 0) {
+          badge.textContent = stats.pending;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+    }
+
+    // 渲染培训需求列表
+    function renderTrainingRequestList(requests) {
+      const tbody = document.getElementById('training-request-list');
+      if (!tbody) return;
+      
+      if (requests.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="px-6 py-12 text-center text-slate-400">
+              <i class="fas fa-inbox text-4xl mb-3 block"></i>
+              <p>暂无培训需求</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      
+      const statusMap = {
+        'pending': '<span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">待处理</span>',
+        'approved': '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">已批准</span>',
+        'rejected': '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">已拒绝</span>',
+        'completed': '<span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">已完成</span>'
+      };
+      
+      tbody.innerHTML = requests.map(req => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-4 py-3 text-sm font-medium text-slate-800">${escHtml(req.submitterName)}</td>
+          <td class="px-4 py-3 text-sm text-slate-600">${escHtml(req.department)}</td>
+          <td class="px-4 py-3 text-sm text-slate-600">
+            <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-xs">${escHtml(req.trainingType)}</span>
+          </td>
+          <td class="px-4 py-3 text-sm text-slate-800 font-medium max-w-[150px] truncate" title="${escHtml(req.topic)}">${escHtml(req.topic)}</td>
+          <td class="px-4 py-3 text-sm text-slate-600 max-w-[100px] truncate" title="${escHtml(req.targetAudience || '')}">${escHtml(req.targetAudience) || '-'}</td>
+          <td class="px-4 py-3 text-sm text-slate-600">${escHtml(req.expectedTime) || '-'}</td>
+          <td class="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">${req.submitTime ? new Date(req.submitTime).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+          <td class="px-4 py-3">${statusMap[req.status] || req.status}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-center gap-2">
+              <button onclick="viewTrainingRequestDetail('${req.id}')" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs font-medium transition">
+                <i class="fas fa-eye mr-1"></i>查看
+              </button>
+              ${req.status === 'pending' ? `
+                <button onclick="updateTrainingRequestStatus('${req.id}', 'approved')" class="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg text-xs font-medium transition">
+                  <i class="fas fa-check mr-1"></i>批准
+                </button>
+                <button onclick="updateTrainingRequestStatus('${req.id}', 'rejected')" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-medium transition">
+                  <i class="fas fa-times mr-1"></i>拒绝
+                </button>
+              ` : ''}
+              <button onclick="deleteTrainingRequest('${req.id}')" class="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-lg text-xs font-medium transition">
+                <i class="fas fa-trash mr-1"></i>删除
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // 查看培训需求详情
+    async function viewTrainingRequestDetail(id) {
+      try {
+        // 从 localStorage 获取
+        let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        let req = requests.find(r => r.id === id);
+        
+        if (!req) {
+          toast('需求记录不存在', 'error');
+          return;
+        }
+        
+        const statusMap = {
+          'pending': '待处理',
+          'approved': '已批准',
+          'rejected': '已拒绝',
+          'completed': '已完成'
+        };
+        
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center';
+        modal.onclick = function(e) { if (e.target === this) this.remove(); };
+        
+        modal.innerHTML = `
+          <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl m-4" onclick="event.stopPropagation()">
+            <div class="bg-gradient-primary px-6 py-4 flex-shrink-0">
+              <h2 class="text-xl font-bold text-white"><i class="fa fa-clipboard-list mr-2"></i>培训需求详情</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs text-slate-500 mb-1">提交人</label>
+                  <p class="text-sm font-medium text-slate-800">${escHtml(req.submitterName)}</p>
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-500 mb-1">部门</label>
+                  <p class="text-sm font-medium text-slate-800">${escHtml(req.department)}</p>
+                </div>
+              </div>
+              <div class="border-t border-slate-100 pt-4">
+                <label class="block text-xs text-slate-500 mb-1">培训类型</label>
+                <p class="text-sm font-medium text-slate-800">${escHtml(req.trainingType)}</p>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">培训主题</label>
+                <p class="text-sm font-medium text-slate-800">${escHtml(req.topic)}</p>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">培训对象</label>
+                <p class="text-sm text-slate-700">${escHtml(req.targetAudience) || '未填写'}</p>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">期望时间</label>
+                <p class="text-sm text-slate-700">${escHtml(req.expectedTime) || '未填写'}</p>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">需求描述</label>
+                <p class="text-sm text-slate-700 whitespace-pre-wrap bg-slate-50 p-3 rounded-lg">${escHtml(req.description) || '未填写'}</p>
+              </div>
+              <div class="border-t border-slate-100 pt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs text-slate-500 mb-1">当前状态</label>
+                  <p class="text-sm font-medium">${statusMap[req.status] || req.status}</p>
+                </div>
+                <div>
+                  <label class="block text-xs text-slate-500 mb-1">提交时间</label>
+                  <p class="text-sm text-slate-700">${new Date(req.submitTime).toLocaleString('zh-CN')}</p>
+                </div>
+              </div>
+            </div>
+            <div class="px-6 pb-5 pt-2 border-t flex gap-3">
+              ${req.status === 'pending' ? `
+                <button onclick="updateTrainingRequestStatus('${req.id}', 'approved'); this.closest('.fixed').remove();" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-medium transition">
+                  <i class="fas fa-check mr-2"></i>批准
+                </button>
+                <button onclick="updateTrainingRequestStatus('${req.id}', 'rejected'); this.closest('.fixed').remove();" class="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition">
+                  <i class="fas fa-times mr-2"></i>拒绝
+                </button>
+              ` : ''}
+              <button onclick="this.closest('.fixed').remove()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition">关闭</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+      } catch (e) {
+        toast('加载详情失败: ' + e.message, 'error');
+      }
+    }
+
+    // 更新培训需求状态
+    async function updateTrainingRequestStatus(id, status) {
+      const actionText = status === 'approved' ? '批准' : (status === 'rejected' ? '拒绝' : '完成');
+      if (!confirm(`确定要${actionText}该培训需求吗？`)) return;
+      
+      try {
+        // 尝试发送到服务器
+        try {
+          const res = await fetch(`/api/training-requests/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status, updateTime: new Date().toISOString() })
+          });
+          if (res.ok) {
+            toast(`需求已${actionText}`);
+            loadTrainingRequests();
+            return;
+          }
+        } catch (e) {
+          console.log('服务器更新失败，使用本地存储:', e.message);
+        }
+        
+        // 本地更新
+        let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        const index = requests.findIndex(r => r.id === id);
+        if (index !== -1) {
+          requests[index].status = status;
+          requests[index].updateTime = new Date().toISOString();
+          localStorage.setItem('training_requests', JSON.stringify(requests));
+          toast(`需求已${actionText}（本地保存）`);
+          loadTrainingRequests();
+        }
+      } catch (e) {
+        toast('操作失败: ' + e.message, 'error');
+      }
+    }
+
+    // 删除培训需求
+    async function deleteTrainingRequest(id) {
+      if (!confirm('确定要删除该培训需求吗？此操作不可恢复。')) return;
+      
+      try {
+        // 尝试发送到服务器
+        try {
+          const res = await fetch(`/api/training-requests/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            toast('需求已删除');
+            loadTrainingRequests();
+            return;
+          }
+        } catch (e) {
+          console.log('服务器删除失败，使用本地存储:', e.message);
+        }
+        
+        // 本地删除
+        let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        requests = requests.filter(r => r.id !== id);
+        localStorage.setItem('training_requests', JSON.stringify(requests));
+        toast('需求已删除（本地保存）');
+        loadTrainingRequests();
+      } catch (e) {
+        toast('删除失败: ' + e.message, 'error');
+      }
+    }
+
+    // 导出培训需求
+    function exportTrainingRequests() {
+      try {
+        let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        
+        if (requests.length === 0) {
+          toast('没有可导出的数据', 'error');
+          return;
+        }
+        
+        const statusMap = {
+          'pending': '待处理',
+          'approved': '已批准',
+          'rejected': '已拒绝',
+          'completed': '已完成'
+        };
+        
+        // CSV 表头
+        const headers = ['提交人', '部门', '岗位', '邮箱', '培训类型', '培训主题', '培训对象', '期望时间', '需求描述', '状态', '提交时间'];
+        
+        // CSV 内容
+        const rows = requests.map(req => [
+          req.submitterName,
+          req.department,
+          req.position,
+          req.email,
+          req.trainingType,
+          req.topic,
+          req.targetAudience || '',
+          req.expectedTime || '',
+          (req.description || '').replace(/\n/g, ' '),
+          statusMap[req.status] || req.status,
+          new Date(req.submitTime).toLocaleString('zh-CN')
+        ]);
+        
+        // 构建 CSV
+        const csvContent = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
+        
+        // 下载
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `培训需求_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        
+        toast('导出成功');
+      } catch (e) {
+        toast('导出失败: ' + e.message, 'error');
+      }
+    }
+
+    // 页面加载时更新徽章
+    document.addEventListener('DOMContentLoaded', () => {
+      updateTrainingRequestStats();
+    });
+  
