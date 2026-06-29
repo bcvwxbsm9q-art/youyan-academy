@@ -51,7 +51,7 @@
       "1781065485355_0": 1,
       "1781077900894_0": 100
     },
-    "lastStudyTime": "2026-06-29T06:23:58.422Z",
+    "lastStudyTime": "2026-06-29T10:56:03.785Z",
     "studyDates": [
       "2026-06-14",
       "2026-06-15",
@@ -62,7 +62,7 @@
       "2026-06-26",
       "2026-06-29"
     ],
-    "totalSeconds": 612,
+    "totalSeconds": 614,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -566,6 +566,24 @@
         "videoTitle": "Untiy UI Draw Call基础指南.mp4",
         "duration": 18,
         "timestamp": "2026-06-29T06:23:58.422Z",
+        "date": "2026-06-29"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-29T10:56:00.126Z",
+        "date": "2026-06-29"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-29T10:56:03.785Z",
         "date": "2026-06-29"
       }
     ],
@@ -1178,7 +1196,7 @@
       ],
       "attachments": [],
       "duration": 2054,
-      "views": 38,
+      "views": 39,
       "rating": 3,
       "id": 1781080411545,
       "createdAt": "2026/6/10 16:33:31",
@@ -1469,7 +1487,7 @@
   },
   "video_pos_1780909174403_1781080411545_0": {
     "position": 1009,
-    "savedAt": "2026-06-29T06:23:31.741Z"
+    "savedAt": "2026-06-29T10:56:01.743Z"
   },
   "course_interaction_1781080411545": {
     "likes": 2,
@@ -1487,8 +1505,8 @@
     "userShares": {}
   },
   "video_pos_1780909174403_1781080411545_1": {
-    "position": 52,
-    "savedAt": "2026-06-29T06:23:58.381Z"
+    "position": 53,
+    "savedAt": "2026-06-29T10:56:03.743Z"
   },
   "course_interaction_1781077900894": {
     "likes": 1,

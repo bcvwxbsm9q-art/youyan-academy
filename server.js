@@ -1829,6 +1829,11 @@ app.get('/api/exams', (req, res) => {
     const unstarted = (exam.allowedUsers && Array.isArray(exam.allowedUsers))
       ? Math.max(0, exam.allowedUsers.length - examAttempts.length)
       : 0;
+    // 基于已完成考试的分数计算平均分、最高分、通过率
+    const completedScores = completed.map(a => a.score).filter(s => typeof s === 'number');
+    const avgScore = completedScores.length ? (completedScores.reduce((s, v) => s + v, 0) / completedScores.length).toFixed(1) : null;
+    const maxScore = completedScores.length ? Math.max(...completedScores) : null;
+    const passRatePercent = completed.length ? Math.round(passed / completed.length * 100) : null;
     return {
       ...exam,
       questionCount: (exam.questions || []).length,
@@ -1837,7 +1842,10 @@ app.get('/api/exams', (req, res) => {
       passCount: passed,
       failCount: failed,
       absentCount: absent,
-      unstartedCount: unstarted
+      unstartedCount: unstarted,
+      avgScore,
+      maxScore,
+      passRatePercent
     };
   });
   res.json(enriched);

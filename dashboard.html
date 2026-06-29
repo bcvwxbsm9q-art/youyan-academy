@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -635,10 +635,10 @@
 
           <!-- 趋势图 + 热门课程 -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <!-- 内容新增趋势 -->
+            <!-- 学习趋势 -->
             <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm">
               <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold text-slate-800">内容新增趋势</h3>
+                <h3 class="font-semibold text-slate-800">学习趋势</h3>
                 <div class="flex gap-1">
                   <button onclick="setTrendDays(7)" class="rpt-trend-btn active text-xs px-3 py-1 rounded-lg">近7天</button>
                   <button onclick="setTrendDays(30)" class="rpt-trend-btn text-xs px-3 py-1 rounded-lg">近30天</button>
@@ -8732,14 +8732,12 @@
 
     // 加载用户列表
     async function loadUsers() {
-      (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#94a3b8\">loadUsers: 开始加载用户...</div>';})();
       console.log('[User Management] 开始加载用户列表...');
       try {
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         console.log('[User Management] Token:', token ? '存在' : '不存在');
 
         if (!token) {
-          (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadUsers: 没有 token!</div>';})();
           toast('请先登录', 'error');
           return;
         }
@@ -8757,17 +8755,14 @@
           const result = await res.json();
           console.log('[User Management] 获取到的用户数据:', result);
           allUsers = result.data.users || [];
-          (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#4ade80\">loadUsers: 获取到 ' + allUsers.length + ' 个用户</div>';})();
           console.log('[User Management] 用户数量:', allUsers.length);
           filterAndRenderUsers();
         } else {
           const errorText = await res.text();
-          (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadUsers: HTTP ' + res.status + ' - ' + errorText + '</div>';})();
           console.error('[User Management] 加载失败:', res.status, errorText);
           toast('加载用户失败: ' + res.status, 'error');
         }
       } catch (err) {
-        (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadUsers ERROR: ' + (err.message||err) + '</div>';})();
         console.error('[User Management] 网络错误:', err);
         toast('网络错误', 'error');
       }
@@ -11739,7 +11734,7 @@
 
     function confirmExamUserPicker() {
       if (userPickerMode === 'assign') {
-        renderAssignAllowedUsers();
+        renderExamAllowedUsers();
       } else if (userPickerMode === 'training') {
         renderTrainingAllowedUsers();
       } else {
@@ -11780,8 +11775,7 @@
       targetTemp.delete(id);
       targetTemp.delete(sid);
       targetTemp.delete(Number(id));
-      if (userPickerMode === 'assign') renderAssignAllowedUsers();
-      else renderExamAllowedUsers();
+      renderExamAllowedUsers();
     }
 
     function openExamModal(id = null) {
@@ -12051,7 +12045,6 @@
               }
             }
           }
-          var _sq = document.getElementById('examShuffleQuestions'); if (_sq) _sq.checked = !!exam.shuffleQuestions;
           var _so = document.getElementById('examShuffleOptions'); if (_so) _so.checked = !!exam.shuffleOptions;
           // 恢复学员查看设置
           if (exam.showData !== undefined) {
@@ -12095,8 +12088,8 @@
             renderSelectedQuestions();
           }
           // 恢复任务指派
-          if (exam.startTime) document.getElementById('examStartTime').value = new Date(exam.startTime).toISOString().slice(0, 16);
-          if (exam.endTime) document.getElementById('examEndTime').value = new Date(exam.endTime).toISOString().slice(0, 16);
+          if (exam.startTime) document.getElementById('examStartTime').value = toLocalDateTimeInput(exam.startTime);
+          if (exam.endTime) document.getElementById('examEndTime').value = toLocalDateTimeInput(exam.endTime);
           let accessType = exam.accessType || 'none';
           if (accessType === 'open' || accessType === 'public') accessType = 'public';
           else if (accessType === 'restricted') accessType = exam.allowedUsers && exam.allowedUsers.length ? 'restricted' : 'none';
@@ -12583,13 +12576,19 @@
       renderExamDetailStudents();
     }
 
-    function formatDuration(seconds) {
+    function formatExamDuration(seconds) {
       if (!seconds || seconds <= 0) return '-';
       const h = Math.floor(seconds / 3600);
       const m = Math.floor((seconds % 3600) / 60);
       const s = seconds % 60;
       if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       return `${m}分${s}秒`;
+    }
+
+    function toLocalDateTimeInput(dateStr) {
+      const d = new Date(dateStr);
+      const pad = n => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     }
 
     function renderExamDetailStudents() {
@@ -12630,7 +12629,7 @@
           </td>
           <td class="px-3 py-3 text-center font-medium text-slate-700">${scoreDisplay}</td>
           <td class="px-3 py-3 text-center text-slate-600">${rateDisplay}</td>
-          <td class="px-3 py-3 text-center text-slate-600">${formatDuration(s.duration)}</td>
+          <td class="px-3 py-3 text-center text-slate-600">${formatExamDuration(s.duration)}</td>
           <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 text-xs rounded-full font-medium ${statusClass}">${s.statusText}</span></td>
           <td class="px-3 py-3 text-center">
             <button onclick="openExamStudentRecords(${currentExamDetailId}, ${s.userId}, '${escJs(s.userName)}')" class="text-indigo-600 hover:text-indigo-700 text-xs font-medium">查看详情</button>
@@ -12784,7 +12783,7 @@
           const badge = r.isHighest ? '<span class="ml-1 px-1 py-0.5 text-[10px] border border-indigo-300 text-indigo-600 rounded">最高</span>' : '';
           return `<tr>
             <td class="px-3 py-3 text-slate-600">${r.completedAt ? new Date(r.completedAt).toLocaleString('zh-CN') : '-'}</td>
-            <td class="px-3 py-3 text-center text-slate-600">${formatDuration(r.durationUsed)}</td>
+            <td class="px-3 py-3 text-center text-slate-600">${formatExamDuration(r.durationUsed)}</td>
             <td class="px-3 py-3 text-center text-slate-700 font-medium">${r.fullScore}/${r.score}${badge}</td>
             <td class="px-3 py-3 text-center text-slate-600">${r.scoreRate}%</td>
             <td class="px-3 py-3 text-center text-slate-600">系统</td>
@@ -12812,7 +12811,7 @@
         s.userName, s.department, s.phone, s.joinTime, s.attemptCount,
         s.status === 'passed' || s.status === 'failed' ? s.score : '-',
         s.status === 'passed' || s.status === 'failed' ? s.scoreRate + '%' : '-',
-        formatDuration(s.duration),
+        formatExamDuration(s.duration),
         s.statusText
       ]);
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
@@ -12839,7 +12838,7 @@
       const headers = ['交卷时间', '作答时长', '总分', '得分', '得分率', '阅卷人', '考试结果'];
       const rows = currentExamStudentRecords.map(r => [
         r.completedAt ? new Date(r.completedAt).toLocaleString('zh-CN') : '-',
-        formatDuration(r.durationUsed),
+        formatExamDuration(r.durationUsed),
         r.fullScore,
         r.score,
         r.scoreRate + '%',
@@ -14501,16 +14500,18 @@
         const d = new Date(); d.setDate(d.getDate() - i);
         labels.push((d.getMonth() + 1) + '/' + d.getDate());
         const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
-        // 统计当天新增的课程和培训数量（核心学习内容）
+        // 统计当天新增的课程、讲师、培训、用户总和作为学习活跃度
         const courseCnt = (data.courses || []).filter(c => toDateKey(c.createdAt) === dateStr).length;
+        const lectCnt   = (data.lecturers || []).filter(l => toDateKey(l.createdAt) === dateStr).length;
         const trainCnt  = (data.training || []).filter(t => toDateKey(t.createdAt || t.startTime) === dateStr).length;
-        values.push({ total: courseCnt + trainCnt, course: courseCnt, train: trainCnt });
+        const userCnt   = (allUsers || []).filter(u => toDateKey(u.createdAt || u.created_at) === dateStr).length;
+        values.push(courseCnt + lectCnt + trainCnt + userCnt);
       }
-      const maxV = Math.max(...values.map(v => v.total), 1);
+      const maxV = Math.max(...values, 1);
       chartEl.innerHTML = values.map((v, i) => {
-        const h = maxV ? Math.max((v.total / maxV) * 100, 3) : 3;
-        return `<div class="flex-1 flex flex-col items-center justify-end h-full" title="${labels[i]}：课程 ${v.course} 门 + 培训 ${v.train} 场">
-          <span class="text-[10px] text-slate-400 mb-1">${v.total || ''}</span>
+        const h = maxV ? Math.max((v / maxV) * 100, 3) : 3;
+        return `<div class="flex-1 flex flex-col items-center justify-end h-full" title="${labels[i]}: ${v}">
+          <span class="text-[10px] text-slate-400 mb-1">${v || ''}</span>
           <div class="w-full max-w-[32px] bg-gradient-to-t from-indigo-600 to-purple-400 rounded-t" style="height:${h}%"></div>
           ${i % Math.ceil(days / 7) === 0 || days <= 7 ? `<span class="text-[10px] text-slate-400 mt-1">${labels[i]}</span>` : ''}
         </div>`;
@@ -14661,12 +14662,13 @@
       });
 
       // 统计卡片
-      const allScores = filtered.flatMap(e => e.scores || e.results || []);
+      const allScores = filtered.flatMap(e => e.avgScore != null ? [parseFloat(e.avgScore)] : []);
       const avgScore  = allScores.length ? (allScores.reduce((s, v) => s + v, 0) / allScores.length).toFixed(1) : '-';
-      const passCount = allScores.filter(v => v >= 60).length;
-      const passRate  = allScores.length ? Math.round(passCount / allScores.length * 100) + '%' : '-';
+      const passCount = filtered.reduce((s, e) => s + (e.passCount || 0), 0);
+      const completedCount = filtered.reduce((s, e) => s + (e.completedCount || 0), 0);
+      const passRate  = completedCount ? Math.round(passCount / completedCount * 100) + '%' : '-';
       el('rpt-ex-total',      filtered.length);
-      el('rpt-ex-participants', filtered.reduce((s, e) => s + (e.participantCount || 0), 0));
+      el('rpt-ex-participants', filtered.reduce((s, e) => s + (e.attemptCount || 0), 0));
       el('rpt-ex-avgscore',    avgScore);
       el('rpt-ex-passrate',    passRate);
 
@@ -14674,18 +14676,19 @@
       const tbody = document.getElementById('rpt-ex-tbody');
       if (!tbody) return;
       tbody.innerHTML = filtered.map(e => {
-        const scores = e.scores || e.results || [];
-        const avg  = scores.length ? (scores.reduce((s, v) => s + v, 0) / scores.length).toFixed(1) : '-';
-        const max  = scores.length ? Math.max(...scores) : '-';
-        const pcnt = scores.filter(v => v >= 60).length;
-        const prate = scores.length ? Math.round(pcnt / scores.length * 100) + '%' : '-';
+        const avg  = e.avgScore != null ? e.avgScore : '-';
+        const max  = e.maxScore != null ? e.maxScore : '-';
+        const prate = e.passRatePercent != null ? e.passRatePercent + '%' : '-';
+        // 统一日期格式为 YYYY-MM-DD
+        const dateStr = e.startTime || e.createdAt || '';
+        const formattedDate = dateStr ? new Date(dateStr).toISOString().split('T')[0] : '-';
         return `<tr class="hover:bg-indigo-50/50 transition">
           <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(e.title)}</td>
-          <td class="px-4 py-3 text-sm text-center text-slate-600">${e.participantCount || 0}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${e.attemptCount || 0}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-600">${avg}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-600">${max}</td>
           <td class="px-4 py-3 text-sm text-center text-green-600 font-medium">${prate}</td>
-          <td class="px-4 py-3 text-sm text-center text-slate-400">${(e.startTime || e.createdAt || '').split(' ')[0] || '-'}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-400">${formattedDate}</td>
         </tr>`;
       }).join('') || '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
     }
@@ -14821,11 +14824,12 @@
       if (type === 'exam') {
         headers = ['考试名称', '参与人数', '平均分', '最高分', '通过率', '考试时间'];
         (data.exams || []).forEach(e => {
-          const scores = e.scores || e.results || [];
-          const avg = scores.length ? (scores.reduce((s, v) => s + v, 0) / scores.length).toFixed(1) : '';
-          const max = scores.length ? Math.max(...scores) : '';
-          const prate = scores.length ? Math.round(scores.filter(v => v >= 60).length / scores.length * 100) + '%' : '';
-          rows.push([e.title, e.participantCount || 0, avg, max, prate, (e.startTime || e.createdAt || '').split(' ')[0]]);
+          const avg = e.avgScore != null ? e.avgScore : '';
+          const max = e.maxScore != null ? e.maxScore : '';
+          const prate = e.passRatePercent != null ? e.passRatePercent + '%' : '';
+          const dateStr = e.startTime || e.createdAt || '';
+          const formattedDate = dateStr ? new Date(dateStr).toISOString().split('T')[0] : '';
+          rows.push([e.title, e.attemptCount || 0, avg, max, prate, formattedDate]);
         });
         filename = '考试报表_' + new Date().toISOString().split('T')[0] + '.csv';
       }
@@ -14866,9 +14870,8 @@
 
     async function loadSurveyList() {
       const container = document.getElementById('survey-list-container');
-      if (!container) { (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadSurveyList: survey-list-container 不存在!</div>';})(); return; }
+      if (!container) return;
 
-      (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#94a3b8\">loadSurveyList: 开始获取 /api/surveys...</div>';})();
       try {
         const [surveysRes, statsRes] = await Promise.all([
           fetch('/api/surveys'),
@@ -14947,10 +14950,8 @@
               </td>
             </tr>`;
         }).join('');
-        (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#4ade80\">loadSurveyList: 成功渲染 ' + surveys.length + ' 个调研</div>';})();
       } catch (e) {
         console.error('加载调研列表失败:', e);
-        (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadSurveyList ERROR: ' + (e.message||e) + '</div>';})();
         container.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-exclamation-triangle text-2xl mb-2 block"></i>加载失败</td></tr>';
       }
     }
