@@ -732,7 +732,7 @@
                     courses.forEach(c => {
                         const enrolledUsers = c.enrolledUsers || [];
                         const isEnrolled = currentUserId ? enrolledUsers.some(u => u.userId == currentUserId) : false;
-                        enrollMap[c.id] = { enrolledUsers, enrollCount: c.enrollCount || enrolledUsers.length, isEnrolled };
+                        enrollMap[c.id] = { enrolledUsers, enrollCount: c.enrollCount || enrolledUsers.length, isEnrolled, extendedEndTime: c.extendedEndTime || null };
                     });
                     const firstDate = new Date(json.data[0].date);
                     if (!isNaN(firstDate.getTime())) {
@@ -915,10 +915,27 @@
             return false;
         }
 
+        // 判断培训对个人是否已关闭（考虑个人延期时间）
+        function isTrainingAccessClosed(courseId, endTime) {
+            const now = new Date();
+            const info = enrollMap[courseId];
+            // 如果有个人延期时间，以延期时间为准
+            if (info && info.extendedEndTime) {
+                const extended = new Date(info.extendedEndTime);
+                return now > extended;
+            }
+            // 否则以培训全局 endTime 为准
+            if (endTime) {
+                const end = new Date(endTime);
+                return now > end;
+            }
+            return false;
+        }
+
         // 获取报名按钮HTML
-        function getEnrollButtonHTML(courseId, courseDate, courseTime, isSmall = false) {
+        function getEnrollButtonHTML(courseId, courseDate, courseTime, isSmall = false, endTime) {
             const isEnrolled = enrollMap[courseId]?.isEnrolled || false;
-            const isEnded = isCourseEnded(courseDate, courseTime);
+            const isEnded = isTrainingAccessClosed(courseId, endTime);
             
             if (isEnded) {
                 // 已结束的课程
@@ -948,8 +965,8 @@
         }
 
         // 获取课程详情弹窗的报名按钮HTML（使用统一的状态计算逻辑）
-        function getCourseDetailEnrollButton(courseId, courseDate, courseTime) {
-            const status = getCourseEnrollStatus(courseId, courseDate, courseTime);
+        function getCourseDetailEnrollButton(courseId, courseDate, courseTime, endTime) {
+            const status = getCourseEnrollStatus(courseId, courseDate, courseTime, endTime);
             
             if (status.isEnded) {
                 // 已结束的课程
@@ -979,10 +996,10 @@
         }
 
         // 统一获取课程报名状态（供多处使用）
-        function getCourseEnrollStatus(courseId, courseDate, courseTime) {
+        function getCourseEnrollStatus(courseId, courseDate, courseTime, endTime) {
             return {
                 isEnrolled: enrollMap[courseId]?.isEnrolled || false,
-                isEnded: isCourseEnded(courseDate, courseTime),
+                isEnded: isTrainingAccessClosed(courseId, endTime),
                 enrollCount: enrollMap[courseId]?.enrollCount || 0
             };
         }
@@ -1233,7 +1250,7 @@
                         </div>
                         <div class="flex flex-col justify-center items-end">
                             <span class="text-xs text-gray-400 mb-2">${c.duration}</span>
-                            ${getEnrollButtonHTML(c.id, c.date, c.time)}
+                            ${getEnrollButtonHTML(c.id, c.date, c.time, false, c.endTime)}
                         </div>
                     </div>
                 `;
@@ -1494,7 +1511,7 @@
                         <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2.5"><i class="fa fa-camera text-indigo-500"></i>学习风采</h3>
                         ${galleryContent}
                     </div>
-                    <div class="pt-2">${getCourseDetailEnrollButton(courseId, course.date, course.time)}</div>
+                    <div class="pt-2">${getCourseDetailEnrollButton(courseId, course.date, course.time, course.endTime)}</div>
                 </div>
             `;
             document.getElementById('modal-content').innerHTML = content;
@@ -1713,7 +1730,9 @@
                 const ext = (displayName || '').split('.').pop().toLowerCase();
                 const icon = iconMap[ext] || 'fa-file';
                 const sizeText = formatSize(f.size);
-                return `<a href="${f.url || '#'}" target="_blank" style="display:flex;align-items:center;gap:0.75rem;padding:0.875rem;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:0.625rem;text-decoration:none;margin-bottom:0.5rem;transition:all 0.2s;">
+                const safeUrl = (f.url || '#').replace(/"/g, '&quot;');
+                const safeName = displayName.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+                return `<div onclick="downloadCoursewareFile('${safeUrl}', '${safeName}')" style="cursor:pointer;display:flex;align-items:center;gap:0.75rem;padding:0.875rem;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:0.625rem;text-decoration:none;margin-bottom:0.5rem;transition:all 0.2s;">
                     <div style="width:2.25rem;height:2.25rem;border-radius:0.5rem;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                         <i class="fa ${icon}" style="font-size:1.125rem;color:#8b5cf6;"></i>
                     </div>
@@ -1724,7 +1743,7 @@
                     <div style="width:2rem;height:2rem;border-radius:50%;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#8b5cf6;">
                         <i class="fa fa-download" style="font-size:0.875rem;"></i>
                     </div>
-                </a>`;
+                </div>`;
             }).join('');
             // 复用 survey-modal 的结构，临时替换内容
             const modal = document.getElementById('survey-modal');
@@ -1742,6 +1761,29 @@
             body.innerHTML = `<div style="padding:0.25rem 0;">${fileListHtml}</div>`;
             footer.style.display = 'none';
             modal.style.display = 'flex';
+        }
+
+        async function downloadCoursewareFile(url, filename) {
+            if (!url || url === '#') { showToast('文件链接无效', 'error'); return; }
+            try {
+                showToast('正在下载：' + filename, 'info');
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('下载失败');
+                const blob = await res.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(blobUrl);
+                showToast('下载完成：' + filename, 'success');
+            } catch (e) {
+                console.warn('[downloadCoursewareFile]', e);
+                // 降级：直接打开链接让浏览器处理
+                window.open(url, '_blank');
+            }
         }
 
         // ===== 调研问卷弹窗 =====
@@ -2038,7 +2080,10 @@
             const openTrainingId = urlParams.get('openTrainingId');
             if (openTrainingId) {
                 const course = courses.find(c => String(c.id) === String(openTrainingId));
-                if (course) showCourseDetailInModal(course.id);
+                if (course) {
+                    showCourseDetailInModal(course.id);
+                    document.getElementById('day-modal').style.display = 'flex';
+                }
             }
 
             // 页面重新可见时刷新数据（用户从考试窗口返回后能看到最新完成状态）

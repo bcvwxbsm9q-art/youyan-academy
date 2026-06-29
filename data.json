@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1782044069160-440027461.jpg",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/6/27 14:27:13",
+      "lastLogin": "2026/6/29 10:36:26",
       "status": "active",
       "position": "人事经理"
     },
@@ -26,7 +26,7 @@
       "role": "user",
       "avatar": "",
       "createdAt": "2026/6/10 18:23:41",
-      "lastLogin": "2026/6/27 14:25:06",
+      "lastLogin": "2026/6/29 10:34:59",
       "status": "active"
     }
   ],
@@ -44,14 +44,14 @@
       "1781065453648_0": 100,
       "1781087427858_0": 5,
       "1781080411545_0": 100,
-      "1781080411545_1": 100,
+      "1781080411545_1": 5,
       "1781064630171_0": 52,
       "1781506198054_0": 17,
       "1781065281803_0": 3,
       "1781065485355_0": 1,
       "1781077900894_0": 100
     },
-    "lastStudyTime": "2026-06-26T14:05:20.860Z",
+    "lastStudyTime": "2026-06-29T06:23:58.422Z",
     "studyDates": [
       "2026-06-14",
       "2026-06-15",
@@ -59,9 +59,10 @@
       "2026-06-20",
       "2026-06-22",
       "2026-06-24",
-      "2026-06-26"
+      "2026-06-26",
+      "2026-06-29"
     ],
-    "totalSeconds": 591,
+    "totalSeconds": 612,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -530,9 +531,45 @@
         "duration": 39,
         "timestamp": "2026-06-26T14:05:20.860Z",
         "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-29T06:23:30.111Z",
+        "date": "2026-06-29"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-29T06:23:33.178Z",
+        "date": "2026-06-29"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-29T06:23:39.068Z",
+        "date": "2026-06-29"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 18,
+        "timestamp": "2026-06-29T06:23:58.422Z",
+        "date": "2026-06-29"
       }
     ],
-    "shares": 1,
+    "shares": 2,
     "ratings": 0,
     "likes": 1,
     "examRecords": [
@@ -1141,7 +1178,7 @@
       ],
       "attachments": [],
       "duration": 2054,
-      "views": 37,
+      "views": 38,
       "rating": 3,
       "id": 1781080411545,
       "createdAt": "2026/6/10 16:33:31",
@@ -1221,6 +1258,74 @@
       "id": 1781506198054,
       "createdAt": "2026/6/15 14:49:58",
       "updatedAt": "2026/6/23 23:04:27"
+    },
+    {
+      "title": "寻路算法简介",
+      "cover": "/uploads/covers/1782715829121-16798150.png",
+      "categoryId": 1780974142620,
+      "subcategoryId": 1780974152980,
+      "lecturerId": 1780911271132,
+      "description": "",
+      "status": "published",
+      "videos": [],
+      "attachments": [],
+      "duration": 0,
+      "views": 0,
+      "rating": 0,
+      "id": 1782715847311,
+      "createdAt": "2026/6/29 14:50:47",
+      "updatedAt": "2026/6/29 14:50:47"
+    },
+    {
+      "title": "Zbrush布料雕刻",
+      "cover": "/uploads/covers/1782715853427-26671989.png",
+      "categoryId": 1780974142620,
+      "subcategoryId": 1780974147097,
+      "lecturerId": 1781063989679,
+      "description": "",
+      "status": "published",
+      "videos": [],
+      "attachments": [],
+      "duration": 0,
+      "views": 0,
+      "rating": 0,
+      "id": 1782715870012,
+      "createdAt": "2026/6/29 14:51:10",
+      "updatedAt": "2026/6/29 14:51:10"
+    },
+    {
+      "title": "浅谈色彩原理",
+      "cover": "/uploads/covers/1782715876505-275090011.png",
+      "categoryId": 1780974099732,
+      "subcategoryId": 1780974107594,
+      "lecturerId": 1780986326119,
+      "description": "",
+      "status": "published",
+      "videos": [],
+      "attachments": [],
+      "duration": 0,
+      "views": 0,
+      "rating": 0,
+      "id": 1782715886439,
+      "createdAt": "2026/6/29 14:51:26",
+      "updatedAt": "2026/6/29 14:51:26"
+    },
+    {
+      "title": "设计中的对比关系",
+      "cover": "/uploads/covers/1782715895078-457080151.png",
+      "categoryId": 1780974099732,
+      "subcategoryId": 1780974104353,
+      "lecturerId": 1781064033425,
+      "description": "",
+      "status": "published",
+      "videos": [],
+      "attachments": [],
+      "duration": 0,
+      "views": 0,
+      "rating": 0,
+      "id": 1782715908220,
+      "createdAt": "2026/6/29 14:51:48",
+      "updatedAt": "2026/6/29 14:51:48"
     }
   ],
   "training_projects": [
@@ -1246,7 +1351,7 @@
       "location": "B区培训室",
       "date": "2026-06-27",
       "startTime": "2026-06-27T08:30",
-      "endTime": "2026-06-27T18:30",
+      "endTime": "2026-06-30T10:30",
       "id": 1781148703132,
       "signinEnabled": true,
       "signinCode": "1196",
@@ -1364,7 +1469,7 @@
   },
   "video_pos_1780909174403_1781080411545_0": {
     "position": 1009,
-    "savedAt": "2026-06-24T06:15:41.298Z"
+    "savedAt": "2026-06-29T06:23:31.741Z"
   },
   "course_interaction_1781080411545": {
     "likes": 2,
@@ -1377,11 +1482,13 @@
       "1781087021554": 3
     },
     "ratingSum": 6,
-    "ratingCount": 2
+    "ratingCount": 2,
+    "shares": 1,
+    "userShares": {}
   },
   "video_pos_1780909174403_1781080411545_1": {
-    "position": 1043,
-    "savedAt": "2026-06-24T06:15:48.115Z"
+    "position": 52,
+    "savedAt": "2026-06-29T06:23:58.381Z"
   },
   "course_interaction_1781077900894": {
     "likes": 1,
@@ -1762,7 +1869,7 @@
       "examId": 1782221347409,
       "read": true,
       "createdAt": "2026-06-23T13:29:07.419Z",
-      "readAt": "2026-06-26T10:27:56.358Z"
+      "readAt": "2026-06-29T02:19:17.676Z"
     },
     {
       "id": 1782221347420,
@@ -1806,7 +1913,7 @@
       "examId": 1782293247918,
       "read": true,
       "createdAt": "2026-06-24T09:27:27.928Z",
-      "readAt": "2026-06-25T03:37:04.885Z"
+      "readAt": "2026-06-29T02:19:06.171Z"
     },
     {
       "id": 1782293247929,
@@ -1890,7 +1997,7 @@
       "examId": 1782468162514,
       "read": true,
       "createdAt": "2026-06-26T10:02:42.524Z",
-      "readAt": "2026-06-27T04:49:23.620Z"
+      "readAt": "2026-06-29T02:18:58.967Z"
     },
     {
       "id": 1782468162524,
@@ -1899,8 +2006,52 @@
       "content": "您有一场新考试「123」待参加，考试时长60分钟，及格分数60分，请尽快完成。",
       "type": "exam",
       "examId": 1782468162514,
+      "read": true,
+      "createdAt": "2026-06-26T10:02:42.524Z",
+      "readAt": "2026-06-29T02:35:31.702Z"
+    },
+    {
+      "userId": 1781087021554,
+      "title": "培训学习提醒",
+      "content": "您报名的「AI小白的日常」尚未完成，请尽快完成学习任务。",
+      "type": "training",
+      "trainingId": 1781148703132,
+      "id": 1782700448430,
+      "read": true,
+      "createdAt": "2026-06-29T02:34:08.430Z",
+      "readAt": "2026-06-29T02:35:07.215Z"
+    },
+    {
+      "userId": 1780909174403,
+      "title": "培训学习提醒",
+      "content": "您报名的「AI小白的日常」尚未完成，请尽快完成学习任务。",
+      "type": "training",
+      "trainingId": 1781148703132,
+      "id": 1782700451710,
+      "read": true,
+      "createdAt": "2026-06-29T02:34:11.710Z",
+      "readAt": "2026-06-29T02:34:20.053Z"
+    },
+    {
+      "userId": 1780909174403,
+      "title": "培训学习提醒",
+      "content": "您报名的「AI小白的日常」尚未完成，请尽快完成学习任务。",
+      "type": "training",
+      "trainingId": 1781148703132,
+      "id": 1782700453676,
+      "read": true,
+      "createdAt": "2026-06-29T02:34:13.676Z",
+      "readAt": "2026-06-29T06:07:36.081Z"
+    },
+    {
+      "userId": "1781087021554",
+      "title": "培训学习时间延期",
+      "content": "您参与的「AI小白的日常」学习时间已延期，请合理安排时间尽快完成学习任务。",
+      "type": "training",
+      "trainingId": 1781148703132,
+      "id": 1782700490786,
       "read": false,
-      "createdAt": "2026-06-26T10:02:42.524Z"
+      "createdAt": "2026-06-29T02:34:50.786Z"
     }
   ],
   "notification_reads": [
@@ -3092,6 +3243,26 @@
       "correctCount": 1,
       "totalQuestions": 3,
       "durationUsed": 5
+    },
+    {
+      "id": 1782699893967,
+      "examId": 1782468162514,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-06-29T02:24:53.968Z",
+      "answers": {
+        "1782111523712": "B",
+        "1782111523714": "C",
+        "1782111523716": "B"
+      },
+      "score": 20,
+      "passed": false,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-06-29T02:24:59.438Z",
+      "correctCount": 0,
+      "totalQuestions": 3,
+      "durationUsed": 5
     }
   ],
   "survey_responses": [
@@ -4109,9 +4280,10 @@
     "savedAt": "2026-06-17T10:04:53.388Z"
   },
   "user_shares_1780909174403": {
-    "totalShares": 1,
+    "totalShares": 2,
     "sharedCourses": [
-      1781506198054
+      1781506198054,
+      1781080411545
     ]
   },
   "learning_data_1780909174403": {
@@ -4124,10 +4296,10 @@
       1781077900894
     ],
     "videoProgress": {
-      "1781087462994_0": 100,
+      "1781087462994_0": 27,
       "1781065453648_0": 100,
       "1781087427858_0": 5,
-      "1781080411545_0": 99,
+      "1781080411545_0": 100,
       "1781080411545_1": 100,
       "1781064630171_0": 52,
       "1781506198054_0": 17,
@@ -4135,15 +4307,18 @@
       "1781065485355_0": 1,
       "1781077900894_0": 100
     },
-    "lastStudyTime": "2026-06-22T06:49:56.810Z",
+    "lastStudyTime": "2026-06-29T06:23:39.068Z",
     "studyDates": [
       "2026-06-14",
       "2026-06-15",
       "2026-06-17",
       "2026-06-20",
-      "2026-06-22"
+      "2026-06-22",
+      "2026-06-24",
+      "2026-06-26",
+      "2026-06-29"
     ],
-    "totalSeconds": 239,
+    "totalSeconds": 594,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -4504,34 +4679,227 @@
         "duration": 2,
         "timestamp": "2026-06-22T06:49:56.810Z",
         "date": "2026-06-22"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-24T06:15:39.693Z",
+        "date": "2026-06-24"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-24T06:15:42.752Z",
+        "date": "2026-06-24"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-24T06:15:46.943Z",
+        "date": "2026-06-24"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-26T13:44:24.705Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781506198054,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 8,
+        "timestamp": "2026-06-26T13:59:17.201Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-26T13:59:34.678Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-26T14:00:40.944Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-26T14:01:40.951Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-26T14:02:40.960Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-26T14:03:40.955Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 60,
+        "timestamp": "2026-06-26T14:04:41.018Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781087462994,
+        "courseTitle": "图标分类与绘画技巧",
+        "videoIndex": 0,
+        "videoTitle": "图标分类与绘画技巧.mp4",
+        "duration": 39,
+        "timestamp": "2026-06-26T14:05:20.860Z",
+        "date": "2026-06-26"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-29T06:23:30.111Z",
+        "date": "2026-06-29"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-29T06:23:33.178Z",
+        "date": "2026-06-29"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 1,
+        "videoTitle": "Untiy UI Draw Call基础指南.mp4",
+        "duration": 1,
+        "timestamp": "2026-06-29T06:23:39.068Z",
+        "date": "2026-06-29"
       }
     ],
-    "shares": 1,
+    "shares": 2,
     "ratings": 0,
-    "likes": 1
+    "likes": 1,
+    "examRecords": [
+      {
+        "examId": 1782181381247,
+        "examTitle": "粒子系统",
+        "score": 100,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 3,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-23T12:43:39.215Z",
+        "attemptId": 1782218595579
+      },
+      {
+        "examId": 1782221347409,
+        "examTitle": "粒子系统",
+        "score": 90,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 2,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-23T13:30:24.250Z",
+        "attemptId": 1782221414020
+      },
+      {
+        "examId": 1782221347409,
+        "examTitle": "粒子系统",
+        "score": 50,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 1,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-23T13:48:28.848Z",
+        "attemptId": 1782222496080
+      },
+      {
+        "examId": 1782221347409,
+        "examTitle": "粒子系统",
+        "score": 50,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 1,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-23T14:06:07.120Z",
+        "attemptId": null
+      },
+      {
+        "examId": 1782281099486,
+        "examTitle": "粒子系统副本",
+        "score": 100,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 3,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-24T07:57:42.654Z",
+        "attemptId": 1782287855038
+      },
+      {
+        "examId": 1782293247918,
+        "examTitle": "123",
+        "score": 80,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 2,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-24T09:27:43.467Z",
+        "attemptId": 1782293258926
+      },
+      {
+        "examId": 1782468162514,
+        "examTitle": "123",
+        "score": 70,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 2,
+        "totalQuestions": 3,
+        "completedAt": "2026-06-27T01:53:39.384Z",
+        "attemptId": 1782525210506
+      }
+    ]
   },
   "papers": [
-    {
-      "id": "paper_1782444280361",
-      "name": "闭环测试试卷-001",
-      "category": "1780973996285",
-      "categoryId": "1780973996285",
-      "categoryName": "策划",
-      "description": "",
-      "duration": 60,
-      "passScore": 60,
-      "maxAttempts": 0,
-      "shuffle": false,
-      "showAnswer": true,
-      "uniformScore": 5,
-      "questions": [],
-      "status": "draft",
-      "type": "fixed",
-      "createdAt": "2026-06-26T03:24:40.361Z",
-      "updatedAt": "2026-06-26T03:24:40.361Z",
-      "creator": "当前用户",
-      "createdBy": "当前用户"
-    },
     {
       "id": "paper_1782182121955",
       "name": "2026企业文化与制度",
@@ -4626,7 +4994,7 @@
       "noticeId": 1782183780370,
       "userId": 1780909174403,
       "username": "15302206488",
-      "visitedAt": "2026-06-26T13:40:28.899Z"
+      "visitedAt": "2026-06-29T06:23:23.267Z"
     }
   ],
   "training_signins": [

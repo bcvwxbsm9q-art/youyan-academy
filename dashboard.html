@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -219,7 +219,7 @@
               </div>
             </div>
             <div class="mt-4 flex items-center text-sm">
-              <span class="text-green-500"><i class="fas fa-arrow-up mr-1"></i><span id="stat-courses-growth">0</span>%</span>
+              <span id="stat-courses-growth-wrap" class="text-green-500"><i class="fas fa-arrow-up mr-1"></i><span id="stat-courses-growth">0</span>%</span>
               <span class="text-slate-400 ml-2">较上月</span>
             </div>
           </div>
@@ -235,7 +235,7 @@
               </div>
             </div>
             <div class="mt-4 flex items-center text-sm">
-              <span class="text-green-500"><i class="fas fa-arrow-up mr-1"></i><span id="stat-lecturers-growth">0</span>%</span>
+              <span id="stat-lecturers-growth-wrap" class="text-green-500"><i class="fas fa-arrow-up mr-1"></i><span id="stat-lecturers-growth">0</span>%</span>
               <span class="text-slate-400 ml-2">较上月</span>
             </div>
           </div>
@@ -251,7 +251,7 @@
               </div>
             </div>
             <div class="mt-4 flex items-center text-sm">
-              <span class="text-green-500"><i class="fas fa-arrow-up mr-1"></i><span id="stat-users-growth">0</span>%</span>
+              <span id="stat-users-growth-wrap" class="text-green-500"><i class="fas fa-arrow-up mr-1"></i><span id="stat-users-growth">0</span>%</span>
               <span class="text-slate-400 ml-2">较上月</span>
             </div>
           </div>
@@ -2765,20 +2765,7 @@
       select.innerHTML = '<option value="">全部分类</option>' + options;
     }
 
-    // ========== 子菜单切换 ==========
-    function toggleSubMenu(menuId) {
-      const menu = document.getElementById(menuId);
-      if (menu) {
-        menu.classList.toggle('hidden');
-        const btn = menu.previousElementSibling;
-        if (btn) {
-          const icon = btn.querySelector('.fa-chevron-right');
-          if (icon) {
-            icon.style.transform = menu.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(90deg)';
-          }
-        }
-      }
-    }
+
 
     // ========== 子标签页切换 ==========
     function switchSubTab(tabName, subTabName) {
@@ -2823,9 +2810,8 @@
     // ========== 轮播管理 ==========
     async function loadCarousels() {
       const tbody = document.getElementById('carousel-list');
-      if (!tbody) { (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadCarousels: carousel-list 不存在!</div>';})(); return; }
+      if (!tbody) return;
 
-      (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#94a3b8\">loadCarousels: 开始获取 /api/banners...</div>';})();
       try {
         const res = await fetch(API + '/banners');
         const banners = await res.json();
@@ -2883,10 +2869,8 @@
             </td>
           </tr>
         `).join('');
-        (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#4ade80\">loadCarousels: 成功渲染 ' + sortedBanners.length + ' 个轮播图</div>';})();
       } catch (err) {
         console.error('加载轮播图失败:', err);
-        (function(){var el=document.getElementById('dbg-log');if(el)el.innerHTML+='<div style=\"color:#f87171\">loadCarousels ERROR: ' + (err.message||err) + '</div>';})();
         tbody.innerHTML = `
           <tr>
             <td colspan="5" class="px-6 py-12 text-center text-red-400">
@@ -3054,35 +3038,20 @@
       }
     }
 
-    function escHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
     function escJs(str) {
       return escHtml(str).replace(/'/g, "\\'");
     }
 
     // ========== 标签切换 ==========
     function switchTab(name) {
-      const startTime = Date.now();
-      function dbg(msg, color) {
-        console.log('[switchTab] ' + msg);
-        var el = document.getElementById('dbg-log');
-        if (el) el.innerHTML += '<div style="color:' + (color||'#e2e8f0') + ';padding:1px 0;">' + msg + '</div>';
-      }
-      dbg('>>> switchTab("' + name + '") 触发', '#38bdf8');
-
       // 隐藏所有标签页（同时使用 class 和 style 双重保障）
       var allTabs = document.querySelectorAll('.tab-content');
-      dbg('找到 .tab-content 数量: ' + allTabs.length, '#94a3b8');
       allTabs.forEach(function(el) {
         el.classList.add('hidden');
         el.style.setProperty('display', 'none', 'important');
       });
       var sidebarItems = document.querySelectorAll('.sidebar-item');
       sidebarItems.forEach(function(el) { el.classList.remove('active'); });
-      dbg('隐藏了 ' + allTabs.length + ' 个标签页', '#94a3b8');
 
       // 显示目标标签页
       var tabEl = document.getElementById('tab-' + name);
@@ -3096,18 +3065,14 @@
           if (p.classList.contains('hidden')) p.classList.remove('hidden');
           p = p.parentElement;
         }
-        dbg('tab-' + name + ' 已显示, display=' + tabEl.style.display + ' hidden=' + tabEl.classList.contains('hidden'), '#4ade80');
       } else {
-        dbg('ERROR: 找不到 tab-' + name, '#f87171');
         return;
       }
       var btnEl = document.querySelector('[data-tab="' + name + '"]');
-      if (btnEl) { btnEl.classList.add('active'); dbg('侧边栏按钮已激活', '#94a3b8'); }
-      else dbg('WARN: 找不到侧边栏按钮 data-tab=' + name, '#fbbf24');
+      if (btnEl) { btnEl.classList.add('active'); }
 
       // 对于有子标签页的标签，自动切换到第一个子标签页
       if (name === 'portal') {
-        dbg('portal 标签页，自动切换到第一个子标签页', '#38bdf8');
         switchSubTab('portal', 'carousel');
       }
 
@@ -3142,25 +3107,16 @@
         reports: loadReports
       };
       if (loaders[name]) {
-        dbg('调用加载器: ' + name, '#38bdf8');
         try {
           var result = loaders[name]();
           if (result && typeof result.then === 'function') {
-            result.then(function() {
-              dbg('加载器 ' + name + ' 完成 (耗时' + (Date.now()-startTime) + 'ms)', '#4ade80');
-            }).catch(function(err) {
-              dbg('ERROR: 加载器 ' + name + ' 异步错误: ' + (err.message||err), '#f87171');
+            result.catch(function(err) {
               toast('加载' + name + '数据失败: ' + err.message, 'error');
             });
-          } else {
-            dbg('加载器 ' + name + ' 同步执行完成 (耗时' + (Date.now()-startTime) + 'ms)', '#4ade80');
           }
         } catch(err) {
-          dbg('ERROR: 加载器 ' + name + ' 同步错误: ' + (err.message||err), '#f87171');
           toast('加载' + name + '数据失败: ' + err.message, 'error');
         }
-      } else {
-        dbg('WARN: 没有找到加载器 for ' + name, '#fbbf24');
       }
     }
 
@@ -3181,6 +3137,38 @@
       }, 3000);
     }
 
+    // 计算环比增长率：基于 createdAt 字段统计本月 vs 上月新增数量
+    function calculateMonthGrowthRate(items) {
+      if (!Array.isArray(items) || items.length === 0) return 0;
+      const now = new Date();
+      const thisYear = now.getFullYear();
+      const thisMonth = now.getMonth();
+      const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+      const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+
+      let thisMonthCount = 0;
+      let lastMonthCount = 0;
+
+      items.forEach(item => {
+        const dateStr = item.createdAt || item.created_at || item.createTime || '';
+        if (!dateStr) return;
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return;
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        if (y === thisYear && m === thisMonth) {
+          thisMonthCount++;
+        } else if (y === lastMonthYear && m === lastMonth) {
+          lastMonthCount++;
+        }
+      });
+
+      if (lastMonthCount === 0) {
+        return thisMonthCount > 0 ? 100 : 0;
+      }
+      return Math.round(((thisMonthCount - lastMonthCount) / lastMonthCount) * 100);
+    }
+
     // ========== 数据统计 ==========
     async function loadDashboard() {
       document.getElementById('stat-courses').textContent = data.courses.length;
@@ -3194,10 +3182,19 @@
 
       document.getElementById('stat-categories-child').textContent = trainingCount;
 
-      // 随机增长数据(实际项目中从后端获取)
-      document.getElementById('stat-courses-growth').textContent = Math.floor(Math.random() * 20 + 5);
-      document.getElementById('stat-lecturers-growth').textContent = Math.floor(Math.random() * 10 + 2);
-      document.getElementById('stat-users-growth').textContent = Math.floor(Math.random() * 15 + 3);
+      // 基于 createdAt 计算真实的环比增长率，并根据正负显示红/绿色和箭头方向
+      function setGrowthDisplay(wrapId, valueId, rate) {
+        const wrap = document.getElementById(wrapId);
+        const valueEl = document.getElementById(valueId);
+        if (!wrap || !valueEl) return;
+        const isPositive = rate >= 0;
+        wrap.className = isPositive ? 'text-green-500' : 'text-red-500';
+        wrap.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'} mr-1"></i><span id="${valueId}">${Math.abs(rate)}</span>%`;
+      }
+
+      setGrowthDisplay('stat-courses-growth-wrap', 'stat-courses-growth', calculateMonthGrowthRate(data.courses));
+      setGrowthDisplay('stat-lecturers-growth-wrap', 'stat-lecturers-growth', calculateMonthGrowthRate(data.lecturers));
+      setGrowthDisplay('stat-users-growth-wrap', 'stat-users-growth', calculateMonthGrowthRate(allUsers || data.users || []));
     }
 
     // ========== 课程管理 ==========
@@ -5292,18 +5289,19 @@
       const currentEnd = event && event.endTime ? event.endTime : new Date().toISOString().slice(0, 16);
       const newEnd = new Date(new Date(currentEnd).getTime() + days * 24 * 60 * 60 * 1000);
       const newEndStr = newEnd.toISOString().slice(0, 16);
+      const idsStr = document.getElementById('delay-target-ids').value;
+      const userIds = idsStr ? idsStr.split(',').map(id => id.trim()).filter(Boolean) : [];
+      if (userIds.length === 0) { toast('没有需要延期的学员', 'error'); return; }
       try {
-        const res = await fetch(API + '/training/' + trainingId, {
-          method: 'PUT',
+        // 给指定学员的报名记录设置个人延期时间
+        const res = await fetch(API + '/training/' + trainingId + '/enrollments/extend', {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endTime: newEndStr })
+          body: JSON.stringify({ userIds, extendedEndTime: newEndStr })
         });
         const result = await res.json();
         if (!result.success) { toast(result.error || '延期失败', 'error'); return; }
-        if (event) event.endTime = newEndStr;
         const notify = document.getElementById('delay-notify').checked;
-        const idsStr = document.getElementById('delay-target-ids').value;
-        const userIds = idsStr ? idsStr.split(',').map(id => id.trim()).filter(Boolean) : [];
         if (notify && userIds.length > 0) {
           const sent = await sendTrainingNotification(trainingId, userIds, 'delay');
           toast(`已延期 ${days} 天，并通知 ${sent} 名学员`);
@@ -6316,21 +6314,6 @@
       } catch (err) {
         container.innerHTML = '<div class="text-center py-20 text-slate-400"><i class="fas fa-exclamation-circle text-3xl mb-3 block"></i><p>加载考勤数据失败</p></div>';
       }
-    }
-
-    function getTrainingTypeClass(project) {
-      const classes = {
-        '新雁计划': 'from-orange-400 to-orange-600',
-        '游雁学堂': 'from-blue-400 to-blue-600',
-        '鸿雁计划': 'from-green-400 to-green-600',
-        'AI实践分享': 'from-amber-400 to-amber-600',
-        '雏雁训练营': 'from-red-400 to-red-600'
-      };
-      return classes[project] || 'from-gray-400 to-gray-600';
-    }
-
-    function getTrainingTypeName(project) {
-      return project;
     }
 
     function renderTrainingCalendar() {
@@ -9975,21 +9958,6 @@
       }
     }
 
-    // ========== 数据导出 ==========
-    function exportData(type) {
-      const baseUrl = API + '/export';
-      const filenames = {
-        courses: 'courses',
-        lecturers: 'lecturers',
-        users: 'users',
-        categories: 'categories',
-        learning: 'learning-records',
-        all: 'all_data'
-      };
-      window.location.href = `${baseUrl}/${filenames[type]}`;
-      toast(`${type === 'all' ? 'JSON' : 'CSV'} 文件开始下载`);
-    }
-
     // ========== 模态框工具 ==========
     function showModal(content) {
       const container = document.getElementById('modal-container');
@@ -11200,7 +11168,6 @@
       editorMode = null;
     }
     // 兼容旧调用
-    function closeExamEditor() { closeUnifiedEditor(); }
     function closePaperEditor() { closeUnifiedEditor(); }
 
     // 异步补充题目详情（从题库获取选项、答案等）
@@ -11507,17 +11474,6 @@
       }
     }
 
-    function sortExamList(field) {
-      if (examSortField === field) {
-        examSortOrder = examSortOrder === 'asc' ? 'desc' : 'asc';
-      } else {
-        examSortField = field;
-        examSortOrder = 'asc';
-      }
-      examCurrentPage = 1;
-      renderExamMgmtList();
-    }
-
     function goExamPage(page) {
       if (page < 1 || page > examTotalPages) return;
       examCurrentPage = page;
@@ -11619,16 +11575,6 @@
 
     let examUserPickerData = [];
     let examUserPickerTemp = new Set();
-
-    function onExamAccessTypeChange() {
-      const type = document.getElementById('examAccessType').value;
-      const container = document.getElementById('examAllowedUsersContainer');
-      if (type === 'restricted') {
-        container.classList.remove('hidden');
-      } else {
-        container.classList.add('hidden');
-      }
-    }
 
     function toggleBtn(btn) {
       const group = btn.getAttribute('data-group');
@@ -12444,19 +12390,6 @@
         if (result.success || result.id) { loadExamMgmtList(); toast('考试已复制'); }
         else toast(result.error || '复制失败', 'error');
       } catch (e) { toast('复制失败: ' + e.message, 'error'); }
-    }
-
-    async function unpublishExam(id) {
-      try {
-        const res = await fetch('/api/exams/' + id, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'draft' })
-        });
-        const data = await res.json();
-        if (data.success) { loadExamMgmtList(); toast('已撤回发布'); }
-        else toast(data.error || '操作失败', 'error');
-      } catch (e) { toast('操作失败', 'error'); }
     }
 
     async function publishExam(id) {
@@ -13574,14 +13507,6 @@
       }
     }
 
-    // 应用统一分数
-    function applyUniformScore() {
-      const score = parseInt(document.getElementById('paperUniformScore').value) || 5;
-      paperQuestions.forEach(q => q.score = score);
-      renderPaperQuestions();
-      toast(`已将所有题目分值设为 ${score} 分`);
-    }
-
     // 保存试卷
     async function savePaper(e) {
       if (e) e.preventDefault();
@@ -13798,15 +13723,6 @@
 
     // [已统一到 renderUnifiedEditor] createPaperEditorView 和 renderPaperEditorQuestions 已合并到统一编辑器
 
-    // 应用统一分数（编辑页）
-    function applyUniformScoreEditor() {
-      const el = document.getElementById('peUniformScore');
-      const score = el ? (parseInt(el.value) || 5) : 5;
-      paperQuestions.forEach(q => q.score = score);
-      renderUnifiedEditor();
-      toast(`已将所有题目分值设为 ${score} 分`);
-    }
-
     // 保存试卷编辑设置
     // 打开试卷信息抽屉
     function openPaperInfoDrawer() {
@@ -13919,14 +13835,6 @@
         console.error('[publishPaper] 保存失败:', e);
         toast('发布失败', 'error');
       }
-    }
-
-    // [closePaperEditor / 题目操作函数已统一到上方]
-
-    // 保存草稿（可选操作，保留兼容）
-    function savePaperDraft() {
-      // 新版弹窗只有一个提交按钮，调用 savePaper 即可
-      savePaper({ preventDefault: () => {} });
     }
 
     // 编辑试卷
@@ -14577,22 +14485,36 @@
       const days = rptTrendDays;
       const labels = [];
       const values = [];
+
+      // 辅助：将 createdAt 统一转换为 YYYY-MM-DD
+      function toDateKey(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      }
+
       for (let i = days - 1; i >= 0; i--) {
         const d = new Date(); d.setDate(d.getDate() - i);
         labels.push((d.getMonth() + 1) + '/' + d.getDate());
-        // 用课程创建日期模拟趋势（创建于当天的课程数）
-        const dateStr = d.toISOString().split('T')[0];
-        const cnt = (data.courses || []).filter(c => (c.createdAt || '').startsWith(dateStr)).length;
-        values.push(cnt);
+        const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
+        // 统计当天新增的课程、讲师、培训、用户总和作为学习活跃度
+        const courseCnt = (data.courses || []).filter(c => toDateKey(c.createdAt) === dateStr).length;
+        const lectCnt   = (data.lecturers || []).filter(l => toDateKey(l.createdAt) === dateStr).length;
+        const trainCnt  = (data.training || []).filter(t => toDateKey(t.createdAt || t.startTime) === dateStr).length;
+        const userCnt   = (allUsers || []).filter(u => toDateKey(u.createdAt || u.created_at) === dateStr).length;
+        values.push(courseCnt + lectCnt + trainCnt + userCnt);
       }
       const maxV = Math.max(...values, 1);
-      const w = 100 / days; // 每根柱子宽度 %
       chartEl.innerHTML = values.map((v, i) => {
         const h = maxV ? Math.max((v / maxV) * 100, 3) : 3;
         return `<div class="flex-1 flex flex-col items-center justify-end h-full" title="${labels[i]}: ${v}">
           <span class="text-[10px] text-slate-400 mb-1">${v || ''}</span>
           <div class="w-full max-w-[32px] bg-gradient-to-t from-indigo-600 to-purple-400 rounded-t" style="height:${h}%"></div>
-          ${i % Math.ceil(days / 7) === 0 ? `<span class="text-[10px] text-slate-400 mt-1">${labels[i]}</span>` : ''}
+          ${i % Math.ceil(days / 7) === 0 || days <= 7 ? `<span class="text-[10px] text-slate-400 mt-1">${labels[i]}</span>` : ''}
         </div>`;
       }).join('');
     }

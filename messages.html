@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -447,6 +447,7 @@
                 'system': ['🔔 系统通知', 'type-system'],
                 'announcement': ['📢 平台公告', 'type-announcement'],
                 'training_assign': ['🎯 培训指派', 'type-training'],
+                'training': ['📋 培训通知', 'type-training'],
                 'exam': ['📝 考试通知', 'type-exam']
             };
             const [label, cls] = map[type] || ['其他', 'type-default'];
@@ -677,8 +678,8 @@
 
             await markAsRead(msgId);
 
-            // 培训指派/考试通知直接跳转到对应页面并自动打开弹窗，复用培训页/考试页原生交互
-            if (msg.type === 'training_assign' && msg.trainingId) {
+            // 培训指派/培训通知/考试通知直接跳转到对应页面并自动打开弹窗，复用培训页/考试页原生交互
+            if ((msg.type === 'training_assign' || msg.type === 'training') && msg.trainingId) {
                 window.location.href = 'training-plan.html?openTrainingId=' + encodeURIComponent(msg.trainingId);
                 return;
             } else if (msg.type === 'exam' && msg.examId) {

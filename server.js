@@ -1029,6 +1029,12 @@ app.get('/api/training/schedule', (req, res) => {
       };
     });
 
+    // 当前用户在该培训中的报名记录及个人延期时间
+    const myEnrollment = currentUserId
+      ? eventEnrollments.find(e => String(e.userId) === String(currentUserId))
+      : null;
+    const myExtendedEndTime = myEnrollment ? myEnrollment.extendedEndTime : null;
+
     // 当前用户在该培训中的各项任务完成状态
     const signinDone = currentUserId
       ? signins.some(s => s.trainingId === event.id && String(s.userId) === String(currentUserId))
@@ -1070,10 +1076,11 @@ app.get('/api/training/schedule', (req, res) => {
       linkedExamId: event.linkedExamId || null,
       linkedSurveyId: event.linkedSurveyId || null,
       coursewareFiles: event.coursewareFiles || [],
-      // 当前用户完成状态
+      // 当前用户完成状态及个人延期时间
       signinDone,
       surveyDone,
-      examDone
+      examDone,
+      extendedEndTime: myExtendedEndTime
     };
   });
 
@@ -1602,6 +1609,34 @@ app.delete('/api/training/:id/enrollments/:enrollId', (req, res) => {
   data.training_enrollments.splice(idx, 1);
   writeData(data);
   res.json({ success: true, message: '已移除' });
+});
+
+// POST /api/training/:id/enrollments/extend - 给指定学员的报名记录延期（支持批量）
+app.post('/api/training/:id/enrollments/extend', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const { userIds, extendedEndTime } = req.body; // userIds: 数组，extendedEndTime: ISO 字符串
+
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return res.status(400).json({ success: false, error: '请选择至少一名学员' });
+  }
+  if (!extendedEndTime) {
+    return res.status(400).json({ success: false, error: '缺少延期截止时间 extendedEndTime' });
+  }
+
+  if (!data.training_enrollments) data.training_enrollments = [];
+
+  let extendedCount = 0;
+  userIds.forEach(uid => {
+    const enrollment = data.training_enrollments.find(e => e.trainingId === trainingId && String(e.userId) === String(uid));
+    if (enrollment) {
+      enrollment.extendedEndTime = extendedEndTime;
+      extendedCount++;
+    }
+  });
+
+  writeData(data);
+  res.json({ success: true, message: `已延期 ${extendedCount} 名学员`, extended: extendedCount });
 });
 
 // GET /api/training/:id/enroll-count - 快速获取报名人数（用于列表页）

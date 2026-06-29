@@ -16,6 +16,8 @@
     let currentCategoryId = 'all'; // 当前选中的分类
     let searchTerm = '';
     let sortBy = 'latest';
+    let currentPage = 1;
+    const PAGE_SIZE = 12;
 
     // 标签样式映射
     const TAG_STYLES = {
@@ -56,6 +58,7 @@
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(() => {
                     searchTerm = this.value.toLowerCase().trim();
+                    currentPage = 1;
                     filterAndRender();
                 }, 300);
             });
@@ -66,6 +69,7 @@
         if (sortFilter) {
             sortFilter.addEventListener('change', function() {
                 sortBy = this.value;
+                currentPage = 1;
                 filterAndRender();
             });
         }
@@ -263,7 +267,8 @@
                 
                 // 更新当前分类
                 currentCategoryId = this.dataset.category;
-                
+                currentPage = 1;
+
                 // 重新筛选
                 filterAndRender();
             });
@@ -357,18 +362,29 @@
     function renderCoursesByCategory() {
         const container = document.getElementById('courses-by-category');
         const emptyState = document.getElementById('empty-state');
-        
+        const paginationContainer = document.getElementById('pagination-container');
+
         if (!container) return;
 
         if (!filteredCourses.length) {
             container.innerHTML = '';
             if (emptyState) emptyState.classList.remove('hidden');
+            if (paginationContainer) paginationContainer.innerHTML = '';
             return;
         }
 
         if (emptyState) emptyState.classList.add('hidden');
 
         const api = window.DataAPI;
+        const total = filteredCourses.length;
+        const totalPages = Math.ceil(total / PAGE_SIZE);
+        // 确保当前页在有效范围内
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        const pageCourses = filteredCourses.slice(start, end);
+
         let html = '';
 
         // 判断当前选中的是全部还是某个具体分类
@@ -376,13 +392,13 @@
             // 全部课程：直接显示所有课程卡片，不分组
             html = `
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${filteredCourses.map(c => renderCourseCard(c, api)).join('')}
+                    ${pageCourses.map(c => renderCourseCard(c, api)).join('')}
                 </div>
             `;
         } else {
             // 显示单个分类
             let cat, catName;
-            
+
             // 检查是否是一级分类
             cat = categories.find(c => String(c.id) === String(currentCategoryId));
             if (cat) {
@@ -400,23 +416,26 @@
                     }
                 }
             }
-            
+
             html = renderCategorySection(
                 cat ? { id: cat.id, name: catName, icon: cat.icon || 'fa-folder' } : { id: currentCategoryId, name: '课程列表', icon: 'fa-book' },
-                filteredCourses, 
-                api
+                pageCourses,
+                api,
+                total
             );
         }
 
         container.innerHTML = html;
+        renderPagination(total, totalPages);
     }
 
     /**
      * 渲染分类区块
      */
-    function renderCategorySection(category, courses, api) {
+    function renderCategorySection(category, courses, api, totalCount) {
         const catName = category.name || '课程';
         const tagStyle = TAG_STYLES[catName] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+        const total = totalCount !== undefined ? totalCount : courses.length;
 
         return `
             <div class="category-section mb-8 max-w-[1200px]">
@@ -424,13 +443,73 @@
                     <span class="inline-block ${tagStyle} px-3 py-1 rounded-lg text-sm font-medium mr-3">
                         <i class="fa ${category.icon || 'fa-folder'} mr-1"></i>${catName}
                     </span>
-                    <span class="text-gray-500 dark:text-gray-400 text-sm">共 ${courses.length} 门课程</span>
+                    <span class="text-gray-500 dark:text-gray-400 text-sm">共 ${total} 门课程</span>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     ${courses.map(c => renderCourseCard(c, api)).join('')}
                 </div>
             </div>
         `;
+    }
+
+    /**
+     * 渲染分页组件
+     */
+    function renderPagination(total, totalPages) {
+        const container = document.getElementById('pagination-container');
+        if (!container) return;
+
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        const primaryColor = '#667eea';
+        const primaryLight = '#e0e7ff';
+
+        let pages = [];
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            if (currentPage <= 4) {
+                pages = [1, 2, 3, 4, 5, '...', totalPages];
+            } else if (currentPage >= totalPages - 3) {
+                pages = [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+            } else {
+                pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+            }
+        }
+
+        const prevDisabled = currentPage <= 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100';
+        const nextDisabled = currentPage >= totalPages ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100';
+
+        let html = `
+            <div class="flex items-center gap-2 flex-wrap">
+                <span style="color:#6b7280;font-size:0.875rem;margin-right:0.5rem;">共 ${total} 条</span>
+                <button onclick="CoursePage.goToPage(${currentPage - 1})" class="w-8 h-8 rounded-md border border-gray-200 flex items-center justify-center text-gray-500 transition-colors ${prevDisabled}" ${currentPage <= 1 ? 'disabled' : ''}>
+                    <i class="fa fa-angle-left text-sm"></i>
+                </button>
+        `;
+
+        pages.forEach(p => {
+            if (p === '...') {
+                html += `<span class="w-8 h-8 flex items-center justify-center text-gray-400 text-sm">...</span>`;
+            } else {
+                const isActive = p === currentPage;
+                const bg = isActive ? `background-color:${primaryColor};color:#fff;border-color:${primaryColor};` : 'background-color:#fff;color:#374151;border-color:#e5e7eb;';
+                const hover = isActive ? '' : 'hover:bg-gray-50;';
+                html += `<button onclick="CoursePage.goToPage(${p})" class="w-8 h-8 rounded-md border flex items-center justify-center text-sm font-medium transition-colors cursor-pointer" style="${bg}${hover}">${p}</button>`;
+            }
+        });
+
+        html += `
+                <button onclick="CoursePage.goToPage(${currentPage + 1})" class="w-8 h-8 rounded-md border border-gray-200 flex items-center justify-center text-gray-500 transition-colors ${nextDisabled}" ${currentPage >= totalPages ? 'disabled' : ''}>
+                    <i class="fa fa-angle-right text-sm"></i>
+                </button>
+            </div>
+        `;
+
+        container.innerHTML = html;
     }
 
     /**
@@ -510,6 +589,19 @@
         },
         refreshData: function() {
             refreshData();
+        },
+        goToPage: function(page) {
+            const totalPages = Math.ceil(filteredCourses.length / PAGE_SIZE);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderCoursesByCategory();
+            // 滚动到课程区域顶部
+            const container = document.getElementById('courses-by-category');
+            if (container) {
+                const rect = container.getBoundingClientRect();
+                const offset = 100;
+                window.scrollTo({ top: window.scrollY + rect.top - offset, behavior: 'smooth' });
+            }
         }
     };
 
