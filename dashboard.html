@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -14501,18 +14501,16 @@
         const d = new Date(); d.setDate(d.getDate() - i);
         labels.push((d.getMonth() + 1) + '/' + d.getDate());
         const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
-        // 统计当天新增的课程、讲师、培训、用户总和作为学习活跃度
+        // 统计当天新增的课程和培训数量（核心学习内容）
         const courseCnt = (data.courses || []).filter(c => toDateKey(c.createdAt) === dateStr).length;
-        const lectCnt   = (data.lecturers || []).filter(l => toDateKey(l.createdAt) === dateStr).length;
         const trainCnt  = (data.training || []).filter(t => toDateKey(t.createdAt || t.startTime) === dateStr).length;
-        const userCnt   = (allUsers || []).filter(u => toDateKey(u.createdAt || u.created_at) === dateStr).length;
-        values.push(courseCnt + lectCnt + trainCnt + userCnt);
+        values.push({ total: courseCnt + trainCnt, course: courseCnt, train: trainCnt });
       }
-      const maxV = Math.max(...values, 1);
+      const maxV = Math.max(...values.map(v => v.total), 1);
       chartEl.innerHTML = values.map((v, i) => {
-        const h = maxV ? Math.max((v / maxV) * 100, 3) : 3;
-        return `<div class="flex-1 flex flex-col items-center justify-end h-full" title="${labels[i]}: ${v}">
-          <span class="text-[10px] text-slate-400 mb-1">${v || ''}</span>
+        const h = maxV ? Math.max((v.total / maxV) * 100, 3) : 3;
+        return `<div class="flex-1 flex flex-col items-center justify-end h-full" title="${labels[i]}：课程 ${v.course} 门 + 培训 ${v.train} 场">
+          <span class="text-[10px] text-slate-400 mb-1">${v.total || ''}</span>
           <div class="w-full max-w-[32px] bg-gradient-to-t from-indigo-600 to-purple-400 rounded-t" style="height:${h}%"></div>
           ${i % Math.ceil(days / 7) === 0 || days <= 7 ? `<span class="text-[10px] text-slate-400 mt-1">${labels[i]}</span>` : ''}
         </div>`;
