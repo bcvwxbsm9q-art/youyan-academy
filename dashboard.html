@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -2749,16 +2749,28 @@
         const examsJson = await examsRes.json();
         data.exams = examsJson || [];
 
-        // 加载报表模块需要的考试记录与培训报名数据
+        // 加载报表模块需要的考试记录、培训报名、签到与学习记录数据
         try {
-          const [attemptsRes, enrollmentsRes] = await Promise.all([
+          const [attemptsRes, enrollmentsRes, signinsRes, allDataRes] = await Promise.all([
             fetch(API + '/data/exam_attempts'),
-            fetch(API + '/data/training_enrollments')
+            fetch(API + '/data/training_enrollments'),
+            fetch(API + '/data/training_signins'),
+            fetch(API + '/data')
           ]);
           if (attemptsRes.ok) data.exam_attempts = await attemptsRes.json();
           if (enrollmentsRes.ok) data.training_enrollments = await enrollmentsRes.json();
+          if (signinsRes.ok) data.training_signins = await signinsRes.json();
+          if (allDataRes.ok) {
+            const allData = await allDataRes.json();
+            // 合并用户学习记录与课程互动数据（用于报表统计）
+            Object.keys(allData).forEach(key => {
+              if (key.startsWith('user_learning_') || key.startsWith('course_interaction_')) {
+                data[key] = allData[key];
+              }
+            });
+          }
         } catch (e) {
-          console.warn('[Dashboard] 加载考试记录/培训报名数据失败:', e);
+          console.warn('[Dashboard] 加载报表统计数据失败:', e);
         }
 
         // 加载用户数据(报表模块需要)
@@ -15030,15 +15042,18 @@
         const courseSeconds = records.reduce((s, r) => s + (parseInt(r.duration) || 0), 0);
         const courseIds = new Set(records.map(r => r.courseId).filter(Boolean));
         const examRecords = learning.examRecords || [];
+        const recordedTotal = parseInt(learning.totalSeconds) || (parseFloat(learning.totalHours) * 3600) || 0;
+        const totalSeconds = recordedTotal || courseSeconds;
         stats.user[uid] = {
-          totalSeconds: parseInt(learning.totalSeconds) || courseSeconds,
-          trainingSeconds: 0, // 当前系统未单独记录培训学习时长
+          totalSeconds,
+          recordedTotal: !!recordedTotal,
+          trainingSeconds: 0,
           courseSeconds,
           courseCount: courseIds.size,
           completedCourseCount: (learning.completedCourses || []).length,
           examCount: examRecords.length,
           certificateCount: 0, // 证书表暂无 userId 关联
-          level: getAccountLevel(parseInt(learning.totalSeconds) || courseSeconds)
+          level: getAccountLevel(totalSeconds)
         };
       });
 
@@ -15052,6 +15067,32 @@
         const uid = String(u.id);
         if (!stats.user[uid]) stats.user[uid] = {};
         if (stats.user[uid].trainingCount === undefined) stats.user[uid].trainingCount = 0;
+      });
+
+      // 1.2 根据培训签到记录与培训起止时间聚合每位学员的培训学习时长
+      const signins = data.training_signins || [];
+      const trainingDurationMap = {};
+      (data.training_events || data.training || []).forEach(t => {
+        const start = new Date(t.startTime || t.date);
+        const end = new Date(t.endTime || t.date);
+        if (!isNaN(start) && !isNaN(end) && end > start) {
+          trainingDurationMap[t.id] = Math.floor((end - start) / 1000);
+        }
+      });
+      signins.forEach(s => {
+        const uid = String(s.userId);
+        const duration = trainingDurationMap[s.trainingId] || 0;
+        if (stats.user[uid]) stats.user[uid].trainingSeconds = (stats.user[uid].trainingSeconds || 0) + duration;
+      });
+      // 若学习记录未单独记录总时长，则总学习时长 = 课程学习时长 + 培训学习时长
+      users.forEach(u => {
+        const uid = String(u.id);
+        const s = stats.user[uid];
+        if (s && !s.recordedTotal) {
+          s.totalSeconds = (s.courseSeconds || 0) + (s.trainingSeconds || 0);
+          s.level = getAccountLevel(s.totalSeconds);
+        }
+        delete s.recordedTotal;
       });
 
       // 2. 从课程互动数据聚合评分/点赞/分享
@@ -15142,6 +15183,18 @@
       return `${m}m`;
     }
 
+    function formatDateTime(iso) {
+      if (!iso) return '-';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '-';
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const hh = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+    }
+
     /* ============================================================
        2. 课程报表
        ============================================================ */
@@ -15228,9 +15281,10 @@
       // 统计卡片
       const activeUsers = users.filter(u => u.status === 'active').length;
       const depts = [...new Set(users.map(u => u.department).filter(Boolean))];
+      const avgSeconds = filtered.length ? (filtered.reduce((s, u) => s + ((reportStats.user[String(u.id)] || {}).totalSeconds || 0), 0) / filtered.length) : 0;
       el('rpt-st-total',  filtered.length);
       el('rpt-st-active', activeUsers);
-      el('rpt-st-avghours', (filtered.length ? (filtered.reduce((s, u) => s + (parseInt(u.learningHours) || 0), 0) / filtered.length).toFixed(1) : '0') + 'h');
+      el('rpt-st-avghours', formatDuration(Math.round(avgSeconds)));
       el('rpt-st-depts', depts.length);
 
       // 表格
@@ -15376,60 +15430,46 @@
       const doneCount = filtered.filter(t => getTrainingStatus(t) === 'completed').length;
       const rate = filtered.length ? Math.round(doneCount / filtered.length * 100) + '%' : '0%';
       
-      // 获取报名人数（异步）
+      const tbody = document.getElementById('rpt-tr-tbody');
+      if (!tbody) return;
+
+      // 使用已聚合的报名数据，避免 N+1 请求
+      const enrollCounts = {};
       let totalPeople = 0;
-      
+      filtered.forEach(t => {
+        const count = (reportStats.training[t.id] || {}).participantCount || 0;
+        enrollCounts[t.id] = count;
+        totalPeople += count;
+      });
       el('rpt-tr-total',  filtered.length);
       el('rpt-tr-done',   doneCount);
       el('rpt-tr-rate',   rate);
+      el('rpt-tr-people', totalPeople);
 
-      const tbody = document.getElementById('rpt-tr-tbody');
-      if (!tbody) return;
-      
-      // 异步获取每个培训的报名人数
-      async function renderWithEnrollCount() {
-        const enrollCounts = {};
-        try {
-          const results = await Promise.all(filtered.map(t =>
-            fetch(API + '/training/' + t.id + '/enroll-count')
-              .then(r => r.json())
-              .then(d => ({ id: t.id, count: d.count || 0 }))
-              .catch(() => ({ id: t.id, count: 0 }))
-          ));
-          results.forEach(r => { enrollCounts[r.id] = r.count; });
-        } catch(e) { /* 获取失败使用0 */ }
-        
-        totalPeople = Object.values(enrollCounts).reduce((s, c) => s + c, 0);
-        el('rpt-tr-people', totalPeople);
-        
-        tbody.innerHTML = filtered.map(t => {
-          // 兼容字段：name/title, instructor/lecturerId, project/categoryId
-          const name = t.name || t.title || '-';
-          const instructor = t.instructor || '-';
-          const project = t.project || '-';
-          const enrollCount = enrollCounts[t.id] || 0;
-          const s = reportStats.training[t.id] || {};
-          const startStr = (t.startTime || t.date || '').split(' ')[0] || '-';
-          const endStr = (t.endTime || '').split(' ')[0] || '-';
-          const status = getTrainingStatus(t);
-          const statusMap = {scheduled:'待开始',ongoing:'进行中',completed:'已完成',cancelled:'已取消'};
-          return `<tr class="hover:bg-indigo-50/50 transition">
-            <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(name)}</td>
-            <td class="px-4 py-3 text-sm text-slate-500">${escHtml(project)}</td>
-            <td class="px-4 py-3 text-sm text-slate-500">${escHtml(instructor)}</td>
-            <td class="px-4 py-3 text-sm text-center text-slate-500">${startStr}</td>
-            <td class="px-4 py-3 text-sm text-center text-slate-500">${endStr}</td>
-            <td class="px-4 py-3 text-sm text-center text-slate-500">${escHtml(s.creatorName || '-')}</td>
-            <td class="px-4 py-3 text-sm text-center text-slate-600">${enrollCount}</td>
-            <td class="px-4 py-3 text-sm text-center">
-              <span class="px-2 py-0.5 rounded-full text-xs ${status === 'completed' ? 'bg-green-100 text-green-700' : status === 'ongoing' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}">
-                ${statusMap[status] || status || '-'}</span>
-            </td>
-          </tr>`;
-        }).join('') || '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
-      }
-      
-      renderWithEnrollCount();
+      const statusMap = {scheduled:'待开始',ongoing:'进行中',completed:'已完成',cancelled:'已取消'};
+      tbody.innerHTML = filtered.map(t => {
+        const name = t.name || t.title || '-';
+        const instructor = t.instructor || '-';
+        const project = t.project || '-';
+        const enrollCount = enrollCounts[t.id] || 0;
+        const s = reportStats.training[t.id] || {};
+        const startStr = formatDateTime(t.startTime || t.date);
+        const endStr = formatDateTime(t.endTime);
+        const status = getTrainingStatus(t);
+        return `<tr class="hover:bg-indigo-50/50 transition">
+          <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(name)}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${escHtml(project)}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${escHtml(instructor)}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-500">${startStr}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-500">${endStr}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-500">${escHtml(s.creatorName || '-')}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${enrollCount}</td>
+          <td class="px-4 py-3 text-sm text-center">
+            <span class="px-2 py-0.5 rounded-full text-xs ${status === 'completed' ? 'bg-green-100 text-green-700' : status === 'ongoing' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}">
+              ${statusMap[status] || status || '-'}</span>
+          </td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
     }
 
     /* ============================================================
@@ -15482,13 +15522,17 @@
         filename = '考试报表_' + new Date().toISOString().split('T')[0] + '.csv';
       }
       if (type === 'training') {
-        headers = ['培训名称', '分类', '讲师', '参训人数', '时间', '状态'];
+        headers = ['培训名称', '分类', '讲师', '培训开始时间', '培训结束时间', '创建人', '参训人数', '状态'];
+        const statusMap = {scheduled:'待开始',ongoing:'进行中',completed:'已完成',cancelled:'已取消'};
         (data.training_events || data.training || []).forEach(t => {
           const name = t.name || t.title || '';
           const project = t.project || '';
           const instructor = t.instructor || '';
-          // 获取报名人数（导出时无法异步，暂用0）
-          rows.push([name, project, instructor, 0, (t.startTime || t.date || '').split(' ')[0], t.status || '']);
+          const s = reportStats.training[t.id] || {};
+          const startStr = formatDateTime(t.startTime || t.date);
+          const endStr = formatDateTime(t.endTime);
+          const status = statusMap[t.status] || t.status || '';
+          rows.push([name, project, instructor, startStr, endStr, s.creatorName || '-', s.participantCount || 0, status]);
         });
         filename = '培训报表_' + new Date().toISOString().split('T')[0] + '.csv';
       }
