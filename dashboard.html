@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -2748,6 +2748,18 @@
         
         const examsJson = await examsRes.json();
         data.exams = examsJson || [];
+
+        // 加载报表模块需要的考试记录与培训报名数据
+        try {
+          const [attemptsRes, enrollmentsRes] = await Promise.all([
+            fetch(API + '/data/exam_attempts'),
+            fetch(API + '/data/training_enrollments')
+          ]);
+          if (attemptsRes.ok) data.exam_attempts = await attemptsRes.json();
+          if (enrollmentsRes.ok) data.training_enrollments = await enrollmentsRes.json();
+        } catch (e) {
+          console.warn('[Dashboard] 加载考试记录/培训报名数据失败:', e);
+        }
 
         // 加载用户数据(报表模块需要)
         try {
