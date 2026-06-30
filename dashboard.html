@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -5718,7 +5718,7 @@
               <td class="px-4 py-2.5 text-sm text-slate-500">${i + 1}</td>
               <td class="px-4 py-2.5 text-sm font-medium text-slate-800">${r.userName || '匿名'}</td>
               <td class="px-4 py-2.5 text-sm text-slate-600">${r.department || '-'}</td>
-              <td class="px-4 py-2.5 text-sm text-slate-500">${new Date(r.submittedAt).toLocaleString('zh-CN')}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-500">${r.submittedAt ? new Date(r.submittedAt).toLocaleString('zh-CN') : '-'}</td>
             </tr>`).join('')
           : `<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-sm">暂无人填写</td></tr>`;
 
@@ -8040,7 +8040,7 @@
               <td class="px-4 py-3 text-sm text-slate-600">${i + 1}</td>
               <td class="px-4 py-3 text-sm font-medium text-slate-800">${r.userName || '匿名'}</td>
               <td class="px-4 py-3 text-sm text-slate-600">${r.department || '-'}</td>
-              <td class="px-4 py-3 text-sm text-slate-600">${new Date(r.submittedAt).toLocaleString('zh-CN')}</td>
+              <td class="px-4 py-3 text-sm text-slate-600">${r.submittedAt ? new Date(r.submittedAt).toLocaleString('zh-CN') : '-'}</td>
             </tr>`).join('')
           : `<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400"><i class="fas fa-inbox text-2xl mb-2"></i><p>暂无人填写</p></td></tr>`;
 
@@ -9271,7 +9271,10 @@
     }
 
     // 搜索和筛选事件绑定
+    let userFiltersInitialized = false;
     function initUserFilters() {
+      if (userFiltersInitialized) return;
+      userFiltersInitialized = true;
       const searchInput = document.getElementById('user-search-input');
       const roleFilter = document.getElementById('user-role-filter');
       const statusFilter = document.getElementById('user-status-filter');
@@ -12114,7 +12117,7 @@
               });
           }
         }
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error(e); toast('加载考试数据失败', 'error'); }
     }
 
     function renderSelectedQuestions() {
@@ -15379,7 +15382,7 @@
                           '</div>' +
                           '<div>' +
                             '<p class="text-sm font-medium text-slate-700">' + escHtml(r.userName || '匿名用户') + '</p>' +
-                            '<p class="text-xs text-slate-400">' + (r.department ? escHtml(r.department) + ' · ' : '') + new Date(r.submittedAt).toLocaleString('zh-CN') + '</p>' +
+                            '<p class="text-xs text-slate-400">' + (r.department ? escHtml(r.department) + ' · ' : '') + (r.submittedAt ? new Date(r.submittedAt).toLocaleString('zh-CN') : '-') + '</p>' +
                           '</div>' +
                         '</div>' +
                         '<button onclick="viewResponseDetail(' + i + ')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-medium transition">查看详情</button>' +
@@ -15412,7 +15415,7 @@
           i + 1,
           r.userName || '匿名用户',
           r.department || '',
-          new Date(r.submittedAt).toLocaleString('zh-CN'),
+          r.submittedAt ? new Date(r.submittedAt).toLocaleString('zh-CN') : '-',
           ...questions.map(q => {
             const a = answers.find(x => x.questionId === q.id);
             if (!a) return '';
@@ -15467,7 +15470,7 @@
           <div class="bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-4 flex items-center justify-between flex-shrink-0">
             <div>
               <h3 class="text-lg font-bold text-white">填写详情</h3>
-              <p class="text-white/60 text-sm">${escHtml(r.userName || '匿名用户')}${r.department ? ' · ' + escHtml(r.department) : ''} · ${new Date(r.submittedAt).toLocaleString('zh-CN')}</p>
+              <p class="text-white/60 text-sm">${escHtml(r.userName || '匿名用户')}${r.department ? ' · ' + escHtml(r.department) : ''} · ${r.submittedAt ? new Date(r.submittedAt).toLocaleString('zh-CN') : '-'}</p>
             </div>
             <button onclick="this.closest('.survey-modal-overlay').remove()" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition"><i class="fas fa-times"></i></button>
           </div>

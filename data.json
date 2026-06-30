@@ -28,6 +28,104 @@
       "createdAt": "2026/6/10 18:23:41",
       "lastLogin": "2026/6/29 10:34:59",
       "status": "active"
+    },
+    {
+      "id": 1782783422496,
+      "username": "1113336",
+      "passwordHash": "131468148580cfa628fd3b7631efbea955993eaee61da0192f7893fd05ae2ec5",
+      "email": "",
+      "phone": "1113336",
+      "realName": "陈志成",
+      "department": "",
+      "role": "user",
+      "avatar": "",
+      "createdAt": "2026/6/30 09:37:02",
+      "lastLogin": null,
+      "status": "active"
+    },
+    {
+      "id": 1782783451005,
+      "username": "21666666",
+      "passwordHash": "c893b5cc6cc1de8d2bbfebb26e1da6990461f2c8eb8177006ab3df1ab0ea916c",
+      "email": "",
+      "phone": "21666666",
+      "realName": "张映娴",
+      "department": "",
+      "role": "user",
+      "avatar": "",
+      "createdAt": "2026/6/30 09:37:31",
+      "lastLogin": null,
+      "status": "active"
+    },
+    {
+      "id": 1782783484378,
+      "username": "13666666666666",
+      "passwordHash": "4c5f1ae7ed003aac3da42c0f92e743b9165e6fc913eeaf379ef36da1a19588e2",
+      "email": "",
+      "phone": "13666666666666",
+      "realName": "林泽婷",
+      "department": "",
+      "role": "user",
+      "avatar": "",
+      "createdAt": "2026/6/30 09:38:04",
+      "lastLogin": null,
+      "status": "active"
+    },
+    {
+      "id": 1782783507741,
+      "username": "56666666666666",
+      "passwordHash": "0a39658db9156d017e87e6a7c99570a07a7a9120b0e2c2aaad49ef60aab415b1",
+      "email": "",
+      "phone": "56666666666666",
+      "realName": "严伟芹",
+      "department": "",
+      "role": "user",
+      "avatar": "",
+      "createdAt": "2026/6/30 09:38:27",
+      "lastLogin": null,
+      "status": "active"
+    },
+    {
+      "id": 1782783520741,
+      "username": "06666666666",
+      "passwordHash": "3dcedf47aef08ea61f68de28f06c491dc6b1dbb8898f1d3c876a3d2a739ea8b1",
+      "email": "",
+      "phone": "06666666666",
+      "realName": "陈少",
+      "department": "",
+      "role": "user",
+      "avatar": "",
+      "createdAt": "2026/6/30 09:38:40",
+      "lastLogin": null,
+      "status": "active"
+    },
+    {
+      "id": 1782783537268,
+      "username": "1111111111111",
+      "passwordHash": "6096b128f37d48c445168ff1d151aa3817c85dee1ea4f37060df260499de2c45",
+      "email": "",
+      "phone": "1111111111111",
+      "realName": "李小飞",
+      "department": "",
+      "role": "user",
+      "avatar": "",
+      "createdAt": "2026/6/30 09:38:57",
+      "lastLogin": null,
+      "status": "active"
+    },
+    {
+      "id": 1782783556507,
+      "username": "066666666666",
+      "passwordHash": "802f528215055e697d8f82a892a1bdf14e195e0d772c81f55f19d0247558d778",
+      "email": "",
+      "phone": "066666666666",
+      "realName": "罗永浩",
+      "department": "",
+      "role": "user",
+      "avatar": "",
+      "createdAt": "2026/6/30 09:39:16",
+      "lastLogin": null,
+      "status": "active"
     }
   ],
   "user_learning_1780909174403": {
@@ -1417,7 +1515,29 @@
       "date": "2026-06-22",
       "startTime": "2026-06-22T17:00",
       "endTime": "2026-06-22T18:00",
-      "id": 1781148838222
+      "id": 1781148838222,
+      "signinEnabled": false,
+      "signinCode": null,
+      "signinStartTime": null,
+      "signinEndTime": null,
+      "examEnabled": false,
+      "surveyEnabled": false,
+      "coursewareEnabled": false,
+      "linkedSurveyId": null,
+      "linkedExamId": null,
+      "accessType": "restricted",
+      "allowedUsers": [
+        1780909174403,
+        1781087021554,
+        1782783422496,
+        1782783451005,
+        1782783484378,
+        1782783507741,
+        1782783520741,
+        1782783537268,
+        1782783556507
+      ],
+      "coursewareFiles": []
     }
   ],
   "user_learning_1": {
@@ -2070,6 +2190,97 @@
       "id": 1782700490786,
       "read": false,
       "createdAt": "2026-06-29T02:34:50.786Z"
+    },
+    {
+      "id": 1782784028012,
+      "userId": 1780909174403,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI原画技巧」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148838222,
+      "read": true,
+      "createdAt": "2026-06-30T01:39:36.989Z",
+      "readAt": "2026-06-30T01:39:44.914Z"
+    },
+    {
+      "id": 1782784500123,
+      "userId": 1781087021554,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI原画技巧」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148838222,
+      "read": false,
+      "createdAt": "2026-06-30T01:39:36.989Z"
+    },
+    {
+      "id": 1782783997928,
+      "userId": 1782783422496,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI原画技巧」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148838222,
+      "read": false,
+      "createdAt": "2026-06-30T01:39:36.989Z"
+    },
+    {
+      "id": 1782783737307,
+      "userId": 1782783451005,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI原画技巧」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148838222,
+      "read": false,
+      "createdAt": "2026-06-30T01:39:36.989Z"
+    },
+    {
+      "id": 1782784422988,
+      "userId": 1782783484378,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI原画技巧」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148838222,
+      "read": false,
+      "createdAt": "2026-06-30T01:39:36.989Z"
+    },
+    {
+      "id": 1782783609591,
+      "userId": 1782783507741,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI原画技巧」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148838222,
+      "read": false,
+      "createdAt": "2026-06-30T01:39:36.989Z"
+    },
+    {
+      "id": 1782783851948,
+      "userId": 1782783520741,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI原画技巧」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148838222,
+      "read": false,
+      "createdAt": "2026-06-30T01:39:36.989Z"
+    },
+    {
+      "id": 1782784194336,
+      "userId": 1782783537268,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI原画技巧」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148838222,
+      "read": false,
+      "createdAt": "2026-06-30T01:39:36.989Z"
+    },
+    {
+      "id": 1782783677512,
+      "userId": 1782783556507,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI原画技巧」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148838222,
+      "read": false,
+      "createdAt": "2026-06-30T01:39:36.989Z"
     }
   ],
   "notification_reads": [
@@ -4096,6 +4307,69 @@
       "userId": 1781087021554,
       "enrolledAt": "2026-06-27T06:13:44.444Z",
       "source": "self"
+    },
+    {
+      "id": 1782783576989,
+      "trainingId": 1781148838222,
+      "userId": 1780909174403,
+      "enrolledAt": "2026-06-30T01:39:36.989Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782783576990,
+      "trainingId": 1781148838222,
+      "userId": 1781087021554,
+      "enrolledAt": "2026-06-30T01:39:36.989Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782783576991,
+      "trainingId": 1781148838222,
+      "userId": 1782783422496,
+      "enrolledAt": "2026-06-30T01:39:36.989Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782783576992,
+      "trainingId": 1781148838222,
+      "userId": 1782783451005,
+      "enrolledAt": "2026-06-30T01:39:36.989Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782783576993,
+      "trainingId": 1781148838222,
+      "userId": 1782783484378,
+      "enrolledAt": "2026-06-30T01:39:36.989Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782783576994,
+      "trainingId": 1781148838222,
+      "userId": 1782783507741,
+      "enrolledAt": "2026-06-30T01:39:36.989Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782783576995,
+      "trainingId": 1781148838222,
+      "userId": 1782783520741,
+      "enrolledAt": "2026-06-30T01:39:36.989Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782783576996,
+      "trainingId": 1781148838222,
+      "userId": 1782783537268,
+      "enrolledAt": "2026-06-30T01:39:36.989Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782783576997,
+      "trainingId": 1781148838222,
+      "userId": 1782783556507,
+      "enrolledAt": "2026-06-30T01:39:36.989Z",
+      "source": "assigned"
     }
   ],
   "user_shares_1781087021554": {

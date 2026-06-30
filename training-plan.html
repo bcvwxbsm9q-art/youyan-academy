@@ -155,9 +155,9 @@
         /* ===== 培训详情 - 基本信息卡片 ===== */
         .tp-info-card {
             background: #ffffff;
-            border: 1px solid #f3f4f6;
+            border: none;
             border-radius: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            box-shadow: none;
             overflow: hidden;
             margin-bottom: 0.75rem;
         }
@@ -207,8 +207,8 @@
             gap: 0.625rem;
         }
         .tp-info-mini-card {
-            background: #f9fafb;
-            border: 1px solid #f3f4f6;
+            background: #ffffff;
+            border: 1px solid #edeef2;
             border-radius: 0.75rem;
             padding: 0.625rem 0.75rem;
             transition: all 0.2s ease;
@@ -216,19 +216,18 @@
             align-items: center;
             gap: 0.625rem;
         }
-        .tp-info-mini-card:hover { background: #f3f4f6; border-color: #e5e7eb; }
+        .tp-info-mini-card:hover { border-color: #d7d9e0; box-shadow: 0 2px 6px rgba(102, 126, 234, 0.06); }
         .tp-info-mini-icon {
-            width: 1.5rem;
-            height: 1.5rem;
-            border-radius: 0.45rem;
-            background: #ffffff;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.6rem;
+            background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%);
             color: #667eea;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.72rem;
+            font-size: 0.85rem;
             flex-shrink: 0;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
         .tp-info-mini-text { flex: 1; min-width: 0; }
         .tp-info-mini-label {
@@ -249,8 +248,8 @@
         .tp-intro-box {
             margin-top: 1rem;
             padding: 0.875rem;
-            background: #f8fafc;
-            border: 1px solid #f1f5f9;
+            background: #ffffff;
+            border: 1px solid #edeef2;
             border-radius: 0.75rem;
         }
         .tp-intro-title {
@@ -271,8 +270,59 @@
         }
         .tp-info-footer {
             padding: 0.875rem 1rem;
-            background: #fafafa;
+            background: #ffffff;
             border-top: 1px solid #f3f4f6;
+        }
+        .tp-enroll-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.875rem;
+        }
+        .tp-enroll-avatar-stack {
+            display: flex;
+            align-items: center;
+        }
+        .tp-enroll-avatar-stack > span {
+            width: 1.75rem;
+            height: 1.75rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border: 2px solid #fff;
+            margin-left: -0.5rem;
+        }
+        .tp-enroll-avatar-stack > span:first-child { margin-left: 0; }
+        .tp-enroll-count {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        .tp-enroll-count span {
+            font-weight: 700;
+            color: #667eea;
+        }
+        .tp-enroll-names {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .tp-enroll-name {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.65rem;
+            background: #f8fafc;
+            border: 1px solid #eef2f7;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            color: #4b5563;
+            font-weight: 500;
         }
 
     </style>
@@ -280,20 +330,20 @@
 <body class="bg-gray-50">
     <!-- 统一弹窗：日历/课程详情 -->
     <div id="day-modal" style="display: none; position: fixed; inset: 0; z-index: 50; align-items: center; justify-content: center; padding: 1rem;">
-        <div onclick="closeDayModal()" style="position: absolute; inset: 0; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(8px);"></div>
-        <div style="position: relative; background-color: white; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); width: 100%; max-width: 560px; max-height: 92vh; overflow: hidden; animation: modalIn 0.3s ease-out;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.25rem 1.5rem; color: white;">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <div id="modal-date" style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.25rem;">2026年1月1日 周五</div>
-                        <div id="modal-title" style="font-size: 1.25rem; font-weight: 600;">课程安排</div>
+        <div onclick="closeDayModal()" style="position: absolute; inset: 0; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(12px);"></div>
+        <div style="position: relative; background-color: white; border-radius: 1.25rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); width: 100%; max-width: 560px; max-height: 92vh; overflow: hidden; animation: modalIn 0.3s ease-out;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem 1.75rem 1.75rem; color: white;">
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;">
+                    <div style="padding-top: 0.25rem;">
+                        <div id="modal-date" style="font-size: 0.8125rem; opacity: 0.85; margin-bottom: 0.375rem; font-weight: 500;">2026年1月1日 周五</div>
+                        <div id="modal-title" style="font-size: 1.375rem; font-weight: 700; letter-spacing: -0.01em;">课程安排</div>
                     </div>
-                    <button onclick="closeDayModal()" style="width: 2.25rem; height: 2.25rem; border-radius: 50%; background-color: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; border: none;">
+                    <button onclick="closeDayModal()" style="flex-shrink: 0; width: 2.25rem; height: 2.25rem; border-radius: 50%; background-color: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; border: none; color: white;">
                         <i class="fa fa-times" style="font-size: 1.125rem;"></i>
                     </button>
                 </div>
             </div>
-            <div id="modal-content" style="padding: 1.5rem; max-height: 72vh; overflow-y: auto;">
+            <div id="modal-content" style="padding: 1.75rem; max-height: 64vh; overflow-y: auto;">
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 0; color: #9ca3af;">
                     <div style="width: 5rem; height: 5rem; border-radius: 50%; background-color: #f3f4f6; display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem;">
                         <i class="fa fa-calendar-o" style="font-size: 2.5rem; color: #d1d5db;"></i>
@@ -861,23 +911,21 @@
         function renderEnrolledAvatars(courseId, compact) {
             const info = enrollMap[courseId];
             if (!info || !info.enrolledUsers || info.enrolledUsers.length === 0) {
-                if (compact) return '<div class="flex items-center text-xs text-gray-400"><i class="fa fa-user-o mr-1"></i>暂无人报名</div>';
-                return `<div class="flex items-center mt-2 text-xs text-gray-400"><i class="fa fa-user-o mr-1"></i>暂无人报名</div>`;
+                if (compact) return '<div class="flex items-center text-xs text-gray-400"><i class="fa fa-user-o mr-1.5 text-purple-400"></i>暂无人报名</div>';
+                return `<div class="flex items-center mt-2 text-xs text-gray-400"><i class="fa fa-user-o mr-1.5 text-purple-400"></i>暂无人报名</div>`;
             }
             const users = info.enrolledUsers;
             const maxShow = 6;
             const showUsers = users.slice(0, maxShow);
             const remaining = users.length - maxShow;
-            let html = compact ? '<div>' : '<div class="mt-2.5 pt-2.5 border-t border-gray-200/60">';
-            html += '<div class="text-[11px] text-gray-500 mb-1.5 font-medium"><i class="fa fa-users mr-1"></i>已报名 (' + info.enrollCount + '人)</div>';
-            html += '<div class="flex flex-wrap gap-1.5">';
-            showUsers.forEach(u => {
-                html += `<span class="inline-flex items-center px-2 py-0.5 bg-white border border-gray-200 rounded-full text-xs text-gray-700 shadow-sm" title="${u.department || ''}">${u.name}</span>`;
-            });
-            if (remaining > 0) {
-                html += `<span class="inline-flex items-center justify-center h-6 min-w-[28px] px-1.5 rounded-full bg-gray-100 text-[11px] text-gray-500 font-medium">+${remaining}人</span>`;
-            }
-            html += '</div></div>';
+            const namesHtml = showUsers.map(u => {
+                return `<span class="tp-enroll-name" title="${u.department || ''}">${u.name}</span>`;
+            }).join('');
+            let html = compact ? '<div>' : '<div class="mt-2.5 pt-2.5 border-t border-gray-100">';
+            html += `<div class="tp-enroll-header">
+                <div class="tp-enroll-count">已报名 <span>${info.enrollCount}</span> 人</div>
+            </div>`;
+            html += `<div class="tp-enroll-names">${namesHtml}</div></div>`;
             return html;
         }
 
@@ -1465,12 +1513,12 @@
 
             const basicInfoContent = `
                 <div class="tp-info-card">
-                    <div class="tp-info-body">
-                        <h2 class="tp-course-title">${course.name}</h2>
+                    <div class="tp-info-body" style="padding: 0;">
+                        <h2 class="tp-course-title" style="margin-bottom: 1.25rem;">${course.name}</h2>
                         ${introHtml}
                         <div class="tp-info-grid">${infoGridHtml}</div>
                     </div>
-                    <div class="tp-info-footer">
+                    <div class="tp-info-footer" style="border-top: 1px solid #f3f4f6; margin-top: 1rem;">
                         ${renderEnrolledAvatars(courseId, true)}
                     </div>
                 </div>
@@ -1496,19 +1544,19 @@
 
             let content = `
                 <div class="animate-fade-in">
-                    <button onclick="backToCourseList()" class="mb-3 flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600 transition-colors">
+                    <button onclick="backToCourseList()" class="mb-4 flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600 transition-colors">
                         <i class="fa fa-arrow-left"></i><span>返回课程列表</span>
                     </button>
-                    <div class="mb-4">
-                        <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2.5"><i class="fa fa-info-circle text-purple-500"></i>基本信息</h3>
+                    <div class="mb-5">
+                        <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-3"><i class="fa fa-info-circle text-primary"></i>基本信息</h3>
                         ${basicInfoContent}
                     </div>
-                    <div class="mb-4">
-                        <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2.5"><i class="fa fa-tasks text-emerald-500"></i>项目内容</h3>
+                    <div class="mb-5">
+                        <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-3"><i class="fa fa-tasks text-primary"></i>项目内容</h3>
                         ${projectContent}
                     </div>
-                    <div class="mb-4">
-                        <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-2.5"><i class="fa fa-camera text-indigo-500"></i>学习风采</h3>
+                    <div class="mb-5">
+                        <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-3"><i class="fa fa-camera text-primary"></i>学习风采</h3>
                         ${galleryContent}
                     </div>
                     <div class="pt-2">${getCourseDetailEnrollButton(courseId, course.date, course.time, course.endTime)}</div>
