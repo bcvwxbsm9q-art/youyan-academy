@@ -405,6 +405,60 @@
             padding: 0.25rem 0;
         }
 
+        /* 当月课程列表分页 */
+        .monthly-page-btn {
+            min-width: 2rem;
+            height: 2rem;
+            padding: 0 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .monthly-page-active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.25);
+        }
+        .monthly-page-normal {
+            background: #fff;
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+        }
+        .monthly-page-normal:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        .monthly-page-nav {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.5rem;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .monthly-page-nav:hover:not(:disabled) {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        .monthly-page-nav:disabled,
+        .monthly-page-nav.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-color: #e5e7eb;
+            color: #d1d5db;
+        }
+
     </style>
 </head>
 <body class="bg-gray-50">
@@ -702,6 +756,7 @@
                         </div>
                         <div id="monthly-courses" class="space-y-3">
                         </div>
+                        <div id="monthly-courses-pagination"></div>
                     </div>
 
                     <div class="space-y-6">
@@ -810,6 +865,8 @@
         let currentMonth = new Date().getMonth();
         let currentCategoryFilter = 'all';
         let currentSearchTerm = '';
+        let currentMonthlyPage = 1; // 当月课程列表当前页码
+        const MONTHLY_PAGE_SIZE = 3; // 当月课程列表每页数量
 
         let courses = [];
         let instructorsMap = {};
@@ -1368,10 +1425,18 @@
                         <p class="text-sm text-gray-400 mt-1">试试调整筛选条件</p>
                     </div>
                 `;
+                document.getElementById('monthly-courses-pagination').innerHTML = '';
                 return;
             }
 
-            container.innerHTML = monthCourses.map((c, index) => {
+            // 分页计算
+            const totalPages = Math.ceil(monthCourses.length / MONTHLY_PAGE_SIZE);
+            if (currentMonthlyPage > totalPages) currentMonthlyPage = totalPages;
+            if (currentMonthlyPage < 1) currentMonthlyPage = 1;
+            const startIndex = (currentMonthlyPage - 1) * MONTHLY_PAGE_SIZE;
+            const pageCourses = monthCourses.slice(startIndex, startIndex + MONTHLY_PAGE_SIZE);
+
+            container.innerHTML = pageCourses.map((c, index) => {
                 const d = new Date(c.date);
                 const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
                 const instructor = getInstructorInfo(c.instructor);
@@ -1412,6 +1477,60 @@
                     </div>
                 `;
             }).join('');
+
+            // 渲染分页（超过3个才显示）
+            renderMonthlyPagination(totalPages);
+        }
+
+        // 渲染当月课程列表分页
+        function renderMonthlyPagination(totalPages) {
+            const paginationContainer = document.getElementById('monthly-courses-pagination');
+            if (!paginationContainer) return;
+
+            if (totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let pagesHtml = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const isActive = i === currentMonthlyPage;
+                pagesHtml += `
+                    <button onclick="goToMonthlyPage(${i})" 
+                            class="monthly-page-btn ${isActive ? 'monthly-page-active' : 'monthly-page-normal'}">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            paginationContainer.innerHTML = `
+                <div class="flex items-center justify-center gap-2 mt-4">
+                    <button onclick="goToMonthlyPage(currentMonthlyPage - 1)" 
+                            class="monthly-page-nav ${currentMonthlyPage === 1 ? 'disabled' : ''}" 
+                            ${currentMonthlyPage === 1 ? 'disabled' : ''}>
+                        <i class="fa fa-chevron-left text-xs"></i>
+                    </button>
+                    ${pagesHtml}
+                    <button onclick="goToMonthlyPage(currentMonthlyPage + 1)" 
+                            class="monthly-page-nav ${currentMonthlyPage === totalPages ? 'disabled' : ''}" 
+                            ${currentMonthlyPage === totalPages ? 'disabled' : ''}>
+                        <i class="fa fa-chevron-right text-xs"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        // 切换当月课程列表页码
+        function goToMonthlyPage(page) {
+            const filteredCourses = getFilteredCourses();
+            const monthCourses = filteredCourses.filter(c => {
+                const d = new Date(c.date);
+                return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+            });
+            const totalPages = Math.ceil(monthCourses.length / MONTHLY_PAGE_SIZE);
+            if (page < 1 || page > totalPages) return;
+            currentMonthlyPage = page;
+            renderMonthlyCourses();
         }
 
         // 当前弹窗状态
@@ -2177,6 +2296,7 @@
             } else {
                 currentMonth--;
             }
+            currentMonthlyPage = 1;
             renderCalendar();
         }
 
@@ -2187,6 +2307,7 @@
             } else {
                 currentMonth++;
             }
+            currentMonthlyPage = 1;
             renderCalendar();
         }
 
@@ -2194,6 +2315,7 @@
             const today = new Date();
             currentYear = today.getFullYear();
             currentMonth = today.getMonth();
+            currentMonthlyPage = 1;
             renderCalendar();
         }
 
@@ -2225,6 +2347,7 @@
             const selectEl = document.getElementById('category-filter');
             if (selectEl) selectEl.value = category;
 
+            currentMonthlyPage = 1;
             renderCalendar();
         }
 
@@ -2263,11 +2386,13 @@
                 clearTimeout(searchDebounceTimer);
                 searchDebounceTimer = setTimeout(() => {
                     currentSearchTerm = e.target.value;
+                    currentMonthlyPage = 1;
                     renderCalendar();
                 }, 300);
             });
 
             document.getElementById('category-filter').addEventListener('change', (e) => {
+                currentMonthlyPage = 1;
                 filterByCategory(e.target.value);
             });
 

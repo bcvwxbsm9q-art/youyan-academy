@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -10449,12 +10449,12 @@
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, categoryId: parseInt(categoryId) })
         });
-        const data = await res.json();
-        if (data.success) {
+        const result = await res.json();
+        if (result.success) {
           closeEditBankModal();
           toast('题库已更新');
           loadBankList();
-        } else { toast(data.error || '更新失败', 'error'); }
+        } else { toast(result.error || '更新失败', 'error'); }
       } catch (e) { toast('更新失败', 'error'); }
     }
 
@@ -10624,9 +10624,9 @@
       const ids = Array.from(checked).map(cb => parseInt(cb.dataset.qid));
       try {
         const res = await fetch('/api/questions/batch', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) });
-        const data = await res.json();
-        if (data.success) { toast(`已删除 ${data.deleted} 道题目`); loadBankQuestions(qbCurrentPage); }
-        else { toast(data.error || '删除失败', 'error'); }
+        const result = await res.json();
+        if (result.success) { toast(`已删除 ${result.deleted} 道题目`); loadBankQuestions(qbCurrentPage); }
+        else { toast(result.error || '删除失败', 'error'); }
       } catch (e) { toast('删除失败', 'error'); }
     }
 
@@ -10909,12 +10909,12 @@
         } else {
           res = await fetch('/api/questions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         }
-        const data = await res.json();
-        if (data.success) {
+        const result = await res.json();
+        if (result.success) {
           closeQuestionModal();
           loadBankQuestions(qbCurrentPage);
           toast(id ? '试题已更新' : '试题添加成功');
-        } else { toast(data.error || '保存失败', 'error'); }
+        } else { toast(result.error || '保存失败', 'error'); }
       } catch (e) { toast('网络错误', 'error'); }
     }
 
@@ -10924,9 +10924,9 @@
       if (!confirm('确定要删除这道题目吗？已关联的考试也会移除该题。')) return;
       try {
         const res = await fetch('/api/questions/' + id, { method: 'DELETE' });
-        const data = await res.json();
-        if (data.success) { toast('题目已删除'); loadBankQuestions(qbCurrentPage); }
-        else { toast(data.error || '删除失败', 'error'); }
+        const result = await res.json();
+        if (result.success) { toast('题目已删除'); loadBankQuestions(qbCurrentPage); }
+        else { toast(result.error || '删除失败', 'error'); }
       } catch (e) { toast('删除失败', 'error'); }
     }
 
@@ -12551,9 +12551,9 @@
             body: JSON.stringify(payload)
           });
         }
-        const data = await res.json();
-        if (data.success) {
-          const newExamId = data.exam ? data.exam.id : editingExamId;
+        const result = await res.json();
+        if (result.success) {
+          const newExamId = result.exam ? result.exam.id : editingExamId;
           // 如果是从培训模块打开的，关联到培训
           if (examModalFromTraining) {
             const idInput = document.getElementById('t-exam-id');
@@ -12567,7 +12567,7 @@
           closeExamModal();
           loadExamMgmtList();
         } else {
-          toast(data.error || '保存失败', 'error');
+          toast(result.error || '保存失败', 'error');
         }
       } catch (err) {
         toast('网络错误: ' + err.message, 'error');
@@ -12577,12 +12577,12 @@
     async function previewExam(id) {
       try {
         const res = await fetch('/api/exams/' + id + '/questions');
-        const data = await res.json();
+        const result = await res.json();
         const examRes = await fetch('/api/exams');
         const allExams = await examRes.json();
         const exam = allExams.find(e => e.id === id);
         document.getElementById('previewExamTitle').textContent = exam ? exam.title : '考试';
-        const questions = data.questions || [];
+        const questions = result.questions || [];
         const typeNames = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '问答题' };
         if (questions.length === 0) {
           document.getElementById('examPreviewContent').innerHTML = '<p class="text-sm text-slate-400 text-center py-4">暂无题目</p>';
@@ -12645,9 +12645,9 @@
       if (!confirm('确定要删除这个考试吗?相关成绩记录也将被清除。')) return;
       try {
         const res = await fetch('/api/exams/' + id, { method: 'DELETE' });
-        const data = await res.json();
-        if (data.success) { loadExamMgmtList(); toast('考试已删除'); }
-        else toast(data.error || '删除失败', 'error');
+        const result = await res.json();
+        if (result.success) { loadExamMgmtList(); toast('考试已删除'); }
+        else toast(result.error || '删除失败', 'error');
       } catch (e) { toast('删除失败', 'error'); }
     }
 
@@ -12677,9 +12677,9 @@
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'published' })
         });
-        const data = await res.json();
-        if (data.success) { loadExamMgmtList(); toast('考试已发布'); }
-        else toast(data.error, 'error');
+        const result = await res.json();
+        if (result.success) { loadExamMgmtList(); toast('考试已发布'); }
+        else toast(result.error, 'error');
       } catch (e) { toast('发布失败', 'error'); }
     }
 
@@ -12689,9 +12689,9 @@
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'closed' })
         });
-        const data = await res.json();
-        if (data.success) { loadExamMgmtList(); toast('考试已结束'); }
-        else toast(data.error, 'error');
+        const result = await res.json();
+        if (result.success) { loadExamMgmtList(); toast('考试已结束'); }
+        else toast(result.error, 'error');
       } catch (e) { toast('操作失败', 'error'); }
     }
 
@@ -12708,8 +12708,8 @@
       modal.classList.add('flex');
       try {
         const res = await fetch('/api/exams/' + id + '/results');
-        const data = await res.json();
-        const results = data.results || [];
+        const result = await res.json();
+        const results = result.results || [];
         currentExamResults = results;
         if (!results.length) {
           tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">暂无成绩记录</td></tr>';
@@ -12990,9 +12990,9 @@
       modal.classList.add('flex');
       try {
         const res = await fetch('/api/exams/' + currentExamDetailId + '/questions/' + questionId + '/answers');
-        const data = await res.json();
-        currentExamQuestionAnswers = data;
-        const answers = data.answers || [];
+        const result = await res.json();
+        currentExamQuestionAnswers = result;
+        const answers = result.answers || [];
         if (!answers.length) {
           body.innerHTML = '<div class="py-12 text-center text-slate-400">暂无答题数据</div>';
           return;
@@ -13060,8 +13060,8 @@
       modal.classList.add('flex');
       try {
         const res = await fetch('/api/exams/' + examId + '/students/' + userId + '/records');
-        const data = await res.json();
-        const records = data.records || [];
+        const result = await res.json();
+        const records = result.records || [];
         currentExamStudentRecords = records;
         if (!records.length) {
           tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">暂无考试记录</td></tr>';
@@ -13151,13 +13151,13 @@
       modal.classList.add('flex');
       try {
         const res = await fetch('/api/exams/attempts/' + attemptId + '/detail');
-        const data = await res.json();
-        currentExamAttemptDetail = data;
-        const attempt = data.attempt || {};
-        const user = data.user || {};
-        const exam = data.exam || {};
+        const result = await res.json();
+        currentExamAttemptDetail = result;
+        const attempt = result.attempt || {};
+        const user = result.user || {};
+        const exam = result.exam || {};
         subtitle.textContent = `${escHtml(user.userName || '')} · ${escHtml(exam.title || '')} · 得分 ${attempt.score || 0}/${exam.fullScore || exam.totalScore || 0}`;
-        const details = data.details || [];
+        const details = result.details || [];
         if (!details.length) {
           body.innerHTML = '<div class="py-12 text-center text-slate-400">暂无作答数据</div>';
           return;

@@ -584,6 +584,122 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
+// ============================================================
+// 短信验证码登录
+// ============================================================
+const smsCodeStore = new Map();
+
+app.post('/api/auth/sms-code', (req, res) => {
+  const { phone } = req.body;
+  if (!phone) {
+    return res.status(400).json({ success: false, error: '请输入手机号' });
+  }
+  if (!/^\d{6,20}$/.test(phone)) {
+    return res.status(400).json({ success: false, error: '手机号格式不正确' });
+  }
+  // 演示环境使用固定验证码，生产环境应替换为随机码并接入短信服务商
+  const code = '123456';
+  smsCodeStore.set(phone, { code, expiresAt: Date.now() + 5 * 60 * 1000 });
+  res.json({ success: true, message: '验证码已发送' });
+});
+
+app.post('/api/auth/sms-login', (req, res) => {
+  const { phone, code } = req.body;
+  if (!phone || !code) {
+    return res.status(400).json({ success: false, error: '请输入手机号和验证码' });
+  }
+  const record = smsCodeStore.get(phone);
+  if (!record || record.code !== code || record.expiresAt < Date.now()) {
+    return res.status(400).json({ success: false, error: '验证码错误或已过期' });
+  }
+
+  const data = readData();
+  if (!data.registered_users) data.registered_users = [];
+
+  const user = data.registered_users.find(u => u.phone === phone || u.username === phone);
+  if (!user) {
+    return res.status(401).json({ success: false, error: '该手机号未开通账号，请联系管理员' });
+  }
+  if (user.status !== 'active') {
+    return res.status(401).json({ success: false, error: '账户已被禁用' });
+  }
+
+  smsCodeStore.delete(phone);
+  user.lastLogin = new Date().toLocaleString('zh-CN');
+  writeData(data);
+
+  const token = createToken(user);
+  const userInfo = { ...user };
+  delete userInfo.passwordHash;
+
+  res.json({
+    success: true,
+    message: '登录成功',
+    data: { token, user: userInfo }
+  });
+});
+
+// ============================================================
+// 扫码登录（钉钉 / 飞书 / 微信 / 企微）
+// 注：当前为流程占位，真实扫码需对接各平台开放平台/JS-SDK
+// ============================================================
+const qrSessions = new Map();
+
+app.post('/api/auth/qr/:provider/init', (req, res) => {
+  const provider = req.params.provider;
+  const qrToken = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+  qrSessions.set(qrToken, {
+    provider,
+    status: 'pending',
+    expiresAt: Date.now() + 60 * 1000
+  });
+  res.json({
+    success: true,
+    data: { qrToken, qrUrl: '' }
+  });
+});
+
+app.get('/api/auth/qr/:provider/status', (req, res) => {
+  const provider = req.params.provider;
+  const token = req.query.token;
+  const session = qrSessions.get(token);
+  if (!session || session.provider !== provider || session.expiresAt < Date.now()) {
+    return res.json({ success: true, data: { status: 'expired' } });
+  }
+  if (session.status === 'confirmed' && session.user) {
+    const userInfo = { ...session.user };
+    delete userInfo.passwordHash;
+    return res.json({
+      success: true,
+      data: { status: 'confirmed', token: session.token, user: userInfo }
+    });
+  }
+  res.json({ success: true, data: { status: session.status } });
+});
+
+// 调试用：模拟扫码登录成功（仅本地测试使用）
+app.post('/api/auth/qr/:provider/simulate', (req, res) => {
+  const provider = req.params.provider;
+  const { token: qrToken } = req.body;
+  const session = qrSessions.get(qrToken);
+  if (!session || session.provider !== provider || session.expiresAt < Date.now()) {
+    return res.status(400).json({ success: false, error: '二维码已过期' });
+  }
+
+  const data = readData();
+  const user = data.registered_users.find(u => u.role === 'admin') || data.registered_users[0];
+  if (!user) {
+    return res.status(500).json({ success: false, error: '无可用用户' });
+  }
+
+  const loginToken = createToken(user);
+  session.status = 'confirmed';
+  session.token = loginToken;
+  session.user = { ...user };
+
+  res.json({ success: true, message: '模拟扫码成功' });
+});
+
 // 验证 token / 获取当前用户信息
 app.get('/api/auth/me', (req, res) => {
   const authHeader = req.headers.authorization;

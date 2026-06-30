@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1782044069160-440027461.jpg",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/6/29 10:36:26",
+      "lastLogin": "2026/6/30 18:03:09",
       "status": "active",
       "position": "人事经理"
     },
@@ -167,7 +167,7 @@
     ],
     "videoProgress": {
       "1781087462994_0": 27,
-      "1781065453648_0": 100,
+      "1781065453648_0": 19,
       "1781087427858_0": 5,
       "1781080411545_0": 100,
       "1781080411545_1": 5,
@@ -177,7 +177,7 @@
       "1781065485355_0": 1,
       "1781077900894_0": 100
     },
-    "lastStudyTime": "2026-06-29T10:56:03.785Z",
+    "lastStudyTime": "2026-06-30T09:42:30.448Z",
     "studyDates": [
       "2026-06-14",
       "2026-06-15",
@@ -186,9 +186,10 @@
       "2026-06-22",
       "2026-06-24",
       "2026-06-26",
-      "2026-06-29"
+      "2026-06-29",
+      "2026-06-30"
     ],
-    "totalSeconds": 614,
+    "totalSeconds": 631,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -711,6 +712,15 @@
         "duration": 1,
         "timestamp": "2026-06-29T10:56:03.785Z",
         "date": "2026-06-29"
+      },
+      {
+        "courseId": 1781065453648,
+        "courseTitle": "成就系统设计：从理论到实践",
+        "videoIndex": 0,
+        "videoTitle": "成就系统设计：从理论到实践.mp4",
+        "duration": 17,
+        "timestamp": "2026-06-30T09:42:30.448Z",
+        "date": "2026-06-30"
       }
     ],
     "shares": 2,
@@ -1235,7 +1245,7 @@
       ],
       "attachments": [],
       "duration": 2415,
-      "views": 17,
+      "views": 18,
       "rating": 0,
       "id": 1781065453648,
       "createdAt": "2026/6/10 12:24:13"
@@ -1493,12 +1503,12 @@
       "content": "",
       "instructor": "魏少银",
       "location": "B区培训室",
-      "date": "2026-06-27",
-      "startTime": "2026-06-27T08:30",
+      "date": "2026-06-30",
+      "startTime": "2026-06-30T08:30",
       "endTime": "2026-06-30T10:30",
       "id": 1781148703132,
       "signinEnabled": true,
-      "signinCode": "6939",
+      "signinCode": "6248",
       "linkedSurveyId": 1781170180951,
       "linkedExamId": 1782468162514,
       "signinStartTime": "2026-06-26 17:30",
@@ -1576,6 +1586,29 @@
         1782783556507
       ],
       "coursewareFiles": []
+    },
+    {
+      "project": "新雁计划",
+      "name": "入职引导",
+      "content": "",
+      "instructor": "曹贺钧",
+      "location": "B区培训室",
+      "date": "2026-06-11",
+      "startTime": "2026-06-11T17:51",
+      "endTime": "2026-06-11T20:51",
+      "signinEnabled": false,
+      "signinCode": null,
+      "signinStartTime": null,
+      "signinEndTime": null,
+      "examEnabled": false,
+      "surveyEnabled": false,
+      "coursewareEnabled": false,
+      "linkedSurveyId": null,
+      "linkedExamId": null,
+      "accessType": "none",
+      "allowedUsers": null,
+      "coursewareFiles": [],
+      "id": 1782813075073
     }
   ],
   "user_learning_1": {
@@ -1692,8 +1725,8 @@
     "ratingCount": 2
   },
   "video_pos_1780909174403_1781065453648_0": {
-    "position": 2415,
-    "savedAt": "2026-06-26T13:44:12.052Z"
+    "position": 476,
+    "savedAt": "2026-06-30T09:42:30.409Z"
   },
   "course_interaction_1781065453648": {
     "likes": 1,
@@ -4423,13 +4456,6 @@
       "source": "assigned"
     },
     {
-      "id": 1782523466437,
-      "trainingId": 1781148703132,
-      "userId": 1780909174403,
-      "enrolledAt": "2026-06-27T01:24:26.437Z",
-      "source": "self"
-    },
-    {
       "id": 1782540824444,
       "trainingId": 1781148703132,
       "userId": 1781087021554,
@@ -4561,6 +4587,13 @@
       "userId": 1782805459054,
       "enrolledAt": "2026-06-30T07:44:32.149Z",
       "source": "assigned"
+    },
+    {
+      "id": 1782812957796,
+      "trainingId": 1781148703132,
+      "userId": 1780909174403,
+      "enrolledAt": "2026-06-30T09:49:17.796Z",
+      "source": "self"
     }
   ],
   "user_shares_1781087021554": {
