@@ -1549,7 +1549,9 @@ app.post('/api/training', (req, res) => {
   const event = req.body;
   const data = readData();
   if (!data.training_events) data.training_events = [];
+  const currentUser = getCurrentUser(req);
   event.id = Date.now();
+  event.createdBy = currentUser ? (currentUser.realName || currentUser.username || currentUser.id) : null;
   data.training_events.push(event);
   if (writeData(data)) {
     res.json({ success: true, event });
@@ -2082,6 +2084,7 @@ app.post('/api/exams', (req, res) => {
   }
   const data = readData();
   if (!data.exams) data.exams = [];
+  const currentUser = getCurrentUser(req);
   const newExam = {
     id: Date.now(),
     title,
@@ -2116,6 +2119,7 @@ app.post('/api/exams', (req, res) => {
     showCorrect: showCorrect || 'show',
     showAnalysis: showAnalysis || 'show',
     viewRank: viewRank || 'after_submit',
+    createdBy: currentUser ? (currentUser.realName || currentUser.username || currentUser.id) : null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };

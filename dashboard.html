@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -654,9 +654,28 @@
           </div>
 
           <!-- 部门学习排行 -->
-          <div class="bg-white rounded-2xl p-6 shadow-sm">
+          <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
             <h3 class="font-semibold text-slate-800 mb-4">部门学习排行</h3>
             <div id="rpt-dept-ranking" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+          </div>
+
+          <!-- 个人学习时长排行榜 + 考试/培训情况 -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- 个人学习时长排行榜 -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm lg:col-span-1">
+              <h3 class="font-semibold text-slate-800 mb-4">个人学习时长排行榜 TOP10</h3>
+              <div id="rpt-user-ranking" class="space-y-3"></div>
+            </div>
+            <!-- 考试情况统计 -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm lg:col-span-1">
+              <h3 class="font-semibold text-slate-800 mb-4">考试情况统计</h3>
+              <div id="rpt-exam-overview" class="space-y-3"></div>
+            </div>
+            <!-- 培训情况统计 -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm lg:col-span-1">
+              <h3 class="font-semibold text-slate-800 mb-4">培训情况统计</h3>
+              <div id="rpt-training-overview" class="space-y-3"></div>
+            </div>
           </div>
         </div>
 
@@ -681,11 +700,16 @@
             <button onclick="exportReportCSV('course')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
           </div>
           <!-- 表格 -->
-          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table class="w-full"><thead class="bg-slate-50"><tr>
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden overflow-x-auto">
+            <table class="w-full min-w-[900px]"><thead class="bg-slate-50"><tr>
               <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">课程名称</th>
               <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">分类</th>
               <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">讲师</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">评分</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">点赞</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">分享</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">学完人数</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">学习时长</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">播放量</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">学时</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">创建时间</th>
@@ -716,13 +740,21 @@
             <button onclick="exportReportCSV('student')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
           </div>
           <!-- 表格 -->
-          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table class="w-full"><thead class="bg-slate-50"><tr>
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden overflow-x-auto">
+            <table class="w-full min-w-[1100px]"><thead class="bg-slate-50"><tr>
               <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
               <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
               <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">岗位</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">角色</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">状态</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">总学习时长</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">培训学习时长</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">课程学习时长</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">学习课程数</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">参与培训数</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">参与考试数</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">获得证书数</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">账号等级</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">创建时间</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">最后登录</th>
             </tr></thead>
@@ -748,13 +780,15 @@
             <button onclick="exportReportCSV('exam')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
           </div>
           <!-- 表格 -->
-          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table class="w-full"><thead class="bg-slate-50"><tr>
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden overflow-x-auto">
+            <table class="w-full min-w-[1000px]"><thead class="bg-slate-50"><tr>
               <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">考试名称</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">参与人数</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">平均分</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">最高分</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">通过率</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">创建人</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">试卷总分</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">及格分</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">考试人数</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">及格率</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">缺考率</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">考试时间</th>
             </tr></thead>
             <tbody id="rpt-ex-tbody" class="divide-y divide-slate-100"></tbody></table>
@@ -782,13 +816,15 @@
             <button onclick="exportReportCSV('training')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
           </div>
           <!-- 表格 -->
-          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table class="w-full"><thead class="bg-slate-50"><tr>
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden overflow-x-auto">
+            <table class="w-full min-w-[1000px]"><thead class="bg-slate-50"><tr>
               <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">培训名称</th>
               <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">分类</th>
               <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">讲师</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">培训开始时间</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">培训结束时间</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">创建人</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">参训人数</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">时间</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">状态</th>
             </tr></thead>
             <tbody id="rpt-tr-tbody" class="divide-y divide-slate-100"></tbody></table>
@@ -14702,6 +14738,10 @@
         const depts = [...new Set((allUsers || []).map(u => u.department).filter(Boolean))];
         stDept.innerHTML = '<option value="">全部部门</option>' + depts.map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
       }
+
+      // 预计算报表统计（来源：课程、培训、考试、学习记录等模块）
+      buildReportStats();
+
       switchReportTab('overview');
     }
 
@@ -14765,6 +14805,11 @@
             <span class="text-sm font-semibold text-slate-800">${cnt} 人</span>
           </div>`).join('') || '<p class="text-sm text-slate-400 col-span-full">暂无部门数据</p>';
       }
+
+      // 个人学习时长排行榜、考试情况、培训情况
+      renderUserLearningRank();
+      renderExamOverview();
+      renderTrainingOverview();
     }
 
     /* 趋势图：按天统计登录人数 */
@@ -14816,6 +14861,276 @@
     }
 
     /* ============================================================
+       学习概览：排行榜与模块统计
+       ============================================================ */
+    function renderUserLearningRank() {
+      const container = document.getElementById('rpt-user-ranking');
+      if (!container) return;
+      const users = allUsers || [];
+      const list = users.map(u => {
+        const uid = String(u.id);
+        const s = reportStats.user[uid] || {};
+        return { user: u, seconds: s.totalSeconds || 0, level: s.level || '青铜' };
+      }).sort((a, b) => b.seconds - a.seconds).slice(0, 10);
+      if (!list.length) {
+        container.innerHTML = '<p class="text-sm text-slate-400">暂无数据</p>';
+        return;
+      }
+      const maxSeconds = Math.max(...list.map(x => x.seconds), 1);
+      container.innerHTML = list.map((item, i) => {
+        const pct = maxSeconds ? Math.round((item.seconds / maxSeconds) * 100) : 0;
+        return `<div class="flex items-center gap-3">
+          <span class="w-5 h-5 rounded-full ${i < 3 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'} text-xs flex items-center justify-center font-bold">${i + 1}</span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-slate-700 truncate">${escHtml(item.user.realName || item.user.username)}</p>
+              <span class="text-xs text-slate-400 ml-2 whitespace-nowrap">${formatDuration(item.seconds)}</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-1.5 mt-1">
+              <div class="bg-gradient-to-r from-indigo-500 to-purple-400 h-1.5 rounded-full" style="width:${pct}%"></div>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded-full text-[10px] bg-indigo-50 text-indigo-600 whitespace-nowrap">${item.level}</span>
+        </div>`;
+      }).join('');
+    }
+
+    function renderExamOverview() {
+      const container = document.getElementById('rpt-exam-overview');
+      if (!container) return;
+      const exams = data.exams || [];
+      if (!exams.length) {
+        container.innerHTML = '<p class="text-sm text-slate-400">暂无考试数据</p>';
+        return;
+      }
+      const totalExams = exams.length;
+      const totalParticipants = exams.reduce((s, e) => s + ((reportStats.exam[e.id]?.participantCount) || 0), 0);
+      const totalAttempts = exams.reduce((s, e) => s + ((reportStats.exam[e.id]?.attemptCount) || 0), 0);
+      const weightedPassRate = exams.reduce((s, e) => {
+        const st = reportStats.exam[e.id] || {};
+        return s + (st.passRate || 0) * (st.attemptCount || 0);
+      }, 0);
+      const overallPassRate = totalAttempts ? Math.round(weightedPassRate / totalAttempts) : 0;
+      const avgTotalScore = exams.length ? Math.round(exams.reduce((s, e) => s + (e.totalScore || 100), 0) / exams.length) : 0;
+      const avgPassingScore = exams.length ? Math.round(exams.reduce((s, e) => s + (e.passingScore || 60), 0) / exams.length) : 0;
+      container.innerHTML = `
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-3 bg-slate-50 rounded-lg text-center">
+            <p class="text-lg font-bold text-slate-800">${totalExams}</p>
+            <p class="text-xs text-slate-500">考试总数</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-lg text-center">
+            <p class="text-lg font-bold text-slate-800">${totalParticipants}</p>
+            <p class="text-xs text-slate-500">参考人数</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-lg text-center">
+            <p class="text-lg font-bold text-slate-800">${overallPassRate}%</p>
+            <p class="text-xs text-slate-500">总及格率</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-lg text-center">
+            <p class="text-lg font-bold text-slate-800">${totalAttempts}</p>
+            <p class="text-xs text-slate-500">考试人次</p>
+          </div>
+        </div>
+        <div class="mt-3 p-3 bg-slate-50 rounded-lg">
+          <div class="flex items-center justify-between text-sm mb-1">
+            <span class="text-slate-500">平均试卷总分</span><span class="font-semibold text-slate-800">${avgTotalScore} 分</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">平均及格分</span><span class="font-semibold text-slate-800">${avgPassingScore} 分</span>
+          </div>
+        </div>`;
+    }
+
+    function renderTrainingOverview() {
+      const container = document.getElementById('rpt-training-overview');
+      if (!container) return;
+      const trainings = data.training_events || data.training || [];
+      if (!trainings.length) {
+        container.innerHTML = '<p class="text-sm text-slate-400">暂无培训数据</p>';
+        return;
+      }
+      const now = new Date();
+      const totalTrainings = trainings.length;
+      const completed = trainings.filter(t => {
+        const end = new Date(t.endTime || t.date);
+        return end < now;
+      }).length;
+      const ongoing = trainings.filter(t => {
+        const start = new Date(t.startTime || t.date);
+        const end = new Date(t.endTime || t.date);
+        return start <= now && end >= now;
+      }).length;
+      const scheduled = totalTrainings - completed - ongoing;
+      const totalPeople = trainings.reduce((s, t) => s + ((reportStats.training[t.id]?.participantCount) || 0), 0);
+      container.innerHTML = `
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-3 bg-slate-50 rounded-lg text-center">
+            <p class="text-lg font-bold text-slate-800">${totalTrainings}</p>
+            <p class="text-xs text-slate-500">培训总数</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-lg text-center">
+            <p class="text-lg font-bold text-slate-800">${totalPeople}</p>
+            <p class="text-xs text-slate-500">参训人次</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-lg text-center">
+            <p class="text-lg font-bold text-green-600">${completed}</p>
+            <p class="text-xs text-slate-500">已完成</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-lg text-center">
+            <p class="text-lg font-bold text-blue-600">${ongoing}</p>
+            <p class="text-xs text-slate-500">进行中</p>
+          </div>
+        </div>
+        <div class="mt-3 p-3 bg-slate-50 rounded-lg">
+          <div class="flex items-center justify-between text-sm mb-1">
+            <span class="text-slate-500">待开始</span><span class="font-semibold text-slate-800">${scheduled} 场</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">完成率</span><span class="font-semibold text-slate-800">${totalTrainings ? Math.round(completed / totalTrainings * 100) : 0}%</span>
+          </div>
+        </div>`;
+    }
+
+    /* ============================================================
+       报表：通用统计缓存
+       ============================================================ */
+    let reportStats = {};
+
+    function buildReportStats() {
+      const stats = {
+        user: {},
+        course: {},
+        exam: {},
+        training: {}
+      };
+
+      const users = allUsers || [];
+      const userMap = {};
+      users.forEach(u => { userMap[String(u.id)] = u; });
+
+      // 1. 从各学员学习记录聚合数据
+      users.forEach(u => {
+        const uid = String(u.id);
+        const key = 'user_learning_' + uid;
+        const learning = data[key] || {};
+        const records = learning.studyRecords || [];
+        const courseSeconds = records.reduce((s, r) => s + (parseInt(r.duration) || 0), 0);
+        const courseIds = new Set(records.map(r => r.courseId).filter(Boolean));
+        const examRecords = learning.examRecords || [];
+        stats.user[uid] = {
+          totalSeconds: parseInt(learning.totalSeconds) || courseSeconds,
+          trainingSeconds: 0, // 当前系统未单独记录培训学习时长
+          courseSeconds,
+          courseCount: courseIds.size,
+          completedCourseCount: (learning.completedCourses || []).length,
+          examCount: examRecords.length,
+          certificateCount: 0, // 证书表暂无 userId 关联
+          level: getAccountLevel(parseInt(learning.totalSeconds) || courseSeconds)
+        };
+      });
+
+      // 1.1 从培训报名数据聚合每位学员参与的培训数
+      const enrollments = data.training_enrollments || [];
+      enrollments.forEach(e => {
+        const uid = String(e.userId);
+        if (stats.user[uid]) stats.user[uid].trainingCount = (stats.user[uid].trainingCount || 0) + 1;
+      });
+      users.forEach(u => {
+        const uid = String(u.id);
+        if (!stats.user[uid]) stats.user[uid] = {};
+        if (stats.user[uid].trainingCount === undefined) stats.user[uid].trainingCount = 0;
+      });
+
+      // 2. 从课程互动数据聚合评分/点赞/分享
+      (data.courses || []).forEach(c => {
+        const interaction = data['course_interaction_' + c.id] || {};
+        const ratingCount = interaction.ratingCount || 0;
+        const ratingSum = interaction.ratingSum || 0;
+        stats.course[c.id] = {
+          likes: interaction.likes || 0,
+          shares: interaction.shares || 0,
+          rating: ratingCount ? (ratingSum / ratingCount).toFixed(1) : (c.rating || '-'),
+          completedCount: 0,
+          learningSeconds: 0
+        };
+      });
+
+      // 3. 从学习记录聚合课程学完人数与学习时长
+      Object.keys(data).forEach(key => {
+        if (!key.startsWith('user_learning_')) return;
+        const learning = data[key] || {};
+        (learning.completedCourses || []).forEach(cid => {
+          if (stats.course[cid]) stats.course[cid].completedCount++;
+        });
+        (learning.studyRecords || []).forEach(r => {
+          const cid = r.courseId;
+          if (stats.course[cid]) stats.course[cid].learningSeconds += (parseInt(r.duration) || 0);
+        });
+      });
+
+      // 4. 从考试记录聚合（含培训关联考试与考试安排）
+      const attempts = data.exam_attempts || [];
+      (data.exams || []).forEach(e => {
+        const examAttempts = attempts.filter(a => String(a.examId) === String(e.id));
+        const participantIds = new Set(examAttempts.map(a => String(a.userId)));
+        const completedAttempts = examAttempts.filter(a => a.status === 'completed');
+        const passCount = completedAttempts.filter(a => a.passed).length;
+        const passRate = completedAttempts.length ? Math.round(passCount / completedAttempts.length * 100) : 0;
+        const allowed = e.allowedUsers;
+        let absentCount = 0;
+        let absentRate = 0;
+        if (allowed && Array.isArray(allowed) && allowed.length > 0) {
+          absentCount = Math.max(0, allowed.length - participantIds.size);
+          absentRate = Math.round(absentCount / allowed.length * 100);
+        }
+        const creator = e.createdBy || e.creator || '-';
+        stats.exam[e.id] = {
+          creator,
+          creatorName: typeof creator === 'number' ? (userMap[String(creator)]?.realName || userMap[String(creator)]?.username || creator) : creator,
+          totalScore: e.totalScore || 100,
+          passingScore: e.passingScore || 60,
+          participantCount: participantIds.size,
+          attemptCount: examAttempts.length,
+          passCount,
+          passRate,
+          absentCount,
+          absentRate
+        };
+      });
+
+      // 5. 从培训报名数据聚合
+      (data.training_events || data.training || []).forEach(t => {
+        const creator = t.createdBy || t.creator || '-';
+        stats.training[t.id] = {
+          participantCount: enrollments.filter(e => String(e.trainingId) === String(t.id)).length,
+          creator,
+          creatorName: typeof creator === 'number' ? (userMap[String(creator)]?.realName || userMap[String(creator)]?.username || creator) : creator
+        };
+      });
+
+      reportStats = stats;
+    }
+
+    function getAccountLevel(totalSeconds) {
+      const hours = totalSeconds / 3600;
+      if (hours >= 100) return '钻石';
+      if (hours >= 50)  return '铂金';
+      if (hours >= 20)  return '黄金';
+      if (hours >= 5)   return '白银';
+      return '青铜';
+    }
+
+    function formatDuration(totalSeconds) {
+      if (!totalSeconds) return '0h';
+      if (totalSeconds < 60) return totalSeconds + 's';
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      if (h > 0) return `${h}h${m ? m + 'm' : ''}`;
+      return `${m}m`;
+    }
+
+    /* ============================================================
        2. 课程报表
        ============================================================ */
     function renderCourseReport() {
@@ -14861,10 +15176,16 @@
       tbody.innerHTML = filtered.map(c => {
         const lect = lecturers.find(l => l.id == c.lecturerId);
         const cat  = categories.find(ct => ct.id == c.categoryId);
+        const s = reportStats.course[c.id] || { rating: '-', likes: 0, shares: 0, completedCount: 0, learningSeconds: 0 };
         return `<tr class="hover:bg-indigo-50/50 transition">
           <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(c.title)}</td>
           <td class="px-4 py-3 text-sm text-slate-500">${escHtml(cat?.name || '-')}</td>
           <td class="px-4 py-3 text-sm text-slate-500">${escHtml(lect?.name || '-')}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${s.rating !== '-' ? s.rating + '<i class="fas fa-star text-yellow-400 text-[10px] ml-0.5"></i>' : '-'}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${s.likes || 0}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${s.shares || 0}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${s.completedCount || 0}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-500">${formatDuration(s.learningSeconds)}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-600">${(c.views || 0)}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-500">${c.duration || '-'}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-400">${(c.createdAt || '').split(' ')[0] || '-'}</td>
@@ -14873,7 +15194,7 @@
               ${c.status === 'published' ? '已发布' : '草稿'}</span>
           </td>
         </tr>`;
-      }).join('') || '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
+      }).join('') || '<tr><td colspan="12" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
     }
 
     /* ============================================================
@@ -14903,7 +15224,10 @@
       // 表格
       const tbody = document.getElementById('rpt-st-tbody');
       if (!tbody) return;
-      tbody.innerHTML = filtered.map(u => `
+      tbody.innerHTML = filtered.map(u => {
+        const uid = String(u.id);
+        const s = reportStats.user[uid] || {};
+        return `
         <tr class="hover:bg-indigo-50/50 transition">
           <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(u.realName || u.username)}</td>
           <td class="px-4 py-3 text-sm text-slate-500">${escHtml(u.department || '-')}</td>
@@ -14913,9 +15237,20 @@
             <span class="w-2 h-2 rounded-full inline-block ${u.status === 'active' ? 'bg-green-500' : 'bg-red-500'}"></span>
             <span class="ml-1 text-xs ${u.status === 'active' ? 'text-green-600' : 'text-red-600'}">${u.status === 'active' ? '启用' : '禁用'}</span>
           </td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${formatDuration(s.totalSeconds)}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-500">${formatDuration(s.trainingSeconds)}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${formatDuration(s.courseSeconds)}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${s.courseCount || 0}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${s.trainingCount || 0}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${s.examCount || 0}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${s.certificateCount || 0}</td>
+          <td class="px-4 py-3 text-sm text-center">
+            <span class="px-2 py-0.5 rounded-full text-xs bg-indigo-50 text-indigo-600">${s.level || '青铜'}</span>
+          </td>
           <td class="px-4 py-3 text-sm text-center text-slate-400">${(u.createdAt || '').split(' ')[0] || '-'}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-400">${u.lastLogin || '-'}</td>
-        </tr>`).join('') || '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
+        </tr>`;
+      }).join('') || '<tr><td colspan="15" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
     }
 
     /* ============================================================
@@ -14961,21 +15296,20 @@
       const tbody = document.getElementById('rpt-ex-tbody');
       if (!tbody) return;
       tbody.innerHTML = filtered.map(e => {
-        const avg  = e.avgScore != null ? e.avgScore : '-';
-        const max  = e.maxScore != null ? e.maxScore : '-';
-        const prate = e.passRatePercent != null ? e.passRatePercent + '%' : '-';
-        // 统一日期格式为 YYYY-MM-DD
+        const s = reportStats.exam[e.id] || {};
         const dateStr = e.startTime || e.createdAt || '';
         const formattedDate = dateStr ? new Date(dateStr).toISOString().split('T')[0] : '-';
         return `<tr class="hover:bg-indigo-50/50 transition">
           <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(e.title)}</td>
-          <td class="px-4 py-3 text-sm text-center text-slate-600">${e.attemptCount || 0}</td>
-          <td class="px-4 py-3 text-sm text-center text-slate-600">${avg}</td>
-          <td class="px-4 py-3 text-sm text-center text-slate-600">${max}</td>
-          <td class="px-4 py-3 text-sm text-center text-green-600 font-medium">${prate}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${escHtml(s.creatorName || '-')}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${s.totalScore || 100}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${s.passingScore || 60}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-600">${s.participantCount || 0}</td>
+          <td class="px-4 py-3 text-sm text-center text-green-600 font-medium">${s.passRate || 0}%</td>
+          <td class="px-4 py-3 text-sm text-center ${s.absentRate > 0 ? 'text-orange-500' : 'text-slate-400'}">${e.allowedUsers && e.allowedUsers.length ? (s.absentRate || 0) + '%' : '-'}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-400">${formattedDate}</td>
         </tr>`;
-      }).join('') || '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
+      }).join('') || '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
     }
 
     /* ============================================================
@@ -15062,21 +15396,25 @@
           const instructor = t.instructor || '-';
           const project = t.project || '-';
           const enrollCount = enrollCounts[t.id] || 0;
-          const dateStr = (t.startTime || t.date || '').split(' ')[0] || '-';
+          const s = reportStats.training[t.id] || {};
+          const startStr = (t.startTime || t.date || '').split(' ')[0] || '-';
+          const endStr = (t.endTime || '').split(' ')[0] || '-';
           const status = getTrainingStatus(t);
           const statusMap = {scheduled:'待开始',ongoing:'进行中',completed:'已完成',cancelled:'已取消'};
           return `<tr class="hover:bg-indigo-50/50 transition">
             <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(name)}</td>
             <td class="px-4 py-3 text-sm text-slate-500">${escHtml(project)}</td>
             <td class="px-4 py-3 text-sm text-slate-500">${escHtml(instructor)}</td>
+            <td class="px-4 py-3 text-sm text-center text-slate-500">${startStr}</td>
+            <td class="px-4 py-3 text-sm text-center text-slate-500">${endStr}</td>
+            <td class="px-4 py-3 text-sm text-center text-slate-500">${escHtml(s.creatorName || '-')}</td>
             <td class="px-4 py-3 text-sm text-center text-slate-600">${enrollCount}</td>
-            <td class="px-4 py-3 text-sm text-center text-slate-400">${dateStr}</td>
             <td class="px-4 py-3 text-sm text-center">
               <span class="px-2 py-0.5 rounded-full text-xs ${status === 'completed' ? 'bg-green-100 text-green-700' : status === 'ongoing' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}">
                 ${statusMap[status] || status || '-'}</span>
             </td>
           </tr>`;
-        }).join('') || '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
+        }).join('') || '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
       }
       
       renderWithEnrollCount();
@@ -15091,30 +15429,43 @@
       let filename = '';
 
       if (type === 'course') {
-        headers = ['课程名称', '分类', '讲师', '播放量', '学时', '创建时间', '状态'];
+        headers = ['课程名称', '分类', '讲师', '评分', '点赞数', '分享数', '学完人数', '学习时长', '播放量', '学时', '创建时间', '状态'];
         (data.courses || []).forEach(c => {
           const lect = (data.lecturers || []).find(l => l.id == c.lecturerId);
           const cat  = (data.categories || []).find(ct => ct.id == c.categoryId);
-          rows.push([c.title, cat?.name || '', lect?.name || '', c.views || 0, c.duration || '', (c.createdAt || '').split(' ')[0], c.status === 'published' ? '已发布' : '草稿']);
+          const s = reportStats.course[c.id] || { rating: '-', likes: 0, shares: 0, completedCount: 0, learningSeconds: 0 };
+          rows.push([c.title, cat?.name || '', lect?.name || '', s.rating, s.likes || 0, s.shares || 0, s.completedCount || 0, formatDuration(s.learningSeconds), c.views || 0, c.duration || '', (c.createdAt || '').split(' ')[0], c.status === 'published' ? '已发布' : '草稿']);
         });
         filename = '课程报表_' + new Date().toISOString().split('T')[0] + '.csv';
       }
       if (type === 'student') {
-        headers = ['姓名', '部门', '岗位', '角色', '状态', '创建时间', '最后登录'];
+        headers = ['姓名', '部门', '岗位', '角色', '状态', '总学习时长', '培训学习时长', '课程学习时长', '学习课程数', '参与培训数', '参与考试数', '获得证书数', '账号等级', '创建时间', '最后登录'];
         (allUsers || []).forEach(u => {
-          rows.push([u.realName || u.username, u.department || '', u.position || '', {admin:'管理员',teacher:'讲师',user:'学员'}[u.role] || u.role || '', u.status === 'active' ? '启用' : '禁用', (u.createdAt || '').split(' ')[0], u.lastLogin || '']);
+          const uid = String(u.id);
+          const s = reportStats.user[uid] || {};
+          rows.push([
+            u.realName || u.username, u.department || '', u.position || '',
+            {admin:'管理员',teacher:'讲师',user:'学员'}[u.role] || u.role || '',
+            u.status === 'active' ? '启用' : '禁用',
+            formatDuration(s.totalSeconds), formatDuration(s.trainingSeconds), formatDuration(s.courseSeconds),
+            s.courseCount || 0, s.trainingCount || 0, s.examCount || 0, s.certificateCount || 0, s.level || '青铜',
+            (u.createdAt || '').split(' ')[0], u.lastLogin || ''
+          ]);
         });
         filename = '学员报表_' + new Date().toISOString().split('T')[0] + '.csv';
       }
       if (type === 'exam') {
-        headers = ['考试名称', '参与人数', '平均分', '最高分', '通过率', '考试时间'];
+        headers = ['考试名称', '创建人', '试卷总分', '及格分', '考试人数', '及格率', '缺考率', '考试时间'];
         (data.exams || []).forEach(e => {
-          const avg = e.avgScore != null ? e.avgScore : '';
-          const max = e.maxScore != null ? e.maxScore : '';
-          const prate = e.passRatePercent != null ? e.passRatePercent + '%' : '';
+          const s = reportStats.exam[e.id] || {};
           const dateStr = e.startTime || e.createdAt || '';
           const formattedDate = dateStr ? new Date(dateStr).toISOString().split('T')[0] : '';
-          rows.push([e.title, e.attemptCount || 0, avg, max, prate, formattedDate]);
+          rows.push([
+            e.title, s.creatorName || '-', s.totalScore || 100, s.passingScore || 60,
+            s.participantCount || 0, (s.passRate || 0) + '%',
+            e.allowedUsers && e.allowedUsers.length ? (s.absentRate || 0) + '%' : '-',
+            formattedDate
+          ]);
         });
         filename = '考试报表_' + new Date().toISOString().split('T')[0] + '.csv';
       }
