@@ -126,6 +126,34 @@
       "createdAt": "2026/6/30 09:39:16",
       "lastLogin": null,
       "status": "active"
+    },
+    {
+      "id": 1782805446347,
+      "username": "69999999999999",
+      "passwordHash": "f424c4492359c3b3d0259944b5b6ad8480810fc9c8de16f7037667e30fe82aa6",
+      "email": "",
+      "phone": "69999999999999",
+      "realName": "易烊千玺",
+      "department": "",
+      "role": "user",
+      "avatar": "",
+      "createdAt": "2026/6/30 15:44:06",
+      "lastLogin": null,
+      "status": "active"
+    },
+    {
+      "id": 1782805459054,
+      "username": "66666666666666",
+      "passwordHash": "8bb186f109895536d998178e57ab653dc9b5acf307a545224672c29f2cc6b526",
+      "email": "",
+      "phone": "66666666666666",
+      "realName": "风吹送",
+      "department": "",
+      "role": "user",
+      "avatar": "",
+      "createdAt": "2026/6/30 15:44:19",
+      "lastLogin": null,
+      "status": "active"
     }
   ],
   "user_learning_1780909174403": {
@@ -1470,14 +1498,24 @@
       "endTime": "2026-06-30T10:30",
       "id": 1781148703132,
       "signinEnabled": true,
-      "signinCode": "1196",
+      "signinCode": "6939",
       "linkedSurveyId": 1781170180951,
       "linkedExamId": 1782468162514,
       "signinStartTime": "2026-06-26 17:30",
       "signinEndTime": "2026-06-27 18:30",
       "accessType": "restricted",
       "allowedUsers": [
-        1780909174403
+        1782783422496,
+        1780909174403,
+        1781087021554,
+        1782783451005,
+        1782783484378,
+        1782783507741,
+        1782783520741,
+        1782783537268,
+        1782783556507,
+        1782805446347,
+        1782805459054
       ],
       "coursewareFiles": [
         {
@@ -2281,6 +2319,96 @@
       "trainingId": 1781148838222,
       "read": false,
       "createdAt": "2026-06-30T01:39:36.989Z"
+    },
+    {
+      "id": 1782800581453,
+      "userId": 1782783422496,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI小白的日常」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148703132,
+      "read": false,
+      "createdAt": "2026-06-30T06:12:40.580Z"
+    },
+    {
+      "id": 1782800477902,
+      "userId": 1782783451005,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI小白的日常」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148703132,
+      "read": false,
+      "createdAt": "2026-06-30T06:12:40.580Z"
+    },
+    {
+      "id": 1782800814108,
+      "userId": 1782783484378,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI小白的日常」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148703132,
+      "read": false,
+      "createdAt": "2026-06-30T06:12:40.580Z"
+    },
+    {
+      "id": 1782800790075,
+      "userId": 1782783507741,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI小白的日常」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148703132,
+      "read": false,
+      "createdAt": "2026-06-30T06:12:40.580Z"
+    },
+    {
+      "id": 1782800358360,
+      "userId": 1782783520741,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI小白的日常」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148703132,
+      "read": false,
+      "createdAt": "2026-06-30T06:12:40.580Z"
+    },
+    {
+      "id": 1782800336050,
+      "userId": 1782783537268,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI小白的日常」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148703132,
+      "read": false,
+      "createdAt": "2026-06-30T06:12:40.580Z"
+    },
+    {
+      "id": 1782800883795,
+      "userId": 1782783556507,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI小白的日常」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148703132,
+      "read": false,
+      "createdAt": "2026-06-30T06:12:40.580Z"
+    },
+    {
+      "id": 1782806340959,
+      "userId": 1782805446347,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI小白的日常」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148703132,
+      "read": false,
+      "createdAt": "2026-06-30T07:44:32.149Z"
+    },
+    {
+      "id": 1782806455921,
+      "userId": 1782805459054,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「AI小白的日常」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1781148703132,
+      "read": false,
+      "createdAt": "2026-06-30T07:44:32.149Z"
     }
   ],
   "notification_reads": [
@@ -4370,6 +4498,69 @@
       "userId": 1782783556507,
       "enrolledAt": "2026-06-30T01:39:36.989Z",
       "source": "assigned"
+    },
+    {
+      "id": 1782799960580,
+      "trainingId": 1781148703132,
+      "userId": 1782783422496,
+      "enrolledAt": "2026-06-30T06:12:40.580Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782799960581,
+      "trainingId": 1781148703132,
+      "userId": 1782783451005,
+      "enrolledAt": "2026-06-30T06:12:40.580Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782799960582,
+      "trainingId": 1781148703132,
+      "userId": 1782783484378,
+      "enrolledAt": "2026-06-30T06:12:40.580Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782799960583,
+      "trainingId": 1781148703132,
+      "userId": 1782783507741,
+      "enrolledAt": "2026-06-30T06:12:40.580Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782799960584,
+      "trainingId": 1781148703132,
+      "userId": 1782783520741,
+      "enrolledAt": "2026-06-30T06:12:40.580Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782799960585,
+      "trainingId": 1781148703132,
+      "userId": 1782783537268,
+      "enrolledAt": "2026-06-30T06:12:40.580Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782799960586,
+      "trainingId": 1781148703132,
+      "userId": 1782783556507,
+      "enrolledAt": "2026-06-30T06:12:40.580Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782805472149,
+      "trainingId": 1781148703132,
+      "userId": 1782805446347,
+      "enrolledAt": "2026-06-30T07:44:32.149Z",
+      "source": "assigned"
+    },
+    {
+      "id": 1782805472150,
+      "trainingId": 1781148703132,
+      "userId": 1782805459054,
+      "enrolledAt": "2026-06-30T07:44:32.149Z",
+      "source": "assigned"
     }
   ],
   "user_shares_1781087021554": {
@@ -5307,6 +5498,18 @@
       "department": "蜗牛工作室",
       "signedAt": "2026-06-27T05:58:28.361Z",
       "method": "direct"
+    }
+  ],
+  "training_assign_history": [
+    {
+      "id": 1782805472149,
+      "trainingId": 1781148703132,
+      "userIds": [
+        1782805446347,
+        1782805459054
+      ],
+      "count": 2,
+      "assignedAt": "2026-06-30T07:44:32.149Z"
     }
   ]
 }

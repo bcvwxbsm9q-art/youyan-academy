@@ -307,12 +307,21 @@
             font-weight: 700;
             color: #667eea;
         }
-        .tp-enroll-names {
+        .tp-enroll-names-wrap {
+            position: relative;
             display: flex;
-            flex-wrap: wrap;
             align-items: center;
             gap: 0.5rem;
         }
+        .tp-enroll-names {
+            display: flex;
+            gap: 0.5rem;
+            overflow: hidden;
+            scroll-behavior: smooth;
+            padding: 0.125rem 0;
+            flex: 1;
+        }
+        .tp-enroll-names::-webkit-scrollbar { display: none; }
         .tp-enroll-name {
             display: inline-flex;
             align-items: center;
@@ -323,6 +332,77 @@
             font-size: 0.75rem;
             color: #4b5563;
             font-weight: 500;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .tp-enroll-nav {
+            width: 1.75rem;
+            height: 1.75rem;
+            border-radius: 50%;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .tp-enroll-nav:hover {
+            border-color: #667eea;
+            color: #667eea;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.12);
+        }
+        .tp-enroll-nav:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            border-color: #e5e7eb;
+            color: #d1d5db;
+        }
+
+        /* 当月课程列表 - 紧凑报名展示 */
+        .tp-enroll-compact {
+            margin-top: auto;
+            padding-top: 0.875rem;
+            border-top: 1px solid #f3f4f6;
+        }
+        .tp-enroll-compact-header {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.75rem;
+            line-height: 1;
+        }
+        .tp-enroll-compact-header span {
+            color: #667eea;
+            font-weight: 700;
+        }
+        .tp-enroll-compact-names {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            overflow: hidden;
+            white-space: nowrap;
+            line-height: 1.2;
+        }
+        .tp-enroll-compact-name {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.625rem;
+            background: #f8fafc;
+            border: 1px solid #eef2f7;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            color: #4b5563;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+        .tp-enroll-compact-more {
+            flex-shrink: 0;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            padding: 0.25rem 0;
         }
 
     </style>
@@ -907,25 +987,54 @@
             return enrollMap[courseId]?.isEnrolled || false;
         }
 
+        // 报名者名单左右滚动
+        function scrollEnrollNames(namesId, direction) {
+            const el = document.getElementById(namesId);
+            if (!el) return;
+            const wrap = el.parentElement;
+            const visibleWidth = wrap.clientWidth - 70; // 减去两个按钮宽度
+            el.scrollBy({ left: direction * Math.max(visibleWidth * 0.7, 120), behavior: 'smooth' });
+        }
+
         // 渲染报名者头像网格
-        function renderEnrolledAvatars(courseId, compact) {
+        // 当月课程列表 - 紧凑报名展示（只显示一排，超出隐藏）
+        function renderCompactEnrolledAvatars(courseId) {
             const info = enrollMap[courseId];
             if (!info || !info.enrolledUsers || info.enrolledUsers.length === 0) {
-                if (compact) return '<div class="flex items-center text-xs text-gray-400"><i class="fa fa-user-o mr-1.5 text-purple-400"></i>暂无人报名</div>';
+                return '';
+            }
+            const users = info.enrolledUsers;
+            const namesHtml = users.map(u => {
+                return `<span class="tp-enroll-compact-name" title="${u.department || ''}">${u.name}</span>`;
+            }).join('');
+            return `<div class="tp-enroll-compact">
+                <div class="tp-enroll-compact-header">已报名 <span>${info.enrollCount}</span> 人</div>
+                <div class="tp-enroll-compact-names">${namesHtml}</div>
+            </div>`;
+        }
+
+        // 弹窗 - 完整报名展示（带左右翻页）
+        function renderEnrolledAvatars(courseId) {
+            const info = enrollMap[courseId];
+            if (!info || !info.enrolledUsers || info.enrolledUsers.length === 0) {
                 return `<div class="flex items-center mt-2 text-xs text-gray-400"><i class="fa fa-user-o mr-1.5 text-purple-400"></i>暂无人报名</div>`;
             }
             const users = info.enrolledUsers;
-            const maxShow = 6;
-            const showUsers = users.slice(0, maxShow);
-            const remaining = users.length - maxShow;
+            const showUsers = users;
             const namesHtml = showUsers.map(u => {
                 return `<span class="tp-enroll-name" title="${u.department || ''}">${u.name}</span>`;
             }).join('');
-            let html = compact ? '<div>' : '<div class="mt-2.5 pt-2.5 border-t border-gray-100">';
+            const wrapId = 'tp-enroll-wrap-' + courseId;
+            const namesId = 'tp-enroll-names-' + courseId;
+            let html = '<div class="mt-2.5 pt-2.5 border-t border-gray-100">';
             html += `<div class="tp-enroll-header">
                 <div class="tp-enroll-count">已报名 <span>${info.enrollCount}</span> 人</div>
             </div>`;
-            html += `<div class="tp-enroll-names">${namesHtml}</div></div>`;
+            html += `<div id="${wrapId}" class="tp-enroll-names-wrap">
+                <button class="tp-enroll-nav" onclick="scrollEnrollNames('${namesId}', -1)" title="上一页"><i class="fa fa-chevron-left" style="font-size:0.625rem;"></i></button>
+                <div id="${namesId}" class="tp-enroll-names">${namesHtml}</div>
+                <button class="tp-enroll-nav" onclick="scrollEnrollNames('${namesId}', 1)" title="下一页"><i class="fa fa-chevron-right" style="font-size:0.625rem;"></i></button>
+            </div></div>`;
             return html;
         }
 
@@ -1273,7 +1382,7 @@
                         <div class="w-14 h-14 rounded-xl bg-gradient-to-br ${getGradientClass(c.category)} flex items-center justify-center flex-shrink-0">
                             <i class="fa ${getCategoryIcon(c.category)} text-white text-lg"></i>
                         </div>
-                        <div class="flex-1 min-w-0">
+                        <div class="flex-1 min-w-0 flex flex-col">
                             <div class="flex items-center gap-2 mb-1">
                                 <span class="${getDayTypeClass(c.category)} px-2 py-0.5 rounded-full text-xs font-medium">${getDayTypeName(c.category)}</span>
                                 ${isFromTraining ? '<span class="text-[10px] px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded">培训项目</span>' : ''}
@@ -1294,9 +1403,9 @@
                                 </span>
                                 ${c.location ? `<span class="flex items-center gap-1"><i class="fa fa-map-marker-alt text-gray-400"></i>${c.location}</span>` : ''}
                             </div>
-                            ${renderEnrolledAvatars(c.id)}
+                            ${renderCompactEnrolledAvatars(c.id)}
                         </div>
-                        <div class="flex flex-col justify-center items-end">
+                        <div class="flex flex-col justify-end items-end">
                             <span class="text-xs text-gray-400 mb-2">${c.duration}</span>
                             ${getEnrollButtonHTML(c.id, c.date, c.time, false, c.endTime)}
                         </div>
@@ -1519,7 +1628,7 @@
                         <div class="tp-info-grid">${infoGridHtml}</div>
                     </div>
                     <div class="tp-info-footer" style="border-top: 1px solid #f3f4f6; margin-top: 1rem;">
-                        ${renderEnrolledAvatars(courseId, true)}
+                        ${renderEnrolledAvatars(courseId)}
                     </div>
                 </div>
             `;

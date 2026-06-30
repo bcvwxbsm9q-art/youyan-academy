@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -2229,31 +2229,41 @@
     </div>
   </div>
 
-  <!-- ========== 学员选择弹窗 ========== -->
-  <div id="examUserPickerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] items-center justify-center hidden">
-    <div class="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-hidden m-4 flex flex-col shadow-2xl">
+  <!-- ========== 通用学员指派弹窗（培训/考试/报名分析共用） ========== -->
+  <div id="unifiedAssignModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden m-4 flex flex-col shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
-        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-user-check mr-2 text-emerald-500"></i>选择学员</h3>
-        <button onclick="closeExamUserPicker()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+        <div>
+          <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-user-check mr-2 text-indigo-500"></i><span id="unifiedAssignTitle">选择学员</span></h3>
+          <p class="text-sm text-slate-500 mt-0.5" id="unifiedAssignSubtitle"></p>
+        </div>
+        <button onclick="closeUnifiedAssignPicker()" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition text-xl">&times;</button>
       </div>
-      <div class="px-6 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0">
-        <div class="relative">
-          <input type="text" id="examUserPickerSearch" placeholder="搜索学员姓名..." oninput="renderExamUserPicker()"
-            class="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+      <div class="px-6 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0 flex items-center gap-3">
+        <div class="relative flex-1">
+          <input type="text" id="unifiedAssignSearch" placeholder="搜索学员姓名..." oninput="filterUnifiedAssignUsers(this.value)"
+            class="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
           <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
         </div>
+        <span class="text-sm text-slate-500 whitespace-nowrap">已选 <strong id="unifiedAssignCount" class="text-indigo-600">0</strong> 人</span>
       </div>
-      <div class="flex-1 overflow-y-auto p-6">
-        <div id="examUserPickerList" class="space-y-2">
-          <p class="text-sm text-slate-400 text-center py-4">加载中...</p>
+      <div class="flex-1 overflow-hidden flex">
+        <!-- 左侧部门栏 -->
+        <div class="w-48 border-r border-slate-100 overflow-y-auto bg-slate-50/50 p-3">
+          <div id="unifiedAssignDeptList" class="space-y-1">
+            <p class="text-sm text-slate-400 text-center py-4">加载中...</p>
+          </div>
+        </div>
+        <!-- 右侧学员列表 -->
+        <div class="flex-1 overflow-y-auto p-4">
+          <div id="unifiedAssignUserList" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <p class="text-sm text-slate-400 text-center py-4 col-span-full">加载中...</p>
+          </div>
         </div>
       </div>
-      <div class="p-4 border-t border-slate-100 bg-slate-50 flex-shrink-0 flex justify-between items-center">
-        <span class="text-sm text-slate-500">已选 <strong id="examUserPickerCount" class="text-emerald-600">0</strong> 人</span>
-        <div class="space-x-2">
-          <button type="button" onclick="closeExamUserPicker()" class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-sm transition">取消</button>
-          <button type="button" onclick="confirmExamUserPicker()" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-sm transition">确认</button>
-        </div>
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex-shrink-0 flex justify-end gap-3">
+        <button type="button" onclick="closeUnifiedAssignPicker()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-100 text-sm transition">取消</button>
+        <button type="button" onclick="confirmUnifiedAssignPicker()" class="px-5 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-sm font-medium transition">确认</button>
       </div>
     </div>
   </div>
@@ -2556,7 +2566,7 @@
           if (window.DataAPI && window.DataAPI.get) {
             return window.DataAPI.get(key) || [];
           }
-          return JSON.parse(localStorage.getItem(key) || '[]');
+          return safeParse(key, []);
         },
         async setData(key, value) {
           if (window.DataAPI && window.DataAPI.set) {
@@ -3289,10 +3299,10 @@
                                 id = parsed[ik];
                             }
                         }
-                    } catch(e) {}
-                }
+                    } catch(e) { console.warn('读取本地数据失败:', e); }
+	                }
 
-                return (id && id.likes) ? id.likes : (c.likes || 0);
+	                return (id && id.likes) ? id.likes : (c.likes || 0);
             })()}</td>
             <!-- 评分 -->
             <td class="px-5 py-4 text-center text-sm text-slate-700">${(function(){
@@ -3309,10 +3319,10 @@
                                 id = parsed[ik];
                             }
                         }
-                    } catch(e) {}
-                }
+                    } catch(e) { console.warn('读取本地数据失败:', e); }
+	                }
 
-                if (id && id.ratingCount > 0) return (id.ratingSum / id.ratingCount).toFixed(1);
+	                if (id && id.ratingCount > 0) return (id.ratingSum / id.ratingCount).toFixed(1);
                 return (c.rating || 0).toFixed(1);
             })()}</td>
             <!-- 状态 -->
@@ -4025,7 +4035,7 @@
             localStorage.setItem('youyan_academy_sync', JSON.stringify({
               type: 'courses', timestamp: Date.now(), source: '/dashboard.html'
             }));
-          } catch(e) {}
+          } catch(e) { console.warn('同步广播失败:', e); }
         } else {
           toast(result.error || '操作失败', 'error');
         }
@@ -4061,9 +4071,8 @@
           toast(newStatus === 'published' ? '课程已发布' : '课程已下架');
           await loadAllData();
           renderCourses();
-          try { localStorage.setItem('youyan_academy_sync', JSON.stringify({ type: 'courses', timestamp: Date.now(), source: '/dashboard.html' })); } catch(e) {}
-        }
-      } catch (err) {
+          try { localStorage.setItem('youyan_academy_sync', JSON.stringify({ type: 'courses', timestamp: Date.now(), source: '/dashboard.html' })); } catch(e) { console.warn('同步广播失败:', e); }
+        }      } catch (err) {
         toast('操作失败', 'error');
       }
     }
@@ -4077,9 +4086,8 @@
           toast('课程已删除');
           await loadAllData();
           renderCourses();
-          try { localStorage.setItem('youyan_academy_sync', JSON.stringify({ type: 'courses', timestamp: Date.now(), source: '/dashboard.html' })); } catch(e) {}
-        } else {
-          toast(result.error || '删除失败', 'error');
+          try { localStorage.setItem('youyan_academy_sync', JSON.stringify({ type: 'courses', timestamp: Date.now(), source: '/dashboard.html' })); } catch(e) { console.warn('同步广播失败:', e); }
+        } else {          toast(result.error || '删除失败', 'error');
         }
       } catch (err) {
         toast('删除失败', 'error');
@@ -4953,6 +4961,7 @@
     let analyticsCurrentTab = 'overview';
     let _analyticsEnrollData = null;
     let _analyticsOverviewData = null;
+    let _analyticsSelectedUserIds = new Set();
     let _analyticsSurveyData = null;
     let _analyticsExamData = null;
     let _analyticsAttendanceData = null;
@@ -5103,8 +5112,12 @@
                 : '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500">未报名</span>');
             const isIncomplete = u.completionRate < 100;
             const examTitle = u.examPassed ? '已通过' : (u.examScore !== null ? `得分 ${u.examScore}，未通过` : '未参加');
+            const checked = _analyticsSelectedUserIds.has(String(u.userId));
             return `
             <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+              <td class="px-4 py-3">
+                <input type="checkbox" class="overview-row-check w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" value="${u.userId}" ${checked ? 'checked' : ''} onchange="toggleOverviewRowSelect(${u.userId})">
+              </td>
               <td class="px-4 py-3 text-sm text-slate-500">${i + 1}</td>
               <td class="px-4 py-3">
                 <div class="flex items-center gap-2.5">
@@ -5139,7 +5152,7 @@
               </td>
             </tr>`;
           }).join('')
-          : `<tr><td colspan="10" class="px-4 py-12 text-center text-slate-400">
+          : `<tr><td colspan="11" class="px-4 py-12 text-center text-slate-400">
               <i class="fas fa-chart-pie text-3xl mb-3 block text-slate-300"></i>
               <p>暂无参与人员</p>
             </td></tr>`;
@@ -5161,10 +5174,10 @@
                 </div>
                 <div class="flex items-center gap-2">
                   ${incompleteCount > 0 ? `
-                  <button onclick="remindAllIncomplete(${trainingId})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-100 transition">
+                  <button onclick="batchRemindSelected(${trainingId})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-100 transition">
                     <i class="fas fa-bullhorn mr-1"></i>批量催促
                   </button>
-                  <button onclick="delayAllTraining(${trainingId})" class="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-xs font-medium hover:bg-amber-100 transition">
+                  <button onclick="batchDelaySelected(${trainingId})" class="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-xs font-medium hover:bg-amber-100 transition">
                     <i class="fas fa-calendar-plus mr-1"></i>批量延期
                   </button>` : ''}
                   <button onclick="exportAnalyticsOverview()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
@@ -5175,6 +5188,9 @@
               <div class="overflow-x-auto rounded-xl border border-slate-100">
                 <table class="w-full">
                   <thead class="bg-slate-50"><tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                      <input type="checkbox" id="overview-select-all" onchange="toggleOverviewSelectAll(this.checked)" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                    </th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
@@ -5222,13 +5238,61 @@
       toast(sent > 0 ? `已向 ${userName || '该学员'} 发送催促提醒` : '发送提醒失败', sent > 0 ? 'success' : 'error');
     }
 
-    async function remindAllIncomplete(trainingId) {
+    function getSelectedOrIncompleteUsers() {
+      if (!_analyticsOverviewData || !_analyticsOverviewData.overview) return [];
+      const users = _analyticsOverviewData.overview.users || [];
+      if (_analyticsSelectedUserIds.size > 0) {
+        return users.filter(u => _analyticsSelectedUserIds.has(String(u.userId)));
+      }
+      return users.filter(u => u.completionRate < 100);
+    }
+
+    function toggleOverviewSelectAll(checked) {
       if (!_analyticsOverviewData || !_analyticsOverviewData.overview) return;
       const users = _analyticsOverviewData.overview.users || [];
-      const incomplete = users.filter(u => u.completionRate < 100);
-      if (incomplete.length === 0) { toast('没有未完成的学员', 'warning'); return; }
-      if (!confirm(`确定向 ${incomplete.length} 名未完成学员发送催促提醒？`)) return;
-      const sent = await sendTrainingNotification(trainingId, incomplete.map(u => u.userId), 'remind');
+      if (checked) {
+        users.forEach(u => _analyticsSelectedUserIds.add(String(u.userId)));
+      } else {
+        _analyticsSelectedUserIds.clear();
+      }
+      document.querySelectorAll('.overview-row-check').forEach(cb => {
+        cb.checked = checked;
+      });
+    }
+
+    function toggleOverviewRowSelect(userId) {
+      const uid = String(userId);
+      if (_analyticsSelectedUserIds.has(uid)) {
+        _analyticsSelectedUserIds.delete(uid);
+      } else {
+        _analyticsSelectedUserIds.add(uid);
+      }
+      updateOverviewSelectAllState();
+    }
+
+    function updateOverviewSelectAllState() {
+      const selectAll = document.getElementById('overview-select-all');
+      if (!selectAll || !_analyticsOverviewData || !_analyticsOverviewData.overview) return;
+      const users = _analyticsOverviewData.overview.users || [];
+      const allChecked = users.length > 0 && users.every(u => _analyticsSelectedUserIds.has(String(u.userId)));
+      selectAll.checked = allChecked;
+      selectAll.indeterminate = !allChecked && _analyticsSelectedUserIds.size > 0;
+    }
+
+    async function remindAllIncomplete(trainingId) {
+      const targets = getSelectedOrIncompleteUsers();
+      if (targets.length === 0) { toast('没有未完成的学员', 'warning'); return; }
+      if (!confirm(`确定向 ${targets.length} 名学员发送催促提醒？`)) return;
+      const sent = await sendTrainingNotification(trainingId, targets.map(u => u.userId), 'remind');
+      toast(`已向 ${sent} 名学员发送催促提醒`);
+    }
+
+    async function batchRemindSelected(trainingId) {
+      const targets = getSelectedOrIncompleteUsers();
+      if (targets.length === 0) { toast('没有可催促的学员', 'warning'); return; }
+      const scopeTip = _analyticsSelectedUserIds.size > 0 ? '已勾选' : '未完成';
+      if (!confirm(`确定向 ${targets.length} 名${scopeTip}学员发送催促提醒？`)) return;
+      const sent = await sendTrainingNotification(trainingId, targets.map(u => u.userId), 'remind');
       toast(`已向 ${sent} 名学员发送催促提醒`);
     }
 
@@ -5274,11 +5338,15 @@
     }
 
     function delayAllTraining(trainingId) {
-      if (!_analyticsOverviewData || !_analyticsOverviewData.overview) return;
-      const users = _analyticsOverviewData.overview.users || [];
-      const incomplete = users.filter(u => u.completionRate < 100);
-      if (incomplete.length === 0) { toast('没有需要延期的学员', 'warning'); return; }
-      openDelayModal(trainingId, incomplete.map(u => u.userId));
+      const targets = getSelectedOrIncompleteUsers();
+      if (targets.length === 0) { toast('没有需要延期的学员', 'warning'); return; }
+      openDelayModal(trainingId, targets.map(u => u.userId));
+    }
+
+    function batchDelaySelected(trainingId) {
+      const targets = getSelectedOrIncompleteUsers();
+      if (targets.length === 0) { toast('没有可延期的学员', 'warning'); return; }
+      openDelayModal(trainingId, targets.map(u => u.userId));
     }
 
     async function confirmDelayTraining(e, trainingId) {
@@ -5286,9 +5354,9 @@
       const days = parseInt(document.getElementById('delay-days').value) || 0;
       if (days <= 0) { toast('请输入有效的延期天数', 'error'); return; }
       const event = data.training.find(x => x.id === trainingId);
-      const currentEnd = event && event.endTime ? event.endTime : new Date().toISOString().slice(0, 16);
+      const currentEnd = event && event.endTime ? event.endTime : toLocalDateTimeInput(new Date());
       const newEnd = new Date(new Date(currentEnd).getTime() + days * 24 * 60 * 60 * 1000);
-      const newEndStr = newEnd.toISOString().slice(0, 16);
+      const newEndStr = toLocalDateTimeInput(newEnd);
       const idsStr = document.getElementById('delay-target-ids').value;
       const userIds = idsStr ? idsStr.split(',').map(id => id.trim()).filter(Boolean) : [];
       if (userIds.length === 0) { toast('没有需要延期的学员', 'error'); return; }
@@ -5449,6 +5517,9 @@
               <div class="flex items-center justify-between mb-3">
                 <h4 class="text-sm font-semibold text-slate-700"><i class="fas fa-list-ul text-indigo-400 mr-2"></i>报名人员明细</h4>
                 <div class="flex items-center gap-2">
+                  <button onclick="openAssignHistoryModal(${trainingId})" class="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-100 transition">
+                    <i class="fas fa-history mr-1"></i>指派记录
+                  </button>
                   <button onclick="exportAnalyticsEnroll()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
                     <i class="fas fa-file-excel mr-1"></i>导出
                   </button>
@@ -6525,7 +6596,7 @@
       }
 
       // 从 localStorage 读取已有图片（兼容数字和字符串两种 key）
-      const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+      const gallery = safeParse('training_gallery', {});
       let galleryData = gallery[trainingId];
       if (!galleryData && typeof trainingId === 'number') {
         galleryData = gallery[String(trainingId)];
@@ -6665,7 +6736,7 @@
 
       if (uploadedUrls.length > 0) {
         // 存储到 localStorage 的 training_gallery
-        const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+        const gallery = safeParse('training_gallery', {});
         
         // 兼容数字和字符串两种 key
         let data = gallery[trainingId];
@@ -6705,7 +6776,7 @@
     async function deleteTrainingImage(trainingId, imageIndex) {
       if (!confirm('确定要删除这张图片吗？')) return;
 
-      const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+      const gallery = safeParse('training_gallery', {});
       
       // 兼容数字和字符串两种 key
       let data = gallery[trainingId];
@@ -6868,10 +6939,10 @@
       }
 
       showModal(`
-        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+        <div class="modal bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-gradient-to-r from-slate-50 to-white">
             <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑' : '添加'}培训</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"><i class="fas fa-times text-lg"></i></button>
           </div>
           <form id="training-form" onsubmit="saveTraining(event, ${training?.id || 'null'})" class="flex-1 overflow-y-auto p-6 space-y-5">
 
@@ -7783,13 +7854,16 @@
     }
 
     async function openTrainingUserPicker() {
-      userPickerMode = 'training';
-      const modal = document.getElementById('examUserPickerModal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      document.getElementById('examUserPickerSearch').value = '';
-      await loadExamUserPickerData();
-      renderExamUserPicker();
+      await openUnifiedAssignPicker({
+        mode: 'training',
+        title: '选择学员',
+        subtitle: '指定参加培训的学员',
+        initialSelected: Array.from(trainingUserPickerTemp),
+        onConfirm: () => {
+          trainingUserPickerTemp = new Set(unifiedAssignState.selected);
+          renderTrainingAllowedUsers();
+        }
+      });
     }
 
     async function onTrainingImportUsersFile() {
@@ -7886,7 +7960,7 @@
         const res = await fetch(API + '/training/' + id, { method: 'DELETE' });
         if (res.ok) {
           // 同步删除 localStorage 中的学习风采图片
-          const gallery = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+          const gallery = safeParse('training_gallery', {});
           const strId = String(id);
           const numId = Number(id);
           let deleted = false;
@@ -8530,97 +8604,354 @@
     }
 
     // 指派学员
+    // ========== 通用学员指派弹窗状态与函数（培训/考试/报名分析共用） ==========
+    let unifiedAssignState = {
+      mode: 'training', // 'training' | 'exam' | 'assign'
+      targetId: null,
+      users: [],
+      selected: new Set(),
+      departments: {},
+      currentDept: '全部',
+      search: '',
+      title: '选择学员',
+      subtitle: '',
+      onConfirm: null
+    };
+
+    async function ensureAllUsersLoaded() {
+      if (allUsers && allUsers.length > 0) return;
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const usersRes = await fetch(API + '/auth/users', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (usersRes.ok) {
+          const usersJson = await usersRes.json();
+          allUsers = (usersJson.data && usersJson.data.users) ? usersJson.data.users : (usersJson.data || usersJson || []);
+        }
+      } catch(e) { /* ignore */ }
+    }
+
+    async function openUnifiedAssignPicker(options) {
+      const { mode, targetId, title, subtitle, initialSelected, onConfirm } = options || {};
+      unifiedAssignState.mode = mode || 'training';
+      unifiedAssignState.targetId = targetId || null;
+      unifiedAssignState.title = title || '选择学员';
+      unifiedAssignState.subtitle = subtitle || '';
+      unifiedAssignState.onConfirm = onConfirm || null;
+      unifiedAssignState.currentDept = '全部';
+      unifiedAssignState.search = '';
+      unifiedAssignState.selected = new Set((initialSelected || []).map(String));
+
+      await ensureAllUsersLoaded();
+      const users = allUsers || [];
+      if (users.length === 0) {
+        toast('暂无可用用户，请先添加用户', 'warning');
+        return;
+      }
+
+      // 按部门分组
+      const departments = { '全部': users };
+      users.forEach(u => {
+        const dept = u.department || '未分组';
+        if (!departments[dept]) departments[dept] = [];
+        departments[dept].push(u);
+      });
+      unifiedAssignState.departments = departments;
+      unifiedAssignState.users = users;
+
+      // 同步原有 temp Set，保证兼容
+      if (mode === 'training') {
+        trainingUserPickerTemp = new Set(unifiedAssignState.selected);
+      } else if (mode === 'exam') {
+        examUserPickerTemp = new Set(unifiedAssignState.selected);
+      } else if (mode === 'assign') {
+        assignExamUserPickerTemp = new Set(unifiedAssignState.selected);
+      }
+
+      const modal = document.getElementById('unifiedAssignModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('unifiedAssignTitle').textContent = unifiedAssignState.title;
+      document.getElementById('unifiedAssignSubtitle').textContent = unifiedAssignState.subtitle;
+      document.getElementById('unifiedAssignSearch').value = '';
+      renderUnifiedAssignPicker();
+    }
+
+    function closeUnifiedAssignPicker() {
+      const modal = document.getElementById('unifiedAssignModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function renderUnifiedAssignPicker() {
+      const state = unifiedAssignState;
+      const users = state.users;
+      const departments = state.departments;
+      const selected = state.selected;
+      const currentDept = state.currentDept;
+      const search = state.search.toLowerCase();
+
+      // 左侧部门列表
+      const deptList = document.getElementById('unifiedAssignDeptList');
+      const deptEntries = Object.entries(departments).filter(([name]) => name !== '全部').sort((a, b) => a[0].localeCompare(b[0]));
+      const allCount = users.length;
+      deptList.innerHTML = `
+        <button onclick="switchUnifiedAssignDept('全部')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition ${currentDept === '全部' ? 'bg-indigo-100 text-indigo-700 font-medium' : 'text-slate-600 hover:bg-slate-100'}">
+          <span>全部</span>
+          <span class="text-xs ${currentDept === '全部' ? 'text-indigo-500' : 'text-slate-400'}">${allCount}</span>
+        </button>
+        ${deptEntries.map(([dept, deptUsers]) => {
+          const isActive = currentDept === dept;
+          return `
+            <button onclick="switchUnifiedAssignDept('${escHtml(dept)}')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition ${isActive ? 'bg-indigo-100 text-indigo-700 font-medium' : 'text-slate-600 hover:bg-slate-100'}">
+              <span class="truncate text-left flex-1">${escHtml(dept)}</span>
+              <span class="text-xs ${isActive ? 'text-indigo-500' : 'text-slate-400'} ml-2">${deptUsers.length}</span>
+            </button>`;
+        }).join('')}
+      `;
+
+      // 右侧学员列表
+      const userList = document.getElementById('unifiedAssignUserList');
+      let displayUsers = currentDept === '全部' ? users : (departments[currentDept] || []);
+      if (search) {
+        displayUsers = displayUsers.filter(u => (u.realName || u.username || '').toLowerCase().includes(search));
+      }
+
+      if (displayUsers.length === 0) {
+        userList.innerHTML = '<p class="text-sm text-slate-400 text-center py-8 col-span-full">无匹配学员</p>';
+      } else {
+        const deptAllTarget = currentDept === '全部' ? users : (departments[currentDept] || []);
+        const deptAllSelected = deptAllTarget.length > 0 && deptAllTarget.every(u => selected.has(String(u.id)));
+        const deptAllIndeterminate = !deptAllSelected && deptAllTarget.some(u => selected.has(String(u.id)));
+        const deptLabel = currentDept === '全部' ? '全部学员' : escHtml(currentDept);
+
+        userList.innerHTML = `
+          <label class="col-span-full flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-100 cursor-pointer hover:bg-slate-100 transition select-none">
+            <input type="checkbox" id="unifiedAssignDeptAll" onchange="toggleUnifiedAssignAll()" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" ${deptAllSelected ? 'checked' : ''}>
+            <span class="text-sm text-slate-700 font-medium">全选${deptLabel}</span>
+            <span class="text-xs text-slate-400 ml-auto">${deptAllTarget.length} 人</span>
+          </label>
+        ` + displayUsers.map(u => {
+          const uid = String(u.id);
+          const checked = selected.has(uid);
+          const name = u.realName || u.username || '未知';
+          return `
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition ${checked ? 'bg-indigo-50' : 'bg-white border border-slate-100'}">
+              <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" ${checked ? 'checked' : ''} onchange="toggleUnifiedAssignUser('${uid}')">
+              <span class="text-sm text-slate-700 truncate">${escHtml(name)}</span>
+            </label>`;
+        }).join('');
+
+        const deptAllCheckbox = document.getElementById('unifiedAssignDeptAll');
+        if (deptAllCheckbox) deptAllCheckbox.indeterminate = deptAllIndeterminate;
+      }
+
+      // 更新已选计数
+      document.getElementById('unifiedAssignCount').textContent = selected.size;
+    }
+
+    function switchUnifiedAssignDept(dept) {
+      unifiedAssignState.currentDept = dept;
+      renderUnifiedAssignPicker();
+    }
+
+    function toggleUnifiedAssignUser(userId) {
+      const uid = String(userId);
+      if (unifiedAssignState.selected.has(uid)) {
+        unifiedAssignState.selected.delete(uid);
+      } else {
+        unifiedAssignState.selected.add(uid);
+      }
+      // 同步对应 temp Set
+      if (unifiedAssignState.mode === 'training') {
+        if (unifiedAssignState.selected.has(uid)) trainingUserPickerTemp.add(uid);
+        else trainingUserPickerTemp.delete(uid);
+      } else if (unifiedAssignState.mode === 'exam') {
+        if (unifiedAssignState.selected.has(uid)) examUserPickerTemp.add(uid);
+        else examUserPickerTemp.delete(uid);
+      } else if (unifiedAssignState.mode === 'assign') {
+        if (unifiedAssignState.selected.has(uid)) assignExamUserPickerTemp.add(uid);
+        else assignExamUserPickerTemp.delete(uid);
+      }
+      renderUnifiedAssignPicker();
+    }
+
+    function toggleUnifiedAssignAll() {
+      const allCheckbox = document.getElementById('unifiedAssignDeptAll');
+      const checked = allCheckbox.checked;
+      const state = unifiedAssignState;
+      const targetUsers = state.currentDept === '全部' ? state.users : (state.departments[state.currentDept] || []);
+      targetUsers.forEach(u => {
+        const uid = String(u.id);
+        if (checked) state.selected.add(uid);
+        else state.selected.delete(uid);
+      });
+      // 同步 temp Set
+      if (state.mode === 'training') {
+        trainingUserPickerTemp = new Set(state.selected);
+      } else if (state.mode === 'exam') {
+        examUserPickerTemp = new Set(state.selected);
+      } else if (state.mode === 'assign') {
+        assignExamUserPickerTemp = new Set(state.selected);
+      }
+      renderUnifiedAssignPicker();
+    }
+
+    function filterUnifiedAssignUsers(keyword) {
+      unifiedAssignState.search = keyword || '';
+      renderUnifiedAssignPicker();
+    }
+
+    function syncUnifiedAssignToLegacyData() {
+      const state = unifiedAssignState;
+      const sync = (dataArr) => {
+        dataArr.forEach(u => {
+          u.selected = state.selected.has(String(u.id));
+        });
+      };
+      if (state.mode === 'training') sync(trainingUserPickerData);
+      else if (state.mode === 'exam') sync(examUserPickerData);
+      else if (state.mode === 'assign') sync(assignExamUserPickerData);
+    }
+
+    async function confirmUnifiedAssignPicker() {
+      const state = unifiedAssignState;
+      const selectedIds = Array.from(state.selected).map(id => isNaN(Number(id)) ? id : Number(id));
+
+      // 同步旧的数据数组，保证 renderAllowedUsers 显示正确
+      syncUnifiedAssignToLegacyData();
+
+      if (state.mode === 'training') {
+        trainingUserPickerTemp = new Set(state.selected);
+        renderTrainingAllowedUsers();
+        closeUnifiedAssignPicker();
+        return;
+      }
+
+      if (state.mode === 'exam') {
+        examUserPickerTemp = new Set(state.selected);
+        renderExamAllowedUsers();
+        closeUnifiedAssignPicker();
+        return;
+      }
+
+      if (state.mode === 'assign' && state.targetId && typeof state.onConfirm === 'function') {
+        await state.onConfirm(selectedIds);
+        closeUnifiedAssignPicker();
+        return;
+      }
+
+      closeUnifiedAssignPicker();
+    }
+
     async function openAssignStudentsModal(trainingId) {
       try {
-        // 获取当前报名用户ID列表
         const enrollRes = await fetch(API + '/training/' + trainingId + '/enrollments');
         const enrollData = await enrollRes.json();
-        const enrolledIds = new Set((enrollData.data || []).map(e => String(e.userId)));
-
-        // 确保 allUsers 已加载
-        if (!allUsers || allUsers.length === 0) {
-          try {
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-            const usersRes = await fetch(API + '/auth/users', {
-              headers: { 'Authorization': 'Bearer ' + token }
-            });
-            if (usersRes.ok) {
-              const usersJson = await usersRes.json();
-              allUsers = (usersJson.data && usersJson.data.users) ? usersJson.data.users : (usersJson.data || usersJson || []);
-            }
-          } catch(e) { /* ignore */ }
-        }
-
-        const users = allUsers || [];
-        if (users.length === 0) {
-          toast('暂无可用用户，请先添加用户', 'warning');
-          return;
-        }
-
+        const enrolledIds = (enrollData.data || []).map(e => String(e.userId));
         const event = data.training.find(x => x.id === trainingId);
-        const title = event ? event.name : '培训指派';
 
-        // 按部门分组
-        const departments = {};
-        users.forEach(u => {
-          const dept = u.department || '未分组';
-          if (!departments[dept]) departments[dept] = [];
-          departments[dept].push(u);
-        });
+        await openUnifiedAssignPicker({
+          mode: 'assign',
+          targetId: trainingId,
+          title: '指派学员',
+          subtitle: event ? event.name : '培训指派',
+          initialSelected: enrolledIds,
+          onConfirm: async (selectedIds) => {
+            const toAdd = selectedIds.filter(id => !enrolledIds.includes(String(id)));
+            const toRemove = enrolledIds.filter(id => !selectedIds.includes(Number(id)));
 
-        let usersHtml = '';
-        Object.entries(departments).sort((a, b) => a[0].localeCompare(b[0])).forEach(([dept, deptUsers]) => {
-          const deptEnrolledCount = deptUsers.filter(u => enrolledIds.has(String(u.id))).length;
-          usersHtml += `
-            <div class="mb-4">
-              <div class="flex items-center justify-between mb-2">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" class="dept-check rounded text-indigo-600 focus:ring-indigo-500" data-dept="${dept}" onchange="toggleDeptUsers('${dept}', this.checked)" />
-                  <span class="text-sm font-semibold text-slate-700">${dept}</span>
-                </label>
-                <span class="text-xs text-slate-400">${deptEnrolledCount}/${deptUsers.length} 已报名</span>
-              </div>
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pl-6">
-                ${deptUsers.map(u => {
-                  const checked = enrolledIds.has(String(u.id));
-                  const seed = encodeURIComponent(u.realName || u.username);
-                  const avatarUrl = u.avatar && u.avatar.startsWith('http') ? u.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
-                  return `
-                    <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer ${checked ? 'bg-indigo-50' : ''}">
-                      <input type="checkbox" class="user-check rounded text-indigo-600 focus:ring-indigo-500" data-user-id="${u.id}" data-dept="${dept}" ${checked ? 'checked' : ''} onchange="updateAssignCount(); syncDeptCheckbox('${dept}')" />
-                      <img src="${avatarUrl}" class="w-6 h-6 rounded-full object-cover" />
-                      <span class="text-xs text-slate-700 truncate">${u.realName || u.username}</span>
-                    </label>`;
-                }).join('')}
-              </div>
-            </div>`;
+            if (toAdd.length > 0) {
+              const res = await fetch(API + '/training/' + trainingId + '/assign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userIds: toAdd })
+              });
+              const result = await res.json();
+              if (!result.success) {
+                toast(result.error || '指派失败', 'error');
+                return;
+              }
+            }
+
+            for (const userId of toRemove) {
+              await fetch(API + '/training/' + trainingId + '/enroll', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId })
+              });
+            }
+
+            const msgs = [];
+            if (toAdd.length > 0) msgs.push(`新增 ${toAdd.length} 人`);
+            if (toRemove.length > 0) msgs.push(`移除 ${toRemove.length} 人`);
+            toast(msgs.length > 0 ? msgs.join('，') : '无变更');
+
+            await loadAllData();
+            renderTrainingList();
+            if (trainingViewMode === 'analytics' && analyticsTrainingId === trainingId) {
+              await renderAnalyticsOverview(trainingId);
+              await renderAnalyticsEnroll(trainingId);
+            }
+          }
         });
+      } catch (err) {
+        toast('加载失败', 'error');
+      }
+    }
+
+    async function openAssignHistoryModal(trainingId) {
+      try {
+        const event = data.training.find(x => x.id === trainingId);
+        const res = await fetch(API + '/training/' + trainingId + '/assign-history');
+        const result = await res.json();
+        const history = result.data || [];
+
+        const rows = history.length > 0
+          ? history.map((h, i) => `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+              <td class="px-4 py-3 text-sm text-slate-500">${i + 1}</td>
+              <td class="px-4 py-3 text-sm text-slate-700 font-medium">${h.count || 0} 人</td>
+              <td class="px-4 py-3 text-sm text-slate-600">
+                <div class="flex flex-wrap gap-1">
+                  ${(h.userNames || []).slice(0, 8).map(name => `<span class="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600">${escHtml(name)}</span>`).join('')}
+                  ${(h.userNames || []).length > 8 ? `<span class="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600">+${h.userNames.length - 8} 人</span>` : ''}
+                </div>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-500">${h.assignedAt ? new Date(h.assignedAt).toLocaleString('zh-CN') : '-'}</td>
+            </tr>`).join('')
+          : `<tr><td colspan="4" class="px-4 py-12 text-center text-slate-400"><i class="fas fa-history text-3xl mb-3 block text-slate-300"></i><p>暂无指派记录</p></td></tr>`;
 
         showModal(`
-          <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div class="modal bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
               <div>
-                <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-user-plus text-cyan-500 mr-2"></i>指派学员</h3>
-                <p class="text-sm text-slate-500">${title}</p>
+                <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-history text-slate-500 mr-2"></i>指派记录</h3>
+                <p class="text-sm text-slate-500">${event ? event.name : '培训指派'}</p>
               </div>
-              <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+              <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"><i class="fas fa-times text-lg"></i></button>
             </div>
-            <div class="px-6 py-3 border-b border-slate-50 flex items-center justify-between">
-              <div class="relative flex-1 max-w-xs">
-                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                <input type="text" id="assign-search" placeholder="搜索姓名..." class="pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 w-full" oninput="filterAssignUsers(this.value)" />
+            <div class="p-6 overflow-y-auto flex-1">
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full">
+                  <thead class="bg-slate-50"><tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">指派人数</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">学员名单</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">指派时间</th>
+                  </tr></thead>
+                  <tbody>${rows}</tbody>
+                </table>
               </div>
-              <span class="text-xs text-slate-400 ml-3" id="assign-count">已选: ${enrolledIds.size} 人</span>
             </div>
-            <div class="p-6 overflow-y-auto flex-1" id="assign-users-list">${usersHtml}</div>
-            <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
-              <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
-              <button onclick="submitAssignStudents(${trainingId})" class="px-5 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-medium">确认指派</button>
+            <div class="px-6 py-4 border-t border-slate-100 flex justify-end">
+              <button onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition text-sm">关闭</button>
             </div>
           </div>
         `);
       } catch (err) {
-        toast('加载失败', 'error');
+        toast('加载指派记录失败', 'error');
       }
     }
 
@@ -8837,7 +9168,7 @@
           </tr>
         `;
       } else {
-        const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+        const currentUser = safeParse('user', null) || (function(){ try { return JSON.parse(sessionStorage.getItem('user')); } catch(e) { return null; } })() || {};
         const currentUserId = currentUser.id;
         tbody.innerHTML = pageUsers.map(user => {
           const isCurrentUser = user.id === currentUserId;
@@ -9236,7 +9567,7 @@
       const user = allUsers.find(u => u.id === userId);
       if (!user) return;
 
-      const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+      const currentUser = safeParse('user', null) || (function(){ try { return JSON.parse(sessionStorage.getItem('user')); } catch(e) { return null; } })() || {};
       if (currentUser.id === userId) {
         toast('不能修改自己的权限', 'error');
         return;
@@ -9756,7 +10087,7 @@
 
       // 记录访问
       try {
-        const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+        const currentUser = safeParse('user', null) || (function(){ try { return JSON.parse(sessionStorage.getItem('user')); } catch(e) { return null; } })() || {};
         await fetch(API + '/notices/' + id + '/visit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -10832,7 +11163,7 @@
           const attempts = d.exam_attempts || [];
           attemptTotal = attempts.length;
           passCount = attempts.filter(a => a.passed).length;
-        } catch(e) {}
+        } catch(e) { console.warn('获取考试统计失败:', e); }
         el('exam-stat-total', total);
         el('exam-stat-published', published);
         el('exam-stat-attempts', totalAttempts);
@@ -11640,19 +11971,26 @@
     let userPickerMode = 'exam'; // 'exam' / 'assign' / 'training'
 
     async function openExamUserPicker(mode) {
-      userPickerMode = mode || 'exam';
-      const modal = document.getElementById('examUserPickerModal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      document.getElementById('examUserPickerSearch').value = '';
-      await loadExamUserPickerData();
-      renderExamUserPicker();
-    }
-
-    function closeExamUserPicker() {
-      const modal = document.getElementById('examUserPickerModal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
+      const pickerMode = mode || 'exam';
+      userPickerMode = pickerMode;
+      const initialSelected = pickerMode === 'assign'
+        ? Array.from(assignExamUserPickerTemp)
+        : Array.from(examUserPickerTemp);
+      await openUnifiedAssignPicker({
+        mode: pickerMode,
+        title: '选择学员',
+        subtitle: pickerMode === 'assign' ? '指派参加考试的学员' : '指定可参加考试的学员',
+        initialSelected,
+        onConfirm: () => {
+          if (pickerMode === 'assign') {
+            assignExamUserPickerTemp = new Set(unifiedAssignState.selected);
+            renderExamAllowedUsers();
+          } else {
+            examUserPickerTemp = new Set(unifiedAssignState.selected);
+            renderExamAllowedUsers();
+          }
+        }
+      });
     }
 
     async function loadExamUserPickerData() {
@@ -11687,63 +12025,6 @@
         else if (userPickerMode === 'training') trainingUserPickerData = [];
         else examUserPickerData = [];
       }
-    }
-
-    function renderExamUserPicker() {
-      let sourceData;
-      if (userPickerMode === 'assign') sourceData = assignExamUserPickerData;
-      else if (userPickerMode === 'training') sourceData = trainingUserPickerData;
-      else sourceData = examUserPickerData;
-      const search = document.getElementById('examUserPickerSearch').value.toLowerCase();
-      const list = document.getElementById('examUserPickerList');
-      const filtered = sourceData.filter(u => u.name.toLowerCase().includes(search));
-      if (filtered.length === 0) {
-        list.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">无匹配学员</p>';
-      } else {
-        list.innerHTML = filtered.map(u => `
-          <label class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition">
-            <input type="checkbox" ${u.selected ? 'checked' : ''} onchange="toggleExamUserSelect(${u.id})"
-              class="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500">
-            <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs font-bold">
-              ${u.name.charAt(0)}
-            </div>
-            <span class="text-sm text-slate-700">${escHtml(u.name)}</span>
-          </label>
-        `).join('');
-      }
-      document.getElementById('examUserPickerCount').textContent = sourceData.filter(u => u.selected).length;
-    }
-
-    function toggleExamUserSelect(id) {
-      let sourceData, targetTemp;
-      if (userPickerMode === 'assign') {
-        sourceData = assignExamUserPickerData;
-        targetTemp = assignExamUserPickerTemp;
-      } else if (userPickerMode === 'training') {
-        sourceData = trainingUserPickerData;
-        targetTemp = trainingUserPickerTemp;
-      } else {
-        sourceData = examUserPickerData;
-        targetTemp = examUserPickerTemp;
-      }
-      const user = sourceData.find(u => String(u.id) === String(id));
-      if (user) {
-        user.selected = !user.selected;
-        if (user.selected) targetTemp.add(String(id));
-        else targetTemp.delete(String(id));
-      }
-      renderExamUserPicker();
-    }
-
-    function confirmExamUserPicker() {
-      if (userPickerMode === 'assign') {
-        renderExamAllowedUsers();
-      } else if (userPickerMode === 'training') {
-        renderTrainingAllowedUsers();
-      } else {
-        renderExamAllowedUsers();
-      }
-      closeExamUserPicker();
     }
 
     function renderExamAllowedUsers() {
@@ -11821,6 +12102,7 @@
       document.getElementById('examImportUsersResult').classList.add('hidden');
       examUserPickerData = [];
       examUserPickerTemp = new Set();
+      userPickerMode = 'exam';
       renderExamAllowedUsers();
       renderSelectedQuestions();
       // 加载试卷下拉
@@ -11849,7 +12131,7 @@
         if (window.dataSync && window.dataSync.getData) {
           papers = window.dataSync.getData('papers') || [];
         } else {
-          papers = JSON.parse(localStorage.getItem('papers') || '[]');
+          papers = safeParse('papers', []);
         }
         const paper = papers.find(p => String(p.id) === String(paperId));
         if (paper) {
@@ -11886,7 +12168,7 @@
           const papers = window.dataSync.getData('papers') || [];
           paper = papers.find(p => p.id === paperId);
         } else {
-          const papers = JSON.parse(localStorage.getItem('papers') || '[]');
+          const papers = safeParse('papers', []);
           paper = papers.find(p => p.id === paperId);
         }
         // 自动填充考试名称为试卷名称
@@ -11899,7 +12181,7 @@
           if (window.dataSync && window.dataSync.getData) {
             allQuestions = window.dataSync.getData('questions') || [];
           } else {
-            allQuestions = JSON.parse(localStorage.getItem('questions') || '[]');
+            allQuestions = safeParse('questions', []);
           }
           selectedExamQuestions = paper.questions.map((pq, idx) => {
             const q = allQuestions.find(qq => qq.id === pq.questionId);
@@ -12091,6 +12373,7 @@
             renderSelectedQuestions();
           }
           // 恢复任务指派
+          userPickerMode = 'exam';
           if (exam.startTime) document.getElementById('examStartTime').value = toLocalDateTimeInput(exam.startTime);
           if (exam.endTime) document.getElementById('examEndTime').value = toLocalDateTimeInput(exam.endTime);
           let accessType = exam.accessType || 'none';
@@ -12193,11 +12476,11 @@
           if (window.dataSync && window.dataSync.getData) {
             papers = window.dataSync.getData('papers') || [];
           } else {
-            papers = JSON.parse(localStorage.getItem('papers') || '[]');
+            papers = safeParse('papers', []);
           }
           const paper = papers.find(p => p.id === paperId);
           if (paper) paperName = paper.name;
-        } catch(e) {}
+        } catch(e) { console.warn('获取试卷名称失败:', e); }
       }
       const attemptsPolicy = getBtnGroupValue('examAttempts') || 'unlimited';
       const screenSwitchPolicy = getBtnGroupValue('examScreenSwitch') || 'unlimited';
@@ -12594,6 +12877,10 @@
       return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     }
 
+    function safeParse(key, fallback) {
+      try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch(e) { return fallback; }
+    }
+
     function renderExamDetailStudents() {
       const tbody = document.getElementById('examDetailStudentsBody');
       const search = (document.getElementById('examDetailStudentSearch').value || '').trim().toLowerCase();
@@ -12952,7 +13239,7 @@
         if (window.dataSync && window.dataSync.getData) {
           papersAllData = window.dataSync.getData('papers') || [];
         } else {
-          papersAllData = JSON.parse(localStorage.getItem('papers') || '[]');
+          papersAllData = safeParse('papers', []);
         }
         
         // 应用筛选
@@ -13244,7 +13531,7 @@
       if (window.dataSync && window.dataSync.getData) {
         papers = window.dataSync.getData('papers') || [];
       } else {
-        papers = JSON.parse(localStorage.getItem('papers') || '[]');
+        papers = safeParse('papers', []);
       }
       if (paperPickerKeyword.trim()) {
         const kw = paperPickerKeyword.trim().toLowerCase();
@@ -13338,7 +13625,7 @@
       if (window.dataSync && window.dataSync.getData) {
         papers = window.dataSync.getData('papers') || [];
       } else {
-        papers = JSON.parse(localStorage.getItem('papers') || '[]');
+        papers = safeParse('papers', []);
       }
       const paper = papers.find(p => String(p.id) === String(paperPickerSelectedId));
       if (paper && paperPickerCallback) {
@@ -13377,7 +13664,7 @@
           const papers = window.dataSync.getData('papers') || [];
           paper = papers.find(p => p.id === id);
         } else {
-          const papers = JSON.parse(localStorage.getItem('papers') || '[]');
+          const papers = safeParse('papers', []);
           paper = papers.find(p => p.id === id);
         }
         
@@ -13569,7 +13856,7 @@
         if (window.dataSync && window.dataSync.getData) {
           papers = window.dataSync.getData('papers') || [];
         } else {
-          papers = JSON.parse(localStorage.getItem('papers') || '[]');
+          papers = safeParse('papers', []);
         }
         
         const idx = papers.findIndex(p => p.id === payload.id);
@@ -13853,7 +14140,7 @@
         if (window.dataSync && window.dataSync.getData) {
           papers = window.dataSync.getData('papers') || [];
         } else {
-          papers = JSON.parse(localStorage.getItem('papers') || '[]');
+          papers = safeParse('papers', []);
         }
         
         papers = papers.filter(p => p.id !== id);
@@ -15719,7 +16006,7 @@
         
         // 如果服务器没有数据，从 localStorage 获取
         if (requests.length === 0) {
-          requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+          requests = safeParse('training_requests', []);
         }
         
         // 按状态筛选
@@ -15745,7 +16032,7 @@
 
     // 更新培训需求统计
     function updateTrainingRequestStats() {
-      let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+      let requests = safeParse('training_requests', []);
       
       // 尝试合并服务器数据
       try {
@@ -15754,8 +16041,8 @@
           const serverRequests = JSON.parse(serverData);
           requests = [...requests, ...serverRequests];
         }
-      } catch (e) {}
-      
+      } catch (e) { console.warn('读取培训请求数据失败:', e); }
+
       const stats = {
         total: requests.length,
         pending: requests.filter(r => r.status === 'pending').length,
@@ -15844,7 +16131,7 @@
     async function viewTrainingRequestDetail(id) {
       try {
         // 从 localStorage 获取
-        let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        let requests = safeParse('training_requests', []);
         let req = requests.find(r => r.id === id);
         
         if (!req) {
@@ -15953,7 +16240,7 @@
         }
         
         // 本地更新
-        let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        let requests = safeParse('training_requests', []);
         const index = requests.findIndex(r => r.id === id);
         if (index !== -1) {
           requests[index].status = status;
@@ -15985,7 +16272,7 @@
         }
         
         // 本地删除
-        let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
+        let requests = safeParse('training_requests', []);
         requests = requests.filter(r => r.id !== id);
         localStorage.setItem('training_requests', JSON.stringify(requests));
         toast('需求已删除（本地保存）');
@@ -15998,10 +16285,10 @@
     // 导出培训需求
     function exportTrainingRequests() {
       try {
-        let requests = JSON.parse(localStorage.getItem('training_requests') || '[]');
-        
-        if (requests.length === 0) {
-          toast('没有可导出的数据', 'error');
+        let requests = safeParse('training_requests', []);
+	        
+	        if (requests.length === 0) {
+	          toast('没有可导出的数据', 'error');
           return;
         }
         

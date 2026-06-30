@@ -1536,7 +1536,7 @@ app.delete('/api/training/:id/enroll', (req, res) => {
   if (!userId) return res.status(400).json({ success: false, error: '缺少 userId' });
 
   if (!data.training_enrollments) data.training_enrollments = [];
-  const idx = data.training_enrollments.findIndex(e => e.trainingId === trainingId && e.userId === userId);
+  const idx = data.training_enrollments.findIndex(e => e.trainingId === trainingId && String(e.userId) === String(userId));
   if (idx === -1) return res.status(404).json({ success: false, error: '未找到报名记录' });
 
   data.training_enrollments.splice(idx, 1);
@@ -1559,6 +1559,7 @@ app.post('/api/training/:id/assign', (req, res) => {
   if (!training) return res.status(404).json({ success: false, error: '培训不存在' });
 
   if (!data.training_enrollments) data.training_enrollments = [];
+  if (!data.training_assign_history) data.training_assign_history = [];
 
   let addedCount = 0;
   const addedUserIds = [];
@@ -1576,6 +1577,17 @@ app.post('/api/training/:id/assign', (req, res) => {
       addedCount++;
     }
   });
+
+  // 记录指派历史
+  if (addedCount > 0) {
+    data.training_assign_history.push({
+      id: Date.now(),
+      trainingId,
+      userIds: addedUserIds,
+      count: addedCount,
+      assignedAt: new Date().toISOString()
+    });
+  }
 
   // 给新指派的学员发送消息中心通知，点击可直接打开培训弹窗
   if (addedUserIds.length > 0) {
@@ -1609,6 +1621,24 @@ app.delete('/api/training/:id/enrollments/:enrollId', (req, res) => {
   data.training_enrollments.splice(idx, 1);
   writeData(data);
   res.json({ success: true, message: '已移除' });
+});
+
+// GET /api/training/:id/assign-history - 获取培训的指派历史记录
+app.get('/api/training/:id/assign-history', (req, res) => {
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const users = data.registered_users || [];
+  const history = (data.training_assign_history || [])
+    .filter(h => h.trainingId === trainingId)
+    .sort((a, b) => new Date(b.assignedAt) - new Date(a.assignedAt))
+    .map(h => ({
+      ...h,
+      userNames: (h.userIds || []).map(uid => {
+        const user = users.find(u => u.id === uid);
+        return user ? (user.realName || user.username) : '未知';
+      })
+    }));
+  res.json({ success: true, data: history });
 });
 
 // POST /api/training/:id/enrollments/extend - 给指定学员的报名记录延期（支持批量）
