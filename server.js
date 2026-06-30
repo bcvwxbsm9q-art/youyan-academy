@@ -305,6 +305,8 @@ app.get('/api/data', (req, res) => {
       courseCount: (data.management_courses || []).filter(c => String(c.lecturerId) === String(l.id)).length
     }));
   }
+  // 登录日志属于敏感/大字段数据，不通过全量接口下发
+  delete data.login_logs;
   res.json(data);
 });
 
@@ -565,10 +567,18 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(401).json({ success: false, error: '账户已被禁用' });
   }
   
-  // 更新最后登录时间
-  user.lastLogin = new Date().toLocaleString('zh-CN');
+  // 更新最后登录时间并记录登录日志
+  const nowStr = new Date().toLocaleString('zh-CN');
+  user.lastLogin = nowStr;
+  data.login_logs = data.login_logs || [];
+  data.login_logs.push({
+    userId: user.id,
+    username: user.username,
+    realName: user.realName || '',
+    loginTime: nowStr
+  });
   writeData(data);
-  
+
   // 创建 token
   const token = createToken(user);
   const userInfo = { ...user };
@@ -625,7 +635,15 @@ app.post('/api/auth/sms-login', (req, res) => {
   }
 
   smsCodeStore.delete(phone);
-  user.lastLogin = new Date().toLocaleString('zh-CN');
+  const smsNowStr = new Date().toLocaleString('zh-CN');
+  user.lastLogin = smsNowStr;
+  data.login_logs = data.login_logs || [];
+  data.login_logs.push({
+    userId: user.id,
+    username: user.username,
+    realName: user.realName || '',
+    loginTime: smsNowStr
+  });
   writeData(data);
 
   const token = createToken(user);
@@ -692,12 +710,62 @@ app.post('/api/auth/qr/:provider/simulate', (req, res) => {
     return res.status(500).json({ success: false, error: '无可用用户' });
   }
 
+  const qrNowStr = new Date().toLocaleString('zh-CN');
+  user.lastLogin = qrNowStr;
+  data.login_logs = data.login_logs || [];
+  data.login_logs.push({
+    userId: user.id,
+    username: user.username,
+    realName: user.realName || '',
+    loginTime: qrNowStr
+  });
+  writeData(data);
+
   const loginToken = createToken(user);
   session.status = 'confirmed';
   session.token = loginToken;
   session.user = { ...user };
 
   res.json({ success: true, message: '模拟扫码成功' });
+});
+
+// ============================================================
+// 报表：登录趋势（按天统计登录人数）
+// ============================================================
+function toDateKey(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+app.get('/api/reports/login-trend', (req, res) => {
+  const days = parseInt(req.query.days) || 7;
+  const data = readData();
+  const logs = data.login_logs || [];
+  const now = new Date();
+  const result = [];
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const dateKey = toDateKey(d.toISOString());
+    const label = (d.getMonth() + 1) + '/' + d.getDate();
+    const userIds = new Set();
+
+    logs.forEach(log => {
+      if (toDateKey(log.loginTime) === dateKey) {
+        userIds.add(log.userId || log.username);
+      }
+    });
+
+    result.push({ label, count: userIds.size });
+  }
+
+  res.json({ success: true, data: result });
 });
 
 // 验证 token / 获取当前用户信息

@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1782044069160-440027461.jpg",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/6/30 18:03:09",
+      "lastLogin": "2026/6/30 18:29:01",
       "status": "active",
       "position": "人事经理"
     },
@@ -23,10 +23,10 @@
       "phone": "14718596470",
       "realName": "何银",
       "department": "蜗牛工作室",
-      "role": "user",
+      "role": "admin",
       "avatar": "",
       "createdAt": "2026/6/10 18:23:41",
-      "lastLogin": "2026/6/29 10:34:59",
+      "lastLogin": "2026/6/30 18:04:55",
       "status": "active"
     },
     {
@@ -1291,20 +1291,13 @@
           "duration": 2069
         }
       ],
-      "attachments": [
-        {
-          "url": "/uploads/documents/1781077898730-824883429.pptx",
-          "name": "GPU Skinning2025.12（谭森）.pptx",
-          "size": 5309140,
-          "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-        }
-      ],
+      "attachments": [],
       "duration": 2069,
-      "views": 3,
+      "views": 0,
       "rating": 0,
       "id": 1781077900894,
       "createdAt": "2026/6/10 15:51:40",
-      "updatedAt": "2026/6/10 15:51:40"
+      "updatedAt": "2026/6/30 18:05:34"
     },
     {
       "title": "游戏挂机的简单设计",
@@ -5543,6 +5536,14 @@
       ],
       "count": 2,
       "assignedAt": "2026-06-30T07:44:32.149Z"
+    }
+  ],
+  "login_logs": [
+    {
+      "userId": 1780909174403,
+      "username": "15302206488",
+      "realName": "许志坚",
+      "loginTime": "2026/6/30 18:29:01"
     }
   ]
 }

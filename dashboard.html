@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -635,10 +635,10 @@
 
           <!-- 趋势图 + 热门课程 -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <!-- 学习趋势 -->
+            <!-- 登录趋势 -->
             <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm">
               <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold text-slate-800">学习趋势</h3>
+                <h3 class="font-semibold text-slate-800">登录趋势</h3>
                 <div class="flex gap-1">
                   <button onclick="setTrendDays(7)" class="rpt-trend-btn active text-xs px-3 py-1 rounded-lg">近7天</button>
                   <button onclick="setTrendDays(30)" class="rpt-trend-btn text-xs px-3 py-1 rounded-lg">近30天</button>
@@ -14767,45 +14767,40 @@
       }
     }
 
-    /* 趋势图：SVG 柱状图 */
-    function renderTrendChart() {
+    /* 趋势图：按天统计登录人数 */
+    async function renderTrendChart() {
       const chartEl = document.getElementById('rpt-trend-chart');
       if (!chartEl) return;
       const days = rptTrendDays;
-      const labels = [];
-      const values = [];
 
-      // 辅助：将 createdAt 统一转换为 YYYY-MM-DD
-      function toDateKey(dateStr) {
-        if (!dateStr) return '';
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) return '';
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
-      }
+      chartEl.innerHTML = '<div class="w-full text-center py-16 text-slate-400 text-sm"><i class="fa fa-spinner fa-spin mr-2"></i>加载中...</div>';
 
-      for (let i = days - 1; i >= 0; i--) {
-        const d = new Date(); d.setDate(d.getDate() - i);
-        labels.push((d.getMonth() + 1) + '/' + d.getDate());
-        const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
-        // 统计当天新增的课程、讲师、培训、用户总和作为学习活跃度
-        const courseCnt = (data.courses || []).filter(c => toDateKey(c.createdAt) === dateStr).length;
-        const lectCnt   = (data.lecturers || []).filter(l => toDateKey(l.createdAt) === dateStr).length;
-        const trainCnt  = (data.training || []).filter(t => toDateKey(t.createdAt || t.startTime) === dateStr).length;
-        const userCnt   = (allUsers || []).filter(u => toDateKey(u.createdAt || u.created_at) === dateStr).length;
-        values.push(courseCnt + lectCnt + trainCnt + userCnt);
+      try {
+        const response = await fetch(`/api/reports/login-trend?days=${days}`);
+        const result = await response.json();
+
+        if (!response.ok || !result.success || !Array.isArray(result.data)) {
+          chartEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-16 col-span-full">暂无登录数据</p>';
+          return;
+        }
+
+        const list = result.data;
+        const labels = list.map(x => x.label);
+        const values = list.map(x => x.count || 0);
+        const maxV = Math.max(...values, 1);
+
+        chartEl.innerHTML = values.map((v, i) => {
+          const h = maxV ? Math.max((v / maxV) * 100, 3) : 3;
+          return `<div class="flex-1 flex flex-col items-center justify-end h-full" title="${labels[i]}: ${v}人登录">
+            <span class="text-[10px] text-slate-400 mb-1">${v || ''}</span>
+            <div class="w-full max-w-[32px] bg-gradient-to-t from-indigo-600 to-purple-400 rounded-t" style="height:${h}%"></div>
+            ${i % Math.ceil(days / 7) === 0 || days <= 7 ? `<span class="text-[10px] text-slate-400 mt-1">${labels[i]}</span>` : ''}
+          </div>`;
+        }).join('');
+      } catch (error) {
+        console.error('加载登录趋势失败:', error);
+        chartEl.innerHTML = '<p class="text-sm text-slate-400 text-center py-16 col-span-full">加载失败</p>';
       }
-      const maxV = Math.max(...values, 1);
-      chartEl.innerHTML = values.map((v, i) => {
-        const h = maxV ? Math.max((v / maxV) * 100, 3) : 3;
-        return `<div class="flex-1 flex flex-col items-center justify-end h-full" title="${labels[i]}: ${v}">
-          <span class="text-[10px] text-slate-400 mb-1">${v || ''}</span>
-          <div class="w-full max-w-[32px] bg-gradient-to-t from-indigo-600 to-purple-400 rounded-t" style="height:${h}%"></div>
-          ${i % Math.ceil(days / 7) === 0 || days <= 7 ? `<span class="text-[10px] text-slate-400 mt-1">${labels[i]}</span>` : ''}
-        </div>`;
-      }).join('');
     }
 
     function setTrendDays(days) {
