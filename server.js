@@ -3778,7 +3778,7 @@ app.get('/api/notifications', (req, res) => {
     publishedNotices.forEach(notice => {
       // 检查用户是否已读
       const readRecord = data.notification_reads.find(
-        r => r.userId === currentUser.id && r.noticeId === notice.id
+        r => String(r.userId) === String(currentUser.id) && r.noticeId === notice.id
       );
       
       // 智能截取纯文本预览：去除HTML标签和base64图片后保留前120字
@@ -3846,12 +3846,12 @@ app.put('/api/notifications/:id/read', (req, res) => {
     
     // 检查是否已有已读记录
     const existingRead = data.notification_reads.find(
-      r => r.userId === currentUser.id && r.noticeId === noticeId
+      r => String(r.userId) === String(currentUser.id) && r.noticeId === noticeId
     );
     
     if (!existingRead) {
       data.notification_reads.push({
-        userId: currentUser.id,
+        userId: String(currentUser.id),
         noticeId: noticeId,
         readAt: new Date().toISOString()
       });
@@ -3864,7 +3864,7 @@ app.put('/api/notifications/:id/read', (req, res) => {
     const notifId = parseInt(notificationId.replace('notification_', ''));
     const notification = data.notifications.find(n => n.id === notifId);
     
-    if (notification && notification.userId === currentUser.id) {
+    if (notification && String(notification.userId) === String(currentUser.id)) {
       notification.read = true;
       notification.readAt = new Date().toISOString();
       writeData(data);
@@ -3903,11 +3903,11 @@ app.post('/api/notifications/batch-read', (req, res) => {
     if (id.startsWith('notice_')) {
       const noticeId = parseInt(id.replace('notice_', ''));
       const existingRead = data.notification_reads.find(
-        r => r.userId === currentUser.id && r.noticeId === noticeId
+        r => String(r.userId) === String(currentUser.id) && r.noticeId === noticeId
       );
       if (!existingRead) {
         data.notification_reads.push({
-          userId: currentUser.id,
+          userId: String(currentUser.id),
           noticeId: noticeId,
           readAt: new Date().toISOString()
         });
@@ -3915,7 +3915,7 @@ app.post('/api/notifications/batch-read', (req, res) => {
     } else {
       const notifId = parseInt(id.replace('notification_', ''));
       const notification = data.notifications.find(
-        n => n.id === notifId && n.userId === currentUser.id
+        n => n.id === notifId && String(n.userId) === String(currentUser.id)
       );
       if (notification) {
         notification.read = true;
@@ -3958,7 +3958,7 @@ app.post('/api/notifications/batch-delete', (req, res) => {
     .map(id => parseInt(id.replace('notification_', '')));
   
   data.notifications = data.notifications.filter(n => {
-    if (n.userId !== currentUser.id) return true;  // 保留其他用户的
+    if (String(n.userId) !== String(currentUser.id)) return true;  // 保留其他用户的
     return !personalIds.includes(n.id);  // 删除当前用户的指定通知
   });
   
@@ -3982,7 +3982,7 @@ app.delete('/api/notifications/:id', (req, res) => {
   initNotificationsData(data);
   
   const index = data.notifications.findIndex(
-    n => n.id === notificationId && n.userId === currentUser.id
+    n => n.id === notificationId && String(n.userId) === String(currentUser.id)
   );
   
   if (index === -1) {

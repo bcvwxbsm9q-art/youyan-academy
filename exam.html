@@ -110,7 +110,7 @@
       </div>
       <p id="error-msg" class="text-lg font-medium text-slate-700 mb-2">加载失败</p>
       <p id="error-detail" class="text-sm text-slate-400 mb-6"></p>
-      <button onclick="location.href='training-plan.html'" class="px-6 py-2.5 bg-gradient-primary text-white rounded-xl text-sm font-medium hover:opacity-90 transition">返回</button>
+      <button onclick="goBackOrFallback()" class="px-6 py-2.5 bg-gradient-primary text-white rounded-xl text-sm font-medium hover:opacity-90 transition">返回</button>
     </div>
 
     <!-- 答题界面 -->
@@ -320,6 +320,22 @@
     }
     function closeConfirm(){ document.getElementById('confirm-modal').classList.add('hidden'); confirmCallback=null; }
     function onConfirmOk(){ if(confirmCallback){const cb=confirmCallback;closeConfirm();cb();} }
+
+    // 返回上一个页面；无可靠来源时回退到培训计划页
+    function goBackOrFallback(fallbackUrl='training-plan.html'){
+      const referrer=document.referrer;
+      if(referrer){
+        try{
+          const refUrl=new URL(referrer);
+          if(refUrl.host===location.host && !refUrl.pathname.includes('/exam.html')){
+            location.href=referrer;
+            return;
+          }
+        }catch(e){}
+      }
+      if(history.length>1){ history.back(); }
+      else { location.href=fallbackUrl; }
+    }
 
     // ========== 加载考试 ==========
     async function loadExam(){
@@ -764,14 +780,14 @@
           async ()=>{
             clearInterval(timerHandle);
             await abandonExam(); // 未交卷退出时同步放弃/清理尝试记录
-            location.href='training-plan.html';
+            goBackOrFallback();
           }
         );
         return;
       }
       // 非答题页直接返回
       clearInterval(timerHandle);
-      location.href='training-plan.html';
+      goBackOrFallback();
     }
 
     // ========== 交卷 ==========

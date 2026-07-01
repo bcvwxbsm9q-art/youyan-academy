@@ -118,7 +118,12 @@
   // 跳转到考试页（先标已读再跳转）
   window.goToExam = async function (examId, notifyId) {
     if (notifyId) {
-      try { await fetch('/api/notifications/' + notifyId + '/read', { method: 'PUT' }); } catch(e){}
+      try {
+        var token = getToken();
+        var headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        await fetch('/api/notifications/' + notifyId + '/read', { method: 'PUT', headers: headers });
+      } catch(e){}
     }
     window.location.href = 'exam.html?id=' + examId;
   };
@@ -126,7 +131,12 @@
   // 跳转到培训页（先标已读再跳转）
   window.goToTraining = async function (trainingId, notifyId) {
     if (notifyId) {
-      try { await fetch('/api/notifications/' + notifyId + '/read', { method: 'PUT' }); } catch(e){}
+      try {
+        var token = getToken();
+        var headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        await fetch('/api/notifications/' + notifyId + '/read', { method: 'PUT', headers: headers });
+      } catch(e){}
     }
     window.location.href = 'training-plan.html?openTrainingId=' + encodeURIComponent(trainingId);
   };

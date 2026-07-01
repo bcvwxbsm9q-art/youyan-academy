@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -612,7 +612,6 @@
             if (!confirm('确定要删除这条消息吗？此操作不可恢复。')) return;
             try {
                 const msg = allMessages.find(function (m) { return String(m.id) === String(msgId); });
-                console.log('[deleteSingleMessage] 待删除消息:', msg, 'msgId:', msgId);
 
                 // 平台公告(notice)使用 /api/notices/{id}，其他通知使用 /api/notifications/{id}
                 // 公告通知ID格式为 'notice_xxx'，需剥离前缀
@@ -623,7 +622,6 @@
                 } else {
                     apiPath = '/api/notifications/' + encodeURIComponent(msgId);
                 }
-                console.log('[deleteSingleMessage] 请求接口:', apiPath);
 
                 const res = await authFetch(apiPath, { method: 'DELETE' });
                 if (!res.ok) {
@@ -660,15 +658,25 @@
 
         window.markAsRead = async function (msgId) {
             try {
-                const res = await authFetch('/api/notifications/' + msgId + '/read', { method: 'PUT' });
+                const res = await authFetch('/api/notifications/' + encodeURIComponent(msgId) + '/read', { method: 'PUT' });
+                if (!res.ok) {
+                    const text = await res.text();
+                    console.error('[markAsRead] 标记已读失败 HTTP', res.status, text);
+                    return;
+                }
                 const result = await res.json();
                 if (result.success) {
                     const msg = allMessages.find(m => m.id === msgId);
-                    if (msg) msg.read = true;
+                    if (msg) {
+                        msg.read = true;
+                        msg.readAt = new Date().toISOString();
+                    }
                     renderMessages();
+                } else {
+                    console.error('[markAsRead] 标记已读失败:', result.error);
                 }
             } catch (e) {
-                // 即使 API 失败也继续弹窗
+                console.error('[markAsRead] 标记已读异常:', e);
             }
         };
 
@@ -729,7 +737,6 @@
                 const res = await authFetch('/api/notifications');
                 const result = await res.json();
                 allMessages = result.success ? (result.data || []).filter(m => !deletedMessageIds.has(m.id)) : [];
-                console.log('[loadMessages] 后端返回消息数:', (result.data || []).length, '过滤后:', allMessages.length);
             } catch (e) {
                 allMessages = [
                     { id: 1, title: '欢迎加入游雁学院', content: '欢迎您加入游雁学院学习平台！在这里您可以学习各类课程，参加培训活动。', type: 'system', read: false, createdAt: '2026-01-15 09:00' },

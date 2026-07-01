@@ -26,7 +26,7 @@
       "role": "admin",
       "avatar": "",
       "createdAt": "2026/6/10 18:23:41",
-      "lastLogin": "2026/7/1 10:49:45",
+      "lastLogin": "2026/7/1 16:54:18",
       "status": "active"
     },
     {
@@ -177,7 +177,7 @@
       "1781065485355_0": 1,
       "1781077900894_0": 100
     },
-    "lastStudyTime": "2026-06-30T09:42:30.448Z",
+    "lastStudyTime": "2026-07-01T06:36:04.027Z",
     "studyDates": [
       "2026-06-14",
       "2026-06-15",
@@ -187,9 +187,10 @@
       "2026-06-24",
       "2026-06-26",
       "2026-06-29",
-      "2026-06-30"
+      "2026-06-30",
+      "2026-07-01"
     ],
-    "totalSeconds": 631,
+    "totalSeconds": 636,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -721,6 +722,15 @@
         "duration": 17,
         "timestamp": "2026-06-30T09:42:30.448Z",
         "date": "2026-06-30"
+      },
+      {
+        "courseId": 1781065453648,
+        "courseTitle": "成就系统设计：从理论到实践",
+        "videoIndex": 0,
+        "videoTitle": "成就系统设计：从理论到实践.mp4",
+        "duration": 5,
+        "timestamp": "2026-07-01T06:36:04.027Z",
+        "date": "2026-07-01"
       }
     ],
     "shares": 2,
@@ -1245,7 +1255,7 @@
       ],
       "attachments": [],
       "duration": 2415,
-      "views": 18,
+      "views": 19,
       "rating": 0,
       "id": 1781065453648,
       "createdAt": "2026/6/10 12:24:13"
@@ -1293,7 +1303,7 @@
       ],
       "attachments": [],
       "duration": 2069,
-      "views": 0,
+      "views": 1,
       "rating": 0,
       "id": 1781077900894,
       "createdAt": "2026/6/10 15:51:40",
@@ -1586,9 +1596,9 @@
       "content": "",
       "instructor": "曹贺钧",
       "location": "B区培训室",
-      "date": "2026-06-11",
-      "startTime": "2026-06-11T17:51",
-      "endTime": "2026-06-11T20:51",
+      "date": "2026-07-01",
+      "startTime": "2026-07-01T16:17",
+      "endTime": "2026-07-01T20:51",
       "signinEnabled": false,
       "signinCode": null,
       "signinStartTime": null,
@@ -1598,22 +1608,25 @@
       "coursewareEnabled": false,
       "linkedSurveyId": null,
       "linkedExamId": null,
-      "accessType": "none",
-      "allowedUsers": null,
+      "accessType": "restricted",
+      "allowedUsers": [
+        1781087021554
+      ],
       "coursewareFiles": [],
       "id": 1782813075073
     }
   ],
   "user_learning_1": {
-    "completedCourses": [
-      "1780986505901"
-    ],
-    "lastStudyTime": "2026-06-11T22:36:36",
+    "totalHours": 1,
+    "completedCourses": [],
     "videoProgress": {
       "1780986505901_0": 100
     },
-    "totalHours": 1,
-    "studyDates": []
+    "lastStudyTime": null,
+    "studyDates": [],
+    "ratings": 0,
+    "shares": 0,
+    "likes": 0
   },
   "video_pos_1_1780986505901_0": {
     "position": 603,
@@ -1652,7 +1665,7 @@
   },
   "video_pos_1780909174403_1781077900894_0": {
     "position": 2069,
-    "savedAt": "2026-06-22T09:22:57.294Z"
+    "savedAt": "2026-07-01T08:54:05.988Z"
   },
   "course_interaction_1781065281803": {
     "likes": 1,
@@ -1718,8 +1731,8 @@
     "ratingCount": 2
   },
   "video_pos_1780909174403_1781065453648_0": {
-    "position": 476,
-    "savedAt": "2026-06-30T09:42:30.409Z"
+    "position": 481,
+    "savedAt": "2026-07-01T06:36:03.983Z"
   },
   "course_interaction_1781065453648": {
     "likes": 1,
@@ -2071,7 +2084,7 @@
       "examId": 1782221347409,
       "read": true,
       "createdAt": "2026-06-23T13:29:07.419Z",
-      "readAt": "2026-06-29T02:19:17.676Z"
+      "readAt": "2026-07-01T06:34:13.312Z"
     },
     {
       "id": 1782221347420,
@@ -2115,7 +2128,7 @@
       "examId": 1782293247918,
       "read": true,
       "createdAt": "2026-06-24T09:27:27.928Z",
-      "readAt": "2026-06-29T02:19:06.171Z"
+      "readAt": "2026-07-01T06:33:57.913Z"
     },
     {
       "id": 1782293247929,
@@ -2243,7 +2256,7 @@
       "id": 1782700453676,
       "read": true,
       "createdAt": "2026-06-29T02:34:13.676Z",
-      "readAt": "2026-07-01T06:05:32.671Z"
+      "readAt": "2026-07-01T06:33:54.455Z"
     },
     {
       "userId": "1781087021554",
@@ -2252,8 +2265,9 @@
       "type": "training",
       "trainingId": 1781148703132,
       "id": 1782700490786,
-      "read": false,
-      "createdAt": "2026-06-29T02:34:50.786Z"
+      "read": true,
+      "createdAt": "2026-06-29T02:34:50.786Z",
+      "readAt": "2026-07-01T10:23:57.905Z"
     },
     {
       "id": 1782784028012,
@@ -2264,7 +2278,7 @@
       "trainingId": 1781148838222,
       "read": true,
       "createdAt": "2026-06-30T01:39:36.989Z",
-      "readAt": "2026-06-30T01:39:44.914Z"
+      "readAt": "2026-07-01T06:33:50.826Z"
     },
     {
       "id": 1782784500123,
@@ -2275,7 +2289,7 @@
       "trainingId": 1781148838222,
       "read": true,
       "createdAt": "2026-06-30T01:39:36.989Z",
-      "readAt": "2026-07-01T01:35:52.065Z"
+      "readAt": "2026-07-01T10:26:11.381Z"
     },
     {
       "id": 1782783997928,
@@ -2436,6 +2450,17 @@
       "trainingId": 1781148703132,
       "read": false,
       "createdAt": "2026-06-30T07:44:32.149Z"
+    },
+    {
+      "id": 1782901685961,
+      "userId": 1781087021554,
+      "title": "培训指派通知",
+      "content": "您已被指派参加「入职引导」培训，请尽快完成相关任务。",
+      "type": "training_assign",
+      "trainingId": 1782813075073,
+      "read": true,
+      "createdAt": "2026-07-01T10:26:33.858Z",
+      "readAt": "2026-07-01T10:26:38.854Z"
     }
   ],
   "notification_reads": [
@@ -3697,6 +3722,20 @@
       "correctCount": 0,
       "totalQuestions": 3,
       "durationUsed": 51
+    },
+    {
+      "id": 1782887653590,
+      "examId": 1782221347409,
+      "userId": "1780909174403",
+      "status": "abandoned",
+      "startedAt": "2026-07-01T06:34:13.590Z",
+      "answers": {},
+      "score": null,
+      "passed": null,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-07-01T06:35:51.029Z",
+      "durationUsed": 97
     }
   ],
   "survey_responses": [
@@ -4638,6 +4677,20 @@
       "userId": 1780909174403,
       "enrolledAt": "2026-06-30T09:49:17.796Z",
       "source": "self"
+    },
+    {
+      "id": 1782895905518,
+      "trainingId": 1782813075073,
+      "userId": 1780909174403,
+      "enrolledAt": "2026-07-01T08:51:45.518Z",
+      "source": "self"
+    },
+    {
+      "id": 1782901593857,
+      "trainingId": 1782813075073,
+      "userId": 1781087021554,
+      "enrolledAt": "2026-07-01T10:26:33.857Z",
+      "source": "assigned"
     }
   ],
   "user_shares_1781087021554": {
@@ -5587,6 +5640,15 @@
       ],
       "count": 2,
       "assignedAt": "2026-06-30T07:44:32.149Z"
+    },
+    {
+      "id": 1782901593857,
+      "trainingId": 1782813075073,
+      "userIds": [
+        1781087021554
+      ],
+      "count": 1,
+      "assignedAt": "2026-07-01T10:26:33.857Z"
     }
   ],
   "login_logs": [
@@ -5619,6 +5681,12 @@
       "username": "15302206488",
       "realName": "许志坚",
       "loginTime": "2026/7/1 11:43:05"
+    },
+    {
+      "userId": 1781087021554,
+      "username": "14718596470",
+      "realName": "何银",
+      "loginTime": "2026/7/1 16:54:18"
     }
   ]
 }

@@ -115,6 +115,20 @@
             opacity: 1;
         }
 
+        /* 积分明细弹窗 */
+        .exp-details-modal {
+            backdrop-filter: blur(8px);
+        }
+        .exp-details-content {
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .exp-details-modal.active .exp-details-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
         /* 新徽章提示条 */
         @keyframes slideDown {
             0% { transform: translateY(-100%); opacity: 0; }
@@ -606,9 +620,11 @@
                                 <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
                                     <i class="fa fa-star text-primary"></i>
                                     等级进度
-                                    <button onclick="openLevelHelpModal()" class="ml-auto w-6 h-6 rounded-full bg-gray-100 hover:bg-primary/10 text-gray-400 hover:text-primary flex items-center justify-center transition-colors" title="等级说明">
-                                        <i class="fa fa-question text-xs"></i>
-                                    </button>
+                                    <div class="ml-auto flex items-center gap-2">
+                                        <button onclick="openLevelHelpModal()" class="w-6 h-6 rounded-full bg-gray-100 hover:bg-primary/10 text-gray-400 hover:text-primary flex items-center justify-center transition-colors" title="等级说明">
+                                            <i class="fa fa-question text-xs"></i>
+                                        </button>
+                                    </div>
                                 </h3>
                                 <div class="space-y-6" id="level-progress">
                                     <!-- 动态渲染 -->
@@ -657,7 +673,7 @@
                                         <div class="bg-gray-50 rounded-xl p-3 space-y-2 text-xs">
                                             <div class="flex justify-between">
                                                 <span class="text-gray-600"><i class="fa fa-clock-o mr-1 text-primary"></i>学习时长</span>
-                                                <span class="font-medium">每 1 小时 = 10 XP</span>
+                                                <span class="font-medium">每 1 小时 = 5 XP</span>
                                             </div>
                                             <div class="flex justify-between">
                                                 <span class="text-gray-600"><i class="fa fa-check-circle mr-1 text-green-500"></i>完成课程</span>
@@ -690,7 +706,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- 我的证书 -->
                         <div class="tab-content hidden" id="certificates-content">
                             <div class="bg-white rounded-xl shadow-md p-6 mb-6">
@@ -1098,7 +1114,7 @@ const BADGES = [
             const baseStats = {
                 completed: parseInt(document.getElementById('stats-completed-courses')?.textContent) || 0,
                 hours: parseFloat(document.getElementById('stat-hours')?.textContent) || 0,
-                streak: parseInt(document.getElementById('streak-days')?.textContent) || 0,
+                streak: updateStreakDays(),
                 days: parseInt(document.getElementById('stats-register-days')?.textContent) || 0,
                 nightStudy: records.some(r => { const h = new Date(r.timestamp).getHours(); return h >= 22; }),
                 earlyStudy: records.some(r => { const h = new Date(r.timestamp).getHours(); return h <= 6; }),
@@ -1115,9 +1131,21 @@ const BADGES = [
                 examPassed: examRecords.filter(e => e.passed).length
             };
 
+            // 计算已解锁徽章数（当前满足条件 + 历史已解锁），与徽章墙展示保持一致
+            const currentlyUnlockedIds = BADGES.filter(b => b.condition(currentUser, baseStats)).map(b => b.id);
+            let storedBadgeIds = [];
+            if (currentUser?.id) {
+                try {
+                    storedBadgeIds = JSON.parse(localStorage.getItem(`badges_unlocked_${currentUser.id}`) || '[]');
+                } catch (e) {
+                    storedBadgeIds = [];
+                }
+            }
+            const allUnlockedIds = [...new Set([...storedBadgeIds, ...currentlyUnlockedIds])];
+
             return {
                 ...baseStats,
-                badges: BADGES.filter(b => b.condition(currentUser, baseStats)).length,
+                badges: allUnlockedIds.length,
                 certificates: learningData.certificates?.length || 0
             };
         }
@@ -1215,10 +1243,15 @@ const BADGES = [
             const learningData = api.getUserLearningData(userId);
             const records = learningData.studyRecords || [];
             
-            // 计算连续学习天数
+            // 计算连续学习天数（优先用 studyRecords，老数据没有记录时回退到 studyDates）
             let streak = 0;
             const today = new Date().toISOString().split('T')[0];
-            const dates = [...new Set(records.map(r => r.date))].sort().reverse();
+            let dates = [];
+            if (records.length > 0) {
+                dates = [...new Set(records.map(r => r.date))].sort().reverse();
+            } else if (learningData.studyDates?.length > 0) {
+                dates = [...learningData.studyDates].sort().reverse();
+            }
             
             if (dates.length > 0) {
                 // 检查今天或昨天是否有记录
@@ -1244,6 +1277,7 @@ const BADGES = [
             
             const streakEl = document.getElementById('streak-days');
             if (streakEl) streakEl.textContent = streak;
+            return streak;
         }
         
         // 更新学习统计数据（实时）
@@ -1285,8 +1319,8 @@ const BADGES = [
             document.getElementById('stat-badges').textContent = unlockedBadgeIds.length;
             document.getElementById('stat-total-badges').textContent = BADGES.length;
 
-            // 更新顶部等级和经验值（复用上面的 stats，使用持久化经验值保证等级稳定）
-            const totalExp = getEffectiveTotalExp(stats);
+            // 更新顶部等级和经验值（统一使用 calculateTotalExp 计算规则）
+            const totalExp = getTotalExp(stats);
             const levelInfo = getLevelInfo(totalExp);
             
             // 更新等级徽章
@@ -1845,10 +1879,10 @@ const BADGES = [
             if (!modal || !tableEl) return;
 
             // 动态渲染等级表
-            const totalExp = getEffectiveTotalExp({
+            const totalExp = getTotalExp({
                 hours: parseFloat(document.getElementById('stat-hours')?.textContent) || 0,
                 completed: parseInt(document.getElementById('stat-completed')?.textContent) || 0,
-                streak: parseInt(document.getElementById('streak-days')?.textContent) || 0,
+                streak: updateStreakDays(),
                 badges: parseInt(document.getElementById('stat-badges')?.textContent) || 0,
                 certificates: parseInt(document.getElementById('stat-certificates')?.textContent) || 0
             });
@@ -1932,8 +1966,8 @@ const BADGES = [
             const levelContainer = document.getElementById('level-progress');
             if (!levelContainer) return;
             
-            // 计算经验值（使用持久化经验值保证等级只升不降）
-            const totalExp = getEffectiveTotalExp(stats);
+            // 计算经验值（统一使用 calculateTotalExp 一套规则）
+            const totalExp = getTotalExp(stats);
             const levelInfo = getLevelInfo(totalExp);
             const expPercent = (levelInfo.currentExp / levelInfo.requiredExp) * 100;
             
@@ -1965,7 +1999,7 @@ const BADGES = [
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div class="flex justify-between">
                             <span class="text-gray-500">学习时长</span>
-                            <span class="font-medium">+${Math.floor(stats.hours * 10)} XP</span>
+                            <span class="font-medium">+${Math.floor(stats.hours * 5)} XP</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">完成课程</span>
@@ -1982,60 +2016,24 @@ const BADGES = [
                     </div>
                 </div>
             `;
+
         }
         
         // 计算总经验值（新规则，用于展示当前各来源贡献）
         function calculateTotalExp(stats) {
             let exp = 0;
-            exp += Math.floor(stats.hours * 10);        // 学习时长：1小时=10XP
+            exp += Math.floor(stats.hours * 5);         // 学习时长：1小时=5XP
             exp += stats.completed * 5;                  // 完成课程：每门5XP
             exp += (stats.streak || 0) * 1;              // 连续学习：每天1XP
             exp += ((stats.badges || 0) + (stats.certificates || 0)) * 5;  // 任务奖励：徽章/证书每个5XP
             return exp;
         }
 
-        // 旧规则计算（仅用于规则变更时的数据迁移）
-        function calculateTotalExpLegacy(stats) {
-            let exp = 0;
-            exp += Math.floor(stats.hours * 10);        // 学习时长：1小时=10XP
-            exp += stats.completed * 50;                 // 完成课程：每门50XP
-            exp += stats.streak >= 30 ? 300 : stats.streak >= 7 ? 100 : 0;  // 连续学习奖励
-            return exp;
+        // 获取总经验值（统一使用 calculateTotalExp 计算规则）
+        function getTotalExp(stats) {
+            return calculateTotalExp(stats);
         }
 
-        // 获取有效总经验值（带持久化，等级只升不降，避免规则调整或连续学习中断导致等级波动）
-        function getEffectiveTotalExp(stats) {
-            const currentExp = calculateTotalExp(stats);
-            const userId = currentUser?.id;
-            const storageKey = userId ? `user_total_exp_${userId}` : null;
-            let storedExp = 0;
-
-            if (storageKey) {
-                try {
-                    storedExp = parseInt(localStorage.getItem(storageKey)) || 0;
-                } catch (e) {
-                    storedExp = 0;
-                }
-            }
-
-            // 首次持久化：取旧规则与新规则的较大值，防止规则改动导致等级下降
-            if (!storedExp) {
-                const legacyExp = calculateTotalExpLegacy(stats);
-                storedExp = Math.max(legacyExp, currentExp);
-                if (storageKey) {
-                    localStorage.setItem(storageKey, storedExp.toString());
-                }
-                return storedExp;
-            }
-
-            // 日常逻辑：只增不减，连续学习中断不会影响已积累等级
-            const effectiveExp = Math.max(storedExp, currentExp);
-            if (effectiveExp > storedExp && storageKey) {
-                localStorage.setItem(storageKey, effectiveExp.toString());
-            }
-            return effectiveExp;
-        }
-        
         // 等级配置
         const LEVEL_CONFIG = [
             { level: 1, name: '新手学员', expRequired: 0 },

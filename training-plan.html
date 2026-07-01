@@ -800,7 +800,7 @@
                         </div>
 
                         <!-- 学习风采轮播 -->
-                        <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div id="gallery-carousel-section" class="bg-white rounded-xl shadow-sm p-6 hidden">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-semibold text-gray-800 flex items-center">
                                     <i class="fa fa-camera mr-2 text-indigo-500"></i>学习风采
@@ -921,11 +921,8 @@
                         const isEnrolled = currentUserId ? enrolledUsers.some(u => u.userId == currentUserId) : false;
                         enrollMap[c.id] = { enrolledUsers, enrollCount: c.enrollCount || enrolledUsers.length, isEnrolled, extendedEndTime: c.extendedEndTime || null };
                     });
-                    const firstDate = new Date(json.data[0].date);
-                    if (!isNaN(firstDate.getTime())) {
-                        currentYear = firstDate.getFullYear();
-                        currentMonth = firstDate.getMonth();
-                    }
+                    // 保持默认显示当前月份，不再跳到第一条数据的月份
+                    // currentYear/currentMonth 已在初始化时设为今天
                 } else {
                     // 如果API返回空数据，使用默认测试数据
                     courses = [
@@ -1083,7 +1080,7 @@
             }).join('');
             const wrapId = 'tp-enroll-wrap-' + courseId;
             const namesId = 'tp-enroll-names-' + courseId;
-            let html = '<div class="mt-2.5 pt-2.5 border-t border-gray-100">';
+            let html = '<div class="mt-2.5 pt-2.5">';
             html += `<div class="tp-enroll-header">
                 <div class="tp-enroll-count">已报名 <span>${info.enrollCount}</span> 人</div>
             </div>`;
@@ -1753,6 +1750,9 @@
             `;
 
             const projectContent = renderProjectContentList(course);
+            // 根据实际渲染结果判断是否有项目内容（避免字符串 "false" 等 truthy 误判）
+            const hasProjectContent = !projectContent.includes('暂无项目内容');
+
             const gallery = getTrainingGallery(courseId);
             const hasGallery = gallery.images && gallery.images.length > 0;
             const galleryContent = hasGallery ? `
@@ -1768,7 +1768,7 @@
                         </div>
                     ` : ''}
                 </div>
-            ` : '<p class="text-sm text-gray-400 text-center py-4">暂无学习风采照片</p>';
+            ` : '';
 
             let content = `
                 <div class="animate-fade-in">
@@ -1779,14 +1779,18 @@
                         <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-3"><i class="fa fa-info-circle text-primary"></i>基本信息</h3>
                         ${basicInfoContent}
                     </div>
+                    ${hasProjectContent ? `
                     <div class="mb-5">
                         <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-3"><i class="fa fa-tasks text-primary"></i>项目内容</h3>
                         ${projectContent}
                     </div>
+                    ` : ''}
+                    ${hasGallery ? `
                     <div class="mb-5">
                         <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-3"><i class="fa fa-camera text-primary"></i>学习风采</h3>
                         ${galleryContent}
                     </div>
+                    ` : ''}
                     <div class="pt-2">${getCourseDetailEnrollButton(courseId, course.date, course.time, course.endTime)}</div>
                 </div>
             `;
@@ -1808,6 +1812,8 @@
         function renderProjectContentList(course) {
             const items = [];
             const isEnrolled = isUserEnrolled(course.id);
+            // 布尔值安全解析：兼容字符串 "false" / "true" / 实际布尔值
+            const boolVal = v => v === true || v === 'true' || v === 1;
             const fmtTime = (v) => {
                 if (!v) return '';
                 try {
@@ -1822,7 +1828,7 @@
             };
 
             // 1. 考勤签到
-            if (course.signinEnabled) {
+            if (boolVal(course.signinEnabled)) {
                 const start = fmtTime(course.signinStartTime || course.startTime);
                 const end = fmtTime(course.signinEndTime || course.endTime);
                 const done = !!course.signinDone;
@@ -1839,7 +1845,7 @@
                 });
             }
             // 2. 调研
-            if (course.surveyEnabled && course.linkedSurveyId) {
+            if (boolVal(course.surveyEnabled) && course.linkedSurveyId) {
                 const done = !!course.surveyDone;
                 items.push({
                     key: 'survey',
@@ -1854,7 +1860,7 @@
                 });
             }
             // 3. 考试
-            if (course.examEnabled && course.linkedExamId) {
+            if (boolVal(course.examEnabled) && course.linkedExamId) {
                 const done = !!course.examDone;
                 items.push({
                     key: 'exam',
@@ -1869,7 +1875,7 @@
                 });
             }
             // 4. 课件（非必修，自由下载）- 紫色系特殊显示
-            if (course.coursewareEnabled && course.coursewareFiles && course.coursewareFiles.length) {
+            if (boolVal(course.coursewareEnabled) && course.coursewareFiles && course.coursewareFiles.length) {
                 const files = course.coursewareFiles;
                 items.push({
                     key: 'courseware',
@@ -2848,9 +2854,13 @@
         
         // 渲染轮播
         function renderGalleryCarousel() {
+            const sectionEl = document.getElementById('gallery-carousel-section');
             const emptyEl = document.getElementById('gallery-carousel-empty');
             const carouselEl = document.getElementById('gallery-carousel');
-            
+
+            if (sectionEl) {
+                sectionEl.classList.toggle('hidden', galleryCarouselData.length === 0);
+            }
             if (!emptyEl || !carouselEl) return;
 
             if (galleryCarouselData.length === 0) {
@@ -2858,10 +2868,10 @@
                 carouselEl.classList.add('hidden');
                 return;
             }
-            
+
             emptyEl.classList.add('hidden');
             carouselEl.classList.remove('hidden');
-            
+
             updateGalleryCarouselSlide();
             startGalleryCarouselAutoPlay();
         }
