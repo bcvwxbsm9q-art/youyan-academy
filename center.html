@@ -100,7 +100,21 @@
             transform: scale(1);
             opacity: 1;
         }
-        
+
+        /* 等级说明弹窗 */
+        .level-help-modal {
+            backdrop-filter: blur(8px);
+        }
+        .level-help-content {
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .level-help-modal.active .level-help-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
         /* 新徽章提示条 */
         @keyframes slideDown {
             0% { transform: translateY(-100%); opacity: 0; }
@@ -592,6 +606,9 @@
                                 <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
                                     <i class="fa fa-star text-primary"></i>
                                     等级进度
+                                    <button onclick="openLevelHelpModal()" class="ml-auto w-6 h-6 rounded-full bg-gray-100 hover:bg-primary/10 text-gray-400 hover:text-primary flex items-center justify-center transition-colors" title="等级说明">
+                                        <i class="fa fa-question text-xs"></i>
+                                    </button>
                                 </h3>
                                 <div class="space-y-6" id="level-progress">
                                     <!-- 动态渲染 -->
@@ -611,6 +628,65 @@
                                 </div>
                                 <div class="p-4 border-t text-center">
                                     <button onclick="closeBadgeDetailModal()" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium transition-colors">关闭</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 等级说明弹窗 -->
+                        <div id="level-help-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 level-help-modal" onclick="if(event.target === this) closeLevelHelpModal()">
+                            <div class="bg-white rounded-2xl w-full max-w-md level-help-content shadow-2xl max-h-[85vh] flex flex-col">
+                                <div class="p-5 border-b flex items-center justify-between">
+                                    <h3 class="text-lg font-bold flex items-center gap-2">
+                                        <i class="fa fa-star text-primary"></i>
+                                        等级说明
+                                    </h3>
+                                    <button onclick="closeLevelHelpModal()" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors">
+                                        <i class="fa fa-times text-sm"></i>
+                                    </button>
+                                </div>
+                                <div class="p-5 overflow-y-auto space-y-5">
+                                    <!-- 升级规则 -->
+                                    <div>
+                                        <h4 class="font-semibold text-sm text-gray-800 mb-2 flex items-center gap-2">
+                                            <i class="fa fa-lightbulb-o text-yellow-500"></i>
+                                            如何升级
+                                        </h4>
+                                        <p class="text-xs text-gray-500 leading-relaxed mb-2">
+                                            通过学习行为和完成平台任务积累 experience 值（XP），当 XP 达到下一等级要求时自动升级。等级越高，代表你的学习积累越丰富。
+                                        </p>
+                                        <div class="bg-gray-50 rounded-xl p-3 space-y-2 text-xs">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600"><i class="fa fa-clock-o mr-1 text-primary"></i>学习时长</span>
+                                                <span class="font-medium">每 1 小时 = 10 XP</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600"><i class="fa fa-check-circle mr-1 text-green-500"></i>完成课程</span>
+                                                <span class="font-medium">每学完 1 门 = 5 XP</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600"><i class="fa fa-fire mr-1 text-orange-500"></i>连续学习</span>
+                                                <span class="font-medium">每天登录学习 = 1 XP</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600"><i class="fa fa-trophy mr-1 text-yellow-500"></i>任务奖励</span>
+                                                <span class="font-medium">每获得 1 个徽章/成就/证书 = 5 XP</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 等级称号表 -->
+                                    <div>
+                                        <h4 class="font-semibold text-sm text-gray-800 mb-2 flex items-center gap-2">
+                                            <i class="fa fa-trophy text-primary"></i>
+                                            等级称号对照表
+                                        </h4>
+                                        <div id="level-help-table" class="border border-gray-100 rounded-xl overflow-hidden text-xs">
+                                            <!-- 动态渲染 -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-4 border-t text-center">
+                                    <button onclick="closeLevelHelpModal()" class="px-6 py-2 bg-primary text-white hover:opacity-90 rounded-lg font-medium transition-colors">我知道了</button>
                                 </div>
                             </div>
                         </div>
@@ -1019,7 +1095,7 @@ const BADGES = [
                 sharesCount = learningData.shares || 0;
             }
 
-            return {
+            const baseStats = {
                 completed: parseInt(document.getElementById('stats-completed-courses')?.textContent) || 0,
                 hours: parseFloat(document.getElementById('stat-hours')?.textContent) || 0,
                 streak: parseInt(document.getElementById('streak-days')?.textContent) || 0,
@@ -1037,6 +1113,12 @@ const BADGES = [
                 perfectScore: examRecords.some(e => e.score === 100),
                 examCount: examRecords.length,
                 examPassed: examRecords.filter(e => e.passed).length
+            };
+
+            return {
+                ...baseStats,
+                badges: BADGES.filter(b => b.condition(currentUser, baseStats)).length,
+                certificates: learningData.certificates?.length || 0
             };
         }
 
@@ -1203,8 +1285,8 @@ const BADGES = [
             document.getElementById('stat-badges').textContent = unlockedBadgeIds.length;
             document.getElementById('stat-total-badges').textContent = BADGES.length;
 
-            // 更新顶部等级和经验值（复用上面的 stats）
-            const totalExp = calculateTotalExp(stats);
+            // 更新顶部等级和经验值（复用上面的 stats，使用持久化经验值保证等级稳定）
+            const totalExp = getEffectiveTotalExp(stats);
             const levelInfo = getLevelInfo(totalExp);
             
             // 更新等级徽章
@@ -1755,7 +1837,54 @@ const BADGES = [
                 modal.classList.add('hidden');
             }, 300);
         }
-        
+
+        // 打开等级说明弹窗
+        function openLevelHelpModal() {
+            const modal = document.getElementById('level-help-modal');
+            const tableEl = document.getElementById('level-help-table');
+            if (!modal || !tableEl) return;
+
+            // 动态渲染等级表
+            const totalExp = getEffectiveTotalExp({
+                hours: parseFloat(document.getElementById('stat-hours')?.textContent) || 0,
+                completed: parseInt(document.getElementById('stat-completed')?.textContent) || 0,
+                streak: parseInt(document.getElementById('streak-days')?.textContent) || 0,
+                badges: parseInt(document.getElementById('stat-badges')?.textContent) || 0,
+                certificates: parseInt(document.getElementById('stat-certificates')?.textContent) || 0
+            });
+
+            tableEl.innerHTML = LEVEL_CONFIG.map((cfg, index) => {
+                const isCurrent = totalExp >= cfg.expRequired && (index === LEVEL_CONFIG.length - 1 || totalExp < LEVEL_CONFIG[index + 1].expRequired);
+                return `
+                    <div class="flex items-center justify-between px-3 py-2 ${isCurrent ? 'bg-primary/5' : index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full ${isCurrent ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'} text-[10px] flex items-center justify-center font-bold">${cfg.level}</span>
+                            <span class="${isCurrent ? 'font-semibold text-primary' : 'text-gray-600'}">${cfg.name}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-gray-400">${cfg.expRequired} XP</span>
+                            ${isCurrent ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 bg-primary text-white rounded">当前</span>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.add('active');
+            });
+        }
+
+        // 关闭等级说明弹窗
+        function closeLevelHelpModal() {
+            const modal = document.getElementById('level-help-modal');
+            if (!modal) return;
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
         // 获取徽章解锁时间
         function getBadgeUnlockTime(userId, badgeId) {
             const learningData = api.getUserLearningData(userId);
@@ -1803,8 +1932,8 @@ const BADGES = [
             const levelContainer = document.getElementById('level-progress');
             if (!levelContainer) return;
             
-            // 计算经验值
-            const totalExp = calculateTotalExp(stats);
+            // 计算经验值（使用持久化经验值保证等级只升不降）
+            const totalExp = getEffectiveTotalExp(stats);
             const levelInfo = getLevelInfo(totalExp);
             const expPercent = (levelInfo.currentExp / levelInfo.requiredExp) * 100;
             
@@ -1840,28 +1969,71 @@ const BADGES = [
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">完成课程</span>
-                            <span class="font-medium">+${stats.completed * 50} XP</span>
+                            <span class="font-medium">+${stats.completed * 5} XP</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">连续学习</span>
-                            <span class="font-medium">+${stats.streak >= 30 ? 300 : stats.streak >= 7 ? 100 : 0} XP</span>
+                            <span class="font-medium">+${stats.streak || 0} XP</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-500">其他奖励</span>
-                            <span class="font-medium">+0 XP</span>
+                            <span class="text-gray-500">任务奖励</span>
+                            <span class="font-medium">+${((stats.badges || 0) + (stats.certificates || 0)) * 5} XP</span>
                         </div>
                     </div>
                 </div>
             `;
         }
         
-        // 计算总经验值
+        // 计算总经验值（新规则，用于展示当前各来源贡献）
         function calculateTotalExp(stats) {
+            let exp = 0;
+            exp += Math.floor(stats.hours * 10);        // 学习时长：1小时=10XP
+            exp += stats.completed * 5;                  // 完成课程：每门5XP
+            exp += (stats.streak || 0) * 1;              // 连续学习：每天1XP
+            exp += ((stats.badges || 0) + (stats.certificates || 0)) * 5;  // 任务奖励：徽章/证书每个5XP
+            return exp;
+        }
+
+        // 旧规则计算（仅用于规则变更时的数据迁移）
+        function calculateTotalExpLegacy(stats) {
             let exp = 0;
             exp += Math.floor(stats.hours * 10);        // 学习时长：1小时=10XP
             exp += stats.completed * 50;                 // 完成课程：每门50XP
             exp += stats.streak >= 30 ? 300 : stats.streak >= 7 ? 100 : 0;  // 连续学习奖励
             return exp;
+        }
+
+        // 获取有效总经验值（带持久化，等级只升不降，避免规则调整或连续学习中断导致等级波动）
+        function getEffectiveTotalExp(stats) {
+            const currentExp = calculateTotalExp(stats);
+            const userId = currentUser?.id;
+            const storageKey = userId ? `user_total_exp_${userId}` : null;
+            let storedExp = 0;
+
+            if (storageKey) {
+                try {
+                    storedExp = parseInt(localStorage.getItem(storageKey)) || 0;
+                } catch (e) {
+                    storedExp = 0;
+                }
+            }
+
+            // 首次持久化：取旧规则与新规则的较大值，防止规则改动导致等级下降
+            if (!storedExp) {
+                const legacyExp = calculateTotalExpLegacy(stats);
+                storedExp = Math.max(legacyExp, currentExp);
+                if (storageKey) {
+                    localStorage.setItem(storageKey, storedExp.toString());
+                }
+                return storedExp;
+            }
+
+            // 日常逻辑：只增不减，连续学习中断不会影响已积累等级
+            const effectiveExp = Math.max(storedExp, currentExp);
+            if (effectiveExp > storedExp && storageKey) {
+                localStorage.setItem(storageKey, effectiveExp.toString());
+            }
+            return effectiveExp;
         }
         
         // 等级配置
@@ -1870,12 +2042,14 @@ const BADGES = [
             { level: 2, name: '初级学员', expRequired: 100 },
             { level: 3, name: '中级学员', expRequired: 300 },
             { level: 4, name: '高级学员', expRequired: 600 },
-            { level: 5, name: '资深学员', expRequired: 1000 },
-            { level: 6, name: '学习达人', expRequired: 1500 },
-            { level: 7, name: '知识探索者', expRequired: 2200 },
+            { level: 5, name: '学习达人', expRequired: 1000 },
+            { level: 6, name: '探究达人', expRequired: 1500 },
+            { level: 7, name: '博学达人', expRequired: 2200 },
             { level: 8, name: '学术先锋', expRequired: 3000 },
-            { level: 9, name: '大师', expRequired: 4000 },
-            { level: 10, name: '传奇学者', expRequired: 5500 }
+            { level: 9, name: '研究学者', expRequired: 4000 },
+            { level: 10, name: '资深学者', expRequired: 5500 },
+            { level: 11, name: '卓越学者', expRequired: 7500 },
+            { level: 12, name: '学术宗师', expRequired: 9999 }
         ];
         
         // 获取等级信息

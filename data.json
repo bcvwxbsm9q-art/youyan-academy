@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1782044069160-440027461.jpg",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/6/30 18:29:01",
+      "lastLogin": "2026/7/1 11:43:05",
       "status": "active",
       "position": "人事经理"
     },
@@ -26,7 +26,7 @@
       "role": "admin",
       "avatar": "",
       "createdAt": "2026/6/10 18:23:41",
-      "lastLogin": "2026/6/30 18:04:55",
+      "lastLogin": "2026/7/1 10:49:45",
       "status": "active"
     },
     {
@@ -1417,7 +1417,7 @@
       "videos": [],
       "attachments": [],
       "duration": 0,
-      "views": 0,
+      "views": 1,
       "rating": 0,
       "id": 1782715847311,
       "createdAt": "2026/6/29 14:50:47",
@@ -2243,7 +2243,7 @@
       "id": 1782700453676,
       "read": true,
       "createdAt": "2026-06-29T02:34:13.676Z",
-      "readAt": "2026-06-29T06:07:36.081Z"
+      "readAt": "2026-07-01T06:05:32.671Z"
     },
     {
       "userId": "1781087021554",
@@ -2273,8 +2273,9 @@
       "content": "您已被指派参加「AI原画技巧」培训，请尽快完成相关任务。",
       "type": "training_assign",
       "trainingId": 1781148838222,
-      "read": false,
-      "createdAt": "2026-06-30T01:39:36.989Z"
+      "read": true,
+      "createdAt": "2026-06-30T01:39:36.989Z",
+      "readAt": "2026-07-01T01:35:52.065Z"
     },
     {
       "id": 1782783997928,
@@ -2447,6 +2448,16 @@
       "userId": 1780909174403,
       "noticeId": 1782183999956,
       "readAt": "2026-06-23T03:13:02.348Z"
+    },
+    {
+      "userId": 1781087021554,
+      "noticeId": 1782183780370,
+      "readAt": "2026-07-01T01:36:03.105Z"
+    },
+    {
+      "userId": 1781087021554,
+      "noticeId": 1782183999956,
+      "readAt": "2026-07-01T01:36:05.097Z"
     }
   ],
   "index_featured_lecturers": [
@@ -3646,6 +3657,46 @@
       "correctCount": 0,
       "totalQuestions": 3,
       "durationUsed": 5
+    },
+    {
+      "id": 1782877420603,
+      "examId": 1782221347409,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-07-01T03:43:40.603Z",
+      "answers": {
+        "1782111523712": "A",
+        "1782111523714": "B",
+        "1782111523716": "A"
+      },
+      "score": 50,
+      "passed": false,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-07-01T03:43:48.040Z",
+      "correctCount": 1,
+      "totalQuestions": 3,
+      "durationUsed": 7
+    },
+    {
+      "id": 1782877445849,
+      "examId": 1782221347409,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-07-01T03:44:05.849Z",
+      "answers": {
+        "1782111523712": "",
+        "1782111523714": "C",
+        "1782111523716": ""
+      },
+      "score": 0,
+      "passed": false,
+      "optionMappings": {},
+      "shuffledQuestionIds": null,
+      "completedAt": "2026-07-01T03:44:56.895Z",
+      "correctCount": 0,
+      "totalQuestions": 3,
+      "durationUsed": 51
     }
   ],
   "survey_responses": [
@@ -5544,6 +5595,30 @@
       "username": "15302206488",
       "realName": "许志坚",
       "loginTime": "2026/6/30 18:29:01"
+    },
+    {
+      "userId": 1780909174403,
+      "username": "15302206488",
+      "realName": "许志坚",
+      "loginTime": "2026/7/1 10:47:50"
+    },
+    {
+      "userId": 1781087021554,
+      "username": "14718596470",
+      "realName": "何银",
+      "loginTime": "2026/7/1 10:49:45"
+    },
+    {
+      "userId": 1781087021554,
+      "username": "14718596470",
+      "realName": "何银",
+      "loginTime": "2026/7/1 10:49:45"
+    },
+    {
+      "userId": 1780909174403,
+      "username": "15302206488",
+      "realName": "许志坚",
+      "loginTime": "2026/7/1 11:43:05"
     }
   ]
 }

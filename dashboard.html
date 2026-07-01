@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -653,26 +653,29 @@
             </div>
           </div>
 
-          <!-- 部门学习排行 -->
-          <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
-            <h3 class="font-semibold text-slate-800 mb-4">部门学习排行</h3>
-            <div id="rpt-dept-ranking" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-          </div>
-
-          <!-- 个人学习时长排行榜 + 考试/培训情况 -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <!-- 个人学习时长排行榜 -->
-            <div class="bg-white rounded-2xl p-6 shadow-sm lg:col-span-1">
-              <h3 class="font-semibold text-slate-800 mb-4">个人学习时长排行榜 TOP10</h3>
+          <!-- 学习排行榜 -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 个人学习时长排行 -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+              <h3 class="font-semibold text-slate-800 mb-4">个人学习时长排行</h3>
               <div id="rpt-user-ranking" class="space-y-3"></div>
             </div>
+            <!-- 部门学习排行 -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+              <h3 class="font-semibold text-slate-800 mb-4">部门学习排行</h3>
+              <div id="rpt-dept-ranking" class="space-y-3"></div>
+            </div>
+          </div>
+
+          <!-- 考试/培训情况 -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <!-- 考试情况统计 -->
-            <div class="bg-white rounded-2xl p-6 shadow-sm lg:col-span-1">
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
               <h3 class="font-semibold text-slate-800 mb-4">考试情况统计</h3>
               <div id="rpt-exam-overview" class="space-y-3"></div>
             </div>
             <!-- 培训情况统计 -->
-            <div class="bg-white rounded-2xl p-6 shadow-sm lg:col-span-1">
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
               <h3 class="font-semibold text-slate-800 mb-4">培训情况统计</h3>
               <div id="rpt-training-overview" class="space-y-3"></div>
             </div>
@@ -783,13 +786,14 @@
           <div class="bg-white rounded-xl shadow-sm overflow-hidden overflow-x-auto">
             <table class="w-full min-w-[1000px]"><thead class="bg-slate-50"><tr>
               <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">考试名称</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">创建人</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">考试分类</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">试卷总分</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">及格分</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">考试人数</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">及格率</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">缺考率</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">考试时间</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500">创建人</th>
             </tr></thead>
             <tbody id="rpt-ex-tbody" class="divide-y divide-slate-100"></tbody></table>
           </div>
@@ -2768,6 +2772,9 @@
                 data[key] = allData[key];
               }
             });
+            // 加载试卷数据用于考试分类关联（优先使用本地编辑过的试卷）
+            const papersLocal = safeParse('papers', []);
+            data.papers = papersLocal.length ? papersLocal : (allData.papers || []);
           }
         } catch (e) {
           console.warn('[Dashboard] 加载报表统计数据失败:', e);
@@ -9689,200 +9696,6 @@
       }
     }
 
-    // ========== 培训课程管理 ==========
-    let currentManageProjectId = null;
-
-    async function manageCourses(projectId) {
-      currentManageProjectId = projectId;
-      const project = data.training.find(t => t.id === projectId);
-      if (!project) {
-        toast('培训项目不存在', 'error');
-        return;
-      }
-
-      // 直接使用本地数据
-      renderCourseManagement(project);
-    }
-
-    function renderCourseManagement(project) {
-      const courses = project.courses || [];
-
-      let content = `
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
-            <h3 class="text-lg font-semibold text-slate-800">${project.name} - 课程管理</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
-          </div>
-          <div class="flex-1 overflow-y-auto p-6">
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-sm text-slate-500">共 ${courses.length} 门课程</span>
-              <button onclick="openAddCourseModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition text-sm">
-                <i class="fas fa-plus mr-1"></i>添加课程
-              </button>
-            </div>
-      `;
-
-      if (courses.length === 0) {
-        content += `
-          <div class="text-center py-12 text-slate-400">
-            <i class="fas fa-inbox text-4xl mb-4 block"></i>
-            <p>暂无课程</p>
-            <button onclick="openAddCourseModal()" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">添加第一个课程</button>
-          </div>
-        `;
-      } else {
-        content += '<div class="space-y-3">';
-        courses.forEach((course, idx) => {
-          content += `
-            <div class="flex items-start gap-4 p-4 bg-slate-50 rounded-xl">
-              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
-                ${idx + 1}
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between gap-2">
-                  <div>
-                    <h4 class="font-medium text-slate-800">${course.name}</h4>
-                    <p class="text-sm text-slate-500 mt-0.5">
-                      <i class="fas fa-user mr-1"></i>${course.instructor || '待定'}
-                      <span class="mx-2">|</span>
-                      <i class="fas fa-calendar mr-1"></i>${course.date || '待定'}
-                      ${course.time ? `<span class="mx-2">|</span><i class="fas fa-clock mr-1"></i>${course.time}` : ''}
-                    </p>
-                    ${course.location ? `<p class="text-xs text-slate-400 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${course.location}</p>` : ''}
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button onclick="deleteTrainingCourse(${course.id})" class="text-red-500 hover:bg-red-50 p-1.5 rounded" title="删除">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          `;
-        });
-        content += '</div>';
-      }
-
-      content += `
-          </div>
-        </div>
-      `;
-
-      showModal(content);
-    }
-
-    function openAddCourseModal() {
-      const content = `
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-            <h3 class="text-lg font-semibold text-slate-800">添加课程</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
-          </div>
-          <form onsubmit="saveTrainingCourse(event)" class="p-6 space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">课程名称 <span class="text-red-500">*</span></label>
-              <input type="text" id="course-name" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">讲师</label>
-                <input type="text" id="course-instructor" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">分类</label>
-                <select id="course-category" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option value="新雁计划">新雁计划</option>
-                  <option value="游雁学堂">游雁学堂</option>
-                  <option value="鸿雁计划">鸿雁计划</option>
-                  <option value="AI实践分享">AI实践分享</option>
-                  <option value="雏雁训练营">雏雁训练营</option>
-                </select>
-              </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">日期 <span class="text-red-500">*</span></label>
-                <input type="date" id="course-date" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">时间</label>
-                <input type="text" id="course-time" placeholder="例:09:00-11:30" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-              </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">时长</label>
-                <input type="text" id="course-duration" placeholder="例:2.5小时" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">地点</label>
-                <input type="text" id="course-location" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-              </div>
-            </div>
-            <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
-              <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">添加</button>
-            </div>
-          </form>
-        </div>
-      `;
-      showModal(content);
-    }
-
-    async function saveTrainingCourse(event) {
-      event.preventDefault();
-
-      const courseData = {
-        name: document.getElementById('course-name').value.trim(),
-        instructor: document.getElementById('course-instructor').value.trim(),
-        category: document.getElementById('course-category').value,
-        date: document.getElementById('course-date').value,
-        time: document.getElementById('course-time').value.trim(),
-        duration: document.getElementById('course-duration').value.trim(),
-        location: document.getElementById('course-location').value.trim()
-      };
-
-      try {
-        const res = await fetch(API + '/training/' + currentManageProjectId + '/courses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(courseData)
-        });
-
-        if (res.ok) {
-          toast('课程已添加');
-          closeModal();
-          await loadAllData();
-          renderTraining();
-          // 重新打开课程管理
-          manageCourses(currentManageProjectId);
-        } else {
-          toast('添加失败', 'error');
-        }
-      } catch (err) {
-        toast('添加失败', 'error');
-      }
-    }
-
-    async function deleteTrainingCourse(courseId) {
-      if (!confirm('确定要删除这门课程吗?')) return;
-
-      try {
-        const res = await fetch(API + '/training/courses/' + courseId, { method: 'DELETE' });
-        if (res.ok) {
-          toast('课程已删除');
-          await loadAllData();
-          renderTraining();
-          // 重新打开课程管理
-          manageCourses(currentManageProjectId);
-        } else {
-          toast('删除失败', 'error');
-        }
-      } catch (err) {
-        toast('删除失败', 'error');
-      }
-    }
-
     // ========== 公告管理 ==========
     function renderNotices() {
       const tbody = document.getElementById('notice-list');
@@ -14811,27 +14624,59 @@
         }).join('') || '<p class="text-sm text-slate-400">暂无数据</p>';
       }
 
-      // 部门学习排行
+      // 个人学习时长排行
+      const userRankingEl = document.getElementById('rpt-user-ranking');
+      if (userRankingEl) {
+        const rankedUsers = [...users]
+          .map(u => {
+            const s = reportStats.user[String(u.id)] || {};
+            return { ...u, totalSeconds: s.totalSeconds || 0 };
+          })
+          .sort((a, b) => b.totalSeconds - a.totalSeconds)
+          .slice(0, 10);
+        const maxSeconds = rankedUsers.length ? Math.max(...rankedUsers.map(u => u.totalSeconds), 1) : 1;
+        userRankingEl.innerHTML = rankedUsers.map((u, i) => {
+          const pct = Math.round((u.totalSeconds / maxSeconds) * 100);
+          return `<div class="flex items-center gap-3">
+            <span class="w-6 h-6 rounded-full ${i < 3 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'} text-xs flex items-center justify-center font-bold">${i + 1}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-slate-700 truncate">${escHtml(u.realName || u.username)}</p>
+              <div class="w-full bg-slate-100 rounded-full h-1.5 mt-1">
+                <div class="bg-indigo-500 h-1.5 rounded-full" style="width:${pct}%"></div>
+              </div>
+            </div>
+            <span class="text-xs text-slate-400">${formatDuration(u.totalSeconds)}</span>
+          </div>`;
+        }).join('') || '<p class="text-sm text-slate-400">暂无数据</p>';
+      }
+
+      // 部门学习排行（按部门总学习时长）
       const deptMap = {};
       users.forEach(u => {
         const d = u.department || '未分配';
-        deptMap[d] = (deptMap[d] || 0) + 1;
+        const s = reportStats.user[String(u.id)] || {};
+        deptMap[d] = (deptMap[d] || 0) + (s.totalSeconds || 0);
       });
       const deptRanking = Object.entries(deptMap).sort((a, b) => b[1] - a[1]);
       const rankEl = document.getElementById('rpt-dept-ranking');
       if (rankEl) {
-        rankEl.innerHTML = deptRanking.map(([d, cnt], i) => `
-          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-            <div class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-full ${i < 3 ? 'bg-indigo-600 text-white' : 'bg-slate-300 text-white'} text-xs flex items-center justify-center font-bold">${i + 1}</span>
-              <span class="text-sm text-slate-700">${escHtml(d)}</span>
+        const maxDeptSeconds = deptRanking.length ? Math.max(...deptRanking.map(([_, s]) => s), 1) : 1;
+        rankEl.innerHTML = deptRanking.map(([d, seconds], i) => {
+          const pct = Math.round((seconds / maxDeptSeconds) * 100);
+          return `<div class="flex items-center gap-3">
+            <span class="w-6 h-6 rounded-full ${i < 3 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'} text-xs flex items-center justify-center font-bold">${i + 1}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-slate-700 truncate">${escHtml(d)}</p>
+              <div class="w-full bg-slate-100 rounded-full h-1.5 mt-1">
+                <div class="bg-indigo-500 h-1.5 rounded-full" style="width:${pct}%"></div>
+              </div>
             </div>
-            <span class="text-sm font-semibold text-slate-800">${cnt} 人</span>
-          </div>`).join('') || '<p class="text-sm text-slate-400 col-span-full">暂无部门数据</p>';
+            <span class="text-xs text-slate-400">${formatDuration(seconds)}</span>
+          </div>`;
+        }).join('') || '<p class="text-sm text-slate-400">暂无部门数据</p>';
       }
 
-      // 个人学习时长排行榜、考试情况、培训情况
-      renderUserLearningRank();
+      // 考试情况、培训情况
       renderExamOverview();
       renderTrainingOverview();
     }
@@ -14885,40 +14730,8 @@
     }
 
     /* ============================================================
-       学习概览：排行榜与模块统计
+       学习概览：模块统计
        ============================================================ */
-    function renderUserLearningRank() {
-      const container = document.getElementById('rpt-user-ranking');
-      if (!container) return;
-      const users = allUsers || [];
-      const list = users.map(u => {
-        const uid = String(u.id);
-        const s = reportStats.user[uid] || {};
-        return { user: u, seconds: s.totalSeconds || 0, level: s.level || '青铜' };
-      }).sort((a, b) => b.seconds - a.seconds).slice(0, 10);
-      if (!list.length) {
-        container.innerHTML = '<p class="text-sm text-slate-400">暂无数据</p>';
-        return;
-      }
-      const maxSeconds = Math.max(...list.map(x => x.seconds), 1);
-      container.innerHTML = list.map((item, i) => {
-        const pct = maxSeconds ? Math.round((item.seconds / maxSeconds) * 100) : 0;
-        return `<div class="flex items-center gap-3">
-          <span class="w-5 h-5 rounded-full ${i < 3 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'} text-xs flex items-center justify-center font-bold">${i + 1}</span>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between">
-              <p class="text-sm text-slate-700 truncate">${escHtml(item.user.realName || item.user.username)}</p>
-              <span class="text-xs text-slate-400 ml-2 whitespace-nowrap">${formatDuration(item.seconds)}</span>
-            </div>
-            <div class="w-full bg-slate-100 rounded-full h-1.5 mt-1">
-              <div class="bg-gradient-to-r from-indigo-500 to-purple-400 h-1.5 rounded-full" style="width:${pct}%"></div>
-            </div>
-          </div>
-          <span class="px-2 py-0.5 rounded-full text-[10px] bg-indigo-50 text-indigo-600 whitespace-nowrap">${item.level}</span>
-        </div>`;
-      }).join('');
-    }
-
     function renderExamOverview() {
       const container = document.getElementById('rpt-exam-overview');
       if (!container) return;
@@ -15124,6 +14937,16 @@
 
       // 4. 从考试记录聚合（含培训关联考试与考试安排）
       const attempts = data.exam_attempts || [];
+      const papers = data.papers || [];
+      const categories = data.categories || [];
+      function resolveCategoryName(categoryId, categoryName) {
+        let name = categoryName || '';
+        if (/^\d+$/.test(name) || !name) {
+          const cat = categories.find(c => String(c.id) === String(categoryId || name));
+          name = cat ? cat.name : (categoryName || '');
+        }
+        return name || '未分类';
+      }
       (data.exams || []).forEach(e => {
         const examAttempts = attempts.filter(a => String(a.examId) === String(e.id));
         const participantIds = new Set(examAttempts.map(a => String(a.userId)));
@@ -15137,10 +14960,13 @@
           absentCount = Math.max(0, allowed.length - participantIds.size);
           absentRate = Math.round(absentCount / allowed.length * 100);
         }
-        const creator = e.createdBy || e.creator || '-';
+        const creator = e.createdBy || e.creator || '许志坚';
+        const paper = papers.find(p => String(p.id) === String(e.paperId));
+        const categoryName = paper ? resolveCategoryName(paper.categoryId || paper.category, paper.categoryName) : '未分类';
         stats.exam[e.id] = {
           creator,
           creatorName: typeof creator === 'number' ? (userMap[String(creator)]?.realName || userMap[String(creator)]?.username || creator) : creator,
+          categoryName,
           totalScore: e.totalScore || 100,
           passingScore: e.passingScore || 60,
           participantCount: participantIds.size,
@@ -15154,7 +14980,7 @@
 
       // 5. 从培训报名数据聚合
       (data.training_events || data.training || []).forEach(t => {
-        const creator = t.createdBy || t.creator || '-';
+        const creator = t.createdBy || t.creator || '许志坚';
         stats.training[t.id] = {
           participantCount: enrollments.filter(e => String(e.trainingId) === String(t.id)).length,
           creator,
@@ -15367,15 +15193,16 @@
         const formattedDate = dateStr ? new Date(dateStr).toISOString().split('T')[0] : '-';
         return `<tr class="hover:bg-indigo-50/50 transition">
           <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(e.title)}</td>
-          <td class="px-4 py-3 text-sm text-slate-500">${escHtml(s.creatorName || '-')}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${escHtml(s.categoryName || '-')}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-600">${s.totalScore || 100}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-600">${s.passingScore || 60}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-600">${s.participantCount || 0}</td>
           <td class="px-4 py-3 text-sm text-center text-green-600 font-medium">${s.passRate || 0}%</td>
           <td class="px-4 py-3 text-sm text-center ${s.absentRate > 0 ? 'text-orange-500' : 'text-slate-400'}">${e.allowedUsers && e.allowedUsers.length ? (s.absentRate || 0) + '%' : '-'}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-400">${formattedDate}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-500">${escHtml(s.creatorName || '许志坚')}</td>
         </tr>`;
-      }).join('') || '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
+      }).join('') || '<tr><td colspan="9" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
     }
 
     /* ============================================================
@@ -15462,7 +15289,7 @@
           <td class="px-4 py-3 text-sm text-slate-500">${escHtml(instructor)}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-500">${startStr}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-500">${endStr}</td>
-          <td class="px-4 py-3 text-sm text-center text-slate-500">${escHtml(s.creatorName || '-')}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-500">${escHtml(s.creatorName || '许志坚')}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-600">${enrollCount}</td>
           <td class="px-4 py-3 text-sm text-center">
             <span class="px-2 py-0.5 rounded-full text-xs ${status === 'completed' ? 'bg-green-100 text-green-700' : status === 'ongoing' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}">
@@ -15507,16 +15334,16 @@
         filename = '学员报表_' + new Date().toISOString().split('T')[0] + '.csv';
       }
       if (type === 'exam') {
-        headers = ['考试名称', '创建人', '试卷总分', '及格分', '考试人数', '及格率', '缺考率', '考试时间'];
+        headers = ['考试名称', '考试分类', '试卷总分', '及格分', '考试人数', '及格率', '缺考率', '考试时间', '创建人'];
         (data.exams || []).forEach(e => {
           const s = reportStats.exam[e.id] || {};
           const dateStr = e.startTime || e.createdAt || '';
           const formattedDate = dateStr ? new Date(dateStr).toISOString().split('T')[0] : '';
           rows.push([
-            e.title, s.creatorName || '-', s.totalScore || 100, s.passingScore || 60,
+            e.title, s.categoryName || '未分类', s.totalScore || 100, s.passingScore || 60,
             s.participantCount || 0, (s.passRate || 0) + '%',
             e.allowedUsers && e.allowedUsers.length ? (s.absentRate || 0) + '%' : '-',
-            formattedDate
+            formattedDate, s.creatorName || '许志坚'
           ]);
         });
         filename = '考试报表_' + new Date().toISOString().split('T')[0] + '.csv';
@@ -15532,7 +15359,7 @@
           const startStr = formatDateTime(t.startTime || t.date);
           const endStr = formatDateTime(t.endTime);
           const status = statusMap[t.status] || t.status || '';
-          rows.push([name, project, instructor, startStr, endStr, s.creatorName || '-', s.participantCount || 0, status]);
+          rows.push([name, project, instructor, startStr, endStr, s.creatorName || '许志坚', s.participantCount || 0, status]);
         });
         filename = '培训报表_' + new Date().toISOString().split('T')[0] + '.csv';
       }
