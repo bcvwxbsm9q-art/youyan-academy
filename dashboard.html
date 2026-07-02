@@ -1322,6 +1322,178 @@
         </div>
       </div>
 
+      <!-- 证书管理 -->
+      <div id="tab-certificate" class="tab-content hidden">
+        <!-- 列表视图 -->
+        <div id="certificateListView">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-slate-800">
+              <i class="fas fa-certificate text-indigo-500 mr-2"></i>证书管理
+            </h2>
+          </div>
+
+          <!-- 统计卡片 -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <p class="text-2xl font-bold text-slate-800" id="cert-stat-total">0</p>
+              <p class="text-sm text-slate-500">证书总数</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <p class="text-2xl font-bold text-green-500" id="cert-stat-enabled">0</p>
+              <p class="text-sm text-slate-500">已启用</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <p class="text-2xl font-bold text-purple-500" id="cert-stat-issued">0</p>
+              <p class="text-sm text-slate-500">累计颁发</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <p class="text-2xl font-bold text-orange-500" id="cert-stat-revoked">0</p>
+              <p class="text-sm text-slate-500">已撤销</p>
+            </div>
+          </div>
+
+          <!-- 筛选与操作栏 -->
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <select id="certFilterDepartment" onchange="onCertificateFilterChange()" class="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white hover:border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+                <option value="all">全部部门</option>
+              </select>
+              <select id="certFilterStatus" onchange="onCertificateFilterChange()" class="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white hover:border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+                <option value="all">全部状态</option>
+                <option value="enabled">已启用</option>
+                <option value="disabled">已停用</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="relative">
+                <input type="text" id="certSearchInput" placeholder="搜索证书名称..." oninput="onCertificateSearch()"
+                  class="w-56 pl-4 pr-10 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+              </div>
+              <button onclick="exportCertificateList()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition">
+                <i class="fas fa-download mr-1"></i>导出
+              </button>
+              <button onclick="openCertificateModal()" class="btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition">
+                <i class="fas fa-plus mr-1.5"></i>新建证书
+              </button>
+            </div>
+          </div>
+
+          <!-- 证书列表 -->
+          <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-slate-50">
+                  <tr>
+                    <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">证书名称</th>
+                    <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">所属部门</th>
+                    <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">有效期</th>
+                    <th class="px-5 py-4 text-center text-sm font-semibold text-slate-600">有效期人员</th>
+                    <th class="px-5 py-4 text-center text-sm font-semibold text-slate-600">已过期人员</th>
+                    <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">创建人</th>
+                    <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">创建时间</th>
+                    <th class="px-5 py-4 text-center text-sm font-semibold text-slate-600">状态</th>
+                    <th class="px-5 py-4 text-center text-sm font-semibold text-slate-600">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="certificateListContainer" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+              <p class="text-sm text-slate-500">共 <span id="certificateCount" class="font-semibold text-slate-700">0</span> 条记录</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 详情视图 -->
+        <div id="certificateDetailView" class="hidden">
+          <div class="flex items-center justify-between mb-6">
+            <button onclick="backToCertificateList()" class="text-slate-500 hover:text-slate-700 transition flex items-center gap-1">
+              <i class="fas fa-arrow-left"></i>返回列表
+            </button>
+            <div class="flex items-center gap-3">
+              <button onclick="openCertificateIssueModal(currentCertificateId)" class="btn-primary px-4 py-2 text-sm text-white rounded-lg font-medium shadow-sm hover:shadow-md transition">
+                <i class="fas fa-plus mr-1.5"></i>颁发证书
+              </button>
+            </div>
+          </div>
+
+          <!-- 摘要卡片 -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2" id="certDetailName">-</h3>
+                <div class="text-sm text-slate-500 space-y-1">
+                  <p>创建人：<span id="certDetailCreator">-</span>　创建时间：<span id="certDetailCreatedAt">-</span></p>
+                  <p>有效期：<span id="certDetailValidity">-</span>　状态：<span id="certDetailStatus">-</span></p>
+                </div>
+              </div>
+              <div class="flex gap-4 text-center">
+                <div>
+                  <p class="text-2xl font-bold text-slate-800" id="certDetailValidCount">0</p>
+                  <p class="text-xs text-slate-500">有效人员</p>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-orange-500" id="certDetailExpiredCount">0</p>
+                  <p class="text-xs text-slate-500">已过期人员</p>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-red-500" id="certDetailRevokedCount">0</p>
+                  <p class="text-xs text-slate-500">撤销记录</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 子标签页 -->
+          <div class="bg-white rounded-xl shadow-sm p-1 mb-6 inline-flex gap-1">
+            <button onclick="switchCertificateDetailTab('active')" id="cert-tab-active" class="cert-detail-tab active px-4 py-2 rounded-lg text-sm font-medium">有效人员</button>
+            <button onclick="switchCertificateDetailTab('expired')" id="cert-tab-expired" class="cert-detail-tab px-4 py-2 rounded-lg text-sm font-medium">到期人员</button>
+            <button onclick="switchCertificateDetailTab('revoked')" id="cert-tab-revoked" class="cert-detail-tab px-4 py-2 rounded-lg text-sm font-medium">撤销记录</button>
+            <button onclick="switchCertificateDetailTab('relations')" id="cert-tab-relations" class="cert-detail-tab px-4 py-2 rounded-lg text-sm font-medium">关联关系</button>
+          </div>
+
+          <!-- 工具栏 -->
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <button onclick="exportCertificateRecords()" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition">
+                <i class="fas fa-download mr-1"></i>导出
+              </button>
+              <button onclick="revokeSelectedRecords()" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition">
+                <i class="fas fa-undo mr-1"></i>撤销
+              </button>
+            </div>
+            <div class="relative">
+              <input type="text" id="certRecordSearchInput" placeholder="搜索姓名..." oninput="renderCertificateRecords()"
+                class="w-48 pl-4 pr-9 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+              <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+            </div>
+          </div>
+
+          <!-- 记录表格 -->
+          <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-slate-50">
+                  <tr>
+                    <th class="pl-5 pr-3 py-3.5 w-12"><input type="checkbox" id="certRecordSelectAll" onchange="toggleCertRecordSelectAll()" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"></th>
+                    <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider">姓名</th>
+                    <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider">证书编号</th>
+                    <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider">认证来源</th>
+                    <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider">颁发时间</th>
+                    <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider">生效时间</th>
+                    <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 tracking-wider">到期时间</th>
+                    <th class="px-3 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider">状态</th>
+                    <th class="pl-3 pr-5 py-3.5 text-center text-xs font-semibold text-slate-500 tracking-wider">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="certificateRecordsContainer" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 运营管理 -->
       <div id="tab-portal" class="tab-content hidden">
         <div class="flex items-center justify-between mb-6">
@@ -14057,6 +14229,1214 @@
     document.addEventListener('DOMContentLoaded', () => {
       updateTrainingRequestStats();
     });
+    async function initCertificatePage() {
+      await populateCertificateDepartmentFilter();
+      await loadCertificateStats();
+      await loadCertificateList();
+    }
+
+    async function loadCertificateStats() {
+      try {
+        const res = await fetch(`${API}/certificates/stats`, { headers: getAuthHeaders() });
+        const result = await res.json();
+        if (!result.success) return;
+        const s = result.data;
+        document.getElementById('cert-stat-total').textContent = s.total || 0;
+        document.getElementById('cert-stat-enabled').textContent = s.enabled || 0;
+        document.getElementById('cert-stat-issued').textContent = s.totalIssued || 0;
+        document.getElementById('cert-stat-revoked').textContent = s.revokedRecords || 0;
+      } catch (e) {
+        console.error('loadCertificateStats error', e);
+      }
+    }
+
+    async function populateCertificateDepartmentFilter() {
+      try {
+        const res = await fetch(`${API}/data/users`, { headers: getAuthHeaders() });
+        const users = await res.json();
+        const departments = new Set();
+        (users || []).forEach(u => { if (u.department) departments.add(u.department); });
+        const select = document.getElementById('certFilterDepartment');
+        if (!select) return;
+        const current = select.value;
+        select.innerHTML = '<option value="all">全部部门</option>';
+        Array.from(departments).sort((a,b) => a.localeCompare(b,'zh')).forEach(dept => {
+          select.innerHTML += `<option value="${escHtml(dept)}">${escHtml(dept)}</option>`;
+        });
+        select.value = current || 'all';
+      } catch (e) {
+        console.error('populateCertificateDepartmentFilter error', e);
+      }
+    }
+
+    function getCertificateFilters() {
+      const department = document.getElementById('certFilterDepartment')?.value || 'all';
+      const status = document.getElementById('certFilterStatus')?.value || 'all';
+      const keyword = document.getElementById('certSearchInput')?.value.trim() || '';
+      const params = new URLSearchParams();
+      if (department !== 'all') params.set('department', department);
+      if (status !== 'all') params.set('status', status);
+      if (keyword) params.set('keyword', keyword);
+      return params.toString();
+    }
+
+    async function loadCertificateList() {
+      try {
+        const query = getCertificateFilters();
+        const res = await fetch(`${API}/certificates${query ? '?' + query : ''}`, { headers: getAuthHeaders() });
+        const result = await res.json();
+        if (!result.success) {
+          toast(result.error || '加载证书列表失败', 'error');
+          return;
+        }
+        certificateListData = result.data || [];
+        renderCertificateList(certificateListData);
+      } catch (e) {
+        toast('加载证书列表失败', 'error');
+        console.error(e);
+      }
+    }
+
+    function renderCertificateList(list) {
+      const container = document.getElementById('certificateListContainer');
+      const countEl = document.getElementById('certificateCount');
+      if (!container) return;
+      countEl.textContent = list.length;
+      if (list.length === 0) {
+        container.innerHTML = `<tr><td colspan="9" class="px-5 py-8 text-center text-sm text-slate-400">暂无证书数据</td></tr>`;
+        return;
+      }
+      container.innerHTML = list.map(cert => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-5 py-4 text-sm text-slate-800 font-medium">${escHtml(cert.name)}</td>
+          <td class="px-5 py-4 text-sm text-slate-600">${escHtml(cert.department || '-')}</td>
+          <td class="px-5 py-4 text-sm text-slate-600">${formatValidity(cert)}</td>
+          <td class="px-5 py-4 text-sm text-slate-600 text-center">${cert.validCount || 0}</td>
+          <td class="px-5 py-4 text-sm text-slate-600 text-center">${cert.expiredCount || 0}</td>
+          <td class="px-5 py-4 text-sm text-slate-600">${escHtml(cert.createdBy || '-')}</td>
+          <td class="px-5 py-4 text-sm text-slate-600">${formatDateTimeCN(cert.createdAt)}</td>
+          <td class="px-5 py-4 text-center">${formatStatusBadge(cert.status)}</td>
+          <td class="px-5 py-4 text-center">
+            <div class="flex items-center justify-center gap-2">
+              <button onclick="viewCertificateDetail(${cert.id})" class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="查看">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button onclick="openCertificateModal(${cert.id})" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="编辑">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button onclick="openCertificateIssueModal(${cert.id})" class="p-1.5 text-slate-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="颁发">
+                <i class="fas fa-award"></i>
+              </button>
+              <button onclick="deleteCertificate(${cert.id})" class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="删除">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function formatValidity(cert) {
+      if (cert.validityType === 'fixed' && cert.validityMonths) {
+        return `${cert.validityMonths} 个月`;
+      }
+      return '永久有效';
+    }
+
+    function formatStatusBadge(status) {
+      if (status === 'enabled') {
+        return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">已启用</span>';
+      }
+      return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-600">已停用</span>';
+    }
+
+    function onCertificateFilterChange() {
+      loadCertificateList();
+    }
+
+    function onCertificateSearch() {
+      if (certificateSearchTimer) clearTimeout(certificateSearchTimer);
+      certificateSearchTimer = setTimeout(() => loadCertificateList(), 300);
+    }
+
+    async function deleteCertificate(id) {
+      if (!confirm('确定要删除该证书吗？删除后将同步移除所有颁发记录，此操作不可恢复。')) return;
+      try {
+        const res = await fetch(`${API}/certificates/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast('证书已删除');
+          loadCertificateStats();
+          loadCertificateList();
+        } else {
+          toast(result.error || '删除失败', 'error');
+        }
+      } catch (e) {
+        toast('删除失败', 'error');
+      }
+    }
+
+    function exportCertificateList() {
+      if (certificateListData.length === 0) {
+        toast('没有可导出的数据', 'error');
+        return;
+      }
+      const rows = certificateListData.map(cert => ({
+        '证书名称': cert.name,
+        '所属部门': cert.department || '-',
+        '有效期': formatValidity(cert),
+        '有效人员': cert.validCount || 0,
+        '已过期人员': cert.expiredCount || 0,
+        '创建人': cert.createdBy || '-',
+        '创建时间': formatDateTimeCN(cert.createdAt),
+        '状态': cert.status === 'enabled' ? '已启用' : '已停用'
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '证书列表');
+      XLSX.writeFile(wb, `证书列表_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    // 证书新建/编辑弹窗
+    async function openCertificateModal(id = null) {
+      currentCertificateId = id;
+      const titleEl = document.getElementById('certificateModalTitle');
+      titleEl.textContent = id ? '编辑证书' : '新建证书';
+      document.getElementById('certificateId').value = id || '';
+
+      // 部门下拉
+      await populateCertificateDepartmentSelect();
+
+      if (id) {
+        try {
+          const res = await fetch(`${API}/certificates/${id}`, { headers: getAuthHeaders() });
+          const result = await res.json();
+          if (!result.success) { toast(result.error || '加载失败', 'error'); return; }
+          const cert = result.data;
+          document.getElementById('certificateName').value = cert.name || '';
+          document.getElementById('certificateDepartment').value = cert.department || '';
+          document.getElementById('certNoPrefix').value = cert.certNoPrefix || '';
+          document.getElementById('certificateStatus').value = cert.status || 'enabled';
+          const radios = document.getElementsByName('certValidityType');
+          for (const r of radios) {
+            r.checked = r.value === (cert.validityType || 'permanent');
+          }
+          document.getElementById('certValidityMonths').value = cert.validityMonths || 12;
+          onCertValidityTypeChange();
+        } catch (e) {
+          toast('加载证书信息失败', 'error');
+          return;
+        }
+      } else {
+        document.getElementById('certificateName').value = '';
+        document.getElementById('certificateDepartment').value = '';
+        document.getElementById('certNoPrefix').value = 'CERT';
+        document.getElementById('certificateStatus').value = 'enabled';
+        const radios = document.getElementsByName('certValidityType');
+        for (const r of radios) { r.checked = r.value === 'permanent'; }
+        document.getElementById('certValidityMonths').value = 12;
+        onCertValidityTypeChange();
+      }
+
+      const modal = document.getElementById('certificateModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeCertificateModal() {
+      const modal = document.getElementById('certificateModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentCertificateId = null;
+    }
+
+    async function populateCertificateDepartmentSelect() {
+      try {
+        const res = await fetch(`${API}/data/users`, { headers: getAuthHeaders() });
+        const users = await res.json();
+        const departments = new Set();
+        (users || []).forEach(u => { if (u.department) departments.add(u.department); });
+        const select = document.getElementById('certificateDepartment');
+        if (!select) return;
+        const current = select.value;
+        select.innerHTML = '<option value="">请选择所属部门</option>';
+        Array.from(departments).sort((a,b) => a.localeCompare(b,'zh')).forEach(dept => {
+          select.innerHTML += `<option value="${escHtml(dept)}">${escHtml(dept)}</option>`;
+        });
+        select.value = current || '';
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function onCertValidityTypeChange() {
+      const radios = document.getElementsByName('certValidityType');
+      let value = 'permanent';
+      for (const r of radios) { if (r.checked) value = r.value; }
+      const wrap = document.getElementById('certValidityMonthsWrap');
+      if (value === 'fixed') wrap.classList.remove('hidden');
+      else wrap.classList.add('hidden');
+    }
+
+    async function saveCertificate() {
+      const id = document.getElementById('certificateId').value;
+      const name = document.getElementById('certificateName').value.trim();
+      const department = document.getElementById('certificateDepartment').value;
+      const certNoPrefix = document.getElementById('certNoPrefix').value.trim();
+      const status = document.getElementById('certificateStatus').value;
+      const radios = document.getElementsByName('certValidityType');
+      let validityType = 'permanent';
+      for (const r of radios) { if (r.checked) validityType = r.value; }
+      const validityMonths = parseInt(document.getElementById('certValidityMonths').value) || 12;
+
+      if (!name) { toast('请输入证书名称', 'error'); return; }
+      if (!department) { toast('请选择所属部门', 'error'); return; }
+      if (!certNoPrefix) { toast('请输入证书编号前缀', 'error'); return; }
+
+      const payload = { name, department, validityType, validityMonths, certNoPrefix, status };
+      try {
+        const url = id ? `${API}/certificates/${id}` : `${API}/certificates`;
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: getAuthHeaders('application/json'),
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast(id ? '证书已更新' : '证书已创建');
+          closeCertificateModal();
+          loadCertificateStats();
+          loadCertificateList();
+          return result.data;
+        } else {
+          toast(result.error || '保存失败', 'error');
+          return null;
+        }
+      } catch (e) {
+        toast('保存失败', 'error');
+        return null;
+      }
+    }
+
+    function openCertificateEditorFromModal() {
+      const id = document.getElementById('certificateId').value;
+      if (id) {
+        openCertificateEditor(parseInt(id));
+      } else {
+        saveCertificate().then(cert => {
+          if (cert && cert.id) openCertificateEditor(cert.id);
+        });
+      }
+    }
+
+    // 证书详情内嵌页
+    async function viewCertificateDetail(id) {
+      currentCertificateId = id;
+      currentCertificateDetailTab = 'active';
+      document.getElementById('certificateListView').classList.add('hidden');
+      document.getElementById('certificateDetailView').classList.remove('hidden');
+      await loadCertificateDetailHeader();
+      await loadCertificateRecords();
+    }
+
+    function backToCertificateList() {
+      document.getElementById('certificateDetailView').classList.add('hidden');
+      document.getElementById('certificateListView').classList.remove('hidden');
+      currentCertificateId = null;
+      currentCertificateDetailTab = 'active';
+      loadCertificateList();
+    }
+
+    async function loadCertificateDetailHeader() {
+      try {
+        const res = await fetch(`${API}/certificates/${currentCertificateId}`, { headers: getAuthHeaders() });
+        const result = await res.json();
+        if (!result.success) return;
+        const cert = result.data;
+        document.getElementById('certDetailName').textContent = cert.name || '-';
+        document.getElementById('certDetailCreator').textContent = cert.createdBy || '-';
+        document.getElementById('certDetailCreatedAt').textContent = formatDateTimeCN(cert.createdAt);
+        document.getElementById('certDetailValidity').textContent = formatValidity(cert);
+        document.getElementById('certDetailStatus').innerHTML = formatStatusBadge(cert.status);
+
+        const recordsRes = await fetch(`${API}/certificates/${currentCertificateId}/records`, { headers: getAuthHeaders() });
+        const recordsResult = await recordsRes.json();
+        const records = recordsResult.data || [];
+        const now = new Date().toISOString();
+        document.getElementById('certDetailValidCount').textContent = records.filter(r => r.status === 'active' && (!r.expiresAt || r.expiresAt > now)).length;
+        document.getElementById('certDetailExpiredCount').textContent = records.filter(r => r.status === 'active' && r.expiresAt && r.expiresAt <= now).length;
+        document.getElementById('certDetailRevokedCount').textContent = records.filter(r => r.status === 'revoked').length;
+      } catch (e) { console.error(e); }
+    }
+
+    function switchCertificateDetailTab(status) {
+      currentCertificateDetailTab = status;
+      document.querySelectorAll('.cert-detail-tab').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById('cert-tab-' + status);
+      if (activeBtn) activeBtn.classList.add('active');
+      loadCertificateRecords();
+    }
+
+    async function loadCertificateRecords() {
+      try {
+        const res = await fetch(`${API}/certificates/${currentCertificateId}/records?status=${currentCertificateDetailTab}`, { headers: getAuthHeaders() });
+        const result = await res.json();
+        if (!result.success) return;
+        certificateRecordsData = result.data || [];
+        renderCertificateRecords();
+      } catch (e) { console.error(e); }
+    }
+
+    function renderCertificateRecords() {
+      const container = document.getElementById('certificateRecordsContainer');
+      const keyword = (document.getElementById('certRecordSearchInput')?.value || '').toLowerCase();
+      if (!container) return;
+
+      let list = certificateRecordsData;
+      if (keyword) list = list.filter(r => (r.userName || '').toLowerCase().includes(keyword));
+
+      if (list.length === 0) {
+        container.innerHTML = `<tr><td colspan="9" class="px-5 py-6 text-center text-sm text-slate-400">暂无记录</td></tr>`;
+        return;
+      }
+
+      container.innerHTML = list.map(r => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="pl-5 pr-3 py-3.5"><input type="checkbox" value="${r.id}" class="cert-record-checkbox rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"></td>
+          <td class="px-3 py-3.5 text-sm text-slate-700">${escHtml(r.userName || '-')}</td>
+          <td class="px-3 py-3.5 text-sm text-slate-600 font-mono">${escHtml(r.certNo || '-')}</td>
+          <td class="px-3 py-3.5 text-sm text-slate-600">${escHtml(r.source || '-')}</td>
+          <td class="px-3 py-3.5 text-sm text-slate-600">${formatDateTimeCN(r.issuedAt)}</td>
+          <td class="px-3 py-3.5 text-sm text-slate-600">${formatDateCN(r.effectiveAt)}</td>
+          <td class="px-3 py-3.5 text-sm text-slate-600">${r.expiresAt ? formatDateCN(r.expiresAt) : '永久'}</td>
+          <td class="px-3 py-3.5 text-center">${formatRecordStatusBadge(r)}</td>
+          <td class="pl-3 pr-5 py-3.5 text-center">
+            <div class="flex items-center justify-center gap-2">
+              ${r.status === 'active' ? `<button onclick="revokeCertificateRecord(${r.id})" class="p-1.5 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition" title="撤销"><i class="fas fa-undo"></i></button>` : ''}
+              <button onclick="previewCertificateRecord(${r.id})" class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="查看证书"><i class="fas fa-eye"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function formatRecordStatusBadge(r) {
+      if (r.status === 'revoked') return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700">已撤销</span>';
+      if (r.expiresAt && r.expiresAt <= new Date().toISOString()) return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-700">已过期</span>';
+      return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">有效</span>';
+    }
+
+    function toggleCertRecordSelectAll() {
+      const checked = document.getElementById('certRecordSelectAll')?.checked || false;
+      document.querySelectorAll('.cert-record-checkbox').forEach(cb => cb.checked = checked);
+    }
+
+    async function revokeCertificateRecord(recordId) {
+      const reason = prompt('请输入撤销原因（可选）：') || '';
+      try {
+        const res = await fetch(`${API}/certificates/${currentCertificateId}/records/${recordId}/revoke`, {
+          method: 'PUT',
+          headers: getAuthHeaders('application/json'),
+          body: JSON.stringify({ reason })
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast('记录已撤销');
+          loadCertificateDetailHeader();
+          loadCertificateRecords();
+        } else {
+          toast(result.error || '撤销失败', 'error');
+        }
+      } catch (e) { toast('撤销失败', 'error'); }
+    }
+
+    async function revokeSelectedRecords() {
+      const checked = Array.from(document.querySelectorAll('.cert-record-checkbox:checked')).map(cb => parseInt(cb.value));
+      if (checked.length === 0) { toast('请选择要撤销的记录', 'error'); return; }
+      const reason = prompt('请输入批量撤销原因（可选）：') || '';
+      try {
+        for (const recordId of checked) {
+          await fetch(`${API}/certificates/${currentCertificateId}/records/${recordId}/revoke`, {
+            method: 'PUT',
+            headers: getAuthHeaders('application/json'),
+            body: JSON.stringify({ reason })
+          });
+        }
+        toast('已撤销所选记录');
+        document.getElementById('certRecordSelectAll').checked = false;
+        loadCertificateDetailHeader();
+        loadCertificateRecords();
+      } catch (e) { toast('撤销失败', 'error'); }
+    }
+
+    function exportCertificateRecords() {
+      if (certificateRecordsData.length === 0) { toast('没有可导出的记录', 'error'); return; }
+      const rows = certificateRecordsData.map(r => ({
+        '姓名': r.userName || '-',
+        '部门': r.department || '-',
+        '证书编号': r.certNo || '-',
+        '认证来源': r.source || '-',
+        '颁发原因': r.issueReason || '-',
+        '颁发时间': formatDateTimeCN(r.issuedAt),
+        '生效时间': formatDateCN(r.effectiveAt),
+        '到期时间': r.expiresAt ? formatDateCN(r.expiresAt) : '永久',
+        '状态': r.status === 'revoked' ? '已撤销' : (r.expiresAt && r.expiresAt <= new Date().toISOString() ? '已过期' : '有效')
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '颁发记录');
+      XLSX.writeFile(wb, `证书颁发记录_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    async function previewCertificateRecord(recordId) {
+      const record = certificateRecordsData.find(r => r.id === recordId);
+      if (!record) return;
+      // 使用当前证书模板渲染真实姓名后预览
+      try {
+        const res = await fetch(`${API}/certificates/${currentCertificateId}`, { headers: getAuthHeaders() });
+        const result = await res.json();
+        if (!result.success) return;
+        const template = result.data.template || getDefaultCertificateTemplate();
+        const previewContainer = document.createElement('div');
+        previewContainer.style.cssText = 'position:fixed;left:-9999px;top:0;';
+        document.body.appendChild(previewContainer);
+        renderCertificateToContainer(previewContainer, template, record.userName || '学员');
+        const canvas = await html2canvas(previewContainer.firstChild, { scale: 2, useCORS: true });
+        document.body.removeChild(previewContainer);
+        const url = canvas.toDataURL('image/png');
+        openCertificatePreviewModal(url);
+      } catch (e) { toast('预览失败', 'error'); }
+    }
+
+    // 颁发证书弹窗
+    async function openCertificateIssueModal(certId) {
+      certificateIssueUserTemp.clear();
+      certificateIssueUserData = [];
+      document.getElementById('issueCertificateId').value = certId;
+      document.getElementById('certIssueUserCount').textContent = '0';
+      document.getElementById('certIssueUserList').innerHTML = '<p class="text-sm text-slate-400 w-full">未选择员工</p>';
+
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const localNow = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      document.getElementById('certIssueIssuedAt').value = localNow;
+      document.getElementById('certIssueEffectiveAt').value = localNow;
+      document.getElementById('certIssueSource').value = '';
+      document.getElementById('certIssueReason').value = '';
+
+      const modal = document.getElementById('certificateIssueModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeCertificateIssueModal() {
+      const modal = document.getElementById('certificateIssueModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      certificateIssueUserTemp.clear();
+      certificateIssueUserData = [];
+    }
+
+    function openCertificateUserPicker() {
+      openExamUserPicker('certificate');
+    }
+
+    function renderCertificateIssueUsers() {
+      const selected = certificateIssueUserData.filter(u => u.selected);
+      document.getElementById('certIssueUserCount').textContent = selected.length;
+      const list = document.getElementById('certIssueUserList');
+      if (selected.length === 0) {
+        list.innerHTML = '<p class="text-sm text-slate-400 w-full">未选择员工</p>';
+      } else {
+        list.innerHTML = selected.map(u => `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full">
+            ${escHtml(u.name)}
+            <button type="button" onclick="removeCertificateIssueUser(${u.id})" class="hover:text-emerald-900">
+              <i class="fas fa-times"></i>
+            </button>
+          </span>
+        `).join('');
+      }
+    }
+
+    function removeCertificateIssueUser(id) {
+      const user = certificateIssueUserData.find(u => u.id === id);
+      if (user) user.selected = false;
+      certificateIssueUserTemp.delete(id);
+      renderCertificateIssueUsers();
+    }
+
+    async function saveCertificateIssue() {
+      const certId = document.getElementById('issueCertificateId').value;
+      const selected = certificateIssueUserData.filter(u => u.selected);
+      if (selected.length === 0) { toast('请选择颁发对象', 'error'); return; }
+
+      const issuedAt = document.getElementById('certIssueIssuedAt').value;
+      const effectiveAt = document.getElementById('certIssueEffectiveAt').value;
+      const source = document.getElementById('certIssueSource').value.trim();
+      const issueReason = document.getElementById('certIssueReason').value.trim();
+
+      if (!issuedAt) { toast('请选择颁发时间', 'error'); return; }
+      if (!effectiveAt) { toast('请选择生效时间', 'error'); return; }
+      if (!source) { toast('请输入认证来源', 'error'); return; }
+      if (!issueReason) { toast('请输入颁发原因', 'error'); return; }
+
+      try {
+        const res = await fetch(`${API}/certificates/${certId}/issue`, {
+          method: 'POST',
+          headers: getAuthHeaders('application/json'),
+          body: JSON.stringify({
+            userIds: selected.map(u => u.id),
+            issuedAt: new Date(issuedAt).toISOString(),
+            effectiveAt: new Date(effectiveAt).toISOString(),
+            source,
+            issueReason
+          })
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast(`已成功颁发 ${selected.length} 人`);
+          closeCertificateIssueModal();
+          loadCertificateStats();
+          loadCertificateList();
+          if (currentCertificateId && currentCertificateId == certId) {
+            loadCertificateDetailHeader();
+            loadCertificateRecords();
+          }
+        } else {
+          toast(result.error || '颁发失败', 'error');
+        }
+      } catch (e) { toast('颁发失败', 'error'); }
+    }
+
+    // 可视化证书编辑器
+    let currentEditorCertId = null;
+    let editorTemplate = null;
+    let editorCertName = '';
+    let selectedLayerId = null;
+    let editorDragState = { active: false, layerId: null, startX: 0, startY: 0, origX: 0, origY: 0 };
+    let editorResizeState = { active: false, layerId: null, startX: 0, startY: 0, origW: 0, origH: 0 };
+    let editorScale = 1;
+    let editorTemplateList = [];
+
+    function getDefaultCertificateTemplate() {
+      return {
+        width: 1123,
+        height: 794,
+        backgroundImage: '',
+        backgroundColor: '#ffffff',
+        layers: [
+          {
+            id: 'layer_' + Date.now(),
+            type: 'text',
+            name: '证书标题',
+            content: '培训结业证书',
+            x: 561, y: 120, width: 800, height: 80,
+            fontSize: 42, fontFamily: "SimHei, 'Microsoft YaHei', sans-serif",
+            color: '#1e293b', bold: true, italic: false, lineHeight: 1.4, align: 'center', zIndex: 1
+          }
+        ]
+      };
+    }
+
+    async function openCertificateEditor(certId) {
+      currentEditorCertId = certId;
+      selectedLayerId = null;
+      try {
+        const [certRes, tplRes] = await Promise.all([
+          fetch(`${API}/certificates/${certId}`, { headers: getAuthHeaders() }),
+          fetch(`${API}/certificate-templates`, { headers: getAuthHeaders() })
+        ]);
+        const certResult = await certRes.json();
+        const tplResult = await tplRes.json();
+        if (!certResult.success) { toast('加载证书失败', 'error'); return; }
+        editorCertName = certResult.data.name || '';
+        editorTemplate = JSON.parse(JSON.stringify(certResult.data.template || getDefaultCertificateTemplate()));
+        editorTemplateList = tplResult.data || [];
+
+        document.getElementById('certEditorCertName').textContent = editorCertName;
+        renderCertificateTemplateOptions();
+        renderCertificateEditorCanvas();
+        renderLayerList();
+        updateCanvasPropertyPanel();
+        updateLayerPropertyPanel();
+
+        const modal = document.getElementById('certificateEditorModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      } catch (e) { toast('打开编辑器失败', 'error'); console.error(e); }
+    }
+
+    function closeCertificateEditor() {
+      const modal = document.getElementById('certificateEditorModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentEditorCertId = null;
+      editorTemplate = null;
+      selectedLayerId = null;
+      editorTemplateList = [];
+    }
+
+    function renderCertificateTemplateOptions() {
+      const select = document.getElementById('certEditorTemplateSelect');
+      select.innerHTML = '<option value="">选择内置模板</option>';
+      editorTemplateList.forEach(tpl => {
+        select.innerHTML += `<option value="${tpl.id}">${escHtml(tpl.name)}</option>`;
+      });
+
+      const list = document.getElementById('certEditorTemplateList');
+      if (editorTemplateList.length === 0) {
+        list.innerHTML = '<p class="text-xs text-slate-400">暂无内置模板</p>';
+        return;
+      }
+      list.innerHTML = editorTemplateList.map(tpl => {
+        const isPortrait = (tpl.template?.height || 0) > (tpl.template?.width || 0);
+        return `
+          <div onclick="applyCertificateTemplate(${tpl.id})" class="cursor-pointer group">
+            <div class="cert-template-thumb ${isPortrait ? 'portrait' : ''} rounded-lg mb-1 flex items-center justify-center text-slate-400 text-xs group-hover:border-indigo-400 transition">
+              ${escHtml(tpl.name)}
+            </div>
+            <p class="text-xs text-slate-600 text-center truncate">${escHtml(tpl.name)}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function computeEditorScale() {
+      const workspace = document.getElementById('certEditorWorkspace');
+      if (!workspace || !editorTemplate) return 1;
+      const padding = 80;
+      const availW = workspace.clientWidth - padding;
+      const availH = workspace.clientHeight - padding;
+      const scaleW = availW / editorTemplate.width;
+      const scaleH = availH / editorTemplate.height;
+      editorScale = Math.min(scaleW, scaleH, 1);
+      return editorScale;
+    }
+
+    function renderCertificateEditorCanvas() {
+      const canvas = document.getElementById('certEditorCanvas');
+      if (!canvas || !editorTemplate) return;
+      const scale = computeEditorScale();
+      canvas.style.width = editorTemplate.width + 'px';
+      canvas.style.height = editorTemplate.height + 'px';
+      canvas.style.transform = `scale(${scale})`;
+      canvas.style.backgroundColor = editorTemplate.backgroundColor || '#ffffff';
+      if (editorTemplate.backgroundImage) {
+        canvas.style.backgroundImage = `url('${editorTemplate.backgroundImage}')`;
+      } else {
+        canvas.style.backgroundImage = 'none';
+      }
+
+      // Sort layers by zIndex
+      const layers = [...(editorTemplate.layers || [])].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+      canvas.innerHTML = '';
+      layers.forEach(layer => {
+        const el = createLayerElement(layer);
+        canvas.appendChild(el);
+      });
+    }
+
+    function createLayerElement(layer) {
+      const div = document.createElement('div');
+      div.className = 'cert-layer' + (layer.id === selectedLayerId ? ' selected' : '') + (layer.hidden ? ' hidden-layer' : '');
+      div.dataset.layerId = layer.id;
+      div.style.left = layer.x + 'px';
+      div.style.top = layer.y + 'px';
+      div.style.width = layer.width + 'px';
+      div.style.height = layer.height + 'px';
+      div.style.zIndex = layer.zIndex || 1;
+      if (layer.rotation) div.style.transform = `rotate(${layer.rotation}deg)`;
+
+      if (layer.type === 'text') {
+        const inner = document.createElement('div');
+        inner.className = 'cert-layer-text';
+        inner.contentEditable = true;
+        inner.innerText = layer.content || '';
+        inner.style.fontSize = (layer.fontSize || 16) + 'px';
+        inner.style.fontFamily = layer.fontFamily || 'sans-serif';
+        inner.style.color = layer.color || '#000000';
+        inner.style.fontWeight = layer.bold ? 'bold' : 'normal';
+        inner.style.fontStyle = layer.italic ? 'italic' : 'normal';
+        inner.style.lineHeight = layer.lineHeight || 1.4;
+        inner.style.textAlign = layer.align || 'left';
+        inner.style.display = 'flex';
+        inner.style.alignItems = 'center';
+        inner.style.justifyContent = layer.align === 'center' ? 'center' : (layer.align === 'right' ? 'flex-end' : 'flex-start');
+        inner.style.whiteSpace = 'pre-wrap';
+        inner.oninput = () => { layer.content = inner.innerText; };
+        inner.onblur = () => { layer.content = inner.innerText; updateLayerPropertyPanel(); };
+        inner.onmousedown = (e) => { selectLayer(layer.id); };
+        div.appendChild(inner);
+      } else if (layer.type === 'image') {
+        const img = document.createElement('img');
+        img.className = 'cert-layer-image';
+        img.src = layer.src || '';
+        img.draggable = false;
+        div.appendChild(img);
+      }
+
+      div.onmousedown = (e) => startDragLayer(e, layer.id);
+      return div;
+    }
+
+    function renderLayerList() {
+      const container = document.getElementById('certEditorLayerList');
+      if (!editorTemplate || !editorTemplate.layers || editorTemplate.layers.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400">暂无图层</p>';
+        return;
+      }
+      const layers = [...editorTemplate.layers].sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0));
+      container.innerHTML = layers.map(layer => `
+        <div onclick="selectLayer('${layer.id}')" class="flex items-center justify-between px-2 py-1.5 rounded cursor-pointer text-sm ${layer.id === selectedLayerId ? 'bg-indigo-100 text-indigo-700' : 'hover:bg-slate-100 text-slate-700'}">
+          <div class="flex items-center gap-2 truncate">
+            <i class="fas ${layer.type === 'text' ? 'fa-font' : 'fa-image'} text-xs text-slate-400"></i>
+            <span class="truncate">${escHtml(layer.name || '未命名')}</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="event.stopPropagation(); toggleLayerVisibility('${layer.id}')" class="p-1 text-xs text-slate-400 hover:text-slate-600">
+              <i class="fas ${layer.hidden ? 'fa-eye-slash' : 'fa-eye'}"></i>
+            </button>
+            <button type="button" onclick="event.stopPropagation(); moveLayer('${layer.id}', 1)" class="p-1 text-xs text-slate-400 hover:text-slate-600"><i class="fas fa-arrow-up"></i></button>
+            <button type="button" onclick="event.stopPropagation(); moveLayer('${layer.id}', -1)" class="p-1 text-xs text-slate-400 hover:text-slate-600"><i class="fas fa-arrow-down"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectLayer(id) {
+      selectedLayerId = id;
+      renderCertificateEditorCanvas();
+      renderLayerList();
+      updateLayerPropertyPanel();
+    }
+
+    function getSelectedLayer() {
+      if (!editorTemplate || !editorTemplate.layers) return null;
+      return editorTemplate.layers.find(l => l.id === selectedLayerId);
+    }
+
+    function updateLayerPropertyPanel() {
+      const panel = document.getElementById('certLayerPropsPanel');
+      const layer = getSelectedLayer();
+      if (!layer) {
+        panel.innerHTML = '<h4 class="text-sm font-semibold text-slate-700 mb-3">图层属性</h4><p class="text-xs text-slate-400">请先选择一个图层</p>';
+        return;
+      }
+
+      let typeSpecific = '';
+      if (layer.type === 'text') {
+        typeSpecific = `
+          <div><label class="block text-xs text-slate-500 mb-1">内容</label>
+          <textarea oninput="updateSelectedLayer({content:this.value})" rows="3" class="w-full px-2 py-1 text-sm border border-slate-200 rounded outline-none">${escHtml(layer.content || '')}</textarea></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs text-slate-500 mb-1">字体</label>
+            <select onchange="updateSelectedLayer({fontFamily:this.value})" class="w-full px-2 py-1 text-sm border border-slate-200 rounded outline-none">
+              <option value="SimHei, 'Microsoft YaHei', sans-serif" ${layer.fontFamily?.includes('SimHei') ? 'selected' : ''}>黑体</option>
+              <option value="SimSun, 'Microsoft YaHei', serif" ${layer.fontFamily?.includes('SimSun') ? 'selected' : ''}>宋体</option>
+              <option value="'Microsoft YaHei', sans-serif" ${layer.fontFamily?.includes('Microsoft YaHei') && !layer.fontFamily?.includes('SimHei') && !layer.fontFamily?.includes('SimSun') ? 'selected' : ''}>微软雅黑</option>
+              <option value="'Segoe UI', sans-serif" ${layer.fontFamily?.includes('Segoe UI') ? 'selected' : ''}>Segoe UI</option>
+            </select></div>
+            <div><label class="block text-xs text-slate-500 mb-1">字号(px)</label>
+            <input type="number" value="${layer.fontSize || 16}" onchange="updateSelectedLayer({fontSize:parseInt(this.value)||16})" class="w-full px-2 py-1 text-sm border border-slate-200 rounded outline-none"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs text-slate-500 mb-1">颜色</label>
+            <div class="flex items-center gap-2">
+              <input type="color" value="${layer.color || '#000000'}" onchange="updateSelectedLayer({color:this.value})" class="w-8 h-8 rounded border border-slate-200 cursor-pointer">
+              <input type="text" value="${layer.color || '#000000'}" onchange="updateSelectedLayer({color:this.value})" class="flex-1 px-2 py-1 text-sm border border-slate-200 rounded outline-none">
+            </div></div>
+            <div><label class="block text-xs text-slate-500 mb-1">行高</label>
+            <input type="number" step="0.1" value="${layer.lineHeight || 1.4}" onchange="updateSelectedLayer({lineHeight:parseFloat(this.value)||1.4})" class="w-full px-2 py-1 text-sm border border-slate-200 rounded outline-none"></div>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="flex items-center gap-1 text-xs text-slate-600 cursor-pointer"><input type="checkbox" ${layer.bold ? 'checked' : ''} onchange="updateSelectedLayer({bold:this.checked})" class="rounded"> 加粗</label>
+            <label class="flex items-center gap-1 text-xs text-slate-600 cursor-pointer"><input type="checkbox" ${layer.italic ? 'checked' : ''} onchange="updateSelectedLayer({italic:this.checked})" class="rounded"> 斜体</label>
+            <select onchange="updateSelectedLayer({align:this.value})" class="px-2 py-1 text-xs border border-slate-200 rounded outline-none">
+              <option value="left" ${layer.align === 'left' ? 'selected' : ''}>左对齐</option>
+              <option value="center" ${layer.align === 'center' ? 'selected' : ''}>居中</option>
+              <option value="right" ${layer.align === 'right' ? 'selected' : ''}>右对齐</option>
+            </select>
+          </div>
+        `;
+      } else if (layer.type === 'image') {
+        typeSpecific = `
+          <div><label class="block text-xs text-slate-500 mb-1">图片地址</label>
+          <input type="text" value="${escHtml(layer.src || '')}" onchange="updateSelectedLayer({src:this.value})" class="w-full px-2 py-1 text-sm border border-slate-200 rounded outline-none"></div>
+          <div><label class="block text-xs text-slate-500 mb-1">不透明度</label>
+          <input type="range" min="0" max="1" step="0.1" value="${layer.opacity != null ? layer.opacity : 1}" onchange="updateSelectedLayer({opacity:parseFloat(this.value)})" class="w-full"></div>
+        `;
+      }
+
+      panel.innerHTML = `
+        <h4 class="text-sm font-semibold text-slate-700 mb-3">图层属性</h4>
+        <div class="space-y-3">
+          <div><label class="block text-xs text-slate-500 mb-1">图层名称</label>
+          <input type="text" value="${escHtml(layer.name || '')}" onchange="updateSelectedLayer({name:this.value})" class="w-full px-2 py-1 text-sm border border-slate-200 rounded outline-none"></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs text-slate-500 mb-1">X</label>
+            <input type="number" value="${layer.x}" onchange="updateSelectedLayer({x:parseInt(this.value)||0})" class="w-full px-2 py-1 text-sm border border-slate-200 rounded outline-none"></div>
+            <div><label class="block text-xs text-slate-500 mb-1">Y</label>
+            <input type="number" value="${layer.y}" onchange="updateSelectedLayer({y:parseInt(this.value)||0})" class="w-full px-2 py-1 text-sm border border-slate-200 rounded outline-none"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs text-slate-500 mb-1">宽度</label>
+            <input type="number" value="${layer.width}" onchange="updateSelectedLayer({width:parseInt(this.value)||10})" class="w-full px-2 py-1 text-sm border border-slate-200 rounded outline-none"></div>
+            <div><label class="block text-xs text-slate-500 mb-1">高度</label>
+            <input type="number" value="${layer.height}" onchange="updateSelectedLayer({height:parseInt(this.value)||10})" class="w-full px-2 py-1 text-sm border border-slate-200 rounded outline-none"></div>
+          </div>
+          <div><label class="block text-xs text-slate-500 mb-1">旋转角度</label>
+          <input type="range" min="-180" max="180" value="${layer.rotation || 0}" onchange="updateSelectedLayer({rotation:parseInt(this.value)})" class="w-full"></div>
+          ${typeSpecific}
+        </div>
+      `;
+    }
+
+    function updateSelectedLayer(props) {
+      const layer = getSelectedLayer();
+      if (!layer) return;
+      Object.assign(layer, props);
+      renderCertificateEditorCanvas();
+      renderLayerList();
+      updateLayerPropertyPanel();
+    }
+
+    function updateCanvasPropertyPanel() {
+      if (!editorTemplate) return;
+      document.getElementById('certEditorCanvasWidth').value = editorTemplate.width;
+      document.getElementById('certEditorCanvasHeight').value = editorTemplate.height;
+      document.getElementById('certEditorCanvasColor').value = editorTemplate.backgroundColor || '#ffffff';
+      document.getElementById('certEditorCanvasColorText').value = editorTemplate.backgroundColor || '#ffffff';
+    }
+
+    function updateCanvasSize() {
+      if (!editorTemplate) return;
+      editorTemplate.width = parseInt(document.getElementById('certEditorCanvasWidth').value) || 1123;
+      editorTemplate.height = parseInt(document.getElementById('certEditorCanvasHeight').value) || 794;
+      renderCertificateEditorCanvas();
+    }
+
+    function updateCanvasBgColor() {
+      if (!editorTemplate) return;
+      const color = document.getElementById('certEditorCanvasColor').value;
+      editorTemplate.backgroundColor = color;
+      document.getElementById('certEditorCanvasColor').value = color;
+      document.getElementById('certEditorCanvasColorText').value = color;
+      renderCertificateEditorCanvas();
+    }
+
+    function addTextLayer() {
+      if (!editorTemplate) return;
+      const id = 'layer_' + Date.now();
+      editorTemplate.layers.push({
+        id,
+        type: 'text',
+        name: '文字图层',
+        content: '请输入文字',
+        x: Math.round(editorTemplate.width / 2) - 100,
+        y: Math.round(editorTemplate.height / 2) - 25,
+        width: 200,
+        height: 50,
+        fontSize: 24,
+        fontFamily: "SimHei, 'Microsoft YaHei', sans-serif",
+        color: '#1e293b',
+        bold: false,
+        italic: false,
+        lineHeight: 1.4,
+        align: 'center',
+        zIndex: (editorTemplate.layers.length + 1)
+      });
+      selectLayer(id);
+    }
+
+    function addImageLayer(src) {
+      if (!editorTemplate) return;
+      const id = 'layer_' + Date.now();
+      editorTemplate.layers.push({
+        id,
+        type: 'image',
+        name: '图片图层',
+        src: src || '',
+        x: Math.round(editorTemplate.width / 2) - 75,
+        y: Math.round(editorTemplate.height / 2) - 75,
+        width: 150,
+        height: 150,
+        opacity: 1,
+        zIndex: (editorTemplate.layers.length + 1)
+      });
+      selectLayer(id);
+    }
+
+    function deleteSelectedLayer() {
+      if (!selectedLayerId || !editorTemplate) return;
+      editorTemplate.layers = editorTemplate.layers.filter(l => l.id !== selectedLayerId);
+      selectedLayerId = null;
+      renderCertificateEditorCanvas();
+      renderLayerList();
+      updateLayerPropertyPanel();
+    }
+
+    function toggleLayerVisibility(id) {
+      if (!editorTemplate) return;
+      const layer = editorTemplate.layers.find(l => l.id === id);
+      if (layer) layer.hidden = !layer.hidden;
+      renderCertificateEditorCanvas();
+      renderLayerList();
+    }
+
+    function moveLayer(id, direction) {
+      if (!editorTemplate) return;
+      const layer = editorTemplate.layers.find(l => l.id === id);
+      if (!layer) return;
+      layer.zIndex = (layer.zIndex || 0) + direction;
+      renderCertificateEditorCanvas();
+      renderLayerList();
+    }
+
+    async function uploadCertificateBackground(input) {
+      const file = input.files[0];
+      if (!file || !editorTemplate) return;
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch(`${API}/upload?type=certificates`, { method: 'POST', body: formData });
+        const result = await res.json();
+        if (result.success) {
+          editorTemplate.backgroundImage = result.url;
+          renderCertificateEditorCanvas();
+          toast('背景上传成功');
+        } else { toast(result.error || '上传失败', 'error'); }
+      } catch (e) { toast('上传失败', 'error'); }
+      input.value = '';
+    }
+
+    async function uploadCertificateSeal(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch(`${API}/upload?type=certificates`, { method: 'POST', body: formData });
+        const result = await res.json();
+        if (result.success) {
+          addImageLayer(result.url);
+          toast('印章上传成功');
+        } else { toast(result.error || '上传失败', 'error'); }
+      } catch (e) { toast('上传失败', 'error'); }
+      input.value = '';
+    }
+
+    async function applyCertificateTemplate(templateId) {
+      const tpl = editorTemplateList.find(t => String(t.id) === String(templateId));
+      if (!tpl || !tpl.template) return;
+      if (!confirm('应用模板将覆盖当前设计，是否继续？')) return;
+      editorTemplate = JSON.parse(JSON.stringify(tpl.template));
+      selectedLayerId = null;
+      renderCertificateEditorCanvas();
+      renderLayerList();
+      updateCanvasPropertyPanel();
+      updateLayerPropertyPanel();
+      document.getElementById('certEditorTemplateSelect').value = '';
+    }
+
+    async function saveCertificateTemplate() {
+      if (!currentEditorCertId || !editorTemplate) return;
+      try {
+        const res = await fetch(`${API}/certificates/${currentEditorCertId}/template`, {
+          method: 'PUT',
+          headers: getAuthHeaders('application/json'),
+          body: JSON.stringify(editorTemplate)
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast('证书样式已保存');
+        } else { toast(result.error || '保存失败', 'error'); }
+      } catch (e) { toast('保存失败', 'error'); }
+    }
+
+    function openCertificatePreviewModal(url) {
+      const modal = document.getElementById('certificatePreviewModal');
+      const img = document.getElementById('certificatePreviewImage');
+      const download = document.getElementById('certificatePreviewDownload');
+      img.src = url;
+      download.href = url;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeCertificatePreview() {
+      const modal = document.getElementById('certificatePreviewModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.getElementById('certificatePreviewImage').src = '';
+      document.getElementById('certificatePreviewDownload').href = '';
+    }
+
+    async function previewCertificate() {
+      if (!editorTemplate) return;
+      try {
+        const container = document.createElement('div');
+        container.style.cssText = 'position:fixed;left:-9999px;top:0;';
+        document.body.appendChild(container);
+        renderCertificateToContainer(container, editorTemplate, '学员姓名');
+        const canvas = await html2canvas(container.firstChild, { scale: 2, useCORS: true });
+        document.body.removeChild(container);
+        const url = canvas.toDataURL('image/png');
+        openCertificatePreviewModal(url);
+      } catch (e) { toast('预览失败', 'error'); console.error(e); }
+    }
+
+    function downloadCertificateImage() {
+      previewCertificate().then(() => {});
+    }
+
+    function renderCertificateToContainer(container, template, userName) {
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = `position:relative;width:${template.width}px;height:${template.height}px;background-color:${template.backgroundColor || '#ffffff'};overflow:hidden;`;
+      if (template.backgroundImage) wrapper.style.backgroundImage = `url('${template.backgroundImage}')`;
+      wrapper.style.backgroundSize = 'cover';
+      wrapper.style.backgroundPosition = 'center';
+
+      const layers = [...(template.layers || [])].filter(l => !l.hidden).sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+      layers.forEach(layer => {
+        const div = document.createElement('div');
+        div.style.cssText = `position:absolute;left:${layer.x}px;top:${layer.y}px;width:${layer.width}px;height:${layer.height}px;z-index:${layer.zIndex || 1};overflow:hidden;`;
+        if (layer.rotation) div.style.transform = `rotate(${layer.rotation}deg)`;
+        if (layer.type === 'text') {
+          const text = (layer.content || '').replace(/学员姓名|获奖者姓名|姓名/g, userName);
+          div.innerText = text;
+          div.style.fontSize = (layer.fontSize || 16) + 'px';
+          div.style.fontFamily = layer.fontFamily || 'sans-serif';
+          div.style.color = layer.color || '#000000';
+          div.style.fontWeight = layer.bold ? 'bold' : 'normal';
+          div.style.fontStyle = layer.italic ? 'italic' : 'normal';
+          div.style.lineHeight = layer.lineHeight || 1.4;
+          div.style.textAlign = layer.align || 'left';
+          div.style.display = 'flex';
+          div.style.alignItems = 'center';
+          div.style.justifyContent = layer.align === 'center' ? 'center' : (layer.align === 'right' ? 'flex-end' : 'flex-start');
+          div.style.whiteSpace = 'pre-wrap';
+          div.style.wordBreak = 'break-word';
+        } else if (layer.type === 'image') {
+          const img = document.createElement('img');
+          img.src = layer.src || '';
+          img.style.cssText = 'width:100%;height:100%;object-fit:contain;opacity:' + (layer.opacity != null ? layer.opacity : 1) + ';';
+          div.appendChild(img);
+        }
+        wrapper.appendChild(div);
+      });
+      container.appendChild(wrapper);
+      return wrapper;
+    }
+
+    // 画板拖拽与缩放
+    function getLayerElRect(layerId) {
+      const el = document.querySelector(`.cert-layer[data-layer-id="${layerId}"]`);
+      return el ? el.getBoundingClientRect() : null;
+    }
+
+    function isResizeHandleClick(e, layerId) {
+      const rect = getLayerElRect(layerId);
+      if (!rect) return false;
+      const handleSize = 10 * editorScale;
+      return e.clientX >= rect.right - handleSize && e.clientY >= rect.bottom - handleSize;
+    }
+
+    function handleCanvasMouseDown(e) {
+      const target = e.target.closest('.cert-layer');
+      if (!target) { selectedLayerId = null; renderCertificateEditorCanvas(); renderLayerList(); updateLayerPropertyPanel(); return; }
+      const layerId = target.dataset.layerId;
+      if (isResizeHandleClick(e, layerId)) {
+        startResizeLayer(e, layerId);
+      } else {
+        startDragLayer(e, layerId);
+      }
+    }
+
+    function handleCanvasMouseMove(e) {
+      if (editorDragState.active) {
+        const layer = editorTemplate.layers.find(l => l.id === editorDragState.layerId);
+        if (!layer) return;
+        const dx = (e.clientX - editorDragState.startX) / editorScale;
+        const dy = (e.clientY - editorDragState.startY) / editorScale;
+        layer.x = Math.round(editorDragState.origX + dx);
+        layer.y = Math.round(editorDragState.origY + dy);
+        const el = document.querySelector(`.cert-layer[data-layer-id="${layer.id}"]`);
+        if (el) {
+          el.style.left = layer.x + 'px';
+          el.style.top = layer.y + 'px';
+        }
+        updateLayerPropertyPanel();
+      } else if (editorResizeState.active) {
+        const layer = editorTemplate.layers.find(l => l.id === editorResizeState.layerId);
+        if (!layer) return;
+        const dw = (e.clientX - editorResizeState.startX) / editorScale;
+        const dh = (e.clientY - editorResizeState.startY) / editorScale;
+        layer.width = Math.max(20, Math.round(editorResizeState.origW + dw));
+        layer.height = Math.max(20, Math.round(editorResizeState.origH + dh));
+        const el = document.querySelector(`.cert-layer[data-layer-id="${layer.id}"]`);
+        if (el) {
+          el.style.width = layer.width + 'px';
+          el.style.height = layer.height + 'px';
+        }
+        updateLayerPropertyPanel();
+      }
+    }
+
+    function handleCanvasMouseUp() {
+      editorDragState.active = false;
+      editorResizeState.active = false;
+      document.removeEventListener('mousemove', handleCanvasMouseMove);
+      document.removeEventListener('mouseup', handleCanvasMouseUp);
+    }
+
+    function startDragLayer(e, layerId) {
+      e.stopPropagation();
+      if (isResizeHandleClick(e, layerId)) {
+        startResizeLayer(e, layerId);
+        return;
+      }
+      selectLayer(layerId);
+      editorDragState = {
+        active: true,
+        layerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        origX: getSelectedLayer().x,
+        origY: getSelectedLayer().y
+      };
+      document.addEventListener('mousemove', handleCanvasMouseMove);
+      document.addEventListener('mouseup', handleCanvasMouseUp);
+    }
+
+    function startResizeLayer(e, layerId) {
+      e.stopPropagation();
+      selectLayer(layerId);
+      const layer = getSelectedLayer();
+      editorResizeState = {
+        active: true,
+        layerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        origW: layer.width,
+        origH: layer.height
+      };
+      document.addEventListener('mousemove', handleCanvasMouseMove);
+      document.addEventListener('mouseup', handleCanvasMouseUp);
+    }
+
+    // 页面加载时更新徽章
+    document.addEventListener('DOMContentLoaded', () => {
+      updateTrainingRequestStats();
+    });
+  </script>
+
+</body>
+</html>
   </script>
 
 </body>
