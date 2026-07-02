@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1782044069160-440027461.jpg",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/7/1 11:43:05",
+      "lastLogin": "2026/7/2 09:35:20",
       "status": "active",
       "position": "人事经理"
     },
@@ -4290,6 +4290,9 @@
       "certNo": "CERT-2024-0315-001"
     }
   ],
+  "certificateDefinitions": [],
+  "certificateRecords": [],
+  "certificateTemplates": [],
   "current_user": {
     "id": 1,
     "name": "张小明",
@@ -5687,6 +5690,12 @@
       "username": "14718596470",
       "realName": "何银",
       "loginTime": "2026/7/1 16:54:18"
+    },
+    {
+      "userId": 1780909174403,
+      "username": "15302206488",
+      "realName": "许志坚",
+      "loginTime": "2026/7/2 09:35:20"
     }
   ]
 }
