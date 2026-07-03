@@ -781,16 +781,16 @@
                                 <div>
                                     <div class="flex justify-between text-sm mb-1">
                                         <span class="text-gray-600">已完成培训</span>
-                                        <span class="font-semibold text-primary" id="completed-training-count">8/12</span>
+                                        <span class="font-semibold text-primary" id="completed-training-count">0/0</span>
                                     </div>
                                     <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                        <div class="h-full bg-gradient-primary rounded-full" id="completed-training-bar" style="width: 66.67%;"></div>
+                                        <div class="h-full bg-gradient-primary rounded-full" id="completed-training-bar" style="width: 0%;"></div>
                                     </div>
                                 </div>
                                 <div>
                                     <div class="flex justify-between text-sm mb-1">
                                         <span class="text-gray-600">本月已报名</span>
-                                        <span class="font-semibold text-primary" id="monthly-enrolled-count">3</span>
+                                        <span class="font-semibold text-primary" id="monthly-enrolled-count">0</span>
                                     </div>
                                     <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
                                         <div class="h-full bg-green-500 rounded-full" style="width: 100%;"></div>
@@ -800,7 +800,7 @@
                         </div>
 
                         <!-- 学习风采轮播 -->
-                        <div id="gallery-carousel-section" class="bg-white rounded-xl shadow-sm p-6 hidden">
+                        <div id="main-gallery-section" class="bg-white rounded-xl shadow-sm p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-semibold text-gray-800 flex items-center">
                                     <i class="fa fa-camera mr-2 text-indigo-500"></i>学习风采
@@ -854,7 +854,7 @@
 
     <script src="js/auth-modal.js"></script>
     <script src="js/auth-guard.js"></script>
-    <script src="js/notification.js"></script>
+    <script src="js/notification.js?v=20260703"></script>
     <script>
         // 退出登录（使用统一认证模块）
         function handleLogout() {
@@ -921,8 +921,22 @@
                         const isEnrolled = currentUserId ? enrolledUsers.some(u => u.userId == currentUserId) : false;
                         enrollMap[c.id] = { enrolledUsers, enrollCount: c.enrollCount || enrolledUsers.length, isEnrolled, extendedEndTime: c.extendedEndTime || null };
                     });
-                    // 保持默认显示当前月份，不再跳到第一条数据的月份
-                    // currentYear/currentMonth 已在初始化时设为今天
+                    // 默认显示当前月份：如果本月有课程则定位到本月，否则回退到第一条数据所在月
+                    const today = new Date();
+                    const hasCurrentMonth = courses.some(c => {
+                        const d = new Date(c.date);
+                        return !isNaN(d.getTime()) && d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
+                    });
+                    if (hasCurrentMonth) {
+                        currentYear = today.getFullYear();
+                        currentMonth = today.getMonth();
+                    } else {
+                        const firstDate = new Date(json.data[0].date);
+                        if (!isNaN(firstDate.getTime())) {
+                            currentYear = firstDate.getFullYear();
+                            currentMonth = firstDate.getMonth();
+                        }
+                    }
                 } else {
                     // 如果API返回空数据，使用默认测试数据
                     courses = [
@@ -1080,7 +1094,7 @@
             }).join('');
             const wrapId = 'tp-enroll-wrap-' + courseId;
             const namesId = 'tp-enroll-names-' + courseId;
-            let html = '<div class="mt-2.5 pt-2.5">';
+            let html = '<div class="mt-2.5 pt-2.5 border-t border-gray-100">';
             html += `<div class="tp-enroll-header">
                 <div class="tp-enroll-count">已报名 <span>${info.enrollCount}</span> 人</div>
             </div>`;
@@ -1292,7 +1306,7 @@
         function getCategoryIcon(category) {
             const icons = {
                 '新雁计划': 'fa-rocket',
-                '游雁学堂': 'fa-code',
+                '游雁学堂': 'fa-graduation-cap',
                 '鸿雁计划': 'fa-users',
                 'AI实践分享': 'fa-laptop',
                 '雏雁训练营': 'fa-building',
@@ -1750,9 +1764,6 @@
             `;
 
             const projectContent = renderProjectContentList(course);
-            // 根据实际渲染结果判断是否有项目内容（避免字符串 "false" 等 truthy 误判）
-            const hasProjectContent = !projectContent.includes('暂无项目内容');
-
             const gallery = getTrainingGallery(courseId);
             const hasGallery = gallery.images && gallery.images.length > 0;
             const galleryContent = hasGallery ? `
@@ -1768,7 +1779,12 @@
                         </div>
                     ` : ''}
                 </div>
-            ` : '';
+            ` : '<p class="text-sm text-gray-400 text-center py-4">暂无学习风采照片</p>';
+
+            const hasProjectContent = !!(course.signinEnabled ||
+                (course.surveyEnabled && course.linkedSurveyId) ||
+                (course.examEnabled && course.linkedExamId) ||
+                (course.coursewareEnabled && course.coursewareFiles && course.coursewareFiles.length));
 
             let content = `
                 <div class="animate-fade-in">
@@ -1779,18 +1795,14 @@
                         <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-3"><i class="fa fa-info-circle text-primary"></i>基本信息</h3>
                         ${basicInfoContent}
                     </div>
-                    ${hasProjectContent ? `
-                    <div class="mb-5">
+                    ${hasProjectContent ? `<div class="mb-5">
                         <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-3"><i class="fa fa-tasks text-primary"></i>项目内容</h3>
                         ${projectContent}
-                    </div>
-                    ` : ''}
-                    ${hasGallery ? `
-                    <div class="mb-5">
+                    </div>` : ''}
+                    ${hasGallery ? `<div class="mb-5">
                         <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-3"><i class="fa fa-camera text-primary"></i>学习风采</h3>
                         ${galleryContent}
-                    </div>
-                    ` : ''}
+                    </div>` : ''}
                     <div class="pt-2">${getCourseDetailEnrollButton(courseId, course.date, course.time, course.endTime)}</div>
                 </div>
             `;
@@ -1812,8 +1824,6 @@
         function renderProjectContentList(course) {
             const items = [];
             const isEnrolled = isUserEnrolled(course.id);
-            // 布尔值安全解析：兼容字符串 "false" / "true" / 实际布尔值
-            const boolVal = v => v === true || v === 'true' || v === 1;
             const fmtTime = (v) => {
                 if (!v) return '';
                 try {
@@ -1828,7 +1838,7 @@
             };
 
             // 1. 考勤签到
-            if (boolVal(course.signinEnabled)) {
+            if (course.signinEnabled) {
                 const start = fmtTime(course.signinStartTime || course.startTime);
                 const end = fmtTime(course.signinEndTime || course.endTime);
                 const done = !!course.signinDone;
@@ -1845,7 +1855,7 @@
                 });
             }
             // 2. 调研
-            if (boolVal(course.surveyEnabled) && course.linkedSurveyId) {
+            if (course.surveyEnabled && course.linkedSurveyId) {
                 const done = !!course.surveyDone;
                 items.push({
                     key: 'survey',
@@ -1860,7 +1870,7 @@
                 });
             }
             // 3. 考试
-            if (boolVal(course.examEnabled) && course.linkedExamId) {
+            if (course.examEnabled && course.linkedExamId) {
                 const done = !!course.examDone;
                 items.push({
                     key: 'exam',
@@ -1870,12 +1880,12 @@
                     status: done ? '已完成' : '待完成', statusColor: done ? '#10b981' : '#f59e0b',
                     actionText: done ? '已完成' : '去完成',
                     actionClass: done ? 'btn-state-done' : 'btn-action-exam',
-                    actionOnclick: done ? '' : `window.open('/exam.html?id=${course.linkedExamId}', '_blank')`,
+                    actionOnclick: done ? '' : `location.href='exam.html?id=${course.linkedExamId}&returnUrl=training-plan.html&trainingId=${course.id}'`,
                     actionDisabled: done
                 });
             }
             // 4. 课件（非必修，自由下载）- 紫色系特殊显示
-            if (boolVal(course.coursewareEnabled) && course.coursewareFiles && course.coursewareFiles.length) {
+            if (course.coursewareEnabled && course.coursewareFiles && course.coursewareFiles.length) {
                 const files = course.coursewareFiles;
                 items.push({
                     key: 'courseware',
@@ -2372,6 +2382,17 @@
                 }
             }
 
+            // 从考试页返回时自动重新打开培训详情弹窗
+            const reopenTrainingId = sessionStorage.getItem('reopenTrainingId');
+            if (reopenTrainingId) {
+                sessionStorage.removeItem('reopenTrainingId');
+                const course = courses.find(c => String(c.id) === String(reopenTrainingId));
+                if (course) {
+                    showCourseDetailInModal(course.id);
+                    document.getElementById('day-modal').style.display = 'flex';
+                }
+            }
+
             // 页面重新可见时刷新数据（用户从考试窗口返回后能看到最新完成状态）
             document.addEventListener('visibilitychange', async () => {
                 if (document.visibilityState === 'visible') {
@@ -2854,21 +2875,20 @@
         
         // 渲染轮播
         function renderGalleryCarousel() {
-            const sectionEl = document.getElementById('gallery-carousel-section');
             const emptyEl = document.getElementById('gallery-carousel-empty');
             const carouselEl = document.getElementById('gallery-carousel');
+            const sectionEl = document.getElementById('main-gallery-section');
 
-            if (sectionEl) {
-                sectionEl.classList.toggle('hidden', galleryCarouselData.length === 0);
-            }
             if (!emptyEl || !carouselEl) return;
 
             if (galleryCarouselData.length === 0) {
                 emptyEl.classList.remove('hidden');
                 carouselEl.classList.add('hidden');
+                if (sectionEl) sectionEl.classList.add('hidden');
                 return;
             }
 
+            if (sectionEl) sectionEl.classList.remove('hidden');
             emptyEl.classList.add('hidden');
             carouselEl.classList.remove('hidden');
 

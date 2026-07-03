@@ -670,7 +670,7 @@
     <script src="data-api.js"></script>
     <script src="js/auth-modal.js"></script>
     <script src="js/auth-guard.js"></script>
-    <script src="js/notification.js?v=20260623"></script>
+    <script src="js/notification.js?v=20260703"></script>
     <!-- JavaScript -->
     <script>
         // ==================== 全局变量 ====================
@@ -836,7 +836,9 @@
         function updateVideoProgress(videoIndex, progress) {
             if (!courseId) { console.warn('[Player] updateVideoProgress 跳过：courseId 为空'); return; }
             const userId = getUserId();
+            console.log(`[Player] updateVideoProgress userId=${userId} courseId=${courseId} idx=${videoIndex} progress=${progress}`);
             const result = window.DataAPI.updateVideoProgress(userId, courseId, videoIndex, progress);
+            console.log(`[Player] updateVideoProgress 结果:`, result);
             if (result && result.isCourseCompleted) showCourseCompletedNotification();
             updateCourseProgressUI();
         }
@@ -991,32 +993,53 @@
         async function loadCourseData() {
             const api = window.DataAPI;
             const courseId = getCourseIdFromUrl();
-
+            
+            console.log('[Player] ===== 开始加载课程数据 =====');
+            console.log('[Player] URL中的courseId:', courseId);
+            console.log('[Player] 当前URL:', window.location.href);
+            console.log('[Player] DataAPI是否存在:', !!api);
+            
             if (!courseId) {
-                console.error('[Player] 未找到courseId参数');
+                console.error('[Player]  未找到courseId参数');
                 return null;
             }
-
+            
             // 优先从服务器获取
             try {
+                console.log('[Player] 正在从服务器获取课程数据...');
                 const response = await fetch('/api/courses');
                 if (response.ok) {
                     const serverCourses = await response.json();
+                    console.log('[Player] 服务器返回课程数量:', serverCourses.length);
+                    if (serverCourses.length > 0) {
+                        console.log('[Player] 第一个课程ID:', serverCourses[0].id);
+                    }
                     const found = serverCourses.find(c => String(c.id) === String(courseId));
-                    if (found) return found;
+                    if (found) {
+                        console.log('[Player] ✅ 从服务器找到课程:', found.title);
+                        console.log('[Player] 课程videos数量:', found.videos?.length || 0);
+                        return found;
+                    }
+                    console.log('[Player] ❌ 服务器未找到匹配的课程');
                 }
             } catch (e) {
-                console.error('[Player] 从服务器获取课程失败:', e);
+                console.error('[Player] ❌ 从服务器获取课程失败:', e);
             }
-
+            
             // 降级到本地缓存
+            console.log('[Player] 尝试从本地缓存获取...');
             const courses = api.getCourses();
+            console.log('[Player] 本地缓存课程数量:', courses.length);
             const found = courses.find(c => String(c.id) === String(courseId));
-
-            if (!found) {
-                console.error('[Player] 本地缓存也未找到课程, courseId:', courseId);
+            
+            if (found) {
+                console.log('[Player] ✅ 从本地缓存找到课程:', found.title);
+            } else {
+                console.error('[Player] ❌ 本地缓存也未找到课程, courseId:', courseId);
+                console.log('[Player] 本地缓存中的所有课程IDs:', courses.map(c => c.id));
             }
-
+            
+            console.log('[Player] ===== 结束加载课程数据 =====');
             return found || null;
         }
 
@@ -1186,6 +1209,7 @@
             document.getElementById('current-chapter-title').textContent = '正在播放：' + (v.title || `课时 ${videoIdx + 1}`);
 
             if (src && src.trim() !== '') {
+                console.log('[Player] 加载视频:', src);
                 sourceEl.src = src;
                 videoEl.load();
                 
@@ -2502,15 +2526,20 @@
 
         // ==================== 初始化 ====================
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('[Player] 页面开始初始化...');
             checkAuthAndUpdateUI();
             loadLearningSettings();
             initKeyboardShortcuts();
 
+            console.log('[Player] 正在初始化DataAPI...');
             if (window.DataAPI?.init) await window.DataAPI.init();
+            console.log('[Player] DataAPI初始化完成');
 
+            console.log('[Player] 正在加载课程数据...');
             const course = await loadCourseData();
-
+            
             if (course) {
+                console.log('[Player] 课程加载成功，开始渲染页面...');
                 populatePlayerPage(course);
                 loadCurrentSessionStudyTime();
                 bindContinueButton();

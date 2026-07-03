@@ -6,8 +6,8 @@ data/
 *.db
 *.db-journal
 
-# 上传文件（运行时生成）
-uploads/
+# 上传文件（运行时生成 - 视频太大不上传）
+uploads/videos/
 
 # 构建输出
 dist/

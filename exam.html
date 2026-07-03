@@ -110,7 +110,7 @@
       </div>
       <p id="error-msg" class="text-lg font-medium text-slate-700 mb-2">加载失败</p>
       <p id="error-detail" class="text-sm text-slate-400 mb-6"></p>
-      <button onclick="goBackOrFallback()" class="px-6 py-2.5 bg-gradient-primary text-white rounded-xl text-sm font-medium hover:opacity-90 transition">返回</button>
+      <button onclick="goBack()" class="px-6 py-2.5 bg-gradient-primary text-white rounded-xl text-sm font-medium hover:opacity-90 transition">返回</button>
     </div>
 
     <!-- 答题界面 -->
@@ -225,8 +225,8 @@
 
       <!-- 操作按钮 -->
       <div class="mt-6 flex gap-3">
-        <button onclick="location.href='center.html'" class="flex-1 py-3 bg-gradient-primary text-white rounded-xl font-semibold text-sm hover:opacity-90 transition shadow-md shadow-primary/20">
-          <i class="fa fa-home mr-1"></i>返回个人中心
+        <button onclick="goBack()" class="flex-1 py-3 bg-gradient-primary text-white rounded-xl font-semibold text-sm hover:opacity-90 transition shadow-md shadow-primary/20">
+          <i class="fa fa-arrow-left mr-1"></i>返回
         </button>
         <button id="btn-retake" class="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-50 transition">
           <i class="fa fa-refresh mr-1"></i>重新考试
@@ -268,6 +268,8 @@
     const params = new URLSearchParams(location.search);
     const examId = params.get('id');
     const attemptId = params.get('attemptId');
+    const returnUrl = params.get('returnUrl');
+    const fromTrainingId = params.get('trainingId');
     let examData = null;
     let questions = [];
     let userAnswers = {};
@@ -286,6 +288,29 @@
       try { return s ? JSON.parse(s) : null; } catch(e) { return null; }
     }
     function escapeHtml(s){ if(!s)return''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+    // 根据进入来源决定返回地址（优先使用传入的 returnUrl，其次取 referrer，兜底首页）
+    function getReturnUrl(){
+      if (returnUrl) {
+        try { return decodeURIComponent(returnUrl); } catch(e) { return returnUrl; }
+      }
+      const ref = document.referrer;
+      if (ref && !ref.includes('/exam.html')) {
+        try {
+          const u = new URL(ref);
+          return (u.pathname + u.search + u.hash).replace(/^\//, '');
+        } catch(e) {}
+      }
+      return 'index.html';
+    }
+    function goBack(){
+      const url = getReturnUrl();
+      // 若返回培训页且携带了培训ID，先把ID存起来，让培训页自动重新打开弹窗
+      if (fromTrainingId && url.includes('training-plan.html')) {
+        sessionStorage.setItem('reopenTrainingId', fromTrainingId);
+      }
+      location.href = url;
+    }
     function toast(msg,type){
       const el=document.createElement('div'); el.className='toast '+(type||'success'); el.textContent=msg;
       document.body.appendChild(el); setTimeout(()=>el.remove(),3500);
@@ -320,22 +345,6 @@
     }
     function closeConfirm(){ document.getElementById('confirm-modal').classList.add('hidden'); confirmCallback=null; }
     function onConfirmOk(){ if(confirmCallback){const cb=confirmCallback;closeConfirm();cb();} }
-
-    // 返回上一个页面；无可靠来源时回退到培训计划页
-    function goBackOrFallback(fallbackUrl='training-plan.html'){
-      const referrer=document.referrer;
-      if(referrer){
-        try{
-          const refUrl=new URL(referrer);
-          if(refUrl.host===location.host && !refUrl.pathname.includes('/exam.html')){
-            location.href=referrer;
-            return;
-          }
-        }catch(e){}
-      }
-      if(history.length>1){ history.back(); }
-      else { location.href=fallbackUrl; }
-    }
 
     // ========== 加载考试 ==========
     async function loadExam(){
@@ -418,7 +427,7 @@
           id:d.questionId,
           content:d.title,
           type:d.type,
-          options:Object.entries(d.options||{}).map(([k,v])=>({label:k,text:v})),
+          options: Array.isArray(d.options) ? d.options : Object.entries(d.options||{}).map(([k,v])=>v),
           answer:d.correctAnswer,
           analysis:d.analysis,
           score:d.score
@@ -436,12 +445,13 @@
             questionId:d.questionId,
             type:d.type,
             content:d.title,
-            options:Object.entries(d.options||{}).map(([k,v])=>({label:k,text:v})),
+            options: Array.isArray(d.options) ? d.options : Object.entries(d.options||{}).map(([k,v])=>v),
             userAnswer:d.userAnswer,
             correctAnswer:d.correctAnswer,
             isCorrect:d.isCorrect,
             analysis:d.analysis,
-            score:d.score
+            score:d.score,
+            fullScore:d.fullScore
           }))
         };
         showResult(result);
@@ -780,14 +790,14 @@
           async ()=>{
             clearInterval(timerHandle);
             await abandonExam(); // 未交卷退出时同步放弃/清理尝试记录
-            goBackOrFallback();
+            goBack();
           }
         );
         return;
       }
       // 非答题页直接返回
       clearInterval(timerHandle);
-      goBackOrFallback();
+      goBack();
     }
 
     // ========== 交卷 ==========
@@ -1016,7 +1026,7 @@
                 <div class="flex flex-wrap items-center gap-2 mb-1.5">
                   <span class="type-badge ${d.type}"><i class="fa ${typeIcon[d.type]||'fa-question'}"></i>${typeMap[d.type]||'未知'}</span>
                   <span class="text-xs text-slate-400 font-medium">第 ${qNum} 题</span>
-                  <span class="text-xs font-bold ${d.isCorrect?'text-emerald-500':'text-red-500'}">+${d.isCorrect?d.score:0}/${d.score||1}分</span>
+                  <span class="text-xs font-bold ${d.score>0?'text-emerald-500':'text-red-500'}">+${d.score||0}/${d.fullScore!==undefined&&d.fullScore!==null?d.fullScore:(d.score||1)}分</span>
                 </div>
                 <p class="text-sm text-slate-700 leading-relaxed font-medium">${escapeHtml(d.content)}</p>
               </div>
@@ -1064,7 +1074,12 @@
       // 重新考试按钮：从历史记录进入时跳转到考试页，正常交卷后刷新
       const retakeBtn=document.getElementById('btn-retake');
       if(retakeBtn){
-        retakeBtn.onclick=attemptId?()=>location.href='exam.html?id='+examData.id:()=>location.reload();
+        retakeBtn.onclick=()=>{
+          let href='exam.html?id='+examData.id;
+          if (returnUrl) href += '&returnUrl=' + encodeURIComponent(returnUrl);
+          if (fromTrainingId) href += '&trainingId=' + encodeURIComponent(fromTrainingId);
+          location.href = href;
+        };
       }
     }
 

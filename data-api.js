@@ -282,6 +282,9 @@
                 });
                 return response.ok;
             } catch (e) {
+                if (e && (e.name === 'AbortError' || /aborted|cancel/i.test(e.message))) {
+                    return false;
+                }
                 console.error(`[DataAPI] 同步 ${key} 到服务器失败:`, e);
                 return false;
             }

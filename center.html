@@ -13,11 +13,74 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#667eea',
-                        secondary: '#764ba2',
-                        dark: '#0f172a',
-                        darkgray: '#1f2937'
-                    }
+                            primary: '#667eea',
+                            secondary: '#764ba2',
+                            dark: '#0f172a',
+                            darkgray: '#1f2937',
+                            lightgreen: {
+                                100: '#dcfce7',
+                                200: '#bbf7d0',
+                                300: '#86efac',
+                                400: '#4ade80',
+                                500: '#22c55e',
+                                600: '#16a34a',
+                                700: '#15803d'
+                            },
+                            skyblue: {
+                                100: '#e0f2fe',
+                                200: '#bae6fd',
+                                300: '#7dd3fc',
+                                400: '#38bdf8',
+                                500: '#0ea5e9',
+                                600: '#0284c7',
+                                700: '#0369a1'
+                            },
+                            deepblue: {
+                                100: '#dbeafe',
+                                200: '#bfdbfe',
+                                300: '#93c5fd',
+                                400: '#60a5fa',
+                                500: '#3b82f6',
+                                600: '#1e40af',
+                                700: '#1e3a8a'
+                            },
+                            gold: {
+                                100: '#fef9c3',
+                                200: '#fef08a',
+                                300: '#fde047',
+                                400: '#facc15',
+                                500: '#eab308',
+                                600: '#ca8a04',
+                                700: '#a16207'
+                            },
+                            bronze: {
+                                100: '#f3e8d8',
+                                200: '#e6d0b3',
+                                300: '#d4b08c',
+                                400: '#cd7f32',
+                                500: '#b87333',
+                                600: '#8c5322',
+                                700: '#6b3e1a'
+                            },
+                            silver: {
+                                100: '#f3f4f6',
+                                200: '#e5e7eb',
+                                300: '#d1d5db',
+                                400: '#c0c0c0',
+                                500: '#9ca3af',
+                                600: '#6b7280',
+                                700: '#4b5563'
+                            },
+                            diamond: {
+                                100: '#e0f2fe',
+                                200: '#bae6fd',
+                                300: '#7dd3fc',
+                                400: '#38bdf8',
+                                500: '#0ea5e9',
+                                600: '#0284c7',
+                                700: '#0369a1'
+                            }
+                        }
                 }
             },
             darkMode: 'class'
@@ -887,12 +950,13 @@
     <script src="js/auth-guard.js"></script>
     <script src="js/data-sync.js"></script>
     <script src="data-api.js"></script>
-    <script src="js/notification.js?v=20260622"></script>
+    <script src="js/notification.js?v=20260703"></script>
     <script>
         const api = window.DataAPI;
         let currentUser = null;
         let learningRecords = [];
         let statsChart = null;
+        let userTrainingCount = 0;
 
         // 徽章定义
         // 徽章分类配置
@@ -901,24 +965,24 @@ const BADGES = [
             { id: 'learner-1', name: '学习新手', icon: 'fa-hourglass-start', color: 'gray', desc: '累计学习1小时', condition: (u, d) => d.hours >= 1 },
             { id: 'learner-10', name: '学习达人', icon: 'fa-fire', color: 'orange', desc: '累计学习10小时', condition: (u, d) => d.hours >= 10 },
             { id: 'learner-50', name: '学习高手', icon: 'fa-rocket', color: 'red', desc: '累计学习50小时', condition: (u, d) => d.hours >= 50 },
-            { id: 'learner-100', name: '学习专家', icon: 'fa-star', color: 'blue', desc: '累计学习100小时', condition: (u, d) => d.hours >= 100 },
-            { id: 'learner-300', name: '学习大师', icon: 'fa-trophy', color: 'purple', desc: '累计学习300小时', condition: (u, d) => d.hours >= 300 },
+            { id: 'learner-100', name: '学习专家', icon: 'fa-flask', color: 'blue', desc: '累计学习100小时', condition: (u, d) => d.hours >= 100 },
+            { id: 'learner-300', name: '学习大师', icon: 'fa-bolt', color: 'purple', desc: '累计学习300小时', condition: (u, d) => d.hours >= 300 },
             { id: 'learner-500', name: '学习宗师', icon: 'fa-diamond', color: 'indigo', desc: '累计学习500小时', condition: (u, d) => d.hours >= 500 },
             
             // 课程完成类 (6个) - 一年内可达：每月2-3门
-            { id: 'course-1', name: '课程新手', icon: 'fa-star', color: 'yellow', desc: '完成第一门课程', condition: (u, d) => d.completed >= 1 },
-            { id: 'course-5', name: '课程达人', icon: 'fa-graduation-cap', color: 'blue', desc: '完成5门课程', condition: (u, d) => d.completed >= 5 },
+            { id: 'course-1', name: '课程新手', icon: 'fa-play-circle', color: 'yellow', desc: '完成第一门课程', condition: (u, d) => d.completed >= 1 },
+            { id: 'course-5', name: '课程达人', icon: 'fa-check-square-o', color: 'blue', desc: '完成5门课程', condition: (u, d) => d.completed >= 5 },
             { id: 'course-10', name: '课程高手', icon: 'fa-book', color: 'teal', desc: '完成10门课程', condition: (u, d) => d.completed >= 10 },
             { id: 'course-20', name: '课程专家', icon: 'fa-university', color: 'purple', desc: '完成20门课程', condition: (u, d) => d.completed >= 20 },
-            { id: 'course-30', name: '课程大师', icon: 'fa-trophy', color: 'yellow', desc: '完成30门课程', condition: (u, d) => d.completed >= 30 },
-            { id: 'course-50', name: '课程宗师', icon: 'fa-graduation-cap', color: 'red', desc: '完成50门课程', condition: (u, d) => d.completed >= 50 },
+            { id: 'course-30', name: '课程大师', icon: 'fa-plane', color: 'yellow', desc: '完成30门课程', condition: (u, d) => d.completed >= 30 },
+            { id: 'course-50', name: '课程宗师', icon: 'fa-bank', color: 'red', desc: '完成50门课程', condition: (u, d) => d.completed >= 50 },
             
             // 连续学习类 (6个) - 合理递进
             { id: 'streak-3', name: '初露锋芒', icon: 'fa-leaf', color: 'green', desc: '连续学习3天', condition: (u, d) => d.streak >= 3 },
-            { id: 'streak-7', name: '坚持不懈', icon: 'fa-calendar-check-o', color: 'green', desc: '连续学习7天', condition: (u, d) => d.streak >= 7 },
+            { id: 'streak-7', name: '坚持不懈', icon: 'fa-calendar-o', color: 'green', desc: '连续学习7天', condition: (u, d) => d.streak >= 7 },
             { id: 'streak-30', name: '持之以恒', icon: 'fa-flag-checkered', color: 'purple', desc: '连续学习30天', condition: (u, d) => d.streak >= 30 },
             { id: 'streak-60', name: '两月达人', icon: 'fa-calendar', color: 'orange', desc: '连续学习60天', condition: (u, d) => d.streak >= 60 },
-            { id: 'streak-90', name: '季度学霸', icon: 'fa-trophy', color: 'blue', desc: '连续学习90天', condition: (u, d) => d.streak >= 90 },
+            { id: 'streak-90', name: '季度学霸', icon: 'fa-line-chart', color: 'blue', desc: '连续学习90天', condition: (u, d) => d.streak >= 90 },
             { id: 'streak-100', name: '百日树人', icon: 'fa-tree', color: 'green', desc: '连续学习100天', condition: (u, d) => d.streak >= 100 },
             
             // 特殊时段类 (3个) - 覆盖全天时段
@@ -932,16 +996,30 @@ const BADGES = [
             { id: 'perfect-score', name: '满分学霸', icon: 'fa-check-circle', color: 'green', desc: '考试获得满分', condition: (u, d) => d.perfectScore },
             
             // 社交互动类 (3个) - 评分、分享、点赞
-            { id: 'rater', name: '评分达人', icon: 'fa-star-half-o', color: 'blue', desc: '评分5个课程', condition: (u, d) => d.ratings >= 5 },
+            { id: 'rater', name: '评分达人', icon: 'fa-thumbs-o-up', color: 'blue', desc: '评分5个课程', condition: (u, d) => d.ratings >= 5 },
             { id: 'sharer', name: '分享达人', icon: 'fa-share-alt', color: 'green', desc: '分享5个课程', condition: (u, d) => d.shares >= 5 },
             { id: 'liker', name: '点赞达人', icon: 'fa-heart', color: 'red', desc: '点赞5个课程', condition: (u, d) => d.likes >= 5 },
             
             // 里程碑类 (4个) - 注册时间纪念
             { id: 'day-7', name: '新人报到', icon: 'fa-hand-o-up', color: 'green', desc: '注册满7天', condition: (u, d) => d.days >= 7 },
-            { id: 'day-30', name: '月度之星', icon: 'fa-star-half-o', color: 'orange', desc: '注册满30天', condition: (u, d) => d.days >= 30 },
+            { id: 'day-30', name: '月度之星', icon: 'fa-star-o', color: 'orange', desc: '注册满30天', condition: (u, d) => d.days >= 30 },
             { id: 'day-100', name: '百日纪念', icon: 'fa-birthday-cake', color: 'pink', desc: '注册满100天', condition: (u, d) => d.days >= 100 },
-            { id: 'day-200', name: '半年纪念', icon: 'fa-calendar-check-o', color: 'purple', desc: '注册满200天', condition: (u, d) => d.days >= 200 },
-            { id: 'day-365', name: '资深学员', icon: 'fa-graduation-cap', color: 'yellow', desc: '注册满一年', condition: (u, d) => d.days >= 365 }
+            { id: 'day-200', name: '半年纪念', icon: 'fa-clock-o', color: 'purple', desc: '注册满200天', condition: (u, d) => d.days >= 200 },
+            { id: 'day-365', name: '资深学员', icon: 'fa-user', color: 'yellow', desc: '注册满一年', condition: (u, d) => d.days >= 365 },
+
+            // 培训参与类 (5个) - 累计参加培训场数
+            { id: 'training-1', name: '初出茅庐', icon: 'fa-envira', color: 'lightgreen', desc: '参加1场培训', condition: (u, d) => d.trainingCount >= 1 },
+            { id: 'training-5', name: '勤学好问', icon: 'fa-folder-open', color: 'skyblue', desc: '参加5场培训', condition: (u, d) => d.trainingCount >= 5 },
+            { id: 'training-10', name: '孜孜不倦', icon: 'fa-files-o', color: 'deepblue', desc: '参加10场培训', condition: (u, d) => d.trainingCount >= 10 },
+            { id: 'training-20', name: '学海无涯', icon: 'fa-ship', color: 'purple', desc: '参加20场培训', condition: (u, d) => d.trainingCount >= 20 },
+            { id: 'training-30', name: '百炼成钢', icon: 'fa-cogs', color: 'gold', desc: '参加30场培训', condition: (u, d) => d.trainingCount >= 30 },
+
+            // 证书获得类 (5个) - 累计获得证书数量
+            { id: 'certificate-1', name: '一证在手', icon: 'fa-shield', color: 'bronze', desc: '获得第1张证书', condition: (u, d) => d.certificateCount >= 1 },
+            { id: 'certificate-3', name: '小有成就', icon: 'fa-key', color: 'silver', desc: '获得第3张证书', condition: (u, d) => d.certificateCount >= 3 },
+            { id: 'certificate-5', name: '证书达人', icon: 'fa-trophy', color: 'gold', desc: '获得第5张证书', condition: (u, d) => d.certificateCount >= 5 },
+            { id: 'certificate-10', name: '荣誉满载', icon: 'fa-flag-o', color: 'diamond', desc: '获得第10张证书', condition: (u, d) => d.certificateCount >= 10 },
+            { id: 'certificate-20', name: '权威认证', icon: 'fa-balance-scale', color: 'red', desc: '获得第20张证书', condition: (u, d) => d.certificateCount >= 20 }
         ];
 
         // 初始化
@@ -951,6 +1029,7 @@ const BADGES = [
             loadUserData();
             initTabNavigation();
             await loadExamRecordsFromServer(); // 拉取服务端考试记录用于徽章计算
+            await loadUserTrainingStatsFromServer(); // 拉取服务端培训统计用于徽章计算
             loadAllData();
             loadActivityTimeline();
             loadBadges();
@@ -975,6 +1054,23 @@ const BADGES = [
                 }
             } catch (e) {
                 console.warn('[考试记录] 拉取失败:', e);
+            }
+        }
+
+        // 从服务端拉取用户培训参与数量，供徽章计算使用
+        async function loadUserTrainingStatsFromServer() {
+            const user = getLoggedInUser();
+            if (!user) return;
+            try {
+                const res = await fetch('/api/user/trainings', {
+                    headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || sessionStorage.getItem('token') || '') }
+                });
+                const result = await res.json();
+                if (result.success && typeof result.count === 'number') {
+                    userTrainingCount = result.count;
+                }
+            } catch (e) {
+                console.warn('[培训统计] 拉取失败:', e);
             }
         }
 
@@ -1128,7 +1224,9 @@ const BADGES = [
                 ratings: ratingsCount,
                 perfectScore: examRecords.some(e => e.score === 100),
                 examCount: examRecords.length,
-                examPassed: examRecords.filter(e => e.passed).length
+                examPassed: examRecords.filter(e => e.passed).length,
+                trainingCount: userTrainingCount,
+                certificateCount: learningData.certificates?.length || 0
             };
 
             // 计算已解锁徽章数（当前满足条件 + 历史已解锁），与徽章墙展示保持一致
@@ -1282,6 +1380,7 @@ const BADGES = [
         
         // 更新学习统计数据（实时）
         function updateLearningStats() {
+            if (!currentUser || !currentUser.id) return;
             const userId = currentUser.id;
             const learningData = api.getUserLearningData(userId);
             
@@ -2382,10 +2481,10 @@ const BADGES = [
                                 </div>
                             </div>
                             <div class="flex flex-col gap-2 flex-shrink-0">
-                                <button onclick="location.href='exam.html?attemptId=${item.scoreAttempt.id}'" class="px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 bg-indigo-50 text-sm font-medium hover:bg-indigo-100 transition flex items-center justify-center gap-1">
+                                <button onclick="location.href='exam.html?attemptId=${item.scoreAttempt.id}&returnUrl=center.html'" class="px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 bg-indigo-50 text-sm font-medium hover:bg-indigo-100 transition flex items-center justify-center gap-1">
                                     <i class="fa fa-file-text-o"></i>答题详情
                                 </button>
-                                <button onclick="location.href='exam.html?id=${item.exam.id}'" class="px-4 py-2 rounded-lg bg-gradient-primary text-white text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-1">
+                                <button onclick="location.href='exam.html?id=${item.exam.id}&returnUrl=center.html'" class="px-4 py-2 rounded-lg bg-gradient-primary text-white text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-1">
                                     <i class="fa fa-redo"></i>重新考试
                                 </button>
                             </div>

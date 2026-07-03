@@ -115,30 +115,13 @@
     }
   }
 
-  // 跳转到考试页（先标已读再跳转）
+  // 跳转到考试页（先标已读再跳转，携带当前页作为返回地址）
   window.goToExam = async function (examId, notifyId) {
     if (notifyId) {
-      try {
-        var token = getToken();
-        var headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = 'Bearer ' + token;
-        await fetch('/api/notifications/' + notifyId + '/read', { method: 'PUT', headers: headers });
-      } catch(e){}
+      try { await fetch('/api/notifications/' + notifyId + '/read', { method: 'PUT' }); } catch(e){}
     }
-    window.location.href = 'exam.html?id=' + examId;
-  };
-
-  // 跳转到培训页（先标已读再跳转）
-  window.goToTraining = async function (trainingId, notifyId) {
-    if (notifyId) {
-      try {
-        var token = getToken();
-        var headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = 'Bearer ' + token;
-        await fetch('/api/notifications/' + notifyId + '/read', { method: 'PUT', headers: headers });
-      } catch(e){}
-    }
-    window.location.href = 'training-plan.html?openTrainingId=' + encodeURIComponent(trainingId);
+    var backUrl = encodeURIComponent(location.pathname.replace(/^\//, '') || 'index.html');
+    window.location.href = 'exam.html?id=' + examId + '&returnUrl=' + backUrl;
   };
 
   function renderNotificationList(list) {
@@ -158,14 +141,14 @@
       var isExam = n.type === 'exam';
       var isTraining = n.type === 'training_assign' || n.type === 'training';
       var clickAction;
-      if (isExam && n.examId) { clickAction = "goToExam(" + n.examId + ",'" + n.id + "')"; }
-      else if (isTraining && n.trainingId) { clickAction = "goToTraining(" + n.trainingId + ",'" + n.id + "')"; }
-      else { clickAction = "markNotificationRead('" + n.id + "')"; }
+      if (isExam && n.examId) { clickAction = 'goToExam(' + n.examId + ',' + n.id + ')'; }
+      else if (isTraining && n.trainingId) { clickAction = "window.location.href='training-plan.html?openTrainingId=' + encodeURIComponent(" + n.trainingId + ")"; }
+      else { clickAction = 'markNotificationRead(' + n.id + ')'; }
       var bgClass = n.read ? 'opacity-60' : (isExam ? 'bg-amber-50/30' : 'bg-blue-50/30');
       var iconColorClass = n.read ? 'text-slate-400' : (isExam ? 'text-amber-500' : 'text-primary');
       var titleColor = n.read ? '' : (isExam ? 'text-amber-600' : 'text-primary');
       var btnHtml = (isExam && n.examId)
-        ? "<button onclick=\"event.stopPropagation();goToExam(" + n.examId + ",'" + n.id + "')\" class=\"mt-2 text-xs px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:opacity-90 font-medium\"><i class=\"fa fa-play mr-1\"></i>进入考试</button>"
+        ? '<button onclick="event.stopPropagation();goToExam(' + n.examId + ',' + n.id + ')" class="mt-2 text-xs px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:opacity-90 font-medium"><i class="fa fa-play mr-1"></i>进入考试</button>'
         : '';
       return '<div class="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition cursor-pointer ' + bgClass + '" onclick="' + clickAction + '">' +
         '<div class="flex items-start gap-2">' +
@@ -252,12 +235,5 @@
     window.addEventListener('userLoginSuccess', function () { loadNotificationBadge(); });
     window.addEventListener('authChange', function () { loadNotificationBadge(); });
     window.addEventListener('userProfileUpdated', function () { loadNotificationBadge(); });
-
-    // 从浏览器缓存返回时（如按返回键），刷新徽章避免显示旧未读数
-    window.addEventListener('pageshow', function (event) {
-      if (event.persisted) {
-        loadNotificationBadge();
-      }
-    });
   }
 })();
