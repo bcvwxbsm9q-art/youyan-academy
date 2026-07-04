@@ -16180,6 +16180,19 @@
       } catch (e) { toast('删除失败: ' + e.message, 'error'); }
     }
 
+    // 兼容调研作答记录的两种 answers 格式：数组或对象
+    function normalizeSurveyAnswers(answers) {
+      if (!answers) return [];
+      if (Array.isArray(answers)) return answers;
+      if (typeof answers === 'object') {
+        return Object.entries(answers).map(([questionId, value]) => ({
+          questionId: isNaN(Number(questionId)) ? questionId : Number(questionId),
+          value
+        }));
+      }
+      return [];
+    }
+
     async function viewSurveyResponses(surveyId) {
       try {
         const [res, surveyRes] = await Promise.all([
@@ -16192,8 +16205,12 @@
         const survey = surveyJson.data || {};
         const questions = survey.questions || [];
 
-        // 缓存数据供导出使用
-        window._surveyExportData = { survey, questions, responses };
+        // 缓存数据供导出使用（将对象格式 answers 统一为数组，避免后续处理报错）
+        window._surveyExportData = {
+          survey,
+          questions,
+          responses: responses.map(r => ({ ...r, answers: normalizeSurveyAnswers(r.answers) }))
+        };
 
         const modal = document.createElement('div');
         modal.className = 'survey-modal-overlay fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center pt-8 pb-8';
@@ -16203,9 +16220,9 @@
         const questionStats = questions.map(q => {
           const stats = { question: q, answers: {} };
           responses.forEach(r => {
-            const answer = (r.answers || []).find(a => a.questionId === q.id);
-            if (answer) {
-              const key = Array.isArray(answer.value) ? answer.value.join(', ') : (answer.value || '未回答');
+            const answer = normalizeSurveyAnswers(r.answers).find(a => String(a.questionId) === String(q.id));
+            if (answer && answer.value !== undefined && answer.value !== null && answer.value !== '') {
+              const key = Array.isArray(answer.value) ? answer.value.join(', ') : String(answer.value);
               stats.answers[key] = (stats.answers[key] || 0) + 1;
             }
           });
@@ -16294,14 +16311,14 @@
       const { survey, questions, responses } = data;
       const headers = ['序号', '姓名', '部门', '提交时间', ...questions.map((q, i) => (i+1) + '.' + (q.title || '题目' + (i+1)))];
       const rows = responses.map((r, i) => {
-        const answers = r.answers || [];
+        const answers = normalizeSurveyAnswers(r.answers);
         return [
           i + 1,
           r.userName || '匿名用户',
           r.department || '',
           r.submittedAt ? new Date(r.submittedAt).toLocaleString('zh-CN') : '-',
           ...questions.map(q => {
-            const a = answers.find(x => x.questionId === q.id);
+            const a = answers.find(x => String(x.questionId) === String(q.id));
             if (!a) return '';
             return Array.isArray(a.value) ? a.value.join('; ') : String(a.value || '');
           })
@@ -16326,14 +16343,14 @@
       const { questions, responses } = data;
       const r = responses[responseIdx];
       if (!r) return;
-      const answers = r.answers || [];
+      const answers = normalizeSurveyAnswers(r.answers);
 
       const detailModal = document.createElement('div');
       detailModal.className = 'survey-modal-overlay fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-start justify-center pt-8 pb-8';
       detailModal.onclick = function(e) { if (e.target === this) this.remove(); };
 
       const answerHtml = questions.map((q, qi) => {
-        const a = answers.find(x => x.questionId === q.id);
+        const a = answers.find(x => String(x.questionId) === String(q.id));
         let val = '未回答';
         if (a) {
           if (q.type === 'rating') {

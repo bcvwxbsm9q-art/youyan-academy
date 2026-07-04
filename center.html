@@ -1248,6 +1248,18 @@ const BADGES = [
             };
         }
 
+        // 统一刷新三处徽章数量 UI（顶部统计卡、成就页计数、等级进度）
+        function updateBadgeStatsUI(allUnlockedIds) {
+            const count = allUnlockedIds.length;
+            const total = BADGES.length;
+            const statBadges = document.getElementById('stat-badges');
+            const statTotal = document.getElementById('stat-total-badges');
+            const badgeCount = document.getElementById('badge-count');
+            if (statBadges) statBadges.textContent = count;
+            if (statTotal) statTotal.textContent = total;
+            if (badgeCount) badgeCount.textContent = `${count}/${total}`;
+        }
+
         // 统一计算已解锁徽章ID（当前满足条件 + 历史已解锁）
         function calculateUnlockedBadgeIds() {
             const userId = currentUser?.id;
@@ -1411,12 +1423,11 @@ const BADGES = [
             document.getElementById('stats-completed-courses').textContent = completedCount;
             document.getElementById('stat-completed').textContent = completedCount;
             
-            // 成就徽章数量
+            // 成就徽章数量（统一使用同一套计算和 UI 刷新）
             const stats = getBadgeStats();
             const { allIds: unlockedBadgeIds } = calculateUnlockedBadgeIds();
             if (currentUser?.id) localStorage.setItem(`badges_unlocked_${currentUser.id}`, JSON.stringify(unlockedBadgeIds));
-            document.getElementById('stat-badges').textContent = unlockedBadgeIds.length;
-            document.getElementById('stat-total-badges').textContent = BADGES.length;
+            updateBadgeStatsUI(unlockedBadgeIds);
 
             // 更新顶部等级和经验值（统一使用 calculateTotalExp 计算规则）
             const totalExp = getTotalExp(stats);
@@ -1835,9 +1846,8 @@ const BADGES = [
                 }
             }
             
-            // 更新徽章计数（显示已解锁/总数）
-            const badgeCount = document.getElementById('badge-count');
-            if (badgeCount) badgeCount.textContent = `${allUnlockedBadges.length}/${BADGES.length}`;
+            // 统一刷新三处徽章数量 UI
+            updateBadgeStatsUI(allUnlockedIds);
         }
         
         // 加载所有徽章（成就页）
@@ -1887,6 +1897,9 @@ const BADGES = [
                 showNewBadgeToast(newlyUnlocked);
             }
             
+            // 统一刷新三处徽章数量 UI
+            updateBadgeStatsUI(allUnlockedIds);
+
             // 渲染等级进度（使用改进的经验值系统）
             renderLevelProgress(stats);
         }

@@ -26,7 +26,7 @@
       "role": "admin",
       "avatar": "",
       "createdAt": "2026/6/10 18:23:41",
-      "lastLogin": "2026/6/30 18:04:55",
+      "lastLogin": "2026/7/4 09:54:42",
       "status": "active"
     },
     {
@@ -1277,31 +1277,6 @@
   ],
   "management_courses": [
     {
-      "title": "KMP算法",
-      "cover": "/uploads/covers/1781064606612-462016602.png",
-      "categoryId": 1780974142620,
-      "subcategoryId": 1780974152980,
-      "lecturerId": 1781063989679,
-      "description": "123",
-      "status": "published",
-      "videos": [
-        {
-          "url": "/uploads/videos/1781064618648-778697615.mp4",
-          "title": "KMP算法.mp4",
-          "size": 52811693,
-          "type": "video/mp4",
-          "duration": 1644
-        }
-      ],
-      "attachments": [],
-      "duration": 1644,
-      "views": 79,
-      "rating": 3.5,
-      "id": 1781064630171,
-      "createdAt": "2026/6/10 12:10:30",
-      "updatedAt": "2026/7/4 09:17:12"
-    },
-    {
       "title": "角色技能设计思路",
       "cover": "/uploads/covers/1781065247208-838171173.png",
       "categoryId": 1780973996285,
@@ -1567,7 +1542,7 @@
       "videos": [],
       "attachments": [],
       "duration": 0,
-      "views": 1,
+      "views": 2,
       "rating": 0,
       "id": 1782715908220,
       "createdAt": "2026/6/29 14:51:48",
@@ -2409,8 +2384,9 @@
       "type": "training",
       "trainingId": 1781148703132,
       "id": 1782700490786,
-      "read": false,
-      "createdAt": "2026-06-29T02:34:50.786Z"
+      "read": true,
+      "createdAt": "2026-06-29T02:34:50.786Z",
+      "readAt": "2026-07-04T01:55:51.321Z"
     },
     {
       "id": 1782784028012,
@@ -2430,8 +2406,9 @@
       "content": "您已被指派参加「AI原画技巧」培训，请尽快完成相关任务。",
       "type": "training_assign",
       "trainingId": 1781148838222,
-      "read": false,
-      "createdAt": "2026-06-30T01:39:36.989Z"
+      "read": true,
+      "createdAt": "2026-06-30T01:39:36.989Z",
+      "readAt": "2026-07-04T01:55:46.311Z"
     },
     {
       "id": 1782783997928,
@@ -2611,8 +2588,9 @@
       "content": "您有一场新考试「166」待参加，考试时长60分钟，及格分数80分，请尽快完成。",
       "type": "exam",
       "examId": 1783072915672,
-      "read": false,
-      "createdAt": "2026-07-03T10:01:55.684Z"
+      "read": true,
+      "createdAt": "2026-07-03T10:01:55.684Z",
+      "readAt": "2026-07-04T01:55:56.235Z"
     },
     {
       "id": 1783072915686,
@@ -6166,19 +6144,6 @@
   ],
   "lecturer_payment_records": [
     {
-      "id": 1783090594306,
-      "lecturerId": 1780911271132,
-      "date": "2026-07-03",
-      "type": "course",
-      "courseId": 1781064630171,
-      "trainingId": null,
-      "manualText": null,
-      "averageRating": 3.5,
-      "bonus": 500,
-      "createdAt": "2026-07-03T14:56:34.306Z",
-      "updatedAt": "2026-07-03T14:56:34.306Z"
-    },
-    {
       "id": 1783127350084,
       "lecturerId": 1780911271132,
       "date": "2026-07-04",
@@ -6192,17 +6157,17 @@
       "updatedAt": "2026-07-04T01:09:10.084Z"
     },
     {
-      "id": 1783127706931,
+      "id": 1783129940051,
       "lecturerId": 1780911271132,
       "date": "2026-07-04",
       "type": "training",
       "courseId": null,
-      "trainingId": 1781148703132,
+      "trainingId": 1783072924613,
       "manualText": null,
-      "averageRating": 5,
-      "bonus": 300,
-      "createdAt": "2026-07-04T01:15:06.931Z",
-      "updatedAt": "2026-07-04T01:15:06.931Z"
+      "averageRating": 4.9,
+      "bonus": 200,
+      "createdAt": "2026-07-04T01:52:20.051Z",
+      "updatedAt": "2026-07-04T01:52:20.051Z"
     }
   ]
 }

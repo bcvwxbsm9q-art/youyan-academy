@@ -1924,7 +1924,8 @@
             const doneCount = requiredItems.filter(i => i.status === '已完成').length;
             const progressPct = requiredItems.length > 0 ? Math.round(doneCount / requiredItems.length * 100) : 0;
 
-            const topInfo = `
+            // 未报名学员不显示培训完成进度
+            const topInfo = isEnrolled ? `
                 <div class="tp-progress-top">
                     <div class="tp-progress-label">
                         <span>培训进度</span>
@@ -1932,7 +1933,7 @@
                     </div>
                     <div class="tp-progress-track"><div class="tp-progress-fill" style="width:${progressPct}%"></div></div>
                     <div class="tp-progress-pct">已完成 ${progressPct}%</div>
-                </div>`;
+                </div>` : '';
             const listHtml = items.map((item, idx) => {
                 // 状态统一在右侧按钮展示，不在卡片下方显示“待完成/待签到”等提醒
                 const statusHtml = '';
