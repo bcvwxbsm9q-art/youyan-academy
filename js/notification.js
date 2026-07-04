@@ -118,7 +118,12 @@
   // 跳转到考试页（先标已读再跳转，携带当前页作为返回地址）
   window.goToExam = async function (examId, notifyId) {
     if (notifyId) {
-      try { await fetch('/api/notifications/' + notifyId + '/read', { method: 'PUT' }); } catch(e){}
+      try {
+        var token = getToken();
+        var headers = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        await fetch('/api/notifications/' + notifyId + '/read', { method: 'PUT', headers: headers });
+      } catch(e){}
     }
     var backUrl = encodeURIComponent(location.pathname.replace(/^\//, '') || 'index.html');
     window.location.href = 'exam.html?id=' + examId + '&returnUrl=' + backUrl;

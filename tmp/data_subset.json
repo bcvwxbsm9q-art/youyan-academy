@@ -1,0 +1,1073 @@
+﻿{
+    "training_events":  [
+                            {
+                                "project":  "AI实践分享",
+                                "name":  "AI小白的日常",
+                                "content":  "",
+                                "instructor":  "魏少银",
+                                "location":  "B区培训室",
+                                "date":  "2026-06-30",
+                                "startTime":  "2026-06-30T08:30",
+                                "endTime":  "2026-06-30T10:30",
+                                "id":  1781148703132,
+                                "signinEnabled":  true,
+                                "signinCode":  "6248",
+                                "linkedSurveyId":  1781170180951,
+                                "linkedExamId":  1782468162514,
+                                "signinStartTime":  "2026-06-26 17:30",
+                                "signinEndTime":  "2026-06-27 18:30",
+                                "accessType":  "restricted",
+                                "allowedUsers":  [
+                                                     1782783422496,
+                                                     1780909174403,
+                                                     1781087021554,
+                                                     1782783451005,
+                                                     1782783484378,
+                                                     1782783507741,
+                                                     1782783520741,
+                                                     1782783537268,
+                                                     1782783556507,
+                                                     1782805446347,
+                                                     1782805459054
+                                                 ],
+                                "coursewareFiles":  [
+                                                        "@{name=KMPç®æ³2025.6ï¼æå²¸ï¼.pptx; url=/uploads/training/1781148703132/1782521879719-221650836.pptx; size=1404075; uploadedAt=2026-06-27T00:57:59.865Z}"
+                                                    ],
+                                "examEnabled":  true,
+                                "surveyEnabled":  true,
+                                "coursewareEnabled":  true
+                            },
+                            {
+                                "project":  "鸿雁计划",
+                                "name":  "微信小游戏接入流程详解",
+                                "content":  "",
+                                "instructor":  "吴佳宝",
+                                "location":  "B区培训室",
+                                "date":  "2026-06-17",
+                                "startTime":  "2026-06-17T11:00",
+                                "endTime":  "2026-06-17T12:00",
+                                "id":  1781148746172,
+                                "signinEnabled":  false,
+                                "signinCode":  null,
+                                "linkedSurveyId":  1781170180951,
+                                "linkedExamId":  null
+                            },
+                            {
+                                "project":  "AI实践分享",
+                                "name":  "AI原画技巧",
+                                "content":  "",
+                                "instructor":  "王国栋",
+                                "location":  "B区培训室",
+                                "date":  "2026-06-22",
+                                "startTime":  "2026-06-22T17:00",
+                                "endTime":  "2026-06-22T18:00",
+                                "id":  1781148838222,
+                                "signinEnabled":  false,
+                                "signinCode":  null,
+                                "signinStartTime":  null,
+                                "signinEndTime":  null,
+                                "examEnabled":  false,
+                                "surveyEnabled":  false,
+                                "coursewareEnabled":  false,
+                                "linkedSurveyId":  null,
+                                "linkedExamId":  null,
+                                "accessType":  "restricted",
+                                "allowedUsers":  [
+                                                     1780909174403,
+                                                     1781087021554,
+                                                     1782783422496,
+                                                     1782783451005,
+                                                     1782783484378,
+                                                     1782783507741,
+                                                     1782783520741,
+                                                     1782783537268,
+                                                     1782783556507
+                                                 ],
+                                "coursewareFiles":  [
+
+                                                    ]
+                            },
+                            {
+                                "project":  "游雁学堂",
+                                "name":  "入职引导",
+                                "content":  "",
+                                "instructor":  "王国栋",
+                                "location":  "B区培训室",
+                                "date":  "2026-07-03",
+                                "startTime":  "2026-07-03T18:00",
+                                "endTime":  "2026-07-03T20:00",
+                                "signinEnabled":  true,
+                                "signinCode":  "6986",
+                                "signinStartTime":  "2026-07-03 18:00",
+                                "signinEndTime":  "2026-07-03 20:00",
+                                "examEnabled":  true,
+                                "surveyEnabled":  true,
+                                "coursewareEnabled":  false,
+                                "linkedSurveyId":  1781170180951,
+                                "linkedExamId":  1783072915672,
+                                "accessType":  "none",
+                                "allowedUsers":  null,
+                                "coursewareFiles":  [
+
+                                                    ],
+                                "id":  1783072924613,
+                                "createdAt":  "2026/7/3 18:02:04"
+                            }
+                        ],
+    "training_enrollments":  [
+                                 {
+                                     "id":  1781676715225,
+                                     "trainingId":  1781148746172,
+                                     "userId":  1781087021554,
+                                     "enrolledAt":  "2026-06-17T06:11:55.225Z",
+                                     "source":  "self"
+                                 },
+                                 {
+                                     "id":  1781686371928,
+                                     "trainingId":  1781148746172,
+                                     "userId":  1780909174403,
+                                     "enrolledAt":  "2026-06-17T08:52:51.928Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782540824444,
+                                     "trainingId":  1781148703132,
+                                     "userId":  1781087021554,
+                                     "enrolledAt":  "2026-06-27T06:13:44.444Z",
+                                     "source":  "self"
+                                 },
+                                 {
+                                     "id":  1782783576989,
+                                     "trainingId":  1781148838222,
+                                     "userId":  1780909174403,
+                                     "enrolledAt":  "2026-06-30T01:39:36.989Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782783576990,
+                                     "trainingId":  1781148838222,
+                                     "userId":  1781087021554,
+                                     "enrolledAt":  "2026-06-30T01:39:36.989Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782783576991,
+                                     "trainingId":  1781148838222,
+                                     "userId":  1782783422496,
+                                     "enrolledAt":  "2026-06-30T01:39:36.989Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782783576992,
+                                     "trainingId":  1781148838222,
+                                     "userId":  1782783451005,
+                                     "enrolledAt":  "2026-06-30T01:39:36.989Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782783576993,
+                                     "trainingId":  1781148838222,
+                                     "userId":  1782783484378,
+                                     "enrolledAt":  "2026-06-30T01:39:36.989Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782783576994,
+                                     "trainingId":  1781148838222,
+                                     "userId":  1782783507741,
+                                     "enrolledAt":  "2026-06-30T01:39:36.989Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782783576995,
+                                     "trainingId":  1781148838222,
+                                     "userId":  1782783520741,
+                                     "enrolledAt":  "2026-06-30T01:39:36.989Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782783576996,
+                                     "trainingId":  1781148838222,
+                                     "userId":  1782783537268,
+                                     "enrolledAt":  "2026-06-30T01:39:36.989Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782783576997,
+                                     "trainingId":  1781148838222,
+                                     "userId":  1782783556507,
+                                     "enrolledAt":  "2026-06-30T01:39:36.989Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782799960580,
+                                     "trainingId":  1781148703132,
+                                     "userId":  1782783422496,
+                                     "enrolledAt":  "2026-06-30T06:12:40.580Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782799960581,
+                                     "trainingId":  1781148703132,
+                                     "userId":  1782783451005,
+                                     "enrolledAt":  "2026-06-30T06:12:40.580Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782799960582,
+                                     "trainingId":  1781148703132,
+                                     "userId":  1782783484378,
+                                     "enrolledAt":  "2026-06-30T06:12:40.580Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782799960583,
+                                     "trainingId":  1781148703132,
+                                     "userId":  1782783507741,
+                                     "enrolledAt":  "2026-06-30T06:12:40.580Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782799960584,
+                                     "trainingId":  1781148703132,
+                                     "userId":  1782783520741,
+                                     "enrolledAt":  "2026-06-30T06:12:40.580Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782799960585,
+                                     "trainingId":  1781148703132,
+                                     "userId":  1782783537268,
+                                     "enrolledAt":  "2026-06-30T06:12:40.580Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782799960586,
+                                     "trainingId":  1781148703132,
+                                     "userId":  1782783556507,
+                                     "enrolledAt":  "2026-06-30T06:12:40.580Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782805472149,
+                                     "trainingId":  1781148703132,
+                                     "userId":  1782805446347,
+                                     "enrolledAt":  "2026-06-30T07:44:32.149Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782805472150,
+                                     "trainingId":  1781148703132,
+                                     "userId":  1782805459054,
+                                     "enrolledAt":  "2026-06-30T07:44:32.149Z",
+                                     "source":  "assigned"
+                                 },
+                                 {
+                                     "id":  1782812957796,
+                                     "trainingId":  1781148703132,
+                                     "userId":  1780909174403,
+                                     "enrolledAt":  "2026-06-30T09:49:17.796Z",
+                                     "source":  "self"
+                                 },
+                                 {
+                                     "id":  1783072984472,
+                                     "trainingId":  1783072924613,
+                                     "userId":  1780909174403,
+                                     "enrolledAt":  "2026-07-03T10:03:04.472Z",
+                                     "source":  "self"
+                                 }
+                             ],
+    "training_signins":  [
+                             {
+                                 "id":  1782532231950,
+                                 "trainingId":  1781148703132,
+                                 "userId":  1780909174403,
+                                 "userName":  "许志坚",
+                                 "department":  "人力资源部",
+                                 "signedAt":  "2026-06-27T03:50:31.950Z",
+                                 "method":  "direct"
+                             },
+                             {
+                                 "id":  1782539908361,
+                                 "trainingId":  1781148703132,
+                                 "userId":  1781087021554,
+                                 "userName":  "何银",
+                                 "department":  "蜗牛工作室",
+                                 "signedAt":  "2026-06-27T05:58:28.361Z",
+                                 "method":  "direct"
+                             },
+                             {
+                                 "id":  1783072985478,
+                                 "trainingId":  1783072924613,
+                                 "userId":  1780909174403,
+                                 "userName":  "许志坚",
+                                 "department":  "人力资源部",
+                                 "signedAt":  "2026-07-03T10:03:05.478Z",
+                                 "method":  "direct"
+                             }
+                         ],
+    "survey_responses":  [
+                             {
+                                 "id":  1781171327112,
+                                 "surveyId":  1781170180951,
+                                 "userId":  1781087021554,
+                                 "userName":  "何银",
+                                 "answers":  [
+                                                 "@{questionId=1; questionTitle=课程对个人成长的帮助性; type=rating; value=5}",
+                                                 "@{questionId=2; questionTitle=课程内容设计与培训项目的吻合度; type=rating; value=5}",
+                                                 "@{questionId=3; questionTitle=课件内容页面设计与排版专业性; type=rating; value=5}",
+                                                 "@{questionId=4; questionTitle=讲师课堂互动氛围的引导能力; type=rating; value=5}",
+                                                 "@{questionId=5; questionTitle=讲师语言表达是否通俗易懂; type=rating; value=5}",
+                                                 "@{questionId=6; questionTitle=讲师授课重点突出、解答问题的精准度; type=rating; value=5}",
+                                                 "@{questionId=7; questionTitle=讲师对课程时间节奏的把控力; type=rating; value=5}",
+                                                 "@{questionId=8; questionTitle=本次培训组织工作的满意程度; type=rating; value=5}",
+                                                 "@{questionId=9; questionTitle=本次培训信息通知的宣传力度; type=rating; value=5}",
+                                                 "@{questionId=10; questionTitle=您对本次培训总体评价; type=rating; value=5}",
+                                                 "@{questionId=11; questionTitle=【单选】您认为本次课程属于哪一种难度等级？（请按实际情况填写）; type=radio; value=入门/简单}",
+                                                 "@{questionId=12; questionTitle=您参加本次培训的主要收获有哪些？; type=text; value=很棒}",
+                                                 "@{questionId=13; questionTitle=您还想要听到哪些培训课？对什么类型的培训感兴趣？; type=text; value=很好}",
+                                                 "@{questionId=14; questionTitle=您对本次培训有哪些建议？; type=text; value=无}"
+                                             ],
+                                 "trainingId":  null,
+                                 "stageIdx":  null,
+                                 "submittedAt":  "2026-06-11T09:48:47.112Z"
+                             },
+                             {
+                                 "id":  1782469820120,
+                                 "surveyId":  1781170180951,
+                                 "userId":  1780909174403,
+                                 "userName":  "许志坚",
+                                 "department":  "人力资源部",
+                                 "answers":  {
+                                                 "1":  5,
+                                                 "2":  5,
+                                                 "3":  5,
+                                                 "4":  5,
+                                                 "5":  5,
+                                                 "6":  5,
+                                                 "7":  5,
+                                                 "8":  5,
+                                                 "9":  5,
+                                                 "10":  5,
+                                                 "11":  "进阶/中等",
+                                                 "12":  "",
+                                                 "13":  "很棒",
+                                                 "14":  "很好"
+                                             },
+                                 "trainingId":  1781148746172,
+                                 "stageIdx":  null,
+                                 "submittedAt":  "2026-06-26T10:30:20.120Z"
+                             },
+                             {
+                                 "id":  1782522641993,
+                                 "surveyId":  1781170180951,
+                                 "userId":  1780909174403,
+                                 "userName":  "许志坚",
+                                 "department":  "人力资源部",
+                                 "answers":  {
+                                                 "1":  5,
+                                                 "2":  5,
+                                                 "3":  5,
+                                                 "4":  5,
+                                                 "5":  5,
+                                                 "6":  5,
+                                                 "7":  5,
+                                                 "8":  5,
+                                                 "9":  5,
+                                                 "10":  5,
+                                                 "11":  "进阶/中等",
+                                                 "12":  "",
+                                                 "13":  "0",
+                                                 "14":  "2"
+                                             },
+                                 "trainingId":  1781148703132,
+                                 "stageIdx":  null,
+                                 "submittedAt":  "2026-06-27T01:10:41.993Z"
+                             }
+                         ],
+    "exam_attempts":  [
+                          {
+                              "id":  1782221414020,
+                              "examId":  1782221347409,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-23T13:30:14.020Z",
+                              "answers":  {
+                                              "1782111523712":  "A",
+                                              "1782111523714":  "A",
+                                              "1782111523716":  "ABC"
+                                          },
+                              "score":  90,
+                              "passed":  true,
+                              "completedAt":  "2026-06-23T13:30:24.250Z",
+                              "correctCount":  2,
+                              "totalQuestions":  3,
+                              "durationUsed":  10
+                          },
+                          {
+                              "id":  1782222496080,
+                              "examId":  1782221347409,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-23T13:48:16.080Z",
+                              "answers":  {
+                                              "1782111523716":  "AB",
+                                              "1782111523714":  "B",
+                                              "1782111523712":  "A"
+                                          },
+                              "score":  50,
+                              "passed":  false,
+                              "completedAt":  "2026-06-23T13:48:28.848Z",
+                              "correctCount":  1,
+                              "totalQuestions":  3,
+                              "durationUsed":  13
+                          },
+                          {
+                              "id":  1782264417616,
+                              "examId":  1782221347409,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-24T01:26:57.616Z",
+                              "answers":  {
+                                              "1782111523712":  "A",
+                                              "1782111523714":  "",
+                                              "1782111523716":  ""
+                                          },
+                              "score":  30,
+                              "passed":  false,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-24T01:27:02.827Z",
+                              "correctCount":  1,
+                              "totalQuestions":  3,
+                              "durationUsed":  5
+                          },
+                          {
+                              "id":  1782281934607,
+                              "examId":  1782281099486,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-24T06:18:54.607Z",
+                              "answers":  {
+                                              "1782111523712":  "",
+                                              "1782111523714":  "B",
+                                              "1782111523716":  "BD"
+                                          },
+                              "score":  20,
+                              "passed":  false,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-24T06:19:28.474Z",
+                              "correctCount":  0,
+                              "totalQuestions":  3,
+                              "durationUsed":  34
+                          },
+                          {
+                              "id":  1782282051696,
+                              "examId":  1782281099486,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-24T06:20:51.696Z",
+                              "answers":  {
+                                              "1782111523712":  "",
+                                              "1782111523714":  "B",
+                                              "1782111523716":  "A"
+                                          },
+                              "score":  20,
+                              "passed":  false,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-24T06:20:57.551Z",
+                              "correctCount":  0,
+                              "totalQuestions":  3,
+                              "durationUsed":  6
+                          },
+                          {
+                              "id":  1782285337704,
+                              "examId":  1782281099486,
+                              "userId":  "1780909174403",
+                              "status":  "taking",
+                              "startedAt":  "2026-06-24T07:15:37.704Z",
+                              "answers":  {
+
+                                          },
+                              "score":  null,
+                              "passed":  null,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null
+                          },
+                          {
+                              "id":  1782285560551,
+                              "examId":  1782221347409,
+                              "userId":  "1780909174403",
+                              "status":  "taking",
+                              "startedAt":  "2026-06-24T07:19:20.551Z",
+                              "answers":  {
+
+                                          },
+                              "score":  null,
+                              "passed":  null,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null
+                          },
+                          {
+                              "id":  1782287713112,
+                              "examId":  1782221347409,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-24T07:55:13.112Z",
+                              "answers":  {
+                                              "1782111523712":  "A",
+                                              "1782111523714":  "B",
+                                              "1782111523716":  "AB"
+                                          },
+                              "score":  50,
+                              "passed":  false,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-24T07:57:22.998Z",
+                              "correctCount":  1,
+                              "totalQuestions":  3,
+                              "durationUsed":  130
+                          },
+                          {
+                              "id":  1782287855038,
+                              "examId":  1782281099486,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-24T07:57:35.038Z",
+                              "answers":  {
+                                              "1782111523712":  "A",
+                                              "1782111523714":  "A",
+                                              "1782111523716":  "ABCD"
+                                          },
+                              "score":  100,
+                              "passed":  true,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-24T07:57:42.654Z",
+                              "correctCount":  3,
+                              "totalQuestions":  3,
+                              "durationUsed":  8
+                          },
+                          {
+                              "id":  1782287887497,
+                              "examId":  1782221347409,
+                              "userId":  "1780909174403",
+                              "status":  "taking",
+                              "startedAt":  "2026-06-24T07:58:07.497Z",
+                              "answers":  {
+
+                                          },
+                              "score":  null,
+                              "passed":  null,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null
+                          },
+                          {
+                              "id":  1782289558238,
+                              "examId":  1782281099486,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-24T08:25:58.238Z",
+                              "answers":  {
+                                              "1782111523712":  "",
+                                              "1782111523714":  "A",
+                                              "1782111523716":  "C"
+                                          },
+                              "score":  50,
+                              "passed":  false,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-24T08:26:18.647Z",
+                              "correctCount":  1,
+                              "totalQuestions":  3,
+                              "durationUsed":  20
+                          },
+                          {
+                              "id":  1782289755840,
+                              "examId":  1782281099486,
+                              "userId":  "1780909174403",
+                              "status":  "taking",
+                              "startedAt":  "2026-06-24T08:29:15.840Z",
+                              "answers":  {
+
+                                          },
+                              "score":  null,
+                              "passed":  null,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null
+                          },
+                          {
+                              "id":  1782290085125,
+                              "examId":  1782281099486,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-24T08:34:45.125Z",
+                              "answers":  {
+                                              "1782111523712":  "B",
+                                              "1782111523714":  "B",
+                                              "1782111523716":  "C"
+                                          },
+                              "score":  20,
+                              "passed":  false,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-24T08:35:53.328Z",
+                              "correctCount":  0,
+                              "totalQuestions":  3,
+                              "durationUsed":  68
+                          },
+                          {
+                              "id":  1782292718744,
+                              "examId":  1782281099486,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-24T09:18:38.744Z",
+                              "answers":  {
+                                              "1782111523712":  "B",
+                                              "1782111523714":  "C",
+                                              "1782111523716":  "A"
+                                          },
+                              "score":  20,
+                              "passed":  false,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-24T09:18:43.347Z",
+                              "correctCount":  0,
+                              "totalQuestions":  3,
+                              "durationUsed":  5
+                          },
+                          {
+                              "id":  1782353515771,
+                              "examId":  1782281099486,
+                              "userId":  "1780909174403",
+                              "status":  "taking",
+                              "startedAt":  "2026-06-25T02:11:55.771Z",
+                              "answers":  {
+
+                                          },
+                              "score":  null,
+                              "passed":  null,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null
+                          },
+                          {
+                              "id":  1782356490566,
+                              "examId":  1782221347409,
+                              "userId":  "1781087021554",
+                              "status":  "taking",
+                              "startedAt":  "2026-06-25T03:01:30.566Z",
+                              "answers":  {
+
+                                          },
+                              "score":  null,
+                              "passed":  null,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null
+                          },
+                          {
+                              "id":  1782356499320,
+                              "examId":  1782281099486,
+                              "userId":  "1781087021554",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-25T03:01:39.320Z",
+                              "answers":  {
+                                              "1782111523712":  "B",
+                                              "1782111523714":  "B",
+                                              "1782111523716":  "B"
+                                          },
+                              "score":  20,
+                              "passed":  false,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-25T03:01:43.675Z",
+                              "correctCount":  0,
+                              "totalQuestions":  3,
+                              "durationUsed":  4
+                          },
+                          {
+                              "id":  1782357666808,
+                              "examId":  1782221347409,
+                              "userId":  "1780909174403",
+                              "status":  "taking",
+                              "startedAt":  "2026-06-25T03:21:06.808Z",
+                              "answers":  {
+
+                                          },
+                              "score":  null,
+                              "passed":  null,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null
+                          },
+                          {
+                              "id":  1782357752811,
+                              "examId":  1782221347409,
+                              "userId":  "1780909174403",
+                              "status":  "taking",
+                              "startedAt":  "2026-06-25T03:22:32.811Z",
+                              "answers":  {
+
+                                          },
+                              "score":  null,
+                              "passed":  null,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null
+                          },
+                          {
+                              "id":  1782358416919,
+                              "examId":  1782221347409,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-25T03:33:36.919Z",
+                              "answers":  {
+                                              "1782111523712":  "",
+                                              "1782111523714":  "A",
+                                              "1782111523716":  "A"
+                                          },
+                              "score":  50,
+                              "passed":  false,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-25T03:51:57.419Z",
+                              "correctCount":  1,
+                              "totalQuestions":  3,
+                              "durationUsed":  1100
+                          },
+                          {
+                              "id":  1782525210506,
+                              "examId":  1782468162514,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-27T01:53:30.506Z",
+                              "answers":  {
+                                              "1782111523712":  "A",
+                                              "1782111523714":  "B",
+                                              "1782111523716":  "ABCD"
+                                          },
+                              "score":  70,
+                              "passed":  true,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-27T01:53:39.384Z",
+                              "correctCount":  2,
+                              "totalQuestions":  3,
+                              "durationUsed":  9
+                          },
+                          {
+                              "id":  1782525647029,
+                              "examId":  1782468162514,
+                              "userId":  "1780909174403",
+                              "status":  "abandoned",
+                              "startedAt":  "2026-06-27T02:00:47.029Z",
+                              "answers":  {
+
+                                          },
+                              "score":  null,
+                              "passed":  null,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-27T03:50:45.178Z",
+                              "durationUsed":  6598
+                          },
+                          {
+                              "id":  1782540869020,
+                              "examId":  1782468162514,
+                              "userId":  "1781087021554",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-27T06:14:29.020Z",
+                              "answers":  {
+                                              "1782111523712":  "A",
+                                              "1782111523714":  "B",
+                                              "1782111523716":  "A"
+                                          },
+                              "score":  50,
+                              "passed":  false,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-27T06:14:34.336Z",
+                              "correctCount":  1,
+                              "totalQuestions":  3,
+                              "durationUsed":  5
+                          },
+                          {
+                              "id":  1782699893967,
+                              "examId":  1782468162514,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-06-29T02:24:53.968Z",
+                              "answers":  {
+                                              "1782111523712":  "B",
+                                              "1782111523714":  "C",
+                                              "1782111523716":  "B"
+                                          },
+                              "score":  20,
+                              "passed":  false,
+                              "optionMappings":  {
+
+                                                 },
+                              "shuffledQuestionIds":  null,
+                              "completedAt":  "2026-06-29T02:24:59.438Z",
+                              "correctCount":  0,
+                              "totalQuestions":  3,
+                              "durationUsed":  5
+                          },
+                          {
+                              "id":  1783072622389,
+                              "examId":  1782468162514,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-07-03T09:57:02.389Z",
+                              "answers":  {
+                                              "1782111523712":  "A",
+                                              "1782111523714":  "B",
+                                              "1782111523716":  "C"
+                                          },
+                              "score":  40,
+                              "passed":  false,
+                              "completedAt":  "2026-07-03T09:57:07.743Z",
+                              "correctCount":  1,
+                              "totalQuestions":  3
+                          },
+                          {
+                              "id":  1783072972548,
+                              "examId":  1783072915672,
+                              "userId":  "1780909174403",
+                              "status":  "taking",
+                              "startedAt":  "2026-07-03T10:02:52.548Z",
+                              "answers":  {
+
+                                          },
+                              "score":  null,
+                              "passed":  null
+                          },
+                          {
+                              "id":  1783072989330,
+                              "examId":  1783072915672,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-07-03T10:03:09.330Z",
+                              "answers":  {
+                                              "1781235958847":  "A",
+                                              "1781235958849":  "A",
+                                              "1781235958851":  "AC"
+                                          },
+                              "score":  57,
+                              "passed":  false,
+                              "completedAt":  "2026-07-03T10:03:16.312Z",
+                              "correctCount":  1,
+                              "totalQuestions":  3
+                          },
+                          {
+                              "id":  1783073428515,
+                              "examId":  1783072915672,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-07-03T10:10:28.515Z",
+                              "answers":  {
+                                              "1781235958847":  "B",
+                                              "1781235958849":  "B",
+                                              "1781235958851":  "B"
+                                          },
+                              "score":  43,
+                              "passed":  false,
+                              "completedAt":  "2026-07-03T10:10:33.112Z",
+                              "correctCount":  1,
+                              "totalQuestions":  3
+                          },
+                          {
+                              "id":  1783073533640,
+                              "examId":  1782221347409,
+                              "userId":  "1780909174403",
+                              "status":  "taking",
+                              "startedAt":  "2026-07-03T10:12:13.640Z",
+                              "answers":  {
+
+                                          },
+                              "score":  null,
+                              "passed":  null
+                          },
+                          {
+                              "id":  1783075550811,
+                              "examId":  1783072915672,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-07-03T10:45:50.811Z",
+                              "answers":  {
+                                              "1781235958847":  "A",
+                                              "1781235958849":  "A",
+                                              "1781235958851":  "ABC"
+                                          },
+                              "score":  70,
+                              "passed":  false,
+                              "completedAt":  "2026-07-03T10:45:57.738Z",
+                              "correctCount":  2,
+                              "totalQuestions":  3
+                          },
+                          {
+                              "id":  1783076416912,
+                              "examId":  1782221347409,
+                              "userId":  "1781087021554",
+                              "status":  "completed",
+                              "startedAt":  "2026-07-03T11:00:16.912Z",
+                              "answers":  {
+                                              "1782111523712":  "",
+                                              "1782111523714":  "",
+                                              "1782111523716":  ""
+                                          },
+                              "score":  0,
+                              "passed":  false,
+                              "completedAt":  "2026-07-03T11:00:33.374Z",
+                              "correctCount":  0,
+                              "totalQuestions":  3
+                          },
+                          {
+                              "id":  1783076472637,
+                              "examId":  1783072915672,
+                              "userId":  "1781087021554",
+                              "status":  "completed",
+                              "startedAt":  "2026-07-03T11:01:12.637Z",
+                              "answers":  {
+                                              "1781235958847":  "A",
+                                              "1781235958849":  "B",
+                                              "1781235958851":  "ABC"
+                                          },
+                              "score":  100,
+                              "passed":  true,
+                              "completedAt":  "2026-07-03T11:02:06.542Z",
+                              "correctCount":  3,
+                              "totalQuestions":  3
+                          },
+                          {
+                              "id":  1783076568599,
+                              "examId":  1783072915672,
+                              "userId":  "1781087021554",
+                              "status":  "completed",
+                              "startedAt":  "2026-07-03T11:02:48.599Z",
+                              "answers":  {
+                                              "1781235958847":  "A",
+                                              "1781235958849":  "B",
+                                              "1781235958851":  "AB"
+                                          },
+                              "score":  80,
+                              "passed":  true,
+                              "completedAt":  "2026-07-03T11:04:12.559Z",
+                              "correctCount":  2,
+                              "totalQuestions":  3
+                          },
+                          {
+                              "id":  1783076778659,
+                              "examId":  1783072915672,
+                              "userId":  "1781087021554",
+                              "status":  "completed",
+                              "startedAt":  "2026-07-03T11:06:18.659Z",
+                              "answers":  {
+                                              "1781235958847":  "B",
+                                              "1781235958849":  "A",
+                                              "1781235958851":  "C"
+                                          },
+                              "score":  20,
+                              "passed":  false,
+                              "completedAt":  "2026-07-03T11:06:54.992Z",
+                              "correctCount":  0,
+                              "totalQuestions":  3,
+                              "durationUsed":  36
+                          },
+                          {
+                              "id":  1783087769834,
+                              "examId":  1783072915672,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-07-03T14:09:29.834Z",
+                              "answers":  {
+                                              "1781235958847":  "A",
+                                              "1781235958849":  "A",
+                                              "1781235958851":  "ABC"
+                                          },
+                              "score":  70,
+                              "passed":  false,
+                              "completedAt":  "2026-07-03T14:09:37.433Z",
+                              "correctCount":  2,
+                              "totalQuestions":  3,
+                              "durationUsed":  8
+                          },
+                          {
+                              "id":  1783087790076,
+                              "examId":  1783072915672,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-07-03T14:09:50.076Z",
+                              "answers":  {
+                                              "1781235958847":  "A",
+                                              "1781235958849":  "A",
+                                              "1781235958851":  "BC"
+                                          },
+                              "score":  50,
+                              "passed":  false,
+                              "completedAt":  "2026-07-03T14:10:08.916Z",
+                              "correctCount":  1,
+                              "totalQuestions":  3,
+                              "durationUsed":  19
+                          },
+                          {
+                              "id":  1783087827978,
+                              "examId":  1783072915672,
+                              "userId":  "1780909174403",
+                              "status":  "completed",
+                              "startedAt":  "2026-07-03T14:10:27.978Z",
+                              "answers":  {
+                                              "1781235958847":  "A",
+                                              "1781235958849":  "B",
+                                              "1781235958851":  "ABC"
+                                          },
+                              "score":  100,
+                              "passed":  true,
+                              "completedAt":  "2026-07-03T14:10:38.438Z",
+                              "correctCount":  3,
+                              "totalQuestions":  3,
+                              "durationUsed":  10
+                          }
+                      ]
+}

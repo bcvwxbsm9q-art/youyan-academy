@@ -213,14 +213,14 @@
                 // 一级分类（带二级分类展开）
                 html += `
                     <div class="category-parent">
-                        <a href="javascript:;" class="category-item category-parent-item ${currentCategoryId === cat.id ? 'active' : ''}" data-category="${cat.id}">
+                        <a href="javascript:;" class="category-item category-parent-item ${String(currentCategoryId) === String(cat.id) ? 'active' : ''}" data-category="${cat.id}">
                             <i class="fa ${cat.icon || 'fa-folder'}"></i>
                             <span>${cat.name}</span>
                             <i class="fa fa-angle-down category-arrow ml-auto text-xs transition-transform ${isExpanded ? 'expanded' : ''}"></i>
                         </a>
                         <div class="category-children" style="display: ${isExpanded ? 'block' : 'none'};">
                             ${cat.children.map(sub => `
-                                <a href="javascript:;" class="category-item category-child-item ${currentCategoryId === sub.id ? 'active' : ''}" data-category="${sub.id}">
+                                <a href="javascript:;" class="category-item category-child-item ${String(currentCategoryId) === String(sub.id) ? 'active' : ''}" data-category="${sub.id}">
                                     <i class="fa fa-file-o"></i>
                                     <span>${sub.name}</span>
                                 </a>
@@ -231,7 +231,7 @@
             } else {
                 // 一级分类（无二级分类）
                 html += `
-                    <a href="javascript:;" class="category-item ${currentCategoryId === cat.id ? 'active' : ''}" data-category="${cat.id}">
+                    <a href="javascript:;" class="category-item ${String(currentCategoryId) === String(cat.id) ? 'active' : ''}" data-category="${cat.id}">
                         <i class="fa ${cat.icon || 'fa-folder'}"></i>
                         <span>${cat.name}</span>
                     </a>

@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -430,6 +430,7 @@
                   <th class="px-4 py-4 text-left text-sm font-semibold text-slate-600">姓名</th>
                   <th class="px-4 py-4 text-left text-sm font-semibold text-slate-600">部门</th>
                   <th class="px-4 py-4 text-left text-sm font-semibold text-slate-600">岗位</th>
+                  <th class="px-4 py-4 text-center text-sm font-semibold text-slate-600">担任讲师年限</th>
                   <th class="px-4 py-4 text-center text-sm font-semibold text-slate-600">等级</th>
                   <th class="px-4 py-4 text-left text-sm font-semibold text-slate-600">标签</th>
                   <th class="px-4 py-4 text-center text-sm font-semibold text-slate-600">课程数</th>
@@ -2771,14 +2772,15 @@
 
     async function loadAllData() {
       try {
-        const [coursesRes, catsRes, lectRes, trainRes, noticesRes, surveysRes, examsRes] = await Promise.all([
+        const [coursesRes, catsRes, lectRes, trainRes, noticesRes, surveysRes, examsRes, paymentRecordsRes] = await Promise.all([
           fetch(API + '/courses'),
           fetch(API + '/categories'),
           fetch(API + '/lecturers'),
           fetch(API + '/training'),
           fetch(API + '/notices'),
           fetch(API + '/surveys'),
-          fetch(API + '/exams')
+          fetch(API + '/exams'),
+          fetch(API + '/lecturer-payment-records')
         ]);
         data.courses = await coursesRes.json();
         data.categories = await catsRes.json();
@@ -2786,12 +2788,15 @@
         data.lecturers = lectJson.data || lectJson;
         data.training = await trainRes.json();
         data.notices = await noticesRes.json();
-        
+
         const surveysJson = await surveysRes.json();
         data.surveys = surveysJson.data || surveysJson || [];
-        
+
         const examsJson = await examsRes.json();
         data.exams = examsJson || [];
+
+        const paymentRecordsJson = await paymentRecordsRes.json();
+        data.lecturer_payment_records = paymentRecordsJson.data || [];
 
         // 加载用户数据(报表模块需要)
         try {
@@ -4514,7 +4519,7 @@
         if (data.lecturers.length === 0) {
           tbody.innerHTML = `
             <tr>
-              <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+              <td colspan="11" class="px-6 py-12 text-center text-slate-400">
                 <i class="fas fa-chalkboard-teacher text-4xl mb-4"></i>
                 <p>暂无讲师数据</p>
               </td>
@@ -4534,9 +4539,9 @@
 
       tbody.innerHTML = data.lecturers.map(lect => {
         const lv = levelMap[lect.level] || levelMap.junior;
-        const courseCount = data.courses.filter(c => c.lecturerId === lect.id).length;
-        const paymentRate = lect.paymentRate || 0;
-        const totalPayment = courseCount * paymentRate;
+        const courseCount = lect.courseCount ?? data.courses.filter(c => c.lecturerId === lect.id).length;
+        const totalPayment = lect.totalPayment ?? 0;
+        const yearsAsInstructor = lect.yearsAsInstructor;
         const skills = lect.skills || [];
         const skillsHtml = skills.length > 0 ?
           skills.map(skill => `<span class="inline-block px-2 py-0.5 rounded text-xs bg-indigo-50 text-indigo-600 mr-1 mb-1">${skill}</span>`).join('') :
@@ -4556,6 +4561,9 @@
             <td class="px-4 py-4 text-sm text-slate-600">
               ${lect.title || '-'}
             </td>
+            <td class="px-4 py-4 text-center text-sm text-slate-600">
+              ${yearsAsInstructor !== null && yearsAsInstructor !== undefined ? `<span class="font-medium">${yearsAsInstructor} 年</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
             <td class="px-4 py-4 text-center">
               <span class="px-3 py-1 rounded-full text-xs font-medium ${lv.class}">${lv.text}</span>
             </td>
@@ -4567,8 +4575,8 @@
             <td class="px-4 py-4 text-center text-sm text-slate-600">
               <span class="font-medium">${courseCount}</span>
             </td>
-            <td class="px-4 py-4 text-center text-sm">
-              <span class="font-medium text-emerald-600">¥${totalPayment.toLocaleString()}</span>
+            <td class="px-4 py-4 text-center text-sm cursor-pointer hover:bg-slate-100 rounded-lg" onclick="openPaymentRecordsModal(${lect.id})">
+              <span class="font-medium text-emerald-600">¥${Number(totalPayment).toLocaleString()}</span>
             </td>
             <td class="px-4 py-4 text-center text-sm text-slate-600">
               ${lect.regDate || '-'}
@@ -4584,6 +4592,10 @@
             </td>
             <td class="px-4 py-4 text-center">
               <div class="flex items-center justify-center gap-2">
+                <button onclick="openPaymentRecordsModal(${lect.id})"
+                  class="p-2 text-emerald-500 hover:bg-emerald-50 rounded-lg transition" title="课酬结算">
+                  <i class="fas fa-money-bill-wave"></i>
+                </button>
                 <button onclick="toggleFeaturedLecturer(${lect.id})"
                   class="p-2 ${data.index_featured_lecturers?.includes(lect.id) ? 'text-yellow-500 hover:bg-yellow-50' : 'text-slate-400 hover:bg-slate-100'} rounded-lg transition"
                   title="${data.index_featured_lecturers?.includes(lect.id) ? '取消明星' : '设为明星讲师'}">
@@ -4613,6 +4625,274 @@
       console.error('渲染讲师列表失败:', error);
       toast('讲师列表渲染失败: ' + error.message, 'error');
     }
+    }
+
+    // ========== 讲师课酬结算 ==========
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function openPaymentRecordsModal(lecturerId) {
+      const lect = (data.lecturers || []).find(l => l.id === lecturerId);
+      if (!lect) return;
+
+      const records = (data.lecturer_payment_records || [])
+        .filter(r => String(r.lecturerId) === String(lecturerId))
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const levelMap = { chief: '首席讲师', senior: '高级讲师', intermediate: '中级讲师', junior: '初级讲师', intern: '实习讲师' };
+      const basePayment = (lect.courseCount || 0) * (lect.paymentRate || 0);
+      const totalBonus = records.reduce((s, r) => s + (Number(r.bonus) || 0), 0);
+
+      const rowsHtml = records.map(r => {
+        let project = '-';
+        if (r.type === 'course') {
+          const c = (data.courses || []).find(c => String(c.id) === String(r.courseId));
+          project = c ? `<span class="text-slate-700">${escapeHtml(c.title)}</span><span class="ml-2 text-xs text-slate-400">课程</span>` : '<span class="text-slate-400">课程已删除</span>';
+        } else if (r.type === 'training') {
+          const t = (data.training || []).find(t => String(t.id) === String(r.trainingId));
+          project = t ? `<span class="text-slate-700">${escapeHtml(t.title)}</span><span class="ml-2 text-xs text-slate-400">培训</span>` : '<span class="text-slate-400">培训已删除</span>';
+        } else if (r.type === 'manual') {
+          project = `<span class="text-slate-700">${escapeHtml(r.manualText || '')}</span><span class="ml-2 text-xs text-slate-400">手动</span>`;
+        }
+        return `
+          <tr class="border-b border-slate-100 hover:bg-slate-50">
+            <td class="px-4 py-3 text-sm text-slate-700">${r.date || '-'}</td>
+            <td class="px-4 py-3 text-sm">${project}</td>
+            <td class="px-4 py-3 text-sm text-center">${r.averageRating !== null && r.averageRating !== undefined ? `<span class="font-medium text-amber-600">${r.averageRating}</span>` : '<span class="text-slate-400">-</span>'}</td>
+            <td class="px-4 py-3 text-sm text-center font-medium text-emerald-600">¥${Number(r.bonus || 0).toLocaleString()}</td>
+            <td class="px-4 py-3 text-center">
+              <button onclick="deletePaymentRecord(${r.id}, ${lect.id})" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>`;
+      }).join('');
+
+      const emptyHtml = `
+        <tr>
+          <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+            <i class="fas fa-file-invoice-dollar text-4xl mb-4"></i>
+            <p>暂无课酬记录</p>
+          </td>
+        </tr>`;
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-800">${lect.name} - 课酬结算</h3>
+              <p class="text-xs text-slate-400 mt-1">${lect.department || ''} · ${levelMap[lect.level] || lect.levelName || ''}</p>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="p-6 overflow-y-auto flex-1">
+            <div class="overflow-x-auto rounded-xl border border-slate-200 mb-4">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-600 font-semibold">
+                  <tr>
+                    <th class="px-4 py-3 text-left font-semibold">授课日期</th>
+                    <th class="px-4 py-3 text-left font-semibold">项目</th>
+                    <th class="px-4 py-3 text-center font-semibold">课程评分平均值</th>
+                    <th class="px-4 py-3 text-center font-semibold">课酬奖金</th>
+                    <th class="px-4 py-3 text-center font-semibold">操作</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">${records.length > 0 ? rowsHtml : emptyHtml}</tbody>
+              </table>
+            </div>
+            <div class="grid grid-cols-3 gap-4 bg-slate-50 rounded-xl p-4 text-center">
+              <div>
+                <p class="text-xs text-slate-500 mb-1">基础课酬</p>
+                <p class="text-base font-bold text-slate-700">¥${Number(basePayment).toLocaleString()}</p>
+              </div>
+              <div>
+                <p class="text-xs text-slate-500 mb-1">累计奖金</p>
+                <p class="text-base font-bold text-emerald-600">¥${Number(totalBonus).toLocaleString()}</p>
+              </div>
+              <div>
+                <p class="text-xs text-slate-500 mb-1">合计</p>
+                <p class="text-base font-bold text-indigo-600">¥${Number(basePayment + totalBonus).toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-end space-x-3 px-6 py-4 border-t border-slate-100 flex-shrink-0">
+            <button type="button" onclick="closeModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-sm">关闭</button>
+            <button type="button" onclick="openPaymentRecordForm(${lect.id})" class="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-medium"><i class="fas fa-plus mr-1"></i>新增记录</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function openPaymentRecordForm(lecturerId) {
+      const lect = (data.lecturers || []).find(l => l.id === lecturerId);
+      if (!lect) return;
+
+      const today = new Date().toISOString().split('T')[0];
+      const courseOptions = (data.courses || []).map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+      const trainingOptions = (data.training || []).map(t => `<option value="${t.id}">${escapeHtml(t.title)}</option>`).join('');
+
+      showModal(`
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800">新增课酬记录 - ${lect.name}</h3>
+            <button onclick="openPaymentRecordsModal(${lect.id})" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <form onsubmit="savePaymentRecord(event, ${lect.id})" class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">授课日期 <span class="text-red-500">*</span></label>
+              <input type="date" id="pr-date" value="${today}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">来源类型 <span class="text-red-500">*</span></label>
+              <select id="pr-type" required onchange="handlePaymentTypeChange()" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="course">关联课程</option>
+                <option value="training">关联培训</option>
+                <option value="manual">手动录入</option>
+              </select>
+            </div>
+            <div id="pr-course-wrap">
+              <label class="block text-sm font-medium text-slate-700 mb-1">课程 <span class="text-red-500">*</span></label>
+              <select id="pr-course-id" onchange="fillPaymentRating()" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="">请选择课程</option>
+                ${courseOptions}
+              </select>
+            </div>
+            <div id="pr-training-wrap" class="hidden">
+              <label class="block text-sm font-medium text-slate-700 mb-1">培训事件 <span class="text-red-500">*</span></label>
+              <select id="pr-training-id" onchange="fillPaymentRating()" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="">请选择培训</option>
+                ${trainingOptions}
+              </select>
+            </div>
+            <div id="pr-manual-wrap" class="hidden">
+              <label class="block text-sm font-medium text-slate-700 mb-1">手动描述 <span class="text-red-500">*</span></label>
+              <input type="text" id="pr-manual-text" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" placeholder="例如：内部分享会">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">课程评分平均值</label>
+                <input type="number" id="pr-rating" step="0.1" min="0" max="5" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" placeholder="自动填充，可修改">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">课酬奖金 <span class="text-red-500">*</span></label>
+                <input type="number" id="pr-bonus" min="0" step="100" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" placeholder="输入奖金金额">
+              </div>
+            </div>
+            <div class="flex justify-end space-x-3 pt-2">
+              <button type="button" onclick="openPaymentRecordsModal(${lect.id})" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="submit" class="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium">保存</button>
+            </div>
+          </form>
+        </div>
+      `);
+      handlePaymentTypeChange();
+    }
+
+    function handlePaymentTypeChange() {
+      const type = document.getElementById('pr-type').value;
+      document.getElementById('pr-course-wrap').classList.toggle('hidden', type !== 'course');
+      document.getElementById('pr-training-wrap').classList.toggle('hidden', type !== 'training');
+      document.getElementById('pr-manual-wrap').classList.toggle('hidden', type !== 'manual');
+      const courseSelect = document.getElementById('pr-course-id');
+      const trainingSelect = document.getElementById('pr-training-id');
+      const manualInput = document.getElementById('pr-manual-text');
+      if (courseSelect) courseSelect.required = type === 'course';
+      if (trainingSelect) trainingSelect.required = type === 'training';
+      if (manualInput) manualInput.required = type === 'manual';
+      fillPaymentRating();
+    }
+
+    async function fillPaymentRating() {
+      const type = document.getElementById('pr-type').value;
+      const ratingInput = document.getElementById('pr-rating');
+      if (!ratingInput) return;
+      if (type === 'course') {
+        const courseId = document.getElementById('pr-course-id').value;
+        if (!courseId) return;
+        const c = (data.courses || []).find(c => String(c.id) === String(courseId));
+        if (c && c.rating !== undefined && c.rating !== null) {
+          ratingInput.value = c.rating;
+        }
+      } else if (type === 'training') {
+        const trainingId = document.getElementById('pr-training-id').value;
+        if (!trainingId) return;
+        try {
+          const res = await fetch(API + '/training/' + trainingId + '/survey-average');
+          const result = await res.json();
+          if (result.averageRating !== null && result.averageRating !== undefined) {
+            ratingInput.value = result.averageRating;
+          }
+        } catch (e) {
+          console.warn('获取培训问卷平均分失败', e);
+        }
+      }
+    }
+
+    async function savePaymentRecord(e, lecturerId) {
+      e.preventDefault();
+      const type = document.getElementById('pr-type').value;
+      const date = document.getElementById('pr-date').value;
+      const bonus = document.getElementById('pr-bonus').value;
+      const averageRating = document.getElementById('pr-rating').value;
+      const payload = { lecturerId, date, type, bonus: Number(bonus) || 0 };
+
+      if (type === 'course') {
+        payload.courseId = document.getElementById('pr-course-id').value;
+        if (!payload.courseId) { toast('请选择课程', 'error'); return; }
+      } else if (type === 'training') {
+        payload.trainingId = document.getElementById('pr-training-id').value;
+        if (!payload.trainingId) { toast('请选择培训事件', 'error'); return; }
+      } else if (type === 'manual') {
+        payload.manualText = document.getElementById('pr-manual-text').value.trim();
+        if (!payload.manualText) { toast('请输入手动描述', 'error'); return; }
+      }
+
+      const ratingVal = parseFloat(averageRating);
+      payload.averageRating = isNaN(ratingVal) ? null : ratingVal;
+
+      try {
+        const res = await fetch(API + '/lecturer-payment-records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast('记录已添加');
+          await loadAllData();
+          renderLecturers();
+          openPaymentRecordsModal(lecturerId);
+        } else {
+          toast(result.error || '保存失败', 'error');
+        }
+      } catch (err) {
+        toast('保存失败', 'error');
+        console.error(err);
+      }
+    }
+
+    async function deletePaymentRecord(recordId, lecturerId) {
+      if (!confirm('确定删除这条课酬记录吗？')) return;
+      try {
+        const res = await fetch(API + '/lecturer-payment-records/' + recordId, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) {
+          toast('记录已删除');
+          await loadAllData();
+          renderLecturers();
+          openPaymentRecordsModal(lecturerId);
+        } else {
+          toast(result.error || '删除失败', 'error');
+        }
+      } catch (err) {
+        toast('删除失败', 'error');
+        console.error(err);
+      }
     }
 
     function openLecturerModal(lecturer = null) {
@@ -4676,6 +4956,11 @@
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">课酬(元/课)</label>
               <input type="number" id="l-payment" value="${lecturer?.paymentRate || 0}" min="0" step="100" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="每节课的课酬">
+            </div>
+            <!-- 开始担任讲师日期 -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">开始担任讲师日期</label>
+              <input type="date" id="l-start-teaching-date" value="${lecturer?.startTeachingDate || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
             <!-- 标签 -->
             <div>
@@ -4807,6 +5092,7 @@
         avatar: document.getElementById('l-avatar').value.trim() || 'https://via.placeholder.com/60',
         intro: document.getElementById('l-intro').value.trim(),
         paymentRate: parseInt(document.getElementById('l-payment').value) || 0,
+        startTeachingDate: document.getElementById('l-start-teaching-date').value || null,
         status: 'enabled',
         type: 'internal',
         skills: skills,
@@ -6668,23 +6954,47 @@
       `);
     }
 
-    function openTrainingImageUpload(trainingId) {
+    async function openTrainingImageUpload(trainingId) {
       const event = data.training.find(x => x.id === trainingId);
       if (!event) {
         toast('培训记录不存在', 'error');
         return;
       }
 
-      // 从 localStorage 读取已有图片（兼容数字和字符串两种 key）
-      const gallery = safeParse('training_gallery', {});
-      let galleryData = gallery[trainingId];
-      if (!galleryData && typeof trainingId === 'number') {
-        galleryData = gallery[String(trainingId)];
+      // 优先使用服务端已持久化的 galleryImages，并兼容旧的 localStorage 数据
+      const galleryLocal = safeParse('training_gallery', {});
+      let galleryLocalData = galleryLocal[trainingId];
+      if (!galleryLocalData && typeof trainingId === 'number') {
+        galleryLocalData = galleryLocal[String(trainingId)];
       }
-      if (!galleryData && typeof trainingId === 'string') {
-        galleryData = gallery[parseInt(trainingId)];
+      if (!galleryLocalData && typeof trainingId === 'string') {
+        galleryLocalData = galleryLocal[parseInt(trainingId)];
       }
-      const existingImages = (galleryData && galleryData.images) ? galleryData.images : [];
+      let existingImages = event.galleryImages && event.galleryImages.length
+        ? event.galleryImages
+        : ((galleryLocalData && galleryLocalData.images) ? galleryLocalData.images : []);
+
+      // 迁移旧 localStorage 数据到服务端（一次机会）
+      if ((!event.galleryImages || event.galleryImages.length === 0) && galleryLocalData && galleryLocalData.images && galleryLocalData.images.length > 0) {
+        try {
+          const migrateRes = await fetch(API + '/training/' + trainingId + '/gallery', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ images: galleryLocalData.images })
+          });
+          const migrateData = await migrateRes.json();
+          if (migrateData.success) {
+            event.galleryImages = migrateData.images;
+            existingImages = migrateData.images;
+            // 清除已迁移的本地数据
+            delete galleryLocal[trainingId];
+            delete galleryLocal[String(trainingId)];
+            localStorage.setItem('training_gallery', JSON.stringify(galleryLocal));
+          }
+        } catch (err) {
+          console.error('migrate training gallery error:', err);
+        }
+      }
 
       showModal(`
         <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
@@ -6796,96 +7106,88 @@
 
       const submitBtn = document.getElementById('upload-submit-btn');
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>处理中...';
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>上传中...';
 
-      const uploadedUrls = [];
-      for (const file of pendingUploadFiles) {
-        try {
-          // 读取文件为 base64 存储到 localStorage
-          const base64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-          uploadedUrls.push(base64);
-        } catch (err) {
-          toast(`处理失败: ${file.name}`, 'error');
+      try {
+        // 1. 批量上传到服务器
+        const formData = new FormData();
+        pendingUploadFiles.forEach(file => formData.append('files', file));
+        const uploadRes = await fetch(API + '/upload/multiple?type=training-gallery', {
+          method: 'POST',
+          body: formData
+        });
+        const uploadData = await uploadRes.json();
+        if (!uploadData.success || !Array.isArray(uploadData.files) || uploadData.files.length === 0) {
+          toast(uploadData.error || '图片上传失败', 'error');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '开始上传';
+          return;
         }
-      }
+        const newUrls = uploadData.files.map(f => f.url);
 
-      if (uploadedUrls.length > 0) {
-        // 存储到 localStorage 的 training_gallery
-        const gallery = safeParse('training_gallery', {});
-        
-        // 兼容数字和字符串两种 key
-        let data = gallery[trainingId];
-        if (!data && typeof trainingId === 'number') {
-          data = gallery[String(trainingId)];
-        }
-        if (!data && typeof trainingId === 'string') {
-          data = gallery[parseInt(trainingId)];
-        }
-        
-        if (!data) {
-          data = { images: [] };
-          gallery[trainingId] = data;
-        }
-        
-        data.images = [...(data.images || []), ...uploadedUrls];
-        localStorage.setItem('training_gallery', JSON.stringify(gallery));
+        // 2. 获取服务端现有图片并合并
+        const galleryRes = await fetch(API + '/training/' + trainingId + '/gallery');
+        const galleryData = await galleryRes.json();
+        const existingImages = (galleryData.success && Array.isArray(galleryData.images)) ? galleryData.images : [];
+        const allImages = [...existingImages, ...newUrls];
 
-        // 更新本地数据
+        // 3. 保存到培训记录
+        const saveRes = await fetch(API + '/training/' + trainingId + '/gallery', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ images: allImages })
+        });
+        const saveData = await saveRes.json();
+        if (!saveData.success) {
+          toast(saveData.error || '保存图片失败', 'error');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '开始上传';
+          return;
+        }
+
+        // 4. 同步本地数据
         const event = data.training.find(x => x.id === trainingId || x.id === parseInt(trainingId) || x.id === String(trainingId));
         if (event) {
-          event.images = data.images;
+          event.galleryImages = saveData.images;
         }
 
-        toast(`成功添加 ${uploadedUrls.length} 张图片`, 'success');
+        toast(`成功添加 ${newUrls.length} 张图片`, 'success');
+        pendingUploadFiles = [];
         closeModal();
         renderTrainingList();
-      } else {
-        toast('处理失败，请重试', 'error');
+      } catch (err) {
+        console.error('submitTrainingImages error:', err);
+        toast('上传失败: ' + err.message, 'error');
         submitBtn.disabled = false;
         submitBtn.innerHTML = '开始上传';
       }
-
-      pendingUploadFiles = [];
     }
 
     async function deleteTrainingImage(trainingId, imageIndex) {
       if (!confirm('确定要删除这张图片吗？')) return;
 
-      const gallery = safeParse('training_gallery', {});
-      
-      // 兼容数字和字符串两种 key
-      let data = gallery[trainingId];
-      if (!data && typeof trainingId === 'number') {
-        data = gallery[String(trainingId)];
-      }
-      if (!data && typeof trainingId === 'string') {
-        data = gallery[parseInt(trainingId)];
-      }
-      
-      if (!data || !data.images || !data.images[imageIndex]) {
-        toast('图片不存在', 'error');
-        return;
-      }
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/gallery/' + imageIndex, { method: 'DELETE' });
+        const result = await res.json();
+        if (!result.success) {
+          toast(result.error || '删除失败', 'error');
+          return;
+        }
 
-      // 从 localStorage 删除
-      data.images.splice(imageIndex, 1);
-      localStorage.setItem('training_gallery', JSON.stringify(gallery));
+        // 同步本地数据
+        const event = data.training.find(x => x.id === trainingId || x.id === parseInt(trainingId) || x.id === String(trainingId));
+        if (event) {
+          event.galleryImages = result.images;
+        }
 
-      // 更新本地数据
-      const event = data.training.find(x => x.id === trainingId || x.id === parseInt(trainingId) || x.id === String(trainingId));
-      if (event) {
-        event.images = data.images;
+        toast('图片已删除', 'success');
+        // 刷新弹窗
+        openTrainingImageUpload(trainingId);
+        renderTrainingList();
+      } catch (err) {
+        console.error('deleteTrainingImage error:', err);
+        toast('删除失败: ' + err.message, 'error');
       }
-
-      toast('图片已删除', 'success');
-      // 刷新弹窗
-      openTrainingImageUpload(trainingId);
-      renderTrainingList();
     }
 
     function prevTrainingMonth() {
@@ -8287,7 +8589,7 @@
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <div>
                 <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-file-alt text-amber-500 mr-2"></i>考试数据</h3>
-                <p class="text-sm text-slate-500">${title} · ${exam.name} · 及格线 ${exam.passingScore || 60}%</p>
+                <p class="text-sm text-slate-500">${title} · ${exam.name} · 及格线 ${exam.passingScore || 60}分</p>
               </div>
               <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
             </div>
@@ -12991,8 +13293,8 @@
           taking: 'bg-blue-100 text-blue-600',
           absent: 'bg-indigo-100 text-indigo-600'
         }[s.status] || 'bg-slate-100 text-slate-500';
-        const scoreDisplay = s.status === 'passed' || s.status === 'failed' ? s.score : '-';
-        const rateDisplay = s.status === 'passed' || s.status === 'failed' ? s.scoreRate + '%' : '-';
+        const scoreDisplay = s.status === 'passed' || s.status === 'failed' ? (s.score ?? '-') : '-';
+        const rateDisplay = s.status === 'passed' || s.status === 'failed' ? ((s.scoreRate ?? 0) + '%') : '-';
         return `<tr>
           <td class="px-3 py-3 text-slate-800">${escHtml(s.userName)}</td>
           <td class="px-3 py-3 text-slate-600">${escHtml(s.department)}</td>
@@ -13088,7 +13390,7 @@
           <div class="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-sm transition">
             <div class="flex items-center justify-between mb-2">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 text-xs font-bold">${escHtml(a.userName.charAt(0))}</div>
+                <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 text-xs font-bold">${escHtml((a.userName || '?').charAt(0))}</div>
                 <div>
                   <p class="text-sm font-semibold text-slate-800">${escHtml(a.userName)}</p>
                   <p class="text-xs text-slate-500">${escHtml(a.department)} · ${escHtml(a.phone)}</p>
@@ -13158,7 +13460,7 @@
           return `<tr>
             <td class="px-3 py-3 text-slate-600">${r.completedAt ? new Date(r.completedAt).toLocaleString('zh-CN') : '-'}</td>
             <td class="px-3 py-3 text-center text-slate-600">${formatExamDuration(r.durationUsed)}</td>
-            <td class="px-3 py-3 text-center text-slate-700 font-medium">${r.fullScore}/${r.score}${badge}</td>
+            <td class="px-3 py-3 text-center text-slate-700 font-medium">${r.score}/${r.fullScore}${badge}</td>
             <td class="px-3 py-3 text-center text-slate-600">${r.scoreRate}%</td>
             <td class="px-3 py-3 text-center text-slate-600">系统</td>
             <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 text-xs rounded-full font-medium ${resultClass}">${resultText}</span></td>
@@ -13246,18 +13548,26 @@
           body.innerHTML = '<div class="py-12 text-center text-slate-400">暂无作答数据</div>';
           return;
         }
+        const typeTextMap = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
         body.innerHTML = details.map(d => {
           const resultClass = d.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600';
           const resultText = d.userAnswer ? (d.isCorrect ? '正确' : '错误') : '未作答';
-          const optionsHtml = Object.entries(d.options || {}).map(([k, v]) => `<div class="text-sm ${k === d.correctAnswer ? 'text-emerald-600 font-medium' : (k === d.userAnswer ? 'text-rose-600' : 'text-slate-600')}"><span class="inline-block w-5 text-xs">${k}.</span>${escHtml(v)}</div>`).join('');
+          const typeText = d.typeText || typeTextMap[d.type] || '单选题';
+          const opts = d.options || {};
+          const isArrayOpts = Array.isArray(opts);
+          const optionsHtml = (isArrayOpts ? opts : Object.entries(opts)).map((item, idx) => {
+            const k = isArrayOpts ? String.fromCharCode(65 + idx) : item[0];
+            const v = isArrayOpts ? item : item[1];
+            return `<div class="text-sm ${k === d.correctAnswer ? 'text-emerald-600 font-medium' : (k === d.userAnswer ? 'text-rose-600' : 'text-slate-600')}"><span class="inline-block w-5 text-xs">${k}.</span>${escHtml(v)}</div>`;
+          }).join('');
           return `
           <div class="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-sm transition">
             <div class="flex items-start justify-between gap-4 mb-3">
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
                   <span class="px-2 py-0.5 text-[10px] font-semibold rounded bg-indigo-50 text-indigo-600">第${d.order}题</span>
-                  <span class="px-2 py-0.5 text-[10px] font-semibold rounded bg-slate-100 text-slate-600">${d.typeText}</span>
-                  <span class="text-xs text-slate-400">${escHtml(d.knowledge)}</span>
+                  <span class="px-2 py-0.5 text-[10px] font-semibold rounded bg-slate-100 text-slate-600">${typeText}</span>
+                  <span class="text-xs text-slate-400">${escHtml(d.knowledge || '')}</span>
                 </div>
                 <p class="text-sm font-medium text-slate-800">${escHtml(d.title)}</p>
               </div>

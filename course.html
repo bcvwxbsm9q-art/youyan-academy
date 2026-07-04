@@ -61,8 +61,8 @@
                             <i class="fa fa-user text-white text-xs" id="user-avatar-icon"></i>
                         </div>
                         <span class="text-sm font-medium text-primary" id="user-display-name">用户</span>
-                        <div class="relative">
-                            <button onclick="window.location.href='messages.html'" class="relative p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary cursor-pointer" title="消息通知">
+                        <div class="relative" id="notification-bell-wrapper">
+                            <button onclick="toggleNotificationPanel()" class="relative p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary cursor-pointer" title="消息通知">
                                 <i class="fa fa-bell text-lg"></i>
                                 <span id="notification-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1">0</span>
                             </button>
@@ -102,6 +102,22 @@
                         <i class="fa fa-sign-out w-6"></i><span>退出登录</span>
                     </button>
                 </nav>
+            </div>
+        </div>
+
+        <!-- 通知下拉面板 -->
+        <div id="notification-panel" class="hidden fixed right-4 top-16 w-80 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-sm font-semibold text-slate-800">通知消息</h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="event.stopPropagation();markAllNotificationsRead()" class="text-xs text-primary hover:text-indigo-700 font-medium">全部已读</button>
+                    <button onclick="closeNotificationPanel()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa fa-times text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="notification-list" class="max-h-[400px] overflow-y-auto">
+                <!-- 通知内容将通过 JavaScript 动态加载 -->
             </div>
         </div>
     </header>

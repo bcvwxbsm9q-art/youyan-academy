@@ -369,7 +369,7 @@
 
         examData=result.exam;
         questions=result.questions||[];
-        currentAttemptId=result.attemptId||null;
+        currentAttemptId=null; // 等 /enter 接口返回后再赋值
 
         if(questions.length===0){
           showError('暂无题目','该试卷还没有添加试题');
@@ -380,10 +380,11 @@
       const sessRes=await fetch('/api/exams/'+examId+'/enter',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({userId:String(user.id), attemptId: result.attemptId})
+        body:JSON.stringify({userId:String(user.id), trainingId: fromTrainingId || undefined})
       });
         const sessData=await sessRes.json();
         if(sessData.success&&sessData.session){
+          currentAttemptId=sessData.attemptId||currentAttemptId;
           examDeadline=new Date(sessData.session.deadline).getTime();
           timerSeconds=sessData.session.remainingSeconds;
           if(sessData.session.expired){
@@ -847,7 +848,7 @@
         const res=await fetch('/api/exams/'+examId+'/submit',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({userId:String(user.id),answers,durationUsed})
+          body:JSON.stringify({userId:String(user.id), attemptId: currentAttemptId, answers, durationUsed, trainingId: fromTrainingId || undefined})
         });
         const result=await res.json();
 

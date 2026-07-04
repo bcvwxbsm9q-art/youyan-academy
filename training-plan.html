@@ -919,7 +919,14 @@
                     courses.forEach(c => {
                         const enrolledUsers = c.enrolledUsers || [];
                         const isEnrolled = currentUserId ? enrolledUsers.some(u => u.userId == currentUserId) : false;
-                        enrollMap[c.id] = { enrolledUsers, enrollCount: c.enrollCount || enrolledUsers.length, isEnrolled, extendedEndTime: c.extendedEndTime || null };
+                        enrollMap[c.id] = {
+                            enrolledUsers,
+                            enrollCount: c.enrollCount || enrolledUsers.length,
+                            isEnrolled,
+                            extendedEndTime: c.extendedEndTime || null,
+                            accessType: c.accessType || 'none',
+                            allowedUsers: c.allowedUsers || []
+                        };
                     });
                     // 默认显示当前月份：如果本月有课程则定位到本月，否则回退到第一条数据所在月
                     const today = new Date();
@@ -1017,7 +1024,7 @@
                         showToast(result.error || '取消失败', 'error');
                     }
                 } else {
-                    // 报名
+                    // 报名（所有学员均可直接报名）
                     const res = await fetch('/api/training/' + courseId + '/enroll', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1175,7 +1182,7 @@
                 }
             }
             
-            // 未结束的课程
+            // 未结束的课程（所有学员均可直接报名）
             if (isEnrolled) {
                 return `<button onclick="event.stopPropagation(); toggleEnroll(${courseId})" 
                         class="${isSmall ? 'px-3 py-1 text-xs' : 'px-4 py-2 text-sm'} bg-gray-200 text-gray-600 hover:bg-gray-300 rounded-lg font-medium transition-all min-w-[80px]">
@@ -1206,7 +1213,7 @@
                 }
             }
             
-            // 未结束的课程
+            // 未结束的课程（所有学员均可直接报名）
             if (status.isEnrolled) {
                 return `<button onclick="event.stopPropagation(); handleModalEnroll(${courseId})" 
                         class="w-full py-3 bg-gray-200 text-gray-600 hover:bg-gray-300 rounded-xl font-medium transition-all">
@@ -1892,8 +1899,8 @@
                     icon: 'fa-folder-open-o', iconColor: '#8b5cf6', iconBg: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)', ringColor: '#8b5cf6',
                     title: `培训课件（${files.length}个文件）`, tag: '资料', tagColor: '#8b5cf6', tagBg: '#f5f3ff',
                     subtitle: '培训相关参考资料，可自由下载',
-                    status: '', statusColor: '#9ca3af',
-                    actionText: '立即下载',
+                    status: '待完成', statusColor: '#9ca3af',
+                    actionText: '去完成',
                     actionClass: 'btn-action-courseware',
                     actionOnclick: `openCoursewareModal(${JSON.stringify(files).replace(/"/g, '&quot;')})`,
                     actionDisabled: false
@@ -1901,20 +1908,20 @@
             }
             if (items.length === 0) return '<p class="text-sm text-gray-400 text-center py-4">暂无项目内容</p>';
 
-            // 未报名学员：所有项目内容置灰且不可点击
+            // 未报名学员：所有项目内容显示“未报名”且不可点击
             if (!isEnrolled) {
                 items.forEach(item => {
                     item.actionClass = 'btn-action-locked';
                     item.actionText = '未报名';
                     item.actionOnclick = '';
                     item.actionDisabled = true;
-                    item.status = '需先报名';
+                    item.status = '未报名';
                     item.statusColor = '#9ca3af';
                 });
             }
 
             const requiredItems = items.filter(i => i.tag === '必修');
-            const doneCount = items.filter(i => i.status === '已完成').length;
+            const doneCount = requiredItems.filter(i => i.status === '已完成').length;
             const progressPct = requiredItems.length > 0 ? Math.round(doneCount / requiredItems.length * 100) : 0;
 
             const topInfo = `
@@ -1971,11 +1978,11 @@
                     if (currentModalCourseId) showCourseDetailInModal(currentModalCourseId);
                 } else {
                     showToast(json.error || '签到失败', 'error');
-                    if (btnEl) setTaskBtnLoading(btnEl, false, '点击签到');
+                    if (btnEl) setTaskBtnLoading(btnEl, false, '去完成');
                 }
             } catch (e) {
                 showToast('签到失败：' + e.message, 'error');
-                if (btnEl) setTaskBtnLoading(btnEl, false, '点击签到');
+                if (btnEl) setTaskBtnLoading(btnEl, false, '去完成');
             }
         }
 
@@ -2398,6 +2405,7 @@
                 if (document.visibilityState === 'visible') {
                     const keepCourseId = currentModalCourseId;
                     await loadTrainingSchedule();
+                    await loadTrainingGalleries();
                     renderCalendar();
                     if (keepCourseId) showCourseDetailInModal(keepCourseId);
                 }
@@ -2434,7 +2442,7 @@
             // 加载培训进度和学习风采轮播（等待用户认证和课程数据加载完成）
             setTimeout(() => {
                 loadTrainingProgress();
-                loadGalleryCarousel();
+                loadTrainingGalleries();
             }, 500);
             
             // 监听月份切换，实时刷新培训进度
@@ -2628,12 +2636,17 @@
                     if (course.date && course.date.startsWith(currentMonthStr)) {
                         const enrollInfo = enrollMap[course.id];
                         const isEnrolled = enrollInfo && enrollInfo.isEnrolled;
-                        
+
                         if (isEnrolled) {
                             monthlyEnrolled++;
-                            // 如果课程日期已过，算作已完成
                             const courseDate = new Date(course.date);
-                            if (courseDate < today) {
+                            const datePassed = !isNaN(courseDate.getTime()) && courseDate < today;
+                            // 所有必修项目内容均完成也算已完成
+                            const modulesDone =
+                                (!course.signinEnabled || !!course.signinDone) &&
+                                (!course.surveyEnabled || !!course.surveyDone) &&
+                                (!course.examEnabled || !!course.examDone);
+                            if (datePassed || modulesDone) {
                                 monthlyCompleted++;
                             }
                         }
@@ -2689,17 +2702,16 @@
         
         // 获取培训的学习风采
         function getTrainingGallery(trainingId) {
+            const images = trainingGalleryMap[trainingId] || trainingGalleryMap[String(trainingId)];
+            if (images && images.length > 0) {
+                return { images };
+            }
+            // 兜底旧数据
             try {
                 const all = JSON.parse(localStorage.getItem('training_gallery') || '{}');
-                // 尝试字符串和数字两种key
                 let data = all[trainingId];
-                if (!data && typeof trainingId === 'number') {
-                    data = all[String(trainingId)];
-                }
-                if (!data && typeof trainingId === 'string') {
-                    data = all[parseInt(trainingId)];
-                }
-                console.log('[学习风采] 获取培训', trainingId, '(类型:', typeof trainingId, ') 数据:', data, '所有数据:', all);
+                if (!data && typeof trainingId === 'number') data = all[String(trainingId)];
+                if (!data && typeof trainingId === 'string') data = all[parseInt(trainingId)];
                 return data || { images: [] };
             } catch (e) {
                 console.error('[学习风采] 获取数据失败:', e);
@@ -2849,26 +2861,58 @@
         let galleryCarouselData = []; // { trainingId, trainingName, images: [] }
         let galleryCarouselIndex = 0;
         let galleryCarouselInterval = null;
+        let trainingGalleryMap = {}; // trainingId -> images[]，从服务端加载
         
+        // 从服务端加载所有培训的学习风采（并兼容旧的 localStorage 数据）
+        async function loadTrainingGalleries() {
+            if (!courses || courses.length === 0) return;
+            trainingGalleryMap = {};
+            await Promise.all(courses.map(async (course) => {
+                try {
+                    const res = await fetch('/api/training/' + course.id + '/gallery');
+                    const json = await res.json();
+                    if (json.success && Array.isArray(json.images)) {
+                        trainingGalleryMap[course.id] = json.images;
+                    }
+                } catch (e) {
+                    console.error('[学习风采] 加载培训', course.id, '失败:', e);
+                }
+            }));
+
+            // 兼容旧数据：服务端没有但 localStorage 有的，回退使用
+            try {
+                const localAll = JSON.parse(localStorage.getItem('training_gallery') || '{}');
+                courses.forEach(course => {
+                    const existing = trainingGalleryMap[course.id];
+                    if (!existing || existing.length === 0) {
+                        const localData = localAll[course.id] || localAll[String(course.id)];
+                        if (localData && localData.images && localData.images.length) {
+                            trainingGalleryMap[course.id] = localData.images;
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error('[学习风采] 读取本地备份失败:', e);
+            }
+
+            loadGalleryCarousel();
+        }
+
         // 加载所有学习风采用于轮播
         function loadGalleryCarousel() {
-            const all = JSON.parse(localStorage.getItem('training_gallery') || '{}');
-            console.log('[学习风采轮播] 加载数据:', all);
             galleryCarouselData = [];
-            
-            Object.entries(all).forEach(([trainingId, data]) => {
-                console.log('[学习风采轮播] 处理培训:', trainingId, data);
-                if (data.images && data.images.length > 0) {
-                    // 找到对应的培训名称
+
+            Object.entries(trainingGalleryMap).forEach(([trainingId, images]) => {
+                if (images && images.length > 0) {
                     const course = courses.find(c => c.id == trainingId);
                     galleryCarouselData.push({
                         trainingId,
                         trainingName: course ? course.name : ('培训 ' + trainingId),
-                        images: data.images
+                        images
                     });
                 }
             });
-            
+
             console.log('[学习风采轮播] 最终数据:', galleryCarouselData);
             renderGalleryCarousel();
         }

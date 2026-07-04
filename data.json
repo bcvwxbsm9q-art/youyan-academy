@@ -857,6 +857,42 @@
         "totalQuestions": 3,
         "completedAt": "2026-07-03T10:45:57.738Z",
         "attemptId": 1783075550811
+      },
+      {
+        "examId": 1783072915672,
+        "examTitle": "166",
+        "score": 70,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 2,
+        "totalQuestions": 3,
+        "completedAt": "2026-07-03T14:09:37.433Z",
+        "attemptId": 1783087769834,
+        "durationUsed": 8
+      },
+      {
+        "examId": 1783072915672,
+        "examTitle": "166",
+        "score": 50,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 1,
+        "totalQuestions": 3,
+        "completedAt": "2026-07-03T14:10:08.916Z",
+        "attemptId": 1783087790076,
+        "durationUsed": 19
+      },
+      {
+        "examId": 1783072915672,
+        "examTitle": "166",
+        "score": 100,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 3,
+        "totalQuestions": 3,
+        "completedAt": "2026-07-03T14:10:38.438Z",
+        "attemptId": 1783087827978,
+        "durationUsed": 10
       }
     ]
   },
@@ -879,7 +915,8 @@
       "courseCount": 0,
       "regDate": "2026-06-08",
       "id": 1780911271132,
-      "rating": 4.5
+      "rating": 4.5,
+      "startTeachingDate": "2020-09-01"
     },
     {
       "name": "王国栋",
@@ -899,7 +936,8 @@
       "courseCount": 0,
       "regDate": "2026-06-08",
       "id": 1780915354634,
-      "rating": 4.2
+      "rating": 4.2,
+      "startTeachingDate": null
     },
     {
       "name": "吴佰桐",
@@ -919,7 +957,8 @@
       "courseCount": 0,
       "regDate": "2026-06-09",
       "id": 1780973279917,
-      "rating": 4.8
+      "rating": 4.8,
+      "startTeachingDate": null
     },
     {
       "name": "黄明芳",
@@ -939,7 +978,8 @@
       "courseCount": 0,
       "regDate": "2026-06-09",
       "id": 1780986326119,
-      "rating": 4.7
+      "rating": 4.7,
+      "startTeachingDate": null
     },
     {
       "name": "李岸",
@@ -959,7 +999,8 @@
       "courseCount": 0,
       "regDate": "2026-06-10",
       "id": 1781063989679,
-      "rating": 4.6
+      "rating": 4.6,
+      "startTeachingDate": null
     },
     {
       "name": "吴佳宝",
@@ -979,7 +1020,8 @@
       "courseCount": 0,
       "regDate": "2026-06-10",
       "id": 1781064033425,
-      "rating": 4.9
+      "rating": 4.9,
+      "startTeachingDate": null
     },
     {
       "name": "陈剑锋",
@@ -999,7 +1041,8 @@
       "courseCount": 0,
       "regDate": "2026-06-10",
       "id": 1781064071833,
-      "rating": 4.8
+      "rating": 4.8,
+      "startTeachingDate": null
     },
     {
       "name": "曹贺钧",
@@ -1019,7 +1062,8 @@
       "courseCount": 0,
       "regDate": "2026-06-10",
       "id": 1781064123970,
-      "rating": 4.6
+      "rating": 4.6,
+      "startTeachingDate": null
     },
     {
       "name": "古海峰",
@@ -1039,7 +1083,8 @@
       "courseCount": 2,
       "regDate": "2026-06-10",
       "id": 1781064213921,
-      "rating": 4.9
+      "rating": 4.9,
+      "startTeachingDate": null
     }
   ],
   "index_banners": [
@@ -2027,6 +2072,63 @@
         "totalQuestions": 3,
         "completedAt": "2026-06-27T06:14:34.336Z",
         "attemptId": 1782540869020
+      },
+      {
+        "examId": 1782221347409,
+        "examTitle": "粒子系统",
+        "score": 0,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 0,
+        "totalQuestions": 3,
+        "completedAt": "2026-07-03T11:00:33.374Z",
+        "attemptId": 1783076416912
+      },
+      {
+        "examId": 1783072915672,
+        "examTitle": "166",
+        "score": 100,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 3,
+        "totalQuestions": 3,
+        "completedAt": "2026-07-03T11:02:06.542Z",
+        "attemptId": 1783076472637
+      },
+      {
+        "examId": 1783072915672,
+        "examTitle": "166",
+        "score": 80,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 2,
+        "totalQuestions": 3,
+        "completedAt": "2026-07-03T11:04:12.559Z",
+        "attemptId": 1783076568599
+      },
+      {
+        "examId": 1783072915672,
+        "examTitle": "166",
+        "score": 20,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 0,
+        "totalQuestions": 3,
+        "completedAt": "2026-07-03T11:06:54.992Z",
+        "attemptId": 1783076778659,
+        "durationUsed": 36
+      },
+      {
+        "examId": 1783072915672,
+        "examTitle": "166",
+        "score": 100,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 3,
+        "totalQuestions": 3,
+        "completedAt": "2026-07-03T11:08:53.483Z",
+        "attemptId": null,
+        "durationUsed": 30
       }
     ]
   },
@@ -3946,6 +4048,129 @@
       "completedAt": "2026-07-03T10:45:57.738Z",
       "correctCount": 2,
       "totalQuestions": 3
+    },
+    {
+      "id": 1783076416912,
+      "examId": 1782221347409,
+      "userId": "1781087021554",
+      "status": "completed",
+      "startedAt": "2026-07-03T11:00:16.912Z",
+      "answers": {
+        "1782111523712": "",
+        "1782111523714": "",
+        "1782111523716": ""
+      },
+      "score": 0,
+      "passed": false,
+      "completedAt": "2026-07-03T11:00:33.374Z",
+      "correctCount": 0,
+      "totalQuestions": 3
+    },
+    {
+      "id": 1783076472637,
+      "examId": 1783072915672,
+      "userId": "1781087021554",
+      "status": "completed",
+      "startedAt": "2026-07-03T11:01:12.637Z",
+      "answers": {
+        "1781235958847": "A",
+        "1781235958849": "B",
+        "1781235958851": "ABC"
+      },
+      "score": 100,
+      "passed": true,
+      "completedAt": "2026-07-03T11:02:06.542Z",
+      "correctCount": 3,
+      "totalQuestions": 3
+    },
+    {
+      "id": 1783076568599,
+      "examId": 1783072915672,
+      "userId": "1781087021554",
+      "status": "completed",
+      "startedAt": "2026-07-03T11:02:48.599Z",
+      "answers": {
+        "1781235958847": "A",
+        "1781235958849": "B",
+        "1781235958851": "AB"
+      },
+      "score": 80,
+      "passed": true,
+      "completedAt": "2026-07-03T11:04:12.559Z",
+      "correctCount": 2,
+      "totalQuestions": 3
+    },
+    {
+      "id": 1783076778659,
+      "examId": 1783072915672,
+      "userId": "1781087021554",
+      "status": "completed",
+      "startedAt": "2026-07-03T11:06:18.659Z",
+      "answers": {
+        "1781235958847": "B",
+        "1781235958849": "A",
+        "1781235958851": "C"
+      },
+      "score": 20,
+      "passed": false,
+      "completedAt": "2026-07-03T11:06:54.992Z",
+      "correctCount": 0,
+      "totalQuestions": 3,
+      "durationUsed": 36
+    },
+    {
+      "id": 1783087769834,
+      "examId": 1783072915672,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-07-03T14:09:29.834Z",
+      "answers": {
+        "1781235958847": "A",
+        "1781235958849": "A",
+        "1781235958851": "ABC"
+      },
+      "score": 70,
+      "passed": false,
+      "completedAt": "2026-07-03T14:09:37.433Z",
+      "correctCount": 2,
+      "totalQuestions": 3,
+      "durationUsed": 8
+    },
+    {
+      "id": 1783087790076,
+      "examId": 1783072915672,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-07-03T14:09:50.076Z",
+      "answers": {
+        "1781235958847": "A",
+        "1781235958849": "A",
+        "1781235958851": "BC"
+      },
+      "score": 50,
+      "passed": false,
+      "completedAt": "2026-07-03T14:10:08.916Z",
+      "correctCount": 1,
+      "totalQuestions": 3,
+      "durationUsed": 19
+    },
+    {
+      "id": 1783087827978,
+      "examId": 1783072915672,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-07-03T14:10:27.978Z",
+      "answers": {
+        "1781235958847": "A",
+        "1781235958849": "B",
+        "1781235958851": "ABC"
+      },
+      "score": 100,
+      "passed": true,
+      "completedAt": "2026-07-03T14:10:38.438Z",
+      "correctCount": 3,
+      "totalQuestions": 3,
+      "durationUsed": 10
     }
   ],
   "survey_responses": [
@@ -4095,6 +4320,32 @@
       "trainingId": 1781148703132,
       "stageIdx": null,
       "submittedAt": "2026-06-27T01:10:41.993Z"
+    },
+    {
+      "id": 1783125506393,
+      "surveyId": 1781170180951,
+      "userId": 1780909174403,
+      "userName": "许志坚",
+      "department": "人力资源部",
+      "answers": {
+        "1": 5,
+        "2": 5,
+        "3": 5,
+        "4": 5,
+        "5": 5,
+        "6": 5,
+        "7": 4,
+        "8": 5,
+        "9": 5,
+        "10": 5,
+        "11": "进阶/中等",
+        "12": "1",
+        "13": "1",
+        "14": "1"
+      },
+      "trainingId": 1783072924613,
+      "stageIdx": null,
+      "submittedAt": "2026-07-04T00:38:26.393Z"
     }
   ],
   "course_ratings": [
@@ -5901,6 +6152,21 @@
       "username": "15302206488",
       "realName": "许志坚",
       "loginTime": "2026/6/30 18:29:01"
+    }
+  ],
+  "lecturer_payment_records": [
+    {
+      "id": 1783090594306,
+      "lecturerId": 1780911271132,
+      "date": "2026-07-03",
+      "type": "course",
+      "courseId": 1781064630171,
+      "trainingId": null,
+      "manualText": null,
+      "averageRating": 3.5,
+      "bonus": 500,
+      "createdAt": "2026-07-03T14:56:34.306Z",
+      "updatedAt": "2026-07-03T14:56:34.306Z"
     }
   ]
 }
