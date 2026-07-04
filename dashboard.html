@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -2186,60 +2186,6 @@
           </div>
         </div>
 
-        <!-- 任务指派 -->
-        <div id="examAssignmentSection" class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 mb-4">
-          <h4 class="text-sm font-semibold text-emerald-800 mb-4"><i class="fas fa-tasks mr-1.5"></i>任务指派</h4>
-          <div class="space-y-4">
-            <!-- 考试时间（同一行） -->
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">开始时间</label>
-                <input type="datetime-local" id="examStartTime"
-                  class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                <p class="text-xs text-slate-400 mt-0.5">留空立即生效</p>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">截止时间</label>
-                <input type="datetime-local" id="examEndTime"
-                  class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                <p class="text-xs text-slate-400 mt-0.5">留空不限</p>
-              </div>
-            </div>
-
-            <!-- 指派学员 -->
-            <div class="flex items-center justify-between">
-              <label class="text-sm font-medium text-slate-700">指派学员</label>
-              <select id="examAccessType" onchange="onExamAccessTypeChange()" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
-                <option value="none">暂不指派</option>
-                <option value="public">全员开放</option>
-                <option value="restricted">指定学员</option>
-                <option value="import">导入学员</option>
-              </select>
-            </div>
-
-            <!-- 指定学员 -->
-            <div id="examAllowedUsersContainer" class="hidden">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm text-slate-600">已选 <span id="examAllowedUsersCount">0</span> 人</span>
-                <button type="button" onclick="openExamUserPicker('exam')" class="text-sm px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
-                  <i class="fas fa-plus mr-1"></i>选择学员
-                </button>
-              </div>
-              <div id="examAllowedUsersList" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                <p class="text-sm text-slate-400 w-full">未选择学员</p>
-              </div>
-            </div>
-
-            <!-- 导入学员 -->
-            <div id="examImportUsersContainer" class="hidden">
-              <label class="block text-xs font-medium text-slate-600 mb-1">导入Excel（包含学员姓名列）</label>
-              <input type="file" id="examImportUsersFile" accept=".xlsx,.xls" onchange="onExamImportUsersFile()"
-                class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
-              <p class="text-xs text-slate-400 mt-1">上传后会自动读取表格中的学员姓名并完成匹配导入</p>
-              <div id="examImportUsersResult" class="mt-2 hidden"></div>
-            </div>
-          </div>
-        </div>
       </form>
     </div>
     <!-- 底部按钮 -->
@@ -2252,6 +2198,71 @@
       </button>
       <button type="button" onclick="saveExamAsPublished()" class="px-5 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-indigo-600 transition">
         <i class="fas fa-paper-plane mr-1.5"></i>发布
+      </button>
+    </div>
+  </div>
+
+  <!-- ========== 考试指派学员抽屉 ========== -->
+  <div id="examAssignDrawerOverlay" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 hidden" onclick="closeExamAssignModal()"></div>
+  <div id="examAssignModal" class="fixed top-0 right-0 h-full w-full max-w-lg bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
+      <h3 class="text-lg font-bold text-slate-800">指派学员</h3>
+      <button onclick="closeExamAssignModal()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-6">
+      <input type="hidden" id="examAssignId">
+      <div class="space-y-4">
+        <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4">
+          <h4 class="text-sm font-semibold text-emerald-800 mb-4"><i class="fas fa-tasks mr-1.5"></i>任务指派</h4>
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">开始时间</label>
+                <input type="datetime-local" id="examAssignStartTime" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                <p class="text-xs text-slate-400 mt-0.5">留空立即生效</p>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">截止时间</label>
+                <input type="datetime-local" id="examAssignEndTime" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                <p class="text-xs text-slate-400 mt-0.5">留空不限</p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-sm font-medium text-slate-700">指派学员</label>
+              <select id="examAssignAccessType" onchange="onExamAssignAccessTypeChange()" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="none">暂不指派</option>
+                <option value="public">全员开放</option>
+                <option value="restricted">指定学员</option>
+                <option value="import">导入学员</option>
+              </select>
+            </div>
+            <div id="examAssignAllowedUsersContainer" class="hidden">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-slate-600">已选 <span id="assignAllowedUsersCount">0</span> 人</span>
+                <button type="button" onclick="openExamAssignUserPicker()" class="text-sm px-3 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
+                  <i class="fas fa-plus mr-1"></i>选择学员
+                </button>
+              </div>
+              <div id="assignAllowedUsersList" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                <p class="text-sm text-slate-400 w-full">未选择学员</p>
+              </div>
+            </div>
+            <div id="examAssignImportUsersContainer" class="hidden">
+              <label class="block text-xs font-medium text-slate-600 mb-1">导入Excel（包含学员姓名列）</label>
+              <input type="file" id="examAssignImportUsersFile" accept=".xlsx,.xls" onchange="onExamAssignImportUsersFile()" class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+              <p class="text-xs text-slate-400 mt-1">上传后会自动读取表格中的学员姓名并完成匹配导入</p>
+              <div id="examAssignImportUsersResult" class="mt-2 hidden"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-end items-center gap-3 p-6 border-t border-slate-100 flex-shrink-0 bg-slate-50">
+      <button type="button" onclick="closeExamAssignModal()" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
+      <button type="button" onclick="saveExamAssign()" class="px-5 py-2.5 bg-emerald-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-emerald-600 transition">
+        <i class="fas fa-check mr-1.5"></i>保存指派
       </button>
     </div>
   </div>
@@ -4071,6 +4082,9 @@
       // 自动计算课程总时长(所有视频时长之和)
       const totalDuration = videos.reduce((sum, v) => sum + (v.duration || 0), 0);
 
+      // 编辑时继承原课程的浏览量和评分,避免被清零
+      const existingCourse = id ? (data.courses.find(c => String(c.id) === String(id)) || {}) : {};
+
       const formData = {
         title,
         cover: document.getElementById('c-cover').value.trim() || 'https://via.placeholder.com/400x225',
@@ -4082,8 +4096,8 @@
         videos,
         attachments,
         duration: totalDuration,
-        views: 0,
-        rating: 0
+        views: existingCourse.views || 0,
+        rating: existingCourse.rating || 0
       };
 
       // 禁用保存按钮,防止重复提交
@@ -4455,7 +4469,7 @@
       try {
         if (!childId) {
           // 删除一级分类
-          if (data.courses.some(c => c.categoryId === parentId)) {
+          if (data.courses.some(c => String(c.categoryId) === String(parentId))) {
             toast('该分类下有课程,不能删除', 'error');
             return;
           }
@@ -4472,7 +4486,7 @@
         } else {
           // 删除子分类
           const parent = data.categories.find(c => c.id === parentId);
-          if (data.courses.some(c => c.subcategoryId === childId)) {
+          if (data.courses.some(c => String(c.subcategoryId) === String(childId))) {
             toast('该分类下有课程,不能删除', 'error');
             return;
           }
@@ -4540,7 +4554,9 @@
       tbody.innerHTML = data.lecturers.map(lect => {
         const lv = levelMap[lect.level] || levelMap.junior;
         const courseCount = lect.courseCount ?? data.courses.filter(c => c.lecturerId === lect.id).length;
-        const totalPayment = lect.totalPayment ?? 0;
+        const totalPayment = (data.lecturer_payment_records || [])
+          .filter(r => String(r.lecturerId) === String(lect.id))
+          .reduce((s, r) => s + (Number(r.bonus) || 0), 0);
         const yearsAsInstructor = lect.yearsAsInstructor;
         const skills = lect.skills || [];
         const skillsHtml = skills.length > 0 ?
@@ -4596,11 +4612,6 @@
                   class="p-2 text-emerald-500 hover:bg-emerald-50 rounded-lg transition" title="课酬结算">
                   <i class="fas fa-money-bill-wave"></i>
                 </button>
-                <button onclick="toggleFeaturedLecturer(${lect.id})"
-                  class="p-2 ${data.index_featured_lecturers?.includes(lect.id) ? 'text-yellow-500 hover:bg-yellow-50' : 'text-slate-400 hover:bg-slate-100'} rounded-lg transition"
-                  title="${data.index_featured_lecturers?.includes(lect.id) ? '取消明星' : '设为明星讲师'}">
-                  <i class="fas fa-star ${data.index_featured_lecturers?.includes(lect.id) ? '' : 'far'}"></i>
-                </button>
                 <button onclick="editLecturer(${lect.id})"
                   class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑">
                   <i class="fas fa-edit"></i>
@@ -4647,19 +4658,18 @@
         .sort((a, b) => new Date(b.date) - new Date(a.date));
 
       const levelMap = { chief: '首席讲师', senior: '高级讲师', intermediate: '中级讲师', junior: '初级讲师', intern: '实习讲师' };
-      const basePayment = (lect.courseCount || 0) * (lect.paymentRate || 0);
       const totalBonus = records.reduce((s, r) => s + (Number(r.bonus) || 0), 0);
 
       const rowsHtml = records.map(r => {
         let project = '-';
         if (r.type === 'course') {
           const c = (data.courses || []).find(c => String(c.id) === String(r.courseId));
-          project = c ? `<span class="text-slate-700">${escapeHtml(c.title)}</span><span class="ml-2 text-xs text-slate-400">课程</span>` : '<span class="text-slate-400">课程已删除</span>';
+          project = c ? `<span class="text-slate-700">${escapeHtml(c.title)}</span>` : '<span class="text-slate-400">课程已删除</span>';
         } else if (r.type === 'training') {
           const t = (data.training || []).find(t => String(t.id) === String(r.trainingId));
-          project = t ? `<span class="text-slate-700">${escapeHtml(t.title)}</span><span class="ml-2 text-xs text-slate-400">培训</span>` : '<span class="text-slate-400">培训已删除</span>';
+          project = t ? `<span class="text-slate-700">${escapeHtml(t.name)}</span>` : '<span class="text-slate-400">培训已删除</span>';
         } else if (r.type === 'manual') {
-          project = `<span class="text-slate-700">${escapeHtml(r.manualText || '')}</span><span class="ml-2 text-xs text-slate-400">手动</span>`;
+          project = `<span class="text-slate-700">${escapeHtml(r.manualText || '')}</span>`;
         }
         return `
           <tr class="border-b border-slate-100 hover:bg-slate-50">
@@ -4705,19 +4715,9 @@
                 <tbody class="divide-y divide-slate-100">${records.length > 0 ? rowsHtml : emptyHtml}</tbody>
               </table>
             </div>
-            <div class="grid grid-cols-3 gap-4 bg-slate-50 rounded-xl p-4 text-center">
-              <div>
-                <p class="text-xs text-slate-500 mb-1">基础课酬</p>
-                <p class="text-base font-bold text-slate-700">¥${Number(basePayment).toLocaleString()}</p>
-              </div>
-              <div>
-                <p class="text-xs text-slate-500 mb-1">累计奖金</p>
-                <p class="text-base font-bold text-emerald-600">¥${Number(totalBonus).toLocaleString()}</p>
-              </div>
-              <div>
-                <p class="text-xs text-slate-500 mb-1">合计</p>
-                <p class="text-base font-bold text-indigo-600">¥${Number(basePayment + totalBonus).toLocaleString()}</p>
-              </div>
+            <div class="bg-slate-50 rounded-xl p-4 text-center">
+              <p class="text-xs text-slate-500 mb-1">累计课酬</p>
+              <p class="text-xl font-bold text-indigo-600">¥${Number(totalBonus).toLocaleString()}</p>
             </div>
           </div>
           <div class="flex justify-end space-x-3 px-6 py-4 border-t border-slate-100 flex-shrink-0">
@@ -4733,8 +4733,7 @@
       if (!lect) return;
 
       const today = new Date().toISOString().split('T')[0];
-      const courseOptions = (data.courses || []).map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
-      const trainingOptions = (data.training || []).map(t => `<option value="${t.id}">${escapeHtml(t.title)}</option>`).join('');
+      const trainingOptions = (data.training || []).map(t => `<option value="${escapeHtml(t.name)}" data-id="${t.id}">${escapeHtml(t.name)}</option>`).join('');
 
       showModal(`
         <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
@@ -4748,30 +4747,10 @@
               <input type="date" id="pr-date" value="${today}" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">来源类型 <span class="text-red-500">*</span></label>
-              <select id="pr-type" required onchange="handlePaymentTypeChange()" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="course">关联课程</option>
-                <option value="training">关联培训</option>
-                <option value="manual">手动录入</option>
-              </select>
-            </div>
-            <div id="pr-course-wrap">
-              <label class="block text-sm font-medium text-slate-700 mb-1">课程 <span class="text-red-500">*</span></label>
-              <select id="pr-course-id" onchange="fillPaymentRating()" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="">请选择课程</option>
-                ${courseOptions}
-              </select>
-            </div>
-            <div id="pr-training-wrap" class="hidden">
-              <label class="block text-sm font-medium text-slate-700 mb-1">培训事件 <span class="text-red-500">*</span></label>
-              <select id="pr-training-id" onchange="fillPaymentRating()" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="">请选择培训</option>
-                ${trainingOptions}
-              </select>
-            </div>
-            <div id="pr-manual-wrap" class="hidden">
-              <label class="block text-sm font-medium text-slate-700 mb-1">手动描述 <span class="text-red-500">*</span></label>
-              <input type="text" id="pr-manual-text" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" placeholder="例如：内部分享会">
+              <label class="block text-sm font-medium text-slate-700 mb-1">关联培训/项目 <span class="text-red-500">*</span></label>
+              <input type="text" id="pr-project" list="pr-training-list" oninput="handlePaymentProjectInput()" required class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" placeholder="选择培训或手动填写">
+              <datalist id="pr-training-list">${trainingOptions}</datalist>
+              <input type="hidden" id="pr-training-id">
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -4790,66 +4769,61 @@
           </form>
         </div>
       `);
-      handlePaymentTypeChange();
     }
 
-    function handlePaymentTypeChange() {
-      const type = document.getElementById('pr-type').value;
-      document.getElementById('pr-course-wrap').classList.toggle('hidden', type !== 'course');
-      document.getElementById('pr-training-wrap').classList.toggle('hidden', type !== 'training');
-      document.getElementById('pr-manual-wrap').classList.toggle('hidden', type !== 'manual');
-      const courseSelect = document.getElementById('pr-course-id');
-      const trainingSelect = document.getElementById('pr-training-id');
-      const manualInput = document.getElementById('pr-manual-text');
-      if (courseSelect) courseSelect.required = type === 'course';
-      if (trainingSelect) trainingSelect.required = type === 'training';
-      if (manualInput) manualInput.required = type === 'manual';
-      fillPaymentRating();
+    function handlePaymentProjectInput() {
+      const input = document.getElementById('pr-project');
+      const hidden = document.getElementById('pr-training-id');
+      if (!input || !hidden) return;
+
+      const value = input.value.trim();
+      const training = (data.training || []).find(t => t.name === value);
+      if (training) {
+        hidden.value = training.id;
+        fillPaymentRating(training.id);
+      } else {
+        hidden.value = '';
+      }
     }
 
-    async function fillPaymentRating() {
-      const type = document.getElementById('pr-type').value;
+    async function fillPaymentRating(trainingId) {
       const ratingInput = document.getElementById('pr-rating');
-      if (!ratingInput) return;
-      if (type === 'course') {
-        const courseId = document.getElementById('pr-course-id').value;
-        if (!courseId) return;
-        const c = (data.courses || []).find(c => String(c.id) === String(courseId));
-        if (c && c.rating !== undefined && c.rating !== null) {
-          ratingInput.value = c.rating;
+      if (!ratingInput || !trainingId) return;
+      try {
+        const res = await fetch(API + '/training/' + trainingId + '/survey-average');
+        const result = await res.json();
+        if (result.averageRating !== null && result.averageRating !== undefined) {
+          ratingInput.value = result.averageRating;
         }
-      } else if (type === 'training') {
-        const trainingId = document.getElementById('pr-training-id').value;
-        if (!trainingId) return;
-        try {
-          const res = await fetch(API + '/training/' + trainingId + '/survey-average');
-          const result = await res.json();
-          if (result.averageRating !== null && result.averageRating !== undefined) {
-            ratingInput.value = result.averageRating;
-          }
-        } catch (e) {
-          console.warn('获取培训问卷平均分失败', e);
-        }
+      } catch (e) {
+        console.warn('获取培训评分失败', e);
       }
     }
 
     async function savePaymentRecord(e, lecturerId) {
       e.preventDefault();
-      const type = document.getElementById('pr-type').value;
       const date = document.getElementById('pr-date').value;
       const bonus = document.getElementById('pr-bonus').value;
       const averageRating = document.getElementById('pr-rating').value;
-      const payload = { lecturerId, date, type, bonus: Number(bonus) || 0 };
+      const trainingId = document.getElementById('pr-training-id').value;
+      const projectText = document.getElementById('pr-project').value.trim();
 
-      if (type === 'course') {
-        payload.courseId = document.getElementById('pr-course-id').value;
-        if (!payload.courseId) { toast('请选择课程', 'error'); return; }
-      } else if (type === 'training') {
-        payload.trainingId = document.getElementById('pr-training-id').value;
-        if (!payload.trainingId) { toast('请选择培训事件', 'error'); return; }
-      } else if (type === 'manual') {
-        payload.manualText = document.getElementById('pr-manual-text').value.trim();
-        if (!payload.manualText) { toast('请输入手动描述', 'error'); return; }
+      if (!date) { toast('请选择授课日期', 'error'); return; }
+      if (!projectText) { toast('请填写关联培训/项目', 'error'); return; }
+      if (bonus === '' || bonus === null || bonus === undefined) { toast('请输入课酬奖金', 'error'); return; }
+
+      const payload = {
+        lecturerId,
+        date,
+        bonus: Number(bonus) || 0
+      };
+
+      if (trainingId) {
+        payload.type = 'training';
+        payload.trainingId = trainingId;
+      } else {
+        payload.type = 'manual';
+        payload.manualText = projectText;
       }
 
       const ratingVal = parseFloat(averageRating);
@@ -4951,11 +4925,6 @@
                 <label class="block text-sm font-medium text-slate-700 mb-1">岗位</label>
                 <input type="text" id="l-title" value="${lecturer?.title || ''}" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="前端工程师">
               </div>
-            </div>
-            <!-- 课酬 -->
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">课酬(元/课)</label>
-              <input type="number" id="l-payment" value="${lecturer?.paymentRate || 0}" min="0" step="100" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="每节课的课酬">
             </div>
             <!-- 开始担任讲师日期 -->
             <div>
@@ -5091,7 +5060,6 @@
         levelName: levelNames[document.getElementById('l-level').value],
         avatar: document.getElementById('l-avatar').value.trim() || 'https://via.placeholder.com/60',
         intro: document.getElementById('l-intro').value.trim(),
-        paymentRate: parseInt(document.getElementById('l-payment').value) || 0,
         startTeachingDate: document.getElementById('l-start-teaching-date').value || null,
         status: 'enabled',
         type: 'internal',
@@ -5129,41 +5097,6 @@
     function editLecturer(id) {
       const lect = data.lecturers.find(l => l.id === id);
       if (lect) openLecturerModal(lect);
-    }
-
-    // 切换明星讲师状态
-    async function toggleFeaturedLecturer(id) {
-      if (!data.index_featured_lecturers) data.index_featured_lecturers = [];
-      const MAX_FEATURED = 6;
-      const idx = data.index_featured_lecturers.indexOf(id);
-      let msg = '';
-      if (idx >= 0) {
-        data.index_featured_lecturers.splice(idx, 1);
-        msg = '已取消明星讲师';
-      } else {
-        if (data.index_featured_lecturers.length >= MAX_FEATURED) {
-          toast('明星讲师最多只能选择 ' + MAX_FEATURED + ' 位,请先取消其他讲师', 'error');
-          return;
-        }
-        data.index_featured_lecturers.push(id);
-        msg = '已设为明星讲师';
-      }
-      try {
-        const res = await fetch(API + '/sync/index_featured_lecturers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data.index_featured_lecturers)
-        });
-        if (res.ok) {
-          toast(msg);
-          await loadAllData();
-          renderLecturers();
-        } else {
-          toast('同步失败', 'error');
-        }
-      } catch (err) {
-        toast('操作失败', 'error');
-      }
     }
 
     async function toggleLecturerStatus(id) {
@@ -6263,18 +6196,21 @@
         });
 
         const passedCount = users.filter(u => u.passed).length;
-        const completedAll = attempts.filter(a => a.status === 'completed' && a.score !== null);
-        const avgScore = completedAll.length > 0
-          ? (completedAll.reduce((s, a) => s + (a.score || 0), 0) / completedAll.length).toFixed(1)
+
+        // 整体分数统计采用“最高分”策略（每人取最好成绩）
+        const userBestScores = users
+          .map(u => (typeof u.bestScore === 'number' ? u.bestScore : null))
+          .filter(s => s !== null);
+        const avgScore = userBestScores.length > 0
+          ? (userBestScores.reduce((s, sc) => s + sc, 0) / userBestScores.length).toFixed(1)
           : '-';
-        const maxScore = completedAll.length > 0 ? Math.max(...completedAll.map(a => a.score || 0)) : '-';
-        const minScore = completedAll.length > 0 ? Math.min(...completedAll.map(a => a.score || 0)) : '-';
+        const maxScore = userBestScores.length > 0 ? Math.max(...userBestScores) : '-';
+        const minScore = userBestScores.length > 0 ? Math.min(...userBestScores) : '-';
         const passRate = users.length > 0 ? Math.round((passedCount / users.length) * 100) : 0;
 
-        // 分数段分布（按人次）
+        // 分数段分布（按每人最高分统计）
         const scoreRanges = { '90-100': 0, '80-89': 0, '70-79': 0, '60-69': 0, '60以下': 0 };
-        attempts.forEach(a => {
-          const s = a.score || 0;
+        userBestScores.forEach(s => {
           if (s >= 90) scoreRanges['90-100']++;
           else if (s >= 80) scoreRanges['80-89']++;
           else if (s >= 70) scoreRanges['70-79']++;
@@ -7301,7 +7237,6 @@
       const surveyOptions = surveys.map(s => `<option value="${s.id}" ${training?.linkedSurveyId === s.id ? 'selected' : ''}>${escHtml(s.title)}</option>`).join('');
 
       const signinEnabled = training?.signinEnabled || false;
-      const signinCode = training?.signinCode || '';
       const examEnabled = training?.examEnabled || false;
       const surveyEnabled = training?.surveyEnabled || false;
       const coursewareEnabled = training?.coursewareEnabled || false;
@@ -7403,7 +7338,7 @@
                       </label>
                     </div>
                     <div class="text-sm font-semibold text-slate-800">考勤</div>
-                    <div class="text-xs text-slate-400 mt-0.5">签到时间+二维码</div>
+                    <div class="text-xs text-slate-400 mt-0.5">签到时间+项目分享</div>
                     <div class="mt-3 text-xs ${signinEnabled ? 'text-emerald-600' : 'text-slate-400'} font-medium flex items-center gap-1">
                       <i class="fas fa-cog"></i><span>${signinEnabled ? '已配置' : '未启用'}</span>
                     </div>
@@ -7636,12 +7571,6 @@
       if (examEnabled && !document.getElementById('t-exam-id')?.value) { toast('请创建考试后再保存', 'error'); return; }
       if (surveyEnabled && !document.getElementById('t-survey-id')?.value) { toast('请选择调研问卷', 'error'); return; }
 
-      // 签到码自动生成（向后兼容 training-signin.html）
-      let signinCode = '';
-      if (attendanceEnabled) {
-        signinCode = String(Math.floor(1000 + Math.random() * 9000));
-      }
-
       // 任务指派
       const accessTypeRaw = document.getElementById('t-access-type').value;
       const accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
@@ -7659,7 +7588,7 @@
         startTime: startVal,
         endTime: endVal,
         signinEnabled: attendanceEnabled,
-        signinCode: attendanceEnabled ? signinCode : null,
+        signinCode: null,
         signinStartTime: attendanceEnabled ? signinStart.replace('T', ' ') : null,
         signinEndTime: attendanceEnabled ? signinEnd.replace('T', ' ') : null,
         examEnabled: examEnabled,
@@ -7737,7 +7666,7 @@
       if (!drawer || !overlay) return;
       overlay.classList.remove('hidden');
       drawer.classList.remove('translate-x-full');
-      if (module === 'attendance') refreshSigninQrcode();
+      if (module === 'attendance') refreshProjectPosterPreview();
     }
 
     function closeModuleDrawer(module) {
@@ -7747,7 +7676,7 @@
       drawer.classList.add('translate-x-full');
       overlay.classList.add('hidden');
       // 考勤：关闭抽屉时提示记得保存培训（仅在已设置签到时间时提示）
-      if (module === 'signin') {
+      if (module === 'attendance') {
         const start = document.getElementById('t-signin-start')?.value;
         const end = document.getElementById('t-signin-end')?.value;
         if (start || end) {
@@ -7841,23 +7770,23 @@
       if (!startInput.value || !endInput.value) { toast('请先在基本信息中填写课程时间', 'error'); return; }
       if (signinStart) signinStart.value = startInput.value;
       if (signinEnd) signinEnd.value = endInput.value;
-      refreshSigninQrcode();
+      refreshProjectPosterPreview();
       toast('已同步课程时间');
     }
 
-    // 考勤：刷新签到二维码
-    function refreshSigninQrcode() {
-      const container = document.getElementById('t-signin-qrcode');
+    // 考勤：刷新项目分享海报预览
+    function refreshProjectPosterPreview() {
+      const container = document.getElementById('t-project-poster-preview');
       if (!container) return;
       const trainingId = currentEditingTrainingId;
       if (!trainingId) {
         container.innerHTML = '<p class="text-xs text-slate-400">保存培训后自动生成</p>';
         return;
       }
-      const signinUrl = window.location.origin + '/training-signin.html?trainingId=' + trainingId;
+      const projectUrl = window.location.origin + '/training-signin.html?id=' + trainingId;
       container.innerHTML = '';
       try {
-        new QRCode(container, { text: signinUrl, width: 200, height: 200, colorDark: '#1e293b', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+        new QRCode(container, { text: projectUrl, width: 180, height: 180, colorDark: '#1e293b', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
       } catch (e) {
         container.innerHTML = '<p class="text-xs text-red-400">二维码生成失败</p>';
       }
@@ -7872,17 +7801,15 @@
       closeModuleDrawer('attendance');
     }
 
-    // 考勤：下载签到海报（复用培训海报的高级样式）
-    function downloadSigninPoster(btn) {
+    // 考勤：下载项目分享海报（使用 poster_light.png 模板）
+    function downloadProjectPoster(btn) {
       const trainingId = currentEditingTrainingId;
       if (!trainingId) { toast('请先保存培训', 'error'); return; }
       const training = currentEditingTraining || {};
-      const signinStart = document.getElementById('t-signin-start')?.value || '';
-      const signinEnd = document.getElementById('t-signin-end')?.value || '';
-      const signinUrl = window.location.origin + '/training-signin.html?trainingId=' + trainingId;
+      const projectUrl = window.location.origin + '/training-signin.html?id=' + trainingId;
 
       // 按钮 loading 态（防止重复点击）
-      const trigger = btn || document.querySelector('button[onclick*="downloadSigninPoster"]');
+      const trigger = btn || document.querySelector('button[onclick*="downloadProjectPoster"]');
       const origHtml = trigger ? trigger.innerHTML : '';
       if (trigger) {
         trigger.disabled = true;
@@ -7892,135 +7819,73 @@
       }
 
       const canvas = document.createElement('canvas');
-      canvas.width = 750; canvas.height = 1334;
+      canvas.width = 750; canvas.height = 1200;
       const ctx = canvas.getContext('2d');
       const W = canvas.width;
       const H = canvas.height;
 
-      // 背景（渐变）
-      const gradient = ctx.createLinearGradient(0, 0, W, H);
-      gradient.addColorStop(0, '#f0fdf4');
-      gradient.addColorStop(0.5, '#ffffff');
-      gradient.addColorStop(1, '#fff7ed');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, W, H);
+      const bgImg = new Image();
+      bgImg.onload = function() {
+        // 绘制背景模板
+        ctx.drawImage(bgImg, 0, 0, W, H);
 
-      // 装饰圆
-      ctx.beginPath();
-      ctx.arc(W * 0.85, H * 0.12, 120, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(W * 0.15, H * 0.88, 90, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
-      ctx.fill();
+        // 培训名称（标题栏下方居中）
+        const title = training.name || training.project || '未命名培训';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.textAlign = 'center';
+        fillTextWithWrap(ctx, title, W / 2, 215, W - 120, 42, 'center');
 
-      // Logo
-      ctx.fillStyle = '#10b981';
-      ctx.beginPath();
-      ctx.arc(70, 70, 18, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 20px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('游', 70, 77);
-      ctx.fillStyle = '#475569';
-      ctx.font = 'bold 28px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText('游雁学院', 105, 80);
+        // 生成项目二维码并绘制
+        const qrSize = 420;
+        const qrContainer = document.createElement('div');
+        qrContainer.style.position = 'fixed';
+        qrContainer.style.left = '-9999px';
+        document.body.appendChild(qrContainer);
+        try {
+          new QRCode(qrContainer, {
+            text: projectUrl,
+            width: qrSize,
+            height: qrSize,
+            colorDark: '#1e293b',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+          setTimeout(() => {
+            const qrCanvas = qrContainer.querySelector('canvas');
+            if (qrCanvas) {
+              const qrX = (W - qrSize) / 2;
+              const qrY = 330;
+              ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+            }
+            document.body.removeChild(qrContainer);
 
-      // 主卡片
-      const cardX = 60;
-      const cardY = 180;
-      const cardW = W - 120;
-      const cardH = H - 360;
-      ctx.fillStyle = '#ffffff';
-      roundRect(ctx, cardX, cardY, cardW, cardH, 24);
-      ctx.fill();
-      ctx.shadowColor = 'rgba(0,0,0,0.06)';
-      ctx.shadowBlur = 30;
-      ctx.shadowOffsetY = 10;
-      ctx.fill();
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetY = 0;
+            // 地点（二维码下方）
+            ctx.fillStyle = '#64748b';
+            ctx.font = '26px sans-serif';
+            ctx.textAlign = 'center';
+            const locationText = training.location ? '地点：' + training.location : '地点待定';
+            fillTextWithWrap(ctx, locationText, W / 2, 930, W - 140, 36, 'center');
 
-      // 绿色标题栏
-      const headerH = 180;
-      ctx.fillStyle = '#10b981';
-      roundRect(ctx, cardX, cardY, cardW, headerH, { tl: 24, tr: 24, br: 0, bl: 0 });
-      ctx.fill();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 42px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('签到码', W / 2, cardY + 80);
-
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.font = '30px sans-serif';
-      const title = training.name || training.project || '未命名培训';
-      const maxTitleWidth = cardW - 80;
-      fillTextWithWrap(ctx, title, W / 2, cardY + 140, maxTitleWidth, 44, 'center');
-
-      // 签到时间
-      const fmt = (v) => { if (!v) return '未设置'; try { return new Date(v.replace(' ', 'T')).toLocaleString('zh-CN'); } catch { return v; } };
-      ctx.fillStyle = '#475569';
-      ctx.font = '24px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('签到时间', W / 2, cardY + headerH + 50);
-      ctx.fillStyle = '#1e293b';
-      ctx.font = 'bold 26px sans-serif';
-      ctx.fillText(fmt(signinStart), W / 2, cardY + headerH + 90);
-      ctx.fillStyle = '#64748b';
-      ctx.font = '22px sans-serif';
-      ctx.fillText('至 ' + fmt(signinEnd), W / 2, cardY + headerH + 125);
-
-      // 生成二维码并绘制
-      const qrSize = 320;
-      const qrContainer = document.createElement('div');
-      qrContainer.style.position = 'fixed';
-      qrContainer.style.left = '-9999px';
-      document.body.appendChild(qrContainer);
-      try {
-        new QRCode(qrContainer, {
-          text: signinUrl,
-          width: qrSize,
-          height: qrSize,
-          colorDark: '#1e293b',
-          colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel.M
-        });
-        setTimeout(() => {
-          const qrCanvas = qrContainer.querySelector('canvas');
-          if (qrCanvas) {
-            const qrX = (W - qrSize) / 2;
-            const qrY = cardY + headerH + 160;
-            ctx.fillStyle = '#ffffff';
-            roundRect(ctx, qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 16);
-            ctx.fill();
-            ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-          }
-          document.body.removeChild(qrContainer);
-
-          // 底部提示
-          ctx.fillStyle = '#94a3b8';
-          ctx.font = '26px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('扫码完成签到', W / 2, H - 140);
-
-          // 触发下载
-          const a = document.createElement('a');
-          a.href = canvas.toDataURL('image/png');
-          a.download = '签到海报_' + (training.name || '培训') + '.png';
-          a.click();
-          toast('签到海报已下载');
+            // 触发下载
+            const a = document.createElement('a');
+            a.href = canvas.toDataURL('image/png');
+            a.download = '培训项目海报_' + (training.name || '培训') + '.png';
+            a.click();
+            toast('项目分享海报已下载');
+            if (trigger) { trigger.disabled = false; trigger.style.pointerEvents = ''; trigger.style.opacity = ''; trigger.innerHTML = origHtml; }
+          }, 100);
+        } catch (e) {
+          if (qrContainer.parentNode) document.body.removeChild(qrContainer);
+          toast('海报生成失败', 'error');
           if (trigger) { trigger.disabled = false; trigger.style.pointerEvents = ''; trigger.style.opacity = ''; trigger.innerHTML = origHtml; }
-        }, 100);
-      } catch (e) {
-        document.body.removeChild(qrContainer);
-        toast('海报生成失败', 'error');
+        }
+      };
+      bgImg.onerror = function() {
+        toast('海报模板加载失败', 'error');
         if (trigger) { trigger.disabled = false; trigger.style.pointerEvents = ''; trigger.style.opacity = ''; trigger.innerHTML = origHtml; }
-      }
+      };
+      bgImg.src = 'poster_light.png';
     }
 
     // 考试：从培训模块打开 examModal（复用考试安排的创建考试抽屉）
@@ -8122,6 +7987,8 @@
       }
       const formData = new FormData();
       Array.from(input.files).forEach(f => formData.append('files', f));
+      // 同时传递原始文件名，避免 multer 解析中文名编码错误
+      Array.from(input.files).forEach(f => formData.append('originalNames', encodeURIComponent(f.name)));
       try {
         const res = await fetch(API + '/upload/multiple?type=courseware', {
           method: 'POST',
@@ -8171,6 +8038,7 @@
             </div>
           </div>
           <div class="flex items-center gap-1.5" id="cw-del-wrap-${i}">
+            <a href="${f.url}" download="${escHtml(f.name || 'download')}" class="text-slate-400 hover:text-rose-500 text-xs px-1.5 py-1 rounded transition" title="下载"><i class="fas fa-download"></i></a>
             <button type="button" onclick="confirmDeleteCourseware(${i})" class="text-slate-400 hover:text-red-500 text-xs px-1.5 py-1 rounded transition" title="删除"><i class="fas fa-trash"></i></button>
           </div>
         </div>`;
@@ -8182,6 +8050,8 @@
     function confirmDeleteCourseware(index) {
       const wrap = document.getElementById('cw-del-wrap-' + index);
       if (!wrap) return;
+      const btn = wrap.querySelector('button[onclick*="confirmDeleteCourseware"]');
+      if (!btn) return;
       // 已是确认态 → 执行删除
       if (wrap.dataset.confirming === '1') {
         clearTimeout(coursewareConfirmTimer);
@@ -8191,7 +8061,9 @@
       }
       // 切换为确认态
       wrap.dataset.confirming = '1';
-      wrap.innerHTML = `<button type="button" onclick="confirmDeleteCourseware(${index})" class="text-red-500 bg-red-50 text-[11px] px-2 py-1 rounded transition">确认删除</button>`;
+      btn.className = 'text-red-500 bg-red-50 text-[11px] px-2 py-1 rounded transition';
+      btn.innerHTML = '确认删除';
+      btn.title = '';
       // 还原其他行的确认态
       document.querySelectorAll('[id^="cw-del-wrap-"]').forEach(el => {
         if (el !== wrap && el.dataset.confirming === '1') resetCoursewareConfirm(el.id.replace('cw-del-wrap-', ''));
@@ -8203,7 +8075,12 @@
       const wrap = document.getElementById('cw-del-wrap-' + index);
       if (!wrap) return;
       wrap.dataset.confirming = '0';
-      wrap.innerHTML = `<button type="button" onclick="confirmDeleteCourseware(${index})" class="text-slate-400 hover:text-red-500 text-xs px-1.5 py-1 rounded transition" title="删除"><i class="fas fa-trash"></i></button>`;
+      const btn = wrap.querySelector('button[onclick*="confirmDeleteCourseware"]');
+      if (btn) {
+        btn.className = 'text-slate-400 hover:text-red-500 text-xs px-1.5 py-1 rounded transition';
+        btn.innerHTML = '<i class="fas fa-trash"></i>';
+        btn.title = '删除';
+      }
     }
 
     async function deleteTrainingCourseware(index) {
@@ -8215,8 +8092,8 @@
         const res = await fetch(API + '/upload/courseware/' + encodeURIComponent(fileName), {
           method: 'DELETE'
         });
-        const result = await res.json();
-        if (result.success) {
+        const result = await res.json().catch(() => ({}));
+        if (res.ok || res.status === 404) {
           currentEditingTraining.coursewareFiles.splice(index, 1);
           document.getElementById('t-courseware-list').innerHTML = renderTrainingCoursewareList(currentEditingTraining.coursewareFiles);
           updateCoursewareCardStatus();
@@ -11626,7 +11503,7 @@
         closed: { cls: 'bg-red-100 text-red-600', text: '已结束' }
       };
       tbody.innerHTML = pageData.map(exam => {
-        const checked = examSelectedIds.has(exam.id) ? 'checked' : '';
+        const checked = examSelectedIds.has(String(exam.id)) ? 'checked' : '';
         const st = statusMap[exam.status] || statusMap.draft;
         const statusCls = st.cls;
         const statusText = st.text;
@@ -11680,6 +11557,7 @@
             <div class="flex items-center justify-end gap-0.5 flex-nowrap">
               <button onclick="copyExam(${exam.id})" class="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded transition flex-shrink-0" title="复制"><i class="fas fa-copy text-xs"></i></button>
               <button onclick="openExamModal(${exam.id})" class="p-1.5 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition flex-shrink-0" title="编辑"><i class="fas fa-edit text-xs"></i></button>
+              <button onclick="openExamAssignModal(${exam.id})" class="p-1.5 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition flex-shrink-0" title="指派学员"><i class="fas fa-user-check text-xs"></i></button>
               ${toggleBtn}
               <button onclick="openExamDetailView(${exam.id}, 'students')" class="p-1.5 text-purple-400 hover:text-purple-600 hover:bg-purple-50 rounded transition flex-shrink-0" title="成绩"><i class="fas fa-chart-bar text-xs"></i></button>
               <button onclick="deleteExam(${exam.id})" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition flex-shrink-0" title="删除"><i class="fas fa-trash text-xs"></i></button>
@@ -12212,14 +12090,15 @@
       renderExamMgmtList();
     }
     function toggleExamSelect(id) {
-      if (examSelectedIds.has(id)) examSelectedIds.delete(id); else examSelectedIds.add(id);
+      const sid = String(id);
+      if (examSelectedIds.has(sid)) examSelectedIds.delete(sid); else examSelectedIds.add(sid);
       updateBatchActionBar();
     }
     function toggleExamSelectAll() {
       const checked = document.getElementById('examSelectAll').checked;
       const visible = applyExamFilters();
-      if (checked) visible.forEach(e => examSelectedIds.add(e.id));
-      else visible.forEach(e => examSelectedIds.delete(e.id));
+      if (checked) visible.forEach(e => examSelectedIds.add(String(e.id)));
+      else visible.forEach(e => examSelectedIds.delete(String(e.id)));
       renderExamMgmtList();
       updateBatchActionBar();
     }
@@ -12479,17 +12358,6 @@
       setBtnGroupValue('examShowCorrect', 'show');
       setBtnGroupValue('examShowAnalysis', 'show');
       setBtnGroupValue('examViewRank', 'after_submit');
-      // 重置任务指派
-      document.getElementById('examStartTime').value = '';
-      document.getElementById('examEndTime').value = '';
-      document.getElementById('examAccessType').value = 'none';
-      onExamAccessTypeChange();
-      document.getElementById('examImportUsersFile').value = '';
-      document.getElementById('examImportUsersResult').classList.add('hidden');
-      examUserPickerData = [];
-      examUserPickerTemp = new Set();
-      userPickerMode = 'exam';
-      renderExamAllowedUsers();
       renderSelectedQuestions();
       // 加载试卷下拉
       loadExamPaperOptions();
@@ -12678,6 +12546,178 @@
       }
     }
 
+    // ========== 考试安排独立指派学员 ==========
+    let currentAssignExamId = null;
+
+    async function openExamAssignModal(examId) {
+      currentAssignExamId = examId;
+      userPickerMode = 'assign';
+      assignExamUserPickerTemp = new Set();
+      assignExamUserPickerData = [];
+      document.getElementById('examAssignImportUsersResult').innerHTML = '';
+      document.getElementById('examAssignImportUsersResult').classList.add('hidden');
+      document.getElementById('examAssignImportUsersFile').value = '';
+
+      try {
+        const res = await fetch('/api/exams/' + examId);
+        const result = await res.json();
+        const exam = result.data || result.exam;
+        if (exam) {
+          document.getElementById('examAssignId').value = exam.id;
+          document.getElementById('examAssignStartTime').value = exam.startTime ? toLocalDateTimeInput(exam.startTime) : '';
+          document.getElementById('examAssignEndTime').value = exam.endTime ? toLocalDateTimeInput(exam.endTime) : '';
+          let accessType = exam.accessType || 'none';
+          if (accessType === 'open' || accessType === 'public') accessType = 'public';
+          else if (accessType === 'restricted') accessType = (exam.allowedUsers && exam.allowedUsers.length) ? 'restricted' : 'none';
+          else accessType = 'none';
+          document.getElementById('examAssignAccessType').value = accessType;
+
+          if (exam.allowedUsers && Array.isArray(exam.allowedUsers)) {
+            assignExamUserPickerTemp = new Set(exam.allowedUsers.map(uid => String(uid)));
+            const usersRes = await fetch('/api/data/users');
+            const users = await usersRes.json();
+            const userMap = new Map(users.map(u => [String(u.id), u.real_name || u.username || '未知']));
+            assignExamUserPickerData = exam.allowedUsers.map(uId => ({
+              id: uId,
+              name: userMap.get(String(uId)) || ('学员' + uId),
+              selected: true
+            }));
+          }
+        }
+      } catch (e) {
+        console.error('加载考试指派数据失败', e);
+      }
+
+      onExamAssignAccessTypeChange();
+      renderExamAllowedUsers();
+      document.getElementById('examAssignDrawerOverlay').classList.remove('hidden');
+      document.getElementById('examAssignModal').classList.remove('translate-x-full');
+    }
+
+    function closeExamAssignModal() {
+      document.getElementById('examAssignDrawerOverlay').classList.add('hidden');
+      document.getElementById('examAssignModal').classList.add('translate-x-full');
+      currentAssignExamId = null;
+    }
+
+    function onExamAssignAccessTypeChange() {
+      const accessType = document.getElementById('examAssignAccessType').value;
+      document.getElementById('examAssignAllowedUsersContainer').classList.toggle('hidden', accessType !== 'restricted' && accessType !== 'import');
+      document.getElementById('examAssignImportUsersContainer').classList.toggle('hidden', accessType !== 'import');
+    }
+
+    async function openExamAssignUserPicker() {
+      userPickerMode = 'assign';
+      await openUnifiedAssignPicker({
+        mode: 'assign',
+        targetId: currentAssignExamId,
+        title: '选择学员',
+        subtitle: '指派参加考试的学员',
+        initialSelected: Array.from(assignExamUserPickerTemp),
+        onConfirm: () => {
+          assignExamUserPickerTemp = new Set(unifiedAssignState.selected);
+          renderExamAllowedUsers();
+        }
+      });
+    }
+
+    async function onExamAssignImportUsersFile() {
+      const input = document.getElementById('examAssignImportUsersFile');
+      const resultEl = document.getElementById('examAssignImportUsersResult');
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      try {
+        const buf = await file.arrayBuffer();
+        const workbook = XLSX.read(buf, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const names = [];
+        rows.forEach(row => {
+          row.forEach(cell => {
+            const v = cell !== undefined && cell !== null ? String(cell).trim() : '';
+            if (v) names.push(v);
+          });
+        });
+        if (!names.length) {
+          resultEl.innerHTML = '<p class="text-xs text-red-500">未读取到任何姓名</p>';
+          resultEl.classList.remove('hidden');
+          return;
+        }
+        const res = await fetch('/api/data/users');
+        const users = await res.json();
+        const matched = [];
+        const unmatched = [];
+        const seen = new Set();
+        names.forEach(name => {
+          if (seen.has(name)) return;
+          seen.add(name);
+          const user = users.find(u => {
+            const n = (u.real_name || u.username || '').trim();
+            return n === name;
+          });
+          if (user) matched.push({ id: String(user.id), name: user.real_name || user.username });
+          else unmatched.push(name);
+        });
+
+        userPickerMode = 'assign';
+        matched.forEach(u => {
+          assignExamUserPickerTemp.add(u.id);
+          if (!assignExamUserPickerData.find(x => String(x.id) === u.id)) {
+            assignExamUserPickerData.push({ id: u.id, name: u.name, selected: true });
+          }
+        });
+        assignExamUserPickerData.forEach(u => {
+          u.selected = assignExamUserPickerTemp.has(String(u.id));
+        });
+        renderExamAllowedUsers();
+        let html = `<p class="text-xs text-emerald-600">成功导入 ${matched.length} 人</p>`;
+        if (unmatched.length) {
+          html += `<p class="text-xs text-amber-600 mt-0.5">未匹配 ${unmatched.length} 人：${escHtml(unmatched.slice(0, 5).join('、'))}${unmatched.length > 5 ? ' 等' : ''}</p>`;
+        }
+        resultEl.innerHTML = html;
+        resultEl.classList.remove('hidden');
+      } catch (e) {
+        resultEl.innerHTML = '<p class="text-xs text-red-500">读取失败：' + escHtml(e.message) + '</p>';
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    async function saveExamAssign() {
+      if (!currentAssignExamId) return;
+      const accessTypeRaw = document.getElementById('examAssignAccessType').value;
+      const accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
+      const startTime = document.getElementById('examAssignStartTime').value;
+      const endTime = document.getElementById('examAssignEndTime').value;
+      const allowedUsers = (accessTypeRaw === 'restricted' || accessTypeRaw === 'import')
+        ? Array.from(assignExamUserPickerTemp).map(id => isNaN(Number(id)) ? id : Number(id))
+        : [];
+
+      const payload = {
+        startTime: startTime ? new Date(startTime).toISOString() : null,
+        endTime: endTime ? new Date(endTime).toISOString() : null,
+        accessType: accessType,
+        allowedUsers: allowedUsers.length ? allowedUsers : null
+      };
+
+      try {
+        const res = await fetch('/api/exams/' + currentAssignExamId, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast('指派已保存');
+          closeExamAssignModal();
+          loadExamMgmtList();
+        } else {
+          toast(result.error || '保存失败', 'error');
+        }
+      } catch (e) {
+        toast('网络错误', 'error');
+      }
+    }
+
     async function loadExamForEdit(id) {
       try {
         const examRes = await fetch('/api/exams');
@@ -12744,7 +12784,10 @@
           if (exam.paperId) {
             document.getElementById('examPaperId').value = exam.paperId;
             renderExamPaperDisplay(exam.paperId);
-            onExamPaperChange();
+            // 优先使用考试自身保存的题目；无题目时再加载试卷题目
+            if (!exam.questions || !exam.questions.length) {
+              await onExamPaperChange();
+            }
           }
           // 恢复已选题目
           if (exam.questions && exam.questions.length) {
@@ -12758,33 +12801,7 @@
             }));
             renderSelectedQuestions();
           }
-          // 恢复任务指派
-          userPickerMode = 'exam';
-          if (exam.startTime) document.getElementById('examStartTime').value = toLocalDateTimeInput(exam.startTime);
-          if (exam.endTime) document.getElementById('examEndTime').value = toLocalDateTimeInput(exam.endTime);
-          let accessType = exam.accessType || 'none';
-          if (accessType === 'open' || accessType === 'public') accessType = 'public';
-          else if (accessType === 'restricted') accessType = exam.allowedUsers && exam.allowedUsers.length ? 'restricted' : 'none';
-          else accessType = 'none';
-          document.getElementById('examAccessType').value = accessType;
-          onExamAccessTypeChange();
-          if (exam.allowedUsers && Array.isArray(exam.allowedUsers)) {
-            examUserPickerTemp = new Set(exam.allowedUsers.map(uid => String(uid)));
-            fetch('/api/data/users')
-              .then(r => r.json())
-              .then(users => {
-                const userMap = new Map(users.map(u => [String(u.id), u.real_name || u.username || '未知']));
-                examUserPickerData = exam.allowedUsers.map(uId => ({
-                  id: uId,
-                  name: userMap.get(String(uId)) || ('学员' + uId),
-                  selected: true
-                }));
-                renderExamAllowedUsers();
-              }).catch(() => {
-                examUserPickerData = exam.allowedUsers.map(uId => ({ id: uId, name: '学员' + uId, selected: true }));
-                renderExamAllowedUsers();
-              });
-          }
+
         }
       } catch (e) { console.error(e); toast('加载考试数据失败', 'error'); }
     }
@@ -12870,24 +12887,23 @@
       }
       const attemptsPolicy = getBtnGroupValue('examAttempts') || 'unlimited';
       const screenSwitchPolicy = getBtnGroupValue('examScreenSwitch') || 'unlimited';
-      let accessTypeRaw, startTime, endTime, accessType, allowedUsers;
+      // 任务指派：只有从培训模块打开时才由培训弹窗设置；考试安排页面独立维护指派
+      let assignPayload = {};
       if (examModalFromTraining) {
-        // 从培训弹窗读取指派设置，确保考试与培训的指派逻辑一致
-        accessTypeRaw = document.getElementById('t-access-type')?.value || 'none';
-        startTime = document.getElementById('t-start')?.value || '';
-        endTime = document.getElementById('t-end')?.value || '';
-        accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
-        allowedUsers = (accessTypeRaw === 'restricted' || accessTypeRaw === 'import')
+        const accessTypeRaw = document.getElementById('t-access-type')?.value || 'none';
+        const startTime = document.getElementById('t-start')?.value || '';
+        const endTime = document.getElementById('t-end')?.value || '';
+        const accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
+        const allowedUsers = (accessTypeRaw === 'restricted' || accessTypeRaw === 'import')
           ? Array.from(trainingUserPickerTemp).map(id => isNaN(Number(id)) ? id : Number(id))
           : [];
-      } else {
-        accessTypeRaw = document.getElementById('examAccessType').value;
-        startTime = document.getElementById('examStartTime').value;
-        endTime = document.getElementById('examEndTime').value;
-        accessType = accessTypeRaw === 'import' ? 'restricted' : (accessTypeRaw || 'none');
-        allowedUsers = (accessTypeRaw === 'restricted' || accessTypeRaw === 'import')
-          ? Array.from(examUserPickerTemp).map(id => isNaN(Number(id)) ? id : Number(id))
-          : [];
+        assignPayload = {
+          startTime: startTime ? new Date(startTime).toISOString() : null,
+          endTime: endTime ? new Date(endTime).toISOString() : null,
+          accessType: accessType,
+          allowedUsers: allowedUsers.length ? allowedUsers : null,
+          fromTraining: true
+        };
       }
       const payload = {
         title: document.getElementById('examTitle').value.trim(),
@@ -12915,12 +12931,7 @@
         questions: selectedExamQuestions,
         paperId: paperId || null,
         paperName: paperName,
-        // 任务指派
-        startTime: startTime ? new Date(startTime).toISOString() : null,
-        endTime: endTime ? new Date(endTime).toISOString() : null,
-        accessType: accessType,
-        allowedUsers: allowedUsers.length ? allowedUsers : null,
-        fromTraining: !!examModalFromTraining
+        ...assignPayload
       };
       try {
         let res;
@@ -13225,16 +13236,18 @@
         passed: students.filter(s => s.status === 'passed').length,
         failed: students.filter(s => s.status === 'failed').length,
         unstarted: students.filter(s => s.status === 'unstarted').length,
-        absent: students.filter(s => s.status === 'absent' || s.status === 'taking').length
+        absent: students.filter(s => s.status === 'absent').length,
+        taking: students.filter(s => s.status === 'taking').length
       };
       const labels = {
         all: `全部(${counts.all})`,
         passed: `及格(${counts.passed})`,
         failed: `不及格(${counts.failed})`,
-        unstarted: `未考/缺考(${counts.unstarted + counts.absent})`,
-        taking: `待阅卷(${counts.absent})`
+        unstarted: `未开始(${counts.unstarted})`,
+        absent: `缺考(${counts.absent})`,
+        taking: `考试中(${counts.taking})`
       };
-      const filters = ['all', 'passed', 'failed', 'unstarted', 'taking'];
+      const filters = ['all', 'passed', 'failed', 'unstarted', 'absent', 'taking'];
       const container = document.getElementById('examDetailStudentFilters');
       container.innerHTML = filters.map(f => {
         const active = currentExamDetailStudentFilter === f ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300';
@@ -13273,13 +13286,7 @@
       let students = currentExamDetailData.students || [];
       if (search) students = students.filter(s => (s.userName || '').toLowerCase().includes(search));
       if (currentExamDetailStudentFilter !== 'all') {
-        if (currentExamDetailStudentFilter === 'unstarted') {
-          students = students.filter(s => s.status === 'unstarted' || s.status === 'absent' || s.status === 'taking');
-        } else if (currentExamDetailStudentFilter === 'taking') {
-          students = students.filter(s => s.status === 'taking' || s.status === 'absent');
-        } else {
-          students = students.filter(s => s.status === currentExamDetailStudentFilter);
-        }
+        students = students.filter(s => s.status === currentExamDetailStudentFilter);
       }
       if (!students.length) {
         tbody.innerHTML = '<tr><td colspan="10" class="py-8 text-center text-slate-400">暂无学员数据</td></tr>';
@@ -16941,7 +16948,7 @@
     <div class="flex-1 overflow-y-auto p-5 space-y-5">
       <div class="bg-emerald-50 rounded-xl p-3 text-xs text-emerald-700 flex items-start gap-2">
         <i class="fas fa-info-circle mt-0.5"></i>
-        <span>设置签到时间窗口，员工在此时段内可扫码签到。点击「从课程时间同步」可自动识别基本信息中的课程时间。</span>
+        <span>设置签到时间窗口，员工在培训任务页点击按钮即可完成签到。可下载项目分享海报，扫码访问培训项目。</span>
       </div>
       <div>
         <label class="block text-sm font-medium text-slate-700 mb-1">签到开始时间</label>
@@ -16955,22 +16962,22 @@
         <i class="fas fa-sync-alt"></i>从课程时间同步
       </button>
       <div class="border-t border-slate-100 pt-4">
-        <label class="block text-sm font-medium text-slate-700 mb-2">签到二维码</label>
-        <div id="t-signin-qrcode" class="flex justify-center items-center bg-slate-50 rounded-xl py-6 min-h-[200px]">
+        <label class="block text-sm font-medium text-slate-700 mb-2">项目分享海报</label>
+        <div id="t-project-poster-preview" class="flex justify-center items-center bg-slate-50 rounded-xl py-4 min-h-[200px]">
           <p class="text-xs text-slate-400">保存培训后自动生成</p>
         </div>
-        <p class="text-xs text-slate-400 mt-2 text-center">员工使用钉钉扫码进入签到页面</p>
+        <p class="text-xs text-slate-400 mt-2 text-center">员工扫码即可访问培训项目并完成签到</p>
       </div>
       <div class="border-t border-slate-100 pt-4">
         <div class="flex gap-2">
           <button type="button" onclick="confirmSigninSettings()" class="flex-1 px-3 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition flex items-center justify-center gap-2">
             <i class="fas fa-check"></i>设置成功
           </button>
-          <button type="button" onclick="downloadSigninPoster(this)" class="flex-1 px-3 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition flex items-center justify-center gap-2">
+          <button type="button" onclick="downloadProjectPoster(this)" class="flex-1 px-3 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition flex items-center justify-center gap-2">
             <i class="fas fa-download"></i>下载海报
           </button>
         </div>
-        <p class="text-xs text-slate-400 mt-2">海报含培训名称、签到时间和二维码，可打印张贴</p>
+        <p class="text-xs text-slate-400 mt-2">海报含培训名称、地点和项目二维码，可分享或打印张贴</p>
       </div>
     </div>
   </div>
@@ -17026,6 +17033,9 @@
         <label class="block text-sm font-medium text-slate-700 mb-2">已上传课件</label>
         <div id="t-courseware-list" class="space-y-2"></div>
       </div>
+    </div>
+    <div class="border-t border-slate-100 p-4 flex justify-end gap-2 flex-shrink-0">
+      <button onclick="closeModuleDrawer('courseware')" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">关闭</button>
     </div>
   </div>
 

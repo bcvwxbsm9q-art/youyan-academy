@@ -577,6 +577,13 @@
         if (!container) return;
 
         let featured = [];
+        const levelRank = { chief: 5, senior: 4, intermediate: 3, junior: 2, intern: 1 };
+        const sortLecturers = (lecturers) => lecturers.sort((a, b) => {
+            const rankA = levelRank[a.level] || 0;
+            const rankB = levelRank[b.level] || 0;
+            if (rankB !== rankA) return rankB - rankA;
+            return (b.courseCount || 0) - (a.courseCount || 0);
+        });
 
         // 优先从API实时获取讲师数据（带动态courseCount）
         try {
@@ -584,31 +591,14 @@
             if (res.ok) {
                 const result = await res.json();
                 const allLecturers = (result.data || []).filter(l => l.status === 'enabled');
-                
-                // 尝试获取明星讲师ID配置
-                let flIds = [];
-                if (window.DataAPI) {
-                    flIds = window.DataAPI.getFeaturedLecturerIds() || [];
-                }
-                
-                if (flIds && flIds.length > 0) {
-                    featured = flIds.map(id => allLecturers.find(l => String(l.id) === String(id))).filter(Boolean).slice(0, 6);
-                } else {
-                    featured = allLecturers.slice(0, 6);
-                }
+                featured = sortLecturers(allLecturers).slice(0, 6);
             }
         } catch (e) {
             console.warn('[Index] 获取讲师数据失败，回退到缓存:', e);
             // 回退到DataAPI缓存
             if (window.DataAPI) {
-                const flIds = window.DataAPI.getFeaturedLecturerIds();
                 const allLecturers = window.DataAPI.getEnabledLecturers();
-                
-                if (flIds && flIds.length > 0) {
-                    featured = flIds.map(id => allLecturers.find(l => String(l.id) === String(id))).filter(Boolean).slice(0, 6);
-                } else {
-                    featured = allLecturers.slice(0, 6);
-                }
+                featured = sortLecturers(allLecturers).slice(0, 6);
             }
         }
 

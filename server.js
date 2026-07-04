@@ -270,13 +270,9 @@ function getTrainingSurveyAverage(data, trainingId) {
 }
 
 function getLecturerTotalPayment(data, lecturer) {
-  const courses = data.management_courses || [];
-  const courseCount = courses.filter(c => String(c.lecturerId) === String(lecturer.id)).length;
-  const basePayment = courseCount * (lecturer.paymentRate || 0);
-  const bonus = (data.lecturer_payment_records || [])
+  return (data.lecturer_payment_records || [])
     .filter(r => String(r.lecturerId) === String(lecturer.id))
     .reduce((s, r) => s + (Number(r.bonus) || 0), 0);
-  return basePayment + bonus;
 }
 
 function calcYearsAsInstructor(startTeachingDate) {
@@ -640,7 +636,7 @@ app.get('/api/data/users', (req, res) => {
     return {
       id: user.id,
       username: user.username,
-      real_name: user.realName || user.real_name || user.username,
+      real_name: user.realName || user.username,
       email: user.email || '',
       department: user.department || '',
       role: user.role === 'admin' ? 'admin' : (user.role || 'student'),
@@ -1535,15 +1531,7 @@ app.post('/api/training/:id/signin', (req, res) => {
     return res.status(400).json({ success: false, error: '该培训未开启签到' });
   }
   
-  // 电脑端直接点击签到时跳过签到码校验
-  if (!direct) {
-    if (!code) {
-      return res.status(400).json({ success: false, error: '缺少签到码' });
-    }
-    if (event.signinCode && event.signinCode !== code) {
-      return res.status(400).json({ success: false, error: '签到码错误' });
-    }
-  }
+  // 所有签到均通过培训任务页点击按钮完成，不再校验签到码
   
   if (!data.training_signins) data.training_signins = [];
   
@@ -1619,8 +1607,20 @@ app.get('/api/training/:id/exam-results', (req, res) => {
   
   const exam = (data.exams || []).find(e => e.id === examId);
   const attempts = (data.exam_attempts || []).filter(a => a.examId === examId);
-  
-  res.json({ success: true, data: attempts, exam, total: attempts.length });
+
+  // 补充学员姓名、部门、岗位等用户信息（系统用户表为 registered_users）
+  const userList = data.registered_users || [];
+  const enrichedAttempts = attempts.map(a => {
+    const user = userList.find(u => String(u.id) === String(a.userId));
+    return {
+      ...a,
+      userName: user ? (user.realName || user.name || user.nickname || user.username || a.userName) : (a.userName || '未知用户'),
+      department: user ? (user.department || a.department || '-') : (a.department || '-'),
+      position: user ? (user.position || a.position || '-') : (a.position || '-')
+    };
+  });
+
+  res.json({ success: true, data: enrichedAttempts, exam, total: enrichedAttempts.length });
 });
 
 // GET /api/training/:id/service-status - 获取培训集成服务状态概览
@@ -2425,10 +2425,27 @@ app.get('/api/exams/:id/students', (req, res) => {
     absent: '缺考'
   };
   const fullScore = exam.totalScore || (exam.questions || []).reduce((s, q) => s + (q.score || 0), 0) || 100;
+  const now = Date.now();
+  const getAttemptDuration = (a) => {
+    if (a.durationUsed !== undefined && a.durationUsed !== null) return a.durationUsed;
+    if (a.completedAt && a.startedAt) {
+      return Math.round((new Date(a.completedAt).getTime() - new Date(a.startedAt).getTime()) / 1000);
+    }
+    if (a.startedAt) {
+      return Math.round((now - new Date(a.startedAt).getTime()) / 1000);
+    }
+    return 0;
+  };
   const students = targetUserIds.map(uid => {
     const user = users.find(u => String(u.id) === uid);
-    const userAttempts = attempts.filter(a => String(a.userId) === uid).sort((a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0));
-    const completedAttempts = userAttempts.filter(a => a.status === 'completed');
+    const allUserAttempts = attempts.filter(a => String(a.userId) === uid).sort((a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0));
+    // 排除 10 秒内退出的无效记录（误操作/网络问题），进行中的尝试也不计入考试次数
+    const meaningfulAttempts = allUserAttempts.filter(a => {
+      if (a.status === 'completed') return true;
+      if (a.status === 'abandoned') return getAttemptDuration(a) >= 10;
+      return false;
+    });
+    const completedAttempts = meaningfulAttempts.filter(a => a.status === 'completed');
     const highestAttempt = completedAttempts.length
       ? completedAttempts.slice().sort((a, b) => (b.score || 0) - (a.score || 0))[0]
       : null;
@@ -2444,22 +2461,22 @@ app.get('/api/exams/:id/students', (req, res) => {
       if (!duration && highestAttempt.completedAt && highestAttempt.startedAt) {
         duration = Math.round((new Date(highestAttempt.completedAt) - new Date(highestAttempt.startedAt)) / 1000);
       }
-    } else if (userAttempts.some(a => a.status === 'taking')) {
+    } else if (allUserAttempts.some(a => a.status === 'taking')) {
       status = 'taking';
-    } else if (userAttempts.some(a => a.status === 'abandoned')) {
+    } else if (meaningfulAttempts.some(a => a.status === 'abandoned')) {
       status = 'absent';
     }
-    const joinAttempt = userAttempts[userAttempts.length - 1];
+    const joinAttempt = allUserAttempts[allUserAttempts.length - 1];
     const joinTime = joinAttempt && joinAttempt.startedAt
       ? new Date(joinAttempt.startedAt).toLocaleString('zh-CN')
       : '-';
     return {
       userId: uid,
-      userName: user ? (user.real_name || user.username) : '未知用户',
+      userName: user ? (user.realName || user.username) : '未知用户',
       department: user ? (user.department || '-') : '-',
       phone: user ? (user.phone || '-') : '-',
       joinTime,
-      attemptCount: userAttempts.length,
+      attemptCount: meaningfulAttempts.length,
       score: score !== null ? score : '-',
       scoreRate: scoreRate !== null ? scoreRate : '-',
       duration,
@@ -2548,10 +2565,10 @@ app.get('/api/exams/:id/students/:userId/records', (req, res) => {
   const user = users.find(u => String(u.id) === String(userId));
   const fullScore = exam.totalScore || (exam.questions || []).reduce((s, q) => s + (q.score || 0), 0) || 100;
   const attempts = (data.exam_attempts || [])
-    .filter(a => a.examId === id && String(a.userId) === String(userId))
+    .filter(a => a.examId === id && String(a.userId) === String(userId) && a.status === 'completed')
     .sort((a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0));
   const highestScore = attempts.length
-    ? Math.max(...attempts.filter(a => a.status === 'completed').map(a => a.score || 0))
+    ? Math.max(...attempts.map(a => a.score || 0))
     : 0;
   const records = attempts.map(a => {
     const score = a.score || 0;
@@ -2565,13 +2582,13 @@ app.get('/api/exams/:id/students/:userId/records', (req, res) => {
       durationUsed: a.durationUsed || 0,
       startedAt: a.startedAt,
       completedAt: a.completedAt,
-      isHighest: a.status === 'completed' && score === highestScore
+      isHighest: score === highestScore
     };
   });
   res.json({
     success: true,
     records,
-    user: user ? { userId: user.id, userName: user.real_name || user.username, department: user.department || '', phone: user.phone || '' } : null
+    user: user ? { userId: user.id, userName: user.realName || user.username, department: user.department || '', phone: user.phone || '' } : null
   });
 });
 
@@ -2608,7 +2625,7 @@ app.get('/api/exams/:id/questions/:questionId/answers', (req, res) => {
     const user = users.find(u => String(u.id) === String(a.userId));
     return {
       userId: a.userId,
-      userName: user ? (user.real_name || user.username) : '未知用户',
+      userName: user ? (user.realName || user.username) : '未知用户',
       department: user ? (user.department || '-') : '-',
       phone: user ? (user.phone || '-') : '-',
       userAnswer: q.type === 'judge' ? judgeAnswerToAB(ua) : ua,
@@ -2644,7 +2661,7 @@ app.get('/api/exams/:id/ranking', (req, res) => {
     const score = a.score || 0;
     return {
       userId: a.userId,
-      userName: user ? (user.real_name || user.username) : '未知用户',
+      userName: user ? (user.realName || user.username) : '未知用户',
       department: user ? (user.department || '') : '',
       avatar: user ? (user.avatar || '') : '',
       score,
@@ -2707,12 +2724,12 @@ app.put('/api/exams/:id/questions', (req, res) => {
 app.get('/api/exams/:id/results', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
-  const attempts = (data.exam_attempts || []).filter(a => a.examId === id);
+  const attempts = (data.exam_attempts || []).filter(a => a.examId === id && a.status === 'completed');
   // 关联用户信息（使用 registered_users 主表）
   const users = data.registered_users || [];
   const results = attempts.map(a => {
     const user = users.find(u => String(u.id) === String(a.userId));
-    return { ...a, userName: user ? (user.real_name || user.username) : '未知用户' };
+    return { ...a, userName: user ? (user.realName || user.username) : '未知用户' };
   }).sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
   res.json({ success: true, results });
 });
@@ -3048,7 +3065,7 @@ app.post('/api/exams/:id/submit', (req, res) => {
   });
 });
 
-// POST /api/exams/:id/abandon - 放弃考试
+// POST /api/exams/:id/abandon - 放弃考试（10秒内退出视为误操作，直接删除记录）
 app.post('/api/exams/:id/abandon', (req, res) => {
   const id = parseInt(req.params.id);
   const { attemptId } = req.body;
@@ -3056,8 +3073,15 @@ app.post('/api/exams/:id/abandon', (req, res) => {
   const attempts = data.exam_attempts || [];
   const index = attempts.findIndex(a => a.id === attemptId);
   if (index !== -1) {
-    attempts[index].status = 'abandoned';
-    attempts[index].completedAt = new Date().toISOString();
+    const startedAt = new Date(attempts[index].startedAt).getTime();
+    const durationUsed = Math.round((Date.now() - startedAt) / 1000);
+    if (durationUsed < 10) {
+      attempts.splice(index, 1);
+    } else {
+      attempts[index].status = 'abandoned';
+      attempts[index].completedAt = new Date().toISOString();
+      attempts[index].durationUsed = durationUsed;
+    }
     writeData(data);
   }
   res.json({ success: true });
@@ -3728,7 +3752,6 @@ app.put('/api/lecturer-applications/:id', (req, res) => {
         levelName: '实习讲师',
         avatar: '',
         intro: app.intro || '',
-        paymentRate: 0,
         status: 'disabled',  // 审批通过后默认禁用，等上传头像后再启用
         type: 'internal',
         skills: app.skills || [],
@@ -3756,7 +3779,6 @@ app.put('/api/lecturer-applications/:id', (req, res) => {
     if (data.registered_users) {
       const user = data.registered_users.find(u => 
         u.realName === app.name || 
-        u.real_name === app.name || 
         u.name === app.name ||
         u.username === app.name
       );
@@ -3925,7 +3947,7 @@ app.get('/api/notifications', (req, res) => {
     publishedNotices.forEach(notice => {
       // 检查用户是否已读
       const readRecord = data.notification_reads.find(
-        r => r.userId === currentUser.id && r.noticeId === notice.id
+        r => String(r.userId) === String(currentUser.id) && String(r.noticeId) === String(notice.id)
       );
       
       // 智能截取纯文本预览：去除HTML标签和base64图片后保留前120字
@@ -4633,11 +4655,13 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
   }
   
   const fileUrl = `/uploads/${req.query.type || 'misc'}/${req.file.filename}`;
+  // multer 默认按 latin1 解析原始文件名，此处恢复为 UTF-8
+  const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
   res.json({
     success: true,
     url: fileUrl,
     filename: req.file.filename,
-    originalName: req.file.originalname,
+    originalName: originalName,
     size: req.file.size,
     mimetype: req.file.mimetype
   });
@@ -4648,15 +4672,33 @@ app.post('/api/upload/multiple', upload.array('files', 10), (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ success: false, error: '没有文件上传' });
   }
-  
-  const files = req.files.map(file => ({
-    url: `/uploads/${req.query.type || 'misc'}/${file.filename}`,
-    filename: file.filename,
-    originalName: file.originalname,
-    size: file.size,
-    mimetype: file.mimetype
-  }));
-  
+
+  // 前端会额外传入 originalNames 字段，避免 multer 解析编码问题
+  const originalNames = req.body && req.body.originalNames;
+  const nameList = Array.isArray(originalNames) ? originalNames : (originalNames ? [originalNames] : []);
+
+  const files = req.files.map((file, i) => {
+    let originalName = '';
+    if (nameList[i]) {
+      try {
+        originalName = decodeURIComponent(nameList[i]);
+      } catch (e) {
+        originalName = nameList[i];
+      }
+    }
+    if (!originalName) {
+      // 降级：尝试从 multer 的 originalname 恢复 UTF-8
+      originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    }
+    return {
+      url: `/uploads/${req.query.type || 'misc'}/${file.filename}`,
+      filename: file.filename,
+      originalName: originalName,
+      size: file.size,
+      mimetype: file.mimetype
+    };
+  });
+
   res.json({
     success: true,
     files: files,

@@ -48,8 +48,8 @@
       var result = await res.json();
       var list = (result.success && result.data) ? result.data : [];
       // 过滤掉用户在消息中心已删除的消息
-      var deletedIds = new Set(JSON.parse(localStorage.getItem('messages_deleted_ids') || '[]'));
-      list = list.filter(function(n){ return !deletedIds.has(n.id); });
+      var deletedIds = new Set((JSON.parse(localStorage.getItem('messages_deleted_ids') || '[]')).map(function(id){ return String(id); }));
+      list = list.filter(function(n){ return !deletedIds.has(String(n.id)); });
       var unreadCount = list.filter(function(n){ return !n.read; }).length;
       var badge = document.getElementById('notification-badge');
       if (!badge) return;
@@ -100,8 +100,8 @@
       var result = await res.json();
       var list = (result.success && result.data) ? result.data : [];
       // 过滤掉用户在消息中心已删除的消息
-      var deletedIds = new Set(JSON.parse(localStorage.getItem('messages_deleted_ids') || '[]'));
-      list = list.filter(function(n){ return !deletedIds.has(n.id); });
+      var deletedIds = new Set((JSON.parse(localStorage.getItem('messages_deleted_ids') || '[]')).map(function(id){ return String(id); }));
+      list = list.filter(function(n){ return !deletedIds.has(String(n.id)); });
       renderNotificationList(list);
       var unreadCount = list.filter(function(n){ return !n.read; }).length;
       var badge = document.getElementById('notification-badge');
@@ -147,7 +147,7 @@
       var isTraining = n.type === 'training_assign' || n.type === 'training';
       var clickAction;
       if (isExam && n.examId) { clickAction = 'goToExam(' + n.examId + ',' + n.id + ')'; }
-      else if (isTraining && n.trainingId) { clickAction = "window.location.href='training-plan.html?openTrainingId=' + encodeURIComponent(" + n.trainingId + ")"; }
+      else if (isTraining && n.trainingId) { clickAction = "window.location.href='training-plan.html?openTrainingId=" + encodeURIComponent(n.trainingId) + "'"; }
       else { clickAction = 'markNotificationRead(' + n.id + ')'; }
       var bgClass = n.read ? 'opacity-60' : (isExam ? 'bg-amber-50/30' : 'bg-blue-50/30');
       var iconColorClass = n.read ? 'text-slate-400' : (isExam ? 'text-amber-500' : 'text-primary');
@@ -185,8 +185,8 @@
       var result = await res.json();
       var list = (result.success && result.data) ? result.data : [];
       // 过滤掉用户在消息中心已删除的消息
-      var deletedIds = new Set(JSON.parse(localStorage.getItem('messages_deleted_ids') || '[]'));
-      list = list.filter(function(n){ return !deletedIds.has(n.id); });
+      var deletedIds = new Set((JSON.parse(localStorage.getItem('messages_deleted_ids') || '[]')).map(function(id){ return String(id); }));
+      list = list.filter(function(n){ return !deletedIds.has(String(n.id)); });
       var unreadIds = list.filter(function(n){ return !n.read; }).map(function(n){ return n.id; });
       if (unreadIds.length === 0) return;
       // 批量标记已读

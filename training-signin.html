@@ -22,8 +22,7 @@
     @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
     .toast.success { background: #10b981; color: #fff; }
     .toast.error { background: #ef4444; color: #fff; }
-    .code-input { width: 48px; height: 56px; font-size: 24px; text-align: center; border: 2px solid #e2e8f0; border-radius: 12px; outline: none; transition: all 0.2s; }
-    .code-input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.15); }
+
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -61,16 +60,10 @@
       <div id="training-info" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6 slide-up">
       </div>
 
-      <!-- 签到码输入 -->
+      <!-- 签到入口 -->
       <div id="signin-section" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 slide-up">
-        <p class="text-sm font-semibold text-slate-800 mb-4 text-center">请输入签到码</p>
-        <div class="flex justify-center gap-3 mb-4" id="code-boxes">
-          <input type="text" class="code-input" maxlength="1" inputmode="numeric" data-idx="0">
-          <input type="text" class="code-input" maxlength="1" inputmode="numeric" data-idx="1">
-          <input type="text" class="code-input" maxlength="1" inputmode="numeric" data-idx="2">
-          <input type="text" class="code-input" maxlength="1" inputmode="numeric" data-idx="3">
-        </div>
-        <p class="text-xs text-slate-400 text-center mb-4">向培训现场工作人员获取签到码</p>
+        <p class="text-sm font-semibold text-slate-800 mb-2 text-center">培训考勤签到</p>
+        <p class="text-xs text-slate-400 text-center mb-4">请在签到时间窗口内点击按钮完成签到</p>
         <button onclick="submitSignin()" id="submit-btn" class="w-full py-3 bg-gradient-primary text-white rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed">
           <i class="fa fa-check-circle mr-2"></i>确认签到
         </button>
@@ -133,11 +126,6 @@
       el.textContent = msg;
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 3000);
-    }
-
-    function getCode() {
-      const inputs = document.querySelectorAll('.code-input');
-      return Array.from(inputs).map(i => i.value).join('');
     }
 
     function canAccessTraining(event, currentUser) {
@@ -293,11 +281,6 @@
     }
 
     async function submitSignin() {
-      const code = getCode();
-      if (code.length < 4) {
-        toast('请输入完整的签到码', 'error');
-        return;
-      }
       const btn = document.getElementById('submit-btn');
       btn.disabled = true;
       btn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>提交中...';
@@ -306,7 +289,7 @@
         const res = await fetch('/api/training/' + trainingId + '/signin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: user.id, code })
+          body: JSON.stringify({ userId: user.id, direct: true })
         });
         const result = await res.json();
         if (result.success) {
@@ -333,34 +316,7 @@
       `;
     }
 
-    // 签到码输入框交互
     document.addEventListener('DOMContentLoaded', () => {
-      const inputs = document.querySelectorAll('.code-input');
-      inputs.forEach((input, idx) => {
-        input.addEventListener('input', (e) => {
-          const val = e.target.value;
-          if (val && idx < inputs.length - 1) {
-            inputs[idx + 1].focus();
-          }
-          if (val && idx === inputs.length - 1) {
-            submitSignin();
-          }
-        });
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Backspace' && !e.target.value && idx > 0) {
-            inputs[idx - 1].focus();
-          }
-        });
-        input.addEventListener('paste', (e) => {
-          e.preventDefault();
-          const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
-          paste.split('').forEach((ch, i) => {
-            if (inputs[i]) inputs[i].value = ch;
-          });
-          if (inputs[paste.length - 1]) inputs[paste.length - 1].focus();
-          if (paste.length === 4) setTimeout(submitSignin, 100);
-        });
-      });
       loadTraining();
     });
   </script>

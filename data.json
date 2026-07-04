@@ -1296,10 +1296,10 @@
       "attachments": [],
       "duration": 1644,
       "views": 79,
-      "rating": 3.7,
+      "rating": 3.5,
       "id": 1781064630171,
       "createdAt": "2026/6/10 12:10:30",
-      "updatedAt": "2026/6/10 15:51:54"
+      "updatedAt": "2026/7/4 09:17:12"
     },
     {
       "title": "角色技能设计思路",
@@ -3483,13 +3483,23 @@
           "type": "multiple"
         }
       ],
-      "startTime": "2026-06-26T09:30:00.000Z",
-      "endTime": "2026-06-27T10:30:00.000Z",
+      "startTime": "2026-06-30T00:30:00.000Z",
+      "endTime": "2026-06-30T02:30:00.000Z",
       "maxAttempts": 0,
       "paperId": "paper_1782113932466",
       "paperName": "粒子系统",
       "allowedUsers": [
-        1780909174403
+        1782783422496,
+        1780909174403,
+        1781087021554,
+        1782783451005,
+        1782783484378,
+        1782783507741,
+        1782783520741,
+        1782783537268,
+        1782783556507,
+        1782805446347,
+        1782805459054
       ],
       "accessType": "restricted",
       "attemptsPolicy": "unlimited",
@@ -3504,7 +3514,7 @@
       "showAnalysis": "show",
       "viewRank": "after_submit",
       "createdAt": "2026-06-26T10:02:42.514Z",
-      "updatedAt": "2026-06-27T00:57:50.321Z",
+      "updatedAt": "2026-07-04T01:17:59.682Z",
       "fromTraining": true
     },
     {
@@ -6167,6 +6177,32 @@
       "bonus": 500,
       "createdAt": "2026-07-03T14:56:34.306Z",
       "updatedAt": "2026-07-03T14:56:34.306Z"
+    },
+    {
+      "id": 1783127350084,
+      "lecturerId": 1780911271132,
+      "date": "2026-07-04",
+      "type": "training",
+      "courseId": null,
+      "trainingId": 1781148703132,
+      "manualText": null,
+      "averageRating": 5,
+      "bonus": 300,
+      "createdAt": "2026-07-04T01:09:10.084Z",
+      "updatedAt": "2026-07-04T01:09:10.084Z"
+    },
+    {
+      "id": 1783127706931,
+      "lecturerId": 1780911271132,
+      "date": "2026-07-04",
+      "type": "training",
+      "courseId": null,
+      "trainingId": 1781148703132,
+      "manualText": null,
+      "averageRating": 5,
+      "bonus": 300,
+      "createdAt": "2026-07-04T01:15:06.931Z",
+      "updatedAt": "2026-07-04T01:15:06.931Z"
     }
   ]
 }
