@@ -49,6 +49,49 @@
 
     // 保存首页讲师数据供弹窗使用
     let _featuredLecturers = [];
+
+    // HTML 转义
+    function escapeHtml(str) {
+        if (!str) return '';
+        const d = document.createElement('div');
+        d.textContent = String(str);
+        return d.innerHTML;
+    }
+
+    // 富文本 HTML 消毒：仅保留安全标签，移除事件处理器和危险协议
+    function sanitizeHtml(html) {
+        if (!html) return '';
+        const allowedTags = new Set(['p','br','strong','b','em','i','u','s','span','div','h1','h2','h3','h4','h5','h6','ul','ol','li','a','img','table','thead','tbody','tr','td','th','blockquote','pre','code','hr']);
+        const allowedAttrs = new Set(['href','src','alt','title','class','style','target','width','height']);
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const walk = (node) => {
+            if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent);
+            if (node.nodeType !== Node.ELEMENT_NODE) return document.createTextNode('');
+            const tag = node.tagName.toLowerCase();
+            if (!allowedTags.has(tag)) return document.createTextNode(node.textContent || '');
+            const el = document.createElement(tag);
+            for (const attr of Array.from(node.attributes)) {
+                const name = attr.name.toLowerCase();
+                if (name.startsWith('on')) continue;
+                if (!allowedAttrs.has(name)) continue;
+                let value = attr.value;
+                if (name === 'href' || name === 'src') {
+                    value = value.replace(/\s/g, '');
+                    if (/^(javascript|data|vbscript):/i.test(value)) continue;
+                    if (tag === 'a' && name === 'href' && !/^[a-z][a-z0-9+.-]*:/i.test(value)) {
+                        value = 'https://' + value;
+                    }
+                }
+                el.setAttribute(name, value);
+            }
+            Array.from(node.childNodes).forEach(child => el.appendChild(walk(child)));
+            return el;
+        };
+        const wrapper = document.createElement('div');
+        Array.from(doc.body.childNodes).forEach(child => wrapper.appendChild(walk(child)));
+        return wrapper.innerHTML;
+    }
     
     // 等待 DOM 加载完成
     document.addEventListener('DOMContentLoaded', function() {
@@ -426,7 +469,7 @@
                             <i class="fa fa-bullhorn text-white"></i>
                         </div>
                         <div class="min-w-0">
-                            <h3 class="font-semibold text-gray-800 text-lg truncate">${notice.title || '公告详情'}</h3>
+                            <h3 class="font-semibold text-gray-800 text-lg truncate">${escapeHtml(notice.title) || '公告详情'}</h3>
                             <p class="text-xs text-gray-500 mt-0.5">
                                 ${notice.pinned ? '<span class="text-red-500 mr-1"><i class="fa fa-thumb-tack"></i>置顶</span>' : ''}
                                 ${notice.publishedAt || notice.createdAt || ''}
@@ -443,14 +486,14 @@
                     <!-- 封面图 -->
                     ${notice.cover ? `
                         <div class="w-full h-48 md:h-64 overflow-hidden">
-                            <img src="${notice.cover}" alt="${notice.title}" class="w-full h-full object-cover">
+                            <img src="${escapeHtml(notice.cover)}" alt="${escapeHtml(notice.title)}" class="w-full h-full object-cover">
                         </div>
                     ` : ''}
                     
                     <!-- 富文本内容 -->
                     <div class="p-6 md:p-8">
                         <div class="prose prose-indigo max-w-none notice-content">
-                            ${notice.content || '<p class="text-gray-400 text-center py-8">暂无内容</p>'}
+                            ${sanitizeHtml(notice.content) || '<p class="text-gray-400 text-center py-8">暂无内容</p>'}
                         </div>
                     </div>
                 </div>
@@ -773,7 +816,7 @@
                             </h3>
                             <div class="space-y-2">
                                 ${courses.length ? courses.map(c => `
-                                    <div class="bg-gray-50 rounded-xl p-3 cursor-pointer hover:bg-gray-100 transition-colors" onclick="closeLecturerModal(); location.href='player.html?id=${c.id}'">
+                                    <div class="bg-gray-50 rounded-xl p-3 cursor-pointer hover:bg-gray-100 transition-colors" onclick="closeLecturerModal(); location.href='player.html?courseId=${c.id}'">
                                         <div class="flex items-center gap-3">
                                             <img src="${c.cover || ''}" class="w-16 h-12 rounded-lg object-cover flex-shrink-0" onerror="this.src='https://placehold.co/64x48/667eea/white?text=课'">
                                             <div class="flex-1 min-w-0">

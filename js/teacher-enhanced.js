@@ -329,7 +329,7 @@
                         <div class="bg-gray-50 rounded-xl p-4 mb-4">
                             <div class="flex items-center gap-3">
                                 <!-- 头像 -->
-                                <img src="${lecturer.avatar || ''}" alt="${lecturer.name}" class="w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-lg" onerror="this.src=''; this.innerHTML='${lecturer.name.charAt(0)}'">
+                                <img src="${lecturer.avatar || ''}" alt="${lecturer.name}" class="w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-lg object-cover" onerror="this.src='https://placehold.co/120x120/667eea/white?text=${encodeURIComponent(lecturer.name.charAt(0))}'">
                                 
                                 <!-- 信息 -->
                                 <div>

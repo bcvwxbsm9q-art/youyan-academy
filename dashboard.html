@@ -2648,8 +2648,8 @@
 
   <script src="data-api.js"></script>
   <script src="js/data-sync.js"></script>
-  <script src="js/auth-modal.js"></script>
-  <script src="js/auth-guard.js"></script>
+  <script src="js/auth-modal.js?v=20260704"></script>
+  <script src="js/auth-guard.js?v=20260704"></script>
   <script>
     // dataSync 兼容层：将 window.dataSync.getData/setData 映射到 DataAPI
     if (!window.dataSync) {
@@ -4095,10 +4095,16 @@
         status: document.querySelector('input[name="c-status"]:checked')?.value || 'draft',
         videos,
         attachments,
-        duration: totalDuration,
-        views: existingCourse.views || 0,
-        rating: existingCourse.rating || 0
+        duration: totalDuration
       };
+      // 编辑时继承原课程的浏览量和评分；若原数据没有这些字段，则不覆盖，让后端保留计算值
+      if (id && existingCourse) {
+        if (existingCourse.views !== undefined) formData.views = existingCourse.views;
+        if (existingCourse.rating !== undefined) formData.rating = existingCourse.rating;
+      } else {
+        formData.views = 0;
+        formData.rating = 0;
+      }
 
       // 禁用保存按钮,防止重复提交
       const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -13054,9 +13060,16 @@
         const resJson = await res.json();
         const exam = resJson.data || resJson;
         if (!exam || exam.error) { toast('获取原考试数据失败', 'error'); return; }
-        const { id: _, createdAt: __, updatedAt: ___, questionCount, attemptCount, completedCount, passCount, failCount, absentCount, unstartedCount, ...copyData } = exam;
+        // 白名单复制：只保留考试定义字段，避免带入统计、作答、状态等运行时数据
+        const whitelist = ['title','description','duration','totalScore','passingScore','maxAttempts','shuffleQuestions','shuffleOptions','attemptsPolicy','attemptsCount','recordScore','screenSwitchPolicy','screenSwitchCount','showData','answerDetail','viewQuestions','showCorrect','showAnalysis','viewRank','questions','paperId','paperName'];
+        const copyData = {};
+        whitelist.forEach(k => { if (exam[k] !== undefined) copyData[k] = exam[k]; });
         copyData.title = (exam.title || '考试') + '副本';
         copyData.status = 'draft';
+        copyData.startTime = null;
+        copyData.endTime = null;
+        copyData.accessType = 'none';
+        copyData.allowedUsers = null;
         const createRes = await fetch('/api/exams', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

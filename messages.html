@@ -409,9 +409,9 @@
     <!-- 统一数据访问层 -->
     <script src="js/data-sync.js?v=2026051301"></script>
     <script src="data-api.js?v=20260520c"></script>
-    <script src="js/auth-modal.js?v=20260526c"></script>
-    <script src="js/auth-guard.js?v=20260526d"></script>
-    <script src="js/notification.js?v=20260703"></script>
+    <script src="js/auth-modal.js?v=20260704"></script>
+    <script src="js/auth-guard.js?v=20260704"></script>
+    <script src="js/notification.js?v=20260704"></script>
     <script>
     // 退出登录
     function handleLogout() {
@@ -444,6 +444,41 @@
             const d = document.createElement('div');
             d.innerHTML = html;
             return d.textContent.trim() || '';
+        }
+
+        // 对富文本 HTML 进行消毒：仅保留安全标签，移除事件处理器和危险协议
+        function sanitizeHtml(html) {
+            if (!html) return '';
+            const allowedTags = new Set(['p','br','strong','b','em','i','u','s','span','div','h1','h2','h3','h4','h5','h6','ul','ol','li','a','img','table','thead','tbody','tr','td','th','blockquote','pre','code','hr']);
+            const allowedAttrs = new Set(['href','src','alt','title','class','style','target','width','height']);
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const walk = (node) => {
+                if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent);
+                if (node.nodeType !== Node.ELEMENT_NODE) return document.createTextNode('');
+                const tag = node.tagName.toLowerCase();
+                if (!allowedTags.has(tag)) return document.createTextNode(node.textContent || '');
+                const el = document.createElement(tag);
+                for (const attr of Array.from(node.attributes)) {
+                    const name = attr.name.toLowerCase();
+                    if (name.startsWith('on')) continue;
+                    if (!allowedAttrs.has(name)) continue;
+                    let value = attr.value;
+                    if (name === 'href' || name === 'src') {
+                        value = value.replace(/\s/g, '');
+                        if (/^(javascript|data|vbscript):/i.test(value)) continue;
+                        if (name === 'a' && name === 'href' && !/^[a-z][a-z0-9+.-]*:/i.test(value)) {
+                            value = 'https://' + value;
+                        }
+                    }
+                    el.setAttribute(name, value);
+                }
+                Array.from(node.childNodes).forEach(child => el.appendChild(walk(child)));
+                return el;
+            };
+            const wrapper = document.createElement('div');
+            Array.from(doc.body.childNodes).forEach(child => wrapper.appendChild(walk(child)));
+            return wrapper.innerHTML;
         }
 
         function formatTime(isoStr) {
@@ -713,7 +748,7 @@
 
             const contentEl = document.getElementById('modal-content');
             contentEl.className = 'modal-body ' + (msg.isHtml ? 'html-content' : 'plain-content');
-            contentEl.innerHTML = msg.isHtml ? (msg.fullContent || msg.content || '暂无内容') : escapeHtml(msg.content || '暂无内容');
+            contentEl.innerHTML = msg.isHtml ? sanitizeHtml(msg.fullContent || msg.content || '暂无内容') : escapeHtml(msg.content || '暂无内容');
             document.getElementById('msg-detail-modal').style.display = 'flex';
         };
 

@@ -852,13 +852,20 @@
         </div>
     </footer>
 
-    <script src="js/auth-modal.js"></script>
-    <script src="js/auth-guard.js"></script>
-    <script src="js/notification.js?v=20260703"></script>
+    <script src="js/auth-modal.js?v=20260704"></script>
+    <script src="js/auth-guard.js?v=20260704"></script>
+    <script src="js/notification.js?v=20260704"></script>
     <script>
         // 退出登录（使用统一认证模块）
         function handleLogout() {
             AuthGuard.logout();
+        }
+
+        function escapeHtml(str) {
+            if (str == null) return '';
+            const d = document.createElement('div');
+            d.textContent = String(str);
+            return d.innerHTML;
         }
         
         let currentYear = new Date().getFullYear();
@@ -1857,7 +1864,7 @@
                     status: done ? '已完成' : '待签到', statusColor: done ? '#10b981' : '#f59e0b',
                     actionText: done ? '已完成' : '去完成',
                     actionClass: done ? 'btn-state-done' : 'btn-action-signin',
-                    actionOnclick: done ? '' : `doDirectSignin(${course.id}, this)`,
+                    actionData: done ? null : { action: 'signin', params: { trainingId: course.id } },
                     actionDisabled: done
                 });
             }
@@ -1872,7 +1879,7 @@
                     status: done ? '已完成' : '待完成', statusColor: done ? '#10b981' : '#f59e0b',
                     actionText: done ? '已完成' : '去完成',
                     actionClass: done ? 'btn-state-done' : 'btn-action-survey',
-                    actionOnclick: done ? '' : `openSurveyModal(${course.linkedSurveyId}, ${course.id})`,
+                    actionData: done ? null : { action: 'survey', params: { surveyId: course.linkedSurveyId, trainingId: course.id } },
                     actionDisabled: done
                 });
             }
@@ -1887,7 +1894,7 @@
                     status: done ? '已完成' : '待完成', statusColor: done ? '#10b981' : '#f59e0b',
                     actionText: done ? '已完成' : '去完成',
                     actionClass: done ? 'btn-state-done' : 'btn-action-exam',
-                    actionOnclick: done ? '' : `location.href='exam.html?id=${course.linkedExamId}&returnUrl=training-plan.html&trainingId=${course.id}'`,
+                    actionData: done ? null : { action: 'exam', params: { examId: course.linkedExamId, trainingId: course.id } },
                     actionDisabled: done
                 });
             }
@@ -1902,7 +1909,7 @@
                     status: '待完成', statusColor: '#9ca3af',
                     actionText: '去完成',
                     actionClass: 'btn-action-courseware',
-                    actionOnclick: `openCoursewareModal(${JSON.stringify(files).replace(/"/g, '&quot;')})`,
+                    actionData: { action: 'courseware', params: { files: files } },
                     actionDisabled: false
                 });
             }
@@ -1937,7 +1944,7 @@
             const listHtml = items.map((item, idx) => {
                 // 状态统一在右侧按钮展示，不在卡片下方显示“待完成/待签到”等提醒
                 const statusHtml = '';
-                const actionAttr = item.actionOnclick ? `onclick="${item.actionOnclick}"` : '';
+                const actionAttr = item.actionData ? `data-action="${item.actionData.action}" data-params="${escapeHtml(JSON.stringify(item.actionData.params)).replace(/"/g, '&quot;')}"` : '';
                 return `
                 <div class="tp-task-card${item.actionDisabled ? ' is-done' : ''}">
                     <div class="tp-task-icon" style="background:${item.iconBg};color:${item.iconColor};box-shadow:0 0 0 3px ${item.ringColor}15;">
@@ -1956,6 +1963,44 @@
             }).join('');
             return topInfo + listHtml;
         }
+
+        // 项目内容任务按钮统一事件处理（避免将动态参数直接拼接进 onclick 属性）
+        function handleTaskAction(action, params, btnEl) {
+            if (!action) return;
+            try {
+                if (action === 'signin') {
+                    doDirectSignin(params.trainingId, btnEl);
+                } else if (action === 'survey') {
+                    openSurveyModal(params.surveyId, params.trainingId);
+                } else if (action === 'exam') {
+                    location.href = `exam.html?id=${params.examId}&returnUrl=training-plan.html&trainingId=${params.trainingId}`;
+                } else if (action === 'courseware') {
+                    openCoursewareModal(params.files || []);
+                }
+            } catch (e) {
+                console.error('[training-plan] 任务按钮处理失败:', action, params, e);
+            }
+        }
+
+        // 绑定一次项目内容任务按钮的事件委托
+        (function bindTaskActionDelegate() {
+            const modalContent = document.getElementById('modal-content');
+            if (!modalContent) return;
+            modalContent.addEventListener('click', function(e) {
+                const btn = e.target.closest('.tp-task-btn[data-action]');
+                if (!btn) return;
+                const action = btn.dataset.action;
+                let params = {};
+                try {
+                    params = JSON.parse(btn.dataset.params || '{}');
+                } catch (err) {
+                    console.warn('[training-plan] 解析任务参数失败:', btn.dataset.params, err);
+                    return;
+                }
+                if (btn.disabled) return;
+                handleTaskAction(action, params, btn);
+            });
+        })();
 
         // ===== 直接签到（电脑端点击签到） =====
         async function doDirectSignin(trainingId, btnEl) {

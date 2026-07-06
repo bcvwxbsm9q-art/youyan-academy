@@ -143,7 +143,7 @@
                     <div class="grid grid-cols-2 gap-3 mb-6">
                         ${QR_PROVIDERS.map(p => `
                             <button type="button" onclick="AuthModal.selectQrProvider('${p.key}')" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition-colors">
-                                <span class="text-primary">${p.icon}</span>
+                                <span style="color:${p.color}">${p.icon}</span>
                                 <span class="text-sm font-medium text-gray-700">${p.name}</span>
                             </button>
                         `).join('')}
@@ -162,7 +162,7 @@
                     <div class="flex justify-center gap-4 mb-4">
                         ${QR_PROVIDERS.map(p => `
                             <button type="button" onclick="AuthModal.selectQrProvider('${p.key}')" class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-gray-100" title="${p.name}">
-                                <span class="text-[${p.color}]">${p.icon}</span>
+                                <span style="color:${p.color}">${p.icon}</span>
                             </button>
                         `).join('')}
                     </div>
