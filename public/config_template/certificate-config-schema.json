@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "证书管理模块配置契约",
+  "description": "证书模块运行时的可配置项与默认值",
+  "type": "object",
+  "properties": {
+    "certificate": {
+      "type": "object",
+      "description": "证书业务配置",
+      "properties": {
+        "defaultCreator": {
+          "type": "string",
+          "default": "许志坚",
+          "description": "证书创建人默认值"
+        },
+        "defaultValidityType": {
+          "type": "string",
+          "enum": ["permanent", "fixed"],
+          "default": "permanent",
+          "description": "默认有效期类型"
+        },
+        "defaultDigits": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 4,
+          "description": "默认证书编号序号位数"
+        },
+        "defaultStartNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "默认起始序号"
+        },
+        "allowDuplicateIssue": {
+          "type": "boolean",
+          "default": false,
+          "description": "是否允许对同一用户重复颁发同一证书（撤销后重发除外）"
+        },
+        "autoIssueOnExamPass": {
+          "type": "boolean",
+          "default": true,
+          "description": "考试合格后是否自动发放证书（全局开关）"
+        },
+        "autoIssueSourceTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["exam", "training"]
+          },
+          "default": ["exam"],
+          "description": "支持自动发放的联动来源"
+        }
+      }
+    },
+    "render": {
+      "type": "object",
+      "description": "证书渲染配置",
+      "properties": {
+        "defaultTemplateId": {
+          "type": "string",
+          "default": "tpl-honor-blue",
+          "description": "默认证书模板 ID"
+        },
+        "pageSize": {
+          "type": "string",
+          "enum": ["A4", "A4-landscape", "letter"],
+          "default": "A4",
+          "description": "打印/导出页面尺寸"
+        },
+        "defaultCompanyName": {
+          "type": "string",
+          "default": "广州游雁网络科技有限公司",
+          "description": "证书上企业名称默认值"
+        }
+      }
+    }
+  }
+}

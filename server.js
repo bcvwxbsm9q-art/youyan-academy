@@ -206,6 +206,168 @@ function initDefaultAdmin() {
   }
 }
 
+// ============================================================
+// 证书管理数据初始化与辅助函数
+// ============================================================
+function initCertificateData() {
+  const data = readData();
+  let changed = false;
+
+  if (!data.certificates) {
+    data.certificates = [];
+    changed = true;
+  }
+  if (!data.user_certificates) {
+    data.user_certificates = [];
+    changed = true;
+  }
+  if (!data.certificate_templates) {
+    data.certificate_templates = [
+      {
+        id: 'tpl-honor-blue',
+        name: '蓝色荣誉证书（竖版）',
+        layout: 'portrait',
+        thumbnail: '',
+        style: {
+          background: 'linear-gradient(135deg, #f8fbff 0%, #e8f4fc 100%)',
+          borderColor: '#1e5a8e',
+          primaryColor: '#1e5a8e',
+          fontFamily: '"Noto Serif SC", "SimSun", serif'
+        },
+        placeholders: [
+          { key: 'name', label: '姓名', defaultValue: '张三' },
+          { key: 'title', label: '证书标题', defaultValue: '荣誉证书' },
+          { key: 'content', label: '正文', defaultValue: '表现优异，特发此证，以资鼓励。' },
+          { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
+          { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
+        ]
+      },
+      {
+        id: 'tpl-completion-gold',
+        name: '金色结业证书（横版）',
+        layout: 'landscape',
+        thumbnail: '',
+        style: {
+          background: 'linear-gradient(135deg, #fffdf5 0%, #fcf3d8 100%)',
+          borderColor: '#bfa05f',
+          primaryColor: '#8a6d2f',
+          fontFamily: '"Noto Serif SC", "SimSun", serif'
+        },
+        placeholders: [
+          { key: 'name', label: '姓名', defaultValue: '李四' },
+          { key: 'title', label: '证书标题', defaultValue: '结业证书' },
+          { key: 'content', label: '正文', defaultValue: '已完成全部培训课程，考核合格，准予结业。' },
+          { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
+          { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
+        ]
+      },
+      {
+        id: 'tpl-excellent-green',
+        name: '绿色优秀学员证书（竖版）',
+        layout: 'portrait',
+        thumbnail: '',
+        style: {
+          background: 'linear-gradient(135deg, #f5fff8 0%, #e3f5e9 100%)',
+          borderColor: '#2d7a4e',
+          primaryColor: '#2d7a4e',
+          fontFamily: '"Noto Sans SC", "Microsoft YaHei", sans-serif'
+        },
+        placeholders: [
+          { key: 'name', label: '姓名', defaultValue: '王五' },
+          { key: 'title', label: '证书标题', defaultValue: '优秀学员证书' },
+          { key: 'content', label: '正文', defaultValue: '学习态度认真，成绩突出，被评为优秀学员。' },
+          { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
+          { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
+        ]
+      },
+      {
+        id: 'tpl-skill-purple',
+        name: '紫色技能认证证书（横版）',
+        layout: 'landscape',
+        thumbnail: '',
+        style: {
+          background: 'linear-gradient(135deg, #faf8ff 0%, #efe8fc 100%)',
+          borderColor: '#6b4c9a',
+          primaryColor: '#6b4c9a',
+          fontFamily: '"Noto Sans SC", "Microsoft YaHei", sans-serif'
+        },
+        placeholders: [
+          { key: 'name', label: '姓名', defaultValue: '赵六' },
+          { key: 'title', label: '证书标题', defaultValue: '技能认证证书' },
+          { key: 'content', label: '正文', defaultValue: '已通过相关技能考核，具备相应专业能力。' },
+          { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
+          { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
+        ]
+      }
+    ];
+    changed = true;
+  }
+
+  if (changed) {
+    writeData(data);
+    console.log('  证书管理数据集合已初始化');
+  } else {
+    console.log('  证书管理数据集合已存在');
+  }
+}
+
+function padNumber(num, digits) {
+  return String(num).padStart(digits, '0');
+}
+
+function generateNextCertNo(data, certificate) {
+  const issued = (data.user_certificates || []).filter(uc => String(uc.certificateId) === String(certificate.id));
+  const maxNum = issued.reduce((max, uc) => {
+    const match = uc.certNo.match(new RegExp(`^${certificate.prefix}(\\d+)$`));
+    if (match) {
+      const n = parseInt(match[1], 10);
+      return n > max ? n : max;
+    }
+    return max;
+  }, certificate.startNumber - 1);
+  return certificate.prefix + padNumber(maxNum + 1, certificate.digits);
+}
+
+function issueCertificateInternal(data, certificateId, userId, sourceType, sourceId) {
+  if (!data.certificates) data.certificates = [];
+  if (!data.user_certificates) data.user_certificates = [];
+
+  const certificate = data.certificates.find(c => String(c.id) === String(certificateId));
+  if (!certificate) return { success: false, error: '证书定义不存在' };
+  if (certificate.status !== 'enabled') return { success: false, error: '证书已停用' };
+
+  const existing = data.user_certificates.find(uc =>
+    String(uc.certificateId) === String(certificateId) &&
+    String(uc.userId) === String(userId) &&
+    uc.status === 'active'
+  );
+  if (existing) return { success: false, error: '该用户已持有有效证书实例' };
+
+  const now = new Date().toISOString();
+  let expireAt = null;
+  if (certificate.validityType === 'fixed' && certificate.validityDays) {
+    expireAt = new Date(Date.now() + certificate.validityDays * 24 * 60 * 60 * 1000).toISOString();
+  }
+
+  const certNo = generateNextCertNo(data, certificate);
+  const userCert = {
+    id: 'uc-' + Date.now() + '-' + Math.round(Math.random() * 1e9),
+    certificateId: String(certificateId),
+    userId: String(userId),
+    certNo,
+    sourceType: sourceType || 'manual',
+    sourceId: sourceId || null,
+    issueAt: now,
+    effectiveAt: now,
+    expireAt,
+    status: 'active',
+    revokedAt: null,
+    revokeReason: null
+  };
+  data.user_certificates.push(userCert);
+  return { success: true, data: userCert };
+}
+
 // 从 course_ratings 计算课程平均评分
 function getCourseAvgRating(data, courseId) {
   // 从 course_ratings 获取评分
@@ -1508,7 +1670,18 @@ app.get('/api/training/schedule', (req, res) => {
 app.get('/api/training/:id/signins', (req, res) => {
   const data = readData();
   const trainingId = parseInt(req.params.id);
-  const signins = (data.training_signins || []).filter(s => s.trainingId === trainingId);
+  const users = data.registered_users || [];
+  const signins = (data.training_signins || [])
+    .filter(s => s.trainingId === trainingId)
+    .map(s => {
+      const user = users.find(u => String(u.id) === String(s.userId));
+      return {
+        ...s,
+        userName: s.userName || (user ? (user.realName || user.username) : '未知用户'),
+        department: s.department || (user ? (user.department || '-') : '-'),
+        position: user ? (user.position || '-') : '-'
+      };
+    });
   res.json({ success: true, data: signins });
 });
 
@@ -1588,8 +1761,19 @@ app.get('/api/training/:id/survey-responses', (req, res) => {
   }
   
   const survey = (data.surveys || []).find(s => s.id === surveyId);
-  const responses = (data.survey_responses || []).filter(r => r.surveyId === surveyId && r.trainingId == trainingId);
-  
+  const users = data.registered_users || [];
+  const responses = (data.survey_responses || [])
+    .filter(r => r.surveyId === surveyId && r.trainingId == trainingId)
+    .map(r => {
+      const user = users.find(u => String(u.id) === String(r.userId));
+      return {
+        ...r,
+        userName: r.userName || (user ? (user.realName || user.username) : '匿名用户'),
+        department: r.department || (user ? (user.department || '-') : '-'),
+        position: user ? (user.position || '-') : '-'
+      };
+    });
+
   res.json({ success: true, data: responses, survey, total: responses.length });
 });
 
@@ -1725,6 +1909,7 @@ app.get('/api/training/:id/enrollments', (req, res) => {
       ...e,
       userName: user ? (user.realName || user.username) : '未知用户',
       userDepartment: user ? (user.department || '-') : '-',
+      userPosition: user ? (user.position || '-') : '-',
       userPhone: user ? (user.phone || '-') : '-',
       userAvatar: user ? (user.avatar || '') : ''
     };
@@ -1882,21 +2067,52 @@ app.get('/api/training/:id/assign-history', (req, res) => {
   const data = readData();
   const trainingId = parseInt(req.params.id);
   const users = data.registered_users || [];
-  const history = (data.training_assign_history || [])
-    .filter(h => h.trainingId === trainingId)
-    .sort((a, b) => new Date(b.assignedAt || 0) - new Date(a.assignedAt || 0));
+  const getUserName = uid => {
+    const u = users.find(user => String(user.id) === String(uid));
+    return u ? (u.realName || u.username || '未知用户') : '未知用户';
+  };
 
-  const result = history.map(h => {
-    const names = (h.userIds || []).map(uid => {
-      const u = users.find(user => String(user.id) === String(uid));
-      return u ? (u.realName || u.username || '未知用户') : '未知用户';
-    });
-    return {
-      count: names.length,
-      userNames: names,
+  // 1. 显式保存的指派历史
+  const explicitHistory = (data.training_assign_history || [])
+    .filter(h => h.trainingId === trainingId)
+    .map(h => ({
+      count: (h.userIds || []).length,
+      userNames: (h.userIds || []).map(uid => getUserName(uid)),
       assignedAt: h.assignedAt
-    };
+    }));
+
+  // 2. 从报名记录反推指派批次，补齐历史数据缺口
+  const assignedEnrollments = (data.training_enrollments || [])
+    .filter(e => e.trainingId === trainingId && e.source === 'assigned');
+  const enrollGroups = {};
+  assignedEnrollments.forEach(e => {
+    const key = String(e.enrolledAt || '');
+    if (!enrollGroups[key]) enrollGroups[key] = [];
+    enrollGroups[key].push(e);
   });
+  const derivedHistory = Object.values(enrollGroups).map(group => ({
+    count: group.length,
+    userNames: group.map(e => getUserName(e.userId)),
+    assignedAt: group[0].enrolledAt
+  }));
+
+  // 3. 合并：按指派时间秒级去重，避免同一批次被重复显示
+  const mergedMap = new Map();
+  [...derivedHistory, ...explicitHistory].forEach(h => {
+    const key = new Date(h.assignedAt || 0).toISOString().slice(0, 19);
+    if (!mergedMap.has(key)) {
+      mergedMap.set(key, { ...h });
+    } else {
+      const existing = mergedMap.get(key);
+      const nameSet = new Set(existing.userNames || []);
+      (h.userNames || []).forEach(name => nameSet.add(name));
+      existing.userNames = Array.from(nameSet);
+      existing.count = existing.userNames.length;
+    }
+  });
+
+  const result = Array.from(mergedMap.values())
+    .sort((a, b) => new Date(b.assignedAt || 0) - new Date(a.assignedAt || 0));
 
   res.json({ success: true, data: result });
 });
@@ -2244,6 +2460,10 @@ app.get('/api/exams', (req, res) => {
     const passCount = completedAttempts.filter(a => a.passed === true).length;
     const failCount = completedAttempts.filter(a => a.passed === false).length;
     const absentCount = attempts.filter(a => a.status === 'abandoned').length;
+    const completedScores = completedAttempts.map(a => a.score != null ? Number(a.score) : 0);
+    const avgScore = completedScores.length ? Math.round((completedScores.reduce((s, v) => s + v, 0) / completedScores.length) * 10) / 10 : null;
+    const maxScore = completedScores.length ? Math.max(...completedScores) : null;
+    const passRatePercent = completedAttempts.length ? Math.round(passCount / completedAttempts.length * 100) : null;
     const attemptedUserIds = new Set(attempts.map(a => String(a.userId)));
     const allowedUsers = Array.isArray(exam.allowedUsers) ? exam.allowedUsers : [];
     const allowedSet = new Set(allowedUsers.map(id => String(id)));
@@ -2258,6 +2478,9 @@ app.get('/api/exams', (req, res) => {
       failCount,
       absentCount,
       unstartedCount,
+      avgScore,
+      maxScore,
+      passRatePercent,
       creator: exam.creator || exam.createdBy || '许志坚',
       paperCategory: category?.name || paper?.categoryName || bank?.name || '-',
       duration: exam.duration || (paper?.duration) || 60,
@@ -2474,6 +2697,7 @@ app.get('/api/exams/:id/students', (req, res) => {
       userId: uid,
       userName: user ? (user.realName || user.username) : '未知用户',
       department: user ? (user.department || '-') : '-',
+      position: user ? (user.position || '-') : '-',
       phone: user ? (user.phone || '-') : '-',
       joinTime,
       attemptCount: meaningfulAttempts.length,
@@ -2588,7 +2812,7 @@ app.get('/api/exams/:id/students/:userId/records', (req, res) => {
   res.json({
     success: true,
     records,
-    user: user ? { userId: user.id, userName: user.realName || user.username, department: user.department || '', phone: user.phone || '' } : null
+    user: user ? { userId: user.id, userName: user.realName || user.username, department: user.department || '', position: user.position || '', phone: user.phone || '' } : null
   });
 });
 
@@ -2627,6 +2851,7 @@ app.get('/api/exams/:id/questions/:questionId/answers', (req, res) => {
       userId: a.userId,
       userName: user ? (user.realName || user.username) : '未知用户',
       department: user ? (user.department || '-') : '-',
+      position: user ? (user.position || '-') : '-',
       phone: user ? (user.phone || '-') : '-',
       userAnswer: q.type === 'judge' ? judgeAnswerToAB(ua) : ua,
       correctAnswer: q.type === 'judge' ? judgeAnswerToAB(q.answer) : correctAnswerRaw,
@@ -2729,7 +2954,12 @@ app.get('/api/exams/:id/results', (req, res) => {
   const users = data.registered_users || [];
   const results = attempts.map(a => {
     const user = users.find(u => String(u.id) === String(a.userId));
-    return { ...a, userName: user ? (user.realName || user.username) : '未知用户' };
+    return {
+      ...a,
+      userName: user ? (user.realName || user.username) : '未知用户',
+      department: user ? (user.department || '-') : '-',
+      position: user ? (user.position || '-') : '-'
+    };
   }).sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
   res.json({ success: true, results });
 });
@@ -3021,6 +3251,16 @@ app.post('/api/exams/:id/submit', (req, res) => {
     const reqTrainingId = req.body.trainingId;
     if (!existingTrainingId && reqTrainingId) {
       attempts[attemptIndex].trainingId = parseInt(reqTrainingId, 10);
+    }
+  }
+
+  // 考试合格后自动发放证书
+  if (passed && exam.certificateId) {
+    const autoIssue = issueCertificateInternal(data, exam.certificateId, userId, 'exam', String(id));
+    if (autoIssue.success) {
+      console.log(`  自动发放证书: ${autoIssue.data.certNo} -> 用户 ${userId}`);
+    } else {
+      console.log(`  自动发放证书失败: ${autoIssue.error} (用户 ${userId}, 考试 ${id})`);
     }
   }
 
@@ -4769,6 +5009,231 @@ app.post('/api/upload/notice-cover', (req, res) => {
 });
 
 // ============================================================
+// 证书管理 REST API
+// ============================================================
+
+// GET /api/certificates/templates - 内置模板列表
+app.get('/api/certificates/templates', (req, res) => {
+  const data = readData();
+  res.json({ success: true, data: data.certificate_templates || [] });
+});
+
+// GET /api/certificates - 证书定义列表
+app.get('/api/certificates', (req, res) => {
+  const data = readData();
+  const { dept, status, keyword } = req.query;
+  let list = (data.certificates || []).slice();
+
+  if (dept) list = list.filter(c => c.dept && c.dept.includes(dept));
+  if (status) list = list.filter(c => c.status === status);
+  if (keyword) {
+    const k = String(keyword).toLowerCase();
+    list = list.filter(c => (c.name || '').toLowerCase().includes(k));
+  }
+
+  const userCerts = data.user_certificates || [];
+  const enriched = list.map(c => {
+    const issued = userCerts.filter(uc => String(uc.certificateId) === String(c.id));
+    const activeCount = issued.filter(uc => uc.status === 'active').length;
+    const expiredCount = issued.filter(uc => uc.status === 'expired').length;
+    const revokedCount = issued.filter(uc => uc.status === 'revoked').length;
+    return { ...c, activeCount, expiredCount, revokedCount, issuedCount: issued.length };
+  });
+
+  res.json({ success: true, data: enriched });
+});
+
+// GET /api/certificates/:id - 证书定义详情
+app.get('/api/certificates/:id', (req, res) => {
+  const data = readData();
+  const certificate = (data.certificates || []).find(c => String(c.id) === String(req.params.id));
+  if (!certificate) return res.status(404).json({ success: false, error: '证书不存在' });
+
+  const userCerts = (data.user_certificates || []).filter(uc => String(uc.certificateId) === String(certificate.id));
+  const activeCount = userCerts.filter(uc => uc.status === 'active').length;
+  const expiredCount = userCerts.filter(uc => uc.status === 'expired').length;
+  const revokedCount = userCerts.filter(uc => uc.status === 'revoked').length;
+
+  res.json({
+    success: true,
+    data: { ...certificate, activeCount, expiredCount, revokedCount, issuedCount: userCerts.length }
+  });
+});
+
+// POST /api/certificates - 创建证书定义
+app.post('/api/certificates', (req, res) => {
+  const data = readData();
+  if (!data.certificates) data.certificates = [];
+
+  const payload = req.body || {};
+  if (!payload.name || !payload.templateId) {
+    return res.status(422).json({ success: false, error: '证书名称和模板必填' });
+  }
+
+  const templates = data.certificate_templates || [];
+  if (!templates.find(t => t.id === payload.templateId)) {
+    return res.status(404).json({ success: false, error: '模板不存在' });
+  }
+
+  const certificate = {
+    id: 'cert-' + Date.now(),
+    name: payload.name,
+    dept: payload.dept || '',
+    validityType: payload.validityType || 'permanent',
+    validityDays: payload.validityType === 'fixed' ? parseInt(payload.validityDays) || 365 : null,
+    prefix: payload.prefix || '',
+    startNumber: parseInt(payload.startNumber) || 1,
+    digits: parseInt(payload.digits) || 4,
+    templateId: payload.templateId,
+    status: payload.status || 'enabled',
+    creator: payload.creator || '许志坚',
+    createdAt: new Date().toISOString()
+  };
+  data.certificates.push(certificate);
+  writeData(data);
+  res.json({ success: true, data: certificate });
+});
+
+// PUT /api/certificates/:id - 更新证书定义
+app.put('/api/certificates/:id', (req, res) => {
+  const data = readData();
+  const index = (data.certificates || []).findIndex(c => String(c.id) === String(req.params.id));
+  if (index === -1) return res.status(404).json({ success: false, error: '证书不存在' });
+
+  const payload = req.body || {};
+  const certificate = data.certificates[index];
+
+  if (payload.name !== undefined) certificate.name = payload.name;
+  if (payload.dept !== undefined) certificate.dept = payload.dept;
+  if (payload.validityType !== undefined) certificate.validityType = payload.validityType;
+  if (payload.validityType === 'fixed') {
+    certificate.validityDays = parseInt(payload.validityDays) || 365;
+  } else {
+    certificate.validityDays = null;
+  }
+  if (payload.prefix !== undefined) certificate.prefix = payload.prefix;
+  if (payload.startNumber !== undefined) certificate.startNumber = parseInt(payload.startNumber) || 1;
+  if (payload.digits !== undefined) certificate.digits = parseInt(payload.digits) || 4;
+  if (payload.templateId !== undefined) certificate.templateId = payload.templateId;
+  if (payload.status !== undefined) certificate.status = payload.status;
+
+  writeData(data);
+  res.json({ success: true, data: certificate });
+});
+
+// DELETE /api/certificates/:id - 删除证书定义
+app.delete('/api/certificates/:id', (req, res) => {
+  const data = readData();
+  const index = (data.certificates || []).findIndex(c => String(c.id) === String(req.params.id));
+  if (index === -1) return res.status(404).json({ success: false, error: '证书不存在' });
+
+  const issued = (data.user_certificates || []).filter(uc => String(uc.certificateId) === String(req.params.id));
+  if (issued.length > 0) {
+    return res.status(409).json({ success: false, error: '已存在颁发记录，禁止删除' });
+  }
+
+  data.certificates.splice(index, 1);
+  writeData(data);
+  res.json({ success: true });
+});
+
+// POST /api/certificates/:id/issue - 手动/批量颁发证书
+app.post('/api/certificates/:id/issue', (req, res) => {
+  const data = readData();
+  const certificate = (data.certificates || []).find(c => String(c.id) === String(req.params.id));
+  if (!certificate) return res.status(404).json({ success: false, error: '证书不存在' });
+
+  const { userIds, sourceType, sourceId } = req.body || {};
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return res.status(422).json({ success: false, error: '请选择要颁发的学员' });
+  }
+
+  const results = [];
+  const errors = [];
+  userIds.forEach(uid => {
+    const result = issueCertificateInternal(data, certificate.id, uid, sourceType || 'manual', sourceId || null);
+    if (result.success) {
+      results.push(result.data);
+    } else {
+      errors.push({ userId: uid, error: result.error });
+    }
+  });
+
+  writeData(data);
+  res.json({ success: true, data: results, errors });
+});
+
+// GET /api/user-certificates - 用户证书实例列表
+app.get('/api/user-certificates', (req, res) => {
+  const data = readData();
+  const { userId, certificateId, status } = req.query;
+  let list = (data.user_certificates || []).slice();
+
+  if (userId) list = list.filter(uc => String(uc.userId) === String(userId));
+  if (certificateId) list = list.filter(uc => String(uc.certificateId) === String(certificateId));
+  if (status) list = list.filter(uc => uc.status === status);
+
+  // 过期状态自动修正
+  list.forEach(uc => {
+    if (uc.status === 'active' && uc.expireAt && new Date(uc.expireAt) < new Date()) {
+      uc.status = 'expired';
+    }
+  });
+
+  const certificates = data.certificates || [];
+  const users = data.registered_users || [];
+  const enriched = list.map(uc => {
+    const cert = certificates.find(c => String(c.id) === String(uc.certificateId)) || {};
+    const user = users.find(u => String(u.id) === String(uc.userId)) || {};
+    return {
+      ...uc,
+      certificateName: cert.name || '',
+      templateId: cert.templateId || '',
+      userName: user.realName || user.username || '',
+      userDepartment: user.department || '',
+      userPosition: user.position || ''
+    };
+  });
+
+  res.json({ success: true, data: enriched });
+});
+
+// GET /api/user-certificates/:id - 用户证书实例详情
+app.get('/api/user-certificates/:id', (req, res) => {
+  const data = readData();
+  const uc = (data.user_certificates || []).find(u => String(u.id) === String(req.params.id));
+  if (!uc) return res.status(404).json({ success: false, error: '证书记录不存在' });
+
+  const cert = (data.certificates || []).find(c => String(c.id) === String(uc.certificateId)) || {};
+  const user = (data.registered_users || []).find(u => String(u.id) === String(uc.userId)) || {};
+  res.json({
+    success: true,
+    data: {
+      ...uc,
+      certificateName: cert.name || '',
+      template: (data.certificate_templates || []).find(t => t.id === cert.templateId) || null,
+      userName: user.realName || user.username || '',
+      userDepartment: user.department || '',
+      userPosition: user.position || ''
+    }
+  });
+});
+
+// POST /api/user-certificates/:id/revoke - 撤销证书
+app.post('/api/user-certificates/:id/revoke', (req, res) => {
+  const data = readData();
+  const uc = (data.user_certificates || []).find(u => String(u.id) === String(req.params.id));
+  if (!uc) return res.status(404).json({ success: false, error: '证书记录不存在' });
+  if (uc.status !== 'active') return res.status(400).json({ success: false, error: '仅可撤销有效状态的证书' });
+
+  uc.status = 'revoked';
+  uc.revokedAt = new Date().toISOString();
+  uc.revokeReason = req.body?.reason || '';
+  writeData(data);
+  res.json({ success: true, data: uc });
+});
+
+// ============================================================
 // 错误处理
 // ============================================================
 app.use((req, res) => {
@@ -4799,8 +5264,10 @@ const server = app.listen(port, () => {
   
   // 初始化管理员账号
   initDefaultAdmin();
+  // 初始化证书管理数据
+  initCertificateData();
   console.log('');
-  
+
   console.log('  页面访问地址：');
   console.log(`  首页:       http://localhost:${port}/`);
   console.log(`  课程中心:   http://localhost:${port}/course`);

@@ -184,6 +184,9 @@
         <button onclick="switchTab('exam-schedule')" data-tab="exam-schedule" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
           <i class="fas fa-tasks w-5"></i><span>考试安排</span>
         </button>
+        <button onclick="switchTab('certificates')" data-tab="certificates" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
+          <i class="fas fa-certificate w-5"></i><span>证书管理</span>
+        </button>
 
         <div class="text-xs text-slate-400 uppercase tracking-wider px-4 py-2 font-medium mt-6">数据管理</div>
         <button onclick="switchTab('users')" data-tab="users" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-white transition text-left">
@@ -1826,7 +1829,7 @@
   </div>
 
   <!-- ========== 新建题库弹窗 ========== -->
-  <div id="newBankModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] items-center justify-center hidden">
+  <div id="newBankModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-md m-4 shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100">
         <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>新建题库</h3>
@@ -5861,18 +5864,19 @@
       const name = event ? event.name : '培训';
       const enrollments = _analyticsEnrollData.enrollments;
 
-      const headers = ['序号', '姓名', '部门', '电话', '来源', '报名时间'];
+      const headers = ['序号', '姓名', '部门', '岗位', '电话', '来源', '报名时间'];
       const rows = enrollments.map((e, i) => [
         i + 1,
         e.userName || '-',
         e.userDepartment || '-',
+        e.userPosition || '-',
         e.userPhone || '-',
         e.source === 'assigned' ? '指派' : '自主报名',
         e.enrolledAt ? new Date(e.enrolledAt).toLocaleString('zh-CN') : '-'
       ]);
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
       // 设置列宽
-      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 10 }, { wch: 22 }];
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 22 }];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, '报名数据');
       XLSX.writeFile(wb, name + '_报名分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
@@ -5896,9 +5900,9 @@
       const name = event ? event.name : '培训';
       const { survey, responses } = _analyticsSurveyData;
 
-      // 构建表头：序号 + 姓名 + 部门 + 提交时间 + 各题目
+      // 构建表头：序号 + 姓名 + 部门 + 岗位 + 提交时间 + 各题目
       const questionTitles = (survey.questions || []).map(q => q.title || q.text || '题目');
-      const headers = ['序号', '填写人', '部门', '提交时间', ...questionTitles];
+      const headers = ['序号', '填写人', '部门', '岗位', '提交时间', ...questionTitles];
       const rows = responses.map((r, i) => {
         const answers = (survey.questions || []).map(q => {
           const val = getSurveyAnswerValue(r.answers, q.id);
@@ -5908,12 +5912,13 @@
           i + 1,
           r.userName || '匿名',
           r.department || '-',
+          r.position || '-',
           r.submittedAt ? new Date(r.submittedAt).toLocaleString('zh-CN') : '-',
           ...answers
         ];
       });
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 22 }, ...questionTitles.map(() => ({ wch: 20 }))];
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 22 }, ...questionTitles.map(() => ({ wch: 20 }))];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, '调研数据');
       XLSX.writeFile(wb, name + '_调研分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
@@ -5926,7 +5931,7 @@
       const name = event ? event.name : '培训';
       const { exam, attempts } = _analyticsExamData;
 
-      const headers = ['序号', '姓名', '部门', '考试次数', '最高分', '是否通过', '最近提交时间'];
+      const headers = ['序号', '姓名', '部门', '岗位', '考试次数', '最高分', '是否通过', '最近提交时间'];
       // 按学员聚合
       const userMap = {};
       attempts.forEach(a => {
@@ -5935,6 +5940,7 @@
           userMap[uid] = {
             userName: a.userName || a.userId || '-',
             department: a.department || '-',
+            position: a.position || '-',
             attempts: []
           };
         }
@@ -5953,13 +5959,14 @@
         i + 1,
         u.userName,
         u.department,
+        u.position,
         u.attempts.length,
         u.bestScore,
         u.passed ? '通过' : '未通过',
         u.latestCompletedAt ? new Date(u.latestCompletedAt).toLocaleString('zh-CN') : '-'
       ]);
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 22 }];
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 22 }];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, '考试数据');
       XLSX.writeFile(wb, name + '_考试分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
@@ -5972,16 +5979,17 @@
       const name = event ? event.name : '培训';
 
       // Sheet 1: 签到明细
-      const headers = ['序号', '姓名', '部门', '签到时间', '状态'];
+      const headers = ['序号', '姓名', '部门', '岗位', '签到时间', '状态'];
       const rows = signins.map((s, i) => [
         i + 1,
         s.userName || '-',
         s.department || '-',
+        s.position || '-',
         s.signedAt ? new Date(s.signedAt).toLocaleString('zh-CN') : '-',
         '已签到'
       ]);
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 22 }, { wch: 8 }];
+      ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 22 }, { wch: 8 }];
 
       // Sheet 2: 考勤汇总
       const summaryHeaders = ['项目', '数值'];
@@ -11311,6 +11319,15 @@
             });
           });
 
+          // 刷新 DataAPI 缓存，确保后续创建考试时能匹配到新导入的题目
+          try {
+            const freshRes = await fetch('/api/data/questions');
+            if (freshRes.ok && window.DataAPI && window.DataAPI.set) {
+              const freshQuestions = await freshRes.json();
+              await window.DataAPI.set('questions', freshQuestions);
+            }
+          } catch(cacheErr) { /* 缓存刷新失败不影响主流程 */ }
+
           // 更新试卷编辑页显示
           if (editorMode) { renderUnifiedEditor(); } else { renderPaperQuestions(); }
         } else {
@@ -12436,15 +12453,25 @@
           document.getElementById('examTitle').value = paper.name;
         }
         if (paper && paper.questions) {
-          // 从题库中加载题目详情
+          // 从题库中加载题目详情（支持数字/字符串ID兼容匹配 + 服务端fallback）
           let allQuestions = [];
           if (window.dataSync && window.dataSync.getData) {
             allQuestions = window.dataSync.getData('questions') || [];
           } else {
             allQuestions = safeParse('questions', []);
           }
+          // 如果本地题库为空，尝试从服务端实时拉取
+          if (!allQuestions.length) {
+            try {
+              const res = await fetch('/api/data/questions');
+              if (res.ok) allQuestions = await res.json();
+            } catch(e) { /* 静默失败 */ }
+          }
           selectedExamQuestions = paper.questions.map((pq, idx) => {
-            const q = allQuestions.find(qq => qq.id === pq.questionId);
+            // 宽松匹配：先严格 ===，再宽松 ==（覆盖数字/字符串ID混用场景）
+            let q = allQuestions.find(qq => qq.id === pq.questionId);
+            if (!q) q = allQuestions.find(qq => qq.id == pq.questionId);
+            if (!q) q = allQuestions.find(qq => String(qq.id) === String(pq.questionId));
             return {
               questionId: pq.questionId,
               score: pq.score || 5,
@@ -13147,9 +13174,11 @@
         toast('没有可导出的成绩数据', 'warning');
         return;
       }
-      const headers = ['学员姓名', '得分', '正确题数', '总题数', '是否通过', '提交时间'];
+      const headers = ['学员姓名', '部门', '岗位', '得分', '正确题数', '总题数', '是否通过', '提交时间'];
       const rows = currentExamResults.map(r => [
         r.userName || '未知',
+        r.department || '-',
+        r.position || '-',
         r.score || 0,
         r.correctCount || 0,
         r.totalQuestions || 0,
@@ -13443,9 +13472,9 @@
         return;
       }
       const q = currentExamQuestionAnswers.question || {};
-      const headers = ['学员姓名', '部门', '手机号', '学员答案', '正确答案', '是否正确', '交卷时间'];
+      const headers = ['学员姓名', '部门', '岗位', '手机号', '学员答案', '正确答案', '是否正确', '交卷时间'];
       const rows = currentExamQuestionAnswers.answers.map(a => [
-        a.userName, a.department, a.phone, a.userAnswer || '未作答', a.correctAnswer,
+        a.userName, a.department, a.position, a.phone, a.userAnswer || '未作答', a.correctAnswer,
         a.isCorrect ? '正确' : '错误',
         a.completedAt ? new Date(a.completedAt).toLocaleString('zh-CN') : '-'
       ]);
@@ -13502,9 +13531,9 @@
     function exportExamDetailStudents() {
       const students = currentExamDetailData.students || [];
       if (!students.length) { toast('没有可导出的学员数据', 'warning'); return; }
-      const headers = ['姓名', '部门', '登录手机号', '加入时间', '考试记录', '考试得分', '得分率', '作答时长', '状态'];
+      const headers = ['姓名', '部门', '岗位', '登录手机号', '加入时间', '考试记录', '考试得分', '得分率', '作答时长', '状态'];
       const rows = students.map(s => [
-        s.userName, s.department, s.phone, s.joinTime, s.attemptCount,
+        s.userName, s.department, s.position, s.phone, s.joinTime, s.attemptCount,
         s.status === 'passed' || s.status === 'failed' ? s.score : '-',
         s.status === 'passed' || s.status === 'failed' ? s.scoreRate + '%' : '-',
         formatExamDuration(s.duration),
@@ -16322,13 +16351,14 @@
         return;
       }
       const { survey, questions, responses } = data;
-      const headers = ['序号', '姓名', '部门', '提交时间', ...questions.map((q, i) => (i+1) + '.' + (q.title || '题目' + (i+1)))];
+      const headers = ['序号', '姓名', '部门', '岗位', '提交时间', ...questions.map((q, i) => (i+1) + '.' + (q.title || '题目' + (i+1)))];
       const rows = responses.map((r, i) => {
         const answers = normalizeSurveyAnswers(r.answers);
         return [
           i + 1,
           r.userName || '匿名用户',
           r.department || '',
+          r.position || '',
           r.submittedAt ? new Date(r.submittedAt).toLocaleString('zh-CN') : '-',
           ...questions.map(q => {
             const a = answers.find(x => String(x.questionId) === String(q.id));
@@ -16340,7 +16370,7 @@
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
       // 设置列宽
       ws['!cols'] = [
-        { wch: 6 }, { wch: 12 }, { wch: 15 }, { wch: 20 },
+        { wch: 6 }, { wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 20 },
         ...questions.map(() => ({ wch: 25 }))
       ];
       const wb = XLSX.utils.book_new();

@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "证书管理模块数据契约",
+  "description": "定义证书模板、证书定义、用户证书实例的数据结构",
+  "definitions": {
+    "CertificateTemplate": {
+      "type": "object",
+      "required": ["id", "name", "layout", "style", "placeholders"],
+      "properties": {
+        "id": { "type": "string", "description": "模板唯一标识" },
+        "name": { "type": "string", "description": "模板名称" },
+        "thumbnail": { "type": "string", "description": "模板缩略图 URL 或 data URI" },
+        "layout": {
+          "type": "string",
+          "enum": ["portrait", "landscape"],
+          "description": "版式：portrait 竖版 / landscape 横版"
+        },
+        "style": {
+          "type": "object",
+          "description": "CSS 样式变量与背景配置",
+          "required": ["background", "borderColor", "primaryColor", "fontFamily"],
+          "properties": {
+            "background": { "type": "string", "description": "背景 CSS，如渐变或 data URI 图片" },
+            "borderColor": { "type": "string", "description": "边框主色" },
+            "primaryColor": { "type": "string", "description": "标题/强调色" },
+            "fontFamily": { "type": "string", "description": "主字体" }
+          }
+        },
+        "placeholders": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Placeholder" },
+          "description": "可替换占位符列表"
+        }
+      }
+    },
+    "Placeholder": {
+      "type": "object",
+      "required": ["key", "label", "defaultValue"],
+      "properties": {
+        "key": { "type": "string", "description": "占位符键，如 name / company / date" },
+        "label": { "type": "string", "description": "占位符显示名称" },
+        "defaultValue": { "type": "string", "description": "默认值" }
+      }
+    },
+    "Certificate": {
+      "type": "object",
+      "required": ["id", "name", "validityType", "prefix", "startNumber", "digits", "templateId", "status", "createdAt"],
+      "properties": {
+        "id": { "type": "string", "description": "证书定义唯一标识" },
+        "name": { "type": "string", "description": "证书名称" },
+        "dept": { "type": ["string", "null"], "description": "所属部门，可选" },
+        "validityType": {
+          "type": "string",
+          "enum": ["permanent", "fixed"],
+          "description": "有效期类型：permanent 永久有效 / fixed 固定期限"
+        },
+        "validityDays": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "固定有效期天数，validityType=fixed 时必填"
+        },
+        "prefix": { "type": "string", "description": "证书编号前缀" },
+        "startNumber": { "type": "integer", "minimum": 1, "description": "起始序号" },
+        "digits": { "type": "integer", "minimum": 1, "maximum": 10, "description": "序号位数" },
+        "templateId": { "type": "string", "description": "关联模板 ID" },
+        "status": {
+          "type": "string",
+          "enum": ["enabled", "disabled"],
+          "description": "启用/停用"
+        },
+        "creator": { "type": "string", "default": "许志坚", "description": "创建人" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "创建时间 ISO 字符串" }
+      }
+    },
+    "UserCertificate": {
+      "type": "object",
+      "required": ["id", "certificateId", "userId", "certNo", "sourceType", "issueAt", "status"],
+      "properties": {
+        "id": { "type": "string", "description": "用户证书实例唯一标识" },
+        "certificateId": { "type": "string", "description": "证书定义 ID" },
+        "userId": { "type": "string", "description": "获得者用户 ID" },
+        "certNo": { "type": "string", "description": "证书编号" },
+        "sourceType": {
+          "type": "string",
+          "enum": ["manual", "exam", "training"],
+          "description": "来源：manual 手动 / exam 考试 / training 培训"
+        },
+        "sourceId": { "type": ["string", "null"], "description": "来源对象 ID，如考试 ID 或培训 ID" },
+        "issueAt": { "type": "string", "format": "date-time", "description": "颁发时间" },
+        "effectiveAt": { "type": "string", "format": "date-time", "description": "生效时间" },
+        "expireAt": { "type": ["string", "null"], "format": "date-time", "description": "到期时间，null 表示永久有效" },
+        "status": {
+          "type": "string",
+          "enum": ["active", "expired", "revoked"],
+          "description": "状态：有效 / 已过期 / 已撤销"
+        },
+        "revokedAt": { "type": ["string", "null"], "format": "date-time", "description": "撤销时间" },
+        "revokeReason": { "type": ["string", "null"], "description": "撤销原因" }
+      }
+    }
+  },
+  "type": "object",
+  "required": ["certificates", "user_certificates", "certificate_templates"],
+  "properties": {
+    "certificates": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/Certificate" }
+    },
+    "user_certificates": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/UserCertificate" }
+    },
+    "certificate_templates": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/CertificateTemplate" }
+    }
+  }
+}

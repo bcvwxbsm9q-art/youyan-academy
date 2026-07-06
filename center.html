@@ -178,20 +178,6 @@
             opacity: 1;
         }
 
-        /* 积分明细弹窗 */
-        .exp-details-modal {
-            backdrop-filter: blur(8px);
-        }
-        .exp-details-content {
-            transform: scale(0.9);
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .exp-details-modal.active .exp-details-content {
-            transform: scale(1);
-            opacity: 1;
-        }
-
         /* 新徽章提示条 */
         @keyframes slideDown {
             0% { transform: translateY(-100%); opacity: 0; }
@@ -684,9 +670,6 @@
                                     <i class="fa fa-star text-primary"></i>
                                     等级进度
                                     <div class="ml-auto flex items-center gap-2">
-                                        <button onclick="openXpDetailModal()" class="text-xs text-primary hover:text-primary/80 font-medium px-2 py-1 rounded-lg hover:bg-primary/5 transition-colors" title="积分明细">
-                                            积分明细
-                                        </button>
                                         <button onclick="openLevelHelpModal()" class="w-6 h-6 rounded-full bg-gray-100 hover:bg-primary/10 text-gray-400 hover:text-primary flex items-center justify-center transition-colors" title="等级说明">
                                             <i class="fa fa-question text-xs"></i>
                                         </button>
@@ -769,32 +752,6 @@
                                 </div>
                                 <div class="p-4 border-t text-center">
                                     <button onclick="closeLevelHelpModal()" class="px-6 py-2 bg-primary text-white hover:opacity-90 rounded-lg font-medium transition-colors">我知道了</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 积分明细弹窗 -->
-                        <div id="xp-detail-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 exp-details-modal" onclick="if(event.target === this) closeXpDetailModal()">
-                            <div class="bg-white rounded-2xl w-full max-w-md exp-details-content shadow-2xl max-h-[85vh] flex flex-col">
-                                <div class="p-5 border-b flex items-center justify-between">
-                                    <h3 class="text-lg font-bold flex items-center gap-2">
-                                        <i class="fa fa-list-alt text-primary"></i>
-                                        积分明细
-                                    </h3>
-                                    <button onclick="closeXpDetailModal()" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors">
-                                        <i class="fa fa-times text-sm"></i>
-                                    </button>
-                                </div>
-                                <div class="p-5 overflow-y-auto flex-1">
-                                    <div id="xp-summary" class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 mb-4">
-                                        <!-- 动态渲染 -->
-                                    </div>
-                                    <div id="xp-records-list" class="space-y-3">
-                                        <!-- 动态渲染 -->
-                                    </div>
-                                </div>
-                                <div class="p-4 border-t text-center">
-                                    <button onclick="closeXpDetailModal()" class="px-6 py-2 bg-primary text-white hover:opacity-90 rounded-lg font-medium transition-colors">我知道了</button>
                                 </div>
                             </div>
                         </div>
@@ -2063,70 +2020,6 @@ const BADGES = [
             }, 300);
         }
 
-        // 打开积分明细弹窗
-        function openXpDetailModal() {
-            const modal = document.getElementById('xp-detail-modal');
-            if (!modal) return;
-
-            const userId = currentUser?.id;
-            const stats = userId ? getBadgeStats() : null;
-            const totalExp = userId ? syncExp(userId, stats || {}).totalExp : 0;
-            const levelInfo = getLevelInfo(totalExp);
-            const records = userId ? getExpRecords(userId) : [];
-
-            const summaryEl = document.getElementById('xp-summary');
-            if (summaryEl) {
-                summaryEl.innerHTML = `
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm text-gray-600">当前总积分</span>
-                        <span class="text-xl font-bold text-primary">${totalExp} XP</span>
-                    </div>
-                    <div class="flex items-center justify-between text-xs text-gray-500">
-                        <span>等级：Lv.${levelInfo.level} ${levelInfo.name}</span>
-                        <span>距离升级还需 ${levelInfo.remainingExp} XP</span>
-                    </div>
-                `;
-            }
-
-            const listEl = document.getElementById('xp-records-list');
-            if (listEl) {
-                if (records.length === 0) {
-                    listEl.innerHTML = `
-                        <div class="text-center py-8 text-gray-400 text-sm">
-                            <i class="fa fa-inbox text-3xl mb-2 block"></i>
-                            暂无积分记录，快去学习赚取 XP 吧！
-                        </div>
-                    `;
-                } else {
-                    listEl.innerHTML = records.slice().reverse().map(r => `
-                        <div class="flex items-start justify-between p-3 bg-gray-50 rounded-xl">
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-800">${r.source || '经验结算'}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">${r.desc || ''}</p>
-                                <p class="text-[10px] text-gray-400 mt-1">${r.date || ''} ${r.time || ''}</p>
-                            </div>
-                            <span class="text-sm font-bold text-primary ml-3 whitespace-nowrap">+${r.value || 0} XP</span>
-                        </div>
-                    `).join('');
-                }
-            }
-
-            modal.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                modal.classList.add('active');
-            });
-        }
-
-        // 关闭积分明细弹窗
-        function closeXpDetailModal() {
-            const modal = document.getElementById('xp-detail-modal');
-            if (!modal) return;
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-        }
-        
         // 获取徽章解锁时间
         function getBadgeUnlockTime(userId, badgeId) {
             const learningData = api.getUserLearningData(userId);
@@ -2289,8 +2182,6 @@ const BADGES = [
         
         // ========== 等级经验值持久化 ==========
         function getExpStorageKey(userId) { return `user_total_exp_v3_${userId}`; }
-        function getExpRecordsKey(userId) { return `user_exp_records_v3_${userId}`; }
-        function getExpStatsKey(userId) { return `user_exp_stats_v3_${userId}`; }
 
         function cleanupExpV2() {
             Object.keys(localStorage).forEach(k => {
@@ -2303,87 +2194,21 @@ const BADGES = [
             return isNaN(val) ? 0 : val;
         }
 
-        function getExpRecords(userId) {
-            try {
-                return JSON.parse(localStorage.getItem(getExpRecordsKey(userId)) || '[]');
-            } catch {
-                return [];
-            }
-        }
-
-        function getLastExpStats(userId) {
-            try {
-                return JSON.parse(localStorage.getItem(getExpStatsKey(userId)) || '{}');
-            } catch {
-                return {};
-            }
-        }
-
-        function setLastExpStats(userId, stats) {
-            localStorage.setItem(getExpStatsKey(userId), JSON.stringify({
-                hours: stats.hours || 0,
-                completed: stats.completed || 0,
-                streak: stats.streak || 0,
-                badges: stats.badges || 0,
-                certificates: stats.certificates || 0
-            }));
-        }
-
-        function saveExp(userId, exp, records) {
+        function saveExp(userId, exp) {
             localStorage.setItem(getExpStorageKey(userId), String(exp));
-            localStorage.setItem(getExpRecordsKey(userId), JSON.stringify(records.slice(-200)));
         }
 
-        // 同步经验值：只增不减，并生成明细记录
+        // 同步经验值：只增不减
         function syncExp(userId, stats) {
             const currentExp = calculateTotalExp(stats);
             const persistedExp = getPersistedExp(userId);
-            const records = getExpRecords(userId);
-            const lastStats = getLastExpStats(userId);
 
             if (currentExp > persistedExp) {
-                const now = new Date();
-                const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-                const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-                const base = { date: dateStr, time: timeStr };
-                let explained = 0;
-
-                const hourInc = Math.max(0, Math.floor((stats.hours || 0) * 5) - Math.floor((lastStats.hours || 0) * 5));
-                if (hourInc > 0) {
-                    records.push({ ...base, source: '学习时长', value: hourInc, desc: `累计学习时长获得 ${hourInc} XP` });
-                    explained += hourInc;
-                }
-
-                const completedInc = Math.max(0, (stats.completed || 0) - (lastStats.completed || 0)) * 5;
-                if (completedInc > 0) {
-                    records.push({ ...base, source: '完成课程', value: completedInc, desc: `完成 ${completedInc / 5} 门课程获得 ${completedInc} XP` });
-                    explained += completedInc;
-                }
-
-                const streakInc = Math.max(0, (stats.streak || 0) - (lastStats.streak || 0));
-                if (streakInc > 0) {
-                    records.push({ ...base, source: '连续学习', value: streakInc, desc: `连续学习 ${stats.streak} 天获得 ${streakInc} XP` });
-                    explained += streakInc;
-                }
-
-                const rewardInc = Math.max(0, ((stats.badges || 0) + (stats.certificates || 0) - (lastStats.badges || 0) - (lastStats.certificates || 0))) * 5;
-                if (rewardInc > 0) {
-                    records.push({ ...base, source: '任务奖励', value: rewardInc, desc: `解锁成就/证书获得 ${rewardInc} XP` });
-                    explained += rewardInc;
-                }
-
-                const diff = currentExp - persistedExp;
-                if (diff > explained) {
-                    records.push({ ...base, source: '经验结算', value: diff - explained, desc: `经验值结算 ${diff - explained} XP` });
-                }
-
-                saveExp(userId, currentExp, records);
-                setLastExpStats(userId, stats);
-                return { totalExp: currentExp, records };
+                saveExp(userId, currentExp);
+                return { totalExp: currentExp };
             }
 
-            setLastExpStats(userId, stats);
-            return { totalExp: Math.max(currentExp, persistedExp), records };
+            return { totalExp: Math.max(currentExp, persistedExp) };
         }
 
         // 加载证书

@@ -1850,17 +1850,31 @@
                     return `${y}/${m}/${day} ${h}:${min}`;
                 } catch { return v; }
             };
+            const fmtSigninTime = (startRaw, endRaw) => {
+                const start = fmtTime(startRaw);
+                const end = fmtTime(endRaw);
+                if (!start) return '';
+                if (!end) return `签到时间 ${start}`;
+                try {
+                    const ds = new Date(String(startRaw).replace(' ', 'T'));
+                    const de = new Date(String(endRaw).replace(' ', 'T'));
+                    if (ds.getFullYear() === de.getFullYear() &&
+                        ds.getMonth() === de.getMonth() &&
+                        ds.getDate() === de.getDate()) {
+                        return `签到时间 ${start.split(' ')[0]} ${start.split(' ')[1]} - ${end.split(' ')[1]}`;
+                    }
+                } catch { }
+                return `签到时间 ${start} 至 ${end}`;
+            };
 
             // 1. 考勤签到
             if (course.signinEnabled) {
-                const start = fmtTime(course.signinStartTime || course.startTime);
-                const end = fmtTime(course.signinEndTime || course.endTime);
                 const done = !!course.signinDone;
                 items.push({
                     key: 'signin',
                     icon: 'fa-check-circle', iconColor: '#10b981', iconBg: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', ringColor: '#10b981',
                     title: '考勤签到', tag: '必修', tagColor: '#10b981', tagBg: '#f0fdf4',
-                    subtitle: `签到时间 ${start ? start : ''}${end ? ' 至 ' + end : ''}`,
+                    subtitle: fmtSigninTime(course.signinStartTime || course.startTime, course.signinEndTime || course.endTime),
                     status: done ? '已完成' : '待签到', statusColor: done ? '#10b981' : '#f59e0b',
                     actionText: done ? '已完成' : '去完成',
                     actionClass: done ? 'btn-state-done' : 'btn-action-signin',
@@ -1890,7 +1904,7 @@
                     key: 'exam',
                     icon: 'fa-file-text', iconColor: '#ef4444', iconBg: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)', ringColor: '#ef4444',
                     title: `《${course.name}》培训考核`, tag: '必修', tagColor: '#ef4444', tagBg: '#fef2f2',
-                    subtitle: done ? '您已通过培训考核' : '完成培训考核以巩固学习成果（可重复考试直到及格）',
+                    subtitle: done ? '您已通过培训考核' : '请完成培训考核以巩固学习成果（可重复考试直到及格）',
                     status: done ? '已完成' : '待完成', statusColor: done ? '#10b981' : '#f59e0b',
                     actionText: done ? '已完成' : '去完成',
                     actionClass: done ? 'btn-state-done' : 'btn-action-exam',

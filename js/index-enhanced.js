@@ -527,7 +527,7 @@
     };
 
     /**
-     * 渲染精品课程
+     * 渲染精品课程（按热门程度降序展示，最多8个）
      */
     function renderFeaturedCourses() {
         const container = document.getElementById('featured-courses-inner');
@@ -537,11 +537,22 @@
         if (window.DataAPI) {
             const fcIds = window.DataAPI.getFeaturedCourseIds();
             const allCourses = window.DataAPI.getPublishedCourses();
-            
+            const allSorted = [...allCourses].sort((a, b) => (b.views || 0) - (a.views || 0));
+
             if (fcIds && fcIds.length > 0) {
-                courses = fcIds.map(id => allCourses.find(c => String(c.id) === String(id))).filter(Boolean);
+                const courseMap = new Map(allCourses.map(c => [String(c.id), c]));
+                // 过滤掉已删除/不存在的课程ID，再按热门程度排序
+                const featured = fcIds
+                    .map(id => courseMap.get(String(id)))
+                    .filter(Boolean)
+                    .sort((a, b) => (b.views || 0) - (a.views || 0));
+
+                const featuredIds = new Set(featured.map(c => String(c.id)));
+                const remaining = allSorted.filter(c => !featuredIds.has(String(c.id)));
+
+                courses = [...featured, ...remaining].slice(0, 8);
             } else {
-                courses = allCourses.slice(0, 8);
+                courses = allSorted.slice(0, 8);
             }
         }
 
