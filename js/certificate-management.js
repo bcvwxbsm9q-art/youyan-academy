@@ -9,7 +9,6 @@
   // ===== 状态 =====
   let certificates = [];
   let templates = [];
-  let users = [];
   let currentDetailCertificate = null;
   let currentDetailTab = 'active';
   let selectedTemplateId = '';
@@ -126,11 +125,6 @@
   async function loadTemplates() {
     const res = await apiGet('/api/certificates/templates');
     templates = res.data || [];
-  }
-
-  async function loadUsers() {
-    const res = await apiGet('/api/data/users');
-    users = res || [];
   }
 
   // ===== 渲染证书列表 =====
@@ -277,13 +271,17 @@
     if (!grid) return;
     grid.innerHTML = templates.map(tpl => {
       const activeClass = selectedTemplateId === tpl.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-slate-50';
+      const isPortrait = tpl.layout === 'portrait';
       return `
         <div onclick="window.CertificateMgmt.selectTemplate('${tpl.id}')" class="cursor-pointer border rounded-xl p-3 transition ${activeClass}">
-          <div class="h-24 rounded-lg mb-2 flex items-center justify-center text-4xl" style="background:${tpl.style.background}; color:${tpl.style.primaryColor}; border: 2px solid ${tpl.style.borderColor};">
-            <i class="fas fa-certificate"></i>
+          <div class="h-28 rounded-lg mb-2 flex flex-col items-center justify-center p-2 text-center relative overflow-hidden" style="background:${tpl.style.background}; color:${tpl.style.primaryColor}; border: 6px double ${tpl.style.borderColor}; font-family:${tpl.style.fontFamily};">
+            <div style="position:absolute; top:6px; left:6px; right:6px; bottom:6px; border:1px solid ${tpl.style.borderColor}; opacity:0.35;"></div>
+            <div class="text-[10px] opacity-70 mb-1 tracking-widest">CERTIFICATE</div>
+            <div class="text-sm font-bold leading-tight">${escapeHtml(tpl.placeholders.find(p => p.key === 'title')?.defaultValue || '证书标题')}</div>
+            <div class="text-[10px] opacity-80 mt-1">${escapeHtml(tpl.placeholders.find(p => p.key === 'name')?.defaultValue || '姓名')}</div>
           </div>
           <p class="text-sm font-medium text-slate-800 text-center">${escapeHtml(tpl.name)}</p>
-          <p class="text-xs text-slate-500 text-center mt-1">${tpl.layout === 'portrait' ? '竖版' : '横版'}</p>
+          <p class="text-xs text-slate-500 text-center mt-1">${isPortrait ? '竖版' : '横版'}</p>
         </div>
       `;
     }).join('');
@@ -309,8 +307,11 @@
       return;
     }
     preview.innerHTML = `
-      <div class="h-40 rounded-lg flex flex-col items-center justify-center p-4 text-center" style="background:${tpl.style.background}; color:${tpl.style.primaryColor}; border: 2px solid ${tpl.style.borderColor}; font-family:${tpl.style.fontFamily};">
-        <div class="text-lg font-bold mb-2">${escapeHtml(tpl.placeholders.find(p => p.key === 'title')?.defaultValue || '证书标题')}</div>
+      <div class="h-40 rounded-lg flex flex-col items-center justify-center p-4 text-center relative overflow-hidden" style="background:${tpl.style.background}; color:${tpl.style.primaryColor}; border: 8px double ${tpl.style.borderColor}; font-family:${tpl.style.fontFamily};">
+        <div style="position:absolute; top:10px; left:10px; right:10px; bottom:10px; border:1px solid ${tpl.style.borderColor}; opacity:0.35;"></div>
+        <div class="text-[10px] opacity-70 mb-2 tracking-[0.3em]">CERTIFICATE</div>
+        <div class="text-xl font-bold mb-2">${escapeHtml(tpl.placeholders.find(p => p.key === 'title')?.defaultValue || '证书标题')}</div>
+        <div class="w-16 h-0.5 mb-2" style="background:${tpl.style.accentColor || tpl.style.borderColor}; opacity:0.6;"></div>
         <div class="text-sm opacity-80">${escapeHtml(tpl.placeholders.find(p => p.key === 'name')?.defaultValue || '姓名')}</div>
       </div>
       <p class="text-xs text-slate-500 text-center mt-2">${escapeHtml(tpl.name)}</p>
@@ -394,58 +395,42 @@
     }
   }
 
-  // ===== 手动发放 =====
-  function openIssueModal(certId) {
+  // ===== 手动发放（复用统一学员指派弹窗） =====
+  async function openIssueModal(certId) {
     const cert = certificates.find(c => c.id === certId);
     if (!cert) return;
-    $('#issue-cert-name').textContent = cert.name;
-    $('#issue-cert-id').value = cert.id;
-    renderIssueUserList();
-    openModal('certificate-issue-modal');
-  }
 
-  function renderIssueUserList() {
-    const keyword = $('#issue-user-search')?.value?.toLowerCase() || '';
-    const list = users.filter(u => {
-      const name = (u.realName || u.username || '').toLowerCase();
-      const dept = (u.department || '').toLowerCase();
-      return name.includes(keyword) || dept.includes(keyword);
-    });
-
-    const container = $('#issue-user-list');
-    if (!container) return;
-
-    if (list.length === 0) {
-      container.innerHTML = '<div class="text-center py-4 text-slate-400">无匹配学员</div>';
+    if (typeof window.openUnifiedAssignPicker !== 'function') {
+      showToast('学员选择组件未加载，请刷新页面', 'error');
       return;
     }
 
-    container.innerHTML = list.map(u => `
-      <label class="flex items-center p-2 hover:bg-slate-50 rounded cursor-pointer">
-        <input type="checkbox" value="${u.id}" class="issue-user-checkbox w-4 h-4 text-blue-600 rounded border-slate-300">
-        <span class="ml-3 text-sm text-slate-700">${escapeHtml(u.realName || u.username || u.id)}</span>
-        <span class="ml-2 text-xs text-slate-500">${escapeHtml(u.department || '')}</span>
-      </label>
-    `).join('');
-  }
-
-  async function submitIssue() {
-    const certId = $('#issue-cert-id').value;
-    const checked = $$('.issue-user-checkbox:checked');
-    const userIds = checked.map(cb => cb.value);
-    if (userIds.length === 0) return showToast('请选择要颁发的学员', 'error');
-
-    const res = await apiPost('/api/certificates/' + certId + '/issue', { userIds, sourceType: 'manual' });
-    if (res.success) {
-      showToast(`成功颁发 ${res.data.length} 人${res.errors.length ? '，失败 ' + res.errors.length + ' 人' : ''}`, 'success');
-      closeModal('certificate-issue-modal');
-      loadCertificates();
-      if (currentDetailCertificate && currentDetailCertificate.id === certId) {
-        renderCertificateDetail();
+    await window.openUnifiedAssignPicker({
+      mode: 'certificate',
+      targetId: certId,
+      title: '颁发证书',
+      subtitle: cert.name,
+      initialSelected: [],
+      onConfirm: async (selectedIds) => {
+        if (!selectedIds || selectedIds.length === 0) {
+          showToast('请选择要颁发的学员', 'error');
+          return;
+        }
+        const res = await apiPost('/api/certificates/' + certId + '/issue', {
+          userIds: selectedIds,
+          sourceType: 'manual'
+        });
+        if (res.success) {
+          showToast(`成功颁发 ${res.data.length} 人${res.errors.length ? '，失败 ' + res.errors.length + ' 人' : ''}`, 'success');
+          loadCertificates();
+          if (currentDetailCertificate && currentDetailCertificate.id === certId) {
+            renderCertificateDetail();
+          }
+        } else {
+          showToast(res.error || '颁发失败', 'error');
+        }
       }
-    } else {
-      showToast(res.error || '颁发失败', 'error');
-    }
+    });
   }
 
   // ===== 证书渲染（通用，用于详情弹窗和个人中心） =====
@@ -454,26 +439,49 @@
     const company = userCert.userDepartment || '广州游雁网络科技有限公司';
     const date = formatDateTime(userCert.issueAt).split(' ')[0];
     const title = certificate.name || '荣誉证书';
-    const content = '成绩合格，特发此证，以资鼓励。';
+    const content = userCert.sourceType === 'exam'
+      ? '通过考试考核，成绩合格，特发此证，以资鼓励。'
+      : (userCert.sourceType === 'training'
+        ? '已完成全部培训课程，考核合格，准予结业。'
+        : '表现优异，特发此证，以资鼓励。');
 
     const isPortrait = template.layout === 'portrait';
     const width = isPortrait ? '210mm' : '297mm';
     const height = isPortrait ? '297mm' : '210mm';
+    const sealColor = template.style.sealColor || template.style.primaryColor;
+    const accentColor = template.style.accentColor || template.style.borderColor;
+    const secondaryColor = template.style.secondaryColor || template.style.primaryColor;
 
     return `
-      <div class="certificate-render-wrap" style="width:${width}; height:${height}; background:${template.style.background}; color:${template.style.primaryColor}; font-family:${template.style.fontFamily}; border:12px double ${template.style.borderColor}; box-sizing:border-box; padding:48px; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
-        <div style="position:absolute; top:24px; left:24px; right:24px; bottom:24px; border:2px solid ${template.style.borderColor}; opacity:0.4;"></div>
-        <div style="position:absolute; top:36px; left:36px; right:36px; bottom:36px; border:1px solid ${template.style.borderColor}; opacity:0.3;"></div>
-        <div style="font-size:14px; letter-spacing:4px; text-transform:uppercase; opacity:0.7; margin-bottom:12px;">Certificate of Achievement</div>
-        <h1 style="font-size:42px; font-weight:bold; margin-bottom:36px; letter-spacing:6px;">${escapeHtml(title)}</h1>
-        <div style="font-size:18px; margin-bottom:24px;">兹证明</div>
-        <div style="font-size:36px; font-weight:bold; margin-bottom:36px; border-bottom:2px solid ${template.style.borderColor}; padding:0 48px 12px;">${escapeHtml(user)}</div>
-        <div style="font-size:18px; line-height:1.8; max-width:80%; margin-bottom:48px;">${escapeHtml(content)}</div>
-        <div style="margin-top:auto; display:flex; justify-content:space-between; width:70%; font-size:16px;">
+      <div class="certificate-render-wrap" style="width:${width}; height:${height}; background:${template.style.background}; color:${template.style.primaryColor}; font-family:${template.style.fontFamily}; border:14px double ${template.style.borderColor}; box-sizing:border-box; padding:56px; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+        <div style="position:absolute; top:28px; left:28px; right:28px; bottom:28px; border:2px solid ${template.style.borderColor}; opacity:0.4;"></div>
+        <div style="position:absolute; top:42px; left:42px; right:42px; bottom:42px; border:1px solid ${template.style.borderColor}; opacity:0.3;"></div>
+
+        <!-- 四角装饰 -->
+        <div style="position:absolute; top:36px; left:36px; width:32px; height:32px; border-top:3px solid ${accentColor}; border-left:3px solid ${accentColor}; opacity:0.6;"></div>
+        <div style="position:absolute; top:36px; right:36px; width:32px; height:32px; border-top:3px solid ${accentColor}; border-right:3px solid ${accentColor}; opacity:0.6;"></div>
+        <div style="position:absolute; bottom:36px; left:36px; width:32px; height:32px; border-bottom:3px solid ${accentColor}; border-left:3px solid ${accentColor}; opacity:0.6;"></div>
+        <div style="position:absolute; bottom:36px; right:36px; width:32px; height:32px; border-bottom:3px solid ${accentColor}; border-right:3px solid ${accentColor}; opacity:0.6;"></div>
+
+        <div style="font-size:13px; letter-spacing:5px; text-transform:uppercase; opacity:0.65; margin-bottom:16px;">Certificate of Achievement</div>
+        <h1 style="font-size:44px; font-weight:bold; margin-bottom:20px; letter-spacing:8px;">${escapeHtml(title)}</h1>
+        <div style="width:120px; height:3px; background:${accentColor}; opacity:0.5; margin-bottom:32px;"></div>
+        <div style="font-size:18px; margin-bottom:24px; opacity:0.85;">兹证明</div>
+        <div style="font-size:38px; font-weight:bold; margin-bottom:36px; border-bottom:2px solid ${template.style.borderColor}; padding:0 56px 14px;">${escapeHtml(user)}</div>
+        <div style="font-size:18px; line-height:1.9; max-width:78%; margin-bottom:48px; opacity:0.9;">${escapeHtml(content)}</div>
+
+        <div style="margin-top:auto; display:flex; justify-content:space-between; width:72%; font-size:15px; opacity:0.9;">
           <div>证书编号：${escapeHtml(userCert.certNo)}</div>
           <div>颁发日期：${date}</div>
         </div>
-        <div style="margin-top:12px; font-size:14px; opacity:0.8;">${escapeHtml(company)}</div>
+        <div style="margin-top:14px; font-size:14px; opacity:0.75;">${escapeHtml(company)}</div>
+
+        <!-- 印章 -->
+        <div style="position:absolute; bottom:80px; right:90px; width:96px; height:96px; border:3px solid ${sealColor}; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0.75; transform:rotate(-12deg);">
+          <div style="font-size:12px; letter-spacing:2px; font-weight:bold; color:${sealColor};">认证专用章</div>
+          <div style="width:64px; height:1px; background:${sealColor}; margin:6px 0; opacity:0.7;"></div>
+          <div style="font-size:10px; color:${sealColor};">${escapeHtml(company).slice(0, 8)}</div>
+        </div>
       </div>
     `;
   }
@@ -525,9 +533,6 @@
     $('#cert-status-filter')?.addEventListener('change', loadCertificates);
     $('#cert-dept-filter')?.addEventListener('change', loadCertificates);
     $('#cert-new-btn')?.addEventListener('click', () => openCertificateModal());
-    $('#issue-user-search')?.addEventListener('input', renderIssueUserList);
-    $('#issue-submit-btn')?.addEventListener('click', submitIssue);
-    $('#issue-cancel-btn')?.addEventListener('click', () => closeModal('certificate-issue-modal'));
 
     $$('.cert-detail-tab').forEach(btn => {
       btn.addEventListener('click', () => switchDetailTab(btn.dataset.tab));
@@ -539,7 +544,6 @@
     init,
     loadCertificates,
     loadTemplates,
-    loadUsers,
     openCertificateModal,
     closeCertificateModal,
     openTemplatePicker,
@@ -550,7 +554,6 @@
     switchDetailTab,
     revokeUserCertificate,
     openIssueModal,
-    submitIssue,
     deleteCertificate,
     toggleCertificateStatus,
     printCertificate,

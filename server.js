@@ -708,6 +708,11 @@ const LEVEL_CONFIG = [
 ];
 
 function getLevelName(totalExp) {
+  const info = getLevelInfo(totalExp);
+  return info.name;
+}
+
+function getLevelInfo(totalExp) {
   let current = LEVEL_CONFIG[0];
   for (let i = 0; i < LEVEL_CONFIG.length; i++) {
     if (totalExp >= LEVEL_CONFIG[i].expRequired) {
@@ -716,26 +721,135 @@ function getLevelName(totalExp) {
       break;
     }
   }
-  return current.name;
+  return current;
+}
+
+// 计算连续学习天数（基于 studyRecords/studyDates 的日期去重后连续天数）
+function calculateStreakDays(record) {
+  const records = Array.isArray(record.studyRecords) ? record.studyRecords : [];
+  const dates = new Set();
+  records.forEach(r => {
+    if (r && r.timestamp) {
+      const d = new Date(r.timestamp);
+      if (!isNaN(d)) {
+        dates.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+      }
+    }
+  });
+  if (record.studyDates) {
+    record.studyDates.forEach(d => {
+      if (d) {
+        const s = String(d).split(' ')[0].split('T')[0];
+        if (s) dates.add(s);
+      }
+    });
+  }
+  const sorted = [...dates].sort();
+  if (sorted.length === 0) return 0;
+
+  let maxStreak = 1;
+  let currentStreak = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i - 1] + 'T00:00:00');
+    const cur = new Date(sorted[i] + 'T00:00:00');
+    const diff = (cur - prev) / (1000 * 60 * 60 * 24);
+    if (diff === 1) {
+      currentStreak++;
+      maxStreak = Math.max(maxStreak, currentStreak);
+    } else if (diff > 1) {
+      currentStreak = 1;
+    }
+  }
+  return maxStreak;
+}
+
+// 基于服务端可获取数据计算当前满足条件的徽章数量（与 center.html 逻辑对齐）
+function calculateBadgeCount(data, uid, stats) {
+  const record = stats.record || {};
+  const records = Array.isArray(record.studyRecords) ? record.studyRecords : [];
+
+  const nightStudy = records.some(r => {
+    if (!r || !r.timestamp) return false;
+    const h = new Date(r.timestamp).getHours();
+    return h >= 22;
+  });
+  const earlyStudy = records.some(r => {
+    if (!r || !r.timestamp) return false;
+    const h = new Date(r.timestamp).getHours();
+    return h <= 6;
+  });
+  const weekendStudy = records.some(r => {
+    if (!r || !r.timestamp) return false;
+    const day = new Date(r.timestamp).getDay();
+    return day === 0 || day === 6;
+  });
+
+  // 从课程互动数据中统计当前用户的点赞/评分/分享课程数
+  let likesCount = record.likes || 0;
+  let ratingsCount = record.ratings || 0;
+  let sharesCount = record.shares || 0;
+  Object.keys(data).forEach(key => {
+    if (!key.startsWith('course_interaction_')) return;
+    const interaction = data[key];
+    if (!interaction || typeof interaction !== 'object') return;
+    if (interaction.userLikes && interaction.userLikes[uid]) likesCount = Math.max(likesCount, 1);
+    if (interaction.userShares && interaction.userShares[uid]) {
+      sharesCount = Math.max(sharesCount, Number(interaction.userShares[uid]) || 1);
+    }
+    if (interaction.userRatings && interaction.userRatings[uid]) ratingsCount = Math.max(ratingsCount, 1);
+  });
+
+  const d = {
+    hours: stats.totalHours || 0,
+    completed: stats.courseCount || 0,
+    streak: stats.streakDays || 0,
+    days: stats.registerDays || 0,
+    nightStudy,
+    earlyStudy,
+    weekendStudy,
+    examCount: stats.examCount || 0,
+    examPassed: stats.examPassed || 0,
+    perfectScore: stats.perfectScore || false,
+    trainingCount: stats.trainingCount || 0,
+    certificateCount: stats.certificateCount || 0,
+    likes: likesCount,
+    ratings: ratingsCount,
+    shares: sharesCount
+  };
+
+  // 徽章条件列表（与 center.html 的 BADGES 条件一一对应）
+  const conditions = [
+    d.hours >= 1, d.hours >= 10, d.hours >= 50, d.hours >= 100, d.hours >= 300, d.hours >= 500,
+    d.completed >= 1, d.completed >= 5, d.completed >= 10, d.completed >= 20, d.completed >= 30, d.completed >= 50,
+    d.streak >= 3, d.streak >= 7, d.streak >= 30, d.streak >= 60, d.streak >= 90, d.streak >= 100,
+    d.earlyStudy, d.nightStudy, d.weekendStudy,
+    d.examCount >= 1, d.examPassed >= 3, d.perfectScore,
+    d.ratings >= 5, d.shares >= 5, d.likes >= 5,
+    d.days >= 7, d.days >= 30, d.days >= 100, d.days >= 200, d.days >= 365,
+    d.trainingCount >= 1, d.trainingCount >= 5, d.trainingCount >= 10, d.trainingCount >= 20, d.trainingCount >= 30,
+    d.certificateCount >= 1, d.certificateCount >= 3, d.certificateCount >= 5, d.certificateCount >= 10, d.certificateCount >= 20
+  ];
+
+  return conditions.filter(Boolean).length;
 }
 
 // 计算学员报表所需的学习统计数据
-function getUserLearningStats(data, userId) {
+function getUserLearningStats(data, userId, userInfo) {
   const uid = String(userId);
   const learningKey1 = 'user_learning_' + uid;
   const learningKey2 = 'learning_data_' + uid;
   const record = data[learningKey1] || data[learningKey2] || {};
 
-  // 总学习时长（秒 -> 小时，保留1位小数）
+  // 课程学习时长（秒 -> 小时，保留1位小数）
   const totalSeconds = Number(record.totalSeconds) || 0;
-  const totalHours = +(totalSeconds / 3600).toFixed(1);
-
-  // 课程学习时长：当前只记录了课程学习总时长，与总学习时长一致
-  const courseHours = totalHours;
+  const courseHours = +(totalSeconds / 3600).toFixed(1);
 
   // 培训学习时长：从培训签到记录估算（每次培训按1小时计，实际场景可细化）
   const trainingSignins = (data.training_signins || []).filter(s => String(s.userId) === uid);
   const trainingHours = trainingSignins.length;
+
+  // 总学习时长 = 课程学习时长 + 培训学习时长
+  const totalHours = +(courseHours + trainingHours).toFixed(1);
 
   // 学习课程数：videoProgress 中不同课程 ID 去重
   const progress = record.videoProgress || {};
@@ -763,10 +877,40 @@ function getUserLearningStats(data, userId) {
   // 获得证书数
   const certificateCount = (data.certificateRecords || []).filter(r => String(r.userId) === uid && r.status === 'active').length;
 
+  // 考试相关统计
+  const userExamAttempts = (data.exam_attempts || []).filter(a => String(a.userId) === uid);
+  const examCount = userExamAttempts.filter(a => a.status === 'completed' || a.passed === true).length;
+  const examPassed = userExamAttempts.filter(a => a.passed === true).length;
+  const perfectScore = userExamAttempts.some(a => Number(a.score) === 100);
+
   // 员工等级
   const expKey = 'user_total_exp_v3_' + uid;
   const totalExp = Number(data[expKey]) || 0;
-  const levelName = getLevelName(totalExp);
+  const levelInfo = getLevelInfo(totalExp);
+  const levelName = levelInfo.name;
+  const level = levelInfo.level;
+
+  // 注册天数
+  const createdAt = userInfo && userInfo.createdAt ? new Date(userInfo.createdAt) : null;
+  const registerDays = createdAt && !isNaN(createdAt) ? Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24))) : 0;
+
+  // 连续学习天数
+  const streakDays = calculateStreakDays(record);
+
+  // 临时统计对象（供徽章计算使用）
+  const statsForBadges = {
+    record,
+    totalHours,
+    courseCount,
+    trainingCount,
+    certificateCount,
+    examCount,
+    examPassed,
+    perfectScore,
+    streakDays,
+    registerDays
+  };
+  const badgeCount = calculateBadgeCount(data, uid, statsForBadges);
 
   return {
     totalHours,
@@ -775,6 +919,9 @@ function getUserLearningStats(data, userId) {
     courseCount,
     trainingCount,
     certificateCount,
+    examCount,
+    badgeCount,
+    level,
     levelName
   };
 }
@@ -1133,7 +1280,7 @@ app.get('/api/auth/users', (req, res) => {
   const users = (data.registered_users || []).map(u => {
     const user = { ...u };
     delete user.passwordHash;
-    const stats = getUserLearningStats(data, u.id);
+    const stats = getUserLearningStats(data, u.id, u);
     return {
       ...user,
       totalHours: stats.totalHours,
@@ -1142,6 +1289,9 @@ app.get('/api/auth/users', (req, res) => {
       trainingCount: stats.trainingCount,
       courseCount: stats.courseCount,
       certificateCount: stats.certificateCount,
+      examCount: stats.examCount,
+      badgeCount: stats.badgeCount,
+      level: stats.level,
       levelName: stats.levelName
     };
   });
@@ -2107,18 +2257,9 @@ app.post('/api/training/:id/assign', (req, res) => {
     });
   }
 
-  // 如果培训关联了已发布的考试，向新增指派学员发送考试通知
-  let examNotifiedCount = 0;
-  if (addedUserIds.length > 0 && training.linkedExamId) {
-    const exam = (data.exams || []).find(e => e.id === training.linkedExamId);
-    if (exam && exam.status === 'published') {
-      examNotifiedCount = sendTrainingExamNotifications(data, training, exam, addedUserIds);
-    }
-  }
-
   writeData(data);
   const totalCount = data.training_enrollments.filter(e => e.trainingId === trainingId).length;
-  res.json({ success: true, message: `已指派 ${addedUserIds.length} 名学员`, added: addedUserIds.length, enrollCount: totalCount, examNotifiedCount });
+  res.json({ success: true, message: `已指派 ${addedUserIds.length} 名学员`, added: addedUserIds.length, enrollCount: totalCount });
 });
 
 // GET /api/training/:id/assign-history - 获取培训指派历史
@@ -4248,41 +4389,6 @@ function sendExamNotifications(data, exam) {
     addedCount++;
   });
   writeData(data);
-  return addedCount;
-}
-
-// 培训指派时发送关联考试通知（仅通知本次新增指派的学员）
-function sendTrainingExamNotifications(data, training, exam, userIds) {
-  initNotificationsData(data);
-  const users = data.registered_users || [];
-  const targetIds = [...new Set((userIds || []).map(id => String(id)))];
-  if (targetIds.length === 0) return 0;
-
-  const now = Date.now();
-  let addedCount = 0;
-  targetIds.forEach((uid, i) => {
-    const user = users.find(u => String(u.id) === uid);
-    if (!user) return;
-
-    // 避免重复通知（同一考试同一用户）
-    const alreadyNotified = data.notifications.some(n =>
-      String(n.userId) === uid && n.type === 'exam' && n.examId === exam.id
-    );
-    if (alreadyNotified) return;
-
-    data.notifications.push({
-      id: now + i,
-      userId: user.id,
-      title: '新考试安排',
-      content: `您参与的培训「${training.name || ''}」包含考试「${exam.title || ''}」，请及时完成。`,
-      type: 'exam',
-      examId: exam.id,
-      trainingId: training.id,
-      read: false,
-      createdAt: new Date().toISOString()
-    });
-    addedCount++;
-  });
   return addedCount;
 }
 

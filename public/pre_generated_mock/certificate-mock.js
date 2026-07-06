@@ -14,9 +14,12 @@
       layout: 'portrait',
       thumbnail: '',
       style: {
-        background: 'linear-gradient(135deg, #f8fbff 0%, #e8f4fc 100%)',
+        background: 'radial-gradient(circle at 15% 15%, rgba(30,90,142,0.14) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(30,90,142,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f0f7ff 40%, #e1f0fb 100%)',
         borderColor: '#1e5a8e',
         primaryColor: '#1e5a8e',
+        secondaryColor: '#4a90c2',
+        accentColor: '#c9a227',
+        sealColor: '#1e5a8e',
         fontFamily: '"Noto Serif SC", "SimSun", serif'
       },
       placeholders: [
@@ -33,9 +36,12 @@
       layout: 'landscape',
       thumbnail: '',
       style: {
-        background: 'linear-gradient(135deg, #fffdf5 0%, #fcf3d8 100%)',
+        background: 'radial-gradient(ellipse at 50% 0%, rgba(191,160,95,0.18) 0%, transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(191,160,95,0.12) 0%, transparent 60%), linear-gradient(135deg, #fffdf5 0%, #fcf6e3 50%, #f9efd0 100%)',
         borderColor: '#bfa05f',
         primaryColor: '#8a6d2f',
+        secondaryColor: '#bfa05f',
+        accentColor: '#8a6d2f',
+        sealColor: '#bfa05f',
         fontFamily: '"Noto Serif SC", "SimSun", serif'
       },
       placeholders: [
@@ -52,9 +58,12 @@
       layout: 'portrait',
       thumbnail: '',
       style: {
-        background: 'linear-gradient(135deg, #f5fff8 0%, #e3f5e9 100%)',
+        background: 'radial-gradient(circle at 80% 20%, rgba(45,122,78,0.12) 0%, transparent 40%), radial-gradient(circle at 20% 80%, rgba(45,122,78,0.08) 0%, transparent 40%), linear-gradient(160deg, #ffffff 0%, #f2fbf5 50%, #e3f5e9 100%)',
         borderColor: '#2d7a4e',
         primaryColor: '#2d7a4e',
+        secondaryColor: '#5aa87a',
+        accentColor: '#2d7a4e',
+        sealColor: '#2d7a4e',
         fontFamily: '"Noto Sans SC", "Microsoft YaHei", sans-serif'
       },
       placeholders: [
@@ -71,9 +80,12 @@
       layout: 'landscape',
       thumbnail: '',
       style: {
-        background: 'linear-gradient(135deg, #faf8ff 0%, #efe8fc 100%)',
+        background: 'linear-gradient(135deg, rgba(107,76,154,0.10) 0%, transparent 50%), linear-gradient(225deg, rgba(107,76,154,0.06) 0%, transparent 50%), linear-gradient(135deg, #faf8ff 0%, #f5f2ff 50%, #efe8fc 100%)',
         borderColor: '#6b4c9a',
         primaryColor: '#6b4c9a',
+        secondaryColor: '#9b7fc7',
+        accentColor: '#6b4c9a',
+        sealColor: '#6b4c9a',
         fontFamily: '"Noto Sans SC", "Microsoft YaHei", sans-serif'
       },
       placeholders: [

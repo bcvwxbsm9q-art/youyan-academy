@@ -78,7 +78,8 @@
                 let value = attr.value;
                 if (name === 'href' || name === 'src') {
                     value = value.replace(/\s/g, '');
-                    if (/^(javascript|data|vbscript):/i.test(value)) continue;
+                    if (/^(javascript|vbscript):/i.test(value)) continue;
+                    if (/^data:/i.test(value) && !/^data:image\//i.test(value)) continue;
                     if (tag === 'a' && name === 'href' && !/^[a-z][a-z0-9+.-]*:/i.test(value)) {
                         value = 'https://' + value;
                     }

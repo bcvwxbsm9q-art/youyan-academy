@@ -879,6 +879,7 @@
         let instructorsMap = {};
         // 报名数据从服务器加载，不再使用 localStorage
         let enrollMap = {}; // courseId -> { enrolledUsers: [], enrollCount: N, isEnrolled: bool }
+        let exams = []; // 全局考试列表，用于判断培训关联的考试是否仍存在
 
         async function loadLecturers() {
             try {
@@ -896,6 +897,28 @@
             } catch (e) {
                 console.log('讲师数据加载失败:', e.message);
             }
+        }
+
+        async function loadExams() {
+            try {
+                const token = (typeof AuthGuard !== 'undefined' && AuthGuard.getToken) ? AuthGuard.getToken() : null;
+                const headers = {};
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                const res = await fetch('/api/exams', { headers });
+                if (!res.ok) throw new Error('加载考试列表失败');
+                const json = await res.json();
+                exams = Array.isArray(json) ? json : (json.data || []);
+            } catch (e) {
+                console.log('考试列表加载失败:', e.message);
+                exams = [];
+            }
+        }
+
+        function examExists(examId) {
+            if (!examId) return false;
+            // 考试列表未成功加载时，按存在处理，避免误隐藏正常入口
+            if (!exams || exams.length === 0) return true;
+            return exams.some(e => String(e.id) === String(examId));
         }
 
         function getInstructorInfo(name) {
@@ -1797,7 +1820,7 @@
 
             const hasProjectContent = !!(course.signinEnabled ||
                 (course.surveyEnabled && course.linkedSurveyId) ||
-                (course.examEnabled && course.linkedExamId) ||
+                (course.examEnabled && course.linkedExamId && examExists(course.linkedExamId)) ||
                 (course.coursewareEnabled && course.coursewareFiles && course.coursewareFiles.length));
 
             let content = `
@@ -1897,8 +1920,8 @@
                     actionDisabled: done
                 });
             }
-            // 3. 考试
-            if (course.examEnabled && course.linkedExamId) {
+            // 3. 考试（关联考试已被删除时不显示入口）
+            if (course.examEnabled && course.linkedExamId && examExists(course.linkedExamId)) {
                 const done = !!course.examDone;
                 items.push({
                     key: 'exam',
@@ -2435,7 +2458,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            await loadTrainingSchedule();
+            await Promise.all([loadTrainingSchedule(), loadExams()]);
             renderCalendar();
 
             // 从消息中心等跳转过来时自动打开指定培训弹窗
@@ -2464,8 +2487,7 @@
             document.addEventListener('visibilitychange', async () => {
                 if (document.visibilityState === 'visible') {
                     const keepCourseId = currentModalCourseId;
-                    await loadTrainingSchedule();
-                    await loadTrainingGalleries();
+                    await Promise.all([loadTrainingSchedule(), loadExams(), loadTrainingGalleries()]);
                     renderCalendar();
                     if (keepCourseId) showCourseDetailInModal(keepCourseId);
                 }
@@ -2701,11 +2723,11 @@
                             monthlyEnrolled++;
                             const courseDate = new Date(course.date);
                             const datePassed = !isNaN(courseDate.getTime()) && courseDate < today;
-                            // 所有必修项目内容均完成也算已完成
+                            // 所有必修项目内容均完成也算已完成（考试已被删除则不再要求）
                             const modulesDone =
                                 (!course.signinEnabled || !!course.signinDone) &&
                                 (!course.surveyEnabled || !!course.surveyDone) &&
-                                (!course.examEnabled || !!course.examDone);
+                                (!course.examEnabled || !examExists(course.linkedExamId) || !!course.examDone);
                             if (datePassed || modulesDone) {
                                 monthlyCompleted++;
                             }
