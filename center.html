@@ -397,6 +397,10 @@
                                     <i class="fa fa-clipboard w-6"></i>
                                     <span>我的考试</span>
                                 </button>
+                                <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center" data-tab="my-trainings">
+                                    <i class="fa fa-users w-6"></i>
+                                    <span>我的培训</span>
+                                </button>
                                 <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center" data-tab="achievements">
                                     <i class="fa fa-trophy w-6"></i>
                                     <span>成就徽章</span>
@@ -642,8 +646,7 @@
                             </div>
                         </div>
                         
-                        <!-- 成就徽章 -->
-                        <div class="tab-content hidden" id="achievements-content">
+
                             <div class="bg-white rounded-xl shadow-md p-6 mb-6">
                                 <div class="flex items-center justify-between mb-6">
                                     <div>
@@ -1020,7 +1023,7 @@ const BADGES = [
             loadAllData();
             loadActivityTimeline();
             loadBadges();
-            loadCertificates();
+            await loadCertificates();
             // 默认显示学习统计
             switchTab('learning-stats');
         });
@@ -1378,7 +1381,7 @@ const BADGES = [
         }
         
         // 更新学习统计数据（实时）
-        function updateLearningStats() {
+        async function updateLearningStats() {
             if (!currentUser || !currentUser.id) return;
             const userId = currentUser.id;
             const learningData = api.getUserLearningData(userId);
@@ -1393,12 +1396,17 @@ const BADGES = [
             const registerDays = api.getRegisterDays(currentUser.createdAt);
             document.getElementById('stats-register-days').textContent = registerDays;
             
-            // 已完成课程数（基于 videoProgress 动态计算，而非 completedCourses 数组）
+            // 已完成课程数（基于 videoProgress 动态计算，并兼容 completedCourses 数组）
+            const completedCourseIds = new Set((learningData.completedCourses || []).map(id => String(id)));
             const allCourses = api.getCourses();
             let completedCount = 0;
             allCourses.forEach(c => {
                 const vids = c.videos || [];
                 if (vids.length === 0) return;
+                if (completedCourseIds.has(String(c.id))) {
+                    completedCount++;
+                    return;
+                }
                 const allWatched = vids.every((v, i) => {
                     const vKey = `${c.id}_${i}`;
                     const p = learningData.videoProgress[vKey] || 0;
@@ -1433,9 +1441,8 @@ const BADGES = [
                 expBarEl.style.width = `${expPercent}%`;
             }
             
-            // 证书数量
-            const certs = learningData.certificates || [];
-            document.getElementById('stat-certificates').textContent = certs.length;
+            // 证书数量（从服务端实时拉取）
+            await loadCertificates();
             
             // 进行中课程数
             let inProgressCount = 0;
@@ -1541,12 +1548,17 @@ const BADGES = [
             const totalHours = totalSec > 0 ? (Math.round(totalSec / 3600 * 10) / 10) : (learningData.totalHours || 0);
             document.getElementById('stats-total-hours').textContent = totalHours;
             
-            // 已完成课程数（基于 videoProgress 动态计算）
+            // 已完成课程数（基于 videoProgress 动态计算，并兼容 completedCourses 数组）
+            const completedCourseIds = new Set((learningData.completedCourses || []).map(id => String(id)));
             const allCourses = api.getCourses();
             let completedCount = 0;
             allCourses.forEach(c => {
                 const vids = c.videos || [];
                 if (vids.length === 0) return;
+                if (completedCourseIds.has(String(c.id))) {
+                    completedCount++;
+                    return;
+                }
                 const allWatched = vids.every((v, i) => {
                     const vKey = `${c.id}_${i}`;
                     const p = learningData.videoProgress[vKey] || 0;
@@ -2212,64 +2224,162 @@ const BADGES = [
         }
 
         // 加载证书
-        function loadCertificates() {
-            const userId = currentUser.id;
-            const learningData = api.getUserLearningData(userId);
-            const certs = learningData.certificates || [];
-            
-            const countEl = document.getElementById('certificate-count');
-            if (countEl) countEl.textContent = certs.length;
+        async function loadCertificates() {
+            try {
+                const userId = currentUser.id;
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+                const res = await fetch('/api/user-certificates?userId=' + encodeURIComponent(userId), {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) throw new Error('加载失败');
+                const result = await res.json();
+                const certs = result.data || [];
+                const validCount = certs.filter(c => c.status === 'active' || c.status === 'expired').length;
+                const countEl = document.getElementById('certificate-count');
+                if (countEl) countEl.textContent = validCount;
+                const statEl = document.getElementById('stat-certificates');
+                if (statEl) statEl.textContent = validCount;
+            } catch (e) {
+                console.error('加载证书统计失败:', e);
+            }
         }
-        
+
+        // 渲染证书 HTML（用于预览/打印）
+        function renderCertificatePreviewHTML(userCert, template) {
+            const user = userCert.userName || '学员';
+            const company = userCert.userDepartment || '广州游雁网络科技有限公司';
+            const date = (userCert.issueAt || '').split('T')[0] || new Date().toISOString().split('T')[0];
+            const title = userCert.certificateName || '荣誉证书';
+            const content = userCert.sourceType === 'exam' ? '考试成绩合格，特发此证，以资鼓励。' : '表现优异，特发此证，以资鼓励。';
+            const isPortrait = template.layout === 'portrait';
+            const width = isPortrait ? '210mm' : '297mm';
+            const height = isPortrait ? '297mm' : '210mm';
+
+            return `
+                <div style="width:${width}; height:${height}; background:${template.style.background}; color:${template.style.primaryColor}; font-family:${template.style.fontFamily}; border:12px double ${template.style.borderColor}; box-sizing:border-box; padding:48px; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+                    <div style="position:absolute; top:24px; left:24px; right:24px; bottom:24px; border:2px solid ${template.style.borderColor}; opacity:0.4;"></div>
+                    <div style="position:absolute; top:36px; left:36px; right:36px; bottom:36px; border:1px solid ${template.style.borderColor}; opacity:0.3;"></div>
+                    <div style="font-size:14px; letter-spacing:4px; text-transform:uppercase; opacity:0.7; margin-bottom:12px;">Certificate of Achievement</div>
+                    <h1 style="font-size:42px; font-weight:bold; margin-bottom:36px; letter-spacing:6px;">${escapeHtml(title)}</h1>
+                    <div style="font-size:18px; margin-bottom:24px;">兹证明</div>
+                    <div style="font-size:36px; font-weight:bold; margin-bottom:36px; border-bottom:2px solid ${template.style.borderColor}; padding:0 48px 12px;">${escapeHtml(user)}</div>
+                    <div style="font-size:18px; line-height:1.8; max-width:80%; margin-bottom:48px;">${escapeHtml(content)}</div>
+                    <div style="margin-top:auto; display:flex; justify-content:space-between; width:70%; font-size:16px;">
+                        <div>证书编号：${escapeHtml(userCert.certNo || '')}</div>
+                        <div>颁发日期：${date}</div>
+                    </div>
+                    <div style="margin-top:12px; font-size:14px; opacity:0.8;">${escapeHtml(company)}</div>
+                </div>
+            `;
+        }
+
+        // 查看/打印证书
+        async function previewCertificate(userCertId) {
+            try {
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+                const res = await fetch('/api/user-certificates/' + encodeURIComponent(userCertId), {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) throw new Error('加载失败');
+                const result = await res.json();
+                const uc = result.data;
+                if (!uc || !uc.template) {
+                    alert('证书模板不存在');
+                    return;
+                }
+                const win = window.open('', '_blank');
+                win.document.write(`
+                    <html><head><title>证书预览</title>
+                    <style>
+                        @media print { body { margin:0; } .cert-print { page-break-after:always; } }
+                        body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f3f4f6; }
+                    </style></head><body>
+                    <div class="cert-print">${renderCertificatePreviewHTML(uc, uc.template)}</div>
+                    <div style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); display:flex; gap:12px;">
+                        <button onclick="window.print()" style="padding:10px 24px; background:#4f46e5; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:14px;">打印 / 保存为PDF</button>
+                        <button onclick="window.close()" style="padding:10px 24px; background:#fff; color:#374151; border:1px solid #d1d5db; border-radius:8px; cursor:pointer; font-size:14px;">关闭</button>
+                    </div>
+                    </body></html>
+                `);
+                win.document.close();
+            } catch (e) {
+                console.error('预览证书失败:', e);
+                alert('预览证书失败');
+            }
+        }
+
         // 加载证书列表
-        function loadCertificatesList() {
-            const userId = currentUser.id;
-            const learningData = api.getUserLearningData(userId);
-            const certs = learningData.certificates || [];
-            
+        async function loadCertificatesList() {
             const container = document.getElementById('certificates-list');
             if (!container) return;
-            
-            if (certs.length === 0) {
+
+            container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400"><i class="fa fa-spinner fa-spin text-2xl"></i><p class="mt-2">加载中...</p></div>';
+
+            try {
+                const userId = currentUser.id;
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+                const res = await fetch('/api/user-certificates?userId=' + encodeURIComponent(userId), {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) throw new Error('加载失败');
+                const result = await res.json();
+                const certs = result.data || [];
+
+                const countEl = document.getElementById('certificate-count');
+                if (countEl) countEl.textContent = certs.length;
+                const statEl = document.getElementById('stat-certificates');
+                if (statEl) statEl.textContent = certs.length;
+
+                if (certs.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-12 text-gray-400">
+                            <div class="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                                <i class="fa fa-certificate text-gray-300 text-3xl"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-600 mb-2">暂无证书</h3>
+                            <p class="text-sm text-gray-400 mb-4">完成考试或培训考核后将获得证书</p>
+                            <a href="course.html" class="inline-flex items-center px-6 py-3 bg-gradient-primary text-white rounded-xl hover:opacity-90 transition-opacity">
+                                <i class="fa fa-book mr-2"></i>去学习
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = certs.map(cert => {
+                    const issueDate = (cert.issueAt || '').split('T')[0] || '未知';
+                    const statusClass = cert.status === 'active' ? 'bg-green-100 text-green-700' : cert.status === 'expired' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700';
+                    const statusText = cert.status === 'active' ? '有效' : cert.status === 'expired' ? '已过期' : '已撤销';
+                    const sourceText = cert.sourceType === 'exam' ? '考试通过' : cert.sourceType === 'training' ? '培训完成' : '手动颁发';
+
+                    return `
+                        <div class="border border-gray-200 rounded-xl p-4 flex items-center gap-4 hover:shadow-md transition-all group bg-white">
+                            <div class="w-16 h-16 rounded-lg flex items-center justify-center text-white text-2xl shadow-lg group-hover:scale-110 transition-transform" style="background:${cert.template?.style?.background || 'linear-gradient(135deg,#f59e0b,#d97706)'}; color:${cert.template?.style?.primaryColor || '#fff'};">
+                                <i class="fa fa-certificate"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-gray-800 truncate">${escapeHtml(cert.certificateName || '证书')}</h4>
+                                <p class="text-sm text-gray-500">编号: ${escapeHtml(cert.certNo || '-')}</p>
+                                <div class="flex items-center gap-2 mt-1 flex-wrap">
+                                    <span class="text-xs ${statusClass} px-2 py-0.5 rounded">${statusText}</span>
+                                    <span class="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">${sourceText}</span>
+                                    <span class="text-xs text-gray-400">颁发: ${issueDate}</span>
+                                </div>
+                            </div>
+                            <button onclick="previewCertificate('${cert.id}')" class="px-3 py-1.5 border border-primary text-primary rounded-lg text-sm hover:bg-primary hover:text-white transition-colors flex-shrink-0">
+                                查看
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error('加载证书列表失败:', e);
                 container.innerHTML = `
                     <div class="col-span-full text-center py-12 text-gray-400">
-                        <div class="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                            <i class="fa fa-certificate text-gray-300 text-3xl"></i>
-                        </div>
-                        <h3 class="text-lg font-medium text-gray-600 mb-2">暂无证书</h3>
-                        <p class="text-sm text-gray-400 mb-4">完成课程考核后将获得证书</p>
-                        <a href="course.html" class="inline-flex items-center px-6 py-3 bg-gradient-primary text-white rounded-xl hover:opacity-90 transition-opacity">
-                            <i class="fa fa-book mr-2"></i>去学习
-                        </a>
+                        <p>加载失败，请稍后重试</p>
                     </div>
                 `;
-                return;
             }
-            
-            container.innerHTML = certs.map(cert => {
-                const course = api.getCourses().find(c => String(c.id) === String(cert.courseId));
-                const courseName = course ? course.title : '未知课程';
-                const grade = cert.grade || '合格';
-                const gradeColor = grade === '优秀' ? 'bg-green-100 text-green-700' : grade === '良好' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700';
-                
-                return `
-                    <div class="border border-gray-200 rounded-xl p-4 flex items-center gap-4 hover:shadow-md transition-all group">
-                        <div class="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center text-white text-2xl shadow-lg group-hover:scale-110 transition-transform">
-                            <i class="fa fa-graduation-cap"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-gray-800">${courseName}</h4>
-                            <p class="text-sm text-gray-500">完成时间: ${cert.date || '未知'}</p>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-xs ${gradeColor} px-2 py-0.5 rounded">${grade}</span>
-                            </div>
-                        </div>
-                        <button class="px-3 py-1.5 border border-primary text-primary rounded-lg text-sm hover:bg-primary hover:text-white transition-colors">
-                            查看
-                        </button>
-                    </div>
-                `;
-            }).join('');
         }
 
         // 加载所有数据
@@ -2327,12 +2437,15 @@ const BADGES = [
             let completed = [];
             let notStarted = [];
 
+            // 兼容历史已完成数据：completedCourses 中记录的课程也视为已完成
+            const completedCourseIds = new Set((learningData.completedCourses || []).map(id => String(id)));
+
             allCourses.forEach(c => {
                 // 只显示已发布的课程
                 if (c.status && c.status !== 'published') return;
-                
+
                 const { total, watched, partial, pct } = calcCourseProgress(c);
-                const isCompleted = pct === 100 && total > 0;
+                const isCompleted = (pct === 100 && total > 0) || completedCourseIds.has(String(c.id));
                 const entered = hasEnteredCourse(c.id);
                 const lastStudy = getLastStudyTime(c.id);
 

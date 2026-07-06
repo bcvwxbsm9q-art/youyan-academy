@@ -1286,7 +1286,7 @@
       </div>
 
       <!-- 学员考试记录弹窗 -->
-      <div id="examStudentRecordsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+      <div id="examStudentRecordsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col m-4">
           <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
             <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-history text-indigo-500 mr-2"></i>考试记录 - <span id="examStudentRecordsTitle"></span></h3>
@@ -1313,7 +1313,7 @@
       </div>
 
       <!-- 作答详情弹窗 -->
-      <div id="examAttemptDetailModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+      <div id="examAttemptDetailModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col m-4">
           <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
             <div>
@@ -1332,7 +1332,7 @@
       </div>
 
       <!-- 题目作答详情弹窗 -->
-      <div id="examQuestionAnswersModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+      <div id="examQuestionAnswersModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col m-4">
           <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
             <div>
@@ -1674,6 +1674,84 @@
         </div>
       </div>
 
+      <!-- 证书管理 -->
+      <div id="tab-certificates" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-slate-800">
+            <i class="fas fa-certificate text-amber-500 mr-2"></i>证书管理
+          </h2>
+          <button id="cert-new-btn" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition">
+            <i class="fas fa-plus mr-2"></i>新建证书
+          </button>
+        </div>
+
+        <!-- 搜索和筛选 -->
+        <div class="flex items-center gap-4 mb-6">
+          <div class="flex-1 relative">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="cert-search-input" placeholder="搜索证书名称..." class="w-full pl-12 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+          </div>
+          <select id="cert-status-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+            <option value="">全部状态</option>
+            <option value="enabled">启用</option>
+            <option value="disabled">停用</option>
+          </select>
+          <select id="cert-dept-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+            <option value="">全部部门</option>
+            <option value="技术部">技术部</option>
+            <option value="产品部">产品部</option>
+            <option value="运营部">运营部</option>
+            <option value="市场部">市场部</option>
+            <option value="人事部">人事部</option>
+          </select>
+          <button id="cert-search-btn" class="px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition">
+            <i class="fas fa-search mr-1"></i>查询
+          </button>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-2xl font-bold text-slate-800" id="cert-stat-total">0</p>
+            <p class="text-sm text-slate-500">证书总数</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-2xl font-bold text-green-500" id="cert-stat-enabled">0</p>
+            <p class="text-sm text-slate-500">启用中</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-2xl font-bold text-blue-500" id="cert-stat-issued">0</p>
+            <p class="text-sm text-slate-500">已颁发人次</p>
+          </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm">
+            <p class="text-2xl font-bold text-purple-500" id="cert-stat-active">0</p>
+            <p class="text-sm text-slate-500">有效证书数</p>
+          </div>
+        </div>
+
+        <!-- 证书列表 -->
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">证书名称</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">所属部门</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">有效期</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">有效人数</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">已过期</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">创建人</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">创建时间</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">操作</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100" id="certificate-list-body">
+              <tr><td colspan="9" class="text-center py-8 text-slate-400">加载中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -1687,7 +1765,7 @@
   </div>
 
   <!-- ========== 轮播图弹窗 ========== -->
-  <div id="carouselModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+  <div id="carouselModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
       <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
         <h3 class="text-lg font-bold text-slate-800" id="carouselModalTitle">添加轮播图</h3>
@@ -1744,7 +1822,7 @@
   </div>
 
   <!-- ========== 题目编辑弹窗 ========== -->
-  <div id="questionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+  <div id="questionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100">
         <h3 class="text-lg font-bold text-slate-800" id="questionModalTitle">添加题目</h3>
@@ -1855,7 +1933,7 @@
   </div>
 
   <!-- ========== 编辑题库弹窗 ========== -->
-  <div id="editBankModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+  <div id="editBankModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-md m-4 shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100">
         <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-edit text-indigo-500 mr-2"></i>编辑题库</h3>
@@ -1882,7 +1960,7 @@
   </div>
 
   <!-- ========== 导入题库弹窗 ========== -->
-  <div id="importBankModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+  <div id="importBankModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-md m-4 shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100">
         <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-upload text-indigo-500 mr-2"></i>导入题库</h3>
@@ -1911,7 +1989,7 @@
   </div>
 
   <!-- ========== 导入试题弹窗（已有题库内追加）========== -->
-  <div id="importQuestionsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+  <div id="importQuestionsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-md m-4 shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100">
         <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-upload text-indigo-500 mr-2"></i>导入试题</h3>
@@ -2113,9 +2191,13 @@
             <!-- 颁发证书 -->
             <div class="flex items-center justify-between">
               <span class="text-sm font-medium text-slate-700">颁发证书：</span>
-              <div class="flex items-center space-x-2">
-                <button type="button" class="px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-lg bg-white text-slate-600 hover:bg-slate-50 transition" onclick="toast('证书功能开发中', 'info')">
-                  <i class="fas fa-plus mr-1"></i>选择证书
+              <div class="flex items-center space-x-2 flex-1 justify-end">
+                <input type="hidden" id="examCertificateId" value="">
+                <select id="examCertificateSelect" class="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none max-w-[180px]">
+                  <option value="">不颁发证书</option>
+                </select>
+                <button type="button" onclick="refreshExamCertificateOptions()" class="px-2 py-1.5 text-xs text-indigo-600 hover:text-indigo-800 transition" title="刷新证书列表">
+                  <i class="fas fa-sync-alt"></i>
                 </button>
                 <span class="text-xs text-slate-400">及格后颁发</span>
               </div>
@@ -2364,7 +2446,7 @@
   </div>
 
   <!-- ========== 考试预览弹窗 ========== -->
-  <div id="examPreviewModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+  <div id="examPreviewModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden m-4 flex flex-col shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
         <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-eye mr-2 text-indigo-500"></i>考试预览 - <span id="previewExamTitle">考试</span></h3>
@@ -2382,7 +2464,7 @@
   </div>
 
   <!-- ========== 考试成绩弹窗 ========== -->
-  <div id="examResultsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+  <div id="examResultsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden m-4 flex flex-col shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
         <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-chart-line mr-2 text-green-500"></i>考试成绩 - <span id="resultsExamTitle">考试</span></h3>
@@ -2414,7 +2496,7 @@
   </div>
 
   <!-- ========== 试卷编辑弹窗 ========== -->
-  <div id="paperModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center hidden">
+  <div id="paperModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden m-4 shadow-2xl flex flex-col">
       <!-- 头部 -->
       <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
@@ -2649,10 +2731,177 @@
     </div>
   </div>
 
+  <!-- ========== 证书新建/编辑弹窗 ========== -->
+  <div id="certificate-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
+      <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
+        <h3 class="text-lg font-bold text-slate-800" id="cert-modal-title">新建证书</h3>
+        <button onclick="window.CertificateMgmt.closeCertificateModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <div class="p-6 space-y-5">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">证书名称 <span class="text-red-500">*</span></label>
+            <input type="text" id="cert-name" placeholder="例如：优秀学员证书"
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">所属部门</label>
+            <input type="text" id="cert-dept" placeholder="例如：技术部"
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none text-sm">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">有效期类型</label>
+            <select id="cert-validity-type"
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm bg-white">
+              <option value="permanent">永久有效</option>
+              <option value="fixed">固定期限</option>
+            </select>
+          </div>
+          <div id="cert-validity-days-wrap" class="hidden">
+            <label class="block text-sm font-medium text-slate-700 mb-1">有效天数</label>
+            <input type="number" id="cert-validity-days" value="365" min="1"
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm">
+          </div>
+        </div>
+
+        <div class="bg-slate-50 rounded-xl p-4">
+          <h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-hashtag mr-1.5"></i>证书编号规则</h4>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">前缀</label>
+              <input type="text" id="cert-prefix" value="CERT" placeholder="CERT"
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">起始序号</label>
+              <input type="number" id="cert-start-number" value="1" min="1"
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">序号位数</label>
+              <input type="number" id="cert-digits" value="4" min="1" max="10"
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+          </div>
+          <p class="text-xs text-slate-400 mt-2">编号格式：前缀 + 补零序号，例如 CERT0001</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">证书模板 <span class="text-red-500">*</span></label>
+          <div class="flex items-start gap-4">
+            <div id="cert-template-preview" class="w-48 h-32 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
+              <span class="text-slate-400 text-sm">请选择模板</span>
+            </div>
+            <div class="flex-1">
+              <button type="button" id="cert-template-picker-btn"
+                class="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-sm hover:bg-amber-100 transition">
+                <i class="fas fa-th-large mr-1.5"></i>选择模板
+              </button>
+              <p class="text-xs text-slate-400 mt-2">内置多款精美模板，支持实时预览</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
+        <button id="cert-cancel-btn" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
+        <button id="cert-save-btn" class="px-5 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-amber-600 transition">
+          <i class="fas fa-save mr-1.5"></i>保存
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 证书模板选择器弹窗 ========== -->
+  <div id="certificate-template-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
+      <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
+        <h3 class="text-lg font-bold text-slate-800">选择证书模板</h3>
+        <button onclick="document.getElementById('certificate-template-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <div class="p-6">
+        <div id="certificate-template-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <!-- 动态渲染 -->
+        </div>
+      </div>
+      <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
+        <button id="cert-template-cancel" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
+        <button id="cert-template-confirm" class="px-5 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-amber-600 transition">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 证书详情弹窗 ========== -->
+  <div id="certificate-detail-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
+      <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
+        <div>
+          <h3 class="text-lg font-bold text-slate-800" id="cert-detail-title">证书详情</h3>
+          <div class="flex items-center gap-4 mt-1" id="cert-detail-meta"></div>
+        </div>
+        <button onclick="window.CertificateMgmt.closeCertificateDetail()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <div class="p-6">
+        <div class="flex border-b border-slate-200 mb-4">
+          <button class="cert-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600" data-tab="active">有效人员</button>
+          <button class="cert-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="expired">已过期</button>
+          <button class="cert-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="revoked">已撤销</button>
+        </div>
+        <div class="bg-white rounded-xl overflow-hidden border border-slate-200">
+          <table class="w-full">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">姓名</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">证书编号</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">认证来源</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">颁发时间</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">生效时间</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">到期时间</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">操作</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100" id="certificate-detail-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 手动颁发证书弹窗 ========== -->
+  <div id="certificate-issue-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
+      <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
+        <h3 class="text-lg font-bold text-slate-800">颁发证书：<span id="issue-cert-name"></span></h3>
+        <button onclick="document.getElementById('certificate-issue-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+      <div class="p-6 space-y-4">
+        <input type="hidden" id="issue-cert-id">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">搜索学员</label>
+          <input type="text" id="issue-user-search" placeholder="输入姓名或部门..."
+            class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm">
+        </div>
+        <div class="border border-slate-200 rounded-xl max-h-64 overflow-y-auto p-2" id="issue-user-list">
+          <!-- 动态渲染 -->
+        </div>
+      </div>
+      <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
+        <button id="issue-cancel-btn" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
+        <button id="issue-submit-btn" class="px-5 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-amber-600 transition">
+          <i class="fas fa-medal mr-1.5"></i>确认颁发
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="data-api.js"></script>
   <script src="js/data-sync.js"></script>
   <script src="js/auth-modal.js?v=20260704"></script>
   <script src="js/auth-guard.js?v=20260704"></script>
+  <script src="js/certificate-management.js?v=20260706"></script>
   <script>
     // dataSync 兼容层：将 window.dataSync.getData/setData 映射到 DataAPI
     if (!window.dataSync) {
@@ -3213,7 +3462,14 @@
         'paper-mgmt': loadPapers,
         'exam-schedule': loadExamMgmtList,
         survey: loadSurveyList,
-        reports: loadReports
+        reports: loadReports,
+        certificates: function() {
+          if (window.CertificateMgmt) {
+            window.CertificateMgmt.loadTemplates();
+            window.CertificateMgmt.loadUsers();
+            window.CertificateMgmt.loadCertificates();
+          }
+        }
       };
       if (loaders[name]) {
         try {
@@ -7388,7 +7644,7 @@
                     <div class="text-sm font-semibold text-slate-800">考试</div>
                     <div class="text-xs text-slate-400 mt-0.5">创建考试+试卷</div>
                     <div class="mt-3 text-xs ${examEnabled ? 'text-amber-600' : 'text-slate-400'} font-medium flex items-center gap-1">
-                      <i class="fas fa-cog"></i><span id="exam-card-status">${examEnabled ? (linkedExam ? escHtml(linkedExam.title || '已关联') : '未配置') : '未启用'}</span>
+                      <i class="fas fa-cog"></i><span id="exam-card-status">${examEnabled ? (linkedExam ? escHtml(linkedExam.title || '已配置') : '未配置') : '未启用'}</span>
                     </div>
                   </div>
                   <!-- 课件卡片 -->
@@ -7497,7 +7753,7 @@
         if (exam && exam.id) {
           document.getElementById('t-exam-id').value = exam.id;
           renderTrainingExamDisplay(exam.id);
-          toast(`已关联考试：${exam.title || '未命名考试'}`);
+          toast('考试配置成功');
         } else {
           toast('考试创建失败', 'error');
         }
@@ -7689,14 +7945,6 @@
       if (!drawer || !overlay) return;
       drawer.classList.add('translate-x-full');
       overlay.classList.add('hidden');
-      // 考勤：关闭抽屉时提示记得保存培训（仅在已设置签到时间时提示）
-      if (module === 'attendance') {
-        const start = document.getElementById('t-signin-start')?.value;
-        const end = document.getElementById('t-signin-end')?.value;
-        if (start || end) {
-          showToast('考勤设置已暂存，请点击"保存培训"使设置生效', 'info');
-        }
-      }
       // 调研：关闭抽屉时同步卡片状态文字
       if (module === 'survey') {
         const status = document.getElementById('survey-card-status');
@@ -7940,7 +8188,7 @@
       if (!surveyId) { toast('请选择调研问卷', 'error'); return; }
       const surveys = data.surveys || [];
       const survey = surveys.find(s => String(s.id) === String(surveyId));
-      toast('已选择调研：' + (survey ? survey.title : '未知问卷'));
+      toast('调研配置成功');
       closeModuleDrawer('survey');
     }
 
@@ -7977,7 +8225,7 @@
           const exam = exams.find(e => String(e.id) === String(training.linkedExamId));
           if (exam) {
             const status = document.getElementById('exam-card-status');
-            if (status) status.textContent = exam.title || '已关联';
+            if (status) status.textContent = exam.title || '已配置';
           }
         }).catch(() => {});
       }
@@ -9189,7 +9437,10 @@
           ? history.map((h, i) => `
             <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
               <td class="px-4 py-3 text-sm text-slate-500">${i + 1}</td>
-              <td class="px-4 py-3 text-sm text-slate-700 font-medium">${h.count || 0} 人</td>
+              <td class="px-4 py-3 text-sm text-slate-700 font-medium">
+                ${h.count || 0} 人
+                ${h.isInitial ? '<span class="ml-1 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px]">创建/编辑时指派</span>' : ''}
+              </td>
               <td class="px-4 py-3 text-sm text-slate-600">
                 <div class="flex flex-wrap gap-1">
                   ${(h.userNames || []).slice(0, 8).map(name => `<span class="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600">${escHtml(name)}</span>`).join('')}
@@ -11545,10 +11796,15 @@
         const absent = exam.absentCount || 0;
         const unstarted = exam.unstartedCount || 0;
         const assigned = (exam.allowedUsers && Array.isArray(exam.allowedUsers)) ? exam.allowedUsers.length : 0;
-        const denominator = assigned > 0 ? assigned : (completed + unstarted + absent);
-        const joinRate = denominator > 0 ? Math.round(completed / denominator * 100) : 0;
+        const attemptedUserCount = exam.attemptedUserCount || 0;
+        let joinRate;
+        if (assigned > 0) {
+          joinRate = Math.round(attemptedUserCount / assigned * 100);
+        } else {
+          joinRate = attemptedUserCount > 0 ? 100 : 0;
+        }
         const passRate = completed > 0 ? Math.round(passed / completed * 100) : 0;
-        const absentRate = denominator > 0 ? Math.round((absent + unstarted) / denominator * 100) : 0;
+        const absentRate = assigned > 0 ? Math.round((absent + unstarted) / assigned * 100) : 0;
         const createdAt = exam.createdAt || exam.created_at;
         const timeStr = createdAt ? new Date(createdAt).toLocaleDateString('zh-CN') : '—';
         return `<tr class="hover:bg-indigo-50/30 transition" data-exam-id="${exam.id}">
@@ -12384,6 +12640,9 @@
       renderSelectedQuestions();
       // 加载试卷下拉
       loadExamPaperOptions();
+      // 重置并加载证书下拉
+      document.getElementById('examCertificateId').value = '';
+      refreshExamCertificateOptions();
       document.getElementById('examDrawerOverlay').classList.remove('hidden');
       document.getElementById('examModal').classList.remove('translate-x-full');
       if (id) loadExamForEdit(id);
@@ -12514,6 +12773,40 @@
       }
       examModalFromTraining = false;
     }
+
+    // ========== 考试证书选择联动 ==========
+    async function refreshExamCertificateOptions(selectedId) {
+      const select = document.getElementById('examCertificateSelect');
+      const hidden = document.getElementById('examCertificateId');
+      if (!select) return;
+      try {
+        const res = await fetch('/api/certificates', { headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') } });
+        const result = await res.json();
+        const certs = result.data || [];
+        select.innerHTML = '<option value="">不颁发证书</option>' +
+          certs.filter(c => c.status === 'enabled').map(c =>
+            `<option value="${escHtml(String(c.id))}">${escHtml(c.name)}</option>`
+          ).join('');
+        const targetId = selectedId || (hidden ? hidden.value : '');
+        if (targetId) {
+          select.value = targetId;
+          if (hidden && !selectedId) hidden.value = targetId;
+        }
+        if (hidden) hidden.value = select.value;
+      } catch (e) {
+        console.error('加载证书列表失败:', e);
+      }
+    }
+
+    (function initExamCertificateSelect() {
+      const select = document.getElementById('examCertificateSelect');
+      const hidden = document.getElementById('examCertificateId');
+      if (select && hidden) {
+        select.addEventListener('change', function() {
+          hidden.value = select.value;
+        });
+      }
+    })();
 
     // ========== 考试抽屉 - 任务指派 ==========
     let assignExamUserPickerData = [];
@@ -12834,6 +13127,11 @@
             }));
             renderSelectedQuestions();
           }
+          // 恢复证书设置
+          if (exam.certificateId) {
+            document.getElementById('examCertificateId').value = exam.certificateId;
+            await refreshExamCertificateOptions(exam.certificateId);
+          }
 
         }
       } catch (e) { console.error(e); toast('加载考试数据失败', 'error'); }
@@ -12964,6 +13262,7 @@
         questions: selectedExamQuestions,
         paperId: paperId || null,
         paperName: paperName,
+        certificateId: (function(){ var _e = document.getElementById('examCertificateId'); return _e ? (_e.value || null) : null; })(),
         ...assignPayload
       };
       try {
@@ -12989,8 +13288,8 @@
             const idInput = document.getElementById('t-exam-id');
             if (idInput) idInput.value = newExamId;
             const status = document.getElementById('exam-card-status');
-            if (status) status.textContent = document.getElementById('examTitle').value.trim() || '已关联';
-            toast(editingExamId ? '考试已更新，已关联到培训' : '考试创建成功，已关联到培训');
+            if (status) status.textContent = document.getElementById('examTitle').value.trim() || '已配置';
+            toast('考试配置成功');
           } else {
             toast(editingExamId ? '考试已更新' : '考试创建成功');
           }
@@ -13088,7 +13387,7 @@
         const exam = resJson.data || resJson;
         if (!exam || exam.error) { toast('获取原考试数据失败', 'error'); return; }
         // 白名单复制：只保留考试定义字段，避免带入统计、作答、状态等运行时数据
-        const whitelist = ['title','description','duration','totalScore','passingScore','maxAttempts','shuffleQuestions','shuffleOptions','attemptsPolicy','attemptsCount','recordScore','screenSwitchPolicy','screenSwitchCount','showData','answerDetail','viewQuestions','showCorrect','showAnalysis','viewRank','questions','paperId','paperName'];
+        const whitelist = ['title','description','duration','totalScore','passingScore','maxAttempts','shuffleQuestions','shuffleOptions','attemptsPolicy','attemptsCount','recordScore','screenSwitchPolicy','screenSwitchCount','showData','answerDetail','viewQuestions','showCorrect','showAnalysis','viewRank','questions','paperId','paperName','certificateId'];
         const copyData = {};
         whitelist.forEach(k => { if (exam[k] !== undefined) copyData[k] = exam[k]; });
         copyData.title = (exam.title || '考试') + '副本';
@@ -15661,8 +15960,9 @@
       }
 
       const doneCount = filtered.reduce((s, t) => s + (t.completeCount || 0), 0);
-      const totalPeople = filtered.reduce((s, t) => s + (t.enrollCount || 0), 0);
+      const totalPeople = filtered.reduce((s, t) => s + (t.totalCount || 0), 0);
       const totalAssign = filtered.reduce((s, t) => s + (t.assignCount || 0), 0);
+      const totalActiveEnroll = filtered.reduce((s, t) => s + (t.activeEnrollCount || 0), 0);
       const rate = totalPeople > 0 ? Math.min(100, Math.round(doneCount / totalPeople * 100)) + '%' : '0%';
 
       el('rpt-tr-total',  filtered.length);
@@ -15686,10 +15986,10 @@
         const name = t.name || t.title || '-';
         const instructor = t.instructor || '-';
         const project = t.project || '-';
-        const enrollCount = t.enrollCount || 0;
+        const enrollCount = t.activeEnrollCount || 0;
         const assignCount = t.assignCount || 0;
         const completeCount = t.completeCount || 0;
-        const completionRate = t.completionRate != null ? t.completionRate + '%' : (enrollCount > 0 ? Math.min(100, Math.round(completeCount / enrollCount * 100)) + '%' : '0%');
+        const completionRate = t.completionRate != null ? t.completionRate + '%' : (t.totalCount > 0 ? Math.min(100, Math.round(completeCount / t.totalCount * 100)) + '%' : '0%');
         const status = getTrainingStatus(t);
         const statusMap = {scheduled:'待开始',ongoing:'进行中',completed:'已完成',cancelled:'已取消'};
         return `<tr class="hover:bg-indigo-50/50 transition">

@@ -105,6 +105,22 @@
     const res = await apiGet(url);
     certificates = res.data || [];
     renderCertificateList();
+    renderCertificateStats();
+  }
+
+  function renderCertificateStats() {
+    const total = certificates.length;
+    const enabled = certificates.filter(c => c.status === 'enabled').length;
+    const issued = certificates.reduce((sum, c) => sum + (c.issuedCount || 0), 0);
+    const active = certificates.reduce((sum, c) => sum + (c.activeCount || 0), 0);
+    const setText = (id, val) => {
+      const el = $('#' + id);
+      if (el) el.textContent = val;
+    };
+    setText('cert-stat-total', total);
+    setText('cert-stat-enabled', enabled);
+    setText('cert-stat-issued', issued);
+    setText('cert-stat-active', active);
   }
 
   async function loadTemplates() {

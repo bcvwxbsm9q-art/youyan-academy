@@ -677,8 +677,10 @@
         updateVideoProgress(userId, courseId, videoIndex, progress) {
             const data = this.getUserLearningData(userId);
             const key = `${courseId}_${videoIndex}`;
-            data.videoProgress[key] = progress;
-            
+            // 保留历史最高进度，防止重复播放时低进度覆盖已完成的 100%
+            const currentProgress = data.videoProgress[key] || 0;
+            data.videoProgress[key] = Math.max(currentProgress, progress);
+
             const course = this.getCourse(courseId);
             if (course && course.videos) {
                 const allWatched = course.videos.every((v, i) => {

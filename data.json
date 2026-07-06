@@ -167,7 +167,7 @@
     ],
     "videoProgress": {
       "1781087462994_0": 27,
-      "1781065453648_0": 19,
+      "1781065453648_0": 100,
       "1781087427858_0": 5,
       "1781080411545_0": 100,
       "1781080411545_1": 5,
@@ -177,7 +177,7 @@
       "1781065485355_0": 1,
       "1781077900894_0": 66
     },
-    "lastStudyTime": "2026-07-06T07:36:11.724Z",
+    "lastStudyTime": "2026-07-06T09:18:13.572Z",
     "studyDates": [
       "2026-06-14",
       "2026-06-15",
@@ -191,7 +191,7 @@
       "2026-07-03",
       "2026-07-06"
     ],
-    "totalSeconds": 644,
+    "totalSeconds": 657,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -741,6 +741,24 @@
         "duration": 9,
         "timestamp": "2026-07-06T07:36:11.724Z",
         "date": "2026-07-06"
+      },
+      {
+        "courseId": 1781065453648,
+        "courseTitle": "成就系统设计：从理论到实践",
+        "videoIndex": 0,
+        "videoTitle": "成就系统设计：从理论到实践.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-06T09:18:10.408Z",
+        "date": "2026-07-06"
+      },
+      {
+        "courseId": 1781065453648,
+        "courseTitle": "成就系统设计：从理论到实践",
+        "videoIndex": 0,
+        "videoTitle": "成就系统设计：从理论到实践.mp4",
+        "duration": 3,
+        "timestamp": "2026-07-06T09:18:13.572Z",
+        "date": "2026-07-06"
       }
     ],
     "shares": 2,
@@ -903,6 +921,18 @@
         "completedAt": "2026-07-03T14:10:38.438Z",
         "attemptId": 1783087827978,
         "durationUsed": 10
+      },
+      {
+        "examId": 1783329992765,
+        "examTitle": "新员工考试",
+        "score": 50,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 1,
+        "totalQuestions": 3,
+        "completedAt": "2026-07-06T09:35:01.035Z",
+        "attemptId": 1783330492656,
+        "durationUsed": 8
       }
     ]
   },
@@ -1335,7 +1365,7 @@
       ],
       "attachments": [],
       "duration": 2415,
-      "views": 18,
+      "views": 20,
       "rating": 5,
       "id": 1781065453648,
       "createdAt": "2026/6/10 12:24:13",
@@ -1721,6 +1751,32 @@
       "coursewareFiles": [],
       "id": 1783072924613,
       "createdAt": "2026/7/3 18:02:04"
+    },
+    {
+      "project": "新雁计划",
+      "name": "新员工培训",
+      "content": "dsafg6",
+      "instructor": "陈剑锋",
+      "location": "B区培训室",
+      "date": "2026-07-06",
+      "startTime": "2026-07-06T17:24",
+      "endTime": "2026-07-06T18:24",
+      "signinEnabled": true,
+      "signinCode": null,
+      "signinStartTime": "2026-07-06 17:24",
+      "signinEndTime": "2026-07-06 18:24",
+      "examEnabled": true,
+      "surveyEnabled": true,
+      "coursewareEnabled": true,
+      "linkedSurveyId": 1781170180951,
+      "linkedExamId": 1783329992765,
+      "accessType": "restricted",
+      "allowedUsers": [
+        1780909174403
+      ],
+      "coursewareFiles": [],
+      "id": 1783330012409,
+      "createdAt": "2026/7/6 17:26:52"
     }
   ],
   "user_learning_1": {
@@ -1837,8 +1893,8 @@
     "ratingCount": 2
   },
   "video_pos_1780909174403_1781065453648_0": {
-    "position": 476,
-    "savedAt": "2026-06-30T09:42:30.409Z"
+    "position": 1060,
+    "savedAt": "2026-07-06T09:18:20.438Z"
   },
   "course_interaction_1781065453648": {
     "likes": 1,
@@ -2725,6 +2781,18 @@
       "examId": 1783072915672,
       "read": false,
       "createdAt": "2026-07-03T10:01:55.684Z"
+    },
+    {
+      "id": 1783330042390,
+      "userId": 1780909174403,
+      "title": "新考试安排",
+      "content": "您参与的培训「新员工培训」包含考试「新员工考试」，请及时完成。",
+      "type": "exam",
+      "examId": 1783329992765,
+      "trainingId": 1783330012409,
+      "read": true,
+      "createdAt": "2026-07-06T09:27:22.390Z",
+      "readAt": "2026-07-06T09:29:14.009Z"
     }
   ],
   "notification_reads": [
@@ -3404,6 +3472,69 @@
       "id": 1783326663129,
       "createdAt": "2026/7/6 16:31:03",
       "updatedAt": "2026/7/6 16:31:03"
+    },
+    {
+      "type": "single",
+      "title": "画面色彩中，主色调应该占（   ）？",
+      "content": "画面色彩中，主色调应该占（   ）？",
+      "options": [
+        "7分",
+        "6分",
+        "8分"
+      ],
+      "answer": "A",
+      "explanation": "画面色彩中主色调占7分。",
+      "analysis": "画面色彩中主色调占7分。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 1783329901073,
+      "id": 1783329924144,
+      "createdAt": "2026/7/6 17:25:24",
+      "updatedAt": "2026/7/6 17:25:24"
+    },
+    {
+      "type": "single",
+      "title": "在163构图模型布局比例下，前景、中景、背景分别应该占多少比例？（   ）",
+      "content": "在163构图模型布局比例下，前景、中景、背景分别应该占多少比例？（   ）",
+      "options": [
+        "10%，60%，30%",
+        "30%，60%，10%",
+        "10%，30%，60%"
+      ],
+      "answer": "A",
+      "explanation": "在163构图模型布局比例下，前景、中景、背景分别应该占10%、60%、30%",
+      "analysis": "在163构图模型布局比例下，前景、中景、背景分别应该占10%、60%、30%",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 3,
+      "bankId": 1783329901073,
+      "id": 1783329924146,
+      "createdAt": "2026/7/6 17:25:24",
+      "updatedAt": "2026/7/6 17:25:24"
+    },
+    {
+      "type": "multiple",
+      "title": "在课堂中提到的721色彩比例规则和163场景构图模型中，以下哪些表述符合标准化流程？（   ）",
+      "content": "在课堂中提到的721色彩比例规则和163场景构图模型中，以下哪些表述符合标准化流程？（   ）",
+      "options": [
+        "中景是承载叙事主体的视觉重心区域",
+        "背景需通过强化细节来与中景形成视觉对比，突出主体",
+        "对比色可利用补色关系制造冷暖冲突，牵引观众注意力"
+      ],
+      "answer": [
+        "A",
+        "C"
+      ],
+      "explanation": "A正确：中景60%是163模型的核心区域，承载叙事主体与视觉重心，决定构图稳定性；\nB错误：背景30%的设计要点是弱化细节、利用雾效制造虚实对比，而非强化细节，目的是减少干扰、突出中景主体；\nE正确：对比色10%作为点睛之笔，补色关系的冷暖冲突是制造视觉张力、引导视线的重要方式。",
+      "analysis": "A正确：中景60%是163模型的核心区域，承载叙事主体与视觉重心，决定构图稳定性；\nB错误：背景30%的设计要点是弱化细节、利用雾效制造虚实对比，而非强化细节，目的是减少干扰、突出中景主体；\nE正确：对比色10%作为点睛之笔，补色关系的冷暖冲突是制造视觉张力、引导视线的重要方式。",
+      "difficulty": "easy",
+      "knowledge": "",
+      "score": 5,
+      "bankId": 1783329901073,
+      "id": 1783329924148,
+      "createdAt": "2026/7/6 17:25:24",
+      "updatedAt": "2026/7/6 17:25:24"
     }
   ],
   "exams": [
@@ -3646,6 +3777,52 @@
       ],
       "createdAt": "2026-07-06T08:51:14.742Z",
       "updatedAt": "2026-07-06T08:51:14.742Z"
+    },
+    {
+      "id": 1783329992765,
+      "title": "新员工考试",
+      "description": "",
+      "duration": 60,
+      "passingScore": 80,
+      "totalScore": 100,
+      "bankId": null,
+      "shuffleQuestions": false,
+      "showAnswer": false,
+      "status": "published",
+      "questions": [
+        {
+          "questionId": 1783329924144,
+          "score": 30,
+          "partialScore": 0,
+          "order": 0,
+          "content": "画面色彩中，主色调应该占（   ）？",
+          "type": "single"
+        },
+        {
+          "questionId": 1783329924146,
+          "score": 30,
+          "partialScore": 0,
+          "order": 1,
+          "content": "在163构图模型布局比例下，前景、中景、背景分别应该占多少比例？（   ）",
+          "type": "single"
+        },
+        {
+          "questionId": 1783329924148,
+          "score": 40,
+          "partialScore": 20,
+          "order": 2,
+          "content": "在课堂中提到的721色彩比例规则和163场景构图模型中，以下哪些表述符合标准化流程？（   ）",
+          "type": "multiple"
+        }
+      ],
+      "startTime": "2026-07-06T09:24:00.000Z",
+      "endTime": "2026-07-06T10:24:00.000Z",
+      "maxAttempts": 0,
+      "paperId": "paper_1783329891141",
+      "paperName": "新员工考试",
+      "allowedUsers": null,
+      "createdAt": "2026-07-06T09:26:32.765Z",
+      "updatedAt": "2026-07-06T09:26:32.765Z"
     }
   ],
   "exam_attempts": [
@@ -4007,6 +4184,25 @@
       "completedAt": "2026-07-03T11:00:33.374Z",
       "correctCount": 0,
       "totalQuestions": 3
+    },
+    {
+      "id": 1783330492656,
+      "examId": 1783329992765,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-07-06T09:34:52.656Z",
+      "answers": {
+        "1783329924144": "A",
+        "1783329924146": "C",
+        "1783329924148": "A"
+      },
+      "score": 50,
+      "passed": false,
+      "trainingId": 1783330012409,
+      "completedAt": "2026-07-06T09:35:01.035Z",
+      "correctCount": 1,
+      "totalQuestions": 3,
+      "durationUsed": 8
     }
   ],
   "survey_responses": [
@@ -4182,6 +4378,32 @@
       "trainingId": 1783072924613,
       "stageIdx": null,
       "submittedAt": "2026-07-04T00:38:26.393Z"
+    },
+    {
+      "id": 1783330587655,
+      "surveyId": 1781170180951,
+      "userId": 1780909174403,
+      "userName": "许志坚",
+      "department": "人力资源部",
+      "answers": {
+        "1": 5,
+        "2": 5,
+        "3": 5,
+        "4": 5,
+        "5": 5,
+        "6": 5,
+        "7": 5,
+        "8": 5,
+        "9": 5,
+        "10": 5,
+        "11": "进阶/中等",
+        "12": "",
+        "13": "0",
+        "14": "0"
+      },
+      "trainingId": 1783330012409,
+      "stageIdx": null,
+      "submittedAt": "2026-07-06T09:36:27.655Z"
     }
   ],
   "course_ratings": [
@@ -4339,6 +4561,16 @@
       "createdBy": "管理员",
       "createdAt": "2026/7/6 16:30:36",
       "updatedAt": "2026/7/6 16:30:36"
+    },
+    {
+      "id": 1783329901073,
+      "name": "新员工考试",
+      "categoryId": 1780974276172,
+      "description": "",
+      "status": "active",
+      "createdBy": "管理员",
+      "createdAt": "2026/7/6 17:25:01",
+      "updatedAt": "2026/7/6 17:25:01"
     }
   ],
   "index_featured_courses": [
@@ -4603,11 +4835,18 @@
   ],
   "certificates": [
     {
-      "id": 1,
-      "courseId": 3,
-      "title": "平面设计进阶课程证书",
-      "issuedDate": "2024-03-15",
-      "certNo": "CERT-2024-0315-001"
+      "id": "cert-legacy-001",
+      "name": "平面设计进阶课程证书",
+      "dept": null,
+      "validityType": "permanent",
+      "validityDays": null,
+      "prefix": "CERT-",
+      "startNumber": 1,
+      "digits": 4,
+      "templateId": "tpl-honor-blue",
+      "status": "enabled",
+      "creator": "许志坚",
+      "createdAt": "2024-03-15T00:00:00.000Z"
     }
   ],
   "current_user": {
@@ -5003,6 +5242,13 @@
       "trainingId": 1783072924613,
       "userId": 1780909174403,
       "enrolledAt": "2026-07-03T10:03:04.472Z",
+      "source": "self"
+    },
+    {
+      "id": 1783330648106,
+      "trainingId": 1783330012409,
+      "userId": 1780909174403,
+      "enrolledAt": "2026-07-06T09:37:28.106Z",
       "source": "self"
     }
   ],
@@ -5909,11 +6155,11 @@
       "totalScore": 100
     },
     {
-      "id": "paper_1783326628209",
-      "name": "测试",
-      "category": "1780974099732",
-      "categoryId": "1780974099732",
-      "categoryName": "美术",
+      "id": "paper_1783329891141",
+      "name": "新员工考试",
+      "category": "1780973996285",
+      "categoryId": "1780973996285",
+      "categoryName": "策划",
       "description": "",
       "duration": 60,
       "passScore": 60,
@@ -5923,19 +6169,19 @@
       "uniformScore": 5,
       "questions": [
         {
-          "questionId": 1783326663125,
+          "questionId": 1783329924144,
           "score": 30,
           "partialScore": 0,
           "order": 0
         },
         {
-          "questionId": 1783326663127,
+          "questionId": 1783329924146,
           "score": 30,
           "partialScore": 0,
           "order": 1
         },
         {
-          "questionId": 1783326663129,
+          "questionId": 1783329924148,
           "score": 40,
           "partialScore": 20,
           "order": 2
@@ -5943,8 +6189,8 @@
       ],
       "status": "published",
       "type": "fixed",
-      "createdAt": "2026-07-06T08:30:28.209Z",
-      "updatedAt": "2026-07-06T08:31:29.028Z",
+      "createdAt": "2026-07-06T09:24:51.141Z",
+      "updatedAt": "2026-07-06T09:25:48.006Z",
       "creator": "当前用户",
       "createdBy": "当前用户",
       "totalScore": 100
@@ -5991,6 +6237,15 @@
       "department": "人力资源部",
       "signedAt": "2026-07-03T10:03:05.478Z",
       "method": "direct"
+    },
+    {
+      "id": 1783330489131,
+      "trainingId": 1783330012409,
+      "userId": 1780909174403,
+      "userName": "许志坚",
+      "department": "人力资源部",
+      "signedAt": "2026-07-06T09:34:49.131Z",
+      "method": "direct"
     }
   ],
   "training_assign_history": [
@@ -6003,6 +6258,14 @@
       ],
       "count": 2,
       "assignedAt": "2026-06-30T07:44:32.149Z"
+    },
+    {
+      "id": 1783330042390,
+      "trainingId": 1783330012409,
+      "userIds": [
+        1780909174403
+      ],
+      "assignedAt": "2026-07-06T09:27:22.390Z"
     }
   ],
   "login_logs": [
@@ -6039,6 +6302,192 @@
       "bonus": 200,
       "createdAt": "2026-07-04T01:52:20.051Z",
       "updatedAt": "2026-07-04T01:52:20.051Z"
+    }
+  ],
+  "user_certificates": [
+    {
+      "id": "uc-legacy-001",
+      "certificateId": "cert-legacy-001",
+      "userId": "1",
+      "certNo": "CERT-2024-0315-001",
+      "sourceType": "manual",
+      "sourceId": null,
+      "issueAt": "2024-03-15T00:00:00.000Z",
+      "effectiveAt": "2024-03-15T00:00:00.000Z",
+      "expireAt": null,
+      "status": "active",
+      "revokedAt": null,
+      "revokeReason": null
+    }
+  ],
+  "certificate_templates": [
+    {
+      "id": "tpl-honor-blue",
+      "name": "蓝色荣誉证书（竖版）",
+      "layout": "portrait",
+      "thumbnail": "",
+      "style": {
+        "background": "radial-gradient(circle at 15% 15%, rgba(30,90,142,0.14) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(30,90,142,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f0f7ff 40%, #e1f0fb 100%)",
+        "borderColor": "#1e5a8e",
+        "primaryColor": "#1e5a8e",
+        "secondaryColor": "#4a90c2",
+        "accentColor": "#c9a227",
+        "sealColor": "#1e5a8e",
+        "fontFamily": "\"Noto Serif SC\", \"SimSun\", serif"
+      },
+      "placeholders": [
+        {
+          "key": "name",
+          "label": "姓名",
+          "defaultValue": "张三"
+        },
+        {
+          "key": "title",
+          "label": "证书标题",
+          "defaultValue": "荣誉证书"
+        },
+        {
+          "key": "content",
+          "label": "正文",
+          "defaultValue": "表现优异，特发此证，以资鼓励。"
+        },
+        {
+          "key": "company",
+          "label": "企业名称",
+          "defaultValue": "广州游雁网络科技有限公司"
+        },
+        {
+          "key": "date",
+          "label": "颁发日期",
+          "defaultValue": "2026-07-06"
+        }
+      ]
+    },
+    {
+      "id": "tpl-completion-gold",
+      "name": "金色结业证书（横版）",
+      "layout": "landscape",
+      "thumbnail": "",
+      "style": {
+        "background": "radial-gradient(ellipse at 50% 0%, rgba(191,160,95,0.18) 0%, transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(191,160,95,0.12) 0%, transparent 60%), linear-gradient(135deg, #fffdf5 0%, #fcf6e3 50%, #f9efd0 100%)",
+        "borderColor": "#bfa05f",
+        "primaryColor": "#8a6d2f",
+        "secondaryColor": "#bfa05f",
+        "accentColor": "#8a6d2f",
+        "sealColor": "#bfa05f",
+        "fontFamily": "\"Noto Serif SC\", \"SimSun\", serif"
+      },
+      "placeholders": [
+        {
+          "key": "name",
+          "label": "姓名",
+          "defaultValue": "李四"
+        },
+        {
+          "key": "title",
+          "label": "证书标题",
+          "defaultValue": "结业证书"
+        },
+        {
+          "key": "content",
+          "label": "正文",
+          "defaultValue": "已完成全部培训课程，考核合格，准予结业。"
+        },
+        {
+          "key": "company",
+          "label": "企业名称",
+          "defaultValue": "广州游雁网络科技有限公司"
+        },
+        {
+          "key": "date",
+          "label": "颁发日期",
+          "defaultValue": "2026-07-06"
+        }
+      ]
+    },
+    {
+      "id": "tpl-excellent-green",
+      "name": "绿色优秀学员证书（竖版）",
+      "layout": "portrait",
+      "thumbnail": "",
+      "style": {
+        "background": "radial-gradient(circle at 80% 20%, rgba(45,122,78,0.12) 0%, transparent 40%), radial-gradient(circle at 20% 80%, rgba(45,122,78,0.08) 0%, transparent 40%), linear-gradient(160deg, #ffffff 0%, #f2fbf5 50%, #e3f5e9 100%)",
+        "borderColor": "#2d7a4e",
+        "primaryColor": "#2d7a4e",
+        "secondaryColor": "#5aa87a",
+        "accentColor": "#2d7a4e",
+        "sealColor": "#2d7a4e",
+        "fontFamily": "\"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
+      },
+      "placeholders": [
+        {
+          "key": "name",
+          "label": "姓名",
+          "defaultValue": "王五"
+        },
+        {
+          "key": "title",
+          "label": "证书标题",
+          "defaultValue": "优秀学员证书"
+        },
+        {
+          "key": "content",
+          "label": "正文",
+          "defaultValue": "学习态度认真，成绩突出，被评为优秀学员。"
+        },
+        {
+          "key": "company",
+          "label": "企业名称",
+          "defaultValue": "广州游雁网络科技有限公司"
+        },
+        {
+          "key": "date",
+          "label": "颁发日期",
+          "defaultValue": "2026-07-06"
+        }
+      ]
+    },
+    {
+      "id": "tpl-skill-purple",
+      "name": "紫色技能认证证书（横版）",
+      "layout": "landscape",
+      "thumbnail": "",
+      "style": {
+        "background": "linear-gradient(135deg, rgba(107,76,154,0.10) 0%, transparent 50%), linear-gradient(225deg, rgba(107,76,154,0.06) 0%, transparent 50%), linear-gradient(135deg, #faf8ff 0%, #f5f2ff 50%, #efe8fc 100%)",
+        "borderColor": "#6b4c9a",
+        "primaryColor": "#6b4c9a",
+        "secondaryColor": "#9b7fc7",
+        "accentColor": "#6b4c9a",
+        "sealColor": "#6b4c9a",
+        "fontFamily": "\"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
+      },
+      "placeholders": [
+        {
+          "key": "name",
+          "label": "姓名",
+          "defaultValue": "赵六"
+        },
+        {
+          "key": "title",
+          "label": "证书标题",
+          "defaultValue": "技能认证证书"
+        },
+        {
+          "key": "content",
+          "label": "正文",
+          "defaultValue": "已通过相关技能考核，具备相应专业能力。"
+        },
+        {
+          "key": "company",
+          "label": "企业名称",
+          "defaultValue": "广州游雁网络科技有限公司"
+        },
+        {
+          "key": "date",
+          "label": "颁发日期",
+          "defaultValue": "2026-07-06"
+        }
+      ]
     }
   ]
 }
