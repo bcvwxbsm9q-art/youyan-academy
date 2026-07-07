@@ -279,97 +279,110 @@
     <main class="flex-1 ml-64 mt-[73px] p-6">
       <!-- 数据概览 -->
       <div id="tab-dashboard" class="tab-content fade-in">
-        <h2 class="text-2xl font-bold text-slate-800 mb-6">
-          <i class="fas fa-chart-pie text-indigo-500 mr-2"></i>数据概览
-        </h2>
-
         <!-- 统计卡片 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
-            <div class="flex items-center justify-between">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          <!-- 课程总数 -->
+          <div class="group relative bg-white rounded-2xl p-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgba(59,130,246,0.18)] transition-all duration-500 overflow-hidden">
+            <div class="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-bl-full transition-transform duration-500 group-hover:scale-110"></div>
+            <div class="flex items-center justify-between relative z-10">
               <div>
-                <p class="text-sm text-slate-500 mb-1">课程总数</p>
-                <p class="text-3xl font-bold text-slate-800" id="stat-courses">0</p>
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">课程总数</p>
+                <p class="text-4xl font-extrabold text-slate-800 tracking-tight" id="stat-courses">0</p>
               </div>
-              <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <i class="fas fa-book text-white text-xl"></i>
+              <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 group-hover:-rotate-3 transition-all duration-300">
+                <i class="fas fa-book-open text-white text-xl"></i>
               </div>
             </div>
-            <div class="mt-4 flex items-center text-sm">
-              <span id="stat-courses-growth-wrap" class="text-green-500"><i class="fas fa-arrow-up mr-1"></i><span id="stat-courses-growth">0</span>%</span>
-              <span class="text-slate-400 ml-2">较上月</span>
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center text-sm relative z-10">
+              <span id="stat-courses-growth-wrap" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600"><i class="fas fa-arrow-up mr-1 text-[10px]"></i><span id="stat-courses-growth">0</span>%</span>
+              <span class="text-slate-400 ml-2 text-xs">较上月</span>
             </div>
           </div>
 
-          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
-            <div class="flex items-center justify-between">
+          <!-- 讲师总数 -->
+          <div class="group relative bg-white rounded-2xl p-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgba(16,185,129,0.18)] transition-all duration-500 overflow-hidden">
+            <div class="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-bl-full transition-transform duration-500 group-hover:scale-110"></div>
+            <div class="flex items-center justify-between relative z-10">
               <div>
-                <p class="text-sm text-slate-500 mb-1">讲师总数</p>
-                <p class="text-3xl font-bold text-slate-800" id="stat-lecturers">0</p>
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">讲师总数</p>
+                <p class="text-4xl font-extrabold text-slate-800 tracking-tight" id="stat-lecturers">0</p>
               </div>
-              <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-110 group-hover:-rotate-3 transition-all duration-300">
                 <i class="fas fa-chalkboard-teacher text-white text-xl"></i>
               </div>
             </div>
-            <div class="mt-4 flex items-center text-sm">
-              <span id="stat-lecturers-growth-wrap" class="text-green-500"><i class="fas fa-arrow-up mr-1"></i><span id="stat-lecturers-growth">0</span>%</span>
-              <span class="text-slate-400 ml-2">较上月</span>
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center text-sm relative z-10">
+              <span id="stat-lecturers-growth-wrap" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600"><i class="fas fa-arrow-up mr-1 text-[10px]"></i><span id="stat-lecturers-growth">0</span>%</span>
+              <span class="text-slate-400 ml-2 text-xs">较上月</span>
             </div>
           </div>
 
-          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
-            <div class="flex items-center justify-between">
+          <!-- 用户总数 -->
+          <div class="group relative bg-white rounded-2xl p-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.18)] transition-all duration-500 overflow-hidden">
+            <div class="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-purple-500/10 to-transparent rounded-bl-full transition-transform duration-500 group-hover:scale-110"></div>
+            <div class="flex items-center justify-between relative z-10">
               <div>
-                <p class="text-sm text-slate-500 mb-1">用户总数</p>
-                <p class="text-3xl font-bold text-slate-800" id="stat-users">0</p>
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">用户总数</p>
+                <p class="text-4xl font-extrabold text-slate-800 tracking-tight" id="stat-users">0</p>
               </div>
-              <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 group-hover:-rotate-3 transition-all duration-300">
                 <i class="fas fa-users text-white text-xl"></i>
               </div>
             </div>
-            <div class="mt-4 flex items-center text-sm">
-              <span id="stat-users-growth-wrap" class="text-green-500"><i class="fas fa-arrow-up mr-1"></i><span id="stat-users-growth">0</span>%</span>
-              <span class="text-slate-400 ml-2">较上月</span>
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center text-sm relative z-10">
+              <span id="stat-users-growth-wrap" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600"><i class="fas fa-arrow-up mr-1 text-[10px]"></i><span id="stat-users-growth">0</span>%</span>
+              <span class="text-slate-400 ml-2 text-xs">较上月</span>
             </div>
           </div>
 
-          <div class="bg-white rounded-2xl p-6 shadow-sm card-hover transition-all duration-300">
-            <div class="flex items-center justify-between">
+          <!-- 培训总数 -->
+          <div class="group relative bg-white rounded-2xl p-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgba(249,115,22,0.18)] transition-all duration-500 overflow-hidden">
+            <div class="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-orange-500/10 to-transparent rounded-bl-full transition-transform duration-500 group-hover:scale-110"></div>
+            <div class="flex items-center justify-between relative z-10">
               <div>
-                <p class="text-sm text-slate-500 mb-1">培训总数</p>
-                <p class="text-3xl font-bold text-slate-800" id="stat-categories">0</p>
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">培训总数</p>
+                <p class="text-4xl font-extrabold text-slate-800 tracking-tight" id="stat-categories">0</p>
               </div>
-              <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <i class="fas fa-calendar-alt text-white text-xl"></i>
+              <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-110 group-hover:-rotate-3 transition-all duration-300">
+                <i class="fas fa-calendar-check text-white text-xl"></i>
               </div>
             </div>
-            <div class="mt-4 flex items-center text-sm text-slate-400">
-              <span id="stat-categories-child">0</span> 场培训
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center text-sm text-slate-400 relative z-10">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-600"><i class="fas fa-calendar-day mr-1 text-[10px]"></i><span id="stat-categories-child">0</span> 场培训</span>
             </div>
           </div>
         </div>
 
-        <!-- 快速操作 -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm">
-          <h3 class="text-lg font-semibold text-slate-800 mb-4">
-            <i class="fas fa-bolt text-yellow-500 mr-2"></i>快捷操作
-          </h3>
+        <!-- 快捷操作 -->
+        <div class="bg-white rounded-2xl p-6 shadow-[0_2px_20px_rgba(0,0,0,0.04)]">
+          <div class="flex items-center mb-5">
+            <div class="w-1 h-5 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full mr-3"></div>
+            <h3 class="text-base font-bold text-slate-800">快捷操作</h3>
+          </div>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button onclick="switchTab('courses'); setTimeout(openCourseModal, 100)" class="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition text-center">
-              <i class="fas fa-plus-circle text-blue-500 text-2xl mb-2"></i>
-              <p class="text-sm font-medium text-slate-700">添加课程</p>
+            <button onclick="switchTab('courses'); setTimeout(openCourseModal, 100)" class="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100/60 hover:from-blue-500 hover:to-blue-600 rounded-2xl p-5 text-center transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-1">
+              <div class="w-12 h-12 mx-auto mb-3 bg-blue-500 group-hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors duration-300 shadow-sm">
+                <i class="fas fa-plus-circle text-white text-xl group-hover:scale-110 inline-block transition-transform duration-300"></i>
+              </div>
+              <p class="text-sm font-semibold text-blue-700 group-hover:text-white transition-colors duration-300">添加课程</p>
             </button>
-            <button onclick="switchTab('categories'); setTimeout(() => openCategoryModal('parent'), 100)" class="p-4 bg-green-50 hover:bg-green-100 rounded-xl transition text-center">
-              <i class="fas fa-folder-plus text-green-500 text-2xl mb-2"></i>
-              <p class="text-sm font-medium text-slate-700">添加分类</p>
+            <button onclick="switchTab('categories'); setTimeout(() => openCategoryModal('parent'), 100)" class="group relative overflow-hidden bg-gradient-to-br from-emerald-50 to-emerald-100/60 hover:from-emerald-500 hover:to-emerald-600 rounded-2xl p-5 text-center transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25 hover:-translate-y-1">
+              <div class="w-12 h-12 mx-auto mb-3 bg-emerald-500 group-hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors duration-300 shadow-sm">
+                <i class="fas fa-folder-plus text-white text-xl group-hover:scale-110 inline-block transition-transform duration-300"></i>
+              </div>
+              <p class="text-sm font-semibold text-emerald-700 group-hover:text-white transition-colors duration-300">添加分类</p>
             </button>
-            <button onclick="switchTab('lecturers'); setTimeout(openLecturerModal, 100)" class="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition text-center">
-              <i class="fas fa-user-plus text-purple-500 text-2xl mb-2"></i>
-              <p class="text-sm font-medium text-slate-700">添加讲师</p>
+            <button onclick="switchTab('lecturers'); setTimeout(openLecturerModal, 100)" class="group relative overflow-hidden bg-gradient-to-br from-purple-50 to-purple-100/60 hover:from-purple-500 hover:to-purple-600 rounded-2xl p-5 text-center transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 hover:-translate-y-1">
+              <div class="w-12 h-12 mx-auto mb-3 bg-purple-500 group-hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors duration-300 shadow-sm">
+                <i class="fas fa-user-plus text-white text-xl group-hover:scale-110 inline-block transition-transform duration-300"></i>
+              </div>
+              <p class="text-sm font-semibold text-purple-700 group-hover:text-white transition-colors duration-300">添加讲师</p>
             </button>
-            <button onclick="switchTab('training'); setTimeout(openTrainingModal, 100)" class="p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition text-center">
-              <i class="fas fa-calendar-plus text-orange-500 text-2xl mb-2"></i>
-              <p class="text-sm font-medium text-slate-700">创建培训</p>
+            <button onclick="switchTab('training'); setTimeout(openTrainingModal, 100)" class="group relative overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100/60 hover:from-orange-500 hover:to-orange-600 rounded-2xl p-5 text-center transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/25 hover:-translate-y-1">
+              <div class="w-12 h-12 mx-auto mb-3 bg-orange-500 group-hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors duration-300 shadow-sm">
+                <i class="fas fa-calendar-plus text-white text-xl group-hover:scale-110 inline-block transition-transform duration-300"></i>
+              </div>
+              <p class="text-sm font-semibold text-orange-700 group-hover:text-white transition-colors duration-300">创建培训</p>
             </button>
           </div>
         </div>
@@ -413,7 +426,6 @@
               <thead class="bg-slate-50">
                 <tr>
                   <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">课程封面</th>
-                  <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">课程ID</th>
                   <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">课程名称</th>
                   <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">分类</th>
                   <th class="px-5 py-4 text-left text-sm font-semibold text-slate-600">讲师</th>
@@ -1790,9 +1802,9 @@
       <div id="tab-certificates" class="tab-content hidden">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-2xl font-bold text-slate-800 flex items-center">
-            <span class="inline-flex w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 items-center justify-center text-white shadow-sm mr-3"><i class="fas fa-certificate"></i></span>证书管理
+            <span class="inline-flex w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 items-center justify-center text-white shadow-sm mr-3"><i class="fas fa-certificate"></i></span>证书管理
           </h2>
-          <button id="cert-new-btn" class="px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 flex items-center">
+          <button id="cert-new-btn" class="px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 flex items-center">
             <i class="fas fa-plus mr-2"></i>新建证书
           </button>
         </div>
@@ -1802,14 +1814,14 @@
           <div class="flex flex-col lg:flex-row lg:items-center gap-3">
             <div class="flex-1 relative">
               <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-              <input type="text" id="cert-search-input" placeholder="搜索证书名称..." class="w-full pl-12 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 bg-slate-50/60">
+              <input type="text" id="cert-search-input" placeholder="搜索证书名称..." class="w-full pl-12 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/60">
             </div>
-            <select id="cert-status-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+            <select id="cert-status-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
               <option value="">全部状态</option>
               <option value="enabled">启用</option>
               <option value="disabled">停用</option>
             </select>
-            <select id="cert-dept-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+            <select id="cert-dept-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
               <option value="">全部部门</option>
               <option value="技术部">技术部</option>
               <option value="产品部">产品部</option>
@@ -1817,7 +1829,7 @@
               <option value="市场部">市场部</option>
               <option value="人事部">人事部</option>
             </select>
-            <button id="cert-search-btn" class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 shadow-sm transition font-medium flex items-center justify-center">
+            <button id="cert-search-btn" class="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl hover:from-indigo-600 hover:to-blue-700 shadow-sm transition font-medium flex items-center justify-center">
               <i class="fas fa-search mr-1"></i>查询
             </button>
           </div>
@@ -2853,7 +2865,10 @@
   <div id="certificate-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
       <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
-        <h3 class="text-lg font-bold text-slate-800" id="cert-modal-title">新建证书</h3>
+        <div class="flex items-center gap-2.5">
+          <span class="inline-flex w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 items-center justify-center text-white text-sm shadow-sm"><i class="fas fa-certificate"></i></span>
+          <h3 class="text-lg font-bold text-slate-800" id="cert-modal-title">新建证书</h3>
+        </div>
         <button onclick="window.CertificateMgmt.closeCertificateModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
       </div>
       <div class="p-6 space-y-5">
@@ -2861,12 +2876,12 @@
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">证书名称 <span class="text-red-500">*</span></label>
             <input type="text" id="cert-name" placeholder="例如：优秀学员证书"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none text-sm">
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm">
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">所属部门</label>
             <input type="text" id="cert-dept" placeholder="例如：技术部"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none text-sm">
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm">
           </div>
         </div>
 
@@ -2874,7 +2889,7 @@
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">有效期类型</label>
             <select id="cert-validity-type"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm bg-white">
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white">
               <option value="permanent">永久有效</option>
               <option value="fixed">固定期限</option>
             </select>
@@ -2882,7 +2897,7 @@
           <div id="cert-validity-days-wrap" class="hidden">
             <label class="block text-sm font-medium text-slate-700 mb-1">有效天数</label>
             <input type="number" id="cert-validity-days" value="365" min="1"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm">
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
           </div>
         </div>
 
@@ -2892,17 +2907,17 @@
             <div>
               <label class="block text-xs font-medium text-slate-600 mb-1">前缀</label>
               <input type="text" id="cert-prefix" value="CERT" placeholder="CERT"
-                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
             <div>
               <label class="block text-xs font-medium text-slate-600 mb-1">起始序号</label>
               <input type="number" id="cert-start-number" value="1" min="1"
-                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
             <div>
               <label class="block text-xs font-medium text-slate-600 mb-1">序号位数</label>
               <input type="number" id="cert-digits" value="4" min="1" max="10"
-                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
           </div>
           <p class="text-xs text-slate-400 mt-2">编号格式：前缀 + 补零序号，例如 CERT0001</p>
@@ -2910,23 +2925,23 @@
 
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">证书模板 <span class="text-red-500">*</span></label>
-          <div class="flex items-start gap-4">
-            <div id="cert-template-preview" class="w-48 h-32 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
+          <div class="flex items-start gap-5">
+            <div id="cert-template-preview" class="cert-preview-frame w-52 h-40 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
               <span class="text-slate-400 text-sm">请选择模板</span>
             </div>
             <div class="flex-1">
               <button type="button" id="cert-template-picker-btn"
-                class="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-sm hover:bg-amber-100 transition">
+                class="px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-lg text-sm hover:from-indigo-600 hover:to-blue-700 shadow-sm transition font-medium">
                 <i class="fas fa-th-large mr-1.5"></i>选择模板
               </button>
-              <p class="text-xs text-slate-400 mt-2">内置多款精美模板，支持实时预览</p>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">内置多款精美模板，支持实时预览。<br>选择后可在此处查看效果。</p>
             </div>
           </div>
         </div>
       </div>
       <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
         <button id="cert-cancel-btn" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
-        <button id="cert-save-btn" class="px-5 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-amber-600 transition">
+        <button id="cert-save-btn" class="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl text-sm font-medium shadow-sm hover:from-indigo-600 hover:to-blue-700 transition">
           <i class="fas fa-save mr-1.5"></i>保存
         </button>
       </div>
@@ -2937,7 +2952,10 @@
   <div id="certificate-template-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
       <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
-        <h3 class="text-lg font-bold text-slate-800">选择证书模板</h3>
+        <div class="flex items-center gap-2.5">
+          <span class="inline-flex w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 items-center justify-center text-white text-sm shadow-sm"><i class="fas fa-th-large"></i></span>
+          <h3 class="text-lg font-bold text-slate-800">选择证书模板</h3>
+        </div>
         <button onclick="document.getElementById('certificate-template-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
       </div>
       <div class="p-6">
@@ -2947,7 +2965,7 @@
       </div>
       <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
         <button id="cert-template-cancel" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
-        <button id="cert-template-confirm" class="px-5 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-amber-600 transition">确定</button>
+        <button id="cert-template-confirm" class="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl text-sm font-medium shadow-sm hover:from-indigo-600 hover:to-blue-700 transition">确定</button>
       </div>
     </div>
   </div>
@@ -2956,21 +2974,24 @@
   <div id="certificate-detail-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
       <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
-        <div>
-          <h3 class="text-lg font-bold text-slate-800" id="cert-detail-title">证书详情</h3>
-          <div class="flex items-center gap-4 mt-1" id="cert-detail-meta"></div>
+        <div class="flex items-center gap-2.5">
+          <span class="inline-flex w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 items-center justify-center text-white text-sm shadow-sm"><i class="fas fa-file-alt"></i></span>
+          <div>
+            <h3 class="text-lg font-bold text-slate-800" id="cert-detail-title">证书详情</h3>
+            <div class="flex items-center gap-4 mt-0.5" id="cert-detail-meta"></div>
+          </div>
         </div>
         <button onclick="window.CertificateMgmt.closeCertificateDetail()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
       </div>
       <div class="p-6">
-        <div class="flex border-b border-slate-200 mb-4">
-          <button class="cert-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600" data-tab="active">有效人员</button>
-          <button class="cert-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="expired">已过期</button>
-          <button class="cert-detail-tab px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="revoked">已撤销</button>
+        <div class="flex border-b border-slate-200 mb-4 gap-1">
+          <button class="cert-detail-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="active" data-active="true">有效人员</button>
+          <button class="cert-detail-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="expired" data-active="false">已过期</button>
+          <button class="cert-detail-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="revoked" data-active="false">已撤销</button>
         </div>
         <div class="bg-white rounded-xl overflow-hidden border border-slate-200">
           <table class="w-full">
-            <thead class="bg-slate-50">
+            <thead class="bg-gradient-to-r from-amber-50/70 to-slate-50">
               <tr>
                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">姓名</th>
                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">证书编号</th>
@@ -2988,38 +3009,11 @@
     </div>
   </div>
 
-  <!-- ========== 手动颁发证书弹窗 ========== -->
-  <div id="certificate-issue-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-    <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
-      <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
-        <h3 class="text-lg font-bold text-slate-800">颁发证书：<span id="issue-cert-name"></span></h3>
-        <button onclick="document.getElementById('certificate-issue-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
-      </div>
-      <div class="p-6 space-y-4">
-        <input type="hidden" id="issue-cert-id">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">搜索学员</label>
-          <input type="text" id="issue-user-search" placeholder="输入姓名或部门..."
-            class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm">
-        </div>
-        <div class="border border-slate-200 rounded-xl max-h-64 overflow-y-auto p-2" id="issue-user-list">
-          <!-- 动态渲染 -->
-        </div>
-      </div>
-      <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
-        <button id="issue-cancel-btn" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
-        <button id="issue-submit-btn" class="px-5 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-amber-600 transition">
-          <i class="fas fa-medal mr-1.5"></i>确认颁发
-        </button>
-      </div>
-    </div>
-  </div>
-
   <script src="data-api.js"></script>
   <script src="js/data-sync.js"></script>
   <script src="js/auth-modal.js?v=20260704"></script>
   <script src="js/auth-guard.js?v=20260704"></script>
-  <script src="js/certificate-management.js?v=20260706"></script>
+  <script src="js/certificate-management.js?v=20260706c"></script>
   <script>
     // dataSync 兼容层：将 window.dataSync.getData/setData 映射到 DataAPI
     if (!window.dataSync) {
@@ -3584,7 +3578,6 @@
         certificates: function() {
           if (window.CertificateMgmt) {
             window.CertificateMgmt.loadTemplates();
-            window.CertificateMgmt.loadUsers();
             window.CertificateMgmt.loadCertificates();
           }
         }
@@ -3734,8 +3727,6 @@
                 <img src="${c.cover || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2250%22><rect fill=%22%23e2e8f0%22 width=%2280%22 height=%2250%22/><text x=%2240%22 y=%2228%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2210%22>暂无封面</text></svg>'}" class="w-full h-full object-cover" loading="lazy" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2250%22><rect fill=%22%23e2e8f0%22 width=%2280%22 height=%2250%22/><text x=%2240%22 y=%2228%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2210%22>暂无封面</text></svg>'">
               </div>
             </td>
-            <!-- 课程ID -->
-            <td class="px-5 py-4 text-sm text-slate-500">${c.id}</td>
             <!-- 课程名称 -->
             <td class="px-5 py-4">
               <p class="font-medium text-slate-800 truncate text-sm" style="max-width: 180px;" title="${c.title}">${c.title}</p>

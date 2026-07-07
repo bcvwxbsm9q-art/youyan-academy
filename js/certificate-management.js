@@ -139,8 +139,8 @@
 
     tbody.innerHTML = certificates.map(cert => {
       const statusBadge = cert.status === 'enabled'
-        ? '<span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">启用</span>'
-        : '<span class="px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">停用</span>';
+        ? '<span class="cert-badge cert-badge--on"><i class="fas fa-circle text-[8px]"></i>启用</span>'
+        : '<span class="cert-badge cert-badge--off"><i class="fas fa-circle text-[8px]"></i>停用</span>';
       const validityText = cert.validityType === 'permanent' ? '永久有效' : `固定期限（${cert.validityDays}天）`;
       return `
         <tr class="border-b hover:bg-slate-50">
@@ -153,12 +153,12 @@
           <td class="px-4 py-3 text-sm text-slate-600">${formatDateTime(cert.createdAt)}</td>
           <td class="px-4 py-3 text-sm">${statusBadge}</td>
           <td class="px-4 py-3 text-sm">
-            <div class="flex items-center space-x-2">
-              <button onclick="window.CertificateMgmt.openCertificateDetail('${cert.id}')" class="text-blue-600 hover:text-blue-800" title="查看"><i class="fas fa-eye"></i></button>
-              <button onclick="window.CertificateMgmt.openCertificateModal('${cert.id}')" class="text-indigo-600 hover:text-indigo-800" title="编辑"><i class="fas fa-edit"></i></button>
-              <button onclick="window.CertificateMgmt.openIssueModal('${cert.id}')" class="text-emerald-600 hover:text-emerald-800" title="颁发"><i class="fas fa-medal"></i></button>
-              <button onclick="window.CertificateMgmt.toggleCertificateStatus('${cert.id}')" class="text-amber-600 hover:text-amber-800" title="启用/停用"><i class="fas fa-toggle-on"></i></button>
-              <button onclick="window.CertificateMgmt.deleteCertificate('${cert.id}')" class="text-red-600 hover:text-red-800" title="删除"><i class="fas fa-trash"></i></button>
+            <div class="flex items-center gap-1.5">
+              <button onclick="window.CertificateMgmt.openCertificateDetail('${cert.id}')" class="cert-action-btn view" title="查看"><i class="fas fa-eye"></i></button>
+              <button onclick="window.CertificateMgmt.openCertificateModal('${cert.id}')" class="cert-action-btn edit" title="编辑"><i class="fas fa-edit"></i></button>
+              <button onclick="window.CertificateMgmt.openIssueModal('${cert.id}')" class="cert-action-btn issue" title="颁发"><i class="fas fa-medal"></i></button>
+              <button onclick="window.CertificateMgmt.toggleCertificateStatus('${cert.id}')" class="cert-action-btn toggle" title="启用/停用"><i class="fas fa-toggle-on"></i></button>
+              <button onclick="window.CertificateMgmt.deleteCertificate('${cert.id}')" class="cert-action-btn del" title="删除"><i class="fas fa-trash"></i></button>
             </div>
           </td>
         </tr>
@@ -270,18 +270,65 @@
     const grid = $('#certificate-template-grid');
     if (!grid) return;
     grid.innerHTML = templates.map(tpl => {
-      const activeClass = selectedTemplateId === tpl.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-slate-50';
+      const activeClass = selectedTemplateId === tpl.id ? 'active' : '';
       const isPortrait = tpl.layout === 'portrait';
+      const bg = tpl.style.background;
+      const bc = tpl.style.borderColor;
+      const pc = tpl.style.primaryColor;
+      const ac = tpl.style.accentColor || bc;
+      const sc = tpl.style.sealColor || pc;
+      const fn = tpl.style.fontFamily;
+      const tTitle = escapeHtml(tpl.placeholders.find(p => p.key === 'title')?.defaultValue || '证书标题');
+      const tName = escapeHtml(tpl.placeholders.find(p => p.key === 'name')?.defaultValue || '姓名');
+
       return `
-        <div onclick="window.CertificateMgmt.selectTemplate('${tpl.id}')" class="cursor-pointer border rounded-xl p-3 transition ${activeClass}">
-          <div class="h-28 rounded-lg mb-2 flex flex-col items-center justify-center p-2 text-center relative overflow-hidden" style="background:${tpl.style.background}; color:${tpl.style.primaryColor}; border: 6px double ${tpl.style.borderColor}; font-family:${tpl.style.fontFamily};">
-            <div style="position:absolute; top:6px; left:6px; right:6px; bottom:6px; border:1px solid ${tpl.style.borderColor}; opacity:0.35;"></div>
-            <div class="text-[10px] opacity-70 mb-1 tracking-widest">CERTIFICATE</div>
-            <div class="text-sm font-bold leading-tight">${escapeHtml(tpl.placeholders.find(p => p.key === 'title')?.defaultValue || '证书标题')}</div>
-            <div class="text-[10px] opacity-80 mt-1">${escapeHtml(tpl.placeholders.find(p => p.key === 'name')?.defaultValue || '姓名')}</div>
+        <div onclick="window.CertificateMgmt.selectTemplate('${tpl.id}')" class="cert-tpl-card ${activeClass}">
+          <div class="h-[188px] rounded-xl mb-2.5 flex flex-col items-center justify-between p-2.5 text-center relative overflow-hidden shadow-md" style="background:${bg}; color:${pc}; border:5px double ${bc}; font-family:${fn};">
+
+            <!-- 内层单线边框 -->
+            <div style="position:absolute; inset:5px; border:1px solid ${bc}; opacity:0.30; pointer-events:none; border-radius:2px;"></div>
+
+            <!-- 四角装饰 L 型 -->
+            <div style="position:absolute; top:8px; left:8px; width:14px; height:14px; border-top:2.5px solid ${ac}; border-left:2.5px solid ${ac}; opacity:0.7;"></div>
+            <div style="position:absolute; top:8px; right:8px; width:14px; height:14px; border-top:2.5px solid ${ac}; border-right:2.5px solid ${ac}; opacity:0.7;"></div>
+            <div style="position:absolute; bottom:8px; left:8px; width:14px; height:14px; border-bottom:2.5px solid ${ac}; border-left:2.5px solid ${ac}; opacity:0.7;"></div>
+            <div style="position:absolute; bottom:8px; right:8px; width:14px; height:14px; border-bottom:2.5px solid ${ac}; border-right:2.5px solid ${ac}; opacity:0.7;"></div>
+
+            <!-- 顶部：CERTIFICATE + 装饰线 -->
+            <div class="relative z-10 w-full pt-1">
+              <div class="text-[9px] opacity-60 tracking-[0.25em] uppercase font-medium">Certificate</div>
+              <div class="flex items-center gap-1.5 justify-center mt-0.5">
+                <div class="flex-1 max-w-[24px]" style="height:1px; background:${ac}; opacity:0.45;"></div>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="opacity:0.5; color:${ac};"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/></svg>
+                <div class="flex-1 max-w-[24px]" style="height:1px; background:${ac}; opacity:0.45;"></div>
+              </div>
+            </div>
+
+            <!-- 中部：标题 + 分隔线 + 姓名 -->
+            <div class="relative z-10 flex-1 flex flex-col items-center justify-center px-1 -mt-1">
+              <div class="text-[15px] font-bold leading-snug tracking-wide" style="text-shadow:0 1px 2px rgba(0,0,0,0.06);">${tTitle}</div>
+              <div class="w-12 h-[2px] my-1.5 rounded-full" style="background:linear-gradient(90deg,transparent,${ac},transparent);"></div>
+              <div class="text-[9px] opacity-60 mb-0.5">兹证明</div>
+              <div class="text-[13px] font-semibold px-3 py-0.5 rounded" style="border-bottom:1.5px dashed ${bc}; opacity:0.9;">${tName}</div>
+            </div>
+
+            <!-- 底部：日期 + 印章 -->
+            <div class="relative z-10 w-full flex items-end justify-between pb-0.5 px-1">
+              <div class="text-[8px] opacity-50 leading-tight">
+                <div>2026-07-06</div>
+                <div class="scale-90 origin-left opacity-40">游雁科技</div>
+              </div>
+              <!-- 圆形印章 -->
+              <div class="w-[34px] h-[34px] rounded-full flex flex-col items-center justify-center shrink-0" style="border:1.8px solid ${sc}; opacity:0.55; transform:rotate(-10deg);">
+                <div class="text-[6px] font-bold tracking-wider leading-tight" style="color:${sc};">认证</div>
+                <div class="w-[16px] h-px my-[2px]" style="background:${sc}; opacity:0.6;"></div>
+                <div class="text-[5px]" style="color:${sc};">专用章</div>
+              </div>
+            </div>
+
           </div>
-          <p class="text-sm font-medium text-slate-800 text-center">${escapeHtml(tpl.name)}</p>
-          <p class="text-xs text-slate-500 text-center mt-1">${isPortrait ? '竖版' : '横版'}</p>
+          <p class="text-sm font-semibold text-slate-800 text-center truncate">${escapeHtml(tpl.name)}</p>
+          <p class="text-xs text-slate-400 text-center mt-0.5">${isPortrait ? '竖版' : '横版'}</p>
         </div>
       `;
     }).join('');
@@ -306,15 +353,64 @@
       preview.innerHTML = '<span class="text-slate-400">请选择模板</span>';
       return;
     }
+
+    const bg = tpl.style.background;
+    const bc = tpl.style.borderColor;
+    const pc = tpl.style.primaryColor;
+    const ac = tpl.style.accentColor || bc;
+    const sc = tpl.style.sealColor || pc;
+    const fn = tpl.style.fontFamily;
+    const tTitle = escapeHtml(tpl.placeholders.find(p => p.key === 'title')?.defaultValue || '证书标题');
+    const tName = escapeHtml(tpl.placeholders.find(p => p.key === 'name')?.defaultValue || '姓名');
+
     preview.innerHTML = `
-      <div class="h-40 rounded-lg flex flex-col items-center justify-center p-4 text-center relative overflow-hidden" style="background:${tpl.style.background}; color:${tpl.style.primaryColor}; border: 8px double ${tpl.style.borderColor}; font-family:${tpl.style.fontFamily};">
-        <div style="position:absolute; top:10px; left:10px; right:10px; bottom:10px; border:1px solid ${tpl.style.borderColor}; opacity:0.35;"></div>
-        <div class="text-[10px] opacity-70 mb-2 tracking-[0.3em]">CERTIFICATE</div>
-        <div class="text-xl font-bold mb-2">${escapeHtml(tpl.placeholders.find(p => p.key === 'title')?.defaultValue || '证书标题')}</div>
-        <div class="w-16 h-0.5 mb-2" style="background:${tpl.style.accentColor || tpl.style.borderColor}; opacity:0.6;"></div>
-        <div class="text-sm opacity-80">${escapeHtml(tpl.placeholders.find(p => p.key === 'name')?.defaultValue || '姓名')}</div>
+      <div class="h-full w-full rounded-xl flex flex-col items-center justify-between p-4 text-center relative overflow-hidden" style="background:${bg}; color:${pc}; border:7px double ${bc}; font-family:${fn}; box-shadow: inset 0 0 40px rgba(0,0,0,0.04);">
+
+        <!-- 内层边框 -->
+        <div style="position:absolute; inset:8px; border:1px solid ${bc}; opacity:0.28; pointer-events:none;"></div>
+        <div style="position:absolute; inset:14px; border:1px solid ${bc}; opacity:0.15; pointer-events:none; border-radius:1px;"></div>
+
+        <!-- 四角装饰 -->
+        <div style="position:absolute; top:12px; left:12px; width:22px; height:22px; border-top:3px solid ${ac}; border-left:3px solid ${ac}; opacity:0.65;"></div>
+        <div style="position:absolute; top:12px; right:12px; width:22px; height:22px; border-top:3px solid ${ac}; border-right:3px solid ${ac}; opacity:0.65;"></div>
+        <div style="position:absolute; bottom:12px; left:12px; width:22px; height:22px; border-bottom:3px solid ${ac}; border-left:3px solid ${ac}; opacity:0.65;"></div>
+        <div style="position:absolute; bottom:12px; right:12px; width:22px; height:22px; border-bottom:3px solid ${ac}; border-right:3px solid ${ac}; opacity:0.65;"></div>
+
+        <!-- 顶部装饰区 -->
+        <div class="relative z-10 w-full">
+          <div class="text-[11px] opacity-60 tracking-[0.35em] uppercase font-medium">Certificate of Achievement</div>
+          <div class="flex items-center gap-2 justify-center mt-1.5">
+            <div class="flex-1 max-w-[36px]" style="height:1px; background:${ac}; opacity:0.45;"></div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="opacity:0.55; color:${ac};"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/></svg>
+            <div class="flex-1 max-w-[36px]" style="height:1px; background:${ac}; opacity:0.45;"></div>
+          </div>
+        </div>
+
+        <!-- 中部内容 -->
+        <div class="relative z-10 flex-1 flex flex-col items-center justify-center px-2 -mt-1">
+          <div class="text-[22px] font-bold leading-tight tracking-wider mb-1" style="text-shadow:0 1px 3px rgba(0,0,0,0.07);">${tTitle}</div>
+          <div class="w-20 h-[2.5px] my-2 rounded-full" style="background:linear-gradient(90deg,transparent,${ac},transparent);"></div>
+          <div class="text-[11px] opacity-60 mb-1 tracking-wide">兹证明</div>
+          <div class="text-[17px] font-semibold px-5 py-1 rounded" style="border-bottom:2px dashed ${bc}; letter-spacing:0.15em;">${tName}</div>
+        </div>
+
+        <!-- 底部信息 + 印章 -->
+        <div class="relative z-10 w-full flex items-end justify-between pb-1 pt-2 px-2">
+          <div class="text-[10px] opacity-50 leading-relaxed text-left">
+            <div>证书编号：NO.20260001</div>
+            <div>颁发日期：2026-07-06</div>
+            <div class="opacity-40 scale-95 origin-left mt-0.5">广州游雁网络科技有限公司</div>
+          </div>
+          <!-- 印章 -->
+          <div class="w-[52px] h-[52px] rounded-full flex flex-col items-center justify-center shrink-0 ml-2" style="border:2.5px solid ${sc}; opacity:0.6; transform:rotate(-12deg); background:rgba(255,255,255,0.25);">
+            <div class="text-[9px] font-bold tracking-widest leading-tight" style="color:${sc};">认证专用章</div>
+            <div class="w-[28px] h-px my-1" style="background:${sc}; opacity:0.6;"></div>
+            <div class="text-[7px]" style="color:${sc};">游雁科技</div>
+          </div>
+        </div>
+
       </div>
-      <p class="text-xs text-slate-500 text-center mt-2">${escapeHtml(tpl.name)}</p>
+      <p class="text-xs text-slate-500 text-center mt-2 font-medium">${escapeHtml(tpl.name)}</p>
     `;
   }
 
@@ -351,8 +447,7 @@
     `;
 
     $$('.cert-detail-tab').forEach(btn => {
-      btn.classList.toggle('border-blue-500 text-blue-600', btn.dataset.tab === currentDetailTab);
-      btn.classList.toggle('border-transparent text-slate-500 hover:text-slate-700', btn.dataset.tab !== currentDetailTab);
+      btn.dataset.active = (btn.dataset.tab === currentDetailTab) ? 'true' : 'false';
     });
 
     const statusMap = { active: 'active', expired: 'expired', revoked: 'revoked' };
@@ -367,7 +462,7 @@
     }
 
     tbody.innerHTML = list.map(uc => `
-      <tr class="border-b hover:bg-slate-50">
+      <tr class="border-b hover:bg-amber-50/50 transition-colors">
         <td class="px-4 py-3 text-sm">${escapeHtml(uc.userName || uc.userId)}</td>
         <td class="px-4 py-3 text-sm text-blue-600">${escapeHtml(uc.certNo)}</td>
         <td class="px-4 py-3 text-sm text-slate-600">${uc.sourceType === 'manual' ? '手动发放' : uc.sourceType === 'exam' ? '考试通过' : '培训完成'}</td>
@@ -376,8 +471,8 @@
         <td class="px-4 py-3 text-sm text-slate-600">${uc.expireAt ? formatDateTime(uc.expireAt) : '无期限'}</td>
         <td class="px-4 py-3 text-sm">
           ${currentDetailTab === 'active'
-            ? `<button onclick="window.CertificateMgmt.revokeUserCertificate('${uc.id}')" class="text-red-600 hover:text-red-800"><i class="fas fa-undo"></i> 撤销</button>`
-            : `<span class="text-slate-400">-</span>`}
+            ? `<button onclick="window.CertificateMgmt.revokeUserCertificate('${uc.id}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 transition"><i class="fas fa-undo"></i> 撤销</button>`
+            : `<span class="text-slate-300">-</span>`}
         </td>
       </tr>
     `).join('');

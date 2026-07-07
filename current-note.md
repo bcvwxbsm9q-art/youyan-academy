@@ -120,9 +120,27 @@
 - 验证：HTML 语法检查通过；s0402 前端三重闸门已执行，Test3 Mock 回归通过，Test1 不适用，Test2 因 Playwright 环境缺失未执行（状态：未闭合）
 - 产出物：`.trae/documents/20260706_模块0_拆分课程列表表头.md`、`.trae/documents/test_reports/frontend_gate_20260706_181105/`
 
-## 八、追加需求：学员报表增加字段并修正等级与总时长
+## 八、追加即时修复：去掉课程管理列表课程 ID 列
 
 ### 8.1 工程过程
+1. 用户反馈：课程 ID 数字较长，希望从课程管理列表中去掉该展示列。
+2. 已确认去掉展示列不影响编辑/发布/下架/删除功能（操作列仍通过 `c.id` 传参）。
+3. 已创建变更追踪文档 `.trae/documents/20260707_模块0_去掉课程ID列.md`。
+4. 已删除 `dashboard.html` 课程列表表头中的「课程ID」列及行模板中对应的展示单元格。
+
+### 8.2 交接状态
+- 当前任务：去掉课程管理列表课程 ID 列
+- 状态：已完成
+- 阻塞项：无
+
+### 8.3 最终结果
+- 文件：`dashboard.html`
+- 验证：HTML 语法检查通过；表头与行模板列数一致（12 列）；s0402 前端三重闸门已执行，Test3 Mock 回归通过，Test1 不适用，Test2 因 Playwright 环境缺失未执行（状态：未闭合）
+- 产出物：`.trae/documents/20260707_模块0_去掉课程ID列.md`、`.trae/documents/test_reports/frontend_gate_20260707_212052/`
+
+## 九、追加需求：学员报表增加字段并修正等级与总时长
+
+### 9.1 工程过程
 1. 用户反馈：学员报表需增加「学员考试数」「获得徽章数」两列；员工等级显示 LV1/LV2 等；总学习时长应包含培训+课程时长。
 2. 已创建变更追踪文档 `.trae/documents/20260706_模块0_学员报表增加字段.md`。
 3. 已修改 `server.js`：
@@ -137,20 +155,20 @@
    - CSV 导出同步新增列与 LV 格式。
 5. 已执行 `node --check server.js`，语法通过。
 
-### 8.2 交接状态
+### 9.2 交接状态
 - 当前任务：学员报表增加字段并修正等级与总时长
 - 状态：已完成
 - 阻塞项：无
 
-### 8.3 最终结果
+### 9.3 最终结果
 - 文件：`server.js`、`dashboard.html`。
 - 验证：`node --check server.js` 通过；HTML 关键位置已核对。
 - 产出物：`.trae/documents/20260706_模块0_学员报表增加字段.md`
 - 待人工验证：重启 Node 服务后刷新 dashboard.html 查看学员报表显示效果。
 
-## 九、追加即时修复：考试列表三率拆分与指派记录 Tab
+## 十、追加即时修复：考试列表三率拆分与指派记录 Tab
 
-### 9.1 工程过程
+### 10.1 工程过程
 1. 用户反馈：考试管理列表中「参与率/及格率/缺考率」希望拆分为三列；考试详情「成绩」按钮中希望增加指派记录。
 2. 已创建变更追踪文档 `.trae/documents/20260706_模块0_拆分考试率表头并增加指派记录.md`。
 3. 已修改 `dashboard.html`：
@@ -160,20 +178,20 @@
    - 新增 `renderExamDetailAssignments()` 与 `exportExamDetailAssignments()`。
 4. 已执行 s0402 前端三重闸门，证据落盘 `.trae/documents/test_reports/frontend_gate_20260706_182047/`。
 
-### 9.2 交接状态
+### 10.2 交接状态
 - 当前任务：考试列表三率拆分与指派记录 Tab
 - 状态：已完成实现，s0402 闸门 **未闭合**
 - 阻塞项：Playwright 浏览器未安装、scripts/test-api.js 缺失
 
-### 9.3 最终结果
+### 10.3 最终结果
 - 文件：`dashboard.html`
 - 验证：内联脚本语法检查 PASS；考试相关 API 冒烟 PASS；Mock 回归 PASS。
 - 产出物：`.trae/documents/20260706_模块0_拆分考试率表头并增加指派记录.md`、`.trae/documents/test_reports/frontend_gate_20260706_182047/`
 - 未闭合项：Test2 E2E 因环境缺失未执行；Test1 单元测试入口缺失。
 
-## 十、追加即时修复：证书颁发弹窗复用统一指派弹窗
+## 十一、追加即时修复：证书颁发弹窗复用统一指派弹窗
 
-### 10.1 工程过程
+### 11.1 工程过程
 1. 用户反馈：证书手动颁发弹窗中学员显示不是姓名，且可复用指派学员弹窗避免重复实现。
 2. 已创建变更追踪文档 `.trae/documents/20260706_证书管理_复用指派弹窗颁发证书.md`。
 3. 已删除 `dashboard.html` 中独立的 `certificate-issue-modal` HTML 弹窗。
@@ -182,12 +200,12 @@
 6. 已清理 `js/certificate-management.js` 中冗余的 `users` 状态、`loadUsers`、`renderIssueUserList`、`submitIssue` 及相关事件监听。
 7. 已移除 `dashboard.html` 证书 tab 加载器中对 `CertificateMgmt.loadUsers()` 的调用。
 
-### 10.2 交接状态
+### 11.2 交接状态
 - 当前任务：证书颁发弹窗复用统一指派弹窗
 - 状态：已完成
 - 阻塞项：无
 
-### 10.3 最终结果
+### 11.3 最终结果
 - 文件：`dashboard.html`、`js/certificate-management.js`。
 - 验证：`node --check js/certificate-management.js` 通过；`node --check server.js` 通过；全局搜索确认旧引用仅在备份文件中存在；s0402 前端三重闸门已执行，Test3 Mock 回归通过，Test1 不适用，Test2 因 Playwright 环境缺失未执行（状态：未闭合）。
 - 产出物：`.trae/documents/20260706_证书管理_复用指派弹窗颁发证书.md`、`.trae/documents/test_reports/frontend_gate_20260706_191500/`。
