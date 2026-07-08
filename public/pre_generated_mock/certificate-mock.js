@@ -10,22 +10,22 @@
   const DEFAULT_TEMPLATES = [
     {
       id: 'tpl-honor-blue',
-      name: '蓝色荣誉证书（竖版）',
+      name: '紫色考试合格证书（竖版）',
       layout: 'portrait',
       thumbnail: '',
       style: {
-        background: 'radial-gradient(circle at 15% 15%, rgba(30,90,142,0.14) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(30,90,142,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f0f7ff 40%, #e1f0fb 100%)',
-        borderColor: '#1e5a8e',
-        primaryColor: '#1e5a8e',
-        secondaryColor: '#4a90c2',
-        accentColor: '#c9a227',
-        sealColor: '#1e5a8e',
+        background: 'repeating-linear-gradient(45deg, rgba(118,75,162,0.07) 0px, rgba(118,75,162,0.07) 1px, transparent 1px, transparent 12px), radial-gradient(circle at 15% 15%, rgba(102,126,234,0.12) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(118,75,162,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f5f3ff 40%, #ede9fe 100%)',
+        borderColor: '#764ba2',
+        primaryColor: '#764ba2',
+        secondaryColor: '#667eea',
+        accentColor: '#9333ea',
+        sealColor: '#764ba2',
         fontFamily: '"Noto Serif SC", "SimSun", serif'
       },
       placeholders: [
         { key: 'name', label: '姓名', defaultValue: '张三' },
-        { key: 'title', label: '证书标题', defaultValue: '荣誉证书' },
-        { key: 'content', label: '正文', defaultValue: '表现优异，特发此证，以资鼓励。' },
+        { key: 'title', label: '证书标题', defaultValue: '考试合格证书' },
+        { key: 'content', label: '正文', defaultValue: '已通过相关考试，成绩合格，特发此证，以资鼓励。' },
         { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
         { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
       ]

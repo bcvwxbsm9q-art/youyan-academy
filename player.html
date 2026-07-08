@@ -562,20 +562,19 @@
                                     </div>
                                 </div>
                             </div>
-                            
-                        </div>
-                        
-                        <!-- 课程简介 -->
-                        <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-lg font-bold text-gray-900">课程简介</h2>
-                                <button id="expand-description" class="inline-flex items-center text-primary hover:text-primary/80 transition-colors">
-                                    <span>展开</span>
-                                    <i class="fa fa-angle-down ml-1"></i>
-                                </button>
-                            </div>
-                            <div id="player-course-description" class="text-gray-600 line-clamp-3 leading-relaxed">
-                                暂无课程简介
+
+                            <!-- 课程简介 -->
+                            <div class="border-t border-gray-100 pt-4 mt-2 hidden" id="course-description-wrapper">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h2 class="text-base font-bold text-gray-900">课程简介</h2>
+                                    <button id="expand-description" class="inline-flex items-center text-sm text-primary hover:text-primary/80 transition-colors">
+                                        <span>展开</span>
+                                        <i class="fa fa-angle-down ml-1"></i>
+                                    </button>
+                                </div>
+                                <div id="player-course-description" class="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                                    暂无课程简介
+                                </div>
                             </div>
                         </div>
 
@@ -598,8 +597,8 @@
                     </div>
                     
                     <!-- 右侧课程大纲 -->
-                    <div class="w-full xl:w-[320px]">
-                        <div class="bg-white rounded-2xl shadow-sm p-4 sticky top-20">
+                    <div class="w-full xl:w-[320px] sticky top-20">
+                        <div class="bg-white rounded-2xl shadow-sm p-4">
                             <div class="flex justify-between items-center mb-4">
                                 <h2 class="text-lg font-bold text-gray-900">课程章节</h2>
                                 <span class="text-sm text-gray-500" id="chapter-count">0课时</span>
@@ -616,6 +615,14 @@
                                     <i class="fa fa-play-circle"></i>
                                     <span>继续学习</span>
                                 </button>
+                            </div>
+                        </div>
+
+                        <!-- 课程资料 -->
+                        <div class="bg-white rounded-2xl shadow-sm p-4 mt-4 hidden" id="course-attachments-section">
+                            <h2 class="text-lg font-bold text-gray-900 mb-4">课程资料</h2>
+                            <div id="course-attachments-list" class="space-y-1 max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar pr-1">
+                                <!-- 由 JS 动态渲染 -->
                             </div>
                         </div>
                     </div>
@@ -1107,10 +1114,20 @@
             document.getElementById('player-rating').textContent = (course.rating || 0).toFixed(1);
             document.getElementById('player-duration').textContent = totalDuration > 0 ? '总时长：' + api.formatDuration(totalDuration) : '总时长：加载中...';
 
-            document.getElementById('player-course-description').textContent = course.description || '暂无课程简介';
+            const descWrapper = document.getElementById('course-description-wrapper');
+            const descEl = document.getElementById('player-course-description');
+            if (course.description && course.description.trim()) {
+                descEl.textContent = course.description.trim();
+                descWrapper.classList.remove('hidden');
+            } else {
+                descWrapper.classList.add('hidden');
+            }
 
             // 渲染讲师信息区域
             renderLecturerInfo(course);
+
+            // 渲染课程资料
+            renderCourseAttachments(course);
 
             // 初始化点赞/评分交互区
             initInteractionBar(course);
@@ -1126,7 +1143,61 @@
             renderChapterList(videos);
             updateCourseProgressUI();
         }
-        
+
+        function getAttachmentIcon(type) {
+            if (!type) return 'fa-file-o text-gray-400';
+            const t = type.toLowerCase();
+            if (t.includes('pdf')) return 'fa-file-pdf text-red-500';
+            if (t.includes('word') || t.includes('msword') || t.includes('officedocument.wordprocessingml')) return 'fa-file-word text-blue-500';
+            if (t.includes('excel') || t.includes('sheet') || t.includes('officedocument.spreadsheetml')) return 'fa-file-excel text-green-500';
+            if (t.includes('powerpoint') || t.includes('presentation') || t.includes('officedocument.presentationml')) return 'fa-file-powerpoint text-orange-500';
+            if (t.includes('image')) return 'fa-file-image text-purple-500';
+            if (t.includes('text')) return 'fa-file-text-o text-gray-500';
+            return 'fa-file-o text-gray-400';
+        }
+
+        function formatAttachmentSize(bytes) {
+            if (!bytes || isNaN(bytes)) return '';
+            const size = Number(bytes);
+            if (size < 1024) return size + ' B';
+            if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+            return (size / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        function renderCourseAttachments(course) {
+            const section = document.getElementById('course-attachments-section');
+            const list = document.getElementById('course-attachments-list');
+            if (!section || !list) return;
+
+            const attachments = course?.attachments || [];
+            if (attachments.length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            list.innerHTML = attachments.map((a, index) => {
+                const url = a.url || '';
+                const name = a.name || ('附件 ' + (index + 1));
+                const sizeText = formatAttachmentSize(a.size);
+                const iconClass = getAttachmentIcon(a.type);
+                return `
+                    <a href="${url}" target="_blank" rel="noopener noreferrer" download="${name.replace(/"/g, '_')}"
+                       class="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-primary/5 border border-gray-100 hover:border-primary/20 transition-colors group">
+                        <div class="flex items-center space-x-3 min-w-0">
+                            <i class="fa ${iconClass} text-lg flex-shrink-0"></i>
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-800 truncate group-hover:text-primary transition-colors" title="${name}">${name}</p>
+                                ${sizeText ? `<p class="text-xs text-gray-400 mt-0.5">${sizeText}</p>` : ''}
+                            </div>
+                        </div>
+                        <i class="fa fa-download text-gray-400 group-hover:text-primary flex-shrink-0 ml-3"></i>
+                    </a>
+                `;
+            }).join('');
+
+            section.classList.remove('hidden');
+        }
+
         function updateTotalDurationDisplay() {
             const videos = window.DataAPI?.getCourse(courseId)?.videos || [];
             let totalDuration = 0;

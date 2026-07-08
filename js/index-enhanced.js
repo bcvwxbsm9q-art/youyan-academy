@@ -457,51 +457,83 @@
           console.warn('[Index] 记录公告访问失败:', e.message);
         }
 
+        // 注入弹窗动画样式（仅注入一次）
+        if (!document.getElementById('notice-modal-styles')) {
+            const style = document.createElement('style');
+            style.id = 'notice-modal-styles';
+            style.textContent = `
+                @keyframes noticeModalIn {
+                    from { opacity: 0; transform: scale(0.97) translateY(12px); }
+                    to   { opacity: 1; transform: scale(1) translateY(0); }
+                }
+                .notice-modal-enter {
+                    animation: noticeModalIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+                }
+                .notice-scroll::-webkit-scrollbar { width: 4px; }
+                .notice-scroll::-webkit-scrollbar-track { background: transparent; }
+                .notice-scroll::-webkit-scrollbar-thumb { background: rgba(102,126,234,0.15); border-radius: 10px; }
+                .notice-scroll::-webkit-scrollbar-thumb:hover { background: rgba(102,126,234,0.3); }
+                .notice-content img { border-radius: 10px; max-width: 100%; }
+                .notice-content p { margin-bottom: 1em; line-height: 1.8; color: #52525b; }
+            `;
+            document.head.appendChild(style);
+        }
+
         const modal = document.createElement('div');
         modal.id = 'notice-modal';
-        modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+        modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8';
         modal.innerHTML = `
+            <!-- 背景遮罩 -->
             <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeNoticeModal()"></div>
-            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col animate-fade-in">
-                <!-- 头部 -->
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
-                    <div class="flex items-center space-x-3 flex-1 min-w-0">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                            <i class="fa fa-bullhorn text-white"></i>
+
+            <!-- 弹窗主体 -->
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[85vh] overflow-hidden flex flex-col notice-modal-enter">
+                <!-- 紫色渐变头部（全宽） -->
+                <div class="relative bg-gradient-to-r from-[#667eea] to-[#764ba2] px-6 py-4 flex-shrink-0">
+                    <!-- 头部内容 -->
+                    <div class="relative flex items-center justify-between">
+                        <div class="flex items-center gap-3.5 flex-1 min-w-0 pr-4">
+                            <div class="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-sm">
+                                <i class="fa fa-bell text-white text-lg"></i>
+                            </div>
+                            <div class="min-w-0 self-center">
+                                <h3 class="text-white font-bold text-[18px] leading-snug truncate">${escapeHtml(notice.title) || '公告详情'}</h3>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <p class="text-white/75 text-[12px] font-medium">公告通知</p>
+                                    ${notice.pinned ? '<span class="inline-flex items-center px-1.5 py-[2px] rounded-md text-[10px] font-semibold bg-white/20 text-white"><i class="fa fa-thumb-tack mr-0.5"></i>置顶</span>' : ''}
+                                    <span class="text-white/65 text-[12px]">
+                                        <i class="fa fa-regular fa-clock mr-1"></i>${notice.publishedAt || notice.createdAt || ''}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="min-w-0">
-                            <h3 class="font-semibold text-gray-800 text-lg truncate">${escapeHtml(notice.title) || '公告详情'}</h3>
-                            <p class="text-xs text-gray-500 mt-0.5">
-                                ${notice.pinned ? '<span class="text-red-500 mr-1"><i class="fa fa-thumb-tack"></i>置顶</span>' : ''}
-                                ${notice.publishedAt || notice.createdAt || ''}
-                            </p>
-                        </div>
+                        <!-- 关闭按钮 -->
+                        <button onclick="closeNoticeModal()" class="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white/90 hover:text-white transition-all duration-200 flex-shrink-0 flex items-center justify-center group self-center">
+                            <i class="fa fa-times text-base group-hover:rotate-90 inline-block transition-transform duration-300"></i>
+                        </button>
                     </div>
-                    <button onclick="closeNoticeModal()" class="text-gray-400 hover:text-gray-600 transition ml-2 flex-shrink-0">
-                        <i class="fa fa-times text-xl"></i>
-                    </button>
                 </div>
-                
+
                 <!-- 内容区 -->
-                <div class="flex-1 overflow-y-auto">
+                <div class="flex-1 overflow-y-auto notice-scroll">
                     <!-- 封面图 -->
                     ${notice.cover ? `
-                        <div class="w-full h-48 md:h-64 overflow-hidden">
+                        <div class="w-full h-48 md:h-56 overflow-hidden">
                             <img src="${escapeHtml(notice.cover)}" alt="${escapeHtml(notice.title)}" class="w-full h-full object-cover">
                         </div>
                     ` : ''}
-                    
+
                     <!-- 富文本内容 -->
-                    <div class="p-6 md:p-8">
-                        <div class="prose prose-indigo max-w-none notice-content">
-                            ${sanitizeHtml(notice.content) || '<p class="text-gray-400 text-center py-8">暂无内容</p>'}
+                    <div class="p-6 md:p-7">
+                        <div class="prose prose-slate max-w-none notice-content text-gray-600 leading-relaxed">
+                            ${sanitizeHtml(notice.content) || '<p class="text-gray-300 text-center py-12"><i class="fa fa-inbox text-3xl mb-3 block opacity-40"></i>暂无内容</p>'}
                         </div>
                     </div>
                 </div>
             </div>
         `;
         document.body.appendChild(modal);
-        
+
         // 阻止事件冒泡
         modal.querySelector('.relative').addEventListener('click', (e) => e.stopPropagation());
         
@@ -521,9 +553,21 @@
     window.closeNoticeModal = function() {
         const modal = document.getElementById('notice-modal');
         if (modal) {
-            modal.remove();
-            // 恢复滚动
-            document.body.style.overflow = '';
+            const inner = modal.querySelector('.notice-modal-enter');
+            if (inner) {
+                inner.style.transition = 'all 0.25s cubic-bezier(0.4, 0, 1, 1)';
+                inner.style.opacity = '0';
+                inner.style.transform = 'scale(0.96) translateY(8px)';
+            }
+            const backdrop = modal.querySelector('.absolute.inset-0');
+            if (backdrop) {
+                backdrop.style.transition = 'opacity 0.2s ease';
+                backdrop.style.opacity = '0';
+            }
+            setTimeout(() => {
+                modal.remove();
+                document.body.style.overflow = '';
+            }, 280);
         }
     };
 

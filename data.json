@@ -26,7 +26,7 @@
       "role": "admin",
       "avatar": "",
       "createdAt": "2026/6/10 18:23:41",
-      "lastLogin": "2026/7/4 09:54:42",
+      "lastLogin": "2026/7/8 10:23:11",
       "status": "active"
     },
     {
@@ -173,11 +173,11 @@
       "1781080411545_1": 5,
       "1781064630171_0": 52,
       "1781506198054_0": 17,
-      "1781065281803_0": 3,
+      "1781065281803_0": 100,
       "1781065485355_0": 1,
       "1781077900894_0": 66
     },
-    "lastStudyTime": "2026-07-06T09:18:13.572Z",
+    "lastStudyTime": "2026-07-08T02:00:06.204Z",
     "studyDates": [
       "2026-06-14",
       "2026-06-15",
@@ -189,9 +189,11 @@
       "2026-06-29",
       "2026-06-30",
       "2026-07-03",
-      "2026-07-06"
+      "2026-07-06",
+      "2026-07-07",
+      "2026-07-08"
     ],
-    "totalSeconds": 657,
+    "totalSeconds": 769,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -759,6 +761,141 @@
         "duration": 3,
         "timestamp": "2026-07-06T09:18:13.572Z",
         "date": "2026-07-06"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 4,
+        "timestamp": "2026-07-07T13:43:06.141Z",
+        "date": "2026-07-07"
+      },
+      {
+        "courseId": 1781065453648,
+        "courseTitle": "成就系统设计：从理论到实践",
+        "videoIndex": 0,
+        "videoTitle": "成就系统设计：从理论到实践.mp4",
+        "duration": 1,
+        "timestamp": "2026-07-08T01:43:13.171Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 7,
+        "timestamp": "2026-07-08T01:43:50.409Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 2,
+        "timestamp": "2026-07-08T01:49:02.064Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 3,
+        "timestamp": "2026-07-08T01:49:06.454Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T01:58:40.976Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T01:58:51.009Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T01:59:00.985Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T01:59:10.998Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T01:59:20.976Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T01:59:30.976Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T01:59:40.980Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T01:59:50.980Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:00:00.975Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 5,
+        "timestamp": "2026-07-08T02:00:06.204Z",
+        "date": "2026-07-08"
       }
     ],
     "shares": 2,
@@ -1333,9 +1470,22 @@
           "duration": 1909
         }
       ],
-      "attachments": [],
+      "attachments": [
+        {
+          "url": "/uploads/documents/1783431741459-575060971.pdf",
+          "name": "培训通知书.pdf",
+          "size": 150447,
+          "type": "application/pdf"
+        },
+        {
+          "url": "/uploads/documents/1783431753564-750630178.pptx",
+          "name": "Ai场景模型制作2025.8（梁耀光）.pptx",
+          "size": 7040365,
+          "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        }
+      ],
       "duration": 1909,
-      "views": 14,
+      "views": 23,
       "rating": 5,
       "id": 1781065281803,
       "createdAt": "2026/6/10 12:21:21",
@@ -1344,7 +1494,7 @@
       "learners": 4,
       "finishers": 2,
       "createdBy": "许志坚",
-      "updatedAt": "2026/7/6 15:40:16"
+      "updatedAt": "2026/7/7 21:42:41"
     },
     {
       "title": "成就系统设计：从理论到实践",
@@ -1365,7 +1515,7 @@
       ],
       "attachments": [],
       "duration": 2415,
-      "views": 20,
+      "views": 21,
       "rating": 5,
       "id": 1781065453648,
       "createdAt": "2026/6/10 12:24:13",
@@ -1451,7 +1601,7 @@
       ],
       "attachments": [],
       "duration": 2054,
-      "views": 39,
+      "views": 40,
       "rating": 3,
       "id": 1781080411545,
       "createdAt": "2026/6/10 16:33:31",
@@ -1616,7 +1766,7 @@
       "videos": [],
       "attachments": [],
       "duration": 0,
-      "views": 0,
+      "views": 1,
       "rating": 0,
       "id": 1783327125758,
       "createdAt": "2026/7/6 16:38:45",
@@ -1814,8 +1964,8 @@
     "savedAt": "2026-06-10T04:11:05.732Z"
   },
   "video_pos_1780909174403_1781065281803_0": {
-    "position": 74,
-    "savedAt": "2026-06-26T13:44:24.659Z"
+    "position": 106,
+    "savedAt": "2026-07-08T02:00:06.165Z"
   },
   "video_pos_1780909174403_1781064630171_0": {
     "position": 868,
@@ -1893,8 +2043,8 @@
     "ratingCount": 2
   },
   "video_pos_1780909174403_1781065453648_0": {
-    "position": 1060,
-    "savedAt": "2026-07-06T09:18:20.438Z"
+    "position": 1061,
+    "savedAt": "2026-07-08T01:43:13.130Z"
   },
   "course_interaction_1781065453648": {
     "likes": 1,
@@ -1915,18 +2065,19 @@
     "videoProgress": {
       "1781087462994_0": 100,
       "1781087427858_0": 5,
-      "1781065281803_0": 3,
+      "1781065281803_0": 13,
       "1781506198054_0": 13,
-      "1781080411545_0": 7,
+      "1781080411545_0": 22,
       "1781065453648_0": 36,
       "1781077900894_0": 2
     },
-    "lastStudyTime": "2026-06-17T10:04:53.423Z",
+    "lastStudyTime": "2026-07-08T03:30:56.193Z",
     "studyDates": [
       "2026-06-12",
-      "2026-06-17"
+      "2026-06-17",
+      "2026-07-08"
     ],
-    "totalSeconds": 395,
+    "totalSeconds": 722,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -2098,6 +2249,321 @@
         "duration": 46,
         "timestamp": "2026-06-17T10:04:53.423Z",
         "date": "2026-06-17"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:34:05.287Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:34:15.290Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:34:25.285Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:34:35.288Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:34:45.290Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:34:55.289Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:35:05.289Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:35:15.290Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:35:25.291Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:35:35.298Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:35:45.292Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:35:55.297Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:36:05.292Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T02:36:15.294Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 3,
+        "timestamp": "2026-07-08T02:36:18.740Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:23:25.986Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 1,
+        "timestamp": "2026-07-08T03:23:27.220Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:23:40.037Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:23:50.037Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:24:00.030Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:24:10.031Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:24:20.030Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:24:30.039Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:24:40.040Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:24:50.030Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:25:00.036Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:25:10.031Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:25:20.042Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:25:30.037Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:25:40.030Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:25:50.041Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:26:00.030Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:30:42.410Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:30:52.410Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 3,
+        "timestamp": "2026-07-08T03:30:56.193Z",
+        "date": "2026-07-08"
       }
     ],
     "ratings": 0,
@@ -2212,8 +2678,8 @@
     "savedAt": "2026-06-12T02:27:47.194Z"
   },
   "video_pos_1781087021554_1781065281803_0": {
-    "position": 76,
-    "savedAt": "2026-06-17T02:03:48.412Z"
+    "position": 251,
+    "savedAt": "2026-07-08T03:30:56.155Z"
   },
   "video_pos_1781087021554_1781087427858_0": {
     "position": 54,
@@ -2249,8 +2715,8 @@
     "ratingCount": 2
   },
   "video_pos_1781087021554_1781080411545_0": {
-    "position": 72,
-    "savedAt": "2026-06-17T02:04:39.526Z"
+    "position": 222,
+    "savedAt": "2026-07-08T03:26:00.891Z"
   },
   "video_pos_1781087021554_1781065453648_0": {
     "position": 892,
@@ -2793,6 +3259,26 @@
       "read": true,
       "createdAt": "2026-07-06T09:27:22.390Z",
       "readAt": "2026-07-06T09:29:14.009Z"
+    },
+    {
+      "id": "nt-1783475460760-0",
+      "userId": "1782783422496",
+      "title": "恭喜您获得证书",
+      "content": "您已获得《优秀讲师》证书，证书编号：0003。请在个人中心-我的证书查看。",
+      "type": "certificate",
+      "certificateId": "cert-1783333691917",
+      "read": false,
+      "createdAt": "2026-07-08T01:51:00.760Z"
+    },
+    {
+      "id": "nt-1783477408201-0",
+      "userId": "1780909174403",
+      "title": "恭喜您获得证书",
+      "content": "您已获得《平面设计进阶课程证书》证书，证书编号：CERT-0001。请在个人中心-我的证书查看。",
+      "type": "certificate",
+      "certificateId": "cert-legacy-001",
+      "read": false,
+      "createdAt": "2026-07-08T02:23:28.202Z"
     }
   ],
   "notification_reads": [
@@ -6221,13 +6707,13 @@
       "noticeId": 1782183780370,
       "userId": 1780909174403,
       "username": "15302206488",
-      "visitedAt": "2026-07-07T13:20:40.596Z"
+      "visitedAt": "2026-07-08T02:20:12.862Z"
     },
     {
       "noticeId": 1782183780370,
       "userId": 1781087021554,
       "username": "14718596470",
-      "visitedAt": "2026-07-06T10:20:57.214Z"
+      "visitedAt": "2026-07-08T03:28:39.753Z"
     }
   ],
   "training_signins": [
@@ -6294,6 +6780,10 @@
       "username": "15302206488",
       "realName": "许志坚",
       "loginTime": "2026/6/30 18:29:01"
+    },
+    {
+      "userId": "1781087021554",
+      "loginTime": "2026-07-08T02:23:11.267Z"
     }
   ],
   "lecturer_payment_records": [
@@ -6338,21 +6828,77 @@
       "status": "active",
       "revokedAt": null,
       "revokeReason": null
+    },
+    {
+      "id": "uc-1783475265117-275474558",
+      "certificateId": "cert-1783333691917",
+      "userId": "1780909174403",
+      "certNo": "0001",
+      "sourceType": "manual",
+      "sourceId": null,
+      "issueAt": "2026-07-08T01:47:45.117Z",
+      "effectiveAt": "2026-07-08T01:47:45.117Z",
+      "expireAt": null,
+      "status": "active",
+      "revokedAt": null,
+      "revokeReason": null
+    },
+    {
+      "id": "uc-1783475265117-767059357",
+      "certificateId": "cert-1783333691917",
+      "userId": "1781087021554",
+      "certNo": "0002",
+      "sourceType": "manual",
+      "sourceId": null,
+      "issueAt": "2026-07-08T01:47:45.117Z",
+      "effectiveAt": "2026-07-08T01:47:45.117Z",
+      "expireAt": null,
+      "status": "active",
+      "revokedAt": null,
+      "revokeReason": null
+    },
+    {
+      "id": "uc-1783475460760-56210661",
+      "certificateId": "cert-1783333691917",
+      "userId": "1782783422496",
+      "certNo": "0003",
+      "sourceType": "manual",
+      "sourceId": null,
+      "issueAt": "2026-07-08T01:51:00.760Z",
+      "effectiveAt": "2026-07-08T01:51:00.760Z",
+      "expireAt": null,
+      "status": "active",
+      "revokedAt": null,
+      "revokeReason": null
+    },
+    {
+      "id": "uc-1783477408202-173151745",
+      "certificateId": "cert-legacy-001",
+      "userId": "1780909174403",
+      "certNo": "CERT-0001",
+      "sourceType": "manual",
+      "sourceId": null,
+      "issueAt": "2026-07-08T02:23:28.202Z",
+      "effectiveAt": "2026-07-08T02:23:28.202Z",
+      "expireAt": null,
+      "status": "active",
+      "revokedAt": null,
+      "revokeReason": null
     }
   ],
   "certificate_templates": [
     {
       "id": "tpl-honor-blue",
-      "name": "蓝色荣誉证书（竖版）",
+      "name": "紫色考试合格证书（竖版）",
       "layout": "portrait",
       "thumbnail": "",
       "style": {
-        "background": "radial-gradient(circle at 15% 15%, rgba(30,90,142,0.14) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(30,90,142,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f0f7ff 40%, #e1f0fb 100%)",
-        "borderColor": "#1e5a8e",
-        "primaryColor": "#1e5a8e",
-        "secondaryColor": "#4a90c2",
-        "accentColor": "#c9a227",
-        "sealColor": "#1e5a8e",
+        "background": "repeating-linear-gradient(45deg, rgba(118,75,162,0.07) 0px, rgba(118,75,162,0.07) 1px, transparent 1px, transparent 12px), radial-gradient(circle at 15% 15%, rgba(102,126,234,0.12) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(118,75,162,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f5f3ff 40%, #ede9fe 100%)",
+        "borderColor": "#764ba2",
+        "primaryColor": "#764ba2",
+        "secondaryColor": "#667eea",
+        "accentColor": "#9333ea",
+        "sealColor": "#764ba2",
         "fontFamily": "\"Noto Serif SC\", \"SimSun\", serif"
       },
       "placeholders": [
@@ -6364,12 +6910,12 @@
         {
           "key": "title",
           "label": "证书标题",
-          "defaultValue": "荣誉证书"
+          "defaultValue": "考试合格证书"
         },
         {
           "key": "content",
           "label": "正文",
-          "defaultValue": "表现优异，特发此证，以资鼓励。"
+          "defaultValue": "已通过相关考试，成绩合格，特发此证，以资鼓励。"
         },
         {
           "key": "company",

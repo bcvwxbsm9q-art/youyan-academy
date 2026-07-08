@@ -225,22 +225,22 @@ function initCertificateData() {
     data.certificate_templates = [
       {
         id: 'tpl-honor-blue',
-        name: '蓝色荣誉证书（竖版）',
+        name: '紫色考试合格证书（竖版）',
         layout: 'portrait',
         thumbnail: '',
         style: {
-          background: 'radial-gradient(circle at 15% 15%, rgba(30,90,142,0.14) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(30,90,142,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f0f7ff 40%, #e1f0fb 100%)',
-          borderColor: '#1e5a8e',
-          primaryColor: '#1e5a8e',
-          secondaryColor: '#4a90c2',
-          accentColor: '#c9a227',
-          sealColor: '#1e5a8e',
+          background: 'repeating-linear-gradient(45deg, rgba(118,75,162,0.07) 0px, rgba(118,75,162,0.07) 1px, transparent 1px, transparent 12px), radial-gradient(circle at 15% 15%, rgba(102,126,234,0.12) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(118,75,162,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f5f3ff 40%, #ede9fe 100%)',
+          borderColor: '#764ba2',
+          primaryColor: '#764ba2',
+          secondaryColor: '#667eea',
+          accentColor: '#9333ea',
+          sealColor: '#764ba2',
           fontFamily: '"Noto Serif SC", "SimSun", serif'
         },
         placeholders: [
           { key: 'name', label: '姓名', defaultValue: '张三' },
-          { key: 'title', label: '证书标题', defaultValue: '荣誉证书' },
-          { key: 'content', label: '正文', defaultValue: '表现优异，特发此证，以资鼓励。' },
+          { key: 'title', label: '证书标题', defaultValue: '考试合格证书' },
+          { key: 'content', label: '正文', defaultValue: '已通过相关考试，成绩合格，特发此证，以资鼓励。' },
           { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
           { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
         ]
@@ -1215,8 +1215,16 @@ app.post('/api/auth/login', (req, res) => {
   
   // 更新最后登录时间
   user.lastLogin = new Date().toLocaleString('zh-CN');
+
+  // 记录登录日志，永久保存，用于登录趋势统计
+  if (!Array.isArray(data.login_logs)) data.login_logs = [];
+  data.login_logs.push({
+    userId: String(user.id),
+    loginTime: new Date().toISOString()
+  });
+
   writeData(data);
-  
+
   // 创建 token
   const token = createToken(user);
   const userInfo = { ...user };
@@ -5373,10 +5381,22 @@ app.post('/api/certificates/:id/issue', (req, res) => {
 
   const results = [];
   const errors = [];
-  userIds.forEach(uid => {
+  const now = Date.now();
+  initNotificationsData(data);
+  userIds.forEach((uid, idx) => {
     const result = issueCertificateInternal(data, certificate.id, uid, sourceType || 'manual', sourceId || null);
     if (result.success) {
       results.push(result.data);
+      data.notifications.push({
+        id: 'nt-' + now + '-' + idx,
+        userId: String(uid),
+        title: '恭喜您获得证书',
+        content: `您已获得《${certificate.name}》证书，证书编号：${result.data.certNo}。请在个人中心-我的证书查看。`,
+        type: 'certificate',
+        certificateId: String(certificate.id),
+        read: false,
+        createdAt: new Date().toISOString()
+      });
     } else {
       errors.push({ userId: uid, error: result.error });
     }
@@ -5404,14 +5424,17 @@ app.get('/api/user-certificates', (req, res) => {
   });
 
   const certificates = data.certificates || [];
+  const templates = data.certificate_templates || [];
   const users = data.registered_users || [];
   const enriched = list.map(uc => {
     const cert = certificates.find(c => String(c.id) === String(uc.certificateId)) || {};
+    const template = templates.find(t => t.id === cert.templateId) || null;
     const user = users.find(u => String(u.id) === String(uc.userId)) || {};
     return {
       ...uc,
       certificateName: cert.name || '',
       templateId: cert.templateId || '',
+      template,
       userName: user.realName || user.username || '',
       userDepartment: user.department || '',
       userPosition: user.position || ''

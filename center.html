@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
     <link rel="stylesheet" href="css/mobile-enhanced.css">
     <script>
         tailwind.config = {
@@ -608,21 +609,77 @@
                         
                         <!-- 我的考试 -->
                         <div class="tab-content hidden" id="my-exams-content">
-                            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-                                <div class="flex items-center justify-between mb-6">
-                                    <div>
-                                        <h3 class="font-bold text-lg flex items-center gap-2">
-                                            <i class="fa fa-clipboard text-primary"></i>
-                                            我的考试
-                                        </h3>
-                                        <p class="text-sm text-gray-500 mt-1">查看已参加的考试记录和成绩</p>
+                            <!-- 考试概览 -->
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                        <i class="fa fa-pie-chart text-primary text-sm"></i>考试概览
+                                    </h3>
+                                    <span class="text-xs text-gray-400" id="exam-stats-update-time"></span>
+                                </div>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 p-4 group hover:shadow-md transition-shadow">
+                                        <div class="absolute -right-3 -top-3 w-16 h-16 bg-blue-100/60 rounded-full blur-sm"></div>
+                                        <i class="fa fa-clipboard text-blue-500 text-lg mb-2 block"></i>
+                                        <div class="text-2xl font-extrabold text-gray-800" id="exam-stat-total">0</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">总考试</div>
                                     </div>
-                                    <div class="text-right">
-                                        <div class="text-2xl font-bold text-primary" id="my-exam-count">0</div>
-                                        <div class="text-xs text-gray-400">场考试</div>
+                                    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-50 to-green-50 p-4 group hover:shadow-md transition-shadow">
+                                        <div class="absolute -right-3 -top-3 w-16 h-16 bg-green-100/60 rounded-full blur-sm"></div>
+                                        <i class="fa fa-check-circle text-emerald-500 text-lg mb-2 block"></i>
+                                        <div class="text-2xl font-extrabold text-gray-800" id="exam-stat-passed">0</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">已通过</div>
+                                    </div>
+                                    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-rose-50 to-red-50 p-4 group hover:shadow-md transition-shadow">
+                                        <div class="absolute -right-3 -top-3 w-16 h-16 bg-rose-100/60 rounded-full blur-sm"></div>
+                                        <i class="fa fa-times-circle text-rose-500 text-lg mb-2 block"></i>
+                                        <div class="text-2xl font-extrabold text-gray-800" id="exam-stat-failed">0</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">未通过</div>
+                                    </div>
+                                    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 p-4 group hover:shadow-md transition-shadow">
+                                        <div class="absolute -right-3 -top-3 w-16 h-16 bg-amber-100/60 rounded-full blur-sm"></div>
+                                        <i class="fa fa-hourglass-half text-amber-500 text-lg mb-2 block"></i>
+                                        <div class="text-2xl font-extrabold text-gray-800" id="exam-stat-pending">0</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">待考试</div>
                                     </div>
                                 </div>
-                                <div id="my-exams-list" class="space-y-4">
+                                <div class="mt-4 pt-4 border-t border-gray-100">
+                                    <div class="flex items-center justify-between text-xs text-gray-400 mb-1.5">
+                                        <span>总体完成进度</span>
+                                        <span id="exam-stat-progress-text">0 / 0 门考试</span>
+                                    </div>
+                                    <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div id="exam-stat-progress-bar" class="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 待考试 -->
+                            <div class="mb-6">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fa fa-hourglass-half text-amber-500"></i>待考试
+                                </h3>
+                                <div id="my-exams-pending" class="space-y-4">
+                                    <!-- 动态渲染 -->
+                                </div>
+                            </div>
+
+                            <!-- 已通过 -->
+                            <div class="mb-6">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fa fa-check-circle text-green-500"></i>已通过
+                                </h3>
+                                <div id="my-exams-passed" class="space-y-4">
+                                    <!-- 动态渲染 -->
+                                </div>
+                            </div>
+
+                            <!-- 未通过 -->
+                            <div class="mb-6">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fa fa-times-circle text-red-500"></i>未通过
+                                </h3>
+                                <div id="my-exams-failed" class="space-y-4">
                                     <!-- 动态渲染 -->
                                 </div>
                             </div>
@@ -648,21 +705,77 @@
                         
                         <!-- 我的培训 -->
                         <div class="tab-content hidden" id="my-trainings-content">
-                            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-                                <div class="flex items-center justify-between mb-6">
-                                    <div>
-                                        <h3 class="font-bold text-lg flex items-center gap-2">
-                                            <i class="fa fa-users text-primary"></i>
-                                            我的培训
-                                        </h3>
-                                        <p class="text-sm text-gray-500 mt-1">查看已参与的培训记录</p>
+                            <!-- 培训概览 -->
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                        <i class="fa fa-pie-chart text-primary text-sm"></i>培训概览
+                                    </h3>
+                                    <span class="text-xs text-gray-400" id="training-stats-update-time"></span>
+                                </div>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 p-4 group hover:shadow-md transition-shadow">
+                                        <div class="absolute -right-3 -top-3 w-16 h-16 bg-blue-100/60 rounded-full blur-sm"></div>
+                                        <i class="fa fa-users text-blue-500 text-lg mb-2 block"></i>
+                                        <div class="text-2xl font-extrabold text-gray-800" id="training-stat-total">0</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">总培训</div>
                                     </div>
-                                    <div class="text-right">
-                                        <div class="text-2xl font-bold text-primary" id="my-training-count">0</div>
-                                        <div class="text-xs text-gray-400">场培训</div>
+                                    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-50 to-green-50 p-4 group hover:shadow-md transition-shadow">
+                                        <div class="absolute -right-3 -top-3 w-16 h-16 bg-green-100/60 rounded-full blur-sm"></div>
+                                        <i class="fa fa-play-circle text-emerald-500 text-lg mb-2 block"></i>
+                                        <div class="text-2xl font-extrabold text-gray-800" id="training-stat-inprogress">0</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">进行中</div>
+                                    </div>
+                                    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 p-4 group hover:shadow-md transition-shadow">
+                                        <div class="absolute -right-3 -top-3 w-16 h-16 bg-amber-100/60 rounded-full blur-sm"></div>
+                                        <i class="fa fa-hourglass-half text-amber-500 text-lg mb-2 block"></i>
+                                        <div class="text-2xl font-extrabold text-gray-800" id="training-stat-pending">0</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">待完成</div>
+                                    </div>
+                                    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 p-4 group hover:shadow-md transition-shadow">
+                                        <div class="absolute -right-3 -top-3 w-16 h-16 bg-violet-100/60 rounded-full blur-sm"></div>
+                                        <i class="fa fa-flag-checkered text-violet-500 text-lg mb-2 block"></i>
+                                        <div class="text-2xl font-extrabold text-gray-800" id="training-stat-ended">0</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">已结束</div>
                                     </div>
                                 </div>
-                                <div id="my-trainings-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="mt-4 pt-4 border-t border-gray-100">
+                                    <div class="flex items-center justify-between text-xs text-gray-400 mb-1.5">
+                                        <span>总体完成进度</span>
+                                        <span id="training-stat-progress-text">0 / 0 项任务</span>
+                                    </div>
+                                    <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div id="training-stat-progress-bar" class="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 进行中 -->
+                            <div class="mb-6">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fa fa-play-circle text-green-500"></i>进行中
+                                </h3>
+                                <div id="my-trainings-in-progress" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- 动态渲染 -->
+                                </div>
+                            </div>
+
+                            <!-- 未开始 -->
+                            <div class="mb-6">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fa fa-clock-o text-blue-500"></i>未开始
+                                </h3>
+                                <div id="my-trainings-not-started" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- 动态渲染 -->
+                                </div>
+                            </div>
+
+                            <!-- 已结束 -->
+                            <div class="mb-6">
+                                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                    <i class="fa fa-check-circle text-gray-500"></i>已结束
+                                </h3>
+                                <div id="my-trainings-ended" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <!-- 动态渲染 -->
                                 </div>
                             </div>
@@ -2251,6 +2364,10 @@ const BADGES = [
 
         // 加载证书
         async function loadCertificates() {
+            if (!currentUser || !currentUser.id) {
+                console.warn('[证书统计] currentUser 未初始化，跳过加载');
+                return;
+            }
             try {
                 const userId = currentUser.id;
                 const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
@@ -2359,6 +2476,13 @@ const BADGES = [
         async function loadCertificatesList() {
             const container = document.getElementById('certificates-list');
             if (!container) return;
+            if (!currentUser || !currentUser.id) {
+                console.warn('[证书列表] currentUser 未初始化，跳过加载');
+                container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400"><p>加载失败，请稍后重试</p></div>';
+                return;
+            }
+
+            const escapeHtml = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
             container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400"><i class="fa fa-spinner fa-spin text-2xl"></i><p class="mt-2">加载中...</p></div>';
 
@@ -2597,16 +2721,90 @@ const BADGES = [
         // 加载我的考试
         async function loadMyExams(force = false) {
             const userId = currentUser?.id;
-            const listEl = document.getElementById('my-exams-list');
-            const countEl = document.getElementById('my-exam-count');
-            if (!userId || !listEl) return;
+            const pendingEl = document.getElementById('my-exams-pending');
+            const passedEl = document.getElementById('my-exams-passed');
+            const failedEl = document.getElementById('my-exams-failed');
+            if (!userId || !pendingEl || !passedEl || !failedEl) return;
 
-            // 已加载过且非强制刷新则直接复用，避免切换 tab 时抖动
-            if (!force && window.myExamItems && listEl.children.length > 0) return;
+            const hasRendered = pendingEl.children.length + passedEl.children.length + failedEl.children.length > 0;
+            if (!force && window.myExamItems && hasRendered) return;
 
             const escapeHtml = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-            listEl.innerHTML = '<div class="py-12 text-center text-gray-400"><i class="fa fa-spinner fa-spin mr-2"></i>加载中...</div>';
+            const loadingHtml = '<div class="py-12 text-center text-gray-400"><i class="fa fa-spinner fa-spin mr-2"></i>加载中...</div>';
+            pendingEl.innerHTML = loadingHtml;
+            passedEl.innerHTML = loadingHtml;
+            failedEl.innerHTML = loadingHtml;
+
+            function renderEmpty(message) {
+                return `
+                    <div class="text-center py-10 text-gray-400 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                        <i class="fa fa-inbox text-gray-300 text-2xl mb-2 block"></i>
+                        <p class="text-sm">${message}</p>
+                    </div>
+                `;
+            }
+
+            function renderExamCard(item) {
+                const score = item.scoreAttempt?.score ?? '-';
+                const passed = item.scoreAttempt?.passed;
+                const category = item.category;
+                const statusText = category === 'passed' ? '已通过' : (category === 'failed' ? '未通过' : '待考试');
+                const statusClass = category === 'passed' ? 'bg-green-100 text-green-700 border-green-200' : (category === 'failed' ? 'bg-red-100 text-red-600 border-red-200' : 'bg-amber-100 text-amber-600 border-amber-200');
+                const barClass = category === 'passed' ? 'bg-green-500' : (category === 'failed' ? 'bg-red-500' : 'bg-amber-500');
+                const scoreClass = category === 'failed' ? 'text-red-500' : 'text-primary';
+                const time = item.scoreAttempt?.completedAt || item.scoreAttempt?.startedAt;
+                const timeStr = time ? new Date(time).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+                const timeLabel = category === 'pending' ? '开始时间' : '考试时间';
+
+                const actionButtons = category === 'pending'
+                    ? `<button onclick="location.href='exam.html?id=${item.exam.id}&returnUrl=center.html'" class="px-4 py-2 rounded-lg bg-gradient-primary text-white text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-1">
+                        <i class="fa fa-play-circle"></i>继续考试
+                       </button>`
+                    : `<button onclick="location.href='exam.html?attemptId=${item.scoreAttempt.id}&returnUrl=center.html'" class="px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 bg-indigo-50 text-sm font-medium hover:bg-indigo-100 transition flex items-center justify-center gap-1">
+                        <i class="fa fa-file-text-o"></i>答题详情
+                       </button>
+                       <button onclick="location.href='exam.html?id=${item.exam.id}&returnUrl=center.html'" class="px-4 py-2 rounded-lg bg-gradient-primary text-white text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-1">
+                        <i class="fa fa-redo"></i>重新考试
+                       </button>`;
+
+                return `
+                <div class="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1.5 ${barClass}"></div>
+                    <div class="p-5 pl-6">
+                        <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between gap-3 mb-2">
+                                    <h4 class="font-bold text-gray-800 text-base truncate">${escapeHtml(item.exam.title)}</h4>
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium border ${statusClass} flex-shrink-0">${statusText}</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-3">
+                                    <span><i class="fa fa-clock-o mr-1 text-primary"></i>${item.exam.duration || '-'}分钟</span>
+                                    <span><i class="fa fa-star mr-1 text-primary"></i>满分${item.exam.totalScore || '-'}分</span>
+                                    <span><i class="fa fa-check-circle mr-1 text-primary"></i>及格线${item.exam.passingScore || '-'}分</span>
+                                    <button onclick="showExamHistory(${item.exam.id})" class="inline-flex items-center text-primary hover:text-indigo-700 hover:underline cursor-pointer bg-transparent border-0 p-0 font-inherit text-sm">
+                                        <i class="fa fa-repeat mr-1 text-primary"></i>已考${item.attempts.length}次
+                                    </button>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-4">
+                                    <div>
+                                        <span class="text-xs text-gray-400 block">考试成绩</span>
+                                        <div class="text-xl font-bold ${scoreClass}">${score}<span class="text-sm font-normal text-gray-400 ml-1">分</span></div>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs text-gray-400 block">${timeLabel}</span>
+                                        <div class="text-sm text-gray-600">${timeStr}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-2 flex-shrink-0">
+                                ${actionButtons}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
             try {
                 const res = await fetch('/api/data');
                 const data = await res.json();
@@ -2614,8 +2812,10 @@ const BADGES = [
                 const attempts = (data.exam_attempts || []).filter(a => String(a.userId) === String(userId));
 
                 if (attempts.length === 0) {
-                    listEl.innerHTML = '<div class="py-12 text-center text-gray-400"><i class="fa fa-clipboard text-4xl mb-3 block opacity-30"></i><p>暂无考试记录</p></div>';
-                    countEl.textContent = '0';
+                    pendingEl.innerHTML = renderEmpty('暂无待考试');
+                    passedEl.innerHTML = renderEmpty('暂无已通过考试');
+                    failedEl.innerHTML = renderEmpty('暂无未通过考试');
+                    updateExamOverview([]);
                     return;
                 }
 
@@ -2638,72 +2838,141 @@ const BADGES = [
                     }
                     return { exam, attempts: list, scoreAttempt, completedCount: completed.length };
                 });
+
+                // 状态分类：只要有及格记录就算已通过；只有 completed 但都不及格算未通过；没有 completed 算待考试
+                items.forEach(item => {
+                    const hasPassed = item.attempts.some(a => a.status === 'completed' && a.passed === true);
+                    const hasCompleted = item.attempts.some(a => a.status === 'completed');
+                    if (hasPassed) item.category = 'passed';
+                    else if (hasCompleted) item.category = 'failed';
+                    else item.category = 'pending';
+                });
+
                 window.myExamItems = items;
 
-                countEl.textContent = items.length;
+                const passed = items.filter(i => i.category === 'passed');
+                const failed = items.filter(i => i.category === 'failed');
+                const pending = items.filter(i => i.category === 'pending');
 
-                listEl.innerHTML = items.map(item => {
-                    const score = item.scoreAttempt?.score ?? '-';
-                    const passed = item.scoreAttempt?.passed;
-                    const statusText = passed === true ? '及格' : (passed === false ? '不及格' : '未完成');
-                    const statusClass = passed === true ? 'bg-green-100 text-green-700' : (passed === false ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600');
-                    const time = item.scoreAttempt?.completedAt || item.scoreAttempt?.startedAt;
-                    const timeStr = time ? new Date(time).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
-                    return `
-                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow">
-                        <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-bold text-gray-800 text-base mb-2">${escapeHtml(item.exam.title)}</h4>
-                                <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-3">
-                                    <span><i class="fa fa-clock-o mr-1 text-primary"></i>${item.exam.duration || '-'}分钟</span>
-                                    <span><i class="fa fa-star mr-1 text-primary"></i>满分${item.exam.totalScore || '-'}分</span>
-                                    <span><i class="fa fa-check-circle mr-1 text-primary"></i>及格线${item.exam.passingScore || '-'}分</span>
-                                    <button onclick="showExamHistory(${item.exam.id})" class="inline-flex items-center text-primary hover:text-indigo-700 hover:underline cursor-pointer bg-transparent border-0 p-0 font-inherit text-sm">
-                                        <i class="fa fa-repeat mr-1 text-primary"></i>已考${item.attempts.length}次
-                                    </button>
-                                </div>
-                                <div class="flex flex-wrap items-center gap-4">
-                                    <div>
-                                        <span class="text-xs text-gray-400 block">考试成绩</span>
-                                        <div class="text-xl font-bold ${passed === false ? 'text-red-500' : 'text-primary'}">${score}<span class="text-sm font-normal text-gray-400 ml-1">分</span></div>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs text-gray-400 block">考试时间</span>
-                                        <div class="text-sm text-gray-600">${timeStr}</div>
-                                    </div>
-                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium ${statusClass}">${statusText}</span>
-                                </div>
-                            </div>
-                            <div class="flex flex-col gap-2 flex-shrink-0">
-                                <button onclick="location.href='exam.html?attemptId=${item.scoreAttempt.id}&returnUrl=center.html'" class="px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 bg-indigo-50 text-sm font-medium hover:bg-indigo-100 transition flex items-center justify-center gap-1">
-                                    <i class="fa fa-file-text-o"></i>答题详情
-                                </button>
-                                <button onclick="location.href='exam.html?id=${item.exam.id}&returnUrl=center.html'" class="px-4 py-2 rounded-lg bg-gradient-primary text-white text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-1">
-                                    <i class="fa fa-redo"></i>重新考试
-                                </button>
-                            </div>
-                        </div>
-                    </div>`;
-                }).join('');
+                updateExamOverview(items);
+
+                pendingEl.innerHTML = pending.length ? pending.map(renderExamCard).join('') : renderEmpty('暂无待考试');
+                passedEl.innerHTML = passed.length ? passed.map(renderExamCard).join('') : renderEmpty('暂无已通过考试');
+                failedEl.innerHTML = failed.length ? failed.map(renderExamCard).join('') : renderEmpty('暂无未通过考试');
             } catch (e) {
-                listEl.innerHTML = '<div class="py-12 text-center text-red-500">加载失败</div>';
+                const errHtml = '<div class="py-12 text-center text-red-500">加载失败</div>';
+                pendingEl.innerHTML = errHtml;
+                passedEl.innerHTML = errHtml;
+                failedEl.innerHTML = errHtml;
                 console.error(e);
             }
+        }
+
+        // 更新考试概览面板
+        function updateExamOverview(items) {
+            const total = items.length;
+            const passed = items.filter(i => i.category === 'passed').length;
+            const failed = items.filter(i => i.category === 'failed').length;
+            const pending = items.filter(i => i.category === 'pending').length;
+            const completed = passed + failed;
+            const progressPercent = total > 0 ? Math.round(completed / total * 100) : 0;
+
+            document.getElementById('exam-stat-total').textContent = total;
+            document.getElementById('exam-stat-passed').textContent = passed;
+            document.getElementById('exam-stat-failed').textContent = failed;
+            document.getElementById('exam-stat-pending').textContent = pending;
+            document.getElementById('exam-stats-update-time').textContent = new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' 更新';
+            document.getElementById('exam-stat-progress-text').textContent = `${completed} / ${total} 门考试`;
+            document.getElementById('exam-stat-progress-bar').style.width = `${progressPercent}%`;
         }
 
         // 加载我的培训
         async function loadMyTrainings(force = false) {
             const userId = currentUser?.id;
-            const listEl = document.getElementById('my-trainings-list');
-            const countEl = document.getElementById('my-training-count');
-            if (!userId || !listEl) return;
+            const inProgressEl = document.getElementById('my-trainings-in-progress');
+            const notStartedEl = document.getElementById('my-trainings-not-started');
+            const endedEl = document.getElementById('my-trainings-ended');
+            if (!userId || !inProgressEl || !notStartedEl || !endedEl) return;
 
-            if (!force && window.myTrainingItems && listEl.children.length > 0) return;
+            const hasRendered = inProgressEl.children.length + notStartedEl.children.length + endedEl.children.length > 0;
+            if (!force && window.myTrainingItems && hasRendered) return;
 
             const escapeHtml = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
             const formatTime = s => s ? new Date(s).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
 
-            listEl.innerHTML = '<div class="col-span-full py-12 text-center text-gray-400"><i class="fa fa-spinner fa-spin mr-2"></i>加载中...</div>';
+            const statusTheme = {
+                '未开始': { bar: 'bg-blue-500', badge: 'bg-blue-50 text-blue-600 border-blue-100', icon: 'fa-clock-o' },
+                '进行中': { bar: 'bg-green-500', badge: 'bg-green-50 text-green-600 border-green-100', icon: 'fa-play-circle' },
+                '已结束': { bar: 'bg-gray-400', badge: 'bg-gray-100 text-gray-600 border-gray-200', icon: 'fa-flag-checkered' }
+            };
+
+            function renderCard(t) {
+                const theme = statusTheme[t.trainingStatus] || statusTheme['已结束'];
+                const pendingTasks = [
+                    t.signinEnabled && !t.signedIn,
+                    t.examEnabled && !t.examDone,
+                    t.surveyEnabled && !t.surveyDone
+                ].filter(Boolean).length;
+                const actionText = t.trainingStatus === '已结束' ? '查看详情' : (pendingTasks > 0 ? `去完成 (${pendingTasks})` : '查看详情');
+
+                const taskItems = [];
+                if (t.signinEnabled) taskItems.push({ done: t.signedIn, icon: t.signedIn ? 'fa-check-circle' : 'fa-circle-o', text: '签到' });
+                if (t.examEnabled) taskItems.push({ done: t.examDone, icon: t.examDone ? 'fa-check-circle' : 'fa-circle-o', text: '考试' });
+                if (t.surveyEnabled) taskItems.push({ done: t.surveyDone, icon: t.surveyDone ? 'fa-check-circle' : 'fa-circle-o', text: '调研' });
+
+                return `
+                <div onclick="location.href='training-plan.html?openTrainingId=${t.id}'" class="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1.5 ${theme.bar}"></div>
+                    <div class="p-5 pl-6">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div class="min-w-0">
+                                <h4 class="font-bold text-gray-800 text-lg leading-tight mb-1 group-hover:text-primary transition-colors truncate">${escapeHtml(t.name)}</h4>
+                                ${t.project ? `<p class="text-sm text-gray-500 truncate">${escapeHtml(t.project)}</p>` : ''}
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium border ${theme.badge} flex-shrink-0 flex items-center gap-1">
+                                <i class="fa ${theme.icon}"></i>${t.trainingStatus}
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-sm text-gray-500 mb-4">
+                            ${t.instructor ? `<div class="flex items-center gap-2"><i class="fa fa-user-o text-primary/70 w-4 text-center"></i><span class="truncate">${escapeHtml(t.instructor)}</span></div>` : ''}
+                            ${t.location ? `<div class="flex items-center gap-2"><i class="fa fa-map-marker text-primary/70 w-4 text-center"></i><span class="truncate">${escapeHtml(t.location)}</span></div>` : ''}
+                            <div class="flex items-center gap-2 sm:col-span-2">
+                                <i class="fa fa-clock-o text-primary/70 w-4 text-center"></i>
+                                <span>${formatTime(t.startTime)} ~ ${formatTime(t.endTime)}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-3 border-t border-gray-50">
+                            <div class="flex items-center gap-3">
+                                ${taskItems.length === 0 ? '<span class="text-xs text-gray-400">无任务要求</span>' : taskItems.map(task => `
+                                    <span class="flex items-center gap-1.5 text-xs ${task.done ? 'text-green-600' : 'text-gray-400'}">
+                                        <i class="fa ${task.icon}"></i>${task.text}
+                                    </span>
+                                `).join('')}
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-xs font-medium text-primary group-hover:text-indigo-700 transition-colors">
+                                ${actionText} <i class="fa fa-angle-right"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            function renderEmpty(message) {
+                return `
+                    <div class="col-span-full text-center py-10 text-gray-400 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                        <i class="fa fa-inbox text-gray-300 text-2xl mb-2 block"></i>
+                        <p class="text-sm">${message}</p>
+                    </div>
+                `;
+            }
+
+            const loadingHtml = '<div class="col-span-full py-12 text-center text-gray-400"><i class="fa fa-spinner fa-spin mr-2"></i>加载中...</div>';
+            inProgressEl.innerHTML = loadingHtml;
+            notStartedEl.innerHTML = loadingHtml;
+            endedEl.innerHTML = loadingHtml;
+
             try {
                 const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
                 const res = await fetch('/api/user/trainings', {
@@ -2714,102 +2983,40 @@ const BADGES = [
 
                 const items = result.list || [];
                 window.myTrainingItems = items;
-                countEl.textContent = items.length;
 
-                if (items.length === 0) {
-                    listEl.innerHTML = `
-                        <div class="col-span-full text-center py-12 text-gray-400">
-                            <div class="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                                <i class="fa fa-users text-gray-300 text-3xl"></i>
-                            </div>
-                            <h3 class="text-lg font-medium text-gray-600 mb-2">暂无培训记录</h3>
-                            <p class="text-sm text-gray-400 mb-4">你还没有参与过任何培训</p>
-                            <a href="training-plan.html" class="inline-flex items-center px-6 py-3 bg-gradient-primary text-white rounded-xl hover:opacity-90 transition-opacity">
-                                <i class="fa fa-compass mr-2"></i>去培训广场
-                            </a>
-                        </div>
-                    `;
-                    return;
-                }
+                const inProgress = items.filter(t => t.trainingStatus === '进行中');
+                const notStarted = items.filter(t => t.trainingStatus === '未开始');
+                const ended = items.filter(t => t.trainingStatus === '已结束');
 
-                const statusTheme = {
-                    '未开始': { bar: 'bg-blue-500', badge: 'bg-blue-50 text-blue-600 border-blue-100', icon: 'fa-clock-o' },
-                    '进行中': { bar: 'bg-green-500', badge: 'bg-green-50 text-green-600 border-green-100', icon: 'fa-play-circle' },
-                    '已结束': { bar: 'bg-gray-400', badge: 'bg-gray-100 text-gray-600 border-gray-200', icon: 'fa-flag-checkered' }
-                };
+                // 概览统计
+                let totalTasks = 0;
+                let completedTasks = 0;
+                items.forEach(t => {
+                    const tasks = [t.signinEnabled, t.examEnabled, t.surveyEnabled].filter(Boolean).length;
+                    const done = [t.signinEnabled && t.signedIn, t.examEnabled && t.examDone, t.surveyEnabled && t.surveyDone].filter(Boolean).length;
+                    totalTasks += tasks;
+                    completedTasks += done;
+                });
+                const pendingTasksTotal = totalTasks - completedTasks;
+                const progressPercent = totalTasks > 0 ? Math.round(completedTasks / totalTasks * 100) : 0;
 
-                listEl.innerHTML = items.map(t => {
-                    const theme = statusTheme[t.trainingStatus] || statusTheme['已结束'];
-                    const pendingTasks = [
-                        t.signinEnabled && !t.signedIn,
-                        t.examEnabled && !t.examDone,
-                        t.surveyEnabled && !t.surveyDone
-                    ].filter(Boolean).length;
-                    const actionText = t.trainingStatus === '已结束' ? '查看详情' : (pendingTasks > 0 ? `去完成 (${pendingTasks})` : '查看详情');
+                document.getElementById('training-stat-total').textContent = items.length;
+                document.getElementById('training-stat-inprogress').textContent = inProgress.length;
+                document.getElementById('training-stat-pending').textContent = pendingTasksTotal;
+                document.getElementById('training-stat-ended').textContent = ended.length;
+                document.getElementById('training-stats-update-time').textContent = new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' 更新';
+                document.getElementById('training-stat-progress-text').textContent = `${completedTasks} / ${totalTasks} 项任务`;
+                document.getElementById('training-stat-progress-bar').style.width = `${progressPercent}%`;
 
-                    const taskItems = [];
-                    if (t.signinEnabled) {
-                        taskItems.push({
-                            done: t.signedIn,
-                            icon: t.signedIn ? 'fa-check-circle' : 'fa-circle-o',
-                            text: '签到'
-                        });
-                    }
-                    if (t.examEnabled) {
-                        taskItems.push({
-                            done: t.examDone,
-                            icon: t.examDone ? 'fa-check-circle' : 'fa-circle-o',
-                            text: '考试'
-                        });
-                    }
-                    if (t.surveyEnabled) {
-                        taskItems.push({
-                            done: t.surveyDone,
-                            icon: t.surveyDone ? 'fa-check-circle' : 'fa-circle-o',
-                            text: '调研'
-                        });
-                    }
-
-                    return `
-                    <div onclick="location.href='training-plan.html?openTrainingId=${t.id}'" class="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer overflow-hidden">
-                        <div class="absolute left-0 top-0 bottom-0 w-1.5 ${theme.bar}"></div>
-                        <div class="p-5 pl-6">
-                            <div class="flex items-start justify-between gap-3 mb-3">
-                                <div class="min-w-0">
-                                    <h4 class="font-bold text-gray-800 text-lg leading-tight mb-1 group-hover:text-primary transition-colors truncate">${escapeHtml(t.name)}</h4>
-                                    ${t.project ? `<p class="text-sm text-gray-500 truncate">${escapeHtml(t.project)}</p>` : ''}
-                                </div>
-                                <span class="px-3 py-1 rounded-full text-xs font-medium border ${theme.badge} flex-shrink-0 flex items-center gap-1">
-                                    <i class="fa ${theme.icon}"></i>${t.trainingStatus}
-                                </span>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-sm text-gray-500 mb-4">
-                                ${t.instructor ? `<div class="flex items-center gap-2"><i class="fa fa-user-o text-primary/70 w-4 text-center"></i><span class="truncate">${escapeHtml(t.instructor)}</span></div>` : ''}
-                                ${t.location ? `<div class="flex items-center gap-2"><i class="fa fa-map-marker text-primary/70 w-4 text-center"></i><span class="truncate">${escapeHtml(t.location)}</span></div>` : ''}
-                                <div class="flex items-center gap-2 sm:col-span-2">
-                                    <i class="fa fa-clock-o text-primary/70 w-4 text-center"></i>
-                                    <span>${formatTime(t.startTime)} ~ ${formatTime(t.endTime)}</span>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center justify-between pt-3 border-t border-gray-50">
-                                <div class="flex items-center gap-3">
-                                    ${taskItems.length === 0 ? '<span class="text-xs text-gray-400">无任务要求</span>' : taskItems.map(task => `
-                                        <span class="flex items-center gap-1.5 text-xs ${task.done ? 'text-green-600' : 'text-gray-400'}">
-                                            <i class="fa ${task.icon}"></i>${task.text}
-                                        </span>
-                                    `).join('')}
-                                </div>
-                                <span class="inline-flex items-center gap-1 text-xs font-medium text-primary group-hover:text-indigo-700 transition-colors">
-                                    ${actionText} <i class="fa fa-angle-right"></i>
-                                </span>
-                            </div>
-                        </div>
-                    </div>`;
-                }).join('');
+                // 渲染分组
+                inProgressEl.innerHTML = inProgress.length ? inProgress.map(renderCard).join('') : renderEmpty('暂无进行中的培训');
+                notStartedEl.innerHTML = notStarted.length ? notStarted.map(renderCard).join('') : renderEmpty('暂无未开始的培训');
+                endedEl.innerHTML = ended.length ? ended.map(renderCard).join('') : renderEmpty('暂无已结束的培训');
             } catch (e) {
-                listEl.innerHTML = '<div class="col-span-full py-12 text-center text-red-500">加载失败</div>';
+                const errHtml = '<div class="col-span-full py-12 text-center text-red-500">加载失败</div>';
+                inProgressEl.innerHTML = errHtml;
+                notStartedEl.innerHTML = errHtml;
+                endedEl.innerHTML = errHtml;
                 console.error(e);
             }
         }
@@ -3313,5 +3520,7 @@ const BADGES = [
             }
         });
     </script>
+    <!-- 证书图片渲染缓存区：离屏渲染证书 DOM 后生成 PNG -->
+    <div id="cert-render-cache" aria-hidden="true" style="position:fixed; left:-9999px; top:-9999px;"></div>
 </body>
 </html>

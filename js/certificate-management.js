@@ -462,7 +462,7 @@
     }
 
     tbody.innerHTML = list.map(uc => `
-      <tr class="border-b hover:bg-amber-50/50 transition-colors">
+      <tr class="border-b hover:bg-indigo-50/50 transition-colors">
         <td class="px-4 py-3 text-sm">${escapeHtml(uc.userName || uc.userId)}</td>
         <td class="px-4 py-3 text-sm text-blue-600">${escapeHtml(uc.certNo)}</td>
         <td class="px-4 py-3 text-sm text-slate-600">${uc.sourceType === 'manual' ? '手动发放' : uc.sourceType === 'exam' ? '考试通过' : '培训完成'}</td>

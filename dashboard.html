@@ -130,7 +130,7 @@
 
     /* 列表行悬浮 */
     #certificate-list-body tr { transition: background .15s ease; }
-    #certificate-list-body tr:hover { background: linear-gradient(90deg, #fffbeb, #ffffff); }
+    #certificate-list-body tr:hover { background: linear-gradient(90deg, #f3e8ff, #ffffff); }
     #certificate-list-body td { vertical-align: middle; }
 
     /* 圆形操作按钮 */
@@ -139,10 +139,10 @@
       font-size: .82rem; background: #fff; border: 1px solid #eef2f7; color: #64748b; transition: all .2s cubic-bezier(.16,1,.3,1);
     }
     .cert-action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px -4px rgba(15,23,42,.18); }
-    .cert-action-btn.view:hover   { color: #2563eb; background: #eff6ff; border-color: #bfdbfe; }
-    .cert-action-btn.edit:hover   { color: #4f46e5; background: #eef2ff; border-color: #c7d2fe; }
-    .cert-action-btn.issue:hover  { color: #059669; background: #ecfdf5; border-color: #a7f3d0; }
-    .cert-action-btn.toggle:hover { color: #d97706; background: #fffbeb; border-color: #fde68a; }
+    .cert-action-btn.view:hover   { color: #9333ea; background: #f3e8ff; border-color: #d8b4fe; }
+    .cert-action-btn.edit:hover   { color: #9333ea; background: #f3e8ff; border-color: #d8b4fe; }
+    .cert-action-btn.issue:hover  { color: #9333ea; background: #f3e8ff; border-color: #d8b4fe; }
+    .cert-action-btn.toggle:hover { color: #9333ea; background: #f3e8ff; border-color: #d8b4fe; }
     .cert-action-btn.del:hover    { color: #dc2626; background: #fef2f2; border-color: #fecaca; }
 
     /* 状态徽章 */
@@ -158,18 +158,18 @@
       position: relative; cursor: pointer; background: #fff; border: 1px solid #e2e8f0; border-radius: 1.1rem;
       padding: .8rem; transition: all .28s cubic-bezier(.16,1,.3,1);
     }
-    .cert-tpl-card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(15,23,42,.12); border-color: #fcd34d; }
+    .cert-tpl-card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(15,23,42,.12); border-color: #d8b4fe; }
     .cert-tpl-card.active {
-      border-color: #f59e0b;
-      box-shadow: 0 0 0 3px rgba(245,158,11,.22), 0 18px 40px rgba(245,158,11,.16);
-      background: linear-gradient(180deg, #fffbeb, #fff);
+      border-color: #9333ea;
+      box-shadow: 0 0 0 3px rgba(147,51,234,.22), 0 18px 40px rgba(147,51,234,.16);
+      background: linear-gradient(180deg, #f3e8ff, #fff);
     }
     .cert-tpl-card.active::before {
       content: "\f00c"; font-family: "Font Awesome 6 Free"; font-weight: 900;
       position: absolute; top: 10px; right: 10px; z-index: 2;
       width: 22px; height: 22px; border-radius: 50%; font-size: .65rem;
       display: flex; align-items: center; justify-content: center;
-      color: #fff; background: #f59e0b; box-shadow: 0 4px 10px -2px rgba(245,158,11,.5);
+      color: #fff; background: #9333ea; box-shadow: 0 4px 10px -2px rgba(147,51,234,.5);
     }
 
     /* 模板预览缩略图 */
@@ -177,9 +177,17 @@
       box-shadow: inset 0 0 0 1px rgba(15,23,42,.06), 0 10px 30px -12px rgba(15,23,42,.25);
     }
 
+    /* 证书主题渐变：与页面主题 #667eea → #764ba2 保持一致 */
+    .cert-gradient {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+    .cert-gradient:hover {
+      background: linear-gradient(135deg, #5a72e3, #6a4191);
+    }
+
     /* 详情弹窗 tab */
     .cert-detail-tab { transition: all .2s ease; cursor: pointer; border-bottom-width: 2px; }
-    .cert-detail-tab[data-active="true"] { color: #d97706; border-color: #f59e0b; }
+    .cert-detail-tab[data-active="true"] { color: #764ba2; border-color: #9333ea; }
   </style>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -1802,9 +1810,9 @@
       <div id="tab-certificates" class="tab-content hidden">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-2xl font-bold text-slate-800 flex items-center">
-            <span class="inline-flex w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 items-center justify-center text-white shadow-sm mr-3"><i class="fas fa-certificate"></i></span>证书管理
+            <span class="inline-flex w-9 h-9 rounded-xl cert-gradient items-center justify-center text-white shadow-sm mr-3"><i class="fas fa-certificate"></i></span>证书管理
           </h2>
-          <button id="cert-new-btn" class="px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 flex items-center">
+          <button id="cert-new-btn" class="px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition cert-gradient flex items-center">
             <i class="fas fa-plus mr-2"></i>新建证书
           </button>
         </div>
@@ -1814,14 +1822,14 @@
           <div class="flex flex-col lg:flex-row lg:items-center gap-3">
             <div class="flex-1 relative">
               <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-              <input type="text" id="cert-search-input" placeholder="搜索证书名称..." class="w-full pl-12 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/60">
+              <input type="text" id="cert-search-input" placeholder="搜索证书名称..." class="w-full pl-12 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/60">
             </div>
-            <select id="cert-status-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            <select id="cert-status-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
               <option value="">全部状态</option>
               <option value="enabled">启用</option>
               <option value="disabled">停用</option>
             </select>
-            <select id="cert-dept-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            <select id="cert-dept-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
               <option value="">全部部门</option>
               <option value="技术部">技术部</option>
               <option value="产品部">产品部</option>
@@ -1829,7 +1837,7 @@
               <option value="市场部">市场部</option>
               <option value="人事部">人事部</option>
             </select>
-            <button id="cert-search-btn" class="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl hover:from-indigo-600 hover:to-blue-700 shadow-sm transition font-medium flex items-center justify-center">
+            <button id="cert-search-btn" class="px-6 py-2.5 cert-gradient text-white rounded-xl shadow-sm transition font-medium flex items-center justify-center">
               <i class="fas fa-search mr-1"></i>查询
             </button>
           </div>
@@ -1837,7 +1845,7 @@
 
         <!-- 统计卡片 -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div class="cert-stat-card" style="--cert-accent:#6366f1;">
+          <div class="cert-stat-card" style="--cert-accent:#764ba2;">
             <div class="cert-stat-icon"><i class="fas fa-layer-group"></i></div>
             <div class="cert-stat-num" id="cert-stat-total">0</div>
             <div class="cert-stat-label">证书总数</div>
@@ -1847,12 +1855,12 @@
             <div class="cert-stat-num" id="cert-stat-enabled">0</div>
             <div class="cert-stat-label">启用中</div>
           </div>
-          <div class="cert-stat-card" style="--cert-accent:#3b82f6;">
+          <div class="cert-stat-card" style="--cert-accent:#9333ea;">
             <div class="cert-stat-icon"><i class="fas fa-award"></i></div>
             <div class="cert-stat-num" id="cert-stat-issued">0</div>
             <div class="cert-stat-label">已颁发人次</div>
           </div>
-          <div class="cert-stat-card" style="--cert-accent:#f59e0b;">
+          <div class="cert-stat-card" style="--cert-accent:#a855f7;">
             <div class="cert-stat-icon"><i class="fas fa-certificate"></i></div>
             <div class="cert-stat-num" id="cert-stat-active">0</div>
             <div class="cert-stat-label">有效证书数</div>
@@ -1862,7 +1870,7 @@
         <!-- 证书列表 -->
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
           <table class="w-full">
-            <thead class="bg-gradient-to-r from-amber-50/70 to-slate-50">
+            <thead class="bg-gradient-to-r from-purple-50/70 to-slate-50">
               <tr>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">证书名称</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">所属部门</th>
@@ -2866,7 +2874,7 @@
     <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
       <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
         <div class="flex items-center gap-2.5">
-          <span class="inline-flex w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 items-center justify-center text-white text-sm shadow-sm"><i class="fas fa-certificate"></i></span>
+          <span class="inline-flex w-8 h-8 rounded-lg cert-gradient items-center justify-center text-white text-sm shadow-sm"><i class="fas fa-certificate"></i></span>
           <h3 class="text-lg font-bold text-slate-800" id="cert-modal-title">新建证书</h3>
         </div>
         <button onclick="window.CertificateMgmt.closeCertificateModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
@@ -2876,12 +2884,12 @@
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">证书名称 <span class="text-red-500">*</span></label>
             <input type="text" id="cert-name" placeholder="例如：优秀学员证书"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm">
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm">
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">所属部门</label>
             <input type="text" id="cert-dept" placeholder="例如：技术部"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm">
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm">
           </div>
         </div>
 
@@ -2889,7 +2897,7 @@
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">有效期类型</label>
             <select id="cert-validity-type"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white">
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm bg-white">
               <option value="permanent">永久有效</option>
               <option value="fixed">固定期限</option>
             </select>
@@ -2897,7 +2905,7 @@
           <div id="cert-validity-days-wrap" class="hidden">
             <label class="block text-sm font-medium text-slate-700 mb-1">有效天数</label>
             <input type="number" id="cert-validity-days" value="365" min="1"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm">
           </div>
         </div>
 
@@ -2907,17 +2915,17 @@
             <div>
               <label class="block text-xs font-medium text-slate-600 mb-1">前缀</label>
               <input type="text" id="cert-prefix" value="CERT" placeholder="CERT"
-                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
             </div>
             <div>
               <label class="block text-xs font-medium text-slate-600 mb-1">起始序号</label>
               <input type="number" id="cert-start-number" value="1" min="1"
-                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
             </div>
             <div>
               <label class="block text-xs font-medium text-slate-600 mb-1">序号位数</label>
               <input type="number" id="cert-digits" value="4" min="1" max="10"
-                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
             </div>
           </div>
           <p class="text-xs text-slate-400 mt-2">编号格式：前缀 + 补零序号，例如 CERT0001</p>
@@ -2931,7 +2939,7 @@
             </div>
             <div class="flex-1">
               <button type="button" id="cert-template-picker-btn"
-                class="px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-lg text-sm hover:from-indigo-600 hover:to-blue-700 shadow-sm transition font-medium">
+                class="px-4 py-2.5 cert-gradient text-white rounded-lg text-sm shadow-sm transition font-medium">
                 <i class="fas fa-th-large mr-1.5"></i>选择模板
               </button>
               <p class="text-xs text-slate-400 mt-2 leading-relaxed">内置多款精美模板，支持实时预览。<br>选择后可在此处查看效果。</p>
@@ -2941,7 +2949,7 @@
       </div>
       <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
         <button id="cert-cancel-btn" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
-        <button id="cert-save-btn" class="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl text-sm font-medium shadow-sm hover:from-indigo-600 hover:to-blue-700 transition">
+        <button id="cert-save-btn" class="px-5 py-2.5 cert-gradient text-white rounded-xl text-sm font-medium shadow-sm transition">
           <i class="fas fa-save mr-1.5"></i>保存
         </button>
       </div>
@@ -2953,7 +2961,7 @@
     <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
       <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
         <div class="flex items-center gap-2.5">
-          <span class="inline-flex w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 items-center justify-center text-white text-sm shadow-sm"><i class="fas fa-th-large"></i></span>
+          <span class="inline-flex w-8 h-8 rounded-lg cert-gradient items-center justify-center text-white text-sm shadow-sm"><i class="fas fa-th-large"></i></span>
           <h3 class="text-lg font-bold text-slate-800">选择证书模板</h3>
         </div>
         <button onclick="document.getElementById('certificate-template-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
@@ -2965,7 +2973,7 @@
       </div>
       <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
         <button id="cert-template-cancel" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
-        <button id="cert-template-confirm" class="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl text-sm font-medium shadow-sm hover:from-indigo-600 hover:to-blue-700 transition">确定</button>
+        <button id="cert-template-confirm" class="px-5 py-2.5 cert-gradient text-white rounded-xl text-sm font-medium shadow-sm transition">确定</button>
       </div>
     </div>
   </div>
@@ -2975,7 +2983,7 @@
     <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
       <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
         <div class="flex items-center gap-2.5">
-          <span class="inline-flex w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 items-center justify-center text-white text-sm shadow-sm"><i class="fas fa-file-alt"></i></span>
+          <span class="inline-flex w-8 h-8 rounded-lg cert-gradient items-center justify-center text-white text-sm shadow-sm"><i class="fas fa-file-alt"></i></span>
           <div>
             <h3 class="text-lg font-bold text-slate-800" id="cert-detail-title">证书详情</h3>
             <div class="flex items-center gap-4 mt-0.5" id="cert-detail-meta"></div>
@@ -2991,7 +2999,7 @@
         </div>
         <div class="bg-white rounded-xl overflow-hidden border border-slate-200">
           <table class="w-full">
-            <thead class="bg-gradient-to-r from-amber-50/70 to-slate-50">
+            <thead class="bg-gradient-to-r from-purple-50/70 to-slate-50">
               <tr>
                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">姓名</th>
                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">证书编号</th>
@@ -3716,7 +3724,6 @@
         const lect = data.lecturers.find(x => x.id == c.lecturerId);
         const st = statusMap[c.status] || statusMap.draft;
         const videoCount = c.videos?.length || 0;
-        const attachmentCount = c.attachments?.length || 0;
         const durationMin = Math.floor((c.duration || 0) / 60);
 
         return `
@@ -3803,7 +3810,6 @@
                 <button onclick="editCourse(${c.id})" class="p-1.5 text-blue-500 hover:bg-blue-50 rounded-md transition" title="编辑">
                   <i class="fas fa-edit text-sm"></i>
                 </button>
-                ${attachmentCount > 0 ? `<span class="text-xs text-emerald-500 px-1" title="${attachmentCount}个附件"><i class="fas fa-paperclip"></i></span>` : ''}
                 <button onclick="toggleCourseStatus(${c.id})" class="p-1.5 ${c.status === 'published' ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'} rounded-md transition" title="${c.status === 'published' ? '下架' : '发布'}">
                   <i class="fas ${c.status === 'published' ? 'fa-arrow-down' : 'fa-arrow-up'} text-sm"></i>
                 </button>
@@ -9472,7 +9478,7 @@
         return;
       }
 
-      if (state.mode === 'assign' && state.targetId && typeof state.onConfirm === 'function') {
+      if ((state.mode === 'assign' || state.mode === 'certificate') && state.targetId && typeof state.onConfirm === 'function') {
         await state.onConfirm(selectedIds);
         closeUnifiedAssignPicker();
         return;

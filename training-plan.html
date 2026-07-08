@@ -60,6 +60,12 @@
         .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .btn-primary:hover { background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%); }
 
+        /* 分类筛选按钮激活态高亮 */
+        .filter-active {
+            box-shadow: 0 0 0 2px #9333ea, 0 0 0 4px #ffffff;
+            transform: scale(1.05);
+        }
+
         /* ===== 培训详情 - 项目内容任务卡片 ===== */
         .tp-progress-top {
             background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
@@ -793,7 +799,7 @@
                                         <span class="font-semibold text-primary" id="monthly-enrolled-count">0</span>
                                     </div>
                                     <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                        <div class="h-full bg-green-500 rounded-full" style="width: 100%;"></div>
+                                        <div id="monthly-enrolled-bar" class="h-full bg-green-500 rounded-full" style="width: 0%;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -871,6 +877,14 @@
         let currentYear = new Date().getFullYear();
         let currentMonth = new Date().getMonth();
         let currentCategoryFilter = 'all';
+        const CATEGORY_FILTER_CLASSES = {
+            'all': ['bg-gradient-primary', 'text-white', 'shadow-lg', 'shadow-purple-500/30'],
+            '新雁计划': ['bg-orange-100', 'text-orange-600', 'hover:bg-orange-200'],
+            '游雁学堂': ['bg-blue-100', 'text-blue-600', 'hover:bg-blue-200'],
+            '鸿雁计划': ['bg-green-100', 'text-green-600', 'hover:bg-green-200'],
+            'AI实践分享': ['bg-amber-100', 'text-amber-600', 'hover:bg-amber-200'],
+            '雏雁训练营': ['bg-red-100', 'text-red-600', 'hover:bg-red-200']
+        };
         let currentSearchTerm = '';
         let currentMonthlyPage = 1; // 当月课程列表当前页码
         const MONTHLY_PAGE_SIZE = 3; // 当月课程列表每页数量
@@ -2428,26 +2442,15 @@
         function filterByCategory(category) {
             currentCategoryFilter = category;
 
-            // 清除所有按钮的主题色类和激活态（避免主题色与灰色/渐变冲突）
-            const themeClasses = [
-                'active', 'bg-gradient-primary', 'text-white', 'shadow-lg', 'shadow-purple-500/30',
-                'bg-gray-100', 'text-gray-600',
-                'bg-orange-100', 'text-orange-600', 'hover:bg-orange-200',
-                'bg-blue-100', 'text-blue-600', 'hover:bg-blue-200',
-                'bg-green-100', 'text-green-600', 'hover:bg-green-200',
-                'bg-amber-100', 'text-amber-600', 'hover:bg-amber-200',
-                'bg-red-100', 'text-red-600', 'hover:bg-red-200'
-            ];
+            // 恢复每个按钮的基础主题色，再单独给当前选中按钮加高亮
             document.querySelectorAll('.filter-tag').forEach(tag => {
-                tag.classList.remove(...themeClasses);
-                tag.classList.add('bg-gray-100', 'text-gray-600');
+                const cat = tag.id.replace('cat-', '');
+                const baseClasses = CATEGORY_FILTER_CLASSES[cat] || ['bg-gray-100', 'text-gray-600'];
+                tag.className = 'filter-tag flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ' + baseClasses.join(' ');
             });
 
             const activeTag = document.getElementById(`cat-${category}`);
-            if (activeTag) {
-                activeTag.classList.add('active', 'bg-gradient-primary', 'text-white', 'shadow-lg', 'shadow-purple-500/30');
-                activeTag.classList.remove('bg-gray-100', 'text-gray-600');
-            }
+            if (activeTag) activeTag.classList.add('filter-active');
 
             // 同步下拉框选中状态，避免按钮与下拉脱节
             const selectEl = document.getElementById('category-filter');
@@ -2710,12 +2713,14 @@
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 
+                let monthlyTotal = 0;         // 本月课程总数
                 let monthlyEnrolled = 0;      // 本月已报名课程数
                 let monthlyCompleted = 0;     // 本月已结束且已报名的课程数
-                
+
                 // 遍历本月课程，统计报名和完成情况
                 courses.forEach(course => {
                     if (course.date && course.date.startsWith(currentMonthStr)) {
+                        monthlyTotal++;
                         const enrollInfo = enrollMap[course.id];
                         const isEnrolled = enrollInfo && enrollInfo.isEnrolled;
 
@@ -2734,11 +2739,12 @@
                         }
                     }
                 });
-                
+
                 // 构建按月统计的数据结构
                 const monthStats = {
                     completed: monthlyCompleted,   // 已结束且已报名
                     enrolled: monthlyEnrolled,     // 已报名总数
+                    total: monthlyTotal,           // 本月课程总数（用于报名进度条分母）
                     month: currentMonthStr
                 };
 
@@ -2753,8 +2759,9 @@
 
         // 更新培训进度显示（按月统计）
         // 已完成培训 = 本月已结束且已报名的课程数 / 本月已报名课程数
+        // 本月已报名进度 = 本月已报名课程数 / 本月课程总数
         function updateTrainingProgress(monthStats) {
-            const { completed, enrolled, month } = monthStats;
+            const { completed, enrolled, total, month } = monthStats;
 
             // 更新已完成培训（本月已结束且已报名的 / 本月已报名的）
             const completedEl = document.getElementById('completed-training-count');
@@ -2769,14 +2776,20 @@
 
             // 更新本月已报名
             const monthlyEl = document.getElementById('monthly-enrolled-count');
+            const monthlyBar = document.getElementById('monthly-enrolled-bar');
             if (monthlyEl) {
                 monthlyEl.textContent = enrolled;
             }
-            
-            console.log('[培训进度] 更新显示:', { 
+            if (monthlyBar) {
+                const percentage = total > 0 ? (enrolled / total * 100) : 0;
+                monthlyBar.style.width = `${percentage}%`;
+            }
+
+            console.log('[培训进度] 更新显示:', {
                 month: month,
-                completed: completed, 
-                enrolled: enrolled
+                completed: completed,
+                enrolled: enrolled,
+                total: total
             });
         }
 
