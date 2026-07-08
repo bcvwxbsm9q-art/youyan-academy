@@ -247,8 +247,8 @@ function initCertificateData() {
       },
       {
         id: 'tpl-completion-gold',
-        name: '金色结业证书（横版）',
-        layout: 'landscape',
+        name: '金色结业证书',
+        layout: 'portrait',
         thumbnail: '',
         style: {
           background: 'radial-gradient(ellipse at 50% 0%, rgba(191,160,95,0.18) 0%, transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(191,160,95,0.12) 0%, transparent 60%), linear-gradient(135deg, #fffdf5 0%, #fcf6e3 50%, #f9efd0 100%)',
@@ -3285,8 +3285,8 @@ app.get('/api/user/trainings', (req, res) => {
       examDone,
       surveyDone,
       signinEnabled: !!event.signinEnabled,
-      examEnabled: !!event.examEnabled,
-      surveyEnabled: !!event.surveyEnabled
+      examEnabled: !!event.examEnabled && !!event.linkedExamId,
+      surveyEnabled: !!event.surveyEnabled && !!event.linkedSurveyId
     };
   }).filter(Boolean).sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0));
 
@@ -5326,6 +5326,7 @@ app.post('/api/certificates', (req, res) => {
     digits: parseInt(payload.digits) || 4,
     templateId: payload.templateId,
     status: payload.status || 'enabled',
+    design: payload.design || null,
     creator: payload.creator || '许志坚',
     createdAt: new Date().toISOString()
   };
@@ -5355,6 +5356,7 @@ app.put('/api/certificates/:id', (req, res) => {
   if (payload.startNumber !== undefined) certificate.startNumber = parseInt(payload.startNumber) || 1;
   if (payload.digits !== undefined) certificate.digits = parseInt(payload.digits) || 4;
   if (payload.templateId !== undefined) certificate.templateId = payload.templateId;
+  if (payload.design !== undefined) certificate.design = payload.design;
   if (payload.status !== undefined) certificate.status = payload.status;
 
   writeData(data);
