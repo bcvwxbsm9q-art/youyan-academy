@@ -1360,7 +1360,8 @@
       "status": "published",
       "id": 1780915939372,
       "createdAt": "2026-06-08T10:52:19.372Z",
-      "updatedAt": "2026-06-10T10:25:32.289Z"
+      "updatedAt": "2026-07-08T09:39:57.565Z",
+      "announcementId": 1782183999956
     },
     {
       "img": "/uploads/covers/1780968839214-49230381.jpg",
@@ -3560,6 +3561,11 @@
       "userId": 1780909174403,
       "noticeId": 1782183999956,
       "readAt": "2026-06-23T03:13:02.348Z"
+    },
+    {
+      "userId": 1781087021554,
+      "noticeId": 1782183999956,
+      "readAt": "2026-07-08T09:44:26.297Z"
     }
   ],
   "index_featured_lecturers": [

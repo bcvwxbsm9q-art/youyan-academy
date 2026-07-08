@@ -586,3 +586,35 @@
 - 验证：dashboard.html 内联脚本解析通过；无新增依赖（SheetJS 已存在）。
 - 产出物：`.trae/documents/20260708_模块0_报表管理导出改为Excel.md`
 - 待人工验证：刷新 `dashboard.html` → 报表管理，分别导出课程/学员/考试/培训报表，确认下载文件为 `.xlsx` 且 Excel 可正常打开。
+
+## 二十六、追加即时修复：轮播管理表单项优化
+
+### 26.1 工程过程
+1. 用户反馈：运营管理后台「轮播管理」添加轮播图时，希望排序和状态放在一行；新增「关联公告」且默认不关联；关联课程/公告的下拉框支持手动输入搜索。
+2. 已创建变更追踪文档 `.trae/documents/20260708_运营管理_优化轮播管理表单项.md`。
+3. 已修改 `dashboard.html`：
+   - 弹窗中排序与状态并排放置；
+   - 新增「关联公告」可搜索下拉；
+   - 将「关联课程」普通下拉改为可搜索下拉；
+   - 轮播列表增加「关联公告」列，同步调整空状态 `colspan`。
+4. 已修改 `dashboard.html` JS：新增可搜索下拉初始化逻辑、课程/公告加载与回填、保存时读取 `announcementId`。
+5. 已修改 `server.js`：
+   - `GET /api/banners` 富化返回 `announcementTitle`；
+   - `POST /api/banners` 与 `PUT /api/banners/:id` 接收并持久化 `announcementId`。
+6. 已修改 `js/index-enhanced.js`：轮播图优先按 `announcementId` 跳转 `messages.html?noticeId=xxx`，其次按 `courseId` 跳转课程页。
+7. 已修改 `messages.html`：页面初始化时识别 URL 参数 `noticeId`，自动打开对应公告详情弹窗。
+8. 已重启 Node 服务并执行浏览器验证。
+
+### 26.2 交接状态
+- 当前任务：轮播管理表单项优化
+- 状态：已完成
+- 阻塞项：无
+
+### 26.3 最终结果
+- 文件：`dashboard.html`、`server.js`、`js/index-enhanced.js`、`messages.html`。
+- 验证：
+  - `node --check server.js`、`node --check js/index-enhanced.js` 通过；
+  - `dashboard.html`、`messages.html` 内联脚本解析通过；
+  - 浏览器验证：弹窗布局正确、可搜索下拉过滤正常、编辑回填正确、列表公告标题显示正确、首页轮播图公告跳转并自动打开详情。
+- 产出物：`.trae/documents/20260708_运营管理_优化轮播管理表单项.md`
+- 注意事项：本地若已有旧 Node 服务运行，需重启服务后刷新页面以加载新接口。

@@ -649,13 +649,72 @@
     content: '表现优异，特发此证，以资鼓励。'
   };
 
+  // ── 专业证书背景预设（防伪纹 / 花边 / 角花 / 水印，纯 CSS+SVG 实现） ──
   const BG_PRESETS = [
-    { key: 'blue', name: '紫韵', css: 'repeating-linear-gradient(45deg, rgba(118,75,162,0.07) 0px, rgba(118,75,162,0.07) 1px, transparent 1px, transparent 12px), radial-gradient(circle at 15% 15%, rgba(102,126,234,0.12) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(118,75,162,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f5f3ff 40%, #ede9fe 100%)' },
-    { key: 'gold', name: '金典', css: 'radial-gradient(ellipse at 50% 0%, rgba(191,160,95,0.18) 0%, transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(191,160,95,0.12) 0%, transparent 60%), linear-gradient(135deg, #fffdf5 0%, #fcf6e3 50%, #f9efd0 100%)' },
-    { key: 'green', name: '青绿', css: 'radial-gradient(circle at 80% 20%, rgba(45,122,78,0.12) 0%, transparent 40%), radial-gradient(circle at 20% 80%, rgba(45,122,78,0.08) 0%, transparent 40%), linear-gradient(160deg, #ffffff 0%, #f2fbf5 50%, #e3f5e9 100%)' },
-    { key: 'purple', name: '典雅', css: 'linear-gradient(135deg, rgba(107,76,154,0.10) 0%, transparent 50%), linear-gradient(225deg, rgba(107,76,154,0.06) 0%, transparent 50%), linear-gradient(135deg, #faf8ff 0%, #f5f2ff 50%, #efe8fc 100%)' },
-    { key: 'white', name: '纯白', css: '#ffffff' },
-    { key: 'cream', name: '米白', css: 'linear-gradient(135deg, #fffdf7 0%, #f5ecd8 100%)' }
+    {
+      key: 'blue-elegant', name: '蓝韵防伪',
+      css: [
+        '#f8fafd',
+        'repeating-linear-gradient(0deg, rgba(59,130,246,.03) 0px, transparent 2px, transparent 18px)',
+        'repeating-linear-gradient(90deg, rgba(59,130,246,.025) 0px, transparent 2px, transparent 24px)',
+        'radial-gradient(ellipse 120% 60% at 50% -10%, rgba(59,130,246,.08) 0%, transparent 70%)',
+        'radial-gradient(ellipse 100% 40% at 50% 110%, rgba(59,130,246,.06) 0%, transparent 65%)',
+        'url("data:image/svg+xml,%3Csvg width=\'120\' height=\'30\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 15 Q15 0 30 15 T60 15 T90 15 T120 15\' fill=\'none\' stroke=\'rgba(59,130,246,.07)\' stroke-width=\'0.7\'/%3E%3Cpath d=\'M0 15 Q15 30 30 15 T60 15 T90 15 T120 15\' fill=\'none\' stroke=\'rgba(59,130,246,.05)\' stroke-width=\'0.5\'/%3E%3C/svg%3E")',
+        'linear-gradient(to right, rgba(59,130,246,.10), rgba(147,197,253,.06), rgba(59,130,246,.10))'
+      ].join(',')
+    },
+    {
+      key: 'gold-classic', name: '金典复古',
+      css: [
+        'linear-gradient(170deg, #fffef8 0%, #fdf8ee 35%, #f9edd5 70%, #f5e6c8 100%)',
+        'repeating-linear-gradient(45deg, rgba(180,140,60,.03) 0px, transparent 1px, transparent 14px)',
+        'repeating-linear-gradient(-45deg, rgba(180,140,60,.02) 0px, transparent 1px, transparent 20px)',
+        'radial-gradient(circle at 50% -5%, rgba(200,160,80,.12) 0%, transparent 55%)',
+        'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'1.5\' fill=\'rgba(180,140,60,.09)\'/%3E%3Ccircle cx=\'30\' cy=\'0\' r=\'1\' fill=\'rgba(180,140,60,.06)\'/%3E%3Ccircle cx=\'30\' cy=\'60\' r=\'1\' fill=\'rgba(180,140,60,.06)\'/%3E%3Ccircle cx=\'0\' cy=\'30\' r=\'1\' fill=\'rgba(180,140,60,.06)\'/%3E%3Ccircle cx=\'60\' cy=\'30\' r=\'1\' fill=\'rgba(180,140,60,.06)\'/%3E%3C/svg%3E")',
+        'linear-gradient(to bottom, rgba(200,160,80,.08), transparent 30%, transparent 70%, rgba(200,160,80,.08))'
+      ].join(',')
+    },
+    {
+      key: 'green-fresh', name: '翠绿清新',
+      css: [
+        '#fafdfb',
+        'repeating-radial-gradient(circle at 50% 50%, transparent 0px, transparent 8px, rgba(34,139,87,.02) 9px, transparent 10px)',
+        'radial-gradient(ellipse 90% 50% at 10% 20%, rgba(34,139,87,.05) 0%, transparent 55%)',
+        'radial-gradient(ellipse 80% 45% at 90% 80%, rgba(34,139,87,.04) 0%, transparent 50%)',
+        'url("data:image/svg+xml,%3Csvg width=\'80\' height=\'80\' viewBox=\'0 0 80 80\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M40 5 Q55 25 75 40 Q55 55 40 75 Q25 25 5 40 Q25 55 40 5z\' fill=\'none\' stroke=\'rgba(34,139,87,.04)\' stroke-width=\'0.6\'/%3E%3C/svg%3E")',
+        'linear-gradient(135deg, rgba(34,139,87,.04), transparent 50%)'
+      ].join(',')
+    },
+    {
+      key: 'purple-noble', name: '紫贵尊荣',
+      css: [
+        'linear-gradient(145deg, #fbf8ff 0%, #f5effe 40%, #ede5fa 100%)',
+        'repeating-conic-gradient(from 0deg at 50% 50%, rgba(124,58,237,.015) 0deg 10deg, transparent 10deg 20deg)',
+        'radial-gradient(ellipse 110% 55% at 50% 0%, rgba(124,58,237,.08) 0%, transparent 60%)',
+        'radial-gradient(ellipse 90% 40% at 50% 100%, rgba(124,58,237,.05) 0%, transparent 55%)',
+        'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 10 C20 0 35 20 50 10 C65 0 80 20 100 10\' fill=\'none\' stroke=\'rgba(124,58,237,.06)\' stroke-width=\'0.6\'/%3E%3Cpath d=\'M0 10 C20 20 35 0 50 10 C65 20 80 0 100 10\' fill=\'none\' stroke=\'rgba(124,58,237,.04)\' stroke-width=\'0.4\'/%3E%3C/svg%3E")',
+        'linear-gradient(to right, rgba(124,58,237,.07), rgba(196,181,253,.05), rgba(124,58,237,.07))'
+      ].join(',')
+    },
+    {
+      key: 'crimson-formal', name: '深蓝庄重',
+      css: [
+        'linear-gradient(160deg, #f7f9fc 0%, #eef3f8 50%, #e4ecf4 100%)',
+        'repeating-linear-gradient(0deg, rgba(30,64,175,.02) 0px, transparent 1px, transparent 16px)',
+        'repeating-linear-gradient(90deg, rgba(30,64,175,.015) 0px, transparent 1px, transparent 22px)',
+        'radial-gradient(ellipse at 50% 50%, rgba(30,64,175,.03) 0%, transparent 65%)',
+        'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect x=\'2\' y=\'2\' width=\'36\' height=\'36\' rx=\'3\' fill=\'none\' stroke=\'rgba(30,64,175,.04)\' stroke-width=\'0.5\'/%3E%3Crect x=\'6\' y=\'6\' width=\'28\' height=\'28\' rx=\'2\' fill=\'none\' stroke=\'rgba(30,64,175,.03)\' stroke-width=\'0.3\'/%3E%3C/svg%3E")'
+      ].join(',')
+    },
+    {
+      key: 'pure-white', name: '纯白简约',
+      css: [
+        '#ffffff',
+        'repeating-linear-gradient(45deg, rgba(148,163,184,.015) 0px, transparent 1px, transparent 18px)',
+        'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(148,163,184,.03) 0%, transparent 50%)',
+        'radial-gradient(ellipse 70% 35% at 50% 100%, rgba(148,163,184,.02) 0%, transparent 45%)'
+      ].join(',')
+    }
   ];
 
   function uid() { return 'el' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -1048,7 +1107,6 @@
     $('#cert-validity-type')?.addEventListener('change', toggleValidityDays);
     $('#cert-save-btn')?.addEventListener('click', saveCertificate);
     $('#cert-cancel-btn')?.addEventListener('click', closeCertificateModal);
-    $('#cert-template-picker-btn')?.addEventListener('click', openTemplatePicker);
     $('#cert-template-confirm')?.addEventListener('click', confirmTemplateSelection);
     $('#cert-template-cancel')?.addEventListener('click', () => closeModal('certificate-template-modal'));
     $('#cert-search-btn')?.addEventListener('click', loadCertificates);

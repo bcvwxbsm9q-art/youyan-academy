@@ -1809,7 +1809,7 @@ const BADGES = [
                             displayColors: false,
                             callbacks: {
                                 title: function(context) {
-                                    return `${currentYear}年${currentMonth + 1}月${context[0].label}`;
+                                    return `${currentYear}年${currentMonth + 1}月${context[0].label}日`;
                                 },
                                 label: function(context) {
                                     const value = context.parsed.y;
@@ -1827,7 +1827,7 @@ const BADGES = [
                     scales: {
                         x: {
                             grid: { display: false },
-                            ticks: { color: '#9ca3af', font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+                            ticks: { color: '#9ca3af', font: { size: 10 }, maxRotation: 0, minRotation: 0, autoSkip: true, maxTicksLimit: 15 }
                         },
                         y: {
                             grid: { color: '#f3f4f6' },
