@@ -486,6 +486,76 @@ function getCourseReportStats(data, courseId) {
   };
 }
 
+// 获取某课程的学员学习明细（用于课程报表弹窗）
+function getCourseLearnerDetails(data, course) {
+  const cid = String(course.id);
+  const users = data.registered_users || [];
+  const prefix = cid + '_';
+  const courseVideos = course.videos || [];
+
+  return users.map(u => {
+    const uid = String(u.id);
+    const record = data['user_learning_' + uid] || data['learning_data_' + uid] || {};
+    const progress = record.videoProgress || {};
+    const completedCourses = record.completedCourses || [];
+    const studyRecords = record.studyRecords || [];
+
+    const courseProgressKeys = Object.keys(progress).filter(k => String(k).startsWith(prefix));
+    const hasProgress = courseProgressKeys.length > 0;
+    const manuallyCompleted = completedCourses.some(id => String(id) === cid);
+
+    // 期望的视频进度键：以课程 videos 数组为准；若无 videos 则使用已有的进度键
+    const expectedKeys = courseVideos.length > 0
+      ? courseVideos.map((_, idx) => `${cid}_${idx}`)
+      : courseProgressKeys;
+    const allVideosFinished = expectedKeys.length > 0 && expectedKeys.every(k => Number(progress[k]) === 100);
+    const isCompleted = manuallyCompleted || allVideosFinished;
+
+    if (!hasProgress && !isCompleted) return null;
+
+    // 学习时长：按该课程的 studyRecords duration 累加（秒 -> 小时）
+    const courseStudyRecords = studyRecords.filter(r => String(r.courseId) === cid);
+    const totalSeconds = courseStudyRecords.reduce((s, r) => s + (Number(r.duration) || 0), 0);
+    const hours = +(totalSeconds / 3600).toFixed(1);
+
+    // 首次学习时间
+    const firstStudyTime = courseStudyRecords.length
+      ? new Date(Math.min(...courseStudyRecords.map(r => new Date(r.timestamp).getTime()))).toLocaleString('zh-CN')
+      : '-';
+
+    // 首次完成学习时间：取该课程 studyRecords 中对应视频进度达到 100% 的最早记录
+    let firstCompleteTime = '-';
+    if (isCompleted) {
+      const completeRecords = courseStudyRecords.filter(r => {
+        const key = `${cid}_${r.videoIndex}`;
+        return Number(progress[key]) === 100;
+      });
+      if (completeRecords.length) {
+        firstCompleteTime = new Date(Math.min(...completeRecords.map(r => new Date(r.timestamp).getTime()))).toLocaleString('zh-CN');
+      } else if (manuallyCompleted) {
+        firstCompleteTime = '已完成（无明细时间）';
+      }
+    }
+
+    // 学习进度：该课程所有视频的平均进度
+    const avgProgress = expectedKeys.length
+      ? Math.round(expectedKeys.reduce((s, k) => s + (Number(progress[k]) || 0), 0) / expectedKeys.length)
+      : (isCompleted ? 100 : 0);
+
+    return {
+      userId: uid,
+      realName: u.realName || u.username || '-',
+      department: u.department || '-',
+      position: u.position || '-',
+      hours,
+      status: isCompleted ? '已完成' : '学习中',
+      firstStudyTime,
+      firstCompleteTime,
+      progress: avgProgress
+    };
+  }).filter(Boolean);
+}
+
 // 同步培训的 allowedUsers 到报名记录和指派历史（创建/编辑培训时自动调用）
 function syncTrainingAllowedUsers(data, trainingId, allowedUsers) {
   if (!Array.isArray(allowedUsers) || allowedUsers.length === 0) return [];
@@ -975,6 +1045,22 @@ app.get('/api/data/courses', (req, res) => {
     };
   });
   res.json(courses);
+});
+
+// GET /api/courses/:id/learners - 课程学员学习明细（课程报表弹窗）
+app.get('/api/courses/:id/learners', (req, res) => {
+  const data = readData();
+  const courseId = req.params.id;
+  const course = (data.management_courses || []).find(c => String(c.id) === String(courseId));
+  if (!course) {
+    return res.status(404).json({ error: '课程不存在' });
+  }
+  const learners = getCourseLearnerDetails(data, course);
+  res.json({
+    courseId,
+    courseTitle: course.title || '',
+    learners
+  });
 });
 
 // GET /api/data/categories - dashboard.html 兼容路由

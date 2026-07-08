@@ -533,3 +533,32 @@
   - `POST /api/notifications/batch-read` 与 `DELETE /api/notifications/:id` 对 `notification_nt-...` ID 均返回 200。
 - 产出物：`.trae/documents/20260708_模块0_修复通知已读标记失败.md`
 - 待人工验证：在浏览器中打开消息中心，点击证书通知，确认消息行红点消失、顶部未读数减少；切换到首页/课程页/个人中心，确认铃铛红点同步消失。
+
+## 二十四、追加需求：培训报表三列拆分与课程报表学员详情弹窗
+
+### 24.1 工程过程
+1. 用户反馈：培训报表「员工报名人数」「任务指派人数」两列数据不够完整，希望拆分为「报名总人数」「指派人数」「自主报名」三列，与培训管理-报名分析口径一致。
+2. 用户反馈：课程报表「学习人数」希望可点击弹出学员详情（姓名、部门、岗位、学习时长、完成状态、首次学习时间、首次完成学习时间、学习进度）。
+3. 用户反馈：课程报表学习时长希望改用 H（小时）呈现。
+4. 已创建变更追踪文档 `.trae/documents/20260708_模块0_报表优化培训与课程.md`。
+5. 已修改 `server.js`：
+   - 新增 `getCourseLearnerDetails(data, course)` 函数，基于 `user_learning_*` / `learning_data_*` 记录聚合课程学员明细。
+   - 新增 `GET /api/courses/:id/learners` 接口，返回学员姓名、部门、岗位、学习时长（小时）、完成状态、首次学习时间、首次完成学习时间、学习进度。
+6. 已修改 `dashboard.html`：
+   - 培训报表表头改为「报名总人数」「指派人数」「自主报名」，数据行同步展示 `totalCount / assignCount / activeEnrollCount`，空状态 `colspan` 改为 13。
+   - 培训报表 CSV 导出同步更新为三列。
+   - 课程报表「学时」表头改为「学习时长」，数值按秒转小时并加 `H` 后缀；CSV 导出同步。
+   - 课程报表「学习人数」单元格增加点击事件，调用 `openCourseLearnersModal(courseId)`。
+   - 新增 `#course-learners-modal` 弹窗与 `openCourseLearnersModal / closeCourseLearnersModal` 函数，异步加载并渲染学员详情列表。
+7. 已执行 `node --check server.js` 与 dashboard.html 内联脚本语法检查，均通过。
+
+### 24.2 交接状态
+- 当前任务：培训报表三列拆分与课程报表学员详情弹窗
+- 状态：已完成
+- 阻塞项：无
+
+### 24.3 最终结果
+- 文件：`server.js`、`dashboard.html`。
+- 验证：`node --check server.js` 通过；dashboard.html 内联脚本解析通过。
+- 产出物：`.trae/documents/20260708_模块0_报表优化培训与课程.md`
+- 待人工验证：重启 Node 服务后打开 `dashboard.html` → 报表管理，确认培训报表三列数据正确、课程报表学习时长单位为 H、点击学习人数可弹出学员详情列表。

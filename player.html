@@ -766,11 +766,16 @@
             const key = `user_learning_${userId}`;
             let data = window.DataAPI ? window.DataAPI.get(key) : null;
             if (!data) {
-                data = { totalHours: 0, totalSeconds: 0, completedCourses: [], videoProgress: {}, lastStudyTime: null, studyDates: [], studyRecords: [] };
+                data = { totalHours: 0, totalSeconds: 0, completedCourses: [], videoProgress: {}, videoWatchTimes: {}, lastStudyTime: null, studyDates: [], studyRecords: [] };
             }
             data.totalSeconds = (data.totalSeconds || 0) + increment;
             data.totalHours = Math.floor(data.totalSeconds / 3600);
             data.lastStudyTime = new Date().toISOString();
+
+            // 累计当前视频真实观看时长
+            if (!data.videoWatchTimes) data.videoWatchTimes = {};
+            const watchKey = `${courseId}_${lastVideoIndex}`;
+            data.videoWatchTimes[watchKey] = (data.videoWatchTimes[watchKey] || 0) + increment;
 
             const api = window.DataAPI;
             const course = api.getCourse(courseId);

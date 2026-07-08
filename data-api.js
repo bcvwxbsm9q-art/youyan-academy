@@ -656,6 +656,7 @@
                     totalHours: 0,
                     completedCourses: [],
                     videoProgress: {},
+                    videoWatchTimes: {},
                     lastStudyTime: null,
                     studyDates: [],
                     ratings: 0,
@@ -681,14 +682,9 @@
             const currentProgress = data.videoProgress[key] || 0;
             data.videoProgress[key] = Math.max(currentProgress, progress);
 
-            const course = this.getCourse(courseId);
-            if (course && course.videos) {
-                const allWatched = course.videos.every((v, i) => {
-                    const vKey = `${courseId}_${i}`;
-                    return (data.videoProgress[vKey] || 0) >= 100;
-                });
-                
-                if (allWatched && !data.completedCourses.includes(courseId)) {
+            // 基于真实观看时长判断课程是否完成，不再仅因进度达到 100% 就自动加入 completedCourses
+            if (this.isCourseCompleted(userId, courseId)) {
+                if (!data.completedCourses.includes(courseId)) {
                     data.completedCourses.push(courseId);
                 }
             }
@@ -706,7 +702,23 @@
          */
         isCourseCompleted(userId, courseId) {
             const data = this.getUserLearningData(userId);
-            return data.completedCourses.includes(courseId);
+            // 历史已完成兼容
+            if (data.completedCourses.includes(courseId)) return true;
+
+            const course = this.getCourse(courseId);
+            if (!course || !course.videos || course.videos.length === 0) return false;
+            if (!data.videoWatchTimes) return false;
+
+            return course.videos.every((v, i) => {
+                const key = `${courseId}_${i}`;
+                const watched = data.videoWatchTimes[key] || 0;
+                const duration = v.duration || 0;
+                // 没有时长信息时回退到进度判断，保证兼容性
+                if (!duration || duration <= 0) {
+                    return (data.videoProgress[key] || 0) >= 100;
+                }
+                return watched >= duration;
+            });
         },
 
         // ========== 数据重置 ==========

@@ -181,6 +181,10 @@
     $('#cert-start-number').value = cert ? (cert.startNumber || 1) : 1;
     $('#cert-digits').value = cert ? (cert.digits || 4) : 4;
 
+    currentDesign = (cert && cert.design) ? deepClone(cert.design) : null;
+    if (currentDesign) currentDesign._tpl = cert.templateId;
+    editorState = null;
+
     selectedTemplateId = cert ? cert.templateId : (templates[0]?.id || '');
     updateTemplatePreview();
     toggleValidityDays();
@@ -214,6 +218,7 @@
       startNumber: parseInt($('#cert-start-number').value) || 1,
       digits: parseInt($('#cert-digits').value) || 4,
       templateId: selectedTemplateId,
+      design: currentDesign,
       status: 'enabled'
     };
 
@@ -336,8 +341,11 @@
 
   function selectTemplate(tplId) {
     selectedTemplateId = tplId;
+    if (!(currentDesign && currentDesign._tpl === tplId)) currentDesign = null;
     renderTemplatePicker();
     updateTemplatePreview();
+    closeModal('certificate-template-modal');
+    openCertificateEditor();
   }
 
   function confirmTemplateSelection() {
@@ -349,6 +357,10 @@
     const tpl = templates.find(t => t.id === selectedTemplateId);
     const preview = $('#cert-template-preview');
     if (!preview) return;
+    if (currentDesign) {
+      preview.innerHTML = renderDesignPreviewBox(currentDesign, 208, 160);
+      return;
+    }
     if (!tpl) {
       preview.innerHTML = '<span class="text-slate-400">请选择模板</span>';
       return;
@@ -601,6 +613,404 @@
       `);
       win.document.close();
     });
+  }
+
+  // ============================================================
+  //  证书可视化编辑器
+  // ============================================================
+  let currentDesign = null;   // 已应用到当前证书的设计（随保存提交）
+  let editorState = null;     // 编辑器内正在编辑的设计副本
+  let selectedElId = null;    // 当前选中元素 id（文字 id 或 'seal'）
+
+  const EDITOR_PAGE = { portrait: { w: 340, h: 480 }, landscape: { w: 480, h: 340 } };
+  const PRINT_SCALE = 2.5;    // 编辑像素 → A4 打印像素
+
+  const EDITOR_SAMPLE = {
+    title: '荣誉证书', name: '张三', certNo: 'CERT0001',
+    date: '2026-07-08', company: '广州游雁网络科技有限公司',
+    content: '表现优异，特发此证，以资鼓励。'
+  };
+
+  const BG_PRESETS = [
+    { key: 'blue', name: '紫韵', css: 'repeating-linear-gradient(45deg, rgba(118,75,162,0.07) 0px, rgba(118,75,162,0.07) 1px, transparent 1px, transparent 12px), radial-gradient(circle at 15% 15%, rgba(102,126,234,0.12) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(118,75,162,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f5f3ff 40%, #ede9fe 100%)' },
+    { key: 'gold', name: '金典', css: 'radial-gradient(ellipse at 50% 0%, rgba(191,160,95,0.18) 0%, transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(191,160,95,0.12) 0%, transparent 60%), linear-gradient(135deg, #fffdf5 0%, #fcf6e3 50%, #f9efd0 100%)' },
+    { key: 'green', name: '青绿', css: 'radial-gradient(circle at 80% 20%, rgba(45,122,78,0.12) 0%, transparent 40%), radial-gradient(circle at 20% 80%, rgba(45,122,78,0.08) 0%, transparent 40%), linear-gradient(160deg, #ffffff 0%, #f2fbf5 50%, #e3f5e9 100%)' },
+    { key: 'purple', name: '典雅', css: 'linear-gradient(135deg, rgba(107,76,154,0.10) 0%, transparent 50%), linear-gradient(225deg, rgba(107,76,154,0.06) 0%, transparent 50%), linear-gradient(135deg, #faf8ff 0%, #f5f2ff 50%, #efe8fc 100%)' },
+    { key: 'white', name: '纯白', css: '#ffffff' },
+    { key: 'cream', name: '米白', css: 'linear-gradient(135deg, #fffdf7 0%, #f5ecd8 100%)' }
+  ];
+
+  function uid() { return 'el' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+  function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+  function fillTokens(text, fill) {
+    return String(text == null ? '' : text).replace(/\{\{(\w+)\}\}/g, (m, k) => (fill[k] !== undefined ? fill[k] : m));
+  }
+  function bgCss(bg) {
+    if (!bg) return '#ffffff';
+    if (bg.type === 'image') return `background-image:url('${bg.value}');background-size:cover;background-position:center;`;
+    return `background:${BG_PRESETS.find(p => p.key === bg.value)?.css || '#fff'};`;
+  }
+
+  function buildDefaultDesign(tpl) {
+    const pc = tpl.style.primaryColor, bc = tpl.style.borderColor;
+    const ac = tpl.style.accentColor || bc, sc = tpl.style.sealColor || pc;
+    const fn = tpl.style.fontFamily;
+    return {
+      _tpl: tpl.id,
+      layout: tpl.layout || 'portrait',
+      background: { type: 'preset', value: tpl.id },
+      borderColor: bc, accentColor: ac, fontFamily: fn,
+      elements: [
+        { id: uid(), type: 'text', key: 'title', x: 30, y: 34, w: 280, h: 48, text: '{{title}}', fontSize: 30, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center', color: pc, underline: false, fontFamily: fn },
+        { id: uid(), type: 'text', key: 'subtitle', x: 110, y: 92, w: 120, h: 22, text: '兹证明', fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center', color: pc, underline: false, fontFamily: fn },
+        { id: uid(), type: 'text', key: 'name', x: 60, y: 120, w: 220, h: 42, text: '{{name}}', fontSize: 26, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center', color: pc, underline: true, fontFamily: fn },
+        { id: uid(), type: 'text', key: 'content', x: 40, y: 176, w: 260, h: 74, text: '{{content}}', fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center', color: '#475569', underline: false, fontFamily: fn },
+        { id: uid(), type: 'text', key: 'certNo', x: 28, y: 402, w: 170, h: 22, text: '证书编号：{{certNo}}', fontSize: 12, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'left', color: '#475569', underline: false, fontFamily: fn },
+        { id: uid(), type: 'text', key: 'date', x: 182, y: 402, w: 130, h: 22, text: '颁发日期：{{date}}', fontSize: 12, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right', color: '#475569', underline: false, fontFamily: fn },
+        { id: uid(), type: 'text', key: 'company', x: 40, y: 440, w: 260, h: 22, text: '{{company}}', fontSize: 12, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center', color: '#475569', underline: false, fontFamily: fn }
+      ],
+      seal: { id: 'seal', text: '认证专用章', x: 228, y: 350, size: 80, color: sc }
+    };
+  }
+
+  // 设计 → 页面 HTML（预览 / 打印通用，scale 决定尺寸）
+  function renderDesignPageInner(d, scale, fill) {
+    const dims = EDITOR_PAGE[d.layout];
+    const pw = dims.w * scale, ph = dims.h * scale;
+    const bc = d.borderColor, ac = d.accentColor;
+    let s = `<div class="cert-design-page" style="width:${pw}px;height:${ph}px;${bgCss(d.background)}">`;
+    s += `<div style="position:absolute;inset:${6 * scale}px;border:${2 * scale}px solid ${bc};opacity:0.4;pointer-events:none;"></div>`;
+    s += `<div style="position:absolute;inset:${12 * scale}px;border:1px solid ${bc};opacity:0.22;pointer-events:none;"></div>`;
+    [['top', 'left'], ['top', 'right'], ['bottom', 'left'], ['bottom', 'right']].forEach(([v, h]) => {
+      s += `<div style="position:absolute;${v}:${10 * scale}px;${h}:${10 * scale}px;width:${10 * scale}px;height:${10 * scale}px;border-${v === 'top' ? 'top' : 'bottom'}:${3 * scale}px solid ${ac};border-${h}:${3 * scale}px solid ${ac};opacity:0.6;"></div>`;
+    });
+    (d.elements || []).forEach(el => {
+      const fs = el.fontSize * scale;
+      const justify = el.textAlign === 'center' ? 'center' : el.textAlign === 'right' ? 'flex-end' : 'flex-start';
+      s += `<div class="cert-design-el" style="left:${el.x * scale}px;top:${el.y * scale}px;width:${el.w * scale}px;height:${el.h * scale}px;font-size:${fs}px;font-weight:${el.fontWeight};font-style:${el.fontStyle};text-align:${el.textAlign};color:${el.color};font-family:${el.fontFamily};text-decoration:${el.underline ? 'underline' : 'none'};display:flex;align-items:center;justify-content:${justify};padding:2px 4px;box-sizing:border-box;">${escapeHtml(fillTokens(el.text, fill))}</div>`;
+    });
+    if (d.seal) {
+      const sz = d.seal.size * scale, fs2 = Math.max(8, sz * 0.16);
+      s += `<div class="cert-design-seal" style="left:${d.seal.x * scale}px;top:${d.seal.y * scale}px;width:${sz}px;height:${sz}px;color:${d.seal.color};border:${3 * scale}px solid ${d.seal.color};font-family:${d.fontFamily};"><div style="font-size:${fs2}px;font-weight:700;line-height:1.1;">${escapeHtml(fillTokens(d.seal.text, fill))}</div></div>`;
+    }
+    s += '</div>';
+    return s;
+  }
+
+  function renderDesignPreviewBox(design, boxW, boxH) {
+    const dims = EDITOR_PAGE[design.layout];
+    const scale = Math.min(boxW / dims.w, boxH / dims.h);
+    const pageW = dims.w * scale, pageH = dims.h * scale;
+    const offX = (boxW - pageW) / 2, offY = (boxH - pageH) / 2;
+    return `<div style="position:relative;width:${boxW}px;height:${boxH}px;overflow:hidden;background:#f8fafc;">
+      <div style="position:absolute;left:${offX}px;top:${offY}px;width:${pageW}px;height:${pageH}px;overflow:hidden;box-shadow:0 8px 24px rgba(15,23,42,.18);">
+        ${renderDesignPageInner(design, scale, EDITOR_SAMPLE)}
+      </div></div>`;
+  }
+
+  // ---------- 编辑器打开 / 关闭 ----------
+  function openCertificateEditor() {
+    if (!selectedTemplateId) { showToast('请先选择模板', 'error'); return; }
+    const tpl = templates.find(t => t.id === selectedTemplateId);
+    if (!tpl) return;
+    if (!editorState || editorState._tpl !== selectedTemplateId) {
+      editorState = (currentDesign && currentDesign._tpl === selectedTemplateId) ? deepClone(currentDesign) : buildDefaultDesign(tpl);
+      editorState._tpl = selectedTemplateId;
+    }
+    openModal('certificate-editor-modal');
+    syncEditorUI();
+    renderEditorPage();
+  }
+  function closeEditor() { closeModal('certificate-editor-modal'); }
+
+  function syncEditorUI() {
+    const d = editorState;
+    $('#et-orient-portrait')?.classList.toggle('active', d.layout === 'portrait');
+    $('#et-orient-landscape')?.classList.toggle('active', d.layout === 'landscape');
+    renderBgGrid();
+    selectElement(null);
+  }
+
+  function renderBgGrid() {
+    const grid = $('#et-bg-grid'); if (!grid) return;
+    grid.innerHTML = BG_PRESETS.map(p => {
+      const active = editorState.background.type === 'preset' && editorState.background.value === p.key;
+      return `<div class="cert-bg-swatch ${active ? 'active' : ''}" data-bg="${p.key}" style="background:${p.css};" title="${p.name}"></div>`;
+    }).join('');
+    grid.querySelectorAll('[data-bg]').forEach(sw => {
+      sw.addEventListener('click', () => setBackground('preset', sw.dataset.bg));
+    });
+  }
+
+  // ---------- 画布渲染（可交互） ----------
+  function handleHTML() {
+    return ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'].map(dir =>
+      `<div class="cert-el-handle ${dir}" data-dir="${dir}"></div>`).join('');
+  }
+  function createTextNode(el) {
+    const node = document.createElement('div');
+    node.className = 'cert-el';
+    node.dataset.id = el.id;
+    applyTextNodeStyle(node, el);
+    node.innerHTML = `<span class="cert-el-text">${escapeHtml(fillTokens(el.text, EDITOR_SAMPLE))}</span>` + handleHTML();
+    return node;
+  }
+  function applyTextNodeStyle(node, el) {
+    node.style.left = el.x + 'px'; node.style.top = el.y + 'px';
+    node.style.width = el.w + 'px'; node.style.height = el.h + 'px';
+    node.style.fontSize = el.fontSize + 'px';
+    node.style.fontWeight = el.fontWeight; node.style.fontStyle = el.fontStyle;
+    node.style.textAlign = el.textAlign; node.style.color = el.color; node.style.fontFamily = el.fontFamily;
+    node.style.textDecoration = el.underline ? 'underline' : 'none';
+  }
+  function createSealNode(seal) {
+    const node = document.createElement('div');
+    node.className = 'cert-seal';
+    node.dataset.id = 'seal';
+    applySealNodeStyle(node, seal);
+    const fs = Math.max(10, seal.size * 0.16);
+    node.innerHTML = `<span class="cs-text">${escapeHtml(fillTokens(seal.text, EDITOR_SAMPLE))}</span>` +
+      ['nw', 'ne', 'sw', 'se'].map(dir => `<div class="cert-el-handle ${dir}" data-dir="${dir}"></div>`).join('');
+    node.querySelector('.cs-text').style.fontSize = fs + 'px';
+    return node;
+  }
+  function applySealNodeStyle(node, seal) {
+    node.style.left = seal.x + 'px'; node.style.top = seal.y + 'px';
+    node.style.width = seal.size + 'px'; node.style.height = seal.size + 'px';
+    node.style.color = seal.color; node.style.fontFamily = editorState.fontFamily;
+  }
+
+  function renderEditorPage() {
+    const page = $('#et-page'); if (!page) return;
+    const d = editorState;
+    const dims = EDITOR_PAGE[d.layout];
+    page.style.width = dims.w + 'px'; page.style.height = dims.h + 'px';
+    page.style.cssText = page.style.cssText; // reset
+    page.setAttribute('style', `width:${dims.w}px;height:${dims.h}px;position:relative;${bgCss(d.background)}box-shadow:0 20px 60px rgba(0,0,0,.5);`);
+    page.innerHTML = `<div class="cep-border" style="inset:6px;border:2px solid ${d.borderColor};opacity:0.4;"></div>
+      <div class="cep-border" style="inset:12px;border:1px solid ${d.borderColor};opacity:0.22;"></div>`;
+    (d.elements || []).forEach(el => {
+      const node = createTextNode(el);
+      page.appendChild(node);
+      attachEl(node, el);
+    });
+    if (d.seal) {
+      const sn = createSealNode(d.seal);
+      page.appendChild(sn);
+      attachEl(sn, d.seal, true);
+    }
+    selectElement(null);
+  }
+
+  // ---------- 元素事件：拖拽 / 缩放 / 选中 / 编辑 ----------
+  let dragState = null;
+  function attachEl(node, el, isSeal) {
+    node.addEventListener('mousedown', e => onElMouseDown(e, el, isSeal, node));
+    if (!isSeal) {
+      node.addEventListener('dblclick', e => {
+        e.preventDefault();
+        const span = node.querySelector('.cert-el-text');
+        if (!span) return;
+        span.setAttribute('contenteditable', 'true');
+        span.focus();
+        document.execCommand && document.getSelection().selectAllChildren(span);
+        const finish = () => {
+          el.text = span.innerText;
+          span.removeAttribute('contenteditable');
+          span.removeEventListener('blur', finish);
+          refreshTextNode(node, el);
+          syncPropPanel();
+        };
+        span.addEventListener('blur', finish);
+      });
+    }
+  }
+  function onElMouseDown(e, el, isSeal, node) {
+    if (e.target.isContentEditable) return; // 正在编辑文字
+    e.preventDefault(); e.stopPropagation();
+    const handle = e.target.closest('[data-dir]');
+    selectElement(isSeal ? 'seal' : el.id);
+    const page = $('#et-page');
+    const rect = page.getBoundingClientRect();
+    const scale = rect.width / EDITOR_PAGE[editorState.layout].w;
+    if (handle) {
+      dragState = { mode: 'resize', dir: handle.dataset.dir, id: isSeal ? 'seal' : el.id, isSeal, startX: e.clientX, startY: e.clientY, orig: isSeal ? { ...editorState.seal } : { ...el } };
+    } else {
+      const cur = isSeal ? editorState.seal : el;
+      dragState = { mode: 'move', id: isSeal ? 'seal' : el.id, isSeal, startX: e.clientX, startY: e.clientY, ox: cur.x, oy: cur.y };
+    }
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+  }
+  function onDragMove(e) {
+    if (!dragState) return;
+    const page = $('#et-page');
+    const rect = page.getBoundingClientRect();
+    const scale = rect.width / EDITOR_PAGE[editorState.layout].w;
+    const dx = (e.clientX - dragState.startX) / scale;
+    const dy = (e.clientY - dragState.startY) / scale;
+    const dims = EDITOR_PAGE[editorState.layout];
+    const node = page.querySelector(`[data-id="${dragState.id}"]`);
+    if (dragState.mode === 'move') {
+      const cur = dragState.isSeal ? editorState.seal : editorState.elements.find(x => x.id === dragState.id);
+      const w = dragState.isSeal ? cur.size : cur.w;
+      const h = dragState.isSeal ? cur.size : cur.h;
+      cur.x = clamp(dragState.ox + dx, 0, dims.w - w);
+      cur.y = clamp(dragState.oy + dy, 0, dims.h - h);
+      node.style.left = cur.x + 'px'; node.style.top = cur.y + 'px';
+    } else {
+      const o = dragState.orig;
+      if (dragState.isSeal) {
+        const ns = clamp(o.size + (dx + dy), 30, 220);
+        editorState.seal.size = ns;
+        editorState.seal.x = clamp(o.x + (o.size - ns) / 2, 0, dims.w - ns);
+        editorState.seal.y = clamp(o.y + (o.size - ns) / 2, 0, dims.h - ns);
+        refreshSealNode();
+      } else {
+        let { x, y, w, h } = o;
+        if (dragState.dir.includes('e')) w = o.w + dx;
+        if (dragState.dir.includes('w')) { x = o.x + dx; w = o.w - dx; }
+        if (dragState.dir.includes('s')) h = o.h + dy;
+        if (dragState.dir.includes('n')) { y = o.y + dy; h = o.h - dy; }
+        w = Math.max(24, w); h = Math.max(18, h);
+        const el = editorState.elements.find(x => x.id === dragState.id);
+        el.x = clamp(x, 0, dims.w - w); el.y = clamp(y, 0, dims.h - h);
+        el.w = w; el.h = h;
+        refreshTextNode(node, el);
+      }
+    }
+  }
+  function onDragEnd() {
+    document.removeEventListener('mousemove', onDragMove);
+    document.removeEventListener('mouseup', onDragEnd);
+    if (dragState && (dragState.mode === 'resize')) syncPropPanel();
+    dragState = null;
+  }
+  function refreshTextNode(node, el) {
+    applyTextNodeStyle(node, el);
+    const span = node.querySelector('.cert-el-text');
+    if (span && !span.isContentEditable) span.textContent = fillTokens(el.text, EDITOR_SAMPLE);
+  }
+  function refreshSealNode() {
+    const node = $('#et-page [data-id="seal"]');
+    if (node) { applySealNodeStyle(node, editorState.seal); const t = node.querySelector('.cs-text'); if (t) { t.textContent = fillTokens(editorState.seal.text, EDITOR_SAMPLE); t.style.fontSize = Math.max(10, editorState.seal.size * 0.16) + 'px'; } }
+  }
+
+  // ---------- 选中 / 属性面板 ----------
+  function selectElement(id) {
+    selectedElId = id;
+    document.querySelectorAll('#et-page .cert-el, #et-page .cert-seal').forEach(n => n.classList.remove('selected'));
+    if (id) { const node = document.querySelector(`#et-page [data-id="${id}"]`); if (node) node.classList.add('selected'); }
+    syncPropPanel();
+  }
+  function selEl() {
+    if (selectedElId === 'seal') return editorState.seal;
+    if (selectedElId) return editorState.elements.find(x => x.id === selectedElId);
+    return null;
+  }
+  function syncPropPanel() {
+    const el = selEl();
+    const empty = $('#et-prop-empty'), tg = $('#et-prop-text-group'), sg = $('#et-prop-seal-group');
+    if (!el) { empty.classList.remove('hidden'); tg.classList.add('hidden'); sg.classList.add('hidden'); return; }
+    empty.classList.add('hidden');
+    if (selectedElId === 'seal') {
+      tg.classList.add('hidden'); sg.classList.remove('hidden');
+      $('#et-prop-seal-text').value = editorState.seal.text;
+      $('#et-prop-seal-size').value = editorState.seal.size;
+      $('#et-prop-seal-color').value = editorState.seal.color;
+    } else {
+      sg.classList.add('hidden'); tg.classList.remove('hidden');
+      $('#et-prop-text').value = el.text;
+      $('#et-prop-size').value = el.fontSize;
+      $('#et-prop-color').value = el.color;
+    }
+    syncToolbarState();
+  }
+  function syncToolbarState() {
+    const el = selEl(); if (!el || selectedElId === 'seal') {
+      $('#et-bold').classList.remove('active'); $('#et-italic').classList.remove('active'); $('#et-underline').classList.remove('active');
+      return;
+    }
+    $('#et-bold').classList.toggle('active', el.fontWeight === 'bold');
+    $('#et-italic').classList.toggle('active', el.fontStyle === 'italic');
+    $('#et-underline').classList.toggle('active', !!el.underline);
+    $('#et-align-l').classList.toggle('active', el.textAlign === 'left');
+    $('#et-align-c').classList.toggle('active', el.textAlign === 'center');
+    $('#et-align-r').classList.toggle('active', el.textAlign === 'right');
+    $('#et-font').value = el.fontFamily;
+    $('#et-size').value = el.fontSize;
+    $('#et-color').value = el.color;
+  }
+
+  // ---------- 工具栏操作 ----------
+  function applyTextStyle(prop, value) {
+    const el = selEl(); if (!el || selectedElId === 'seal') return;
+    el[prop] = value;
+    const node = document.querySelector(`#et-page [data-id="${el.id}"]`);
+    if (node) refreshTextNode(node, el);
+    syncToolbarState();
+  }
+  function toggleTextStyle(prop, on, off) {
+    const el = selEl(); if (!el || selectedElId === 'seal') return;
+    applyTextStyle(prop, el[prop] === on ? off : on);
+  }
+  function addTextElement() {
+    const dims = EDITOR_PAGE[editorState.layout];
+    const el = { id: uid(), type: 'text', x: Math.round(dims.w / 2 - 90), y: Math.round(dims.h / 2 - 16), w: 180, h: 32, text: '新文字', fontSize: 18, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center', color: editorState.borderColor, underline: false, fontFamily: editorState.fontFamily };
+    editorState.elements.push(el);
+    const node = createTextNode(el); $('#et-page').appendChild(node); attachEl(node, el);
+    selectElement(el.id);
+  }
+  function addSealElement() {
+    const dims = EDITOR_PAGE[editorState.layout];
+    editorState.seal = { id: 'seal', text: '认证专用章', x: Math.round(dims.w - 110), y: Math.round(dims.h - 110), size: 80, color: editorState.accentColor };
+    const old = document.querySelector('#et-page [data-id="seal"]'); if (old) old.remove();
+    const node = createSealNode(editorState.seal); $('#et-page').appendChild(node); attachEl(node, editorState.seal, true);
+    selectElement('seal');
+  }
+  function deleteSelected() {
+    if (selectedElId === 'seal') { editorState.seal = null; const n = document.querySelector('#et-page [data-id="seal"]'); if (n) n.remove(); selectElement(null); return; }
+    if (!selectedElId) return;
+    editorState.elements = editorState.elements.filter(x => x.id !== selectedElId);
+    const n = document.querySelector(`#et-page [data-id="${selectedElId}"]`); if (n) n.remove();
+    selectElement(null);
+  }
+  function bringToFront() {
+    if (!selectedElId) return;
+    const node = document.querySelector(`#et-page [data-id="${selectedElId}"]`);
+    if (node) node.parentNode.appendChild(node);
+  }
+  function setLayout(orient) {
+    editorState.layout = orient;
+    const dims = EDITOR_PAGE[orient];
+    (editorState.elements || []).forEach(el => {
+      el.x = clamp(el.x, 0, dims.w - el.w); el.y = clamp(el.y, 0, dims.h - el.h);
+    });
+    if (editorState.seal) {
+      editorState.seal.x = clamp(editorState.seal.x, 0, dims.w - editorState.seal.size);
+      editorState.seal.y = clamp(editorState.seal.y, 0, dims.h - editorState.seal.size);
+    }
+    renderEditorPage();
+    $('#et-orient-portrait').classList.toggle('active', orient === 'portrait');
+    $('#et-orient-landscape').classList.toggle('active', orient === 'landscape');
+  }
+  function setBackground(type, value) {
+    editorState.background = { type, value };
+    renderEditorPage();
+    renderBgGrid();
+  }
+  function onBgUpload(e) {
+    const file = e.target.files && e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { setBackground('image', reader.result); };
+    reader.readAsDataURL(file);
+  }
+  function applyEditorDesign() {
+    currentDesign = deepClone(editorState);
+    closeEditor();
+    updateTemplatePreview();
+    showToast('样式已应用', 'success');
   }
 
   // ===== 初始化绑定 =====

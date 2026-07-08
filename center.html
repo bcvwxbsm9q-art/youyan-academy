@@ -501,7 +501,11 @@
                                     <h4 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
                                         <i class="fa fa-line-chart text-gray-500"></i>学习趋势
                                     </h4>
-                                    <div class="h-48 relative">
+                                    <div class="mb-5">
+                                        <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">本月学习时长</p>
+                                        <p class="text-3xl font-extrabold text-indigo-600" id="stat-month-total">0</p>
+                                    </div>
+                                    <div class="h-40 relative">
                                         <canvas id="stats-learning-chart"></canvas>
                                     </div>
                                 </div>
@@ -1107,7 +1111,7 @@ const BADGES = [
             { id: 'learner-500', name: '学习宗师', icon: 'fa-diamond', color: 'indigo', desc: '累计学习500小时', condition: (u, d) => d.hours >= 500 },
             
             // 课程完成类 (6个) - 一年内可达：每月2-3门
-            { id: 'course-1', name: '课程新手', icon: 'fa-play-circle', color: 'yellow', desc: '完成第一门课程', condition: (u, d) => d.completed >= 1 },
+            { id: 'course-1', name: '课程新手', icon: 'fa-play-circle', color: 'yellow', desc: '完成第1门课程', condition: (u, d) => d.completed >= 1 },
             { id: 'course-5', name: '课程达人', icon: 'fa-check-square-o', color: 'blue', desc: '完成5门课程', condition: (u, d) => d.completed >= 5 },
             { id: 'course-10', name: '课程高手', icon: 'fa-book', color: 'teal', desc: '完成10门课程', condition: (u, d) => d.completed >= 10 },
             { id: 'course-20', name: '课程专家', icon: 'fa-university', color: 'purple', desc: '完成20门课程', condition: (u, d) => d.completed >= 20 },
@@ -1527,6 +1531,28 @@ const BADGES = [
             if (streakEl) streakEl.textContent = streak;
             return streak;
         }
+
+        // 严格判断课程是否完成：基于真实观看时长，兼容历史 completedCourses
+        function isCourseCompletedStrict(learningData, course) {
+            const completedCourseIds = new Set((learningData.completedCourses || []).map(id => String(id)));
+            if (completedCourseIds.has(String(course.id))) return true;
+
+            const vids = course.videos || [];
+            if (vids.length === 0) return false;
+            const watchTimes = learningData.videoWatchTimes || {};
+            const videoProgress = learningData.videoProgress || {};
+
+            return vids.every((v, i) => {
+                const vKey = `${course.id}_${i}`;
+                const duration = v.duration || 0;
+                if (duration > 0) {
+                    return (watchTimes[vKey] || 0) >= duration;
+                }
+                // 没有时长信息时回退到进度判断
+                const p = videoProgress[vKey] || 0;
+                return (typeof p === 'number' && !isNaN(p) && p >= 100);
+            });
+        }
         
         // 更新学习统计数据（实时）
         async function updateLearningStats() {
@@ -1544,23 +1570,13 @@ const BADGES = [
             const registerDays = api.getRegisterDays(currentUser.createdAt);
             document.getElementById('stats-register-days').textContent = registerDays;
             
-            // 已完成课程数（基于 videoProgress 动态计算，并兼容 completedCourses 数组）
-            const completedCourseIds = new Set((learningData.completedCourses || []).map(id => String(id)));
+            // 已完成课程数（基于真实观看时长严格判断，并兼容 completedCourses 数组）
             const allCourses = api.getCourses();
             let completedCount = 0;
             allCourses.forEach(c => {
                 const vids = c.videos || [];
                 if (vids.length === 0) return;
-                if (completedCourseIds.has(String(c.id))) {
-                    completedCount++;
-                    return;
-                }
-                const allWatched = vids.every((v, i) => {
-                    const vKey = `${c.id}_${i}`;
-                    const p = learningData.videoProgress[vKey] || 0;
-                    return (typeof p === 'number' && !isNaN(p) && p >= 100);
-                });
-                if (allWatched) completedCount++;
+                if (isCourseCompletedStrict(learningData, c)) completedCount++;
             });
             document.getElementById('course-stat-completed').textContent = completedCount;
             document.getElementById('stats-completed-courses').textContent = completedCount;
@@ -1699,23 +1715,13 @@ const BADGES = [
             const totalHours = totalSec > 0 ? (Math.round(totalSec / 3600 * 10) / 10) : (learningData.totalHours || 0);
             document.getElementById('stats-total-hours').textContent = totalHours;
             
-            // 已完成课程数（基于 videoProgress 动态计算，并兼容 completedCourses 数组）
-            const completedCourseIds = new Set((learningData.completedCourses || []).map(id => String(id)));
+            // 已完成课程数（基于真实观看时长严格判断，并兼容 completedCourses 数组）
             const allCourses = api.getCourses();
             let completedCount = 0;
             allCourses.forEach(c => {
                 const vids = c.videos || [];
                 if (vids.length === 0) return;
-                if (completedCourseIds.has(String(c.id))) {
-                    completedCount++;
-                    return;
-                }
-                const allWatched = vids.every((v, i) => {
-                    const vKey = `${c.id}_${i}`;
-                    const p = learningData.videoProgress[vKey] || 0;
-                    return (typeof p === 'number' && !isNaN(p) && p >= 100);
-                });
-                if (allWatched) completedCount++;
+                if (isCourseCompletedStrict(learningData, c)) completedCount++;
             });
             document.getElementById('stats-completed-courses').textContent = completedCount;
             
@@ -1724,154 +1730,52 @@ const BADGES = [
             document.getElementById('stats-register-days').textContent = registerDays;
         }
         
-        // 初始化月度学习统计图表（本月每日柱状图）
+        // 初始化月度学习统计（静态概览，不使用 Chart.js 动态图表）
         function initStatsChart() {
-            const ctx = document.getElementById('stats-learning-chart');
-            if (!ctx) return;
-            
-            if (statsChart) {
-                statsChart.destroy();
-            }
-            
             const userId = currentUser.id;
             const learningData = api.getUserLearningData(userId);
             const records = learningData.studyRecords || [];
-            
+
             // 获取本月数据
             const today = new Date();
             const currentYear = today.getFullYear();
             const currentMonth = today.getMonth();
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            
-            // 生成本月每一天的数据
-            const labels = [];
-            const data = [];
-            
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                
-                // 只显示到今天为止的日期
-                if (day > today.getDate()) {
-                    break;
-                }
-                
-                labels.push(`${day}日`);
-                
-                // 汇总当天所有记录的时长（精确到分钟）
-                const daySeconds = records
+            const monthLabel = `${currentYear}年${currentMonth + 1}月`;
+
+            // 汇总本月每一天的时长（分钟）
+            const dayMinutes = {};
+            for (let d = 1; d <= today.getDate(); d++) {
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const daySec = records
                     .filter(r => r.date === dateStr)
                     .reduce((sum, r) => sum + (r.duration || 0), 0);
-                
-                // 转换为分钟
-                data.push(Math.round(daySeconds / 60 * 10) / 10);
-            }
-            
-            // 计算最大值用于颜色分级
-            const maxValue = Math.max(...data, 1);
-            
-            // 生成渐变色数组（根据数值大小）
-            const backgroundColors = data.map(value => {
-                const intensity = value / maxValue;
-                // 从浅紫到深紫的渐变
-                const r = Math.round(102 + (118 - 102) * intensity);
-                const g = Math.round(126 + (75 - 126) * intensity);
-                const b = Math.round(234 + (162 - 234) * intensity);
-                return `rgba(${r}, ${g}, ${b}, 0.8)`;
-            });
-            
-            const borderColors = data.map(value => {
-                const intensity = value / maxValue;
-                const r = Math.round(102 + (118 - 102) * intensity);
-                const g = Math.round(126 + (75 - 126) * intensity);
-                const b = Math.round(234 + (162 - 234) * intensity);
-                return `rgba(${r}, ${g}, ${b}, 1)`;
-            });
-            
-            statsChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '学习时长(分钟)',
-                        data: data,
-                        backgroundColor: backgroundColors,
-                        borderColor: borderColors,
-                        borderWidth: 1,
-                        borderRadius: 4,
-                        borderSkipped: false,
-                        barPercentage: 0.7,
-                        categoryPercentage: 0.9
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        title: {
-                            display: true,
-                            text: `${currentYear}年${currentMonth + 1}月 学习时长统计`,
-                            color: '#6b7280',
-                            font: { size: 14, weight: 'bold' }
-                        },
-                        tooltip: {
-                            backgroundColor: '#fff',
-                            titleColor: '#6b7280',
-                            bodyColor: '#6b7280',
-                            borderColor: '#e5e7eb',
-                            borderWidth: 1,
-                            padding: 12,
-                            displayColors: false,
-                            callbacks: {
-                                title: function(context) {
-                                    return `${currentYear}年${currentMonth + 1}月${context[0].label}`;
-                                },
-                                label: function(context) {
-                                    const value = context.parsed.y;
-                                    if (value === 0) {
-                                        return '今日无学习记录';
-                                    }
-                                    if (value >= 60) {
-                                        const hours = Math.floor(value / 60);
-                                        const mins = Math.round(value % 60);
-                                        return `学习时长: ${hours}小时${mins}分钟`;
-                                    }
-                                    return `学习时长: ${Math.round(value)} 分钟`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { 
-                                color: '#9ca3af',
-                                font: { size: 10 },
-                                maxRotation: 45,
-                                minRotation: 45
-                            }
-                        },
-                        y: {
-                            grid: { color: '#f3f4f6' },
-                            ticks: { 
-                                color: '#9ca3af',
-                                font: { size: 11 },
-                                callback: function(value) {
-                                    if (value >= 60) {
-                                        return Math.round(value / 60) + 'h';
-                                    }
-                                    return value + 'm';
-                                }
-                            },
-                            beginAtZero: true
-                        }
-                    },
-                    animation: {
-                        duration: 800,
-                        easing: 'easeOutQuart'
-                    }
+                if (daySec > 0) {
+                    dayMinutes[d] = Math.round(daySec / 60 * 10) / 10;
                 }
-            });
+            }
+
+            // 计算指标
+            const values = Object.values(dayMinutes);
+            const totalMin = Math.round(values.reduce((s, v) => s + v, 0));
+            const studyDays = values.length;
+            const avgMin = studyDays > 0 ? Math.round(totalMin / studyDays * 10) / 10 : 0;
+            const maxMin = studyDays > 0 ? Math.max(...values) : 0;
+
+            // 填充静态卡片
+            document.getElementById('stat-month-total').innerHTML = totalMin >= 60
+                ? (totalMin / 60).toFixed(1) + '<span class="text-sm font-normal text-gray-400 ml-0.5">小时</span>'
+                : totalMin + '<span class="text-sm font-normal text-gray-400 ml-0.5">分钟</span>';
+            document.getElementById('stat-month-days').textContent = studyDays;
+            document.getElementById('stat-month-days').insertAdjacentHTML('beforeend', '<span class="text-sm font-normal text-gray-400 ml-0.5">天</span>');
+            document.getElementById('stat-month-avg').textContent = avgMin.toFixed(avgMin < 10 ? 1 : 0);
+            document.getElementById('stat-month-avg').insertAdjacentHTML('beforeend', '<span class="text-sm font-normal text-gray-400 ml-0.5">分/天</span>');
+
+            if (maxMin >= 60) {
+                document.getElementById('stat-month-max').innerHTML = (maxMin / 60).toFixed(1) + '<span class="text-sm font-normal text-gray-400 ml-0.5">小时</span>';
+            } else {
+                document.getElementById('stat-month-max').innerHTML = maxMin + '<span class="text-sm font-normal text-gray-400 ml-0.5">分钟</span>';
+            }
+            document.getElementById('stat-month-label').textContent = `— ${monthLabel} 学习概况 —`;
         }
 
         // 加载活动时间线
@@ -2703,15 +2607,12 @@ const BADGES = [
             let completed = [];
             let notStarted = [];
 
-            // 兼容历史已完成数据：completedCourses 中记录的课程也视为已完成
-            const completedCourseIds = new Set((learningData.completedCourses || []).map(id => String(id)));
-
             allCourses.forEach(c => {
                 // 只显示已发布的课程
                 if (c.status && c.status !== 'published') return;
 
                 const { total, watched, partial, pct } = calcCourseProgress(c);
-                const isCompleted = (pct === 100 && total > 0) || completedCourseIds.has(String(c.id));
+                const isCompleted = isCourseCompletedStrict(learningData, c);
                 const entered = hasEnteredCourse(c.id);
                 const lastStudy = getLastStudyTime(c.id);
 

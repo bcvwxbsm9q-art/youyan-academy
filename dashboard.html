@@ -128,25 +128,28 @@
     .rpt-ov-label { margin-top: .45rem; font-size: .82rem; color: #94a3b8; }
 
     /* ========== 证书管理模块美化（作用域隔离，仅影响证书管理，不动其他页面） ========== */
-    /* 统计卡片 — 与工作台学习概览卡片统一紧凑风格 */
+    /* 统计卡片 — 图标置于右侧的左右布局，紧凑省竖向空间 */
     .cert-stat-card {
       position: relative; background: #fff; border: 1px solid #f1f5f9;
-      border-radius: 1rem; padding: 1.15rem 1.25rem; overflow: hidden;
+      border-radius: 1rem; padding: 1.1rem 1.25rem; overflow: hidden;
+      display: flex; align-items: center; justify-content: space-between; gap: .75rem;
       box-shadow: 0 1px 3px rgba(15,23,42,.05);
       transition: transform .28s cubic-bezier(.16,1,.3,1), box-shadow .28s;
     }
     .cert-stat-card::after {
       content: ""; position: absolute; right: -18px; top: -18px; width: 72px; height: 72px;
-      border-radius: 50%; opacity: .08; background: var(--cert-accent, #667eea);
+      border-radius: 50%; opacity: .08; background: var(--cert-accent, #667eea); pointer-events: none;
     }
     .cert-stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(15,23,42,.10); }
+    .cert-stat-info { min-width: 0; }
     .cert-stat-icon {
-      width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; margin-bottom: .55rem; color: #fff; background: var(--cert-accent, #667eea);
+      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.05rem; color: #fff; background: var(--cert-accent, #667eea);
       box-shadow: 0 8px 18px -6px var(--cert-accent, #667eea);
     }
-    .cert-stat-num { font-size: 1.5rem; font-weight: 800; line-height: 1.1; color: #1e293b; letter-spacing: -.02em; }
-    .cert-stat-label { margin-top: .3rem; font-size: .78rem; color: #94a3b8; }
+    .cert-stat-num { font-size: 1.6rem; font-weight: 800; line-height: 1.1; color: #1e293b; letter-spacing: -.02em; }
+    .cert-stat-label { margin-top: .25rem; font-size: .78rem; color: #94a3b8; }
 
     /* 列表行悬浮 */
     #certificate-list-body tr { transition: background .15s ease; }
@@ -204,6 +207,108 @@
     .cert-gradient:hover {
       background: linear-gradient(135deg, #5a72e3, #6a4191);
     }
+
+    /* ========== 证书可视化编辑器（作用域隔离，仅影响编辑器弹窗） ========== */
+    .cert-editor-modal { background: #0f1115; }
+    .cert-editor-shell { display: grid; grid-template-columns: 1fr 280px; grid-template-rows: auto 1fr; height: 100%; }
+    .cert-editor-toolbar {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      padding: 10px 14px; background: #1a1d24; border-bottom: 1px solid #2a2e38;
+    }
+    .cert-editor-toolbar .et-btn {
+      display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 11px;
+      border-radius: 8px; background: #262a34; color: #cbd2e0; font-size: 13px; cursor: pointer;
+      border: 1px solid transparent; transition: all .15s ease; white-space: nowrap;
+    }
+    .cert-editor-toolbar .et-btn:hover { background: #313644; color: #fff; }
+    .cert-editor-toolbar .et-btn.active { background: #6d28d9; color: #fff; border-color: #8b5cf6; }
+    .cert-editor-toolbar .et-sep { width: 1px; height: 22px; background: #2a2e38; margin: 0 4px; }
+    .cert-editor-toolbar select, .cert-editor-toolbar input[type="number"] {
+      height: 34px; border-radius: 8px; background: #262a34; color: #cbd2e0; border: 1px solid #2a2e38;
+      padding: 0 8px; font-size: 13px; outline: none;
+    }
+    .cert-editor-toolbar input[type="color"] { width: 34px; height: 34px; border: none; background: none; cursor: pointer; padding: 0; }
+    .cert-editor-stage {
+      position: relative; overflow: auto; background:
+        linear-gradient(45deg, #15171c 25%, transparent 25%),
+        linear-gradient(-45deg, #15171c 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #15171c 75%),
+        linear-gradient(-45deg, transparent 75%, #15171c 75%);
+      background-size: 22px 22px; background-position: 0 0, 0 11px, 11px -11px, -11px 0;
+      display: flex; align-items: flex-start; justify-content: center; padding: 36px;
+    }
+    .cert-editor-page { position: relative; flex-shrink: 0; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+    .cert-editor-page .cep-border { position: absolute; pointer-events: none; }
+    .cert-el {
+      position: absolute; cursor: move; user-select: none; box-sizing: border-box;
+      padding: 4px 6px; border: 1px dashed transparent; border-radius: 3px; line-height: 1.25;
+      transition: border-color .12s;
+    }
+    .cert-el:hover { border-color: rgba(139,92,246,.5); }
+    .cert-el.selected { border-color: #8b5cf6; box-shadow: 0 0 0 1px rgba(139,92,246,.4); }
+    .cert-el[contenteditable="true"] { cursor: text; border-color: #8b5cf6; outline: none; }
+    .cert-el-handle {
+      position: absolute; width: 11px; height: 11px; background: #fff; border: 2px solid #8b5cf6;
+      border-radius: 50%; z-index: 5; display: none;
+    }
+    .cert-el.selected .cert-el-handle { display: block; }
+    .cert-seal.selected .cert-el-handle { display: block; }
+    .cert-el-handle.nw { top: -6px; left: -6px; cursor: nwse-resize; }
+    .cert-el-handle.ne { top: -6px; right: -6px; cursor: nesw-resize; }
+    .cert-el-handle.sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+    .cert-el-handle.se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+    .cert-el-handle.n  { top: -6px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+    .cert-el-handle.s  { bottom: -6px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+    .cert-el-handle.w  { left: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .cert-el-handle.e  { right: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .cert-seal {
+      position: absolute; border-radius: 50%; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center; cursor: move; box-sizing: border-box;
+      border: 3px solid currentColor; color: #764ba2;
+    }
+    .cert-seal .cs-text { font-weight: 700; line-height: 1.1; }
+    .cert-seal .cs-star { font-size: .55em; opacity: .85; }
+    .cert-editor-side { background: #fff; border-left: 1px solid #e5e7eb; overflow-y: auto; padding: 16px; }
+    .cert-editor-side h5 { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin: 16px 0 8px; }
+    .cert-editor-side h5:first-child { margin-top: 0; }
+    .cert-orient-tabs { display: flex; gap: 8px; }
+    .cert-orient-tabs button {
+      flex: 1; padding: 9px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: #fff;
+      font-size: 13px; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all .15s;
+    }
+    .cert-orient-tabs button.active { border-color: #8b5cf6; background: #f5f3ff; color: #6d28d9; font-weight: 600; }
+    .cert-bg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .cert-bg-swatch {
+      aspect-ratio: 3/4; border-radius: 8px; cursor: pointer; border: 2px solid transparent;
+      position: relative; overflow: hidden; transition: transform .15s;
+    }
+    .cert-bg-swatch:hover { transform: translateY(-2px); }
+    .cert-bg-swatch.active { border-color: #8b5cf6; box-shadow: 0 0 0 2px rgba(139,92,246,.3); }
+    .cert-bg-upload {
+      margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px; border: 1.5px dashed #cbd5e1; border-radius: 10px; color: #64748b; font-size: 13px;
+      cursor: pointer; transition: all .15s; background: #f8fafc;
+    }
+    .cert-bg-upload:hover { border-color: #8b5cf6; color: #6d28d9; background: #f5f3ff; }
+    .cert-prop-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .cert-prop-row label { font-size: 13px; color: #475569; width: 52px; flex-shrink: 0; }
+    .cert-prop-row input[type="text"], .cert-prop-row textarea, .cert-prop-row select {
+      flex: 1; padding: 7px 9px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; outline: none; color: #334155;
+    }
+    .cert-prop-row input[type="text"]:focus, .cert-prop-row textarea:focus { border-color: #8b5cf6; }
+    .cert-prop-hint { font-size: 12px; color: #94a3b8; }
+    .cert-side-empty { text-align: center; color: #cbd5e1; padding: 40px 10px; font-size: 13px; }
+    .cert-side-empty i { font-size: 28px; display: block; margin-bottom: 8px; opacity: .5; }
+
+    /* 表单内的静态设计预览（应用编辑器后） */
+    .cert-static-preview { transform-origin: top left; }
+
+    /* 详情/打印：基于 design 的渲染 */
+    .cert-design-page { position: relative; box-sizing: border-box; overflow: hidden; }
+    .cert-design-el { position: absolute; box-sizing: border-box; line-height: 1.25; }
+    .cert-design-seal { position: absolute; border-radius: 50%; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center; box-sizing: border-box; }
 
     /* 详情弹窗 tab */
     .cert-detail-tab { transition: all .2s ease; cursor: pointer; border-bottom-width: 2px; }
@@ -922,7 +1027,7 @@
               <option value="">全部分类</option>
             </select>
             <div class="flex-1 min-w-[200px] relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i><input id="rpt-cr-search" oninput="renderCourseReport()" placeholder="搜索课程名称..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></div>
-            <button onclick="exportReportCSV('course')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
+            <button onclick="exportReportExcel('course')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
           </div>
           <!-- 表格 -->
           <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -938,11 +1043,44 @@
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">转发数</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">学习人数</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">学完人数</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">学时</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">学习时长</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">创建时间</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">状态</th>
             </tr></thead>
             <tbody id="rpt-cr-tbody" class="divide-y divide-slate-100"></tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 课程学员详情弹窗 -->
+        <div id="course-learners-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+          <div class="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl flex flex-col">
+            <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800">课程学员详情</h3>
+                <p id="course-learners-title" class="text-sm text-slate-500 mt-0.5">-</p>
+              </div>
+              <button onclick="closeCourseLearnersModal()" class="text-slate-400 hover:text-slate-600 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-x-auto">
+              <table class="w-full min-w-[900px]">
+                <thead class="bg-slate-50">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 whitespace-nowrap">姓名</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 whitespace-nowrap">部门</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 whitespace-nowrap">岗位</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">学习时长</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">完成状态</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">首次学习时间</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">首次完成学习时间</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">学习进度</th>
+                  </tr>
+                </thead>
+                <tbody id="course-learners-tbody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-100 flex justify-end">
+              <button onclick="closeCourseLearnersModal()" class="px-5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
             </div>
           </div>
         </div>
@@ -1013,7 +1151,7 @@
               <option value="">全部状态</option><option value="active">启用</option><option value="disabled">禁用</option>
             </select>
             <div class="flex-1 min-w-[200px] relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i><input id="rpt-st-search" oninput="renderStudentReport()" placeholder="搜索姓名/手机号..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></div>
-            <button onclick="exportReportCSV('student')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
+            <button onclick="exportReportExcel('student')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
           </div>
           <!-- 表格 -->
           <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -1102,7 +1240,7 @@
               <option value="all">全部时间</option><option value="today">今天</option><option value="7d">近7天</option><option value="30d">近30天</option><option value="180d">近半年</option><option value="365d">近一年</option>
             </select>
             <div class="flex-1 min-w-[200px] relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i><input id="rpt-ex-search" oninput="renderExamReport()" placeholder="搜索考试名称..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></div>
-            <button onclick="exportReportCSV('exam')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
+            <button onclick="exportReportExcel('exam')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
           </div>
           <!-- 表格 -->
           <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -1189,7 +1327,7 @@
               <option value="">全部分类</option>
             </select>
             <div class="flex-1 min-w-[200px] relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i><input id="rpt-tr-search" oninput="renderTrainingReport()" placeholder="搜索培训名称..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></div>
-            <button onclick="exportReportCSV('training')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
+            <button onclick="exportReportExcel('training')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition"><i class="fas fa-file-excel mr-1"></i>导出 Excel</button>
           </div>
           <!-- 表格 -->
           <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -1203,8 +1341,9 @@
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">开始时间</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">结束时间</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">完成人数</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">员工报名人数</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">任务指派人数</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">报名总人数</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">指派人数</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">自主报名</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">培训完成率</th>
               <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">状态</th>
             </tr></thead>
@@ -2082,24 +2221,32 @@
         <!-- 统计卡片 -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div class="cert-stat-card" style="--cert-accent:#764ba2;">
+            <div class="cert-stat-info">
+              <div class="cert-stat-num" id="cert-stat-total">0</div>
+              <div class="cert-stat-label">证书总数</div>
+            </div>
             <div class="cert-stat-icon"><i class="fas fa-layer-group"></i></div>
-            <div class="cert-stat-num" id="cert-stat-total">0</div>
-            <div class="cert-stat-label">证书总数</div>
           </div>
           <div class="cert-stat-card" style="--cert-accent:#10b981;">
+            <div class="cert-stat-info">
+              <div class="cert-stat-num" id="cert-stat-enabled">0</div>
+              <div class="cert-stat-label">启用中</div>
+            </div>
             <div class="cert-stat-icon"><i class="fas fa-check-circle"></i></div>
-            <div class="cert-stat-num" id="cert-stat-enabled">0</div>
-            <div class="cert-stat-label">启用中</div>
           </div>
           <div class="cert-stat-card" style="--cert-accent:#9333ea;">
+            <div class="cert-stat-info">
+              <div class="cert-stat-num" id="cert-stat-issued">0</div>
+              <div class="cert-stat-label">已颁发人次</div>
+            </div>
             <div class="cert-stat-icon"><i class="fas fa-award"></i></div>
-            <div class="cert-stat-num" id="cert-stat-issued">0</div>
-            <div class="cert-stat-label">已颁发人次</div>
           </div>
           <div class="cert-stat-card" style="--cert-accent:#a855f7;">
+            <div class="cert-stat-info">
+              <div class="cert-stat-num" id="cert-stat-active">0</div>
+              <div class="cert-stat-label">有效证书数</div>
+            </div>
             <div class="cert-stat-icon"><i class="fas fa-certificate"></i></div>
-            <div class="cert-stat-num" id="cert-stat-active">0</div>
-            <div class="cert-stat-label">有效证书数</div>
           </div>
         </div>
 
@@ -3174,11 +3321,17 @@
               <span class="text-slate-400 text-sm">请选择模板</span>
             </div>
             <div class="flex-1">
-              <button type="button" id="cert-template-picker-btn"
-                class="px-4 py-2.5 cert-gradient text-white rounded-lg text-sm shadow-sm transition font-medium">
-                <i class="fas fa-th-large mr-1.5"></i>选择模板
-              </button>
-              <p class="text-xs text-slate-400 mt-2 leading-relaxed">内置多款精美模板，支持实时预览。<br>选择后可在此处查看效果。</p>
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <button type="button" id="cert-template-picker-btn"
+                  class="px-4 py-2.5 cert-gradient text-white rounded-lg text-sm shadow-sm transition font-medium">
+                  <i class="fas fa-th-large mr-1.5"></i>选择模板
+                </button>
+                <button type="button" id="cert-design-editor-btn"
+                  class="px-4 py-2.5 border border-purple-300 text-purple-700 bg-purple-50 rounded-lg text-sm transition font-medium hover:bg-purple-100">
+                  <i class="fas fa-paint-brush mr-1.5"></i>配置样式
+                </button>
+              </div>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">选好模板后可进入可视化编辑器，<br>自由调整文字、样式与背景、添加印章。</p>
             </div>
           </div>
         </div>
@@ -3210,6 +3363,122 @@
       <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
         <button id="cert-template-cancel" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
         <button id="cert-template-confirm" class="px-5 py-2.5 cert-gradient text-white rounded-xl text-sm font-medium shadow-sm transition">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 证书可视化编辑器弹窗（覆盖于模板选择器之上，由“选择模板”进入） ========== -->
+  <div id="certificate-editor-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center hidden">
+    <div class="bg-white rounded-2xl w-full max-w-6xl max-h-[94vh] overflow-hidden shadow-2xl flex flex-col">
+      <!-- 头部 -->
+      <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-white flex-shrink-0">
+        <div class="flex items-center gap-2.5">
+          <span class="inline-flex w-8 h-8 rounded-lg cert-gradient items-center justify-center text-white text-sm shadow-sm"><i class="fas fa-paint-brush"></i></span>
+          <div>
+            <h3 class="text-base font-bold text-slate-800">证书编辑器</h3>
+            <p class="text-xs text-slate-400">拖拽文字 / 印章调整位置，双击文字可直接修改内容</p>
+          </div>
+        </div>
+        <button onclick="window.CertificateMgmt.closeEditor()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+      </div>
+
+      <!-- 编辑区 -->
+      <div class="cert-editor-shell">
+        <!-- 顶部工具栏 -->
+        <div class="cert-editor-toolbar">
+          <button class="et-btn" id="et-add-text"><i class="fas fa-font"></i>添加文字</button>
+          <button class="et-btn" id="et-add-seal"><i class="fas fa-stamp"></i>添加印章</button>
+          <div class="et-sep"></div>
+          <select id="et-font" title="字体">
+            <option value='"Noto Serif SC","SimSun",serif'>宋体（衬线）</option>
+            <option value='"Noto Sans SC","Microsoft YaHei",sans-serif'>黑体（无衬线）</option>
+            <option value='"KaiTi","STKaiti",serif'>楷体</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="Arial, sans-serif">Arial</option>
+          </select>
+          <input type="number" id="et-size" min="8" max="120" value="20" title="字号(px)" style="width:64px;">
+          <div class="et-sep"></div>
+          <button class="et-btn" id="et-bold" title="加粗"><i class="fas fa-bold"></i></button>
+          <button class="et-btn" id="et-italic" title="斜体"><i class="fas fa-italic"></i></button>
+          <button class="et-btn" id="et-underline" title="下划线"><i class="fas fa-underline"></i></button>
+          <div class="et-sep"></div>
+          <button class="et-btn" id="et-align-l" title="左对齐"><i class="fas fa-align-left"></i></button>
+          <button class="et-btn" id="et-align-c" title="居中"><i class="fas fa-align-center"></i></button>
+          <button class="et-btn" id="et-align-r" title="右对齐"><i class="fas fa-align-right"></i></button>
+          <div class="et-sep"></div>
+          <input type="color" id="et-color" value="#1f2937" title="文字颜色">
+          <div class="et-sep"></div>
+          <button class="et-btn" id="et-delete" title="删除选中元素"><i class="fas fa-trash"></i>删除</button>
+          <button class="et-btn" id="et-bringfront" title="置于顶层"><i class="fas fa-layer-group"></i>置顶</button>
+        </div>
+
+        <!-- 画布 -->
+        <div class="cert-editor-stage" id="et-stage">
+          <div class="cert-editor-page" id="et-page"></div>
+        </div>
+
+        <!-- 右侧面板 -->
+        <div class="cert-editor-side">
+          <h5>版式</h5>
+          <div class="cert-orient-tabs">
+            <button id="et-orient-portrait" data-orient="portrait"><i class="fas fa-square" style="transform:rotate(0)"></i>竖版</button>
+            <button id="et-orient-landscape" data-orient="landscape"><i class="fas fa-square"></i>横版</button>
+          </div>
+
+          <h5>背景</h5>
+          <div class="cert-bg-grid" id="et-bg-grid"></div>
+          <label class="cert-bg-upload">
+            <i class="fas fa-cloud-upload-alt"></i>上传自定义背景图片
+            <input type="file" id="et-bg-upload" accept="image/*" class="hidden">
+          </label>
+
+          <h5>选中元素</h5>
+          <div id="et-prop-panel">
+            <!-- 文字属性 -->
+            <div id="et-prop-text-group">
+              <div class="cert-prop-row">
+                <label>内容</label>
+                <textarea id="et-prop-text" rows="2" placeholder="输入文字"></textarea>
+              </div>
+              <div class="cert-prop-row">
+                <label>字号</label>
+                <input type="number" id="et-prop-size" min="8" max="120" value="20">
+              </div>
+              <div class="cert-prop-row">
+                <label>颜色</label>
+                <input type="color" id="et-prop-color" value="#1f2937">
+              </div>
+              <div class="cert-prop-hint">双击画布上的文字可直接编辑内容。</div>
+            </div>
+            <!-- 印章属性 -->
+            <div id="et-prop-seal-group" class="hidden">
+              <div class="cert-prop-row">
+                <label>文字</label>
+                <input type="text" id="et-prop-seal-text" value="认证专用章" placeholder="印章文字">
+              </div>
+              <div class="cert-prop-row">
+                <label>大小</label>
+                <input type="number" id="et-prop-seal-size" min="30" max="200" value="80">
+              </div>
+              <div class="cert-prop-row">
+                <label>颜色</label>
+                <input type="color" id="et-prop-seal-color" value="#764ba2">
+              </div>
+            </div>
+            <div id="et-prop-empty" class="cert-side-empty">
+              <i class="fas fa-hand-pointer"></i>
+              点击画布中的元素进行编辑，<br>或从顶部添加文字 / 印章
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部 -->
+      <div class="flex justify-end gap-3 px-6 py-3.5 border-t border-slate-100 bg-slate-50 flex-shrink-0">
+        <button id="et-cancel" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
+        <button id="et-apply" class="px-6 py-2.5 cert-gradient text-white rounded-xl text-sm font-medium shadow-sm transition">
+          <i class="fas fa-check mr-1.5"></i>应用并返回
+        </button>
       </div>
     </div>
   </div>
@@ -16179,6 +16448,13 @@
       renderOverview();
     }
 
+    /* 将秒转换为小时并格式化为 XH */
+    function formatCourseDuration(seconds) {
+      const s = Number(seconds) || 0;
+      if (s <= 0) return '-';
+      return +(s / 3600).toFixed(1) + 'H';
+    }
+
     /* ============================================================
        2. 课程报表
        ============================================================ */
@@ -16235,9 +16511,11 @@
           <td class="px-4 py-3 text-sm text-center text-amber-600 font-medium">${rating}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-600">${c.likes || 0}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-600">${c.shares || 0}</td>
-          <td class="px-4 py-3 text-sm text-center text-slate-600">${c.learners || 0}</td>
+          <td class="px-4 py-3 text-sm text-center">
+            <span class="cursor-pointer text-indigo-600 hover:underline font-medium" onclick="openCourseLearnersModal(${c.id})">${c.learners || 0}</span>
+          </td>
           <td class="px-4 py-3 text-sm text-center text-green-600 font-medium">${c.finishers || 0}</td>
-          <td class="px-4 py-3 text-sm text-center text-slate-500">${c.duration || '-'}</td>
+          <td class="px-4 py-3 text-sm text-center text-slate-500">${formatCourseDuration(c.duration)}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-400">${(c.createdAt || '').split(' ')[0] || '-'}</td>
           <td class="px-4 py-3 text-sm text-center">
             <span class="px-2 py-0.5 rounded-full text-xs ${c.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
@@ -16245,6 +16523,58 @@
           </td>
         </tr>`;
       }).join('') || '<tr><td colspan="13" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
+    }
+
+    /* 课程学员详情弹窗 */
+    async function openCourseLearnersModal(courseId) {
+      const modal = document.getElementById('course-learners-modal');
+      const titleEl = document.getElementById('course-learners-title');
+      const tbody = document.getElementById('course-learners-tbody');
+      if (!modal || !tbody) return;
+
+      const course = (data.courses || []).find(c => String(c.id) === String(courseId));
+      titleEl.textContent = course ? escHtml(course.title || '') : '';
+      tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">加载中...</td></tr>';
+      modal.classList.remove('hidden');
+
+      try {
+        const res = await fetch(`/api/courses/${courseId}/learners`);
+        const payload = await res.json();
+        const learners = payload.learners || [];
+        if (!learners.length) {
+          tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">暂无学员数据</td></tr>';
+          return;
+        }
+        tbody.innerHTML = learners.map(l => `
+          <tr class="hover:bg-indigo-50/50 transition">
+            <td class="px-4 py-3 text-sm text-slate-700 font-medium">${escHtml(l.realName || '-')}</td>
+            <td class="px-4 py-3 text-sm text-slate-500">${escHtml(l.department || '-')}</td>
+            <td class="px-4 py-3 text-sm text-slate-500">${escHtml(l.position || '-')}</td>
+            <td class="px-4 py-3 text-sm text-center text-slate-600">${l.hours != null ? l.hours + 'H' : '-'}</td>
+            <td class="px-4 py-3 text-sm text-center">
+              <span class="px-2 py-0.5 rounded-full text-xs ${l.status === '已完成' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}">${l.status || '-'}</span>
+            </td>
+            <td class="px-4 py-3 text-sm text-center text-slate-500 whitespace-nowrap">${l.firstStudyTime || '-'}</td>
+            <td class="px-4 py-3 text-sm text-center text-slate-500 whitespace-nowrap">${l.firstCompleteTime || '-'}</td>
+            <td class="px-4 py-3 text-sm text-center">
+              <div class="flex items-center justify-center gap-2">
+                <span class="text-xs text-slate-600">${l.progress != null ? l.progress : 0}%</span>
+                <div class="w-16 bg-slate-200 rounded-full h-1.5">
+                  <div class="bg-gradient-to-r from-indigo-400 to-blue-500 h-1.5 rounded-full" style="width:${l.progress != null ? l.progress : 0}%"></div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('加载课程学员详情失败:', err);
+        tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-red-500">加载失败，请稍后重试</td></tr>';
+      }
+    }
+
+    function closeCourseLearnersModal() {
+      const modal = document.getElementById('course-learners-modal');
+      if (modal) modal.classList.add('hidden');
     }
 
     /* ============================================================
@@ -16439,10 +16769,11 @@
         const name = t.name || t.title || '-';
         const instructor = t.instructor || '-';
         const project = t.project || '-';
+        const totalCount = t.totalCount || 0;
         const enrollCount = t.activeEnrollCount || 0;
         const assignCount = t.assignCount || 0;
         const completeCount = t.completeCount || 0;
-        const completionRate = t.completionRate != null ? t.completionRate + '%' : (t.totalCount > 0 ? Math.min(100, Math.round(completeCount / t.totalCount * 100)) + '%' : '0%');
+        const completionRate = t.completionRate != null ? t.completionRate + '%' : (totalCount > 0 ? Math.min(100, Math.round(completeCount / totalCount * 100)) + '%' : '0%');
         const status = getTrainingStatus(t);
         const statusMap = {scheduled:'待开始',ongoing:'进行中',completed:'已完成',cancelled:'已取消'};
         return `<tr class="hover:bg-indigo-50/50 transition">
@@ -16454,41 +16785,48 @@
           <td class="px-4 py-3 text-sm text-center text-slate-400">${fmtDate(t.startTime || t.date)}</td>
           <td class="px-4 py-3 text-sm text-center text-slate-400">${fmtDate(t.endTime || t.date)}</td>
           <td class="px-4 py-3 text-sm text-center text-green-600 font-medium">${completeCount}</td>
-          <td class="px-4 py-3 text-sm text-center text-slate-600">${enrollCount}</td>
-          <td class="px-4 py-3 text-sm text-center text-slate-600">${assignCount}</td>
+          <td class="px-4 py-3 text-sm text-center text-indigo-600 font-medium">${totalCount}</td>
+          <td class="px-4 py-3 text-sm text-center text-cyan-600">${assignCount}</td>
+          <td class="px-4 py-3 text-sm text-center text-emerald-600">${enrollCount}</td>
           <td class="px-4 py-3 text-sm text-center text-indigo-600 font-medium">${completionRate}</td>
           <td class="px-4 py-3 text-sm text-center">
             <span class="px-2 py-0.5 rounded-full text-xs ${status === 'completed' ? 'bg-green-100 text-green-700' : status === 'ongoing' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}">
               ${statusMap[status] || status || '-'}</span>
           </td>
         </tr>`;
-      }).join('') || '<tr><td colspan="12" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
+      }).join('') || '<tr><td colspan="13" class="px-4 py-8 text-center text-slate-400">暂无数据</td></tr>';
     }
 
     /* ============================================================
-       通用：CSV 导出（含 BOM 防止中文乱码）
+       通用：Excel 导出（使用 SheetJS 生成真正的 .xlsx）
        ============================================================ */
-    function exportReportCSV(type) {
+    function exportReportExcel(type) {
       let headers = [];
       let rows    = [];
       let filename = '';
+      let sheetName = '报表数据';
+      let colWidths = [];
 
       if (type === 'course') {
-        headers = ['课程名称', '分类', '讲师', '创建人', '播放量', '课程评分', '点赞数', '转发数', '学习人数', '学完人数', '学时', '创建时间', '状态'];
+        headers = ['课程名称', '分类', '讲师', '创建人', '播放量', '课程评分', '点赞数', '转发数', '学习人数', '学完人数', '学习时长(H)', '创建时间', '状态'];
         (data.courses || []).forEach(c => {
           const lect = (data.lecturers || []).find(l => l.id == c.lecturerId);
           const cat  = (data.categories || []).find(ct => ct.id == c.categoryId);
           const rating = c.rating != null ? Number(c.rating).toFixed(1) : '';
-          rows.push([c.title, cat?.name || '', lect?.name || '', c.createdBy || '许志坚', c.views || 0, rating, c.likes || 0, c.shares || 0, c.learners || 0, c.finishers || 0, c.duration || '', (c.createdAt || '').split(' ')[0], c.status === 'published' ? '已发布' : '草稿']);
+          rows.push([c.title, cat?.name || '', lect?.name || '', c.createdBy || '许志坚', c.views || 0, rating, c.likes || 0, c.shares || 0, c.learners || 0, c.finishers || 0, formatCourseDuration(c.duration), (c.createdAt || '').split(' ')[0], c.status === 'published' ? '已发布' : '草稿']);
         });
-        filename = '课程报表_' + new Date().toISOString().split('T')[0] + '.csv';
+        filename = '课程报表_' + new Date().toISOString().split('T')[0] + '.xlsx';
+        sheetName = '课程报表';
+        colWidths = [{ wch: 28 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 }];
       }
       if (type === 'student') {
         headers = ['姓名', '部门', '岗位', '角色', '状态', '总学习时长', '培训学习时长', '课程学习时长', '参与培训数', '学习课程数', '获得证书数', '学员考试数', '获得徽章数', '员工等级', '创建时间', '最后登录'];
         (allUsers || []).forEach(u => {
           rows.push([u.realName || u.username, u.department || '', u.position || '', {admin:'管理员',teacher:'讲师',user:'学员'}[u.role] || u.role || '', u.status === 'active' ? '启用' : '禁用', (u.totalHours || 0) + 'h', (u.trainingHours || 0) + 'h', (u.courseHours || 0) + 'h', u.trainingCount || 0, u.courseCount || 0, u.certificateCount || 0, u.examCount || 0, u.badgeCount || 0, 'LV' + (u.level || 1), (u.createdAt || '').split(' ')[0], u.lastLogin || '']);
         });
-        filename = '学员报表_' + new Date().toISOString().split('T')[0] + '.csv';
+        filename = '学员报表_' + new Date().toISOString().split('T')[0] + '.xlsx';
+        sheetName = '学员报表';
+        colWidths = [{ wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 16 }];
       }
       if (type === 'exam') {
         headers = ['考试名称', '创建人', '试卷分类', '考试时长', '试卷总分', '及格分', '参与人数', '平均分', '最高分', '通过率', '考试时间'];
@@ -16500,18 +16838,21 @@
           const formattedDate = dateStr ? new Date(dateStr).toISOString().split('T')[0] : '';
           rows.push([e.title, e.creator || '许志坚', e.paperCategory || '', e.duration || 60, e.totalScore || 100, e.passingScore || 60, e.attemptCount || 0, avg, max, prate, formattedDate]);
         });
-        filename = '考试报表_' + new Date().toISOString().split('T')[0] + '.csv';
+        filename = '考试报表_' + new Date().toISOString().split('T')[0] + '.xlsx';
+        sheetName = '考试报表';
+        colWidths = [{ wch: 28 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }];
       }
       if (type === 'training') {
-        headers = ['培训名称', '培训项目', '创建人', '讲师', '创建时间', '开始时间', '结束时间', '完成人数', '员工报名人数', '任务指派人数', '培训完成率', '状态'];
+        headers = ['培训名称', '培训项目', '创建人', '讲师', '创建时间', '开始时间', '结束时间', '完成人数', '报名总人数', '指派人数', '自主报名', '培训完成率', '状态'];
         (data.training_events || data.training || []).forEach(t => {
           const name = t.name || t.title || '';
           const project = t.project || '';
           const instructor = t.instructor || '';
-          const enrollCount = t.enrollCount || 0;
+          const totalCount = t.totalCount || 0;
+          const enrollCount = t.activeEnrollCount || 0;
           const assignCount = t.assignCount || 0;
           const completeCount = t.completeCount || 0;
-          const completionRate = t.completionRate != null ? t.completionRate + '%' : (enrollCount > 0 ? Math.min(100, Math.round(completeCount / enrollCount * 100)) + '%' : '0%');
+          const completionRate = t.completionRate != null ? t.completionRate + '%' : (totalCount > 0 ? Math.min(100, Math.round(completeCount / totalCount * 100)) + '%' : '0%');
           function fmtCsvDate(d) {
             if (!d) return '';
             let s = String(d).split(' ')[0] || '';
@@ -16522,20 +16863,19 @@
           const startTime = fmtCsvDate(t.startTime || t.date);
           const endTime = fmtCsvDate(t.endTime || t.date);
           const statusMap = {scheduled:'待开始',ongoing:'进行中',completed:'已完成',cancelled:'已取消'};
-          rows.push([name, project, t.createdBy || '许志坚', instructor, createdAt, startTime, endTime, completeCount, enrollCount, assignCount, completionRate, statusMap[t.status] || t.status || '']);
+          rows.push([name, project, t.createdBy || '许志坚', instructor, createdAt, startTime, endTime, completeCount, totalCount, assignCount, enrollCount, completionRate, statusMap[t.status] || t.status || '']);
         });
-        filename = '培训报表_' + new Date().toISOString().split('T')[0] + '.csv';
+        filename = '培训报表_' + new Date().toISOString().split('T')[0] + '.xlsx';
+        sheetName = '培训报表';
+        colWidths = [{ wch: 28 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }];
       }
 
-      // 生成 CSV（含 BOM）
-      const BOM = '\uFEFF';
-      const csvContent = BOM + [headers.join(','), ...rows.map(r => r.map(c => `"${String(c || '').replace(/"/g, '""')}"`).join(','))].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      link.click();
-      URL.revokeObjectURL(link.href);
+      // 生成 Excel（真正的 .xlsx）
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = colWidths;
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      XLSX.writeFile(wb, filename);
       toast('导出成功：' + filename, 'success');
     }
 
