@@ -565,14 +565,10 @@
 
                             <!-- 课程简介 -->
                             <div class="border-t border-gray-100 pt-4 mt-2 hidden" id="course-description-wrapper">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h2 class="text-base font-bold text-gray-900">课程简介</h2>
-                                    <button id="expand-description" class="inline-flex items-center text-sm text-primary hover:text-primary/80 transition-colors">
-                                        <span>展开</span>
-                                        <i class="fa fa-angle-down ml-1"></i>
-                                    </button>
-                                </div>
-                                <div id="player-course-description" class="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                                <h2 class="text-lg font-bold text-gray-900 mb-3 flex items-center">
+                                    <i class="fa fa-file-text-o text-primary mr-2 text-xl"></i>课程简介
+                                </h2>
+                                <div id="player-course-description" class="text-sm text-gray-600 leading-relaxed">
                                     暂无课程简介
                                 </div>
                             </div>
@@ -580,7 +576,7 @@
 
                         <!-- 讲师信息区域 -->
                         <div class="bg-white rounded-2xl shadow-sm p-6 mb-6" id="lecturer-info-section">
-                            <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center">
+                            <h2 class="text-lg font-bold text-gray-900 mb-3 flex items-center">
                                 <i class="fa fa-user-circle text-primary mr-2 text-xl"></i>讲师介绍
                             </h2>
                             <div id="lecturer-info-content">
@@ -1602,17 +1598,6 @@
             document.getElementById('mobile-menu').classList.toggle('hidden');
         });
         
-        document.getElementById('expand-description')?.addEventListener('click', function() {
-            const description = document.getElementById('player-course-description');
-            if (description.classList.contains('line-clamp-3')) {
-                description.classList.remove('line-clamp-3');
-                this.innerHTML = '<span>收起</span><i class="fa fa-angle-up ml-1"></i>';
-            } else {
-                description.classList.add('line-clamp-3');
-                this.innerHTML = '<span>展开</span><i class="fa fa-angle-down ml-1"></i>';
-            }
-        });
-        
         // ==================== 讲师信息渲染 ====================
         const RATING_LABELS = {
             5: '干货满满！',
@@ -1661,9 +1646,9 @@
 
             container.innerHTML = `
                 <div class="lecturer-card">
-                    <div class="relative">
+                    <div class="flex flex-col items-center flex-shrink-0">
                         ${avatarHtml}
-                        ${lecturer.levelName ? `<span class="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-gradient-primary text-white text-[10px] font-medium whitespace-nowrap">${lecturer.levelName}</span>` : ''}
+                        ${lecturer.levelName ? `<span class="mt-2 px-2 py-0.5 rounded-full bg-gradient-primary text-white text-xs font-medium whitespace-nowrap">${lecturer.levelName}</span>` : ''}
                     </div>
                     <div class="flex-1 min-w-0">
                         <h3 class="text-lg font-bold text-gray-900 mb-1">${lecturer.name || '未知讲师'}</h3>
@@ -1671,7 +1656,7 @@
                             <span class="mr-3"><i class="fa fa-briefcase mr-1"></i>${lecturer.title || lecturer.department || ''}</span>
                             <span><i class="fa fa-building mr-1"></i>${lecturer.department || ''}</span>
                         </p>
-                        ${lecturer.intro ? `<p class="text-sm text-gray-600 mt-2 line-clamp-2 leading-relaxed">${lecturer.intro}</p>` : ''}
+                        ${lecturer.intro ? `<p class="text-sm text-gray-600 mt-2 leading-relaxed">${lecturer.intro}</p>` : ''}
                         ${skillsHtml ? `<div class="flex flex-wrap gap-2 mt-3">${skillsHtml}</div>` : ''}
                         <a href="teacher.html" class="inline-flex items-center mt-3 text-sm text-primary hover:text-primary/80 transition-colors group">
                             <span>查看讲师详情</span>

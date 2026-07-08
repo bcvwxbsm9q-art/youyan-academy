@@ -117,6 +117,10 @@
 ### 10.3 最终结果
 - 文件：`training-plan.html`。
 - 验证：筛选按钮切换后恢复彩色主题；进度条按 `已报名 / 本月课程总数` 显示，总数为 0 时不显示绿色。
+- 后续调整 1：用户反馈紫色高亮外圈太丑，已移除，仅保留彩色胶囊按钮。产出物：`.trae/documents/20260708_模块0_去掉筛选按钮紫色高亮.md`。
+- 后续调整 2：用户觉得缺少交互反馈，已按“选中项加深背景色”实现：未选中保持浅色彩色背景，选中项变为同色系深色背景 + 白字。产出物：`.trae/documents/20260708_模块0_筛选按钮选中态加深背景.md`。
+- 后续调整 3：用户要求“全部课程”按钮保持默认渐变，不加深。已修改 `filterByCategory()` 仅对非 `all` 分类应用深色激活态。产出物：`.trae/documents/20260708_模块0_全部课程按钮不变色.md`。
+- 后续调整 4：用户反馈课件不算任务，按钮应为“去下载”。已将 `training-plan.html` 中课件条目的按钮文案改为“去下载”，状态文案改为“可下载”。产出物：`.trae/documents/20260708_模块0_课件按钮改为去下载.md`。
 - 产出物：`.trae/documents/20260708_模块0_修复培训页筛选与进度条.md`
 
 ## 七、追加即时修复：课程管理列表表头拆分
@@ -167,8 +171,12 @@
 7. 用户反馈：标题文件夹图标与右侧外部链接图标不统一；已移除标题图标，并将右侧图标改为下载图标，链接添加 `download` 属性。
 8. 用户反馈：下载后的文件名变成 URL 中的数字 ID；已给 `download` 属性赋值为附件原始文件名（对双引号做安全替换），确保下载名称与显示名称一致。
 9. 用户反馈：课程简介作为独立卡片不够紧凑，且无简介时应隐藏；已将课程简介移入「课程信息区」卡片内部（学习进度下方），删除原独立卡片，并根据 `course.description` 显隐。
-10. 已新增 `getAttachmentIcon`、`formatAttachmentSize`、`renderCourseAttachments` 函数并在 `populatePlayerPage` 中调用。
-11. 无附件时卡片自动隐藏。
+10. 用户反馈：课程简介标题缺少图标、样式应与讲师介绍一致，且「展开」按钮无用；已为课程简介添加 `fa-file-alt` 图标并统一标题样式，删除展开/收起按钮，简介完整显示。
+11. 用户反馈：讲师头像右下角等级标签位置歪斜；已将等级标签移讲师姓名右侧作为圆角徽章，头像右下角不再显示标签。
+12. 二次反馈修正：课程简介图标 `fa-file-alt` 在 Font Awesome 4 中不存在导致不显示，已改为 `fa-file-text-o`。
+13. 二次反馈修正：讲师等级标签改放在头像正下方居中显示，而非姓名右侧。
+14. 已新增 `getAttachmentIcon`、`formatAttachmentSize`、`renderCourseAttachments` 函数并在 `populatePlayerPage` 中调用。
+15. 无附件时卡片自动隐藏。
 
 ### 9.2 交接状态
 - 当前任务：播放页显示课程资料
@@ -181,8 +189,10 @@
 - 产出物：
   - `.trae/documents/20260707_模块0_播放页显示课程资料.md`
   - `.trae/documents/20260708_模块0_课程简介并入课程信息区.md`
+  - `.trae/documents/20260708_模块0_优化课程简介与讲师介绍排版.md`
   - `.trae/documents/test_reports/frontend_gate_20260707_213351/`
   - `.trae/documents/test_reports/frontend_gate_20260708_104734/`
+  - `.trae/documents/test_reports/frontend_gate_20260708_114118/`
 
 ## 十、追加需求：学员报表增加字段并修正等级与总时长
 
@@ -472,3 +482,54 @@
   - 重启 Node 服务后，`GET /api/user-certificates?userId=1782783422496` 返回 200，记录中包含完整 `template` 对象。
 - 产出物：`.trae/documents/20260708_模块0_修复个人中心证书列表加载.md`
 - 待人工验证：登录被颁发证书的用户账号，进入个人中心 → 我的证书，确认列表正常加载、卡片显示模板背景、点击查看可预览证书。
+
+## 二十二、追加即时修复：证书图片生成卡死
+
+### 22.1 工程过程
+1. 用户反馈：个人中心「我的证书」证书图片一直显示「生成证书图片...」，无法正常完成。
+2. 已通过浏览器控制台复现：`htmlToImage.toPng()` 抛出 `isTrusted` 事件错误，证书模板使用的 `"Noto Serif SC"` 外部字体栈导致字体加载失败。
+3. 已修改 `center.html`：
+   - `renderCertificatePreviewHTML()` 改用系统字体栈（`'PingFang SC', 'Microsoft YaHei', 'SimSun', serif`）。
+   - 证书尺寸从 `mm` 改为 `px`（竖版 794×1123，横版 1123×794）。
+   - `loadCertificatesList()` 中 `htmlToImage.toPng()` 增加 `skipFonts: true`、`backgroundColor: '#ffffff'` 与 8 秒超时。
+   - 生成失败时占位图显示「生成失败」，避免无限 loading。
+4. 已同步更新 `test-cert-image.html` 的字体与尺寸处理。
+5. 已更新变更追踪文档 `.trae/documents/20260708_模块0_证书列表图片化并支持下载.md`。
+
+### 22.2 交接状态
+- 当前任务：证书图片生成卡死修复
+- 状态：已完成
+- 阻塞项：无
+
+### 22.3 最终结果
+- 文件：`center.html`、`test-cert-image.html`。
+- 验证：
+  - 浏览器实测个人中心「我的证书」证书图片可正常生成，下载按钮变为可用。
+  - 控制台无字体加载相关错误。
+- 产出物：`.trae/documents/20260708_模块0_证书列表图片化并支持下载.md`（已更新）
+- 待人工验证：在目标浏览器中刷新个人中心 → 我的证书，确认图片在数秒内生成、下载按钮可点击。
+
+## 二十三、追加 Bug 修复：证书通知点击后红点不消失
+
+### 23.1 工程过程
+1. 用户反馈：消息中心的证书推送消息点击后，所有页面仍显示红点。
+2. 已创建变更追踪文档 `.trae/documents/20260708_模块0_修复通知已读标记失败.md`。
+3. 已诊断根因：证书颁发接口生成的通知 ID 为字符串（如 `nt-1783477408201-0`），`GET /api/notifications` 返回时会包装为 `notification_nt-...`；但 `PUT /api/notifications/:id/read`、`POST /api/notifications/batch-read`、`DELETE /api/notifications/:id` 去掉 `notification_` 前缀后仍用 `parseInt` 解析，导致字符串 ID 匹配失败返回 404，无法标记已读/删除。
+4. 已修改 `server.js`：三个接口均改为先剥离 `notification_` 前缀，再用 `String(n.id) === String(rawId)` 匹配。
+5. 已恢复测试过程中被误删的证书通知数据到 `data.json`。
+6. 已重启 Node 服务并执行接口验证：单条已读、批量已读、删除均返回 200，再次获取列表后 `read` 字段正确更新。
+
+### 23.2 交接状态
+- 当前任务：证书通知已读标记失败修复
+- 状态：已完成
+- 阻塞项：无
+
+### 23.3 最终结果
+- 文件：`server.js`、`data.json`。
+- 验证：
+  - `node --check server.js` 通过。
+  - `PUT /api/notifications/notification_nt-1783477408201-0/read` 返回 `200 {"success":true}`。
+  - `GET /api/notifications` 再次查询，该通知 `read` 字段从 `false` 变为 `true`。
+  - `POST /api/notifications/batch-read` 与 `DELETE /api/notifications/:id` 对 `notification_nt-...` ID 均返回 200。
+- 产出物：`.trae/documents/20260708_模块0_修复通知已读标记失败.md`
+- 待人工验证：在浏览器中打开消息中心，点击证书通知，确认消息行红点消失、顶部未读数减少；切换到首页/课程页/个人中心，确认铃铛红点同步消失。

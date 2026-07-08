@@ -60,12 +60,6 @@
         .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .btn-primary:hover { background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%); }
 
-        /* 分类筛选按钮激活态高亮 */
-        .filter-active {
-            box-shadow: 0 0 0 2px #9333ea, 0 0 0 4px #ffffff;
-            transform: scale(1.05);
-        }
-
         /* ===== 培训详情 - 项目内容任务卡片 ===== */
         .tp-progress-top {
             background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
@@ -884,6 +878,14 @@
             '鸿雁计划': ['bg-green-100', 'text-green-600', 'hover:bg-green-200'],
             'AI实践分享': ['bg-amber-100', 'text-amber-600', 'hover:bg-amber-200'],
             '雏雁训练营': ['bg-red-100', 'text-red-600', 'hover:bg-red-200']
+        };
+        const CATEGORY_ACTIVE_STYLES = {
+            'all': { background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', color: '#ffffff' },
+            '新雁计划': { background: '#f97316', color: '#ffffff' },
+            '游雁学堂': { background: '#3b82f6', color: '#ffffff' },
+            '鸿雁计划': { background: '#22c55e', color: '#ffffff' },
+            'AI实践分享': { background: '#f59e0b', color: '#ffffff' },
+            '雏雁训练营': { background: '#ef4444', color: '#ffffff' }
         };
         let currentSearchTerm = '';
         let currentMonthlyPage = 1; // 当月课程列表当前页码
@@ -1957,8 +1959,8 @@
                     icon: 'fa-folder-open-o', iconColor: '#8b5cf6', iconBg: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)', ringColor: '#8b5cf6',
                     title: `培训课件（${files.length}个文件）`, tag: '资料', tagColor: '#8b5cf6', tagBg: '#f5f3ff',
                     subtitle: '培训相关参考资料，可自由下载',
-                    status: '待完成', statusColor: '#9ca3af',
-                    actionText: '去完成',
+                    status: '可下载', statusColor: '#9ca3af',
+                    actionText: '去下载',
                     actionClass: 'btn-action-courseware',
                     actionData: { action: 'courseware', params: { files: files } },
                     actionDisabled: false
@@ -2442,15 +2444,23 @@
         function filterByCategory(category) {
             currentCategoryFilter = category;
 
-            // 恢复每个按钮的基础主题色，再单独给当前选中按钮加高亮
+            // 恢复每个按钮的基础主题色，再给当前选中按钮加深背景
             document.querySelectorAll('.filter-tag').forEach(tag => {
                 const cat = tag.id.replace('cat-', '');
                 const baseClasses = CATEGORY_FILTER_CLASSES[cat] || ['bg-gray-100', 'text-gray-600'];
                 tag.className = 'filter-tag flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ' + baseClasses.join(' ');
+                tag.style.background = '';
+                tag.style.color = '';
             });
 
             const activeTag = document.getElementById(`cat-${category}`);
-            if (activeTag) activeTag.classList.add('filter-active');
+            if (activeTag && category !== 'all') {
+                const activeStyle = CATEGORY_ACTIVE_STYLES[category];
+                if (activeStyle) {
+                    activeTag.style.background = activeStyle.background;
+                    activeTag.style.color = activeStyle.color;
+                }
+            }
 
             // 同步下拉框选中状态，避免按钮与下拉脱节
             const selectEl = document.getElementById('category-filter');

@@ -4500,10 +4500,12 @@ app.put('/api/notifications/:id/read', (req, res) => {
     
     res.json({ success: true });
   } else {
-    // 处理个人通知
-    const notifId = parseInt(notificationId.replace('notification_', ''));
-    const notification = data.notifications.find(n => n.id === notifId);
-    
+    // 处理个人通知（兼容数字 ID、notification_ 前缀 ID、nt- 前缀字符串 ID 等）
+    const rawId = notificationId.startsWith('notification_')
+      ? notificationId.slice('notification_'.length)
+      : notificationId;
+    const notification = data.notifications.find(n => String(n.id) === String(rawId));
+
     if (notification && String(notification.userId) === String(currentUser.id)) {
       notification.read = true;
       notification.readAt = new Date().toISOString();
@@ -4553,9 +4555,12 @@ app.post('/api/notifications/batch-read', (req, res) => {
         });
       }
     } else {
-      const notifId = parseInt(id.replace('notification_', ''));
+      // 兼容数字 ID、notification_ 前缀 ID、nt- 前缀字符串 ID 等
+      const rawId = id.startsWith('notification_')
+        ? id.slice('notification_'.length)
+        : id;
       const notification = data.notifications.find(
-        n => n.id === notifId && String(n.userId) === String(currentUser.id)
+        n => String(n.id) === String(rawId) && String(n.userId) === String(currentUser.id)
       );
       if (notification) {
         notification.read = true;
@@ -4612,23 +4617,27 @@ app.delete('/api/notifications/:id', (req, res) => {
   if (!currentUser) {
     return res.status(401).json({ success: false, error: '未登录' });
   }
-  
-  const notificationId = parseInt(req.params.id);
-  if (isNaN(notificationId)) {
+
+  const notificationId = req.params.id;
+  if (!notificationId) {
     return res.status(400).json({ success: false, error: '无效的通知ID' });
   }
-  
+
   const data = readData();
   initNotificationsData(data);
-  
+
+  // 兼容数字 ID、notification_ 前缀 ID、nt- 前缀字符串 ID 等
+  const rawId = notificationId.startsWith('notification_')
+    ? notificationId.slice('notification_'.length)
+    : notificationId;
   const index = data.notifications.findIndex(
-    n => n.id === notificationId && String(n.userId) === String(currentUser.id)
+    n => String(n.id) === String(rawId) && String(n.userId) === String(currentUser.id)
   );
-  
+
   if (index === -1) {
     return res.status(404).json({ success: false, error: '通知不存在或无权限删除' });
   }
-  
+
   data.notifications.splice(index, 1);
   writeData(data);
   res.json({ success: true, message: '已删除该消息' });

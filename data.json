@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1782044069160-440027461.jpg",
       "createdAt": "2026/6/8 16:59:34",
-      "lastLogin": "2026/7/6 11:47:17",
+      "lastLogin": "2026/7/8 14:40:26",
       "status": "active",
       "position": "人事经理"
     },
@@ -1070,6 +1070,42 @@
         "completedAt": "2026-07-06T09:35:01.035Z",
         "attemptId": 1783330492656,
         "durationUsed": 8
+      },
+      {
+        "examId": 1783329992765,
+        "examTitle": "新员工考试",
+        "score": 30,
+        "fullScore": 100,
+        "passed": false,
+        "correctCount": 1,
+        "totalQuestions": 3,
+        "completedAt": "2026-07-08T06:21:42.970Z",
+        "attemptId": 1783491695157,
+        "durationUsed": 8
+      },
+      {
+        "examId": 1783329992765,
+        "examTitle": "新员工考试",
+        "score": 100,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 3,
+        "totalQuestions": 3,
+        "completedAt": "2026-07-08T06:22:02.659Z",
+        "attemptId": 1783491717783,
+        "durationUsed": 5
+      },
+      {
+        "examId": 1783327874741,
+        "examTitle": "测试",
+        "score": 70,
+        "fullScore": 100,
+        "passed": true,
+        "correctCount": 2,
+        "totalQuestions": 3,
+        "completedAt": "2026-07-08T06:56:14.018Z",
+        "attemptId": 1783493766658,
+        "durationUsed": 7
       }
     ]
   },
@@ -1485,7 +1521,7 @@
         }
       ],
       "duration": 1909,
-      "views": 23,
+      "views": 25,
       "rating": 5,
       "id": 1781065281803,
       "createdAt": "2026/6/10 12:21:21",
@@ -1601,7 +1637,7 @@
       ],
       "attachments": [],
       "duration": 2054,
-      "views": 40,
+      "views": 43,
       "rating": 3,
       "id": 1781080411545,
       "createdAt": "2026/6/10 16:33:31",
@@ -1766,7 +1802,7 @@
       "videos": [],
       "attachments": [],
       "duration": 0,
-      "views": 1,
+      "views": 2,
       "rating": 0,
       "id": 1783327125758,
       "createdAt": "2026/7/6 16:38:45",
@@ -2065,19 +2101,19 @@
     "videoProgress": {
       "1781087462994_0": 100,
       "1781087427858_0": 5,
-      "1781065281803_0": 13,
+      "1781065281803_0": 14,
       "1781506198054_0": 13,
-      "1781080411545_0": 22,
+      "1781080411545_0": 41,
       "1781065453648_0": 36,
       "1781077900894_0": 2
     },
-    "lastStudyTime": "2026-07-08T03:30:56.193Z",
+    "lastStudyTime": "2026-07-08T06:15:57.752Z",
     "studyDates": [
       "2026-06-12",
       "2026-06-17",
       "2026-07-08"
     ],
-    "totalSeconds": 722,
+    "totalSeconds": 893,
     "studyRecords": [
       {
         "courseId": 1781087462994,
@@ -2564,6 +2600,186 @@
         "duration": 3,
         "timestamp": "2026-07-08T03:30:56.193Z",
         "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:49:41.754Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 6,
+        "timestamp": "2026-07-08T03:49:47.985Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 5,
+        "timestamp": "2026-07-08T03:49:55.095Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:51:06.640Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:51:16.641Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:51:26.642Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:51:36.638Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:51:46.640Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:51:56.643Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:52:06.648Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T03:52:16.643Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 1,
+        "timestamp": "2026-07-08T03:52:18.390Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T06:14:50.876Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781065281803,
+        "courseTitle": "角色技能设计思路",
+        "videoIndex": 0,
+        "videoTitle": "角色技能设计思路.mp4",
+        "duration": 5,
+        "timestamp": "2026-07-08T06:14:56.017Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T06:15:13.078Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T06:15:23.081Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T06:15:33.077Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T06:15:43.082Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-08T06:15:53.082Z",
+        "date": "2026-07-08"
+      },
+      {
+        "courseId": 1781080411545,
+        "courseTitle": "游戏挂机的简单设计",
+        "videoIndex": 0,
+        "videoTitle": "游戏挂机托管的简单设计.mp4",
+        "duration": 4,
+        "timestamp": "2026-07-08T06:15:57.752Z",
+        "date": "2026-07-08"
       }
     ],
     "ratings": 0,
@@ -2678,8 +2894,8 @@
     "savedAt": "2026-06-12T02:27:47.194Z"
   },
   "video_pos_1781087021554_1781065281803_0": {
-    "position": 251,
-    "savedAt": "2026-07-08T03:30:56.155Z"
+    "position": 280,
+    "savedAt": "2026-07-08T06:14:55.976Z"
   },
   "video_pos_1781087021554_1781087427858_0": {
     "position": 54,
@@ -2715,8 +2931,8 @@
     "ratingCount": 2
   },
   "video_pos_1781087021554_1781080411545_0": {
-    "position": 222,
-    "savedAt": "2026-07-08T03:26:00.891Z"
+    "position": 422,
+    "savedAt": "2026-07-08T06:15:57.711Z"
   },
   "video_pos_1781087021554_1781065453648_0": {
     "position": 892,
@@ -3277,8 +3493,9 @@
       "content": "您已获得《平面设计进阶课程证书》证书，证书编号：CERT-0001。请在个人中心-我的证书查看。",
       "type": "certificate",
       "certificateId": "cert-legacy-001",
-      "read": false,
-      "createdAt": "2026-07-08T02:23:28.202Z"
+      "read": true,
+      "createdAt": "2026-07-08T02:23:28.202Z",
+      "readAt": "2026-07-08T06:46:07.433Z"
     }
   ],
   "notification_reads": [
@@ -4689,6 +4906,61 @@
       "correctCount": 1,
       "totalQuestions": 3,
       "durationUsed": 8
+    },
+    {
+      "id": 1783491695157,
+      "examId": 1783329992765,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-07-08T06:21:35.157Z",
+      "answers": {
+        "1783329924144": "C",
+        "1783329924146": "A",
+        "1783329924148": "ABC"
+      },
+      "score": 30,
+      "passed": false,
+      "completedAt": "2026-07-08T06:21:42.970Z",
+      "correctCount": 1,
+      "totalQuestions": 3,
+      "durationUsed": 8
+    },
+    {
+      "id": 1783491717783,
+      "examId": 1783329992765,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-07-08T06:21:57.783Z",
+      "answers": {
+        "1783329924144": "A",
+        "1783329924146": "A",
+        "1783329924148": "AC"
+      },
+      "score": 100,
+      "passed": true,
+      "completedAt": "2026-07-08T06:22:02.659Z",
+      "correctCount": 3,
+      "totalQuestions": 3,
+      "durationUsed": 5
+    },
+    {
+      "id": 1783493766658,
+      "examId": 1783327874741,
+      "userId": "1780909174403",
+      "status": "completed",
+      "startedAt": "2026-07-08T06:56:06.658Z",
+      "answers": {
+        "1783326663125": "A",
+        "1783326663127": "A",
+        "1783326663129": "ABC"
+      },
+      "score": 70,
+      "passed": true,
+      "trainingId": 1781148703132,
+      "completedAt": "2026-07-08T06:56:14.018Z",
+      "correctCount": 2,
+      "totalQuestions": 3,
+      "durationUsed": 7
     }
   ],
   "survey_responses": [
@@ -6707,7 +6979,7 @@
       "noticeId": 1782183780370,
       "userId": 1780909174403,
       "username": "15302206488",
-      "visitedAt": "2026-07-08T02:20:12.862Z"
+      "visitedAt": "2026-07-08T06:51:04.524Z"
     },
     {
       "noticeId": 1782183780370,
@@ -6784,6 +7056,14 @@
     {
       "userId": "1781087021554",
       "loginTime": "2026-07-08T02:23:11.267Z"
+    },
+    {
+      "userId": "1780909174403",
+      "loginTime": "2026-07-08T06:16:20.012Z"
+    },
+    {
+      "userId": "1780909174403",
+      "loginTime": "2026-07-08T06:40:26.617Z"
     }
   ],
   "lecturer_payment_records": [
