@@ -822,6 +822,17 @@
             });
             await loadMessages();
 
+            // 处理从首页轮播图关联公告跳转过来的场景：自动打开对应公告详情
+            const urlParams = new URLSearchParams(window.location.search);
+            const noticeId = urlParams.get('noticeId');
+            if (noticeId) {
+                const targetId = 'notice_' + noticeId;
+                const msg = allMessages.find(function (m) { return String(m.id) === targetId; });
+                if (msg) {
+                    openDetail(targetId);
+                }
+            }
+
             window.addEventListener('userProfileUpdated', () => {
                 loadMessages();
             });

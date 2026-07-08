@@ -542,6 +542,21 @@
 
   // ===== 证书渲染（通用，用于详情弹窗和个人中心） =====
   function renderCertificateHTML(userCert, certificate, template) {
+    if (certificate && certificate.design) {
+      const fill = {
+        title: certificate.name || '荣誉证书',
+        name: userCert.userName || '学员',
+        certNo: userCert.certNo || '',
+        date: (userCert.issueAt ? formatDateTime(userCert.issueAt).split(' ')[0] : ''),
+        company: userCert.userDepartment || '广州游雁网络科技有限公司',
+        content: userCert.sourceType === 'exam'
+          ? '通过考试考核，成绩合格，特发此证，以资鼓励。'
+          : (userCert.sourceType === 'training'
+            ? '已完成全部培训课程，考核合格，准予结业。'
+            : '表现优异，特发此证，以资鼓励。')
+      };
+      return renderDesignPageInner(certificate.design, PRINT_SCALE, fill);
+    }
     const user = userCert.userName || '学员';
     const company = userCert.userDepartment || '广州游雁网络科技有限公司';
     const date = formatDateTime(userCert.issueAt).split(' ')[0];
@@ -598,20 +613,23 @@
       if (!res.success) return showToast(res.error || '加载失败', 'error');
       const uc = res.data;
       const tpl = uc.template;
-      if (!tpl) return showToast('模板不存在', 'error');
+      if (!tpl && !uc.design) return showToast('模板不存在', 'error');
 
-      const win = window.open('', '_blank');
-      win.document.write(`
-        <html><head><title>证书打印</title>
-        <style>
-          @media print { body { margin:0; } .cert-print { page-break-after:always; } }
-          body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f3f4f6; }
-        </style></head><body>
-        <div class="cert-print">${renderCertificateHTML(uc, { name: uc.certificateName }, tpl)}</div>
-        <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 300); };</script>
-        </body></html>
-      `);
-      win.document.close();
+      apiGet('/api/certificates/' + uc.certificateId).then(cres => {
+        const certDef = cres.data || {};
+        const win = window.open('', '_blank');
+        win.document.write(`
+          <html><head><title>证书打印</title>
+          <style>
+            @media print { body { margin:0; } .cert-print { page-break-after:always; } }
+            body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f3f4f6; }
+          </style></head><body>
+          <div class="cert-print">${renderCertificateHTML(uc, { name: uc.certificateName, design: certDef.design }, tpl)}</div>
+          <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 300); };</script>
+          </body></html>
+        `);
+        win.document.close();
+      });
     });
   }
 
@@ -1039,6 +1057,34 @@
     $('#cert-dept-filter')?.addEventListener('change', loadCertificates);
     $('#cert-new-btn')?.addEventListener('click', () => openCertificateModal());
 
+    // 编辑器
+    $('#cert-design-editor-btn')?.addEventListener('click', openCertificateEditor);
+    $('#et-add-text')?.addEventListener('click', addTextElement);
+    $('#et-add-seal')?.addEventListener('click', addSealElement);
+    $('#et-bold')?.addEventListener('click', () => toggleTextStyle('fontWeight', 'bold', 'normal'));
+    $('#et-italic')?.addEventListener('click', () => toggleTextStyle('fontStyle', 'italic', 'normal'));
+    $('#et-underline')?.addEventListener('click', () => toggleTextStyle('underline', true, false));
+    $('#et-align-l')?.addEventListener('click', () => applyTextStyle('textAlign', 'left'));
+    $('#et-align-c')?.addEventListener('click', () => applyTextStyle('textAlign', 'center'));
+    $('#et-align-r')?.addEventListener('click', () => applyTextStyle('textAlign', 'right'));
+    $('#et-color')?.addEventListener('input', e => applyTextStyle('color', e.target.value));
+    $('#et-size')?.addEventListener('input', e => applyTextStyle('fontSize', parseInt(e.target.value) || 16));
+    $('#et-font')?.addEventListener('change', e => applyTextStyle('fontFamily', e.target.value));
+    $('#et-delete')?.addEventListener('click', deleteSelected);
+    $('#et-bringfront')?.addEventListener('click', bringToFront);
+    $('#et-orient-portrait')?.addEventListener('click', () => setLayout('portrait'));
+    $('#et-orient-landscape')?.addEventListener('click', () => setLayout('landscape'));
+    $('#et-bg-upload')?.addEventListener('change', onBgUpload);
+    $('#et-apply')?.addEventListener('click', applyEditorDesign);
+    $('#et-cancel')?.addEventListener('click', closeEditor);
+    $('#et-prop-text')?.addEventListener('input', e => { const el = selEl(); if (el) { el.text = e.target.value; const n = document.querySelector(`#et-page [data-id="${el.id}"]`); if (n) refreshTextNode(n, el); } });
+    $('#et-prop-size')?.addEventListener('input', e => { const el = selEl(); if (el) { el.fontSize = parseInt(e.target.value) || 16; const n = document.querySelector(`#et-page [data-id="${el.id}"]`); if (n) refreshTextNode(n, el); } });
+    $('#et-prop-color')?.addEventListener('input', e => { const el = selEl(); if (el) { el.color = e.target.value; const n = document.querySelector(`#et-page [data-id="${el.id}"]`); if (n) refreshTextNode(n, el); } });
+    $('#et-prop-seal-text')?.addEventListener('input', e => { if (editorState.seal) { editorState.seal.text = e.target.value; refreshSealNode(); } });
+    $('#et-prop-seal-size')?.addEventListener('input', e => { if (editorState.seal) { editorState.seal.size = clamp(parseInt(e.target.value) || 80, 30, 220); refreshSealNode(); } });
+    $('#et-prop-seal-color')?.addEventListener('input', e => { if (editorState.seal) { editorState.seal.color = e.target.value; refreshSealNode(); } });
+    $('#et-stage')?.addEventListener('mousedown', e => { if (e.target.id === 'et-stage' || e.target.id === 'et-page') selectElement(null); });
+
     $$('.cert-detail-tab').forEach(btn => {
       btn.addEventListener('click', () => switchDetailTab(btn.dataset.tab));
     });
@@ -1062,7 +1108,10 @@
     deleteCertificate,
     toggleCertificateStatus,
     printCertificate,
-    renderCertificateHTML
+    renderCertificateHTML,
+    openCertificateEditor,
+    closeEditor,
+    renderDesignPageInner
   };
 
   // DOM 就绪后初始化

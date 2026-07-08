@@ -258,9 +258,14 @@
         // ---- 重建轮播 HTML ----
         // 第一张用 relative（撑开容器高度），其余 absolute 叠放
         const slidesHtml = sorted.map((b, i) => {
-            const clickHandler = b.courseId ?
-                `onclick="location.href='player.html?courseId=${b.courseId}'"` :
-                `onclick="location.href='course.html'"`;
+            let clickHandler;
+            if (b.announcementId) {
+                clickHandler = `onclick="location.href='messages.html?noticeId=${encodeURIComponent(b.announcementId)}'"`;
+            } else if (b.courseId) {
+                clickHandler = `onclick="location.href='player.html?courseId=${b.courseId}'"`;
+            } else {
+                clickHandler = `onclick="location.href='course.html'"`;
+            }
             const imgTag = b.img ?
                 `<img src="${b.img}" alt="轮播图" class="w-full h-auto block">` :
                 `<div class="w-full bg-gradient-to-br from-indigo-500 to-purple-600" style="padding-top:37.5%"></div>`;

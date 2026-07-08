@@ -3848,11 +3848,13 @@ app.delete('/api/users/:id', (req, res) => {
 app.get('/api/banners', (req, res) => {
   const data = readData();
   const banners = (data.index_banners || []).sort((a, b) => (a.order || 0) - (b.order || 0));
-  // 附带关联课程信息
+  // 附带关联课程和公告信息
   const courses = data.management_courses || [];
+  const notices = data.notices || [];
   const enriched = banners.map(b => {
     const course = b.courseId ? courses.find(c => c.id === b.courseId) : null;
-    return { ...b, courseTitle: course ? course.title : null };
+    const notice = b.announcementId ? notices.find(n => n.id === b.announcementId) : null;
+    return { ...b, courseTitle: course ? course.title : null, announcementTitle: notice ? notice.title : null };
   });
   res.json(enriched);
 });
@@ -3870,6 +3872,7 @@ app.post('/api/banners', upload.single('cover'), (req, res) => {
       id: Date.now(),
       img: coverUrl,
       courseId: req.body.courseId ? parseInt(req.body.courseId) : null,
+      announcementId: req.body.announcementId ? parseInt(req.body.announcementId) : null,
       order: data.index_banners.length + 1,
       status: 'published',
       createdAt: new Date().toISOString()
@@ -3878,6 +3881,8 @@ app.post('/api/banners', upload.single('cover'), (req, res) => {
     // JSON 模式
     banner = req.body;
     banner.id = Date.now();
+    banner.courseId = banner.courseId ? parseInt(banner.courseId) : null;
+    banner.announcementId = banner.announcementId ? parseInt(banner.announcementId) : null;
     banner.status = banner.status || 'published';
     banner.createdAt = banner.createdAt || new Date().toISOString();
   }
@@ -3920,6 +3925,7 @@ app.put('/api/banners/:id', upload.single('cover'), (req, res) => {
     updates.img = '/uploads/covers/' + req.file.filename;
   }
   if (req.body.courseId !== undefined) updates.courseId = req.body.courseId ? parseInt(req.body.courseId) : null;
+  if (req.body.announcementId !== undefined) updates.announcementId = req.body.announcementId ? parseInt(req.body.announcementId) : null;
   if (req.body.order !== undefined) updates.order = parseInt(req.body.order);
   if (req.body.status !== undefined) updates.status = req.body.status;
 

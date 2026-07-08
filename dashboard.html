@@ -151,6 +151,30 @@
     .cert-stat-num { font-size: 1.6rem; font-weight: 800; line-height: 1.1; color: #1e293b; letter-spacing: -.02em; }
     .cert-stat-label { margin-top: .25rem; font-size: .78rem; color: #94a3b8; }
 
+    /* ========== 通用工作台统计卡片（考试安排/调研管理/用户管理统一风格） ========== */
+    /* 与证书管理卡片一致：左文字 + 右图标 + 右上角柔光晕，hover 轻浮 */
+    .wb-stat-card {
+      position: relative; background: #fff; border: 1px solid #f1f5f9;
+      border-radius: 1rem; padding: 1.1rem 1.25rem; overflow: hidden;
+      display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+      box-shadow: 0 1px 3px rgba(15,23,42,.05);
+      transition: transform .28s cubic-bezier(.16,1,.3,1), box-shadow .28s;
+    }
+    .wb-stat-card::after {
+      content: ""; position: absolute; right: -18px; top: -18px; width: 72px; height: 72px;
+      border-radius: 50%; opacity: .08; background: var(--wb-accent, #667eea); pointer-events: none;
+    }
+    .wb-stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(15,23,42,.10); }
+    .wb-stat-info { min-width: 0; }
+    .wb-stat-icon {
+      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.05rem; color: #fff; background: var(--wb-accent, #667eea);
+      box-shadow: 0 8px 18px -6px var(--wb-accent, #667eea);
+    }
+    .wb-stat-num { font-size: 1.6rem; font-weight: 800; line-height: 1.1; color: #1e293b; letter-spacing: -.02em; }
+    .wb-stat-label { margin-top: .25rem; font-size: .78rem; color: #94a3b8; }
+
     /* 列表行悬浮 */
     #certificate-list-body tr { transition: background .15s ease; }
     #certificate-list-body tr:hover { background: linear-gradient(90deg, #f3e8ff, #ffffff); }
@@ -248,6 +272,8 @@
     .cert-el:hover { border-color: rgba(139,92,246,.5); }
     .cert-el.selected { border-color: #8b5cf6; box-shadow: 0 0 0 1px rgba(139,92,246,.4); }
     .cert-el[contenteditable="true"] { cursor: text; border-color: #8b5cf6; outline: none; }
+    .cert-el .cert-el-text { user-select: text; outline: none; width: 100%; display: inline-block; }
+    .cert-el[contenteditable="true"], .cert-el[contenteditable="true"] .cert-el-text { user-select: text; }
     .cert-el-handle {
       position: absolute; width: 11px; height: 11px; background: #fff; border: 2px solid #8b5cf6;
       border-radius: 50%; z-index: 5; display: none;
@@ -1553,42 +1579,34 @@
         </div>
 
         <!-- 统计卡片 -->
-        <div class="grid grid-cols-4 gap-4 mb-6">
-          <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
-              <i class="fas fa-clipboard-list text-white text-lg"></i>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="wb-stat-card" style="--wb-accent:#667eea;">
+            <div class="wb-stat-info">
+              <div class="wb-stat-num" id="exam-stat-total">0</div>
+              <div class="wb-stat-label">考试总数</div>
             </div>
-            <div>
-              <p class="text-2xl font-bold text-slate-800" id="exam-stat-total">0</p>
-              <p class="text-sm text-slate-500">考试总数</p>
-            </div>
+            <div class="wb-stat-icon"><i class="fas fa-clipboard-list"></i></div>
           </div>
-          <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center flex-shrink-0">
-              <i class="fas fa-paper-plane text-white text-lg"></i>
+          <div class="wb-stat-card" style="--wb-accent:#8b5cf6;">
+            <div class="wb-stat-info">
+              <div class="wb-stat-num" id="exam-stat-published">0</div>
+              <div class="wb-stat-label">已发布</div>
             </div>
-            <div>
-              <p class="text-2xl font-bold text-slate-800" id="exam-stat-published">0</p>
-              <p class="text-sm text-slate-500">已发布</p>
-            </div>
+            <div class="wb-stat-icon"><i class="fas fa-paper-plane"></i></div>
           </div>
-          <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-300 to-indigo-500 flex items-center justify-center flex-shrink-0">
-              <i class="fas fa-users text-white text-lg"></i>
+          <div class="wb-stat-card" style="--wb-accent:#3b82f6;">
+            <div class="wb-stat-info">
+              <div class="wb-stat-num" id="exam-stat-attempts">0</div>
+              <div class="wb-stat-label">参考人次</div>
             </div>
-            <div>
-              <p class="text-2xl font-bold text-slate-800" id="exam-stat-attempts">0</p>
-              <p class="text-sm text-slate-500">参考人次</p>
-            </div>
+            <div class="wb-stat-icon"><i class="fas fa-users"></i></div>
           </div>
-          <div class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
-              <i class="fas fa-chart-pie text-white text-lg"></i>
+          <div class="wb-stat-card" style="--wb-accent:#a855f7;">
+            <div class="wb-stat-info">
+              <div class="wb-stat-num" id="exam-stat-passrate">0%</div>
+              <div class="wb-stat-label">通过率</div>
             </div>
-            <div>
-              <p class="text-2xl font-bold text-slate-800" id="exam-stat-passrate">0%</p>
-              <p class="text-sm text-slate-500">通过率</p>
-            </div>
+            <div class="wb-stat-icon"><i class="fas fa-chart-pie"></i></div>
           </div>
         </div>
 
@@ -1871,22 +1889,34 @@
         </div>
 
         <!-- 统计卡片 -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-            <p class="text-2xl font-bold text-slate-800" id="stat-total-surveys">0</p>
-            <p class="text-sm text-slate-500">调研总数</p>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="wb-stat-card" style="--wb-accent:#764ba2;">
+            <div class="wb-stat-info">
+              <div class="wb-stat-num" id="stat-total-surveys">0</div>
+              <div class="wb-stat-label">调研总数</div>
+            </div>
+            <div class="wb-stat-icon"><i class="fas fa-poll"></i></div>
           </div>
-          <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-            <p class="text-2xl font-bold text-green-500" id="stat-active-surveys">0</p>
-            <p class="text-sm text-slate-500">进行中</p>
+          <div class="wb-stat-card" style="--wb-accent:#10b981;">
+            <div class="wb-stat-info">
+              <div class="wb-stat-num" id="stat-active-surveys">0</div>
+              <div class="wb-stat-label">进行中</div>
+            </div>
+            <div class="wb-stat-icon"><i class="fas fa-play-circle"></i></div>
           </div>
-          <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-            <p class="text-2xl font-bold text-yellow-500" id="stat-draft-surveys">0</p>
-            <p class="text-sm text-slate-500">草稿</p>
+          <div class="wb-stat-card" style="--wb-accent:#f59e0b;">
+            <div class="wb-stat-info">
+              <div class="wb-stat-num" id="stat-draft-surveys">0</div>
+              <div class="wb-stat-label">草稿</div>
+            </div>
+            <div class="wb-stat-icon"><i class="fas fa-file-edit"></i></div>
           </div>
-          <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-            <p class="text-2xl font-bold text-purple-500" id="stat-total-responses">0</p>
-            <p class="text-sm text-slate-500">累计提交</p>
+          <div class="wb-stat-card" style="--wb-accent:#3b82f6;">
+            <div class="wb-stat-info">
+              <div class="wb-stat-num" id="stat-total-responses">0</div>
+              <div class="wb-stat-label">累计提交</div>
+            </div>
+            <div class="wb-stat-icon"><i class="fas fa-inbox"></i></div>
           </div>
         </div>
 
@@ -1948,6 +1978,7 @@
               <thead class="bg-slate-50">
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">封面图</th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">关联公告</th>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">关联课程</th>
                   <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">排序</th>
                   <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">状态</th>
@@ -1956,7 +1987,7 @@
               </thead>
               <tbody id="carousel-list" class="divide-y divide-slate-200">
                 <tr>
-                  <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                  <td colspan="6" class="px-6 py-12 text-center text-slate-400">
                     <i class="fas fa-images text-4xl mb-3 block"></i>
                     <p>暂无轮播图</p>
                     <button onclick="openCarouselModal()" class="mt-4 btn-primary px-6 py-2.5 text-white rounded-xl font-medium">添加轮播图</button>
@@ -2311,25 +2342,37 @@
             <i class="fas fa-cloud-upload-alt mr-1"></i>本地上传封面图片
           </button>
         </div>
+        <!-- 关联公告 -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">关联公告 <span class="text-slate-400 font-normal">(可选,点击轮播图跳转到该公告)</span></label>
+          <div class="relative searchable-select" data-target="carousel-announcement">
+            <input type="text" id="carousel-announcement-text" placeholder="输入关键字搜索公告" autocomplete="off" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none">
+            <input type="hidden" id="carousel-announcement">
+            <div class="select-dropdown absolute z-20 w-full mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg hidden"></div>
+          </div>
+        </div>
         <!-- 关联课程 -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">关联课程 <span class="text-slate-400 font-normal">(可选,点击轮播图跳转到该课程)</span></label>
-          <select id="carousel-course" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none">
-            <option value="">不关联课程</option>
-          </select>
+          <div class="relative searchable-select" data-target="carousel-course">
+            <input type="text" id="carousel-course-text" placeholder="输入关键字搜索课程" autocomplete="off" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none">
+            <input type="hidden" id="carousel-course">
+            <div class="select-dropdown absolute z-20 w-full mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg hidden"></div>
+          </div>
         </div>
-        <!-- 排序 -->
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">排序</label>
-          <input type="number" id="carousel-order" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none" placeholder="数字越小越靠前" min="1">
-        </div>
-        <!-- 状态 -->
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">状态</label>
-          <select id="carousel-status" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none">
-            <option value="published">已发布</option>
-            <option value="draft">草稿</option>
-          </select>
+        <!-- 排序和状态 -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">排序</label>
+            <input type="number" id="carousel-order" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none" placeholder="数字越小越靠前" min="1">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">状态</label>
+            <select id="carousel-status" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none">
+              <option value="published">已发布</option>
+              <option value="draft">草稿</option>
+            </select>
+          </div>
         </div>
         <!-- 按钮 -->
         <div class="flex gap-3 pt-2">
@@ -3802,7 +3845,7 @@
         if (!banners || banners.length === 0) {
           tbody.innerHTML = `
             <tr>
-              <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+              <td colspan="6" class="px-6 py-12 text-center text-slate-400">
                 <i class="fas fa-images text-4xl mb-3 block"></i>
                 <p>暂无轮播图</p>
                 <p class="text-sm">点击上方按钮添加</p>
@@ -3819,8 +3862,13 @@
             <!-- 封面图 -->
             <td class="px-6 py-4">
               <div class="w-32 h-20 rounded-lg overflow-hidden bg-slate-100">
-                <img src="${escHtml(b.img)}" alt="${escHtml(b.courseTitle||'')}" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22128%22 height=%2280%22><rect fill=%22%23e2e8f0%22 width=%22128%22 height=%2280%22/><text x=%2264%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2212%22>暂无封面</text></svg>'">
+                <img src="${escHtml(b.img)}" alt="${escHtml(b.courseTitle||b.announcementTitle||'')}" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22128%22 height=%2280%22><rect fill=%22%23e2e8f0%22 width=%22128%22 height=%2280%22/><text x=%2264%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2212%22>暂无封面</text></svg>'">
               </div>
+            </td>
+
+            <!-- 关联公告 -->
+            <td class="px-6 py-4 text-sm text-slate-700">
+              ${b.announcementTitle ? escHtml(b.announcementTitle) : '<span class="text-slate-400">未关联</span>'}
             </td>
 
             <!-- 关联课程 -->
@@ -3856,7 +3904,7 @@
         console.error('加载轮播图失败:', err);
         tbody.innerHTML = `
           <tr>
-            <td colspan="5" class="px-6 py-12 text-center text-red-400">
+            <td colspan="6" class="px-6 py-12 text-center text-red-400">
               <i class="fas fa-exclamation-circle text-3xl mb-2 block"></i>
               <p>加载失败,请刷新重试</p>
             </td>
@@ -3864,7 +3912,101 @@
       }
     }
 
+    // 轮播图可搜索下拉缓存
+    let carouselCourses = [];
+    let carouselAnnouncements = [];
+    let carouselEditingBanner = null;
+    const initializedSearchableSelects = new Set();
+
+    function initCarouselSearchableSelect(container, items, textInput, hiddenInput) {
+      const dropdown = container.querySelector('.select-dropdown');
+
+      function renderOptions(filter) {
+        const term = String(filter || '').trim().toLowerCase();
+        const filtered = items.filter(item => {
+          const label = String(item.title || item.name || '').toLowerCase();
+          return label.includes(term);
+        });
+        if (filtered.length === 0) {
+          dropdown.innerHTML = '<div class="px-4 py-2 text-sm text-slate-400">无匹配结果</div>';
+          return;
+        }
+        dropdown.innerHTML = filtered.map(item =>
+          `<div class="select-option px-4 py-2 text-sm hover:bg-indigo-50 cursor-pointer text-slate-700 truncate" data-value="${item.id}" data-label="${escHtml(item.title || item.name)}">${escHtml(item.title || item.name)}</div>`
+        ).join('');
+      }
+
+      function bindOnce() {
+        if (initializedSearchableSelects.has(container)) return;
+        textInput.addEventListener('focus', () => {
+          renderOptions(textInput.value);
+          dropdown.classList.remove('hidden');
+        });
+        textInput.addEventListener('input', () => {
+          renderOptions(textInput.value);
+          dropdown.classList.remove('hidden');
+        });
+        dropdown.addEventListener('click', (e) => {
+          const option = e.target.closest('.select-option');
+          if (!option) return;
+          textInput.value = option.dataset.label;
+          hiddenInput.value = option.dataset.value;
+          dropdown.classList.add('hidden');
+        });
+        document.addEventListener('click', (e) => {
+          if (!container.contains(e.target)) dropdown.classList.add('hidden');
+        });
+        initializedSearchableSelects.add(container);
+      }
+
+      bindOnce();
+      renderOptions(textInput.value);
+    }
+
+    async function loadCarouselCourseOptions() {
+      const container = document.querySelector('[data-target="carousel-course"]');
+      const textInput = document.getElementById('carousel-course-text');
+      const hiddenInput = document.getElementById('carousel-course');
+      try {
+        const res = await fetch(API + '/courses');
+        const courses = await res.json();
+        carouselCourses = (courses || []).filter(c => c.status === 'published');
+        initCarouselSearchableSelect(container, carouselCourses, textInput, hiddenInput);
+        if (carouselEditingBanner && carouselEditingBanner.courseId) {
+          const course = carouselCourses.find(c => c.id === carouselEditingBanner.courseId);
+          if (course) {
+            textInput.value = course.title;
+            hiddenInput.value = course.id;
+          }
+        }
+      } catch (err) {
+        textInput.placeholder = '加载课程失败';
+      }
+    }
+
+    async function loadCarouselAnnouncementOptions() {
+      const container = document.querySelector('[data-target="carousel-announcement"]');
+      const textInput = document.getElementById('carousel-announcement-text');
+      const hiddenInput = document.getElementById('carousel-announcement');
+      try {
+        const res = await fetch(API + '/notices');
+        const notices = await res.json();
+        carouselAnnouncements = notices || [];
+        initCarouselSearchableSelect(container, carouselAnnouncements, textInput, hiddenInput);
+        if (carouselEditingBanner && carouselEditingBanner.announcementId) {
+          const notice = carouselAnnouncements.find(n => n.id === carouselEditingBanner.announcementId);
+          if (notice) {
+            textInput.value = notice.title;
+            hiddenInput.value = notice.id;
+          }
+        }
+      } catch (err) {
+        textInput.placeholder = '加载公告失败';
+      }
+    }
+
     function openCarouselModal(banner = null) {
+      carouselEditingBanner = banner || null;
       document.getElementById('carousel-id').value = banner ? banner.id : '';
       document.getElementById('carousel-order').value = banner ? banner.order || '' : '';
       document.getElementById('carousel-status').value = banner ? banner.status || 'published' : 'published';
@@ -3884,8 +4026,15 @@
         placeholder.classList.remove('hidden');
       }
 
-      // 加载课程列表到下拉框
+      // 清空可搜索下拉
+      document.getElementById('carousel-course-text').value = '';
+      document.getElementById('carousel-course').value = '';
+      document.getElementById('carousel-announcement-text').value = '';
+      document.getElementById('carousel-announcement').value = '';
+
+      // 加载课程和公告列表
       loadCarouselCourseOptions();
+      loadCarouselAnnouncementOptions();
 
       const modal = document.getElementById('carouselModal');
       modal.classList.remove('hidden');
@@ -3899,25 +4048,10 @@
       document.getElementById('carouselForm').reset();
       document.getElementById('carousel-cover-img').classList.add('hidden');
       document.getElementById('carousel-cover-placeholder').classList.remove('hidden');
+      carouselEditingBanner = null;
     }
 
-    async function loadCarouselCourseOptions() {
-      const select = document.getElementById('carousel-course');
-      const currentCourseId = document.getElementById('carousel-id').value ? '' : ''; // 编辑时从已有数据恢复
-      try {
-        const res = await fetch(API + '/courses');
-        const courses = await res.json();
-        const published = (courses || []).filter(c => c.status === 'published');
-        select.innerHTML = '<option value="">不关联课程</option>' +
-          published.map(c => `<option value="${c.id}">${escHtml(c.title)}</option>`).join('');
-        // 编辑时回填课程
-        if (currentCourseId) select.value = currentCourseId;
-      } catch (err) {
-        select.innerHTML = '<option value="">加载课程失败</option>';
-      }
-    }
-
-    // 编辑时回填关联课程
+    // 编辑时回填关联课程和公告
     async function editCarousel(id) {
       try {
         const res = await fetch(API + '/banners');
@@ -3925,10 +4059,6 @@
         const banner = banners.find(b => b.id === id);
         if (banner) {
           openCarouselModal(banner);
-          // 加载课程选项后再回填
-          setTimeout(() => {
-            document.getElementById('carousel-course').value = banner.courseId || '';
-          }, 300);
         }
       } catch (err) {
         toast('获取轮播图信息失败', 'error');
@@ -3980,6 +4110,7 @@
       const bannerData = {
         img: coverUrl,
         courseId: document.getElementById('carousel-course').value ? parseInt(document.getElementById('carousel-course').value) : null,
+        announcementId: document.getElementById('carousel-announcement').value ? parseInt(document.getElementById('carousel-announcement').value) : null,
         order: parseInt(document.getElementById('carousel-order').value) || 99,
         status: document.getElementById('carousel-status').value
       };

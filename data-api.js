@@ -669,7 +669,89 @@
             if (data.ratings === undefined) data.ratings = 0;
             if (data.shares === undefined) data.shares = 0;
             if (data.likes === undefined) data.likes = 0;
-            return data;
+
+            // 对旧数据按新规则做一次重新换算
+            this.migrateUserData(userId);
+
+            return this.get(key) || data;
+        },
+
+        /**
+         * 迁移旧学习数据：按真实观看时长规则重新换算 completedCourses、totalSeconds、studyDates 等
+         */
+        migrateUserData(userId) {
+            const key = `user_learning_${userId}`;
+            let data = this.get(key);
+            if (!data) return;
+
+            // 已经迁移过且 videoWatchTimes 非空则跳过
+            if (data.migratedAt && data.videoWatchTimes && Object.keys(data.videoWatchTimes).length > 0) return;
+
+            let changed = false;
+
+            // 1. 从 studyRecords 重建 videoWatchTimes
+            if (data.studyRecords && data.studyRecords.length > 0) {
+                if (!data.videoWatchTimes) data.videoWatchTimes = {};
+                data.studyRecords.forEach(r => {
+                    if (!r.courseId || r.videoIndex === undefined || r.duration === undefined) return;
+                    const k = `${r.courseId}_${r.videoIndex}`;
+                    data.videoWatchTimes[k] = (data.videoWatchTimes[k] || 0) + (parseInt(r.duration) || 0);
+                });
+                changed = true;
+            }
+
+            // 2. 重新计算 totalSeconds / totalHours
+            if (data.studyRecords && data.studyRecords.length > 0) {
+                const total = data.studyRecords.reduce((sum, r) => sum + (parseInt(r.duration) || 0), 0);
+                if (total > 0) {
+                    data.totalSeconds = total;
+                    data.totalHours = Math.floor(total / 3600);
+                    changed = true;
+                }
+            }
+
+            // 3. 重新计算 studyDates
+            if (data.studyRecords && data.studyRecords.length > 0) {
+                const dates = [...new Set(data.studyRecords.map(r => r.date).filter(Boolean))].sort();
+                if (dates.length > 0) {
+                    data.studyDates = dates;
+                    changed = true;
+                }
+            }
+
+            // 4. 根据新的观看时长规则重新计算 completedCourses
+            const allCourses = this.getCourses();
+            const newCompleted = [];
+            allCourses.forEach(c => {
+                const vids = c.videos || [];
+                if (vids.length === 0) return;
+                const allWatched = vids.every((v, i) => {
+                    const k = `${c.id}_${i}`;
+                    const duration = v.duration || 0;
+                    if (duration > 0) {
+                        return (data.videoWatchTimes && data.videoWatchTimes[k] || 0) >= duration;
+                    }
+                    return (data.videoProgress[k] || 0) >= 100;
+                });
+                if (allWatched) newCompleted.push(String(c.id));
+            });
+
+            // 保留历史 completedCourses 中仍然满足新规则的，并加入新推导出的
+            const oldCompleted = (data.completedCourses || []).map(id => String(id));
+            const validCompleted = oldCompleted.filter(id => newCompleted.includes(id));
+            newCompleted.forEach(id => {
+                if (!validCompleted.includes(id)) validCompleted.push(id);
+            });
+
+            if (JSON.stringify(validCompleted.slice().sort()) !== JSON.stringify(oldCompleted.slice().sort())) {
+                data.completedCourses = validCompleted;
+                changed = true;
+            }
+
+            if (changed) {
+                data.migratedAt = new Date().toISOString();
+                this.set(key, data);
+            }
         },
 
         /**

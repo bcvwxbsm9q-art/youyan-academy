@@ -562,3 +562,27 @@
 - 验证：`node --check server.js` 通过；dashboard.html 内联脚本解析通过。
 - 产出物：`.trae/documents/20260708_模块0_报表优化培训与课程.md`
 - 待人工验证：重启 Node 服务后打开 `dashboard.html` → 报表管理，确认培训报表三列数据正确、课程报表学习时长单位为 H、点击学习人数可弹出学员详情列表。
+
+## 二十五、追加需求：报表管理导出全部改为 Excel
+
+### 25.1 工程过程
+1. 用户反馈：报表管理的导出按钮显示「导出 Excel」，但实际下载的是 CSV 文件，要求全部改成真正的 Excel（`.xlsx`）。
+2. 已创建变更追踪文档 `.trae/documents/20260708_模块0_报表管理导出改为Excel.md`。
+3. 已复核：项目中已引入 SheetJS（`xlsx-0.20.1`），其他数据分析导出已使用 `XLSX.utils.aoa_to_sheet` 生成 `.xlsx`。
+4. 已修改 `dashboard.html`：
+   - 将 `exportReportCSV(type)` 重构为 `exportReportExcel(type)`，使用 `XLSX.utils.aoa_to_sheet`、`XLSX.utils.book_new`、`XLSX.writeFile` 生成真正的 `.xlsx`。
+   - 为四种报表类型分别设置 sheet 名称与列宽。
+   - 四个报表 tab 的导出按钮 `onclick` 从 `exportReportCSV(...)` 改为 `exportReportExcel(...)`。
+   - 文件名后缀从 `.csv` 改为 `.xlsx`。
+5. 已执行 dashboard.html 内联脚本语法检查，解析通过。
+
+### 25.2 交接状态
+- 当前任务：报表管理导出全部改为 Excel
+- 状态：已完成
+- 阻塞项：无
+
+### 25.3 最终结果
+- 文件：`dashboard.html`。
+- 验证：dashboard.html 内联脚本解析通过；无新增依赖（SheetJS 已存在）。
+- 产出物：`.trae/documents/20260708_模块0_报表管理导出改为Excel.md`
+- 待人工验证：刷新 `dashboard.html` → 报表管理，分别导出课程/学员/考试/培训报表，确认下载文件为 `.xlsx` 且 Excel 可正常打开。

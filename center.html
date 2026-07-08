@@ -1730,52 +1730,121 @@ const BADGES = [
             document.getElementById('stats-register-days').textContent = registerDays;
         }
         
-        // 初始化月度学习统计（静态概览，不使用 Chart.js 动态图表）
+        // 初始化月度学习统计（柱状图 + 顶部当月总时长）
         function initStatsChart() {
             const userId = currentUser.id;
             const learningData = api.getUserLearningData(userId);
             const records = learningData.studyRecords || [];
 
-            // 获取本月数据
             const today = new Date();
             const currentYear = today.getFullYear();
             const currentMonth = today.getMonth();
-            const monthLabel = `${currentYear}年${currentMonth + 1}月`;
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-            // 汇总本月每一天的时长（分钟）
-            const dayMinutes = {};
-            for (let d = 1; d <= today.getDate(); d++) {
-                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            // 汇总本月每日时长（分钟）
+            const labels = [];
+            const data = [];
+            let totalSec = 0;
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                labels.push(`${day}`);
+
                 const daySec = records
                     .filter(r => r.date === dateStr)
                     .reduce((sum, r) => sum + (r.duration || 0), 0);
-                if (daySec > 0) {
-                    dayMinutes[d] = Math.round(daySec / 60 * 10) / 10;
-                }
+                totalSec += daySec;
+                data.push(Math.round(daySec / 60 * 10) / 10);
             }
 
-            // 计算指标
-            const values = Object.values(dayMinutes);
-            const totalMin = Math.round(values.reduce((s, v) => s + v, 0));
-            const studyDays = values.length;
-            const avgMin = studyDays > 0 ? Math.round(totalMin / studyDays * 10) / 10 : 0;
-            const maxMin = studyDays > 0 ? Math.max(...values) : 0;
-
-            // 填充静态卡片
+            // 顶部：当月总学习时长（自动换算 小时/分钟）
+            const totalMin = Math.round(totalSec / 60 * 10) / 10;
             document.getElementById('stat-month-total').innerHTML = totalMin >= 60
-                ? (totalMin / 60).toFixed(1) + '<span class="text-sm font-normal text-gray-400 ml-0.5">小时</span>'
-                : totalMin + '<span class="text-sm font-normal text-gray-400 ml-0.5">分钟</span>';
-            document.getElementById('stat-month-days').textContent = studyDays;
-            document.getElementById('stat-month-days').insertAdjacentHTML('beforeend', '<span class="text-sm font-normal text-gray-400 ml-0.5">天</span>');
-            document.getElementById('stat-month-avg').textContent = avgMin.toFixed(avgMin < 10 ? 1 : 0);
-            document.getElementById('stat-month-avg').insertAdjacentHTML('beforeend', '<span class="text-sm font-normal text-gray-400 ml-0.5">分/天</span>');
+                ? (totalMin / 60).toFixed(1) + ' <span class="text-base font-normal text-gray-400 ml-1">小时</span>'
+                : totalMin + ' <span class="text-base font-normal text-gray-400 ml-1">分钟</span>';
 
-            if (maxMin >= 60) {
-                document.getElementById('stat-month-max').innerHTML = (maxMin / 60).toFixed(1) + '<span class="text-sm font-normal text-gray-400 ml-0.5">小时</span>';
-            } else {
-                document.getElementById('stat-month-max').innerHTML = maxMin + '<span class="text-sm font-normal text-gray-400 ml-0.5">分钟</span>';
+            // 柱状图：本月每日学习分布
+            const ctx = document.getElementById('stats-learning-chart');
+            if (!ctx) return;
+            if (statsChart) {
+                statsChart.destroy();
             }
-            document.getElementById('stat-month-label').textContent = `— ${monthLabel} 学习概况 —`;
+
+            const maxValue = Math.max(...data, 1);
+
+            const backgroundColors = data.map(value => {
+                const intensity = value / maxValue;
+                const r = Math.round(102 + (118 - 102) * intensity);
+                const g = Math.round(126 + (75 - 126) * intensity);
+                const b = Math.round(234 + (162 - 234) * intensity);
+                return `rgba(${r}, ${g}, ${b}, 0.8)`;
+            });
+
+            statsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '学习时长(分钟)',
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.9
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#fff',
+                            titleColor: '#6b7280',
+                            bodyColor: '#6b7280',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                title: function(context) {
+                                    return `${currentYear}年${currentMonth + 1}月${context[0].label}`;
+                                },
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    if (value === 0) return '当日无学习记录';
+                                    if (value >= 60) {
+                                        const h = Math.floor(value / 60);
+                                        const m = Math.round(value % 60);
+                                        return `学习时长: ${h}小时${m}分钟`;
+                                    }
+                                    return `学习时长: ${Math.round(value)} 分钟`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#9ca3af', font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+                        },
+                        y: {
+                            grid: { color: '#f3f4f6' },
+                            ticks: {
+                                color: '#9ca3af',
+                                font: { size: 11 },
+                                callback: function(value) {
+                                    if (value >= 60) return Math.round(value / 60) + 'h';
+                                    return value + 'm';
+                                }
+                            },
+                            beginAtZero: true
+                        }
+                    },
+                    animation: { duration: 800, easing: 'easeOutQuart' }
+                }
+            });
         }
 
         // 加载活动时间线
