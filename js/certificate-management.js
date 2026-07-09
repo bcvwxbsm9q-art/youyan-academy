@@ -255,10 +255,15 @@
   }
 
   async function deleteCertificate(certId) {
-    if (!confirm('确定删除该证书定义吗？')) return;
+    const cert = certificates.find(c => c.id === certId);
+    const activeCount = cert ? (cert.activeCount || 0) + (cert.expiredCount || 0) : 0;
+    const msg = cert
+      ? `确定删除证书「${cert.name}」吗？${activeCount > 0 ? `（将同时清理 ${activeCount} 条关联的颁发记录）` : ''}`
+      : '确定删除该证书定义吗？';
+    if (!confirm(msg)) return;
     const res = await apiDelete('/api/certificates/' + certId);
     if (res.success) {
-      showToast('证书已删除', 'success');
+      showToast(res.message || '证书已删除', 'success');
       loadCertificates();
     } else {
       showToast(res.error || '删除失败', 'error');
@@ -649,73 +654,76 @@
     content: '表现优异，特发此证，以资鼓励。'
   };
 
-  // ── 专业证书背景预设（防伪纹 / 花边 / 角花 / 水印，纯 CSS+SVG 实现） ──
-  const BG_PRESETS = [
+    // ── 8 套证书模板（基于真实高清 PNG 底纹图片） ──
+  const CERT_TEMPLATES = [
     {
-      key: 'blue-elegant', name: '蓝韵防伪',
-      css: [
-        '#f8fafd',
-        'repeating-linear-gradient(0deg, rgba(59,130,246,.03) 0px, transparent 2px, transparent 18px)',
-        'repeating-linear-gradient(90deg, rgba(59,130,246,.025) 0px, transparent 2px, transparent 24px)',
-        'radial-gradient(ellipse 120% 60% at 50% -10%, rgba(59,130,246,.08) 0%, transparent 70%)',
-        'radial-gradient(ellipse 100% 40% at 50% 110%, rgba(59,130,246,.06) 0%, transparent 65%)',
-        'url("data:image/svg+xml,%3Csvg width=\'120\' height=\'30\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 15 Q15 0 30 15 T60 15 T90 15 T120 15\' fill=\'none\' stroke=\'rgba(59,130,246,.07)\' stroke-width=\'0.7\'/%3E%3Cpath d=\'M0 15 Q15 30 30 15 T60 15 T90 15 T120 15\' fill=\'none\' stroke=\'rgba(59,130,246,.05)\' stroke-width=\'0.5\'/%3E%3C/svg%3E")',
-        'linear-gradient(to right, rgba(59,130,246,.10), rgba(147,197,253,.06), rgba(59,130,246,.10))'
-      ].join(',')
+      key: 'blue-floral',     name: '蓝绿花饰',
+      desc: '竖条纹底纹 · 四角花卉 · 顶底装饰',
+      bg: "url('/uploads/cert-templates/cert-blue-floral.png') center/cover no-repeat",
+      titleColor: '#1a365d',   textColor: '#334155', subtitleColor: '#64748b',
+      accentColor: '#2c5282',  sealColor: '#c2410c',
+      fontFamily: "'STSong','SimSun','Times New Roman',serif"
     },
     {
-      key: 'gold-classic', name: '金典复古',
-      css: [
-        'linear-gradient(170deg, #fffef8 0%, #fdf8ee 35%, #f9edd5 70%, #f5e6c8 100%)',
-        'repeating-linear-gradient(45deg, rgba(180,140,60,.03) 0px, transparent 1px, transparent 14px)',
-        'repeating-linear-gradient(-45deg, rgba(180,140,60,.02) 0px, transparent 1px, transparent 20px)',
-        'radial-gradient(circle at 50% -5%, rgba(200,160,80,.12) 0%, transparent 55%)',
-        'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'1.5\' fill=\'rgba(180,140,60,.09)\'/%3E%3Ccircle cx=\'30\' cy=\'0\' r=\'1\' fill=\'rgba(180,140,60,.06)\'/%3E%3Ccircle cx=\'30\' cy=\'60\' r=\'1\' fill=\'rgba(180,140,60,.06)\'/%3E%3Ccircle cx=\'0\' cy=\'30\' r=\'1\' fill=\'rgba(180,140,60,.06)\'/%3E%3Ccircle cx=\'60\' cy=\'30\' r=\'1\' fill=\'rgba(180,140,60,.06)\'/%3E%3C/svg%3E")',
-        'linear-gradient(to bottom, rgba(200,160,80,.08), transparent 30%, transparent 70%, rgba(200,160,80,.08))'
-      ].join(',')
+      key: 'gold-wave',       name: '金波典雅',
+      desc: '金色边框 · 波浪水纹 · 深蓝底角',
+      bg: "url('/uploads/cert-templates/cert-gold-wave.png') center/cover no-repeat",
+      titleColor: '#7c5c00',   textColor: '#4a3c1a', subtitleColor: '#8b7355',
+      accentColor: '#b8860b',  sealColor: '#a16207',
+      fontFamily: "'STKaiti','KaiTi','SimSun',serif"
     },
     {
-      key: 'green-fresh', name: '翠绿清新',
-      css: [
-        '#fafdfb',
-        'repeating-radial-gradient(circle at 50% 50%, transparent 0px, transparent 8px, rgba(34,139,87,.02) 9px, transparent 10px)',
-        'radial-gradient(ellipse 90% 50% at 10% 20%, rgba(34,139,87,.05) 0%, transparent 55%)',
-        'radial-gradient(ellipse 80% 45% at 90% 80%, rgba(34,139,87,.04) 0%, transparent 50%)',
-        'url("data:image/svg+xml,%3Csvg width=\'80\' height=\'80\' viewBox=\'0 0 80 80\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M40 5 Q55 25 75 40 Q55 55 40 75 Q25 25 5 40 Q25 55 40 5z\' fill=\'none\' stroke=\'rgba(34,139,87,.04)\' stroke-width=\'0.6\'/%3E%3C/svg%3E")',
-        'linear-gradient(135deg, rgba(34,139,87,.04), transparent 50%)'
-      ].join(',')
+      key: 'orange-seal',     name: '橙灰防伪',
+      desc: '橙色波浪内框 · 灰色防伪外框',
+      bg: "url('/uploads/cert-templates/cert-orange-seal.png') center/cover no-repeat",
+      titleColor: '#c2410c',   textColor: '#4a3f35', subtitleColor: '#78716c',
+      accentColor: '#ea580c',  sealColor: '#dc2626',
+      fontFamily: "'STSong','SimSun','Times New Roman',serif"
     },
     {
-      key: 'purple-noble', name: '紫贵尊荣',
-      css: [
-        'linear-gradient(145deg, #fbf8ff 0%, #f5effe 40%, #ede5fa 100%)',
-        'repeating-conic-gradient(from 0deg at 50% 50%, rgba(124,58,237,.015) 0deg 10deg, transparent 10deg 20deg)',
-        'radial-gradient(ellipse 110% 55% at 50% 0%, rgba(124,58,237,.08) 0%, transparent 60%)',
-        'radial-gradient(ellipse 90% 40% at 50% 100%, rgba(124,58,237,.05) 0%, transparent 55%)',
-        'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 10 C20 0 35 20 50 10 C65 0 80 20 100 10\' fill=\'none\' stroke=\'rgba(124,58,237,.06)\' stroke-width=\'0.6\'/%3E%3Cpath d=\'M0 10 C20 20 35 0 50 10 C65 20 80 0 100 10\' fill=\'none\' stroke=\'rgba(124,58,237,.04)\' stroke-width=\'0.4\'/%3E%3C/svg%3E")',
-        'linear-gradient(to right, rgba(124,58,237,.07), rgba(196,181,253,.05), rgba(124,58,237,.07))'
-      ].join(',')
+      key: 'cream-elegant',   name: '米白雅致',
+      desc: '欧式花边框 · 中央淡雅花纹',
+      bg: "url('/uploads/cert-templates/cert-cream-elegant.png') center/cover no-repeat",
+      titleColor: '#5d4e37',   textColor: '#57534e', subtitleColor: '#a8a29e',
+      accentColor: '#78716c',  sealColor: '#b45309',
+      fontFamily: "'STFangsong','FangSong','SimSun',serif"
     },
     {
-      key: 'crimson-formal', name: '深蓝庄重',
-      css: [
-        'linear-gradient(160deg, #f7f9fc 0%, #eef3f8 50%, #e4ecf4 100%)',
-        'repeating-linear-gradient(0deg, rgba(30,64,175,.02) 0px, transparent 1px, transparent 16px)',
-        'repeating-linear-gradient(90deg, rgba(30,64,175,.015) 0px, transparent 1px, transparent 22px)',
-        'radial-gradient(ellipse at 50% 50%, rgba(30,64,175,.03) 0%, transparent 65%)',
-        'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect x=\'2\' y=\'2\' width=\'36\' height=\'36\' rx=\'3\' fill=\'none\' stroke=\'rgba(30,64,175,.04)\' stroke-width=\'0.5\'/%3E%3Crect x=\'6\' y=\'6\' width=\'28\' height=\'28\' rx=\'2\' fill=\'none\' stroke=\'rgba(30,64,175,.03)\' stroke-width=\'0.3\'/%3E%3C/svg%3E")'
-      ].join(',')
+      key: 'gray-scroll',     name: '卷草古典',
+      desc: '浅灰卷草边框 · 顶底花纹装饰',
+      bg: "url('/uploads/cert-templates/cert-gray-scroll.png') center/cover no-repeat",
+      titleColor: '#374151',   textColor: '#4b5563', subtitleColor: '#6b7280',
+      accentColor: '#4b5563',  sealColor: '#b91c1c',
+      fontFamily: "'STSong','SimSun','Times New Roman',serif"
     },
     {
-      key: 'pure-white', name: '纯白简约',
-      css: [
-        '#ffffff',
-        'repeating-linear-gradient(45deg, rgba(148,163,184,.015) 0px, transparent 1px, transparent 18px)',
-        'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(148,163,184,.03) 0%, transparent 50%)',
-        'radial-gradient(ellipse 70% 35% at 50% 100%, rgba(148,163,184,.02) 0%, transparent 45%)'
-      ].join(',')
+      key: 'navy-security',   name: '深蓝防伪',
+      desc: '蓝色防伪纹底 · 波浪花饰边框',
+      bg: "url('/uploads/cert-templates/cert-navy-security.png') center/cover no-repeat",
+      titleColor: '#1e3a5f',   textColor: '#334155', subtitleColor: '#64748b',
+      accentColor: '#1e40af',  sealColor: '#be123c',
+      fontFamily: "'STSong','SimSun','Times New Roman',serif"
+    },
+    {
+      key: 'gold-medal',      name: '金徽荣誉',
+      desc: '金色边框 · 同心圆弧线 · AWARD 徽章',
+      bg: "url('/uploads/cert-templates/cert-gold-medal.png') center/cover no-repeat",
+      titleColor: '#92400e',   textColor: '#4a3c1a', subtitleColor: '#8b7355',
+      accentColor: '#b8860b',  sealColor: '#a16207',
+      fontFamily: "'STKaiti','KaiTi','SimSun',serif"
+    },
+    {
+      key: 'cream-ribbon',    name: '勋章绦带',
+      desc: '米黄底纹 · 绦带徽章 · 菱形点阵',
+      bg: "url('/uploads/cert-templates/cert-cream-ribbon.png') center/cover no-repeat",
+      titleColor: '#8b6914',   textColor: '#5c4f35', subtitleColor: '#927a3c',
+      accentColor: '#ca8a04',  sealColor: '#b45309',
+      fontFamily: "'STKaiti','KaiTi','SimSun',serif"
     }
   ];
+
+  // 向后兼容：BG_PRESETS 从 CERT_TEMPLATES 提取（供 bgCss 查找）
+  const BG_PRESETS = CERT_TEMPLATES.map(t => ({ key: t.key, name: t.name, css: t.bg }));
 
   function uid() { return 'el' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
@@ -788,12 +796,18 @@
 
   // ---------- 编辑器打开 / 关闭 ----------
   function openCertificateEditor() {
-    if (!selectedTemplateId) { showToast('请先选择模板', 'error'); return; }
-    const tpl = templates.find(t => t.id === selectedTemplateId);
-    if (!tpl) return;
-    if (!editorState || editorState._tpl !== selectedTemplateId) {
-      editorState = (currentDesign && currentDesign._tpl === selectedTemplateId) ? deepClone(currentDesign) : buildDefaultDesign(tpl);
-      editorState._tpl = selectedTemplateId;
+    // 不再需要先选模板——直接用第一套模板（蓝韵防伪）作为默认
+    const defaultTplKey = editorState?._tplKey || CERT_TEMPLATES[0].key;
+    if (!editorState || editorState._tplKey !== defaultTplKey) {
+      // 如果已有保存的 design 且模板匹配则复用，否则新建
+      if (currentDesign && currentDesign._tplKey === defaultTplKey) {
+        editorState = deepClone(currentDesign);
+      } else {
+        // 用第一套模板初始化空设计
+        editorState = { _tplKey: '', layout: 'portrait', elements: [], seal: null, background: { type: 'preset', value: '' } };
+        applyTemplate(defaultTplKey);
+        return; // applyTemplate 已经调用了 syncEditorUI + renderEditorPage
+      }
     }
     openModal('certificate-editor-modal');
     syncEditorUI();
@@ -809,16 +823,66 @@
     selectElement(null);
   }
 
-  function renderBgGrid() {
+  // ── 右侧模板选择网格（显示 5 套完整设计预览） ──
+  function renderTemplateGrid() {
     const grid = $('#et-bg-grid'); if (!grid) return;
-    grid.innerHTML = BG_PRESETS.map(p => {
-      const active = editorState.background.type === 'preset' && editorState.background.value === p.key;
-      return `<div class="cert-bg-swatch ${active ? 'active' : ''}" data-bg="${p.key}" style="background:${p.css};" title="${p.name}"></div>`;
+    grid.innerHTML = CERT_TEMPLATES.map(t => {
+      const active = editorState._tplKey === t.key;
+      return `
+        <div class="cert-tpl-swatch ${active ? 'active' : ''}" data-tpl="${t.key}" title="${t.name}">
+          <div class="cert-tpl-swatch-preview" style="background:${t.bg};border:2px solid #e2e8f0;">
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:9px;font-weight:700;color:${t.titleColor};opacity:.6;text-align:center;line-height:1.2;text-shadow:0 0 4px white;">${t.name.slice(0,2)}</div>
+          </div>
+          <p class="cert-tpl-swatch-name">${t.name}</p>
+          <p class="cert-tpl-swatch-desc">${t.desc}</p>
+        </div>`;
     }).join('');
-    grid.querySelectorAll('[data-bg]').forEach(sw => {
-      sw.addEventListener('click', () => setBackground('preset', sw.dataset.bg));
+    grid.querySelectorAll('[data-tpl]').forEach(sw => {
+      sw.addEventListener('click', () => applyTemplate(sw.dataset.tpl));
     });
   }
+
+  // ── 应用一套完整证书模板 ──
+  function applyTemplate(tplKey) {
+    const t = CERT_TEMPLATES.find(x => x.key === tplKey); if (!t) return;
+    const dims = EDITOR_PAGE[editorState.layout];
+    // 保留用户已编辑的文字内容（如果已有）
+    const existingTexts = {};
+    (editorState.elements || []).forEach(el => { if (el.type === 'text' && el.key) existingTexts[el.key] = el.text; });
+
+    editorState._tplKey = tplKey;
+    editorState.background = { type: 'preset', value: t.key };
+    editorState.borderColor = t.borderOuter;
+    editorState.accentColor = t.accentColor;
+    editorState.fontFamily = t.fontFamily;
+    editorState.titleColor = t.titleColor;
+    editorState.subtitleColor = t.subtitleColor;
+    editorState.textColor = t.textColor;
+    editorState.sealColor = t.sealColor;
+    editorState.borderWidth = t.borderWidth;
+    editorState.borderInner = t.borderInner;
+    editorState.topOrnament = t.topOrnament || '';
+    editorState.bottomOrnament = t.bottomOrnament || '';
+    editorState.cornerSvg = t.cornerSvg || '';
+
+    // 构建默认元素（使用模板配色，保留已有文字）
+    editorState.elements = [
+      { id: uid(), type: 'text', key: 'title',   x: dims.w*0.04, y: dims.h*0.08, w: dims.w*0.92, h: 50, text: existingTexts['title']   || '{{title}}',   fontSize: 28, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center', color: t.titleColor, underline: false, fontFamily: t.fontFamily },
+      { id: uid(), type: 'text', key: 'subtitle',x: dims.w*0.22, y: dims.h*0.185,w: dims.w*0.56, h: 22, text: existingTexts['subtitle']|| '兹证明',        fontSize: 13, fontWeight: 'normal',fontStyle:'normal',textAlign:'center',color:t.subtitleColor,underline:false,fontFamily:t.fontFamily },
+      { id: uid(), type: 'text', key: 'name',    x: dims.w*0.1,  y: dims.h*0.24, w: dims.w*0.8, h: 42, text: existingTexts['name']    || '{{name}}',     fontSize: 24, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center', color: t.titleColor, underline: true, fontFamily: t.fontFamily },
+      { id: uid(), type: 'text', key: 'content', x: dims.w*0.1,  y: dims.h*0.34, w: dims.w*0.8, h: 70, text: existingTexts['content'] || '{{content}}',  fontSize: 13, fontWeight: 'normal',fontStyle:'normal',textAlign:'center',color:t.textColor,   underline:false,fontFamily:t.fontFamily },
+      { id: uid(), type: 'text', key: 'certNo',  x: dims.w*0.06, y: dims.h*0.82, w: dims.w*0.48,h: 20, text: existingTexts['certNo']  || '证书编号：{{certNo}}',fontSize:11,fontWeight:'normal',fontStyle:'normal',textAlign:'left', color:t.textColor,underline:false,fontFamily:t.fontFamily },
+      { id: uid(), type: 'text', key: 'date',    x: dims.w*0.5,  y: dims.h*0.82, w: dims.w*0.44,h: 20, text: existingTexts['date']    || '颁发日期：{{date}}',  fontSize:11,fontWeight:'normal',fontStyle:'normal',textAlign:'right',color:t.textColor,underline:false,fontFamily:t.fontFamily },
+      { id: uid(), type: 'text', key: 'company', x: dims.w*0.1,  y: dims.h*0.89, w: dims.w*0.8, h: 20, text: existingTexts['company'] || '{{company}}',   fontSize:11,fontWeight:'normal',fontStyle:'normal',textAlign:'center',color:t.textColor,underline:false,fontFamily:t.fontFamily }
+    ];
+    editorState.seal = { id: 'seal', text: '认证专用章', x: dims.w * 0.68, y: dims.h * 0.68, size: 70, color: t.sealColor };
+
+    syncEditorUI();
+    renderEditorPage();
+  }
+
+  // 向后兼容旧名
+  function renderBgGrid() { renderTemplateGrid(); }
 
   // ---------- 画布渲染（可交互） ----------
   function handleHTML() {
@@ -862,11 +926,12 @@
     const page = $('#et-page'); if (!page) return;
     const d = editorState;
     const dims = EDITOR_PAGE[d.layout];
-    page.style.width = dims.w + 'px'; page.style.height = dims.h + 'px';
-    page.style.cssText = page.style.cssText; // reset
-    page.setAttribute('style', `width:${dims.w}px;height:${dims.h}px;position:relative;${bgCss(d.background)}box-shadow:0 20px 60px rgba(0,0,0,.5);`);
-    page.innerHTML = `<div class="cep-border" style="inset:6px;border:2px solid ${d.borderColor};opacity:0.4;"></div>
-      <div class="cep-border" style="inset:12px;border:1px solid ${d.borderColor};opacity:0.22;"></div>`;
+
+    // 设置页面容器尺寸与背景
+    page.style.width = dims.w + 'px';
+    page.style.height = dims.h + 'px';
+    page.style.cssText += bgCss(d.background);
+    page.innerHTML = '';
     (d.elements || []).forEach(el => {
       const node = createTextNode(el);
       page.appendChild(node);

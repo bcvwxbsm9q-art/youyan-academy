@@ -1560,6 +1560,64 @@ app.post('/api/auth/users/:id/reset-password', (req, res) => {
   }
 });
 
+// 管理员 - 重置用户学习数据（清空该用户的所有学习相关记录，相当于新用户）
+app.post('/api/auth/users/:id/reset-learning-data', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: '未提供认证令牌' });
+  }
+
+  const token = authHeader.slice(7);
+  const currentUser = verifyToken(token);
+
+  if (!currentUser || currentUser.role !== 'admin') {
+    return res.status(403).json({ success: false, error: '权限不足' });
+  }
+
+  try {
+    const userId = String(req.params.id);
+    const data = readData();
+
+    // 1. 清空用户学习主记录
+    const learningKey1 = `user_learning_${userId}`;
+    const learningKey2 = `learning_data_${userId}`;
+    if (data[learningKey1] !== undefined) delete data[learningKey1];
+    if (data[learningKey2] !== undefined) delete data[learningKey2];
+
+    // 2. 清空考试记录
+    if (data.exam_attempts) {
+      data.exam_attempts = data.exam_attempts.filter(a => String(a.userId) !== userId);
+    }
+
+    // 3. 清空培训报名与签到记录
+    if (data.training_enrollments) {
+      data.training_enrollments = data.training_enrollments.filter(e => String(e.userId) !== userId);
+    }
+    if (data.training_signins) {
+      data.training_signins = data.training_signins.filter(s => String(s.userId) !== userId);
+    }
+
+    // 4. 清空调研答卷记录
+    if (data.survey_responses) {
+      data.survey_responses = data.survey_responses.filter(r => String(r.userId) !== userId);
+    }
+
+    // 5. 清空证书记录
+    if (data.certificates) {
+      data.certificates = data.certificates.filter(c => String(c.userId) !== userId);
+    }
+
+    if (writeData(data)) {
+      res.json({ success: true, message: '用户学习数据已清空' });
+    } else {
+      res.status(500).json({ success: false, error: '写入失败' });
+    }
+  } catch (error) {
+    console.error('重置用户学习数据失败:', error);
+    res.status(500).json({ success: false, error: '重置失败' });
+  }
+});
+
 // 管理员 - 切换用户管理员权限
 app.put('/api/auth/users/:id/toggle-role', (req, res) => {
   const authHeader = req.headers.authorization;
@@ -3379,6 +3437,34 @@ app.get('/api/user/trainings', (req, res) => {
   res.json({ success: true, count: trainingIds.size, trainingIds: Array.from(trainingIds), list });
 });
 
+// GET /api/user/login-days - 获取当前用户的实际登录天数（按日期去重）
+app.get('/api/user/login-days', (req, res) => {
+  const currentUser = getCurrentUser(req);
+  if (!currentUser) {
+    return res.status(401).json({ success: false, error: '未登录' });
+  }
+
+  const data = readData();
+  const userId = String(currentUser.id);
+  const loginLogs = data.login_logs || [];
+
+  const dateSet = new Set();
+  loginLogs.forEach(log => {
+    if (String(log.userId) !== userId || !log.loginTime) return;
+    const loginDate = new Date(log.loginTime);
+    if (isNaN(loginDate.getTime())) return;
+    const dateStr = loginDate.toISOString().split('T')[0];
+    dateSet.add(dateStr);
+  });
+
+  const loginDates = Array.from(dateSet).sort();
+  res.json({
+    success: true,
+    loginDays: loginDates.length,
+    loginDates
+  });
+});
+
 // GET/POST /api/exams/:id/take - 学员开始考试（获取试卷）
 const takeExamHandler = (req, res) => {
   const id = parseInt(req.params.id);
@@ -4089,17 +4175,46 @@ app.post('/api/notices/:id/visit', (req, res) => {
   }
 });
 
-// GET /api/notices/:id/visits - 获取公告访问详情
+// GET /api/notices/:id/visits - 获取公告访问详情（按用户聚合）
 app.get('/api/notices/:id/visits', (req, res) => {
   const noticeId = parseInt(req.params.id);
   const data = readData();
+  const users = data.registered_users || [];
   const visits = (data.notice_visits || []).filter(v => v.noticeId === noticeId);
-  
+
+  // 按 userId 聚合：计算访问次数和首次访问时间
+  const userVisitMap = new Map();
+  visits.forEach(v => {
+    const userId = v.userId;
+    const existed = userVisitMap.get(userId);
+    if (existed) {
+      existed.visitCount += 1;
+      const current = new Date(v.visitedAt);
+      if (current < new Date(existed.firstVisitAt)) {
+        existed.firstVisitAt = v.visitedAt;
+      }
+    } else {
+      const user = users.find(u => u.id === userId) || {};
+      userVisitMap.set(userId, {
+        userId: userId,
+        name: user.realName || v.username || String(userId),
+        department: user.department || '—',
+        position: user.position || '—',
+        firstVisitAt: v.visitedAt,
+        visitCount: 1
+      });
+    }
+  });
+
+  const aggregated = Array.from(userVisitMap.values()).sort((a, b) =>
+    new Date(b.firstVisitAt) - new Date(a.firstVisitAt)
+  );
+
   res.json({
     success: true,
     noticeId: noticeId,
-    totalCount: visits.length,
-    visits: visits.sort((a, b) => new Date(b.visitedAt) - new Date(a.visitedAt))
+    totalCount: aggregated.length,
+    visits: aggregated
   });
 });
 
@@ -5455,20 +5570,29 @@ app.put('/api/certificates/:id', (req, res) => {
   res.json({ success: true, data: certificate });
 });
 
-// DELETE /api/certificates/:id - 删除证书定义
+// DELETE /api/certificates/:id - 删除证书定义（同时清理已颁发的关联记录）
 app.delete('/api/certificates/:id', (req, res) => {
   const data = readData();
   const index = (data.certificates || []).findIndex(c => String(c.id) === String(req.params.id));
   if (index === -1) return res.status(404).json({ success: false, error: '证书不存在' });
 
+  const cert = data.certificates[index];
   const issued = (data.user_certificates || []).filter(uc => String(uc.certificateId) === String(req.params.id));
-  if (issued.length > 0) {
-    return res.status(409).json({ success: false, error: '已存在颁发记录，禁止删除' });
+
+  // 删除时同时清理该证书的所有颁发记录
+  let cleaned = 0;
+  if (issued.length > 0 && data.user_certificates) {
+    const beforeLen = data.user_certificates.length;
+    data.user_certificates = data.user_certificates.filter(uc => String(uc.certificateId) !== String(req.params.id));
+    cleaned = beforeLen - data.user_certificates.length;
   }
 
   data.certificates.splice(index, 1);
   writeData(data);
-  res.json({ success: true });
+  res.json({
+    success: true,
+    message: `「${cert.name}」已删除${cleaned > 0 ? `，同时清理了 ${cleaned} 条颁发记录` : ''}`
+  });
 });
 
 // POST /api/certificates/:id/issue - 手动/批量颁发证书

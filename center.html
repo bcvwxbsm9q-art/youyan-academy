@@ -478,19 +478,19 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- 注册天数 -->
+                                    <!-- 登录天数 -->
                                     <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200 hover:shadow-lg transition-all group">
                                         <div class="flex items-center justify-between mb-4">
                                             <div class="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                                                 <i class="fa fa-calendar text-white text-xl"></i>
                                             </div>
-                                            <span class="text-purple-600 text-sm font-medium">平台会员</span>
+                                            <span class="text-purple-600 text-sm font-medium">登录天数</span>
                                         </div>
                                         <div class="text-3xl font-bold text-purple-700 mb-1" id="stats-register-days">0</div>
                                         <div class="text-sm text-purple-600">天</div>
                                         <div class="mt-3 flex items-center text-xs text-purple-600 bg-purple-50 rounded-lg px-2 py-1 w-fit">
                                             <i class="fa fa-calendar-check-o mr-1"></i>
-                                            <span>自注册之日起</span>
+                                            <span>累计登录天数</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1141,12 +1141,12 @@ const BADGES = [
             { id: 'sharer', name: '分享达人', icon: 'fa-share-alt', color: 'green', desc: '分享5个课程', condition: (u, d) => d.shares >= 5 },
             { id: 'liker', name: '点赞达人', icon: 'fa-heart', color: 'red', desc: '点赞5个课程', condition: (u, d) => d.likes >= 5 },
             
-            // 里程碑类 (4个) - 注册时间纪念
-            { id: 'day-7', name: '新人报到', icon: 'fa-hand-o-up', color: 'green', desc: '注册满7天', condition: (u, d) => d.days >= 7 },
-            { id: 'day-30', name: '月度之星', icon: 'fa-star-o', color: 'orange', desc: '注册满30天', condition: (u, d) => d.days >= 30 },
-            { id: 'day-100', name: '百日纪念', icon: 'fa-birthday-cake', color: 'pink', desc: '注册满100天', condition: (u, d) => d.days >= 100 },
-            { id: 'day-200', name: '半年纪念', icon: 'fa-clock-o', color: 'purple', desc: '注册满200天', condition: (u, d) => d.days >= 200 },
-            { id: 'day-365', name: '资深学员', icon: 'fa-user', color: 'yellow', desc: '注册满一年', condition: (u, d) => d.days >= 365 },
+            // 里程碑类 (4个) - 登录天数纪念
+            { id: 'day-7', name: '新人报到', icon: 'fa-hand-o-up', color: 'green', desc: '登录满7天', condition: (u, d) => d.days >= 7 },
+            { id: 'day-30', name: '月度之星', icon: 'fa-star-o', color: 'orange', desc: '登录满30天', condition: (u, d) => d.days >= 30 },
+            { id: 'day-100', name: '百日纪念', icon: 'fa-birthday-cake', color: 'pink', desc: '登录满100天', condition: (u, d) => d.days >= 100 },
+            { id: 'day-200', name: '半年纪念', icon: 'fa-clock-o', color: 'purple', desc: '登录满200天', condition: (u, d) => d.days >= 200 },
+            { id: 'day-365', name: '资深学员', icon: 'fa-user', color: 'yellow', desc: '登录满一年', condition: (u, d) => d.days >= 365 },
 
             // 培训参与类 (5个) - 累计参加培训场数
             { id: 'training-1', name: '初出茅庐', icon: 'fa-envira', color: 'lightgreen', desc: '参加1场培训', condition: (u, d) => d.trainingCount >= 1 },
@@ -1172,6 +1172,7 @@ const BADGES = [
             initTabNavigation();
             await loadExamRecordsFromServer(); // 拉取服务端考试记录用于徽章计算
             await loadUserTrainingStatsFromServer(); // 拉取服务端培训统计用于徽章计算
+            await loadLoginDaysFromServer(); // 拉取服务端登录天数用于里程碑徽章
             loadAllData();
             loadActivityTimeline();
             loadBadges();
@@ -1213,6 +1214,26 @@ const BADGES = [
                 }
             } catch (e) {
                 console.warn('[培训统计] 拉取失败:', e);
+            }
+        }
+
+        // 从服务端拉取实际登录天数，用于里程碑徽章和统计卡片
+        let userLoginDays = 0;
+        async function loadLoginDaysFromServer() {
+            const user = getLoggedInUser();
+            if (!user) return;
+            try {
+                const res = await fetch('/api/user/login-days', {
+                    headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || sessionStorage.getItem('token') || '') }
+                });
+                const result = await res.json();
+                if (result.success && typeof result.loginDays === 'number') {
+                    userLoginDays = result.loginDays;
+                    const el = document.getElementById('stats-register-days');
+                    if (el) el.textContent = userLoginDays;
+                }
+            } catch (e) {
+                console.warn('[登录天数] 拉取失败:', e);
             }
         }
 
@@ -1371,17 +1392,9 @@ const BADGES = [
                 certificateCount: learningData.certificates?.length || 0
             };
 
-            // 计算已解锁徽章数（当前满足条件 + 历史已解锁），与徽章墙展示保持一致
+            // 重新换算徽章：只按当前条件计算，不再合并历史解锁记录
             const currentlyUnlockedIds = BADGES.filter(b => b.condition(currentUser, baseStats)).map(b => b.id);
-            let storedBadgeIds = [];
-            if (currentUser?.id) {
-                try {
-                    storedBadgeIds = JSON.parse(localStorage.getItem(`badges_unlocked_${currentUser.id}`) || '[]');
-                } catch (e) {
-                    storedBadgeIds = [];
-                }
-            }
-            const allUnlockedIds = [...new Set([...storedBadgeIds, ...currentlyUnlockedIds])];
+            const allUnlockedIds = currentlyUnlockedIds;
 
             return {
                 ...baseStats,
@@ -1402,17 +1415,11 @@ const BADGES = [
             if (badgeCount) badgeCount.textContent = `${count}/${total}`;
         }
 
-        // 统一计算已解锁徽章ID（当前满足条件 + 历史已解锁）
+        // 统一计算已解锁徽章ID：重新换算后只按当前条件计算，不再合并历史解锁记录
         function calculateUnlockedBadgeIds() {
-            const userId = currentUser?.id;
             const stats = getBadgeStats();
             const currentlyUnlocked = BADGES.filter(b => b.condition(currentUser, stats)).map(b => b.id);
-            let storedIds = [];
-            if (userId) {
-                storedIds = JSON.parse(localStorage.getItem(`badges_unlocked_${userId}`) || '[]');
-            }
-            const allIds = [...new Set([...storedIds, ...currentlyUnlocked])];
-            return { allIds, currentlyUnlocked, storedIds };
+            return { allIds: currentlyUnlocked, currentlyUnlocked, storedIds: [] };
         }
 
         // 从 interaction 数据计算点赞的不同课程数（兼容老用户）
@@ -1566,9 +1573,12 @@ const BADGES = [
             document.getElementById('stat-hours').textContent = totalHours;
             document.getElementById('stats-total-hours').textContent = totalHours;
             
-            // 注册天数
-            const registerDays = api.getRegisterDays(currentUser.createdAt);
-            document.getElementById('stats-register-days').textContent = registerDays;
+            // 登录天数（从服务端拉取，统计卡片已由 loadLoginDaysFromServer 更新）
+            // 若服务端接口失败，兜底使用注册天数
+            const loginDaysEl = document.getElementById('stats-register-days');
+            if (loginDaysEl && loginDaysEl.textContent === '0' && userLoginDays === 0) {
+                loginDaysEl.textContent = api.getRegisterDays(currentUser.createdAt);
+            }
             
             // 已完成课程数（基于真实观看时长严格判断，并兼容 completedCourses 数组）
             const allCourses = api.getCourses();
@@ -1725,9 +1735,11 @@ const BADGES = [
             });
             document.getElementById('stats-completed-courses').textContent = completedCount;
             
-            // 注册天数
-            const registerDays = api.getRegisterDays(currentUser.createdAt);
-            document.getElementById('stats-register-days').textContent = registerDays;
+            // 登录天数（从服务端拉取，统计卡片已由 loadLoginDaysFromServer 更新）
+            const loginDaysEl2 = document.getElementById('stats-register-days');
+            if (loginDaysEl2 && loginDaysEl2.textContent === '0' && userLoginDays === 0) {
+                loginDaysEl2.textContent = api.getRegisterDays(currentUser.createdAt);
+            }
         }
         
         // 初始化月度学习统计（柱状图 + 顶部当月总时长）

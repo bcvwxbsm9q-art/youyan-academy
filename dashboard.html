@@ -232,42 +232,103 @@
       background: linear-gradient(135deg, #5a72e3, #6a4191);
     }
 
-    /* ========== 证书可视化编辑器（作用域隔离，仅影响编辑器弹窗） ========== */
-    .cert-editor-modal { background: #0f1115; }
-    .cert-editor-shell { display: grid; grid-template-columns: 1fr 280px; grid-template-rows: auto 1fr; height: 100%; }
+    /* ========== 抽屉式窗口（证书新建/编辑） ========== */
+    @keyframes drawerSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes drawerFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .cert-drawer-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,.45); backdrop-filter: blur(4px);
+      z-index: 55; display: flex; justify-content: flex-end;
+      animation: drawerFadeIn .25s ease;
+    }
+    .cert-drawer-overlay.hidden { display: none; }
+    .cert-drawer {
+      width: 520px; max-width: 92vw; height: 100%; background: #fff;
+      box-shadow: -8px 0 40px rgba(15,23,42,.15);
+      display: flex; flex-direction: column;
+      animation: drawerSlideIn .28s cubic-bezier(.16,1,.3,1);
+    }
+    .cert-drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px; border-bottom: 1px solid #f1f5f9; flex-shrink: 0;
+    }
+    .cert-drawer-body { flex: 1; overflow-y: auto; padding: 24px; }
+    .cert-drawer-footer {
+      display: flex; justify-content: flex-end; gap: 12px;
+      padding: 16px 24px; border-top: 1px solid #f1f5f9; background: #f8fafc; flex-shrink: 0;
+    }
+    .cert-template-picker-row { display: flex; align-items: flex-start; gap: 16px; }
+
+    /* ========== 编辑器抽屉（宽幅） ========== */
+    .cert-editor-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,.55); backdrop-filter: blur(6px);
+      z-index: 56; display: flex; justify-content: flex-end;
+      animation: drawerFadeIn .25s ease;
+    }
+    .cert-editor-overlay.hidden { display: none; }
+    .cert-editor-drawer {
+      width: 96vw; max-width: 1400px; height: 100%; background: #fff;
+      box-shadow: -12px 0 50px rgba(15,23,42,.2);
+      display: flex; flex-direction: column;
+      animation: drawerSlideIn .3s cubic-bezier(.16,1,.3,1);
+    }
+    .cert-editor-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px; border-bottom: 1px solid #f1f5f9; flex-shrink: 0;
+    }
+    .cert-editor-footer {
+      display: flex; justify-content: flex-end; gap: 12px;
+      padding: 12px 24px; border-top: 1px solid #f1f5f9; background: #f8fafc; flex-shrink: 0;
+    }
+
+    /* ========== 编辑器三栏布局 ========== */
+    .cert-editor-shell { display: grid; grid-template-columns: 220px 1fr 260px; height: 100%; overflow: hidden; }
+    .cert-editor-left {
+      background: #fafbfc; border-right: 1px solid #e5e7eb;
+      overflow-y: auto; padding: 14px;
+    }
+    .cert-editor-left h5 { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 6px; }
+    .cert-editor-left h5:first-child { margin-top: 0; }
+    .cert-editor-center { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+
+    /* 工具栏 */
     .cert-editor-toolbar {
-      grid-column: 1 / -1;
-      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-      padding: 10px 14px; background: #1a1d24; border-bottom: 1px solid #2a2e38;
+      display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+      padding: 8px 12px; background: #1a1d24; border-bottom: 1px solid #2a2e38; flex-shrink: 0;
     }
     .cert-editor-toolbar .et-btn {
-      display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 11px;
-      border-radius: 8px; background: #262a34; color: #cbd2e0; font-size: 13px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 9px;
+      border-radius: 6px; background: #262a34; color: #cbd2e0; font-size: 12px; cursor: pointer;
       border: 1px solid transparent; transition: all .15s ease; white-space: nowrap;
     }
     .cert-editor-toolbar .et-btn:hover { background: #313644; color: #fff; }
-    .cert-editor-toolbar .et-btn.active { background: #6d28d9; color: #fff; border-color: #8b5cf6; }
-    .cert-editor-toolbar .et-sep { width: 1px; height: 22px; background: #2a2e38; margin: 0 4px; }
+    .cert-editor-toolbar .et-btn.active { background: #6d28d9; color: #fff; }
+    .cert-editor-toolbar .et-btn-danger { color: #fca5a5; }
+    .cert-editor-toolbar .et-btn-danger:hover { background: #7f1d1d; color: #fecaca; }
+    .cert-editor-toolbar .et-sep { width: 1px; height: 20px; background: #2a2e38; margin: 0 3px; }
     .cert-editor-toolbar select, .cert-editor-toolbar input[type="number"] {
-      height: 34px; border-radius: 8px; background: #262a34; color: #cbd2e0; border: 1px solid #2a2e38;
-      padding: 0 8px; font-size: 13px; outline: none;
+      height: 30px; border-radius: 6px; background: #262a34; color: #cbd2e0; border: 1px solid #2a2e38;
+      padding: 0 7px; font-size: 12px; outline: none;
     }
-    .cert-editor-toolbar input[type="color"] { width: 34px; height: 34px; border: none; background: none; cursor: pointer; padding: 0; }
+    .cert-editor-toolbar input[type="color"] { width: 30px; height: 30px; border: none; background: none; cursor: pointer; padding: 0; }
+
+    /* 画布 */
     .cert-editor-stage {
-      position: relative; overflow: auto; background:
+      position: relative; flex: 1; overflow: auto; background:
         linear-gradient(45deg, #15171c 25%, transparent 25%),
         linear-gradient(-45deg, #15171c 25%, transparent 25%),
         linear-gradient(45deg, transparent 75%, #15171c 75%),
         linear-gradient(-45deg, transparent 75%, #15171c 75%);
       background-size: 22px 22px; background-position: 0 0, 0 11px, 11px -11px, -11px 0;
-      display: flex; align-items: flex-start; justify-content: center; padding: 36px;
+      display: flex; align-items: flex-start; justify-content: center; padding: 32px;
     }
-    .cert-editor-page { position: relative; flex-shrink: 0; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+    .cert-editor-page { position: relative; flex-shrink: 0; box-shadow: 0 20px 60px rgba(0,0,0,.5); background: #fff; }
     .cert-editor-page .cep-border { position: absolute; pointer-events: none; }
+
+    /* 可编辑文字元素 */
     .cert-el {
       position: absolute; cursor: move; user-select: none; box-sizing: border-box;
       padding: 4px 6px; border: 1px dashed transparent; border-radius: 3px; line-height: 1.25;
-      transition: border-color .12s;
+      display: flex; align-items: center; overflow: hidden; transition: border-color .12s;
     }
     .cert-el:hover { border-color: rgba(139,92,246,.5); }
     .cert-el.selected { border-color: #8b5cf6; box-shadow: 0 0 0 1px rgba(139,92,246,.4); }
@@ -275,57 +336,132 @@
     .cert-el .cert-el-text { user-select: text; outline: none; width: 100%; display: inline-block; }
     .cert-el[contenteditable="true"], .cert-el[contenteditable="true"] .cert-el-text { user-select: text; }
     .cert-el-handle {
-      position: absolute; width: 11px; height: 11px; background: #fff; border: 2px solid #8b5cf6;
+      position: absolute; width: 10px; height: 10px; background: #fff; border: 2px solid #8b5cf6;
       border-radius: 50%; z-index: 5; display: none;
     }
-    .cert-el.selected .cert-el-handle { display: block; }
-    .cert-seal.selected .cert-el-handle { display: block; }
-    .cert-el-handle.nw { top: -6px; left: -6px; cursor: nwse-resize; }
-    .cert-el-handle.ne { top: -6px; right: -6px; cursor: nesw-resize; }
-    .cert-el-handle.sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
-    .cert-el-handle.se { bottom: -6px; right: -6px; cursor: nwse-resize; }
-    .cert-el-handle.n  { top: -6px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
-    .cert-el-handle.s  { bottom: -6px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
-    .cert-el-handle.w  { left: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
-    .cert-el-handle.e  { right: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .cert-el.selected .cert-el-handle, .cert-seal.selected .cert-el-handle, .cert-img-el.selected .cert-el-handle { display: block; }
+    .cert-el-handle.nw { top: -5px; left: -5px; cursor: nwse-resize; }
+    .cert-el-handle.ne { top: -5px; right: -5px; cursor: nesw-resize; }
+    .cert-el-handle.sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
+    .cert-el-handle.se { bottom: -5px; right: -5px; cursor: nwse-resize; }
+    .cert-el-handle.n  { top: -5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+    .cert-el-handle.s  { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+    .cert-el-handle.w  { left: -5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .cert-el-handle.e  { right: -5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+
+    /* 印章文字 */
     .cert-seal {
       position: absolute; border-radius: 50%; display: flex; flex-direction: column; align-items: center;
       justify-content: center; text-align: center; cursor: move; box-sizing: border-box;
-      border: 3px solid currentColor; color: #764ba2;
+      border: 3px solid currentColor; color: #764ba2; overflow: hidden;
     }
     .cert-seal .cs-text { font-weight: 700; line-height: 1.1; }
     .cert-seal .cs-star { font-size: .55em; opacity: .85; }
-    .cert-editor-side { background: #fff; border-left: 1px solid #e5e7eb; overflow-y: auto; padding: 16px; }
-    .cert-editor-side h5 { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin: 16px 0 8px; }
+
+    /* 图片元素 */
+    .cert-img-el {
+      position: absolute; cursor: move; user-select: none; overflow: hidden;
+      border: 1px dashed transparent; box-sizing: border-box;
+    }
+    .cert-img-el:hover { border-color: rgba(139,92,246,.4); }
+    .cert-img-el.selected { border-color: #8b5cf6; border-style: solid; z-index: 3; }
+    .cert-img-el img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+
+    /* 右侧属性面板 */
+    .cert-editor-side {
+      background: #fff; border-left: 1px solid #e5e7eb; overflow-y: auto; padding: 14px;
+    }
+    .cert-editor-side h5 { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 6px; }
     .cert-editor-side h5:first-child { margin-top: 0; }
-    .cert-orient-tabs { display: flex; gap: 8px; }
+    .cert-orient-tabs { display: flex; gap: 6px; }
     .cert-orient-tabs button {
-      flex: 1; padding: 9px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: #fff;
-      font-size: 13px; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all .15s;
+      flex: 1; padding: 7px 6px; border-radius: 8px; border: 1.5px solid #e2e8f0; background: #fff;
+      font-size: 12px; color: #64748b; cursor: pointer; transition: all .15s;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
     }
     .cert-orient-tabs button.active { border-color: #8b5cf6; background: #f5f3ff; color: #6d28d9; font-weight: 600; }
-    .cert-bg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .cert-bg-swatch {
-      aspect-ratio: 3/4; border-radius: 8px; cursor: pointer; border: 2px solid transparent;
-      position: relative; overflow: hidden; transition: transform .15s;
+
+    /* 模板选择网格 */
+    .cert-bg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .cert-tpl-swatch {
+      cursor: pointer; border: 2px solid transparent; border-radius: 8px;
+      padding: 4px; background: white; transition: all .18s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
     }
-    .cert-bg-swatch:hover { transform: translateY(-2px); }
-    .cert-bg-swatch.active { border-color: #8b5cf6; box-shadow: 0 0 0 2px rgba(139,92,246,.3); }
+    .cert-tpl-swatch:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+    .cert-tpl-swatch.active { border-color: #8b5cf6; box-shadow: 0 0 0 2px rgba(139,92,246,.15), 0 3px 10px rgba(0,0,0,.08); }
+    .cert-tpl-swatch-preview { aspect-ratio: 3/4; border-radius: 4px; position: relative; overflow: hidden; margin-bottom: 3px; }
+    .cert-tpl-swatch-name { font-size: 11.5px; font-weight: 600; color: #334155; text-align: center; margin: 0; line-height: 1.2; }
+    .cert-tpl-swatch-desc { font-size: 10px; color: #94a3b8; text-align: center; margin: 1px 0 0; line-height: 1.2; }
     .cert-bg-upload {
-      margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 10px; border: 1.5px dashed #cbd5e1; border-radius: 10px; color: #64748b; font-size: 13px;
+      margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px; border: 1.5px dashed #cbd5e1; border-radius: 8px; color: #64748b; font-size: 12px;
       cursor: pointer; transition: all .15s; background: #f8fafc;
     }
     .cert-bg-upload:hover { border-color: #8b5cf6; color: #6d28d9; background: #f5f3ff; }
-    .cert-prop-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .cert-prop-row label { font-size: 13px; color: #475569; width: 52px; flex-shrink: 0; }
+
+    /* 属性表单 */
+    .cert-prop-row { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 8px; }
+    .cert-prop-row label { font-size: 11px; color: #64748b; width: 44px; flex-shrink: 0; padding-top: 6px; }
     .cert-prop-row input[type="text"], .cert-prop-row textarea, .cert-prop-row select {
-      flex: 1; padding: 7px 9px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; outline: none; color: #334155;
+      flex: 1; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 7px; font-size: 12px; outline: none; color: #334155;
     }
     .cert-prop-row input[type="text"]:focus, .cert-prop-row textarea:focus { border-color: #8b5cf6; }
-    .cert-prop-hint { font-size: 12px; color: #94a3b8; }
-    .cert-side-empty { text-align: center; color: #cbd5e1; padding: 40px 10px; font-size: 13px; }
-    .cert-side-empty i { font-size: 28px; display: block; margin-bottom: 8px; opacity: .5; }
+    .cert-prop-row-half { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .cert-prop-row-half label { font-size: 11px; color: #64748b; display: block; margin-bottom: 2px; }
+    .cert-prop-row-half input[type="number"], .cert-prop-row-half input[type="color"] {
+      width: 100%; padding: 5px 7px; border: 1px solid #e2e8f0; border-radius: 7px; font-size: 12px; outline: none;
+    }
+    .cert-prop-row-half input[type="color"] { height: 30px; cursor: pointer; padding: 2px 3px; }
+    .cert-prop-hint { font-size: 11px; color: #94a3b8; margin-top: 6px; line-height: 1.4; }
+
+    /* 动态参数标签 */
+    .cert-token-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+    .cert-token-chip {
+      display: inline-block; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 600;
+      background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; cursor: pointer;
+      transition: all .12s ease; user-select: none;
+    }
+    .cert-token-chip:hover { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+    .cert-token-chip:active { transform: scale(.95); }
+
+    /* 印章类型切换 */
+    .cert-seal-type-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+    .et-seal-type-btn {
+      flex: 1; padding: 6px; border-radius: 7px; border: 1.5px solid #e2e8f0; background: #fff;
+      font-size: 12px; color: #64748b; cursor: pointer; transition: all .15s;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    .et-seal-type-btn.active { border-color: #8b5cf6; background: #f5f3ff; color: #6d28d9; font-weight: 600; }
+
+    /* 印章图片预览 */
+    .cert-seal-img-preview {
+      width: 100%; aspect-ratio: 1; max-height: 110px; border: 2px dashed #cbd5e1; border-radius: 10px;
+      cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; color: #94a3b8; font-size: 12px; transition: all .15s; margin-bottom: 8px; overflow: hidden;
+      background: #f8fafc;
+    }
+    .cert-seal-img-preview:hover { border-color: #8b5cf6; color: #6d28d9; background: #f5f3ff; }
+    .cert-seal-img-preview.has-img { border-style: solid; border-color: #e2e8f0; padding: 0; }
+    .cert-seal-img-preview.has-img img { width: 100%; height: 100%; object-fit: contain; }
+    .cert-seal-img-preview i { font-size: 20px; }
+    .cert-seal-img-remove {
+      width: 100%; padding: 6px; border-radius: 7px; background: #fef2f2; color: #dc2626;
+      font-size: 11px; cursor: pointer; border: none; transition: all .15s;
+      display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 8px;
+    }
+    .cert-seal-img-remove:hover { background: #fecaca; }
+
+    /* 图片上传按钮 */
+    .cert-img-upload-btn {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 7px; border: 1.5px dashed #cbd5e1; border-radius: 8px; color: #64748b; font-size: 12px;
+      cursor: pointer; transition: all .15s; background: #f8fafc;
+    }
+    .cert-img-upload-btn:hover { border-color: #8b5cf6; color: #6d28d9; background: #f5f3ff; }
+
+    .cert-side-empty { text-align: center; color: #cbd5e1; padding: 30px 10px; font-size: 12px; }
+    .cert-side-empty i { font-size: 24px; display: block; margin-bottom: 6px; opacity: .5; }
 
     /* 表单内的静态设计预览（应用编辑器后） */
     .cert-static-preview { transform-origin: top left; }
@@ -3307,87 +3443,89 @@
     </div>
   </div>
 
-  <!-- ========== 证书新建/编辑弹窗 ========== -->
-  <div id="certificate-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
-      <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
+  <!-- ========== 证书新建/编辑（抽屉式窗口） ========== -->
+  <div id="certificate-drawer-overlay" class="cert-drawer-overlay hidden" onclick="window.CertificateMgmt.closeCertificateModal()">
+    <div class="cert-drawer" onclick="event.stopPropagation()">
+      <div class="cert-drawer-header">
         <div class="flex items-center gap-2.5">
           <span class="inline-flex w-8 h-8 rounded-lg cert-gradient items-center justify-center text-white text-sm shadow-sm"><i class="fas fa-certificate"></i></span>
-          <h3 class="text-lg font-bold text-slate-800" id="cert-modal-title">新建证书</h3>
-        </div>
-        <button onclick="window.CertificateMgmt.closeCertificateModal()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
-      </div>
-      <div class="p-6 space-y-5">
-        <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">证书名称 <span class="text-red-500">*</span></label>
+            <h3 class="text-base font-bold text-slate-800" id="cert-modal-title">新建证书</h3>
+            <p class="text-xs text-slate-400">填写证书基本信息并配置样式模板</p>
+          </div>
+        </div>
+        <button onclick="window.CertificateMgmt.closeCertificateModal()" class="text-slate-400 hover:text-slate-600 transition text-xl leading-none">&times;</button>
+      </div>
+      <div class="cert-drawer-body">
+        <div class="space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">证书名称 <span class="text-red-500">*</span></label>
             <input type="text" id="cert-name" placeholder="例如：优秀学员证书"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm">
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 outline-none text-sm transition">
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">所属部门</label>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">所属部门</label>
             <input type="text" id="cert-dept" placeholder="例如：技术部"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm">
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 outline-none text-sm transition">
           </div>
-        </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">有效期类型</label>
+              <select id="cert-validity-type"
+                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 outline-none text-sm bg-white transition">
+                <option value="permanent">永久有效</option>
+                <option value="fixed">固定期限</option>
+              </select>
+            </div>
+            <div id="cert-validity-days-wrap" class="hidden">
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">有效天数</label>
+              <input type="number" id="cert-validity-days" value="365" min="1"
+                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 outline-none text-sm transition">
+            </div>
+          </div>
 
-        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+            <h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-hashtag mr-1.5"></i>证书编号规则</h4>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">前缀</label>
+                <input type="text" id="cert-prefix" value="CERT" placeholder="CERT"
+                  class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 outline-none transition">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">起始序号</label>
+                <input type="number" id="cert-start-number" value="1" min="1"
+                  class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 outline-none transition">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">序号位数</label>
+                <input type="number" id="cert-digits" value="4" min="1" max="10"
+                  class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 outline-none transition">
+              </div>
+            </div>
+            <p class="text-xs text-slate-400 mt-2">示例编号：CERT0001</p>
+          </div>
+
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">有效期类型</label>
-            <select id="cert-validity-type"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm bg-white">
-              <option value="permanent">永久有效</option>
-              <option value="fixed">固定期限</option>
-            </select>
-          </div>
-          <div id="cert-validity-days-wrap" class="hidden">
-            <label class="block text-sm font-medium text-slate-700 mb-1">有效天数</label>
-            <input type="number" id="cert-validity-days" value="365" min="1"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm">
-          </div>
-        </div>
-
-        <div class="bg-slate-50 rounded-xl p-4">
-          <h4 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-hashtag mr-1.5"></i>证书编号规则</h4>
-          <div class="grid grid-cols-3 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">前缀</label>
-              <input type="text" id="cert-prefix" value="CERT" placeholder="CERT"
-                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">起始序号</label>
-              <input type="number" id="cert-start-number" value="1" min="1"
-                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">序号位数</label>
-              <input type="number" id="cert-digits" value="4" min="1" max="10"
-                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
-            </div>
-          </div>
-          <p class="text-xs text-slate-400 mt-2">编号格式：前缀 + 补零序号，例如 CERT0001</p>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">证书模板 <span class="text-red-500">*</span></label>
-          <div class="flex items-start gap-5">
-            <div id="cert-template-preview" class="cert-preview-frame w-52 h-40 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
-              <span class="text-slate-400 text-sm">请选择模板</span>
-            </div>
-            <div class="flex-1">
-              <button type="button" id="cert-design-editor-btn"
-                class="px-5 py-2.5 cert-gradient text-white rounded-lg text-sm shadow-sm transition font-medium">
-                <i class="fas fa-paint-brush mr-1.5"></i>配置样式
-              </button>
-              <p class="text-xs text-slate-400 mt-2 leading-relaxed">点击进入可视化编辑器，自由选择模板、调整文字与样式、添加印章。</p>
+            <label class="block text-sm font-medium text-slate-700 mb-2">证书样式模板</label>
+            <div class="cert-template-picker-row">
+              <div id="cert-template-preview" class="cert-preview-frame w-44 h-32 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
+                <span class="text-slate-400 text-sm">未配置</span>
+              </div>
+              <div class="flex-1 flex flex-col justify-center pl-4">
+                <button type="button" id="cert-design-editor-btn"
+                  class="px-5 py-2.5 cert-gradient text-white rounded-lg text-sm shadow-sm transition font-medium self-start">
+                  <i class="fas fa-paint-brush mr-1.5"></i>配置样式
+                </button>
+                <p class="text-xs text-slate-400 mt-2 leading-relaxed">进入可视化编辑器，选择模板、调整文字样式、添加印章</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
+      <div class="cert-drawer-footer">
         <button id="cert-cancel-btn" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
-        <button id="cert-save-btn" class="px-5 py-2.5 cert-gradient text-white rounded-xl text-sm font-medium shadow-sm transition">
+        <button id="cert-save-btn" class="px-6 py-2.5 cert-gradient text-white rounded-xl text-sm font-medium shadow-sm transition">
           <i class="fas fa-save mr-1.5"></i>保存
         </button>
       </div>
@@ -3416,117 +3554,163 @@
     </div>
   </div>
 
-  <!-- ========== 证书可视化编辑器弹窗（覆盖于模板选择器之上，由“选择模板”进入） ========== -->
-  <div id="certificate-editor-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center hidden">
-    <div class="bg-white rounded-2xl w-full max-w-6xl max-h-[94vh] overflow-hidden shadow-2xl flex flex-col">
+  <!-- ========== 证书可视化编辑器（抽屉式窗口） ========== -->
+  <div id="certificate-editor-drawer-overlay" class="cert-editor-overlay hidden" onclick="window.CertificateMgmt.closeEditor()">
+    <div class="cert-editor-drawer" onclick="event.stopPropagation()">
       <!-- 头部 -->
-      <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-white flex-shrink-0">
+      <div class="cert-editor-header">
         <div class="flex items-center gap-2.5">
           <span class="inline-flex w-8 h-8 rounded-lg cert-gradient items-center justify-center text-white text-sm shadow-sm"><i class="fas fa-paint-brush"></i></span>
           <div>
-            <h3 class="text-base font-bold text-slate-800">证书编辑器</h3>
-            <p class="text-xs text-slate-400">拖拽文字 / 印章调整位置，双击文字可直接修改内容</p>
+            <h3 class="text-base font-bold text-slate-800">样式编辑器</h3>
+            <p class="text-xs text-slate-400">拖拽元素调整位置 · 双击文字直接修改 · 支持动态参数</p>
           </div>
         </div>
-        <button onclick="window.CertificateMgmt.closeEditor()" class="text-slate-400 hover:text-slate-600 transition text-xl">&times;</button>
+        <button onclick="window.CertificateMgmt.closeEditor()" class="text-slate-400 hover:text-slate-600 transition text-xl leading-none">&times;</button>
       </div>
 
-      <!-- 编辑区 -->
       <div class="cert-editor-shell">
-        <!-- 顶部工具栏 -->
-        <div class="cert-editor-toolbar">
-          <button class="et-btn" id="et-add-text"><i class="fas fa-font"></i>添加文字</button>
-          <button class="et-btn" id="et-add-seal"><i class="fas fa-stamp"></i>添加印章</button>
-          <div class="et-sep"></div>
-          <select id="et-font" title="字体">
-            <option value='"Noto Serif SC","SimSun",serif'>宋体（衬线）</option>
-            <option value='"Noto Sans SC","Microsoft YaHei",sans-serif'>黑体（无衬线）</option>
-            <option value='"KaiTi","STKaiti",serif'>楷体</option>
-            <option value="Georgia, serif">Georgia</option>
-            <option value="Arial, sans-serif">Arial</option>
-          </select>
-          <input type="number" id="et-size" min="8" max="120" value="20" title="字号(px)" style="width:64px;">
-          <div class="et-sep"></div>
-          <button class="et-btn" id="et-bold" title="加粗"><i class="fas fa-bold"></i></button>
-          <button class="et-btn" id="et-italic" title="斜体"><i class="fas fa-italic"></i></button>
-          <button class="et-btn" id="et-underline" title="下划线"><i class="fas fa-underline"></i></button>
-          <div class="et-sep"></div>
-          <button class="et-btn" id="et-align-l" title="左对齐"><i class="fas fa-align-left"></i></button>
-          <button class="et-btn" id="et-align-c" title="居中"><i class="fas fa-align-center"></i></button>
-          <button class="et-btn" id="et-align-r" title="右对齐"><i class="fas fa-align-right"></i></button>
-          <div class="et-sep"></div>
-          <input type="color" id="et-color" value="#1f2937" title="文字颜色">
-          <div class="et-sep"></div>
-          <button class="et-btn" id="et-delete" title="删除选中元素"><i class="fas fa-trash"></i>删除</button>
-          <button class="et-btn" id="et-bringfront" title="置于顶层"><i class="fas fa-layer-group"></i>置顶</button>
-        </div>
-
-        <!-- 画布 -->
-        <div class="cert-editor-stage" id="et-stage">
-          <div class="cert-editor-page" id="et-page"></div>
-        </div>
-
-        <!-- 右侧面板 -->
-        <div class="cert-editor-side">
-          <h5>版式</h5>
+        <!-- 左侧：模板选择 + 版式 -->
+        <div class="cert-editor-left">
+          <h5>版式方向</h5>
           <div class="cert-orient-tabs">
-            <button id="et-orient-portrait" data-orient="portrait"><i class="fas fa-square" style="transform:rotate(0)"></i>竖版</button>
-            <button id="et-orient-landscape" data-orient="landscape"><i class="fas fa-square"></i>横版</button>
+            <button id="et-orient-portrait" data-orient="portrait" class="active"><i class="fas fa-id-card"></i>竖版</button>
+            <button id="et-orient-landscape" data-orient="landscape"><i class="fas fa-credit-card"></i>横版</button>
           </div>
 
-          <h5>背景</h5>
+          <h5>模板风格</h5>
           <div class="cert-bg-grid" id="et-bg-grid"></div>
           <label class="cert-bg-upload">
-            <i class="fas fa-cloud-upload-alt"></i>上传自定义背景图片
+            <i class="fas fa-cloud-upload-alt"></i>上传自定义背景
             <input type="file" id="et-bg-upload" accept="image/*" class="hidden">
           </label>
+        </div>
 
-          <h5>选中元素</h5>
+        <!-- 中间：画布 + 工具栏 -->
+        <div class="cert-editor-center">
+          <div class="cert-editor-toolbar">
+            <button class="et-btn" id="et-add-text"><i class="fas fa-font"></i>添加文字</button>
+            <button class="et-btn" id="et-add-seal"><i class="fas fa-stamp"></i>添加印章</button>
+            <button class="et-btn" id="et-add-image"><i class="fas fa-image"></i>插入图片</button>
+            <div class="et-sep"></div>
+            <select id="et-font" title="字体">
+              <option value='"Noto Serif SC","SimSun",serif'>宋体</option>
+              <option value='"Noto Sans SC","Microsoft YaHei",sans-serif'>黑体</option>
+              <option value='"KaiTi","STKaiti",serif'>楷体</option>
+              <option value="Georgia, serif">Georgia</option>
+              <option value="Arial, sans-serif">Arial</option>
+            </select>
+            <input type="number" id="et-size" min="8" max="120" value="20" title="字号(px)" style="width:58px;">
+            <div class="et-sep"></div>
+            <button class="et-btn" id="et-bold" title="加粗"><b>B</b></button>
+            <button class="et-btn" id="et-italic" title="斜体"><i>I</i></button>
+            <button class="et-btn" id="et-underline" title="下划线"><u>U</u></button>
+            <div class="et-sep"></div>
+            <button class="et-btn" id="et-align-l" title="左对齐"><i class="fas fa-align-left"></i></button>
+            <button class="et-btn" id="et-align-c" title="居中"><i class="fas fa-align-center"></i></button>
+            <button class="et-btn" id="et-align-r" title="右对齐"><i class="fas fa-align-right"></i></button>
+            <div class="et-sep"></div>
+            <input type="color" id="et-color" value="#1f2937" title="颜色">
+            <div class="et-sep"></div>
+            <button class="et-btn et-btn-danger" id="et-delete" title="删除"><i class="fas fa-trash"></i></button>
+            <button class="et-btn" id="et-bringfront" title="置顶"><i class="fas fa-layer-group"></i></button>
+          </div>
+          <div class="cert-editor-stage" id="et-stage">
+            <div class="cert-editor-page" id="et-page"></div>
+          </div>
+        </div>
+
+        <!-- 右侧：属性面板（精简优化） -->
+        <div class="cert-editor-side">
+          <h5>元素属性</h5>
           <div id="et-prop-panel">
             <!-- 文字属性 -->
-            <div id="et-prop-text-group">
+            <div id="et-prop-text-group" class="hidden">
               <div class="cert-prop-row">
-                <label>内容</label>
-                <textarea id="et-prop-text" rows="2" placeholder="输入文字"></textarea>
+                <label>文字内容</label>
+                <textarea id="et-prop-text" rows="2" placeholder="支持 {{name}} 等动态参数"></textarea>
               </div>
-              <div class="cert-prop-row">
-                <label>字号</label>
-                <input type="number" id="et-prop-size" min="8" max="120" value="20">
+              <div class="cert-token-chips">
+                <span class="cert-token-chip" data-token="{{title}}">标题</span>
+                <span class="cert-token-chip" data-token="{{name}}">姓名</span>
+                <span class="cert-token-chip" data-token="{{content}}">内容</span>
+                <span class="cert-token-chip" data-token="{{certNo}}">编号</span>
+                <span class="cert-token-chip" data-token="{{date}}">日期</span>
+                <span class="cert-token-chip" data-token="{{company}}">公司</span>
               </div>
-              <div class="cert-prop-row">
-                <label>颜色</label>
-                <input type="color" id="et-prop-color" value="#1f2937">
+              <div class="cert-prop-row-half">
+                <div>
+                  <label>字号</label>
+                  <input type="number" id="et-prop-size" min="8" max="120" value="20">
+                </div>
+                <div>
+                  <label>颜色</label>
+                  <input type="color" id="et-prop-color" value="#1f2937">
+                </div>
               </div>
-              <div class="cert-prop-hint">双击画布上的文字可直接编辑内容。</div>
+              <p class="cert-prop-hint">💡 双击画布文字可直接编辑，点击上方标签快速插入动态参数</p>
             </div>
             <!-- 印章属性 -->
             <div id="et-prop-seal-group" class="hidden">
-              <div class="cert-prop-row">
-                <label>文字</label>
-                <input type="text" id="et-prop-seal-text" value="认证专用章" placeholder="印章文字">
+              <div class="cert-seal-type-tabs">
+                <button class="et-seal-type-btn active" data-type="text"><i class="fas fa-font"></i>文字印章</button>
+                <button class="et-seal-type-btn" data-type="image"><i class="fas fa-image"></i>图片印章</button>
               </div>
-              <div class="cert-prop-row">
-                <label>大小</label>
-                <input type="number" id="et-prop-seal-size" min="30" max="200" value="80">
+              <div id="et-seal-text-group">
+                <div class="cert-prop-row">
+                  <label>文字</label>
+                  <input type="text" id="et-prop-seal-text" value="认证专用章" placeholder="印章文字">
+                </div>
               </div>
-              <div class="cert-prop-row">
-                <label>颜色</label>
-                <input type="color" id="et-prop-seal-color" value="#764ba2">
+              <div id="et-seal-image-group" class="hidden">
+                <div class="cert-seal-img-preview" id="et-seal-img-preview" onclick="document.getElementById('et-seal-img-input').click()">
+                  <i class="fas fa-cloud-upload-alt"></i>
+                  <span>点击上传印章图片</span>
+                </div>
+                <input type="file" id="et-seal-img-input" accept="image/*" class="hidden">
+                <button class="cert-seal-img-remove hidden" id="et-seal-img-remove"><i class="fas fa-times"></i>移除图片</button>
               </div>
+              <div class="cert-prop-row-half">
+                <div>
+                  <label>大小</label>
+                  <input type="number" id="et-prop-seal-size" min="30" max="200" value="80">
+                </div>
+                <div>
+                  <label>颜色</label>
+                  <input type="color" id="et-prop-seal-color" value="#764ba2">
+                </div>
+              </div>
+            </div>
+            <!-- 图片元素属性 -->
+            <div id="et-prop-image-group" class="hidden">
+              <div class="cert-prop-row">
+                <label>URL</label>
+                <input type="text" id="et-prop-img-src" placeholder="图片地址">
+              </div>
+              <div class="cert-prop-row-half">
+                <div>
+                  <label>透明度</label>
+                  <input type="range" id="et-prop-img-opacity" min="0" max="100" value="100">
+                </div>
+              </div>
+              <label class="cert-img-upload-btn" style="margin-top:6px;">
+                <i class="fas fa-cloud-upload-alt"></i>上传替换图片
+                <input type="file" id="et-prop-img-upload" accept="image/*" class="hidden">
+              </label>
             </div>
             <div id="et-prop-empty" class="cert-side-empty">
               <i class="fas fa-hand-pointer"></i>
-              点击画布中的元素进行编辑，<br>或从顶部添加文字 / 印章
+              选中画布元素进行编辑
             </div>
           </div>
         </div>
       </div>
 
       <!-- 底部 -->
-      <div class="flex justify-end gap-3 px-6 py-3.5 border-t border-slate-100 bg-slate-50 flex-shrink-0">
+      <div class="cert-editor-footer">
         <button id="et-cancel" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
         <button id="et-apply" class="px-6 py-2.5 cert-gradient text-white rounded-xl text-sm font-medium shadow-sm transition">
-          <i class="fas fa-check mr-1.5"></i>应用并返回
+          <i class="fas fa-check mr-1.5"></i>应用样式
         </button>
       </div>
     </div>
@@ -3575,7 +3759,7 @@
   <script src="js/data-sync.js"></script>
   <script src="js/auth-modal.js?v=20260704"></script>
   <script src="js/auth-guard.js?v=20260704"></script>
-  <script src="js/certificate-management.js?v=20260706c"></script>
+  <script src="js/certificate-management.js?v=20260708a"></script>
   <script>
     // dataSync 兼容层：将 window.dataSync.getData/setData 映射到 DataAPI
     if (!window.dataSync) {
@@ -7224,7 +7408,7 @@
 
         const passedCount = users.filter(u => u.passed).length;
 
-        // 整体分数统计采用“最高分”策略（每人取最好成绩）
+        // 整体分数统计采用"最高分"策略（每人取最好成绩）
         const userBestScores = users
           .map(u => (typeof u.bestScore === 'number' ? u.bestScore : null))
           .filter(s => s !== null);
@@ -10501,6 +10685,7 @@
               <td class="px-6 py-4 text-center">
                 <button onclick="editUser(${user.id})" class="text-indigo-600 hover:text-indigo-800 mr-2" title="编辑资料"><i class="fas fa-edit"></i></button>
                 <button onclick="resetUserPassword(${user.id})" class="text-orange-600 hover:text-orange-800 mr-2" title="重置密码"><i class="fas fa-key"></i></button>
+                <button onclick="resetUserLearningData(${user.id}, '${(user.realName || user.username || '').replace(/'/g, "\\'")}')" class="text-cyan-600 hover:text-cyan-800 mr-2" title="重置学习数据"><i class="fas fa-undo-alt"></i></button>
                 <button onclick="toggleUserRole(${user.id})" class="${user.role === 'admin' ? 'text-purple-600 hover:text-purple-800' : 'text-emerald-600 hover:text-emerald-800'} mr-2" title="${user.role === 'admin' ? '取消管理员' : '设为管理员'}" ${isCurrentUser ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>
                   <i class="fas fa-${user.role === 'admin' ? 'user-shield' : 'user-plus'}"></i>
                 </button>
@@ -10768,6 +10953,46 @@
 
         if (res.ok) {
           toast('密码重置成功');
+        } else {
+          const error = await res.json();
+          toast(error.error || '重置失败', 'error');
+        }
+      } catch (err) {
+        toast('网络错误', 'error');
+      }
+    }
+
+    // 重置用户学习数据（清空所有学习相关记录，相当于新用户）
+    async function resetUserLearningData(userId, userName) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) {
+        toast('用户不存在', 'error');
+        return;
+      }
+
+      const confirmed = confirm(`确定要清空用户 "${userName || user.realName || user.username}" 的所有学习数据吗？\n\n这将清空：\n- 课程学习进度与时长\n- 已完成课程记录\n- 考试记录\n- 培训报名与签到记录\n- 调研答卷记录\n- 证书记录\n- 徽章与经验值本地缓存\n\n此操作不可恢复，请谨慎操作！`);
+      if (!confirmed) return;
+
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const res = await fetch(`${API}/auth/users/${userId}/reset-learning-data`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (res.ok) {
+          // 同时清除该用户在当前浏览器中的本地学习缓存
+          const uid = String(userId);
+          localStorage.removeItem(`user_learning_${uid}`);
+          localStorage.removeItem(`learning_data_${uid}`);
+          localStorage.removeItem(`badges_unlocked_${uid}`);
+          localStorage.removeItem(`badge_unlock_times_${uid}`);
+          localStorage.removeItem(`user_total_exp_v3_${uid}`);
+
+          toast('用户学习数据已清空');
         } else {
           const error = await res.json();
           toast(error.error || '重置失败', 'error');
@@ -11506,16 +11731,34 @@
       const safeTitle = String(noticeTitle || '公告').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
       showModal(`
-        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
-            <h3 class="text-lg font-semibold text-slate-800">访问详情 - ${safeTitle}</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+        <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+          <!-- 头部 -->
+          <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 flex-shrink-0">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <i class="fas fa-chart-bar text-white"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-white">访问详情</h3>
+                <p class="text-xs text-white/80">${safeTitle}</p>
+              </div>
+            </div>
+            <button onclick="closeModal()" class="w-8 h-8 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
-          <div id="visit-detail-body" class="flex-1 overflow-y-auto p-6">
-            <div class="text-center text-slate-400 py-8"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>
+
+          <!-- 内容 -->
+          <div id="visit-detail-body" class="flex-1 overflow-y-auto p-6 bg-slate-50">
+            <div class="flex items-center justify-center py-12 text-slate-400">
+              <i class="fas fa-spinner fa-spin text-2xl mr-3"></i>
+              <span>加载访问记录...</span>
+            </div>
           </div>
-          <div class="px-6 py-4 border-t border-slate-100 flex justify-end flex-shrink-0">
-            <button onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">关闭</button>
+
+          <!-- 底部 -->
+          <div class="px-6 py-4 border-t border-slate-100 flex justify-end flex-shrink-0 bg-white">
+            <button onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition text-sm font-medium text-slate-600">关闭</button>
           </div>
         </div>
       `);
@@ -11533,6 +11776,7 @@
         }
         const respData = await res.json();
         const visits = respData.visits || [];
+        const totalCount = respData.totalCount || visits.length;
         const body = document.getElementById('visit-detail-body');
         if (!body) {
           console.error('[Dashboard] visit-detail-body 未找到');
@@ -11540,37 +11784,90 @@
         }
 
         if (visits.length === 0) {
-          body.innerHTML = '<div class="text-center text-slate-400 py-8"><i class="fas fa-user-slash text-3xl mb-3 block"></i><p>暂无访问记录</p></div>';
+          body.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-12 text-slate-400">
+              <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                <i class="fas fa-user-slash text-2xl text-slate-300"></i>
+              </div>
+              <p class="text-sm">暂无访问记录</p>
+            </div>
+          `;
           return;
         }
 
         body.innerHTML = `
-          <div class="text-sm text-slate-500 mb-4">共 <span class="font-semibold text-slate-700">${visits.length}</span> 人访问</div>
-          <table class="w-full">
-            <thead class="bg-slate-50">
-              <tr>
-                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">用户</th>
-                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500">访问时间</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              ${visits.map(v => `
-                <tr class="hover:bg-slate-50">
-                  <td class="px-4 py-3 text-sm text-slate-700">
-                    <i class="fas fa-user-circle text-slate-400 mr-2"></i>${v.username || v.userId}
-                  </td>
-                  <td class="px-4 py-3 text-sm text-slate-500">
-                    <i class="far fa-clock mr-1"></i>${new Date(v.visitedAt).toLocaleString('zh-CN')}
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+          <!-- 统计卡片 -->
+          <div class="grid grid-cols-2 gap-4 mb-5">
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <div class="text-xs text-slate-400 mb-1">访问人数</div>
+              <div class="text-2xl font-bold text-indigo-600">${totalCount}<span class="text-sm font-normal text-slate-500 ml-1">人</span></div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <div class="text-xs text-slate-400 mb-1">总访问次数</div>
+              <div class="text-2xl font-bold text-purple-600">${visits.reduce((sum, v) => sum + (v.visitCount || 1), 0)}<span class="text-sm font-normal text-slate-500 ml-1">次</span></div>
+            </div>
+          </div>
+
+          <!-- 访问列表表格 -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/50">
+              <h4 class="text-sm font-semibold text-slate-700">访问明细</h4>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-slate-50">
+                    <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">姓名</th>
+                    <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">部门</th>
+                    <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">岗位</th>
+                    <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">首次访问时间</th>
+                    <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">访问次数</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  ${visits.map(v => `
+                    <tr class="hover:bg-slate-50 transition">
+                      <td class="px-5 py-3.5 text-sm font-medium text-slate-700">
+                        <div class="flex items-center gap-2">
+                          <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold">
+                            ${(v.name || '未').charAt(0)}
+                          </div>
+                          ${escHtml(v.name || '未知用户')}
+                        </div>
+                      </td>
+                      <td class="px-5 py-3.5 text-sm text-slate-600">${escHtml(v.department || '—')}</td>
+                      <td class="px-5 py-3.5 text-sm text-slate-600">${escHtml(v.position || '—')}</td>
+                      <td class="px-5 py-3.5 text-sm text-slate-600">
+                        <div class="flex items-center gap-1.5">
+                          <i class="far fa-clock text-slate-400 text-xs"></i>
+                          ${v.firstVisitAt ? new Date(v.firstVisitAt).toLocaleString('zh-CN') : '—'}
+                        </div>
+                      </td>
+                      <td class="px-5 py-3.5 text-sm text-center">
+                        <span class="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-semibold text-xs">
+                          ${v.visitCount || 1}
+                        </span>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
         `;
       } catch (err) {
         console.error('[Dashboard] 获取访问详情失败:', err);
         const body = document.getElementById('visit-detail-body');
-        if (body) body.innerHTML = '<div class="text-center text-red-400 py-8"><i class="fas fa-exclamation-triangle text-3xl mb-3 block"></i><p>加载失败: ' + err.message + '</p></div>';
+        if (body) {
+          body.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-12 text-red-400">
+              <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4">
+                <i class="fas fa-exclamation-triangle text-2xl text-red-400"></i>
+              </div>
+              <p class="text-sm">加载失败: ${err.message}</p>
+            </div>
+          `;
+        }
       }
     }
 
@@ -12526,7 +12823,7 @@
       }
 
       if (!pageData.length) {
-        tbody.innerHTML = '<tr><td colspan="11" class="px-6 py-16 text-center text-slate-400"><i class="fas fa-clipboard-list text-4xl mb-3 block opacity-30"></i><p>暂无考试</p><p class="text-xs mt-1">点击右上角“创建考试”开始安排考试</p></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="px-6 py-16 text-center text-slate-400"><i class="fas fa-clipboard-list text-4xl mb-3 block opacity-30"></i><p>暂无考试</p><p class="text-xs mt-1">点击右上角"创建考试"开始安排考试</p></td></tr>';
         return;
       }
 
@@ -12980,7 +13277,7 @@
           + '    <textarea id="peDescInput" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm resize-none" placeholder="请输入试卷说明...">' + escHtml(paper ? paper.description || '' : '') + '</textarea></div>'
           + '    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-sm text-indigo-700 flex items-start gap-2">'
           + '      <i class="fas fa-info-circle mt-0.5"></i>'
-          + '      <p>考试时长与及格分请在“考试安排”中设置，此处不再重复配置。</p>'
+          + '      <p>考试时长与及格分请在"考试安排"中设置，此处不再重复配置。</p>'
           + '    </div>'
           + '  </div>'
           + '  <div class="px-6 py-4 border-t border-slate-100 flex-shrink-0 flex gap-3">'

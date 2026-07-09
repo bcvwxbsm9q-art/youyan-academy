@@ -684,8 +684,9 @@
             let data = this.get(key);
             if (!data) return;
 
-            // 已经迁移过且 videoWatchTimes 非空则跳过
-            if (data.migratedAt && data.videoWatchTimes && Object.keys(data.videoWatchTimes).length > 0) return;
+            // 已经迁移过且版本一致则跳过
+            const MIGRATION_VERSION = 2;
+            if (data.migratedAt && data.migrationVersion >= MIGRATION_VERSION && data.videoWatchTimes && Object.keys(data.videoWatchTimes).length > 0) return;
 
             let changed = false;
 
@@ -700,10 +701,11 @@
                 changed = true;
             }
 
-            // 2. 重新计算 totalSeconds / totalHours
+            // 2. 重新计算 totalSeconds / totalHours，但不低于原有 totalSeconds（避免 studyRecords 被截断导致时长变少）
             if (data.studyRecords && data.studyRecords.length > 0) {
                 const total = data.studyRecords.reduce((sum, r) => sum + (parseInt(r.duration) || 0), 0);
-                if (total > 0) {
+                const originalTotal = data.totalSeconds || 0;
+                if (total > originalTotal) {
                     data.totalSeconds = total;
                     data.totalHours = Math.floor(total / 3600);
                     changed = true;
@@ -750,6 +752,7 @@
 
             if (changed) {
                 data.migratedAt = new Date().toISOString();
+                data.migrationVersion = 2;
                 this.set(key, data);
             }
         },
