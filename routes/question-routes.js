@@ -36,6 +36,55 @@ function writeData(data) {
   }
 }
 
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+
+/**
+ * 安全删除上传文件
+ * @param {string} url - /uploads/{type}/{filename} 格式的路径
+ * @param {string} context - 用于日志标注删除上下文
+ */
+function tryDeleteUploadFile(url, context) {
+  if (!url || typeof url !== 'string') return;
+  if (url.startsWith('http') || url.startsWith('data:')) return;
+  const match = url.match(/^\/uploads\/([^/]+)\/(.+)$/);
+  if (!match) return;
+  const [, type, filename] = match;
+  const filePath = path.join(uploadsDir, type, filename);
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`[文件已删除][${context}] ${filePath}`);
+    }
+  } catch (err) {
+    console.warn(`[文件删除失败][${context}] ${filePath}: ${err.message}`);
+  }
+}
+
+/**
+ * 递归收集题目中的图片（题干、选项等）
+ * @param {Object} question
+ */
+function collectQuestionFiles(question) {
+  const urls = [];
+  if (!question || typeof question !== 'object') return urls;
+  if (typeof question.image === 'string' && question.image.startsWith('/uploads/')) {
+    urls.push(question.image);
+  }
+  if (question.optionImages && typeof question.optionImages === 'object') {
+    Object.values(question.optionImages).forEach(url => {
+      if (typeof url === 'string' && url.startsWith('/uploads/')) urls.push(url);
+    });
+  }
+  if (Array.isArray(question.options)) {
+    question.options.forEach(opt => {
+      if (opt && typeof opt.image === 'string' && opt.image.startsWith('/uploads/')) {
+        urls.push(opt.image);
+      }
+    });
+  }
+  return urls;
+}
+
 const TYPE_NAMES = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
 const DIFF_NAMES = { easy: '简单', medium: '中等', hard: '困难' };
 
@@ -126,12 +175,18 @@ router.delete('/question-banks/:id', (req, res) => {
   const index = banks.findIndex(b => b.id === id);
   if (index === -1) return res.status(404).json({ success: false, error: '题库不存在' });
 
+  // 删除该题库下所有题目的图片
+  const questionsToDelete = (data.questions || []).filter(q => q.bankId === id);
+  questionsToDelete.forEach(q => {
+    collectQuestionFiles(q).forEach(url => tryDeleteUploadFile(url, `question-bank:${id}:question:${q.id}`));
+  });
+
   // 同时删除该题库下的所有试题
   data.questions = (data.questions || []).filter(q => q.bankId !== id);
   banks.splice(index, 1);
   data.question_banks = banks;
   writeData(data);
-  res.json({ success: true });
+  res.json({ success: true, message: '题库已删除，关联题目及图片已清理' });
 });
 
 // ========== 试题管理 API ==========
@@ -240,6 +295,9 @@ router.delete('/questions/:id', (req, res) => {
   const index = questions.findIndex(q => q.id === id);
   if (index === -1) return res.status(404).json({ success: false, error: '试题不存在' });
 
+  // 删除题目图片
+  collectQuestionFiles(questions[index]).forEach(url => tryDeleteUploadFile(url, `question:${id}`));
+
   questions.splice(index, 1);
   data.questions = questions;
   // 同时从考试中移除
@@ -249,7 +307,7 @@ router.delete('/questions/:id', (req, res) => {
     });
   }
   writeData(data);
-  res.json({ success: true });
+  res.json({ success: true, message: '试题已删除，关联图片已清理' });
 });
 
 // 批量删除试题
@@ -260,6 +318,13 @@ router.delete('/questions/batch', (req, res) => {
   }
   const data = readData();
   const idSet = new Set(ids);
+
+  // 删除待删题目的图片
+  const questionsToDelete = (data.questions || []).filter(q => idSet.has(q.id));
+  questionsToDelete.forEach(q => {
+    collectQuestionFiles(q).forEach(url => tryDeleteUploadFile(url, `question-batch:${q.id}`));
+  });
+
   data.questions = (data.questions || []).filter(q => !idSet.has(q.id));
   if (data.exams) {
     data.exams.forEach(exam => {
@@ -267,7 +332,7 @@ router.delete('/questions/batch', (req, res) => {
     });
   }
   writeData(data);
-  res.json({ success: true, deleted: ids.length });
+  res.json({ success: true, deleted: ids.length, message: '试题已删除，关联图片已清理' });
 });
 
 // 批量创建试题

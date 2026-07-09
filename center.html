@@ -179,14 +179,6 @@
             opacity: 1;
         }
 
-        /* 新徽章提示条 */
-        @keyframes slideDown {
-            0% { transform: translateY(-100%); opacity: 0; }
-            100% { transform: translateY(0); opacity: 1; }
-        }
-        .new-badge-toast {
-            animation: slideDown 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -1573,13 +1565,9 @@ const BADGES = [
             document.getElementById('stat-hours').textContent = totalHours;
             document.getElementById('stats-total-hours').textContent = totalHours;
             
-            // 登录天数（从服务端拉取，统计卡片已由 loadLoginDaysFromServer 更新）
-            // 若服务端接口失败，兜底使用注册天数
-            const loginDaysEl = document.getElementById('stats-register-days');
-            if (loginDaysEl && loginDaysEl.textContent === '0' && userLoginDays === 0) {
-                loginDaysEl.textContent = api.getRegisterDays(currentUser.createdAt);
-            }
-            
+            // 登录天数已由 loadLoginDaysFromServer 从服务端拉取并写入 stats-register-days，
+            // 不再使用注册天数兜底，确保重置后真实显示为 0。
+
             // 已完成课程数（基于真实观看时长严格判断，并兼容 completedCourses 数组）
             const allCourses = api.getCourses();
             let completedCount = 0;
@@ -1735,11 +1723,8 @@ const BADGES = [
             });
             document.getElementById('stats-completed-courses').textContent = completedCount;
             
-            // 登录天数（从服务端拉取，统计卡片已由 loadLoginDaysFromServer 更新）
-            const loginDaysEl2 = document.getElementById('stats-register-days');
-            if (loginDaysEl2 && loginDaysEl2.textContent === '0' && userLoginDays === 0) {
-                loginDaysEl2.textContent = api.getRegisterDays(currentUser.createdAt);
-            }
+            // 登录天数已由 loadLoginDaysFromServer 从服务端拉取并写入 stats-register-days，
+            // 不再使用注册天数兜底，确保重置后真实显示为 0。
         }
         
         // 初始化月度学习统计（柱状图 + 顶部当月总时长）
@@ -2001,70 +1986,27 @@ const BADGES = [
             const container = document.getElementById('all-badges');
             if (!container) return;
             
-            // 检查哪些徽章是新解锁的（基于合并后的列表）
-            const newlyUnlocked = [];
-            
             container.innerHTML = BADGES.map((b, index) => {
                 const unlocked = allUnlockedIds.includes(b.id);
-                const isNewlyUnlocked = unlocked && !storedUnlocked.includes(b.id);
-                
-                if (isNewlyUnlocked) {
-                    newlyUnlocked.push(b);
-                }
                 
                 return `
-                    <div class="flex flex-col items-center p-4 rounded-xl border ${unlocked ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200 opacity-50'} hover:shadow-md transition-all cursor-pointer group ${isNewlyUnlocked ? 'badge-unlock-animation' : ''}" 
-                         onclick="showBadgeDetail('${b.id}', ${unlocked})"
-                         style="${isNewlyUnlocked ? `animation-delay: ${index * 0.1}s` : ''}">
-                        <div class="w-16 h-16 rounded-full ${unlocked ? `bg-${b.color}-100` : 'bg-gray-200'} flex items-center justify-center text-2xl mb-2 group-hover:scale-110 transition-transform ${unlocked ? `text-${b.color}-600` : 'text-gray-400'} ${unlocked ? 'badge-glow' : ''} ${isNewlyUnlocked ? 'badge-glow-effect' : ''}">
+                    <div class="flex flex-col items-center p-4 rounded-xl border ${unlocked ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200 opacity-50'} hover:shadow-md transition-all cursor-pointer group" 
+                         onclick="showBadgeDetail('${b.id}', ${unlocked})">
+                        <div class="w-16 h-16 rounded-full ${unlocked ? `bg-${b.color}-100` : 'bg-gray-200'} flex items-center justify-center text-2xl mb-2 group-hover:scale-110 transition-transform ${unlocked ? `text-${b.color}-600` : 'text-gray-400'} ${unlocked ? 'badge-glow' : ''}">
                             <i class="fa ${b.icon}"></i>
                         </div>
                         <span class="text-sm font-medium ${unlocked ? 'text-gray-800' : 'text-gray-400'}">${b.name}</span>
                         <span class="text-xs text-gray-500 mt-1 text-center">${b.desc}</span>
                         ${unlocked ? '<span class="text-xs text-green-600 mt-1"><i class="fa fa-check"></i> 已解锁</span>' : '<span class="text-xs text-gray-400 mt-1">未解锁</span>'}
-                        ${isNewlyUnlocked ? '<span class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-bounce">!</span>' : ''}
                     </div>
                 `;
             }).join('');
-            
-            // 如果有新解锁的徽章，显示庆祝提示
-            if (newlyUnlocked.length > 0) {
-                showNewBadgeToast(newlyUnlocked);
-            }
             
             // 统一刷新三处徽章数量 UI
             updateBadgeStatsUI(allUnlockedIds);
 
             // 渲染等级进度（使用改进的经验值系统）
             renderLevelProgress(stats);
-        }
-        
-        // 显示新徽章解锁提示
-        function showNewBadgeToast(badges) {
-            badges.forEach((badge, index) => {
-                setTimeout(() => {
-                    const toast = document.createElement('div');
-                    toast.className = 'fixed top-20 right-4 z-50 bg-white rounded-xl shadow-2xl p-4 flex items-center gap-3 new-badge-toast border border-yellow-200';
-                    toast.innerHTML = `
-                        <div class="w-12 h-12 rounded-full bg-${badge.color}-100 flex items-center justify-center text-${badge.color}-600 text-xl badge-celebrate">
-                            <i class="fa ${badge.icon}"></i>
-                        </div>
-                        <div>
-                            <p class="font-bold text-gray-800">解锁新徽章！</p>
-                            <p class="text-sm text-gray-500">${badge.name} - ${badge.desc}</p>
-                        </div>
-                    `;
-                    document.body.appendChild(toast);
-                    
-                    // 3秒后自动移除
-                    setTimeout(() => {
-                        toast.style.opacity = '0';
-                        toast.style.transform = 'translateX(100%)';
-                        toast.style.transition = 'all 0.5s ease';
-                        setTimeout(() => toast.remove(), 500);
-                    }, 4000);
-                }, index * 500);
-            });
         }
         
         // 显示徽章详情

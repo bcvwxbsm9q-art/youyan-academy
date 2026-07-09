@@ -650,3 +650,315 @@
   - 浏览器验证：弹窗头部、统计卡片、表格列与样式均符合要求；姓名、部门、岗位、首次访问时间、访问次数正确显示；缺失岗位显示「—」。
 - 产出物：`.trae/documents/20260708_运营管理_优化公告访问详情弹窗.md`
 - 注意事项：本地若已有旧 Node 服务运行，需重启服务后刷新页面以加载新接口。
+
+## 二十八、补全用户学习数据重置范围
+
+### 28.1 工程过程
+1. 用户反馈管理后台「重置学习数据」范围不足，希望重置后「相当于是一个新账号」，需补齐课程评分、点赞、注册时间、最后登录、培训、徽章、登录数据等。
+2. 已创建变更追踪文档 `.trae/documents/20260709_模块0_补全用户学习数据重置范围.md`。
+3. 已梳理当前重置范围与 14 项缺漏数据域，就「注册时间是否重置为当前时间」「培训指派历史是否一并清理」两个价值判断节点征求用户确认，用户选择「全部重置」。
+4. 已修改 `server.js` 的 `/api/auth/users/:id/reset-learning-data`：
+   - 保留原有 6 类学习记录清理；
+   - 新增课程评分 `course_ratings`、课程互动 `course_interaction_*` 清理并重新计算课程平均分；
+   - 新增登录日志 `login_logs`、个人通知 `notifications`、公告访问 `notice_visits` 清理；
+   - 新增用户证书实例 `user_certificates`、`certificateRecords` 清理；
+   - 新增培训指派历史 `training_assign_history` 清理；
+   - 新增经验值 `user_total_exp_v3_*`、点赞/分享/评分汇总 `user_likes_*` / `user_shares_*` / `user_ratings_*` 清理；
+   - 新增学习会话、视频进度、课程笔记等通配动态键清理；
+   - 重置 `registered_users[].createdAt` 为当前时间、`lastLogin` 为 `null`。
+5. 已修改 `dashboard.html` 的 `resetUserLearningData`：
+   - 更新 confirm 文案，完整列出 14 项将被清空的内容；
+   - 扩展本地缓存清理：独立 localStorage 键 + `learning_platform_data` 内部用户键 + 兜底遍历删除。
+6. 已执行 `node --check server.js`，语法通过。
+7. 已编写临时端到端测试脚本：注入测试用户与全量测试记录，调用重置接口后 25 项断言全部通过；测试完成后恢复 `data.json` 并清理临时文件。
+
+### 28.2 交接状态
+- 当前任务：补全用户学习数据重置范围
+- 状态：已完成
+- 阻塞项：无
+
+### 28.3 最终结果
+- 文件：`server.js`、`dashboard.html`。
+- 验证：
+  - `node --check server.js` 通过。
+  - 临时测试服务器（端口 3004）25 项断言全部通过，确认课程评分、点赞/分享、登录日志、通知、公告访问、证书实例、培训指派历史、经验值、学习会话、视频进度、笔记、注册时间、最后登录均按要求重置。
+- 产出物：`.trae/documents/20260709_模块0_补全用户学习数据重置范围.md`
+- 待人工验证：重启 Node 服务后，在浏览器中登录管理后台，对测试账号执行「重置学习数据」，确认 confirm 列表与实际操作一致；重点检查注册时间、最后登录、课程评分、点赞数是否恢复为新账号状态。
+
+### 28.4 语义标注
+- **做到哪了**：重置学习数据范围已扩展完成，服务端与前端均已更新，测试通过。
+- **为什么**：用户要求重置后相当于新账号，原接口仅覆盖 6 类记录，随着系统迭代已存在多处用户数据未清理。
+- **未闭合项**：未在真实浏览器中手动触发按钮验证文案；本地 3003 端口已有 Node 服务在运行，新代码需重启服务后生效。
+- **接续入口**：重启 Node 服务 → 管理后台 → 学员管理 → 对测试账号点击「重置学习数据」图标验证。
+
+## 二十九、补充通知已读记录重置
+
+### 29.1 工程过程
+1. 继续排查重置范围完整性，发现 `data.json` 中存在 `notification_reads` 数组记录用户已读系统公告，但重置接口未清理。
+2. 已创建变更追踪文档 `.trae/documents/20260709_模块0_补充通知已读记录重置.md`。
+3. 已修改 `server.js`：在 `/api/auth/users/:id/reset-learning-data` 中添加 `notification_reads` 按 `userId` 过滤清理。
+4. 已修改 `dashboard.html`：confirm 文案将「公告访问记录」明确为「公告访问/已读记录」。
+5. 已更新本 note。
+
+### 29.2 交接状态
+- 当前任务：补充通知已读记录重置
+- 状态：已完成
+- 阻塞项：无
+
+### 29.3 最终结果
+- 文件：`server.js`、`dashboard.html`、`current-note.md`。
+- 验证：`node --check server.js` 通过。
+- 产出物：`.trae/documents/20260709_模块0_补充通知已读记录重置.md`
+- 待人工验证：重启 Node 服务后，在浏览器中对测试账号执行「重置学习数据」，确认 `data.json` 中 `notification_reads` 不再包含该用户记录。
+
+### 29.4 语义标注
+- **做到哪了**：补充了 `notification_reads` 清理，使重置后公告/通知状态符合新账号预期。
+- **为什么**：`notification_reads` 在公告已读接口中持续写入，若不清空会导致重置后用户仍看到已读状态。
+- **未闭合项**：无（已处理）。
+- **接续入口**：无需接续。
+
+## 三十、重置未生效排查与数据清零
+
+### 30.1 工程过程
+1. 用户反馈对许志坚、何银执行「重置学习数据」后注册时间未变，要求严格检查数据是否清空。
+2. 已排查确认根因：本地 Node 服务进程启动于 2026-07-09 10:15:10，在最新重置代码保存前启动，一直运行旧代码，导致重置接口未执行新增清理逻辑，也未重置 `createdAt`/`lastLogin`。
+3. 已创建变更追踪文档 `.trae/documents/20260709_模块0_重置未生效排查.md`。
+4. 已备份 `data.json` 为 `data-backup-20260709-111000.json`。
+5. 已停止旧 Node 进程并重启服务（新启动时间 2026-07-09 11:36:53）。
+6. 已生成管理员 token 并调用 `/api/auth/users/:id/reset-learning-data`，许志坚（1780909174403）与何银（1781087021554）均返回 200 成功。
+7. 已严格扫描 `data.json` 验证：两个用户除 `registered_users` 基础资料外，所有含用户 ID 的数据（notifications、notification_reads、course_ratings、notice_visits、login_logs、training_assign_history、course_interaction_*、动态学习键等）均已清空；`createdAt` 更新为 `2026/7/9 11:39:45`，`lastLogin` 为 `null`。
+8. 已执行 `node --check server.js` 与 `data.json` JSON 校验，均通过。
+
+### 30.2 交接状态
+- 当前任务：重置未生效排查与数据清零
+- 状态：已完成
+- 阻塞项：无
+
+### 30.3 最终结果
+- 文件：`data.json`（已更新）、`server.js`（服务已重启加载最新代码）。
+- 验证：
+  - `node --check server.js` 通过。
+  - `data.json` 为合法 JSON。
+  - 两个用户学习相关数据全部清空，注册时间已重置为当前时间，最后登录为 null。
+- 产出物：`.trae/documents/20260709_模块0_重置未生效排查.md`、备份文件 `data-backup-20260709-111000.json`。
+
+### 30.4 语义标注
+- **做到哪了**：已定位重置未生效根因为服务未重启，已重启服务并手动对两个用户执行重置，已验证数据清零。
+- **为什么**：Node 服务必须重启才能加载修改后的重置逻辑；旧进程持续运行导致用户点击重置时执行的是旧代码。
+- **未闭合项**：无。
+- **接续入口**：无需接续；后续如需重置其他用户，直接在管理后台点击「重置学习数据」即可，服务已运行最新代码。
+
+## 三十一、登录天数文案补充与再次重置
+
+### 31.1 工程过程
+1. 用户反馈重置后个人中心仍显示「登录天数 31 天」及「新人报到」「月度之星」徽章已解锁，要求将登录天数加入重置。
+2. 已排查确认：
+   - 登录天数由服务端 `GET /api/user/login-days` 实时从 `login_logs` 去重日期计算；
+   - `login_logs` 已在 `cleanupUserRelatedData()` 中按用户 ID 过滤清理，服务端逻辑已覆盖。
+3. 已创建变更追踪文档 `.trae/documents/20260709_模块0_登录天数加入重置文案.md`。
+4. 已修改 `dashboard.html`：confirm 弹窗将「登录历史与最后登录时间」明确为「登录历史、登录天数与最后登录时间」。
+5. 已再次调用 `/api/auth/users/:id/reset-learning-data` 对许志坚、何银执行幂等重置，均返回 200 成功。
+6. 已验证：
+   - `data.json` 中 `login_logs` 总数为 0；
+   - 两个用户除 `registered_users` 基础资料外无其他残留；
+   - `GET /api/user/login-days` 对两个用户均返回 `{"loginDays":0,"loginDates":[]}`；
+   - `createdAt` 更新为 `2026/7/9 12:13:10`，`lastLogin` 为 `null`。
+
+### 31.2 交接状态
+- 当前任务：登录天数文案补充与再次重置
+- 状态：已完成
+- 阻塞项：无
+
+### 31.3 最终结果
+- 文件：`dashboard.html`、`data.json`、`current-note.md`。
+- 验证：
+  - `node --check server.js` 通过。
+  - `data.json` 为合法 JSON。
+  - 服务端登录天数接口返回 0。
+- 产出物：`.trae/documents/20260709_模块0_登录天数加入重置文案.md`。
+- 待人工验证：在浏览器中对两个账号按 `Ctrl+F5` 强制刷新后，确认个人中心「登录天数」显示为 0，「新人报到」「月度之星」不再显示已解锁。
+
+### 31.4 语义标注
+- **做到哪了**：已补充文案并再次重置，已验证服务端登录天数为 0。
+- **为什么**：登录天数实际来自 `login_logs` 的去重日期计算，已在重置逻辑中清理；用户看到的旧数据是浏览器缓存或截图时间导致。
+- **未闭合项**：需用户刷新浏览器页面以清除前端缓存。
+- **接续入口**：用户在浏览器中按 `Ctrl+F5` 刷新个人中心页面验证。
+
+## 三十二、修复登录天数被注册天数兜底覆盖
+
+### 32.1 工程过程
+1. 用户再次反馈「登录天数没有移除」，要求加进重置范围并再次重置。
+2. 已排查确认：
+   - 服务端 `cleanupUserRelatedData()` 已清空 `login_logs`，`data.json` 中两个目标用户的 `login_logs` 数量为 0；
+   - `/api/user/login-days` 返回 `{"loginDays": 0, "loginDates": []}`；
+   - 真正原因是 `center.html` 的 `updateLearningStats()` 与 `loadAllData()` 中存在兜底逻辑：当 `stats-register-days` 显示为 0 且 `userLoginDays === 0` 时，会用 `api.getRegisterDays(currentUser.createdAt)` 覆盖显示值，导致重置后仍显示注册天数。
+3. 已创建变更追踪文档 `.trae/documents/20260709_模块0_登录天数显示不再兜底注册天数.md`。
+4. 已修改 `center.html`：移除两处用注册天数兜底登录天数的代码，让统计卡片始终显示服务端 `/api/user/login-days` 返回的真实登录天数。
+5. 已再次生成管理员 token 并调用 `/api/auth/users/:id/reset-learning-data`，许志坚（1780909174403）与何银（1781087021554）均返回 200 成功。
+6. 已验证：
+   - `data.json` 中两个用户的 `login_logs` 数量为 0；
+   - `createdAt` 更新为 `2026/7/9 12:20:02`，`lastLogin` 为 `null`；
+   - `/api/user/login-days` 返回 0。
+
+### 32.2 交接状态
+- 当前任务：修复登录天数被注册天数兜底覆盖
+- 状态：已完成
+- 阻塞项：无
+
+### 32.3 最终结果
+- 文件：`center.html`。
+- 验证：
+  - `center.html` 内嵌脚本语法检查通过；
+  - 服务端重置接口返回 200；
+  - `data.json` 为合法 JSON；
+  - 目标用户 `login_logs` 为 0，`createdAt`/`lastLogin` 已重置；
+  - s0402 前端三重闸门已执行，Test1 通过、Test3 通过、Test2 因 Playwright 环境缺失未执行（状态：未闭合），证据落盘 `.trae/documents/test_reports/frontend_gate_20260709_122319/`。
+- 产出物：`.trae/documents/20260709_模块0_登录天数显示不再兜底注册天数.md`、`.trae/documents/test_reports/frontend_gate_20260709_122319/`。
+- 待人工验证：在浏览器中对两个账号按 `Ctrl+F5` 强制刷新后，确认个人中心「登录天数」显示为 0，「新人报到」「月度之星」不再显示已解锁。
+
+### 32.4 语义标注
+- **做到哪了**：已定位登录天数未清空的真正原因并修复 `center.html` 兜底逻辑，已再次重置两个用户。
+- **为什么**：登录天数的清空逻辑本身是正确的，但个人中心显示层用注册天数做了兜底覆盖，导致视觉上未归零。
+- **未闭合项**：需用户在浏览器中强制刷新页面以加载最新 `center.html` 并清除本地缓存。
+- **接续入口**：用户在浏览器中按 `Ctrl+F5` 刷新个人中心页面验证。
+
+## 三十三、用户管理弹窗新增岗位字段并调整布局
+
+### 33.1 工程过程
+1. 用户反馈：用户管理中的「添加用户」弹窗需要增加「岗位」字段，并将「姓名/手机号」「部门/岗位」分别排成一行。
+2. 已创建变更追踪文档 `.trae/documents/20260709_模块0_用户弹窗增加岗位字段.md`。
+3. 已修改 `dashboard.html`：
+   - 「添加新用户」弹窗：真实姓名与手机号并排，部门与岗位并排，新增岗位输入框。
+   - 「编辑用户资料」弹窗：同步采用相同布局与岗位字段。
+   - `saveNewUser()` 与 `saveUserEdit()` 中均将 `position` 加入请求数据。
+4. 已修改 `server.js`：
+   - `/api/auth/register` 接口读取并持久化 `position`。
+   - `PUT /api/auth/users/:id` 接口将 `position` 加入 `allowedFields` 白名单。
+5. 已执行 `node --check server.js`，语法通过。
+6. 已尝试浏览器验证：Node 服务运行正常，但管理员账号密码非默认，无法登录进入用户管理页面完成弹窗截图验证。
+
+### 33.2 交接状态
+- 当前任务：用户管理弹窗新增岗位字段并调整布局
+- 状态：已完成
+- 阻塞项：无
+
+### 33.3 最终结果
+- 文件：`dashboard.html`、`server.js`。
+- 验证：
+  - `node --check server.js` 通过。
+  - `dashboard.html` 内联脚本新增字段与布局代码已核对，表单结构与保存逻辑一致。
+- 产出物：`.trae/documents/20260709_模块0_用户弹窗增加岗位字段.md`。
+- 待人工验证：重启 Node 服务后，在浏览器中登录管理后台 → 用户管理 → 点击「添加用户」/「编辑资料」，确认弹窗第一行为「真实姓名/手机号」、第二行为「部门/岗位」，且保存后用户列表「岗位」列正确显示。
+
+### 33.4 语义标注
+- **做到哪了**：已完成新增/编辑用户弹窗的岗位字段与布局调整，后端接口已支持 position 读写。
+- **为什么**：用户列表已显示岗位列，但弹窗缺少录入入口，导致岗位信息无法维护。
+- **未闭合项**：浏览器渲染截图验证因管理员登录密码未知未完成。
+- **接续入口**：用户可在浏览器中登录后验证弹窗布局；如需测试后端保存，可新增或编辑用户并检查 `data.json` 中 `registered_users[].position`。
+
+## 三十四、管理后台 9 模块批量选择/批量操作补全
+
+### 34.1 工程过程
+1. 收到用户反馈：管理后台 9 个模块（培训、课程、讲师、调研、题库、试卷、考试安排、证书、用户）缺少首列复选框，无法实现批量调整分类与批量删除。
+2. 已创建/更新变更追踪文档 `.trae/documents/20260709_模块0_管理后台批量选择操作.md`。
+3. 已核查当前代码：课程、讲师、培训、调研、题库、试卷、考试安排、用户、证书 9 个模块的批量操作栏、表头全选 checkbox、行 checkbox、选择函数、批量删除函数均已实现。
+4. 已修复 3 处细节缺陷：
+   - `dashboard.html` 课程空状态 `colspan="13"` 修正为 `colspan="12"`。
+   - `dashboard.html` 证书列表加载中 `colspan="9"` 修正为 `colspan="10"`。
+   - `dashboard.html` 试卷批量调整分类中 `ids.includes(p.id)` 修正为 `ids.includes(String(p.id))`，避免字符串/数字 ID 混用导致分类未生效。
+5. 已执行语法检查：`node --check server.js`、`node --check js/certificate-management.js` 通过；`dashboard.html` 内联脚本块解析通过。
+6. 已执行 s0402 前端三重闸门，证据落盘 `.trae/documents/test_reports/frontend_gate_20260709_223000/`：Test1 因 `scripts/test-api.js` 缺失 BLOCKED，Test2 因 Playwright 未安装 BLOCKED，Test3 Mock 基线 PASS。
+
+### 34.2 交接状态
+- 当前任务：管理后台 9 模块批量选择/批量操作补全
+- 状态：已完成实现与静态验证
+- 阻塞项：无代码阻塞；Test2 E2E 与 Test1 单元测试入口缺失属于环境/基础设施问题
+
+### 34.3 最终结果
+- 文件：`dashboard.html`、`js/certificate-management.js`（本回合仅修改 `dashboard.html` 3 处细节）。
+- 验证：
+  - `node --check server.js` 通过。
+  - `node --check js/certificate-management.js` 通过。
+  - `dashboard.html` 内联脚本解析通过。
+  - 各模块批量栏、表头全选、行 checkbox、选择函数、批量删除函数均已就位。
+  - 课程/培训/题库/试卷支持批量调整分类。
+  - s0402 前端三重闸门已执行，总体状态 **未闭合**（Test1/Test2 因环境/入口缺失未执行，Test3 PASS）。
+- 产出物：`.trae/documents/20260709_模块0_管理后台批量选择操作.md`、`.trae/documents/test_reports/frontend_gate_20260709_223000/`。
+- 待人工验证：在浏览器中打开 `dashboard.html`，分别对各管理模块测试勾选、全选、批量删除、批量调整分类（如有）的端到端交互。
+
+### 34.4 语义标注
+- **做到哪了**：9 模块批量选择/批量操作功能已实现，本回合完成细节修正与静态验证。
+- **为什么**：此前已有大量实现落地，本次仅需对齐 colspan、修复试卷批量分类 ID 比较即可闭合。
+- **未闭合项**：Test2 E2E 因 Playwright 浏览器未安装未执行；Test1 单元测试入口 `scripts/test-api.js` 缺失；真实浏览器端到端交互需人工验证。
+- **接续入口**：用户可在浏览器中登录管理后台，逐模块验证批量操作；或安装 Playwright 后重跑 s0402 前端三重闸门。
+
+## 三十五、级联删除补全与试卷后端化收尾
+
+### 35.1 工程过程
+1. 用户提出管理后台删除记录后，服务器上关联的视频、图片、PPT 课件、考试成绩、试卷、指派数据、讲师头像、课酬、课程评分/点赞/转发、公告图片等未被清理，希望实现删除记录时本地/服务器一并关联删除。
+2. 与用户确认关键边界：
+   - 删除讲师时，若其下存在课程则禁止删除；
+   - 删除培训时，独占的考试/调研级联删除，共享的考试/调研仅解除引用；
+   - 删除用户时，级联删除其学习/考试/培训记录及头像；
+   - 文件删除失败时不阻断数据库记录清理，仅记录警告；
+   - 删除题库时保留「自动移除考试中该题目」的行为；
+   - 将试卷管理从 `localStorage` 迁移到后端 `/api/papers` 并实现级联清理。
+3. 已创建实施计划 `.trae/documents/20260709_模块0_级联删除收尾与试卷后端化实施计划.md`。
+4. 已备份 `data.json` 与 `uploads/` 到 `.trae/backups/20260709_cascade_delete_v4/`。
+5. 已在 `server.js` 增加级联删除工具函数，并补全/修正各 `DELETE` 路由的关联清理逻辑：用户、课程、讲师、培训、考试、公告、调研、分类、轮播图、证书、培训风采图、培训内嵌课程、`/api/papers/:id`。
+6. 已在 `routes/question-routes.js` 补全删除题库/单题/批量题目时的题目图片清理。
+7. 已在 `server.js` 新增 `/api/papers` CRUD 接口；`POST /api/papers` 允许客户端传入原 `id` 用于一次性迁移旧 `localStorage` 数据。
+8. 已修正 4 处关键级联删除逻辑错误：
+   - 试卷删除同步清空考试 `paperId` 与 `paperName`；
+   - 培训删除仅删除与该培训关联的通知，不再误删所有 `training_assign` 通知；
+   - 讲师删除正确排除 `lecturer_applications` 匹配记录并清理首页推荐数组；
+   - 课程删除补充清理 `user_learning_*` 学习记录中的课程引用。
+9. 已更新 `dashboard.html`：
+   - 统一更新课程、讲师、培训、用户、公告、调研、分类、题目、试卷、考试、轮播图的删除确认文案；
+   - 统一 `DELETE` 失败后读取 `result.error` 并用 toast 提示；
+   - 将试卷管理模块从 `localStorage` 迁移到 `/api/papers`，包含加载、保存、删除、复制、状态切换、分类调整、考试选择器；
+   - 新增 `migratePapersIfNeeded()` 一次性迁移旧 `localStorage` 试卷数据；
+   - 移除所有 `localStorage`/`dataSync` 对 `papers` 的写入。
+10. 已执行语法检查：`node --check server.js`、`node --check routes/question-routes.js` 均通过。
+11. 已执行 API 冒烟：本地 Node 服务运行中，`GET http://localhost:3003/api/papers` 返回 200 与空数组；`POST /api/papers` 返回 201 并成功持久化。
+12. 已创建变更追踪文档 `.trae/documents/20260709_模块0_级联删除补全与试卷后端化.md`。
+
+### 35.2 交接状态
+- 当前任务：级联删除补全与试卷后端化收尾
+- 状态：后端与前端主体实现已完成，静态检查与 API 冒烟通过。
+- 阻塞项：Test2 E2E 因项目未安装 Playwright 依赖无法执行；真实浏览器端到端删除流程需人工验证；试卷实体缺少 `public/` 下三层契约
+
+### 35.3 最终结果
+- 文件：`server.js`、`routes/question-routes.js`、`dashboard.html`、`scripts/test-api.js`、`current-note.md`。
+- 验证：
+  - `node --check server.js` 通过。
+  - `node --check routes/question-routes.js` 通过。
+  - `GET /api/papers` 返回 200 `{"success":true,"data":[]}`。
+  - `POST /api/papers` 返回 201，新试卷持久化到 `data.json`。
+  - 新增 `scripts/test-api.js`，运行后 12 项断言全部通过（Papers CRUD + 课程列表冒烟）。
+  - 执行 s0402 前端三重闸门，证据落盘 `.trae/documents/test_reports/frontend_gate_20260709_164329/`：
+    - Test1 API 单元测试：**PASS**
+    - Test2 E2E：**BLOCKED**（项目未安装 Playwright 依赖）
+    - Test3 Mock 回归：**PASS**（现有契约/Mock 有效，但试卷实体缺少三层契约）
+- 产出物：
+  - `.trae/documents/20260709_模块0_级联删除补全与试卷后端化.md`
+  - `.trae/documents/20260709_模块0_级联删除收尾与试卷后端化实施计划.md`
+  - `.trae/documents/test_reports/frontend_gate_20260709_164329/`
+  - 备份目录 `.trae/backups/20260709_cascade_delete_v4/`
+- 待人工验证：
+  - 在浏览器中登录管理后台，逐模块删除测试记录，确认文案包含级联影响说明；
+  - 删除后检查 `uploads/` 对应文件是否被清理；
+  - 删除试卷后检查关联考试的 `paperId`/`paperName` 是否置空；
+  - 旧 `localStorage` 中的 `papers` 是否在首次加载时迁移到后端。
+
+### 35.4 语义标注
+- **做到哪了**：级联删除后端逻辑与试卷后端化前端改造均已完成；语法检查、API 冒烟、Test1、Test3 均通过；Test2 因 Playwright 未安装阻塞。
+- **为什么**：用户要求删除记录时不保留任何关联数据/文件以节省空间，且试卷模块此前仅存于浏览器本地，无法参与级联清理。
+- **未闭合项**：
+  - Test2 E2E 因项目未安装 Playwright 依赖无法执行；
+  - 试卷实体尚未补充 `public/` 下三层契约；
+  - 真实浏览器端到端删除流程需人工验证。
+- **接续入口**：
+  - 安装 Playwright 后重跑 Test2：`npm install --save-dev playwright`，然后执行 `.trae/documents/test_reports/frontend_gate_20260709_164329/test2_dashboard_smoke.js`；
+  - 或在浏览器中登录管理后台进行端到端验证；
+  - 如需补齐试卷三层契约，走 s0601 契约变更流程。

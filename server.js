@@ -168,6 +168,300 @@ function writeData(data) {
   }
 }
 
+// ============================================================
+// 级联删除工具函数
+// ============================================================
+
+/**
+ * 安全删除上传文件
+ * @param {string} url - /uploads/{type}/{filename} 格式的路径
+ * @param {string} context - 用于日志标注删除上下文
+ */
+function tryDeleteUploadFile(url, context) {
+  if (!url || typeof url !== 'string') return;
+  // 忽略外链和 data URI
+  if (url.startsWith('http') || url.startsWith('data:')) return;
+  const match = url.match(/^\/uploads\/([^/]+)\/(.+)$/);
+  if (!match) return;
+  const [, type, filename] = match;
+  const filePath = path.join(uploadsDir, type, filename);
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`[文件已删除][${context}] ${filePath}`);
+    }
+  } catch (err) {
+    console.warn(`[文件删除失败][${context}] ${filePath}: ${err.message}`);
+  }
+}
+
+/**
+ * 从实体对象中提取指定字段的本地文件 URL
+ * @param {Object} entity - 数据实体
+ * @param {Array<string>} fields - 字段名列表，支持字符串字段、数组字段（取 url 或 value）、对象数组（取 url）
+ */
+function collectFilesFromEntity(entity, fields) {
+  const urls = [];
+  if (!entity || typeof entity !== 'object') return urls;
+  fields.forEach(field => {
+    const val = entity[field];
+    if (!val) return;
+    if (typeof val === 'string') {
+      urls.push(val);
+    } else if (Array.isArray(val)) {
+      val.forEach(item => {
+        if (typeof item === 'string') {
+          urls.push(item);
+        } else if (item && typeof item === 'object') {
+          if (typeof item.url === 'string') urls.push(item.url);
+          if (typeof item.value === 'string') urls.push(item.value);
+        }
+      });
+    }
+  });
+  return urls.filter(url => typeof url === 'string' && url.startsWith('/uploads/'));
+}
+
+/**
+ * 从富文本 HTML 中提取 /uploads/ 图片路径
+ * @param {string} html
+ */
+function collectUrlsFromHtml(html) {
+  if (!html || typeof html !== 'string') return [];
+  const regex = /src=["'](\/uploads\/[^"']+)["']/g;
+  const urls = [];
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    urls.push(match[1]);
+  }
+  return urls;
+}
+
+/**
+ * 递归收集题目中的图片（题干、选项等）
+ * @param {Object} question
+ */
+function collectQuestionFiles(question) {
+  const urls = [];
+  if (!question || typeof question !== 'object') return urls;
+  if (typeof question.image === 'string' && question.image.startsWith('/uploads/')) {
+    urls.push(question.image);
+  }
+  if (question.optionImages && typeof question.optionImages === 'object') {
+    Object.values(question.optionImages).forEach(url => {
+      if (typeof url === 'string' && url.startsWith('/uploads/')) urls.push(url);
+    });
+  }
+  if (Array.isArray(question.options)) {
+    question.options.forEach(opt => {
+      if (opt && typeof opt.image === 'string' && opt.image.startsWith('/uploads/')) {
+        urls.push(opt.image);
+      }
+    });
+  }
+  return urls;
+}
+
+/**
+ * 清理匹配前缀的动态键
+ * @param {Object} data - data.json 根对象
+ * @param {Array<string|RegExp>} patterns - 前缀字符串或正则
+ */
+function cleanupDynamicKeysByPatterns(data, patterns) {
+  Object.keys(data).forEach(key => {
+    const matched = patterns.some(pattern => {
+      if (typeof pattern === 'string') return key.startsWith(pattern);
+      return pattern.test(key);
+    });
+    if (matched) {
+      delete data[key];
+    }
+  });
+}
+
+/**
+ * 删除考试相关文件（题目图片）
+ * @param {Object} exam
+ */
+function deleteExamFiles(exam) {
+  if (!exam) return;
+  (exam.questions || []).forEach(q => {
+    collectQuestionFiles(q).forEach(url => tryDeleteUploadFile(url, `exam:${exam.id}`));
+  });
+}
+
+/**
+ * 删除调研相关文件（题目图片）
+ * @param {Object} survey
+ */
+function deleteSurveyFiles(survey) {
+  if (!survey) return;
+  (survey.questions || []).forEach(q => {
+    collectQuestionFiles(q).forEach(url => tryDeleteUploadFile(url, `survey:${survey.id}`));
+  });
+}
+
+/**
+ * 删除题库/试卷相关文件
+ * @param {Object} bankOrPaper
+ */
+function deleteQuestionBankFiles(bankOrPaper) {
+  if (!bankOrPaper) return;
+  (bankOrPaper.questions || []).forEach(q => {
+    collectQuestionFiles(q).forEach(url => tryDeleteUploadFile(url, `bank/paper:${bankOrPaper.id}`));
+  });
+}
+
+/**
+ * 清理用户关联数据（用于删除用户和重置学习数据）
+ * @param {Object} data - data.json 根对象
+ * @param {string} uid - 用户 ID（字符串）
+ * @param {boolean} removeAvatar - 是否删除头像文件
+ */
+function cleanupUserRelatedData(data, uid, removeAvatar = false) {
+  // 1. 清空用户学习主记录
+  const learningKey1 = `user_learning_${uid}`;
+  const learningKey2 = `learning_data_${uid}`;
+  if (data[learningKey1] !== undefined) delete data[learningKey1];
+  if (data[learningKey2] !== undefined) delete data[learningKey2];
+
+  // 2. 清空考试记录
+  if (data.exam_attempts) {
+    data.exam_attempts = data.exam_attempts.filter(a => String(a.userId) !== uid);
+  }
+
+  // 3. 清空培训报名、签到与指派历史
+  if (data.training_enrollments) {
+    data.training_enrollments = data.training_enrollments.filter(e => String(e.userId) !== uid);
+  }
+  if (data.training_signins) {
+    data.training_signins = data.training_signins.filter(s => String(s.userId) !== uid);
+  }
+  if (data.training_assign_history) {
+    data.training_assign_history.forEach(h => {
+      if (Array.isArray(h.userIds)) {
+        h.userIds = h.userIds.filter(id => String(id) !== uid);
+      }
+    });
+    data.training_assign_history = data.training_assign_history.filter(
+      h => Array.isArray(h.userIds) && h.userIds.length > 0
+    );
+  }
+
+  // 4. 清空调研答卷记录
+  if (data.survey_responses) {
+    data.survey_responses = data.survey_responses.filter(r => String(r.userId) !== uid);
+  }
+
+  // 5. 清空证书相关记录（兼容旧数据）
+  if (data.certificates) {
+    data.certificates = data.certificates.filter(c => String(c.userId) !== uid);
+  }
+  if (data.user_certificates) {
+    data.user_certificates = data.user_certificates.filter(c => String(c.userId) !== uid);
+  }
+  if (data.certificateRecords) {
+    data.certificateRecords = data.certificateRecords.filter(r => String(r.userId) !== uid);
+  }
+
+  // 6. 清空课程评分
+  if (data.course_ratings) {
+    data.course_ratings = data.course_ratings.filter(r => String(r.userId) !== uid);
+  }
+
+  // 7. 清理课程互动（点赞/评分/分享）并重新计算聚合
+  Object.keys(data).forEach(key => {
+    if (!key.startsWith('course_interaction_')) return;
+    const interaction = data[key];
+    if (!interaction || typeof interaction !== 'object') return;
+    const courseIdStr = key.replace('course_interaction_', '');
+    const courseIdNum = Number(courseIdStr);
+    let changed = false;
+
+    ['userLikes', 'userRatings', 'userShares'].forEach(prop => {
+      const map = interaction[prop];
+      if (map && typeof map === 'object' && map[uid] !== undefined) {
+        delete map[uid];
+        changed = true;
+      }
+    });
+
+    if (!changed) return;
+
+    const likes = Object.keys(interaction.userLikes || {}).length;
+    const shares = Object.values(interaction.userShares || {}).reduce(
+      (s, v) => s + (Number(v) || 0), 0
+    );
+    const ratingEntries = Object.entries(interaction.userRatings || {});
+    const ratingCount = ratingEntries.length;
+    const ratingSum = ratingEntries.reduce((s, [, v]) => s + (Number(v) || 0), 0);
+
+    interaction.likes = likes;
+    interaction.shares = shares;
+    interaction.ratingCount = ratingCount;
+    interaction.ratingSum = ratingSum;
+
+    if (likes === 0 && shares === 0 && ratingCount === 0) {
+      delete data[key];
+    }
+
+    const course = (data.management_courses || []).find(c => c.id === courseIdNum);
+    if (course) {
+      course.rating = getCourseAvgRating(data, courseIdNum) ?? 0;
+      course.likes = likes;
+      course.shares = shares;
+    }
+  });
+
+  // 8. 清空登录日志
+  if (data.login_logs) {
+    data.login_logs = data.login_logs.filter(l => String(l.userId) !== uid);
+  }
+
+  // 9. 清空个人通知
+  if (data.notifications) {
+    data.notifications = data.notifications.filter(n => String(n.userId) !== uid);
+  }
+
+  // 10. 清空公告访问记录与通知已读记录
+  if (data.notice_visits) {
+    data.notice_visits = data.notice_visits.filter(v => String(v.userId) !== uid);
+  }
+  if (data.notification_reads) {
+    data.notification_reads = data.notification_reads.filter(r => String(r.userId) !== uid);
+  }
+
+  // 11. 清空经验值、点赞、分享、评分汇总等动态用户键
+  const dynamicUserKeys = [
+    `user_total_exp_v3_${uid}`,
+    `user_likes_${uid}`,
+    `user_shares_${uid}`,
+    `user_ratings_${uid}`
+  ];
+  dynamicUserKeys.forEach(key => {
+    if (data[key] !== undefined) delete data[key];
+  });
+
+  // 12. 清空学习会话、视频位置、课程笔记等通配动态键
+  Object.keys(data).forEach(key => {
+    if (
+      key.startsWith(`study_session_${uid}_`) ||
+      key.startsWith(`video_pos_${uid}_`) ||
+      key.startsWith(`note_${uid}_`)
+    ) {
+      delete data[key];
+    }
+  });
+
+  // 13. 删除头像文件
+  if (removeAvatar && data.registered_users) {
+    const user = data.registered_users.find(u => String(u.id) === uid);
+    if (user && user.avatar) {
+      tryDeleteUploadFile(user.avatar, `user:${uid}`);
+    }
+  }
+}
+
 // 初始化管理员账号（服务器启动时调用）
 function initDefaultAdmin() {
   const data = readData();
@@ -1202,7 +1496,7 @@ app.get('/api/data', (req, res) => {
 
 // 用户注册
 app.post('/api/auth/register', (req, res) => {
-  const { username, password, email, phone, realName, department } = req.body;
+  const { username, password, email, phone, realName, department, position } = req.body;
   
   if (!username || !password) {
     return res.status(400).json({ success: false, error: '用户名和密码不能为空' });
@@ -1243,6 +1537,7 @@ app.post('/api/auth/register', (req, res) => {
     phone: phone || '',
     realName: realName || username,
     department: department || '',
+    position: position || '',
     role: 'user',
     avatar: '',
     createdAt: new Date().toLocaleString('zh-CN'),
@@ -1463,11 +1758,19 @@ app.delete('/api/auth/users/:id', (req, res) => {
   if (userIndex === -1) {
     return res.status(404).json({ success: false, error: '用户不存在' });
   }
+
+  const uid = String(userId);
+  // 级联清理用户关联数据与头像文件
+  cleanupUserRelatedData(data, uid, true);
   
-  data.registered_users.splice(userIndex, 1);
+  // 重新定位用户索引（cleanupUserRelatedData 不会修改 registered_users 顺序，但保险起见）
+  const finalIndex = data.registered_users.findIndex(u => u.id === userId);
+  if (finalIndex !== -1) {
+    data.registered_users.splice(finalIndex, 1);
+  }
   
   if (writeData(data)) {
-    res.json({ success: true, message: '用户已删除' });
+    res.json({ success: true, message: '用户已删除，关联数据已清理' });
   } else {
     res.status(500).json({ success: false, error: '删除失败' });
   }
@@ -1499,7 +1802,7 @@ app.put('/api/auth/users/:id', (req, res) => {
   }
   
   // 更新允许的字段
-  const allowedFields = ['realName', 'email', 'phone', 'department', 'role'];
+  const allowedFields = ['realName', 'email', 'phone', 'department', 'position', 'role'];
   allowedFields.forEach(field => {
     if (updates[field] !== undefined) {
       data.registered_users[userIndex][field] = updates[field];
@@ -1576,35 +1879,19 @@ app.post('/api/auth/users/:id/reset-learning-data', (req, res) => {
 
   try {
     const userId = String(req.params.id);
+    const uid = userId;
     const data = readData();
 
-    // 1. 清空用户学习主记录
-    const learningKey1 = `user_learning_${userId}`;
-    const learningKey2 = `learning_data_${userId}`;
-    if (data[learningKey1] !== undefined) delete data[learningKey1];
-    if (data[learningKey2] !== undefined) delete data[learningKey2];
+    // 复用级联清理函数
+    cleanupUserRelatedData(data, uid, false);
 
-    // 2. 清空考试记录
-    if (data.exam_attempts) {
-      data.exam_attempts = data.exam_attempts.filter(a => String(a.userId) !== userId);
-    }
-
-    // 3. 清空培训报名与签到记录
-    if (data.training_enrollments) {
-      data.training_enrollments = data.training_enrollments.filter(e => String(e.userId) !== userId);
-    }
-    if (data.training_signins) {
-      data.training_signins = data.training_signins.filter(s => String(s.userId) !== userId);
-    }
-
-    // 4. 清空调研答卷记录
-    if (data.survey_responses) {
-      data.survey_responses = data.survey_responses.filter(r => String(r.userId) !== userId);
-    }
-
-    // 5. 清空证书记录
-    if (data.certificates) {
-      data.certificates = data.certificates.filter(c => String(c.userId) !== userId);
+    // 重置用户账号基础字段（相当于新账号）
+    if (data.registered_users) {
+      const user = data.registered_users.find(u => String(u.id) === uid);
+      if (user) {
+        user.createdAt = new Date().toLocaleString('zh-CN');
+        user.lastLogin = null;
+      }
     }
 
     if (writeData(data)) {
@@ -1659,6 +1946,78 @@ app.put('/api/auth/users/:id/toggle-role', (req, res) => {
       success: true, 
       message: newRole === 'admin' ? '已授予管理员权限' : '已撤销管理员权限',
       data: { user } 
+    });
+  } else {
+    res.status(500).json({ success: false, error: '更新失败' });
+  }
+});
+
+// 管理员 - 设置用户角色（支持三角色：user/teacher/admin）
+app.put('/api/auth/users/:id/set-role', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: '未提供认证令牌' });
+  }
+  
+  const token = authHeader.slice(7);
+  const payload = verifyToken(token);
+  
+  if (!payload || payload.role !== 'admin') {
+    return res.status(403).json({ success: false, error: '需要管理员权限' });
+  }
+  
+  const userId = parseInt(req.params.id);
+  const { role } = req.body;
+  
+  // 验证角色值
+  const validRoles = ['user', 'teacher', 'admin'];
+  if (!role || !validRoles.includes(role)) {
+    return res.status(400).json({ 
+      success: false, 
+      error: `无效的角色值，可选值：${validRoles.join('、')}` 
+    });
+  }
+  
+  // 不允许修改自己的权限
+  if (payload.id === userId) {
+    return res.status(400).json({ success: false, error: '不能修改自己的权限' });
+  }
+  
+  const data = readData();
+  if (!data.registered_users) data.registered_users = [];
+  
+  const userIndex = data.registered_users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, error: '用户不存在' });
+  }
+  
+  const oldRole = data.registered_users[userIndex].role;
+  const newRole = role;
+  
+  // 更新角色
+  data.registered_users[userIndex].role = newRole;
+  
+  // 如果设为讲师，确保有讲师相关字段
+  if (newRole === 'teacher' && !data.registered_users[userIndex].title) {
+    data.registered_users[userIndex].title = '内部讲师';
+    data.registered_users[userIndex].level = 'intern';
+    data.registered_users[userIndex].levelName = '见习讲师';
+  }
+  
+  if (writeData(data)) {
+    const user = { ...data.registered_users[userIndex] };
+    delete user.passwordHash;
+    
+    const roleNames = { user: '学员', teacher: '讲师', admin: '管理员' };
+    
+    res.json({ 
+      success: true, 
+      message: `已将用户身份从「${roleNames[oldRole]}」改为「${roleNames[newRole]}」`,
+      data: { 
+        user,
+        oldRole,
+        newRole
+      } 
     });
   } else {
     res.status(500).json({ success: false, error: '更新失败' });
@@ -1726,15 +2085,74 @@ app.put('/api/courses/:id', (req, res) => {
 app.delete('/api/courses/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
-  if (data.management_courses) {
-    data.management_courses = data.management_courses.filter(c => c.id !== id);
-    if (writeData(data)) {
-      res.json({ success: true });
-    } else {
-      res.status(500).json({ success: false, error: '写入失败' });
+  if (!data.management_courses) {
+    return res.status(404).json({ success: false, error: '课程列表不存在' });
+  }
+
+  const courseIndex = data.management_courses.findIndex(c => c.id === id);
+  if (courseIndex === -1) {
+    return res.status(404).json({ success: false, error: '课程不存在' });
+  }
+
+  // 前置校验：被培训引用时禁止删除
+  const inTrainingEvent = (data.training_events || []).some(t => t.linkedCourseId === id);
+  const inTrainingProject = (data.training_projects || []).some(p =>
+    (p.courses || []).some(c => c.id === id)
+  );
+  if (inTrainingEvent || inTrainingProject) {
+    return res.status(400).json({ success: false, error: '该课程已被培训关联，无法删除' });
+  }
+
+  const course = data.management_courses[courseIndex];
+
+  // 删除课程相关文件
+  collectFilesFromEntity(course, ['cover']).forEach(url => tryDeleteUploadFile(url, `course:${id}`));
+  collectFilesFromEntity(course, ['videos']).forEach(url => tryDeleteUploadFile(url, `course:${id}`));
+  collectFilesFromEntity(course, ['attachments']).forEach(url => tryDeleteUploadFile(url, `course:${id}`));
+
+  // 清理关联数据
+  if (data.course_ratings) {
+    data.course_ratings = data.course_ratings.filter(r => r.courseId !== id);
+  }
+  if (data.index_featured_courses) {
+    data.index_featured_courses = data.index_featured_courses.filter(c => c !== id);
+  }
+  if (data.index_banners) {
+    data.index_banners.forEach(b => {
+      if (b.courseId === id) b.courseId = null;
+    });
+  }
+  if (data.my_courses) {
+    data.my_courses = data.my_courses.filter(c => c.courseId !== id);
+  }
+
+  // 清理动态键
+  delete data[`course_interaction_${id}`];
+  delete data[`course_stats_${id}`];
+  cleanupDynamicKeysByPatterns(data, [new RegExp(`^video_pos_\\d+_${id}_.*$`)]);
+
+  // 清理所有用户学习记录中对该课程的引用
+  Object.keys(data).forEach(key => {
+    if (!key.startsWith('user_learning_')) return;
+    const record = data[key];
+    if (!record || typeof record !== 'object') return;
+    if (Array.isArray(record.completedCourses)) {
+      record.completedCourses = record.completedCourses.filter(cid => String(cid) !== String(id));
     }
+    if (record.videoProgress && typeof record.videoProgress === 'object') {
+      Object.keys(record.videoProgress).forEach(k => {
+        if (k.startsWith(`${id}_`) || k.includes(`_${id}_`)) delete record.videoProgress[k];
+      });
+    }
+  });
+
+  // 删除课程主记录
+  data.management_courses.splice(courseIndex, 1);
+
+  if (writeData(data)) {
+    res.json({ success: true, message: '课程已删除，关联数据已清理' });
   } else {
-    res.status(404).json({ success: false, error: '课程列表不存在' });
+    res.status(500).json({ success: false, error: '删除失败' });
   }
 });
 
@@ -1791,15 +2209,51 @@ app.put('/api/lecturers/:id', (req, res) => {
 app.delete('/api/lecturers/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
-  if (data.lecturers) {
-    data.lecturers = data.lecturers.filter(l => l.id !== id);
-    if (writeData(data)) {
-      res.json({ success: true });
-    } else {
-      res.status(500).json({ success: false, error: '写入失败' });
-    }
+  if (!data.lecturers) {
+    return res.status(404).json({ success: false, error: '讲师列表不存在' });
+  }
+
+  const lecturerIndex = data.lecturers.findIndex(l => l.id === id);
+  if (lecturerIndex === -1) {
+    return res.status(404).json({ success: false, error: '讲师不存在' });
+  }
+
+  // 前置校验：有关联课程时禁止删除
+  const hasCourses = (data.management_courses || []).some(c => String(c.lecturerId) === String(id));
+  if (hasCourses) {
+    return res.status(400).json({ success: false, error: '该讲师下存在课程，无法删除' });
+  }
+
+  const lecturer = data.lecturers[lecturerIndex];
+
+  // 删除头像文件
+  if (lecturer.avatar) {
+    tryDeleteUploadFile(lecturer.avatar, `lecturer:${id}`);
+  }
+
+  // 清理关联数据
+  if (data.lecturer_payment_records) {
+    data.lecturer_payment_records = data.lecturer_payment_records.filter(r => String(r.lecturerId) !== String(id));
+  }
+  if (data.lecturer_applications) {
+    data.lecturer_applications = data.lecturer_applications.filter(
+      a => String(a.lecturerId) !== String(id) && String(a.approvedLecturerId) !== String(id)
+    );
+  }
+  if (data.index_featured_lecturers) {
+    data.index_featured_lecturers = data.index_featured_lecturers.filter(l => l !== id);
+  }
+  if (data.index_featured_lecturers_v2) {
+    data.index_featured_lecturers_v2 = data.index_featured_lecturers_v2.filter(l => l !== id);
+  }
+
+  // 删除讲师主记录
+  data.lecturers.splice(lecturerIndex, 1);
+
+  if (writeData(data)) {
+    res.json({ success: true, message: '讲师已删除，关联数据已清理' });
   } else {
-    res.status(404).json({ success: false, error: '讲师列表不存在' });
+    res.status(500).json({ success: false, error: '删除失败' });
   }
 });
 
@@ -2240,15 +2694,110 @@ app.put('/api/training/:id', (req, res) => {
 app.delete('/api/training/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
-  if (data.training_events) {
-    data.training_events = data.training_events.filter(e => e.id !== id);
-    if (writeData(data)) {
-      res.json({ success: true });
-    } else {
-      res.status(500).json({ success: false, error: '写入失败' });
+  if (!data.training_events) {
+    return res.status(404).json({ success: false, error: '培训事件列表不存在' });
+  }
+
+  const trainingIndex = data.training_events.findIndex(e => e.id === id);
+  if (trainingIndex === -1) {
+    return res.status(404).json({ success: false, error: '培训不存在' });
+  }
+
+  const training = data.training_events[trainingIndex];
+
+  // 删除培训相关文件
+  (training.galleryImages || []).forEach(url => tryDeleteUploadFile(url, `training:${id}`));
+  (training.coursewareFiles || []).forEach(url => tryDeleteUploadFile(url, `training:${id}`));
+
+  // 清理培训特有数据
+  if (data.training_enrollments) {
+    data.training_enrollments = data.training_enrollments.filter(e => e.trainingId !== id);
+  }
+  if (data.training_signins) {
+    data.training_signins = data.training_signins.filter(s => s.trainingId !== id);
+  }
+  if (data.training_attendances) {
+    data.training_attendances = data.training_attendances.filter(a => a.trainingId !== id);
+  }
+  if (data.training_exams) {
+    data.training_exams = data.training_exams.filter(r => r.trainingId !== id);
+  }
+  if (data.training_surveys) {
+    data.training_surveys = data.training_surveys.filter(r => r.trainingId !== id);
+  }
+  if (data.survey_responses) {
+    data.survey_responses = data.survey_responses.filter(r => r.trainingId !== id);
+  }
+  if (data.training_assign_history) {
+    data.training_assign_history = data.training_assign_history.filter(h => h.trainingId !== id);
+  }
+  if (data.my_enrolled_trainings) {
+    data.my_enrolled_trainings = data.my_enrolled_trainings.filter(t => t.id !== id);
+  }
+  if (data.notifications) {
+    data.notifications = data.notifications.filter(n => n.trainingId !== id);
+  }
+
+  // 处理关联的考试：仅删除被当前培训独占的，共享的解除引用
+  if (training.linkedExamId) {
+    const examId = training.linkedExamId;
+    const otherTrainingRefs = (data.training_events || []).filter(t => t.id !== id && t.linkedExamId === examId).length;
+    if (otherTrainingRefs === 0) {
+      const exam = (data.exams || []).find(e => e.id === examId);
+      if (exam) {
+        deleteExamFiles(exam);
+        if (data.exam_attempts) {
+          data.exam_attempts = data.exam_attempts.filter(a => a.examId !== examId);
+        }
+        data.exams = (data.exams || []).filter(e => e.id !== examId);
+      }
     }
+  }
+
+  // 处理关联的调研：仅删除被当前培训独占的，共享的解除引用
+  if (training.linkedSurveyId) {
+    const surveyId = training.linkedSurveyId;
+    const otherTrainingRefs = (data.training_events || []).filter(t => t.id !== id && t.linkedSurveyId === surveyId).length;
+    if (otherTrainingRefs === 0) {
+      const survey = (data.surveys || []).find(s => s.id === surveyId);
+      if (survey) {
+        deleteSurveyFiles(survey);
+        if (data.survey_responses) {
+          data.survey_responses = data.survey_responses.filter(r => r.surveyId !== surveyId);
+        }
+        data.surveys = (data.surveys || []).filter(s => s.id !== surveyId);
+      }
+    }
+  }
+
+  // 处理关联的课程：解除 training_events 引用
+  if (training.linkedCourseId) {
+    // 课程本身是独立实体，不删除，只解除引用
+  }
+
+  // 删除旧版 training_projects 中同名/同 ID 项目及其嵌套 courses
+  if (data.training_projects) {
+    data.training_projects = data.training_projects.filter(p => {
+      const matchById = p.id === id;
+      const matchByName = p.project === training.project || p.name === training.name;
+      if (matchById || matchByName) {
+        // 删除项目下嵌套课程的文件
+        (p.courses || []).forEach(c => {
+          collectFilesFromEntity(c, ['cover', 'videos', 'attachments']).forEach(url => tryDeleteUploadFile(url, `training-project-course:${c.id}`));
+        });
+        return false;
+      }
+      return true;
+    });
+  }
+
+  // 删除培训主记录
+  data.training_events.splice(trainingIndex, 1);
+
+  if (writeData(data)) {
+    res.json({ success: true, message: '培训已删除，关联数据已清理' });
   } else {
-    res.status(404).json({ success: false, error: '培训事件列表不存在' });
+    res.status(500).json({ success: false, error: '删除失败' });
   }
 });
 
@@ -2363,6 +2912,11 @@ app.delete('/api/training/:id/gallery/:idx', (req, res) => {
   if (idx < 0 || idx >= training.galleryImages.length) {
     return res.status(400).json({ success: false, error: '图片索引越界' });
   }
+
+  // 先删除服务器文件
+  const url = training.galleryImages[idx];
+  tryDeleteUploadFile(url, `training-gallery:${trainingId}:${idx}`);
+
   training.galleryImages.splice(idx, 1);
   writeData(data);
   res.json({ success: true, images: training.galleryImages });
@@ -2695,7 +3249,7 @@ app.put('/api/training/courses/:courseId', (req, res) => {
   }
 });
 
-// DELETE /api/training/courses/:courseId - 删除培训课程
+// DELETE /api/training/courses/:courseId - 删除培训课程（清理课程文件）
 app.delete('/api/training/courses/:courseId', (req, res) => {
   const courseId = parseInt(req.params.courseId);
   const data = readData();
@@ -2703,17 +3257,24 @@ app.delete('/api/training/courses/:courseId', (req, res) => {
   let deleted = false;
   for (const project of data.training_projects || []) {
     if (project.courses) {
+      const course = project.courses.find(c => c.id === courseId);
+      if (course) {
+        // 删除课程相关文件
+        collectFilesFromEntity(course, ['cover', 'videos', 'attachments']).forEach(url =>
+          tryDeleteUploadFile(url, `training-project-course:${courseId}`)
+        );
+        deleted = true;
+      }
       const initialLength = project.courses.length;
       project.courses = project.courses.filter(c => c.id !== courseId);
       if (project.courses.length < initialLength) {
         deleted = true;
-        break;
       }
     }
   }
   
   if (deleted && writeData(data)) {
-    res.json({ success: true });
+    res.json({ success: true, message: '培训课程已删除，关联文件已清理' });
   } else {
     res.status(404).json({ success: false, error: '课程不存在' });
   }
@@ -2955,13 +3516,36 @@ app.delete('/api/exams/:id', (req, res) => {
   if (index === -1) {
     return res.status(404).json({ success: false, error: '考试不存在' });
   }
+
+  const exam = exams[index];
+
+  // 删除考试题目相关文件
+  deleteExamFiles(exam);
+
   exams.splice(index, 1);
-  // 同时删除相关成绩记录
+
+  // 删除相关成绩记录
   if (data.exam_attempts) {
     data.exam_attempts = data.exam_attempts.filter(a => a.examId !== id);
   }
+
+  // 解除培训关联
+  (data.training_events || []).forEach(t => {
+    if (t.linkedExamId === id) t.linkedExamId = null;
+  });
+
+  // 清理培训-考试关联表
+  if (data.training_exams) {
+    data.training_exams = data.training_exams.filter(r => r.examId !== id);
+  }
+
+  // 清理相关通知
+  if (data.notifications) {
+    data.notifications = data.notifications.filter(n => n.examId !== id);
+  }
+
   if (writeData(data)) {
-    res.json({ success: true, message: '考试已删除' });
+    res.json({ success: true, message: '考试已删除，关联数据已清理' });
   } else {
     res.status(500).json({ success: false, error: '删除失败' });
   }
@@ -3985,15 +4569,26 @@ app.post('/api/banners', upload.single('cover'), (req, res) => {
 app.delete('/api/banners/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
-  if (data.index_banners) {
-    data.index_banners = data.index_banners.filter(b => b.id !== id);
-    if (writeData(data)) {
-      res.json({ success: true });
-    } else {
-      res.status(500).json({ success: false, error: '删除失败' });
-    }
+  if (!data.index_banners) {
+    return res.status(404).json({ success: false, error: 'Banner列表不存在' });
+  }
+
+  const bannerIndex = data.index_banners.findIndex(b => b.id === id);
+  if (bannerIndex === -1) {
+    return res.status(404).json({ success: false, error: 'Banner不存在' });
+  }
+
+  const banner = data.index_banners[bannerIndex];
+  if (banner.img) {
+    tryDeleteUploadFile(banner.img, `banner:${id}`);
+  }
+
+  data.index_banners.splice(bannerIndex, 1);
+
+  if (writeData(data)) {
+    res.json({ success: true, message: '轮播图已删除' });
   } else {
-    res.status(404).json({ success: false, error: 'Banner列表不存在' });
+    res.status(500).json({ success: false, error: '删除失败' });
   }
 });
 
@@ -4130,20 +4725,44 @@ app.post('/api/notices/unpin-all', (req, res) => {
   }
 });
 
-// DELETE /api/notices/:id - 删除公告
+// DELETE /api/notices/:id - 删除公告（清理正文图片、访问记录、轮播引用）
 app.delete('/api/notices/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
-  
-  if (data.notices) {
-    data.notices = data.notices.filter(n => n.id !== id);
-    if (writeData(data)) {
-      res.json({ success: true });
-    } else {
-      res.status(500).json({ success: false, error: '删除失败' });
-    }
+
+  if (!data.notices) {
+    return res.status(404).json({ success: false, error: '公告列表不存在' });
+  }
+
+  const noticeIndex = data.notices.findIndex(n => n.id === id);
+  if (noticeIndex === -1) {
+    return res.status(404).json({ success: false, error: '公告不存在' });
+  }
+
+  const notice = data.notices[noticeIndex];
+
+  // 删除正文中的 /uploads/ 图片
+  collectUrlsFromHtml(notice.content).forEach(url => tryDeleteUploadFile(url, `notice:${id}`));
+
+  // 删除公告访问记录
+  if (data.notice_visits) {
+    data.notice_visits = data.notice_visits.filter(v => v.noticeId !== id);
+  }
+
+  // 解除轮播图中对该公告的引用
+  if (data.index_banners) {
+    data.index_banners.forEach(b => {
+      if (b.announcementId === id) b.announcementId = null;
+    });
+  }
+
+  // 删除主记录
+  data.notices.splice(noticeIndex, 1);
+
+  if (writeData(data)) {
+    res.json({ success: true, message: '公告已删除，关联数据已清理' });
   } else {
-    res.status(404).json({ success: false, error: '公告不存在' });
+    res.status(500).json({ success: false, error: '删除失败' });
   }
 });
 
@@ -4294,19 +4913,48 @@ app.put('/api/surveys/:id', (req, res) => {
   }
 });
 
-// DELETE /api/surveys/:id - 删除调研
+// DELETE /api/surveys/:id - 删除调研（清理题目图片、答卷、培训引用）
 app.delete('/api/surveys/:id', (req, res) => {
   const data = readData();
   const id = parseInt(req.params.id);
-  if (data.surveys) {
-    data.surveys = data.surveys.filter(s => s.id !== id);
-    if (writeData(data)) {
-      res.json({ success: true });
-    } else {
-      res.status(500).json({ success: false, error: '删除失败' });
-    }
+  if (!data.surveys) {
+    return res.status(404).json({ success: false, error: '调研列表不存在' });
+  }
+
+  const surveyIndex = data.surveys.findIndex(s => s.id === id);
+  if (surveyIndex === -1) {
+    return res.status(404).json({ success: false, error: '调研不存在' });
+  }
+
+  const survey = data.surveys[surveyIndex];
+
+  // 删除题目相关图片
+  deleteSurveyFiles(survey);
+
+  // 删除调研主记录
+  data.surveys.splice(surveyIndex, 1);
+
+  // 清理调研答卷
+  if (data.survey_responses) {
+    data.survey_responses = data.survey_responses.filter(r => r.surveyId !== id);
+  }
+
+  // 解除培训关联
+  if (data.training_events) {
+    data.training_events.forEach(t => {
+      if (t.linkedSurveyId === id) t.linkedSurveyId = null;
+    });
+  }
+
+  // 清理培训-调研关联表
+  if (data.training_surveys) {
+    data.training_surveys = data.training_surveys.filter(r => r.surveyId !== id);
+  }
+
+  if (writeData(data)) {
+    res.json({ success: true, message: '调研已删除，关联数据已清理' });
   } else {
-    res.status(404).json({ success: false, error: '调研不存在' });
+    res.status(500).json({ success: false, error: '删除失败' });
   }
 });
 
@@ -4462,7 +5110,7 @@ app.put('/api/lecturer-applications/:id', (req, res) => {
         department: app.department,
         title: '内部讲师',
         level: 'intern',
-        levelName: '实习讲师',
+        levelName: '见习讲师',
         avatar: '',
         intro: app.intro || '',
         status: 'disabled',  // 审批通过后默认禁用，等上传头像后再启用
@@ -4918,19 +5566,52 @@ app.put('/api/categories/:id', (req, res) => {
   }
 });
 
-// DELETE /api/categories/:id - 删除分类
+// DELETE /api/categories/:id - 删除分类（递归子分类、校验课程引用）
 app.delete('/api/categories/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
-  if (data.course_categories) {
-    data.course_categories = data.course_categories.filter(c => c.id !== id);
-    if (writeData(data)) {
-      res.json({ success: true });
-    } else {
-      res.status(500).json({ success: false, error: '写入失败' });
-    }
+  if (!data.course_categories) {
+    return res.status(404).json({ success: false, error: '分类列表不存在' });
+  }
+
+  const categoryIndex = data.course_categories.findIndex(c => c.id === id);
+  if (categoryIndex === -1) {
+    return res.status(404).json({ success: false, error: '分类不存在' });
+  }
+
+  const category = data.course_categories[categoryIndex];
+
+  // 递归收集该分类及其所有子分类 ID
+  const collectSubIds = (cat) => {
+    const ids = [cat.id];
+    (cat.children || []).forEach(child => {
+      ids.push(child.id);
+    });
+    return ids;
+  };
+  const removedIds = new Set(collectSubIds(category));
+
+  // 校验：被删分类或子分类下是否存在课程
+  const hasCourses = (data.management_courses || []).some(c =>
+    removedIds.has(c.categoryId) || removedIds.has(c.subcategoryId)
+  );
+  if (hasCourses) {
+    return res.status(400).json({ success: false, error: '该分类或其子分类下存在课程，无法删除' });
+  }
+
+  // 移除分类
+  data.course_categories.splice(categoryIndex, 1);
+
+  // 兜底：将命中分类/子分类的课程 categoryId/subcategoryId 置空
+  (data.management_courses || []).forEach(c => {
+    if (removedIds.has(c.categoryId)) c.categoryId = null;
+    if (removedIds.has(c.subcategoryId)) c.subcategoryId = null;
+  });
+
+  if (writeData(data)) {
+    res.json({ success: true, message: '分类已删除' });
   } else {
-    res.status(404).json({ success: false, error: '分类列表不存在' });
+    res.status(500).json({ success: false, error: '删除失败' });
   }
 });
 
@@ -5078,7 +5759,7 @@ app.get('/api/export/lecturers', (req, res) => {
   const data = readData();
   const lecturers = data.lecturers || [];
   
-  const levelMap = { chief: '首席讲师', senior: '高级讲师', intermediate: '中级讲师', junior: '初级讲师', intern: '实习讲师' };
+  const levelMap = { senior: '高级讲师', intermediate: '中级讲师', junior: '初级讲师', intern: '见习讲师' };
   const typeMap = { internal: '内聘', external: '外聘' };
   
   const csvRows = ['讲师ID,姓名,类型,部门,等级,职称,课程数,状态,标签,登记时间'];
@@ -5456,6 +6137,121 @@ app.post('/api/upload/notice-cover', (req, res) => {
 });
 
 // ============================================================
+// 试卷管理 API
+// ============================================================
+
+// GET /api/papers - 试卷列表
+app.get('/api/papers', (req, res) => {
+  const data = readData();
+  let papers = (data.papers || []).slice();
+  const { keyword, categoryId, type } = req.query;
+  if (keyword) {
+    const k = String(keyword).toLowerCase();
+    papers = papers.filter(p => (p.name || '').toLowerCase().includes(k));
+  }
+  if (categoryId) {
+    papers = papers.filter(p => String(p.categoryId) === String(categoryId));
+  }
+  if (type) {
+    papers = papers.filter(p => p.type === type);
+  }
+  res.json({ success: true, data: papers });
+});
+
+// GET /api/papers/:id - 试卷详情
+app.get('/api/papers/:id', (req, res) => {
+  const data = readData();
+  const id = req.params.id;
+  const paper = (data.papers || []).find(p => String(p.id) === String(id));
+  if (!paper) return res.status(404).json({ success: false, error: '试卷不存在' });
+  res.json({ success: true, data: paper });
+});
+
+// POST /api/papers - 创建试卷
+app.post('/api/papers', (req, res) => {
+  const data = readData();
+  if (!data.papers) data.papers = [];
+  const payload = req.body || {};
+  if (!payload.name) {
+    return res.status(400).json({ success: false, error: '试卷名称为必填项' });
+  }
+  const now = new Date().toISOString();
+  const paper = {
+    id: payload.id || ('paper-' + Date.now()),
+    name: payload.name,
+    categoryId: payload.categoryId || null,
+    categoryName: payload.categoryName || '',
+    type: payload.type || 'fixed',
+    description: payload.description || '',
+    questions: payload.questions || [],
+    totalScore: payload.totalScore || 0,
+    status: payload.status || 'enabled',
+    creator: payload.creator || payload.createdBy || '管理员',
+    createdBy: payload.createdBy || payload.creator || '管理员',
+    createdAt: payload.createdAt || now,
+    updatedAt: now
+  };
+  data.papers.push(paper);
+  if (writeData(data)) {
+    res.status(201).json({ success: true, data: paper });
+  } else {
+    res.status(500).json({ success: false, error: '保存失败' });
+  }
+});
+
+// PUT /api/papers/:id - 更新试卷
+app.put('/api/papers/:id', (req, res) => {
+  const data = readData();
+  const id = req.params.id;
+  const index = (data.papers || []).findIndex(p => String(p.id) === String(id));
+  if (index === -1) return res.status(404).json({ success: false, error: '试卷不存在' });
+  const updates = { ...req.body, updatedAt: new Date().toISOString() };
+  delete updates.id;
+  delete updates.createdAt;
+  data.papers[index] = { ...data.papers[index], ...updates };
+  if (writeData(data)) {
+    res.json({ success: true, data: data.papers[index] });
+  } else {
+    res.status(500).json({ success: false, error: '更新失败' });
+  }
+});
+
+// DELETE /api/papers/:id - 删除试卷（清理题目图片、解除考试引用）
+app.delete('/api/papers/:id', (req, res) => {
+  const data = readData();
+  const id = req.params.id;
+  const papers = data.papers || [];
+  const index = papers.findIndex(p => String(p.id) === String(id));
+  if (index === -1) return res.status(404).json({ success: false, error: '试卷不存在' });
+
+  const paper = papers[index];
+
+  // 删除试卷题目中的图片（若试卷内嵌题目对象包含图片字段）
+  (paper.questions || []).forEach(q => {
+    collectQuestionFiles(q).forEach(url => tryDeleteUploadFile(url, `paper:${id}:question:${q.questionId || q.id}`));
+  });
+
+  // 解除考试对试卷的引用
+  if (data.exams) {
+    data.exams.forEach(e => {
+      if (String(e.paperId) === String(id)) {
+        e.paperId = null;
+        e.paperName = null;
+      }
+    });
+  }
+
+  papers.splice(index, 1);
+  data.papers = papers;
+
+  if (writeData(data)) {
+    res.json({ success: true, message: '试卷已删除，关联引用已清理' });
+  } else {
+    res.status(500).json({ success: false, error: '删除失败' });
+  }
+});
+
+// ============================================================
 // 证书管理 REST API
 // ============================================================
 
@@ -5585,6 +6381,16 @@ app.delete('/api/certificates/:id', (req, res) => {
     const beforeLen = data.user_certificates.length;
     data.user_certificates = data.user_certificates.filter(uc => String(uc.certificateId) !== String(req.params.id));
     cleaned = beforeLen - data.user_certificates.length;
+  }
+
+  // 解除考试对该证书的引用
+  (data.exams || []).forEach(e => {
+    if (String(e.certificateId) === String(req.params.id)) e.certificateId = null;
+  });
+
+  // 清理与该证书相关的通知
+  if (data.notifications) {
+    data.notifications = data.notifications.filter(n => String(n.certificateId) !== String(req.params.id));
   }
 
   data.certificates.splice(index, 1);

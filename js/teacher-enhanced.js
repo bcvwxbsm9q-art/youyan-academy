@@ -13,11 +13,10 @@
 
     // 等级样式映射
     const LEVEL_STYLES = {
-        'chief': { class: 'level-chief', name: '首席讲师', icon: 'fa-star' },
-        'senior': { class: 'level-senior', name: '高级讲师', icon: 'fa-certificate' },
+        'senior': { class: 'level-senior', name: '高级讲师', icon: 'fa-star' },
         'intermediate': { class: 'level-intermediate', name: '中级讲师', icon: 'fa-graduation-cap' },
         'junior': { class: 'level-junior', name: '初级讲师', icon: 'fa-user' },
-        'intern': { class: 'level-intern', name: '实习讲师', icon: 'fa-user-o' }
+        'intern': { class: 'level-intern', name: '见习讲师', icon: 'fa-seedling' }
     };
 
     // 防抖定时器

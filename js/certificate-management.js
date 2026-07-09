@@ -13,6 +13,7 @@
   let currentDetailTab = 'active';
   let selectedTemplateId = '';
   let editingCertificateId = null;
+  let certSelectedIds = new Set();
 
   // ===== 工具函数 =====
   function $(selector) { return document.querySelector(selector); }
@@ -50,6 +51,17 @@
   }
 
   function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  }
+
+  // Drawer 抽屉式窗口（右滑动画）
+  function openDrawerOverlay(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('hidden');
+  }
+
+  function closeDrawerOverlay(id) {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   }
@@ -133,7 +145,7 @@
     if (!tbody) return;
 
     if (certificates.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-slate-400">暂无证书，点击「新建证书」创建</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="10" class="text-center py-8 text-slate-400">暂无证书，点击「新建证书」创建</td></tr>`;
       return;
     }
 
@@ -142,8 +154,12 @@
         ? '<span class="cert-badge cert-badge--on"><i class="fas fa-circle text-[8px]"></i>启用</span>'
         : '<span class="cert-badge cert-badge--off"><i class="fas fa-circle text-[8px]"></i>停用</span>';
       const validityText = cert.validityType === 'permanent' ? '永久有效' : `固定期限（${cert.validityDays}天）`;
+      const checked = certSelectedIds.has(String(cert.id)) ? 'checked' : '';
       return `
         <tr class="border-b hover:bg-slate-50">
+          <td class="pl-5 pr-2 py-3 text-center" onclick="event.stopPropagation()">
+            <input type="checkbox" class="cert-row-check rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" onchange="window.CertificateMgmt.toggleCertSelect('${cert.id}')" ${checked}>
+          </td>
           <td class="px-4 py-3 text-sm">${escapeHtml(cert.name)}</td>
           <td class="px-4 py-3 text-sm text-slate-600">${escapeHtml(cert.dept || '-')}</td>
           <td class="px-4 py-3 text-sm text-slate-600">${validityText}</td>
@@ -164,6 +180,69 @@
         </tr>
       `;
     }).join('');
+    updateCertSelectAllState();
+    updateCertBatchActionBar();
+  }
+
+  // ===== 证书批量选择逻辑 =====
+  function toggleCertSelect(id) {
+    const sid = String(id);
+    if (certSelectedIds.has(sid)) certSelectedIds.delete(sid);
+    else certSelectedIds.add(sid);
+    updateCertSelectAllState();
+    updateCertBatchActionBar();
+    renderCertificateList();
+  }
+
+  function toggleCertSelectAll() {
+    const el = document.getElementById('certSelectAll');
+    const checked = el ? el.checked : false;
+    if (checked) certificates.forEach(c => certSelectedIds.add(String(c.id)));
+    else certificates.forEach(c => certSelectedIds.delete(String(c.id)));
+    renderCertificateList();
+    updateCertBatchActionBar();
+  }
+
+  function updateCertSelectAllState() {
+    const allChecked = certificates.length > 0 && certificates.every(c => certSelectedIds.has(String(c.id)));
+    const el = document.getElementById('certSelectAll');
+    if (el) el.checked = allChecked;
+  }
+
+  function updateCertBatchActionBar() {
+    const bar = document.getElementById('certBatchActionBar');
+    const count = document.getElementById('certBatchCount');
+    if (!bar || !count) return;
+    if (certSelectedIds.size > 0) {
+      bar.classList.remove('hidden');
+      count.textContent = `已选 ${certSelectedIds.size} 项`;
+    } else {
+      bar.classList.add('hidden');
+    }
+  }
+
+  function clearCertSelection() {
+    certSelectedIds.clear();
+    const el = document.getElementById('certSelectAll');
+    if (el) el.checked = false;
+    renderCertificateList();
+    updateCertBatchActionBar();
+  }
+
+  async function batchDeleteCertificates() {
+    const ids = Array.from(certSelectedIds);
+    if (!ids.length) return;
+    if (!confirm(`确定删除选中的 ${ids.length} 个证书吗？此操作不可恢复。`)) return;
+    let success = 0, fail = 0;
+    for (const id of ids) {
+      try {
+        const ok = await deleteCertificate(id, false);
+        if (ok) success++; else fail++;
+      } catch (e) { fail++; }
+    }
+    clearCertSelection();
+    await loadCertificates();
+    showToast(`删除完成：成功 ${success}，失败 ${fail}`);
   }
 
   // ===== 新建/编辑证书 =====
@@ -189,11 +268,11 @@
     updateTemplatePreview();
     toggleValidityDays();
 
-    openModal('certificate-modal');
+    openDrawerOverlay('certificate-drawer-overlay');
   }
 
   function closeCertificateModal() {
-    closeModal('certificate-modal');
+    closeDrawerOverlay('certificate-drawer-overlay');
     editingCertificateId = null;
   }
 
@@ -254,19 +333,21 @@
     }
   }
 
-  async function deleteCertificate(certId) {
+  async function deleteCertificate(certId, askConfirm = true) {
     const cert = certificates.find(c => c.id === certId);
     const activeCount = cert ? (cert.activeCount || 0) + (cert.expiredCount || 0) : 0;
     const msg = cert
       ? `确定删除证书「${cert.name}」吗？${activeCount > 0 ? `（将同时清理 ${activeCount} 条关联的颁发记录）` : ''}`
       : '确定删除该证书定义吗？';
-    if (!confirm(msg)) return;
+    if (askConfirm && !confirm(msg)) return false;
     const res = await apiDelete('/api/certificates/' + certId);
     if (res.success) {
-      showToast(res.message || '证书已删除', 'success');
+      if (askConfirm) showToast(res.message || '证书已删除', 'success');
       loadCertificates();
+      return true;
     } else {
-      showToast(res.error || '删除失败', 'error');
+      if (askConfirm) showToast(res.error || '删除失败', 'error');
+      return false;
     }
   }
 
@@ -645,85 +726,129 @@
   let editorState = null;     // 编辑器内正在编辑的设计副本
   let selectedElId = null;    // 当前选中元素 id（文字 id 或 'seal'）
 
-  const EDITOR_PAGE = { portrait: { w: 340, h: 480 }, landscape: { w: 480, h: 340 } };
+  const EDITOR_PAGE = { portrait: { w: 420, h: 594 }, landscape: { w: 594, h: 420 } };
   const PRINT_SCALE = 2.5;    // 编辑像素 → A4 打印像素
 
   const EDITOR_SAMPLE = {
-    title: '荣誉证书', name: '张三', certNo: 'CERT0001',
-    date: '2026-07-08', company: '广州游雁网络科技有限公司',
-    content: '表现优异，特发此证，以资鼓励。'
+    title: '荣誉证书', name: '$姓名$', certNo: '',
+    date: '$颁发日期$', company: '$企业名称$',
+    content: '在本公司工作期间，认真负责，表现优\n秀，现授予 年度优秀员工 荣誉称号。特发此\n证，以示表彰。'
   };
 
-    // ── 8 套证书模板（基于真实高清 PNG 底纹图片） ──
+    // ── 12 套证书模板（6 竖版 + 6 横版，基于真实 PNG 图片） ──
   const CERT_TEMPLATES = [
+    // ── 竖版（portrait） ──
     {
-      key: 'blue-floral',     name: '蓝绿花饰',
-      desc: '竖条纹底纹 · 四角花卉 · 顶底装饰',
-      bg: "url('/uploads/cert-templates/cert-blue-floral.png') center/cover no-repeat",
+      key: 'v1', name: '翠竹', orientation: 'portrait',
+      bg: "url('/uploads/cert-templates/cert-v1.png') center/cover no-repeat",
       titleColor: '#1a365d',   textColor: '#334155', subtitleColor: '#64748b',
       accentColor: '#2c5282',  sealColor: '#c2410c',
-      fontFamily: "'STSong','SimSun','Times New Roman',serif"
+      fontFamily: "'STSong','SimSun','Times New Roman',serif",
+      layoutHint: { titleY: 0.12, subtitleY: 0.18, nameY: 0.26, contentY: 0.36, companyY: 0.80, dateY: 0.86 }
     },
     {
-      key: 'gold-wave',       name: '金波典雅',
-      desc: '金色边框 · 波浪水纹 · 深蓝底角',
-      bg: "url('/uploads/cert-templates/cert-gold-wave.png') center/cover no-repeat",
-      titleColor: '#7c5c00',   textColor: '#4a3c1a', subtitleColor: '#8b7355',
-      accentColor: '#b8860b',  sealColor: '#a16207',
-      fontFamily: "'STKaiti','KaiTi','SimSun',serif"
-    },
-    {
-      key: 'orange-seal',     name: '橙灰防伪',
-      desc: '橙色波浪内框 · 灰色防伪外框',
-      bg: "url('/uploads/cert-templates/cert-orange-seal.png') center/cover no-repeat",
-      titleColor: '#c2410c',   textColor: '#4a3f35', subtitleColor: '#78716c',
-      accentColor: '#ea580c',  sealColor: '#dc2626',
-      fontFamily: "'STSong','SimSun','Times New Roman',serif"
-    },
-    {
-      key: 'cream-elegant',   name: '米白雅致',
-      desc: '欧式花边框 · 中央淡雅花纹',
-      bg: "url('/uploads/cert-templates/cert-cream-elegant.png') center/cover no-repeat",
+      key: 'v2', name: '白玉', orientation: 'portrait',
+      bg: "url('/uploads/cert-templates/cert-v2.png') center/cover no-repeat",
       titleColor: '#5d4e37',   textColor: '#57534e', subtitleColor: '#a8a29e',
       accentColor: '#78716c',  sealColor: '#b45309',
-      fontFamily: "'STFangsong','FangSong','SimSun',serif"
+      fontFamily: "'STFangsong','FangSong','SimSun',serif",
+      layoutHint: { titleY: 0.13, subtitleY: 0.19, nameY: 0.27, contentY: 0.34, companyY: 0.81, dateY: 0.86 }
     },
     {
-      key: 'gray-scroll',     name: '卷草古典',
-      desc: '浅灰卷草边框 · 顶底花纹装饰',
-      bg: "url('/uploads/cert-templates/cert-gray-scroll.png') center/cover no-repeat",
-      titleColor: '#374151',   textColor: '#4b5563', subtitleColor: '#6b7280',
-      accentColor: '#4b5563',  sealColor: '#b91c1c',
-      fontFamily: "'STSong','SimSun','Times New Roman',serif"
+      key: 'v3', name: '金辉', orientation: 'portrait',
+      bg: "url('/uploads/cert-templates/cert-v3.png') center/cover no-repeat",
+      titleColor: '#7c5c00',   textColor: '#4a3c1a', subtitleColor: '#8b7355',
+      accentColor: '#b8860b',  sealColor: '#a16207',
+      fontFamily: "'STKaiti','KaiTi','SimSun',serif",
+      layoutHint: { titleY: 0.11, subtitleY: 0.17, nameY: 0.25, contentY: 0.35, companyY: 0.79, dateY: 0.85 }
     },
     {
-      key: 'navy-security',   name: '深蓝防伪',
-      desc: '蓝色防伪纹底 · 波浪花饰边框',
-      bg: "url('/uploads/cert-templates/cert-navy-security.png') center/cover no-repeat",
+      key: 'v4', name: '墨韵', orientation: 'portrait',
+      bg: "url('/uploads/cert-templates/cert-v4.png') center/cover no-repeat",
       titleColor: '#1e3a5f',   textColor: '#334155', subtitleColor: '#64748b',
       accentColor: '#1e40af',  sealColor: '#be123c',
-      fontFamily: "'STSong','SimSun','Times New Roman',serif"
+      fontFamily: "'STSong','SimSun','Times New Roman',serif",
+      layoutHint: { titleY: 0.12, subtitleY: 0.18, nameY: 0.26, contentY: 0.36, companyY: 0.81, dateY: 0.86 }
     },
     {
-      key: 'gold-medal',      name: '金徽荣誉',
-      desc: '金色边框 · 同心圆弧线 · AWARD 徽章',
-      bg: "url('/uploads/cert-templates/cert-gold-medal.png') center/cover no-repeat",
+      key: 'v5', name: '蔚蓝', orientation: 'portrait',
+      bg: "url('/uploads/cert-templates/cert-v5.png') center/cover no-repeat",
+      titleColor: '#166534',   textColor: '#3f4c3a', subtitleColor: '#6b8068',
+      accentColor: '#15803d',  sealColor: '#b45309',
+      fontFamily: "'STSong','SimSun','Times New Roman',serif",
+      layoutHint: { titleY: 0.12, subtitleY: 0.18, nameY: 0.26, contentY: 0.36, companyY: 0.80, dateY: 0.86 }
+    },
+    {
+      key: 'v6', name: '朝阳', orientation: 'portrait',
+      bg: "url('/uploads/cert-templates/cert-v6.png') center/cover no-repeat",
       titleColor: '#92400e',   textColor: '#4a3c1a', subtitleColor: '#8b7355',
       accentColor: '#b8860b',  sealColor: '#a16207',
-      fontFamily: "'STKaiti','KaiTi','SimSun',serif"
+      fontFamily: "'STKaiti','KaiTi','SimSun',serif",
+      layoutHint: { titleY: 0.12, subtitleY: 0.18, nameY: 0.26, contentY: 0.33, companyY: 0.79, dateY: 0.84 }
+    },
+    // ── 横版（landscape） ──
+    {
+      key: 'h1', name: '典藏', orientation: 'landscape',
+      bg: "url('/uploads/cert-templates/cert-h1.png') center/cover no-repeat",
+      titleColor: '#1a365d',   textColor: '#334155', subtitleColor: '#64748b',
+      accentColor: '#2c5282',  sealColor: '#c2410c',
+      fontFamily: "'STSong','SimSun','Times New Roman',serif",
+      layoutHint: { titleY: 0.10, subtitleY: 0.15, nameY: 0.24, contentY: 0.40, companyY: 0.82, dateY: 0.89 }
     },
     {
-      key: 'cream-ribbon',    name: '勋章绦带',
-      desc: '米黄底纹 · 绦带徽章 · 菱形点阵',
-      bg: "url('/uploads/cert-templates/cert-cream-ribbon.png') center/cover no-repeat",
-      titleColor: '#8b6914',   textColor: '#5c4f35', subtitleColor: '#927a3c',
-      accentColor: '#ca8a04',  sealColor: '#b45309',
-      fontFamily: "'STKaiti','KaiTi','SimSun',serif"
+      key: 'h2', name: '锦绣', orientation: 'landscape',
+      bg: "url('/uploads/cert-templates/cert-h2.png') center/cover no-repeat",
+      titleColor: '#5d4e37',   textColor: '#57534e', subtitleColor: '#a8a29e',
+      accentColor: '#78716c',  sealColor: '#b45309',
+      fontFamily: "'STFangsong','FangSong','SimSun',serif",
+      layoutHint: { titleY: 0.10, subtitleY: 0.15, nameY: 0.24, contentY: 0.40, companyY: 0.82, dateY: 0.89 }
+    },
+    {
+      key: 'h3', name: '丹霞', orientation: 'landscape',
+      bg: "url('/uploads/cert-templates/cert-h3.png') center/cover no-repeat",
+      titleColor: '#92400e',   textColor: '#4a3c1a', subtitleColor: '#8b7355',
+      accentColor: '#b8860b',  sealColor: '#a16207',
+      fontFamily: "'STKaiti','KaiTi','SimSun',serif",
+      layoutHint: { titleY: 0.10, subtitleY: 0.15, nameY: 0.24, contentY: 0.40, companyY: 0.82, dateY: 0.89 }
+    },
+    {
+      key: 'h4', name: '春晒', orientation: 'landscape',
+      bg: "url('/uploads/cert-templates/cert-h4.png') center/cover no-repeat",
+      titleColor: '#166534',   textColor: '#3f4c3a', subtitleColor: '#6b8068',
+      accentColor: '#15803d',  sealColor: '#b45309',
+      fontFamily: "'STSong','SimSun','Times New Roman',serif",
+      layoutHint: { titleY: 0.10, subtitleY: 0.15, nameY: 0.24, contentY: 0.40, companyY: 0.82, dateY: 0.89 }
+    },
+    {
+      key: 'h5', name: '银素', orientation: 'landscape',
+      bg: "url('/uploads/cert-templates/cert-h5.png') center/cover no-repeat",
+      titleColor: '#374151',   textColor: '#4b5563', subtitleColor: '#6b7280',
+      accentColor: '#4b5563',  sealColor: '#b91c1c',
+      fontFamily: "'Microsoft YaHei','PingFang SC',sans-serif",
+      layoutHint: { titleY: 0.10, subtitleY: 0.15, nameY: 0.24, contentY: 0.40, companyY: 0.82, dateY: 0.89 }
+    },
+    {
+      key: 'h6', name: '紫宸', orientation: 'landscape',
+      bg: "url('/uploads/cert-templates/cert-h6.png') center/cover no-repeat",
+      titleColor: '#5b21b6',   textColor: '#3b3654', subtitleColor: '#7e6f9e',
+      accentColor: '#7c3aed',  sealColor: '#be185d',
+      fontFamily: "'STSong','SimSun','Times New Roman',serif",
+      layoutHint: { titleY: 0.10, subtitleY: 0.15, nameY: 0.24, contentY: 0.40, companyY: 0.82, dateY: 0.89 }
     }
   ];
 
   // 向后兼容：BG_PRESETS 从 CERT_TEMPLATES 提取（供 bgCss 查找）
   const BG_PRESETS = CERT_TEMPLATES.map(t => ({ key: t.key, name: t.name, css: t.bg }));
+
+  // ── 预制印章样式 ──
+  const SEAL_PRESETS = [
+    { key: 'circle-red',    name: '圆形公章',   text: '认证专用章', color: '#c41e0f', size: 80,  shape: 'circle',   rotation: -12, css: 'border-radius:50%;border:3px solid {c};' },
+    { key: 'square-red',    name: '方形印章',   text: '合格',       color: '#b91c1c', size: 72,  shape: 'square',   rotation: -3,  css: 'border-radius:3px;border:3px solid {c};' },
+    { key: 'star-gold',     name: '五角徽章',   text: '荣誉证书',   color: '#b8860b', size: 78,  shape: 'star',      rotation: 0,   css: 'border-radius:50%;border:2px solid {c};background:rgba(184,134,11,.08);' },
+    { key: 'oval-blue',     name: '椭圆认证',   text: 'OFFICIAL',   color: '#1e40af', size: 86,  shape: 'oval',      rotation: -8,  css: 'border-radius:50%;border:2px solid {c};' },
+    { key: 'diamond-purple',name: '菱形防伪',   text: '已核验',     color: '#7c3aed', size: 70,  shape: 'diamond',   rotation: 45,  css: 'border-radius:6px;border:2px solid {c};background:rgba(124,58,235,.06);' },
+    { key: 'round-green',   name: '绿色圆章',   text: '通过',       color: '#15803d', size: 76,  shape: 'circle',   rotation: -5,  css: 'border-radius:50%;border:3px solid {c};' }
+  ];
 
   function uid() { return 'el' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
@@ -747,15 +872,14 @@
       background: { type: 'preset', value: tpl.id },
       borderColor: bc, accentColor: ac, fontFamily: fn,
       elements: [
-        { id: uid(), type: 'text', key: 'title', x: 30, y: 34, w: 280, h: 48, text: '{{title}}', fontSize: 30, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center', color: pc, underline: false, fontFamily: fn },
-        { id: uid(), type: 'text', key: 'subtitle', x: 110, y: 92, w: 120, h: 22, text: '兹证明', fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center', color: pc, underline: false, fontFamily: fn },
-        { id: uid(), type: 'text', key: 'name', x: 60, y: 120, w: 220, h: 42, text: '{{name}}', fontSize: 26, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center', color: pc, underline: true, fontFamily: fn },
-        { id: uid(), type: 'text', key: 'content', x: 40, y: 176, w: 260, h: 74, text: '{{content}}', fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center', color: '#475569', underline: false, fontFamily: fn },
-        { id: uid(), type: 'text', key: 'certNo', x: 28, y: 402, w: 170, h: 22, text: '证书编号：{{certNo}}', fontSize: 12, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'left', color: '#475569', underline: false, fontFamily: fn },
-        { id: uid(), type: 'text', key: 'date', x: 182, y: 402, w: 130, h: 22, text: '颁发日期：{{date}}', fontSize: 12, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right', color: '#475569', underline: false, fontFamily: fn },
-        { id: uid(), type: 'text', key: 'company', x: 40, y: 440, w: 260, h: 22, text: '{{company}}', fontSize: 12, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center', color: '#475569', underline: false, fontFamily: fn }
+        { id: uid(), type: 'text', key: 'title', x: 18, y: 65, w: 384, h: 48, text: '{{title}}', fontSize: 32, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center', color: pc, underline: false, fontFamily: fn },
+        { id: uid(), type: 'text', key: 'subtitle', x: 63, y: 113, w: 294, h: 20, text: 'CERTIFICATE OF HONORS', fontSize: 10, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center', color: '#64748b', underline: false, fontFamily: 'Arial,sans-serif' },
+        { id: uid(), type: 'text', key: 'name', x: 34, y: 160, w: 352, h: 38, text: '{{name}}', fontSize: 26, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center', color: pc, underline: true, fontFamily: fn },
+        { id: uid(), type: 'text', key: 'content', x: 34, y: 220, w: 352, h: 130, text: '{{content}}', fontSize: 14, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center', color: '#475569', underline: false, fontFamily: fn },
+        { id: uid(), type: 'text', key: 'company', x: 200, y: 493, w: 185, h: 22, text: '{{company}}', fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right', color: '#475569', underline: false, fontFamily: fn },
+        { id: uid(), type: 'text', key: 'date', x: 235, y: 523, w: 150, h: 22, text: '{{date}}', fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right', color: '#475569', underline: false, fontFamily: fn }
       ],
-      seal: { id: 'seal', text: '认证专用章', x: 228, y: 350, size: 80, color: sc }
+      seal: null
     };
   }
 
@@ -806,14 +930,14 @@
         // 用第一套模板初始化空设计
         editorState = { _tplKey: '', layout: 'portrait', elements: [], seal: null, background: { type: 'preset', value: '' } };
         applyTemplate(defaultTplKey);
-        return; // applyTemplate 已经调用了 syncEditorUI + renderEditorPage
+        // 注意：不再 return —— applyTemplate 已设置好 state，继续往下打开抽屉
       }
     }
-    openModal('certificate-editor-modal');
+    openDrawerOverlay('certificate-editor-drawer-overlay');
     syncEditorUI();
     renderEditorPage();
   }
-  function closeEditor() { closeModal('certificate-editor-modal'); }
+  function closeEditor() { closeDrawerOverlay('certificate-editor-drawer-overlay'); }
 
   function syncEditorUI() {
     const d = editorState;
@@ -823,18 +947,18 @@
     selectElement(null);
   }
 
-  // ── 右侧模板选择网格（显示 5 套完整设计预览） ──
+  // ── 右侧模板选择列表（按当前方向过滤，单列滚动） ──
   function renderTemplateGrid() {
     const grid = $('#et-bg-grid'); if (!grid) return;
-    grid.innerHTML = CERT_TEMPLATES.map(t => {
+    const currentOrient = editorState.layout || 'portrait';
+    const filtered = CERT_TEMPLATES.filter(t => t.orientation === currentOrient);
+    grid.innerHTML = filtered.map(t => {
       const active = editorState._tplKey === t.key;
       return `
         <div class="cert-tpl-swatch ${active ? 'active' : ''}" data-tpl="${t.key}" title="${t.name}">
           <div class="cert-tpl-swatch-preview" style="background:${t.bg};border:2px solid #e2e8f0;">
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:9px;font-weight:700;color:${t.titleColor};opacity:.6;text-align:center;line-height:1.2;text-shadow:0 0 4px white;">${t.name.slice(0,2)}</div>
           </div>
           <p class="cert-tpl-swatch-name">${t.name}</p>
-          <p class="cert-tpl-swatch-desc">${t.desc}</p>
         </div>`;
     }).join('');
     grid.querySelectorAll('[data-tpl]').forEach(sw => {
@@ -846,36 +970,72 @@
   function applyTemplate(tplKey) {
     const t = CERT_TEMPLATES.find(x => x.key === tplKey); if (!t) return;
     const dims = EDITOR_PAGE[editorState.layout];
+    // 使用模板专属布局提示（基于背景装饰区域计算），回退到默认值
+    const lh = t.layoutHint || {};
+    const ty = (lh.titleY || 0.13) * dims.h;
+    const sy = (lh.subtitleY || 0.19) * dims.h;
+    const ny = (lh.nameY || 0.27) * dims.h;
+    const cy = (lh.contentY || 0.34) * dims.h;
+    const coy = (lh.companyY || 0.80) * dims.h;
+    const dy = (lh.dateY || 0.85) * dims.h;
+
     // 保留用户已编辑的文字内容（如果已有）
     const existingTexts = {};
     (editorState.elements || []).forEach(el => { if (el.type === 'text' && el.key) existingTexts[el.key] = el.text; });
 
     editorState._tplKey = tplKey;
     editorState.background = { type: 'preset', value: t.key };
-    editorState.borderColor = t.borderOuter;
+    // 根据模板方向自动切换画布尺寸
+    if (t.orientation) {
+      editorState.layout = t.orientation;
+      $('#et-orient-portrait')?.classList.toggle('active', t.orientation === 'portrait');
+      $('#et-orient-landscape')?.classList.toggle('active', t.orientation === 'landscape');
+    }
     editorState.accentColor = t.accentColor;
     editorState.fontFamily = t.fontFamily;
     editorState.titleColor = t.titleColor;
     editorState.subtitleColor = t.subtitleColor;
     editorState.textColor = t.textColor;
     editorState.sealColor = t.sealColor;
-    editorState.borderWidth = t.borderWidth;
-    editorState.borderInner = t.borderInner;
-    editorState.topOrnament = t.topOrnament || '';
-    editorState.bottomOrnament = t.bottomOrnament || '';
-    editorState.cornerSvg = t.cornerSvg || '';
 
-    // 构建默认元素（使用模板配色，保留已有文字）
+    // 构建默认元素（使用模板配色 + 模板专属坐标）
+    // 竖版需要更大左右内边距避免与花边重叠，横版稍窄
+    const padX = editorState.layout === 'portrait' ? dims.w * 0.11 : dims.w * 0.08;
+    const innerW = dims.w - padX * 2; // 内容区宽度
     editorState.elements = [
-      { id: uid(), type: 'text', key: 'title',   x: dims.w*0.04, y: dims.h*0.08, w: dims.w*0.92, h: 50, text: existingTexts['title']   || '{{title}}',   fontSize: 28, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center', color: t.titleColor, underline: false, fontFamily: t.fontFamily },
-      { id: uid(), type: 'text', key: 'subtitle',x: dims.w*0.22, y: dims.h*0.185,w: dims.w*0.56, h: 22, text: existingTexts['subtitle']|| '兹证明',        fontSize: 13, fontWeight: 'normal',fontStyle:'normal',textAlign:'center',color:t.subtitleColor,underline:false,fontFamily:t.fontFamily },
-      { id: uid(), type: 'text', key: 'name',    x: dims.w*0.1,  y: dims.h*0.24, w: dims.w*0.8, h: 42, text: existingTexts['name']    || '{{name}}',     fontSize: 24, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center', color: t.titleColor, underline: true, fontFamily: t.fontFamily },
-      { id: uid(), type: 'text', key: 'content', x: dims.w*0.1,  y: dims.h*0.34, w: dims.w*0.8, h: 70, text: existingTexts['content'] || '{{content}}',  fontSize: 13, fontWeight: 'normal',fontStyle:'normal',textAlign:'center',color:t.textColor,   underline:false,fontFamily:t.fontFamily },
-      { id: uid(), type: 'text', key: 'certNo',  x: dims.w*0.06, y: dims.h*0.82, w: dims.w*0.48,h: 20, text: existingTexts['certNo']  || '证书编号：{{certNo}}',fontSize:11,fontWeight:'normal',fontStyle:'normal',textAlign:'left', color:t.textColor,underline:false,fontFamily:t.fontFamily },
-      { id: uid(), type: 'text', key: 'date',    x: dims.w*0.5,  y: dims.h*0.82, w: dims.w*0.44,h: 20, text: existingTexts['date']    || '颁发日期：{{date}}',  fontSize:11,fontWeight:'normal',fontStyle:'normal',textAlign:'right',color:t.textColor,underline:false,fontFamily:t.fontFamily },
-      { id: uid(), type: 'text', key: 'company', x: dims.w*0.1,  y: dims.h*0.89, w: dims.w*0.8, h: 20, text: existingTexts['company'] || '{{company}}',   fontSize:11,fontWeight:'normal',fontStyle:'normal',textAlign:'center',color:t.textColor,underline:false,fontFamily:t.fontFamily }
+      { id: uid(), type: 'text', key: 'title',
+        x: padX, y: Math.round(ty), w: Math.round(innerW), h: 48,
+        text: existingTexts['title'] || '{{title}}',
+        fontSize: 32, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center',
+        color: t.titleColor, underline: false, fontFamily: t.fontFamily },
+      { id: uid(), type: 'text', key: 'subtitle',
+        x: padX, y: Math.round(sy), w: Math.round(innerW), h: 20,
+        text: existingTexts['subtitle'] || 'CERTIFICATE OF HONORS',
+        fontSize: 10, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center',
+        color: '#64748b', underline: false, fontFamily: 'Arial,sans-serif' },
+      { id: uid(), type: 'text', key: 'name',
+        x: padX, y: Math.round(ny), w: Math.round(innerW), h: 38,
+        text: existingTexts['name'] || '{{name}}',
+        fontSize: 26, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center',
+        color: t.titleColor, underline: true, fontFamily: t.fontFamily },
+      { id: uid(), type: 'text', key: 'content',
+        x: padX, y: Math.round(cy), w: Math.round(innerW), h: 130,
+        text: existingTexts['content'] || '{{content}}',
+        fontSize: 14, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center',
+        color: t.textColor, underline: false, fontFamily: t.fontFamily },
+      { id: uid(), type: 'text', key: 'company',
+        x: dims.w * 0.46, y: Math.round(coy), w: dims.w * 0.48, h: 22,
+        text: existingTexts['company'] || '{{company}}',
+        fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right',
+        color: t.textColor, underline: false, fontFamily: t.fontFamily },
+      { id: uid(), type: 'text', key: 'date',
+        x: dims.w * 0.54, y: Math.round(dy), w: dims.w * 0.40, h: 22,
+        text: existingTexts['date'] || '{{date}}',
+        fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right',
+        color: t.textColor, underline: false, fontFamily: t.fontFamily }
     ];
-    editorState.seal = { id: 'seal', text: '认证专用章', x: dims.w * 0.68, y: dims.h * 0.68, size: 70, color: t.sealColor };
+    // 默认不添加印章（用户可手动添加）
+    editorState.seal = null;
 
     syncEditorUI();
     renderEditorPage();
@@ -911,15 +1071,92 @@
     node.dataset.id = 'seal';
     applySealNodeStyle(node, seal);
     const fs = Math.max(10, seal.size * 0.16);
-    node.innerHTML = `<span class="cs-text">${escapeHtml(fillTokens(seal.text, EDITOR_SAMPLE))}</span>` +
+    // 根据形状类型渲染不同的内部结构
+    const shape = seal.shape || 'circle';
+    let innerHtml = '';
+    if (shape === 'star') {
+      innerHtml = `<div class="cs-star">★</div><span class="cs-text">${escapeHtml(fillTokens(seal.text, EDITOR_SAMPLE))}</span>`;
+    } else if (shape === 'diamond') {
+      innerHtml = `<span class="cs-text cs-diamond-text">${escapeHtml(fillTokens(seal.text, EDITOR_SAMPLE))}</span>`;
+    } else {
+      innerHtml = `<span class="cs-text">${escapeHtml(fillTokens(seal.text, EDITOR_SAMPLE))}</span>`;
+    }
+    node.innerHTML = innerHtml +
       ['nw', 'ne', 'sw', 'se'].map(dir => `<div class="cert-el-handle ${dir}" data-dir="${dir}"></div>`).join('');
-    node.querySelector('.cs-text').style.fontSize = fs + 'px';
+    const textEl = node.querySelector('.cs-text');
+    if (textEl) textEl.style.fontSize = fs + 'px';
     return node;
   }
   function applySealNodeStyle(node, seal) {
     node.style.left = seal.x + 'px'; node.style.top = seal.y + 'px';
     node.style.width = seal.size + 'px'; node.style.height = seal.size + 'px';
     node.style.color = seal.color; node.style.fontFamily = editorState.fontFamily;
+    // 应用形状样式
+    const shape = seal.shape || 'circle';
+    const c = seal.color;
+    let baseCss = '';
+    switch (shape) {
+      case 'circle': baseCss = `border-radius:50%;border:3px solid ${c};`; break;
+      case 'square': baseCss = `border-radius:3px;border:3px solid ${c};`; break;
+      case 'star': baseCss = `border-radius:50%;border:2px solid ${c};background:rgba(184,134,11,.08);`; break;
+      case 'oval': baseCss = `border-radius:50%;border:2px solid ${c};`; break;
+      case 'diamond': baseCss = `border-radius:6px;border:2px solid ${c};background:rgba(124,58,235,.06);`; break;
+      default: baseCss = `border-radius:50%;border:3px solid ${c};`;
+    }
+    node.style.cssText += baseCss;
+    const rot = seal.rotation !== undefined ? seal.rotation : (shape === 'square' ? -3 : -12);
+    node.style.transform = `rotate(${rot}deg)`;
+  }
+  // ── 应用印章预设 ──
+  function applySealPreset(presetKey) {
+    const p = SEAL_PRESETS.find(s => s.key === presetKey);
+    if (!p) return;
+    const dims = EDITOR_PAGE[editorState.layout];
+    editorState.seal = {
+      id: 'seal',
+      text: p.text,
+      x: Math.round(dims.w - p.size - 20),
+      y: Math.round(dims.h - p.size - 20),
+      size: p.size,
+      color: p.color,
+      shape: p.shape,
+      rotation: p.rotation
+    };
+    // 替换画布上的印章节点
+    const old = document.querySelector('#et-page [data-id="seal"]');
+    if (old) old.remove();
+    const node = createSealNode(editorState.seal);
+    $('#et-page').appendChild(node);
+    attachEl(node, editorState.seal, true);
+    selectElement('seal');
+    // 更新属性面板中的值
+    $('#et-prop-seal-text').value = p.text;
+    $('#et-prop-seal-size').value = p.size;
+    $('#et-prop-seal-color').value = p.color;
+    // 高亮当前选中预设
+    renderSealPresets();
+  }
+  // ── 渲染印章预设选择器 ──
+  function renderSealPresets() {
+    const container = $('#et-seal-presets');
+    if (!container) return;
+    const curShape = editorState.seal?.shape || 'circle';
+    const curColor = editorState.seal?.color || '';
+    container.innerHTML = SEAL_PRESETS.map(p => {
+      // 匹配逻辑：shape+color 最接近的算 active
+      const isActive = (editorState.seal &&
+        ((p.shape === curShape && p.color === curColor) ||
+         (p.key === editorState.seal._presetKey)));
+      return `<button class="et-seal-preset-btn ${isActive ? 'active' : ''}" data-preset="${p.key}" title="${p.name}">
+        <div class="et-spb-preview" style="width:36px;height:36px;border:${p.shape==='square'?'3px':'2px'} solid ${p.color};border-radius:${p.shape==='square'?'3px':'50%'};transform:rotate(${p.rotation}deg);display:flex;align-items:center;justify-content:center;color:${p.color};font-size:7px;font-weight:700;background:${p.shape==='star'||p.shape==='diamond'?p.color+'14':''};">
+          ${p.shape==='star'?'★':p.text.slice(0,2)}
+        </div>
+        <span>${p.name}</span>
+      </button>`;
+    }).join('');
+    container.querySelectorAll('[data-preset]').forEach(btn => {
+      btn.addEventListener('click', () => applySealPreset(btn.dataset.preset));
+    });
   }
 
   function renderEditorPage() {
@@ -1061,6 +1298,7 @@
       $('#et-prop-seal-text').value = editorState.seal.text;
       $('#et-prop-seal-size').value = editorState.seal.size;
       $('#et-prop-seal-color').value = editorState.seal.color;
+      renderSealPresets();
     } else {
       sg.classList.add('hidden'); tg.classList.remove('hidden');
       $('#et-prop-text').value = el.text;
@@ -1106,7 +1344,7 @@
   }
   function addSealElement() {
     const dims = EDITOR_PAGE[editorState.layout];
-    editorState.seal = { id: 'seal', text: '认证专用章', x: Math.round(dims.w - 110), y: Math.round(dims.h - 110), size: 80, color: editorState.accentColor };
+    editorState.seal = { id: 'seal', text: '考试合', x: Math.round(dims.w - 110), y: Math.round(dims.h - 110), size: 80, color: editorState.accentColor };
     const old = document.querySelector('#et-page [data-id="seal"]'); if (old) old.remove();
     const node = createSealNode(editorState.seal); $('#et-page').appendChild(node); attachEl(node, editorState.seal, true);
     selectElement('seal');
@@ -1134,6 +1372,13 @@
       editorState.seal.y = clamp(editorState.seal.y, 0, dims.h - editorState.seal.size);
     }
     renderEditorPage();
+    // 切换方向后刷新模版列表，若当前模版方向不匹配则自动选第一个对应方向的模版
+    const curTpl = CERT_TEMPLATES.find(x => x.key === editorState._tplKey);
+    if (!curTpl || curTpl.orientation !== orient) {
+      const first = CERT_TEMPLATES.find(x => x.orientation === orient);
+      if (first) { applyTemplate(first.key); return; }
+    }
+    renderBgGrid();
     $('#et-orient-portrait').classList.toggle('active', orient === 'portrait');
     $('#et-orient-landscape').classList.toggle('active', orient === 'landscape');
   }
@@ -1208,6 +1453,29 @@
     $('#et-prop-seal-color')?.addEventListener('input', e => { if (editorState.seal) { editorState.seal.color = e.target.value; refreshSealNode(); } });
     $('#et-stage')?.addEventListener('mousedown', e => { if (e.target.id === 'et-stage' || e.target.id === 'et-page') selectElement(null); });
 
+    // 键盘 Delete / Backspace 删除选中元素
+    document.addEventListener('keydown', e => {
+      // 只在编辑器打开时响应
+      if (!$('#et-stage')?.offsetParent) return;
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElId) {
+        e.preventDefault();
+        deleteSelected();
+      }
+    });
+
+    // Token 标签点击插入动态参数
+    $$('.cert-token-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const el = selEl();
+        if (!el || selectedElId === 'seal') return;
+        const token = chip.dataset.token;
+        el.text += token;
+        const n = document.querySelector(`#et-page [data-id="${el.id}"]`);
+        if (n) refreshTextNode(n, el);
+        $('#et-prop-text').value = el.text;
+      });
+    });
+
     $$('.cert-detail-tab').forEach(btn => {
       btn.addEventListener('click', () => switchDetailTab(btn.dataset.tab));
     });
@@ -1234,7 +1502,13 @@
     renderCertificateHTML,
     openCertificateEditor,
     closeEditor,
-    renderDesignPageInner
+    renderDesignPageInner,
+    toggleCertSelect,
+    toggleCertSelectAll,
+    updateCertSelectAllState,
+    updateCertBatchActionBar,
+    clearCertSelection,
+    batchDeleteCertificates
   };
 
   // DOM 就绪后初始化
