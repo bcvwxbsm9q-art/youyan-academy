@@ -820,24 +820,27 @@
           </button>
         </div>
 
-        <!-- 讲师统计 -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div class="bg-white rounded-xl p-4 shadow-sm text-center">
-            <p class="text-2xl font-bold text-slate-800" id="lect-total">0</p>
-            <p class="text-sm text-slate-500">讲师总数</p>
+        <!-- 讲师筛选栏 -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm mb-6 flex flex-wrap gap-4">
+          <div class="flex-1 min-w-[200px]">
+            <input type="text" id="lecturer-search" placeholder="搜索讲师姓名/部门/岗位..."
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+              oninput="renderLecturers()">
           </div>
-          <div class="bg-white rounded-xl p-4 shadow-sm text-center">
-            <p class="text-2xl font-bold text-green-500" id="lect-enabled">0</p>
-            <p class="text-sm text-slate-500">启用中</p>
-          </div>
-          <div class="bg-white rounded-xl p-4 shadow-sm text-center">
-            <p class="text-2xl font-bold text-purple-500" id="lect-intern">0</p>
-            <p class="text-sm text-slate-500">见习讲师</p>
-          </div>
-          <div class="bg-white rounded-xl p-4 shadow-sm text-center">
-            <p class="text-2xl font-bold text-blue-500" id="lect-courses">0</p>
-            <p class="text-sm text-slate-500">课程数</p>
-          </div>
+          <select id="lecturer-status-filter" onchange="renderLecturers()"
+            class="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition">
+            <option value="">全部状态</option>
+            <option value="enabled">启用中</option>
+            <option value="disabled">已禁用</option>
+          </select>
+          <select id="lecturer-level-filter" onchange="renderLecturers()"
+            class="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition">
+            <option value="">全部等级</option>
+            <option value="senior">高级讲师</option>
+            <option value="intermediate">中级讲师</option>
+            <option value="junior">初级讲师</option>
+            <option value="intern">见习讲师</option>
+          </select>
         </div>
 
         <!-- 讲师批量操作栏 -->
@@ -905,6 +908,19 @@
               <i class="fas fa-plus"></i>添加培训
             </button>
           </div>
+        </div>
+
+        <!-- 培训筛选栏 -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm mb-6 flex flex-wrap gap-4">
+          <div class="flex-1 min-w-[200px]">
+            <input type="text" id="training-search" placeholder="搜索培训项目/课题/讲师/地点..."
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+              oninput="renderTrainingList()">
+          </div>
+          <select id="training-project-filter" onchange="renderTrainingList()"
+            class="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition">
+            <option value="">全部项目</option>
+          </select>
         </div>
 
         <!-- 日历视图 -->
@@ -2224,10 +2240,26 @@
               <i class="fas fa-plus mr-1"></i>添加轮播图
             </button>
           </div>
+
+          <!-- 批量操作栏 -->
+          <div id="bannerBatchActionBar" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-3 flex-wrap">
+            <span class="text-sm text-indigo-700 font-medium" id="bannerBatchCount">已选 0 项</span>
+            <div class="h-4 w-px bg-indigo-300"></div>
+            <button onclick="batchDeleteBanners()" class="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1.5 rounded-md transition">
+              <i class="fas fa-trash-alt mr-1.5"></i>批量删除
+            </button>
+            <button onclick="clearBannerSelection()" class="ml-auto text-sm text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-md transition">
+              取消选择
+            </button>
+          </div>
+
           <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <table class="w-full">
               <thead class="bg-slate-50">
                 <tr>
+                  <th class="pl-5 pr-2 py-4 w-10 text-center">
+                    <input type="checkbox" id="bannerSelectAll" onchange="toggleBannerSelectAll()" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                  </th>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">封面图</th>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">关联公告</th>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">关联课程</th>
@@ -2257,10 +2289,26 @@
               <i class="fas fa-plus mr-1"></i>发布公告
             </button>
           </div>
+
+          <!-- 批量操作栏 -->
+          <div id="noticeBatchActionBar" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-3 flex-wrap">
+            <span class="text-sm text-indigo-700 font-medium" id="noticeBatchCount">已选 0 项</span>
+            <div class="h-4 w-px bg-indigo-300"></div>
+            <button onclick="batchDeleteNotices()" class="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1.5 rounded-md transition">
+              <i class="fas fa-trash-alt mr-1.5"></i>批量删除
+            </button>
+            <button onclick="clearNoticeSelection()" class="ml-auto text-sm text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-md transition">
+              取消选择
+            </button>
+          </div>
+
           <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <table class="w-full">
               <thead class="bg-slate-50">
                 <tr>
+                  <th class="pl-5 pr-2 py-4 w-10 text-center">
+                    <input type="checkbox" id="noticeSelectAll" onchange="toggleNoticeSelectAll()" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                  </th>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">标题</th>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">发布时间</th>
                   <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">访问量</th>
@@ -2268,7 +2316,7 @@
                 </tr>
               </thead>
               <tbody id="portal-notice-list" class="divide-y divide-slate-200">
-                <tr><td colspan="4" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-bullhorn text-2xl mb-2 block"></i><p>暂无公告</p></td></tr>
+                <tr><td colspan="5" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-bullhorn text-2xl mb-2 block"></i><p>暂无公告</p></td></tr>
               </tbody>
             </table>
           </div>
@@ -2295,10 +2343,32 @@
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-slate-700">讲师报名</h3>
           </div>
+
+          <!-- 批量操作栏 -->
+          <div id="applicationBatchActionBar" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-3 flex-wrap">
+            <span class="text-sm text-indigo-700 font-medium" id="applicationBatchCount">已选 0 项</span>
+            <div class="h-4 w-px bg-indigo-300"></div>
+            <button onclick="batchApproveApplications()" class="text-sm text-green-600 hover:text-green-800 hover:bg-green-50 px-3 py-1.5 rounded-md transition">
+              <i class="fas fa-check mr-1.5"></i>批量通过
+            </button>
+            <button onclick="batchRejectApplications()" class="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1.5 rounded-md transition">
+              <i class="fas fa-times mr-1.5"></i>批量拒绝
+            </button>
+            <button onclick="batchDeleteApplications()" class="text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-100 px-3 py-1.5 rounded-md transition">
+              <i class="fas fa-trash-alt mr-1.5"></i>批量删除
+            </button>
+            <button onclick="clearApplicationSelection()" class="ml-auto text-sm text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-md transition">
+              取消选择
+            </button>
+          </div>
+
           <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <table class="w-full">
               <thead class="bg-slate-50">
                 <tr>
+                  <th class="pl-5 pr-2 py-4 w-10 text-center">
+                    <input type="checkbox" id="applicationSelectAll" onchange="toggleApplicationSelectAll()" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                  </th>
                   <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">姓名</th>
                   <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">部门</th>
                   <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">擅长领域</th>
@@ -2333,34 +2403,33 @@
             </div>
           </div>
 
-          <!-- 统计卡片 -->
-          <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-              <p class="text-2xl font-bold text-slate-800" id="req-stat-total">0</p>
-              <p class="text-sm text-slate-500">需求总数</p>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-              <p class="text-2xl font-bold text-yellow-500" id="req-stat-pending">0</p>
-              <p class="text-sm text-slate-500">待处理</p>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-              <p class="text-2xl font-bold text-green-500" id="req-stat-approved">0</p>
-              <p class="text-sm text-slate-500">已批准</p>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-              <p class="text-2xl font-bold text-red-500" id="req-stat-rejected">0</p>
-              <p class="text-sm text-slate-500">已拒绝</p>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-              <p class="text-2xl font-bold text-blue-500" id="req-stat-completed">0</p>
-              <p class="text-sm text-slate-500">已完成</p>
-            </div>
+          <!-- 统计卡片已移除 -->
+
+          <!-- 批量操作栏 -->
+          <div id="trainingReqBatchActionBar" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-3 flex-wrap">
+            <span class="text-sm text-indigo-700 font-medium" id="trainingReqBatchCount">已选 0 项</span>
+            <div class="h-4 w-px bg-indigo-300"></div>
+            <button onclick="batchApproveTrainingRequests()" class="text-sm text-green-600 hover:text-green-800 hover:bg-green-50 px-3 py-1.5 rounded-md transition">
+              <i class="fas fa-check mr-1.5"></i>批量批准
+            </button>
+            <button onclick="batchRejectTrainingRequests()" class="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1.5 rounded-md transition">
+              <i class="fas fa-times mr-1.5"></i>批量拒绝
+            </button>
+            <button onclick="batchDeleteTrainingRequests()" class="text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-100 px-3 py-1.5 rounded-md transition">
+              <i class="fas fa-trash-alt mr-1.5"></i>批量删除
+            </button>
+            <button onclick="clearTrainingReqSelection()" class="ml-auto text-sm text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-md transition">
+              取消选择
+            </button>
           </div>
 
           <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <table class="w-full">
               <thead class="bg-slate-50">
                 <tr>
+                  <th class="pl-5 pr-2 py-4 w-10 text-center">
+                    <input type="checkbox" id="trainingReqSelectAll" onchange="toggleTrainingReqSelectAll()" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                  </th>
                   <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">提交人</th>
                   <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">部门</th>
                   <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">培训类型</th>
@@ -2374,7 +2443,7 @@
               </thead>
               <tbody id="training-request-list" class="divide-y divide-slate-200">
                 <tr>
-                  <td colspan="9" class="px-6 py-12 text-center text-slate-400">
+                  <td colspan="10" class="px-6 py-12 text-center text-slate-400">
                     <i class="fas fa-inbox text-4xl mb-3 block"></i>
                     <p>暂无培训需求</p>
                   </td>
@@ -4108,6 +4177,8 @@
 
         // 更新分类筛选下拉
         updateCategoryFilter();
+        // 更新培训项目筛选下拉
+        updateTrainingProjectFilter();
         // 数据加载完成后刷新各面板(无论当前显示哪个 tab)
         if (document.getElementById('notice-list')) renderNotices();
         if (document.getElementById('portal-notice-list')) renderPortalNotices();
@@ -4123,6 +4194,15 @@
       if (!select) return;
       const options = data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
       select.innerHTML = '<option value="">全部分类</option>' + options;
+    }
+
+    function updateTrainingProjectFilter() {
+      const select = document.getElementById('training-project-filter');
+      if (!select) return;
+      // 从实际数据中提取项目列表
+      const projects = [...new Set((data.training || []).map(e => e.project).filter(Boolean))];
+      const options = projects.map(p => `<option value="${p}">${p}</option>`).join('');
+      select.innerHTML = '<option value="">全部项目</option>' + options;
     }
 
 
@@ -4179,7 +4259,7 @@
         if (!banners || banners.length === 0) {
           tbody.innerHTML = `
             <tr>
-              <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+              <td colspan="7" class="px-6 py-12 text-center text-slate-400">
                 <i class="fas fa-images text-4xl mb-3 block"></i>
                 <p>暂无轮播图</p>
                 <p class="text-sm">点击上方按钮添加</p>
@@ -4191,8 +4271,13 @@
         // 按排序号升序排列
         const sortedBanners = [...banners].sort((a, b) => (a.order || 99) - (b.order || 99));
 
-        tbody.innerHTML = sortedBanners.map(b => `
+        tbody.innerHTML = sortedBanners.map(b => {
+          const checked = bannerSelectedIds.has(String(b.id)) ? 'checked' : '';
+          return `
           <tr class="hover:bg-slate-50 transition">
+            <td class="pl-5 pr-2 py-4 text-center" onclick="event.stopPropagation()">
+              <input type="checkbox" class="banner-row-check rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" onchange="toggleBannerSelect('${b.id}')" ${checked}>
+            </td>
             <!-- 封面图 -->
             <td class="px-6 py-4">
               <div class="w-32 h-20 rounded-lg overflow-hidden bg-slate-100">
@@ -4232,13 +4317,13 @@
                 <i class="fas fa-trash mr-1"></i>删除
               </button>
             </td>
-          </tr>
-        `).join('');
+          </tr>`;
+        }).join('');
       } catch (err) {
         console.error('加载轮播图失败:', err);
         tbody.innerHTML = `
           <tr>
-            <td colspan="6" class="px-6 py-12 text-center text-red-400">
+            <td colspan="7" class="px-6 py-12 text-center text-red-400">
               <i class="fas fa-exclamation-circle text-3xl mb-2 block"></i>
               <p>加载失败,请刷新重试</p>
             </td>
@@ -5978,10 +6063,24 @@
       try {
         console.log('开始渲染讲师列表,讲师数量:', data.lecturers.length);
 
-        document.getElementById('lect-total').textContent = data.lecturers.length;
-        document.getElementById('lect-enabled').textContent = data.lecturers.filter(l => l.status === 'enabled').length;
-        document.getElementById('lect-intern').textContent = data.lecturers.filter(l => l.level === 'intern').length;
-        document.getElementById('lect-courses').textContent = data.courses.length;
+        // 搜索和筛选
+        const searchEl = document.getElementById('lecturer-search');
+        const statusEl = document.getElementById('lecturer-status-filter');
+        const levelEl = document.getElementById('lecturer-level-filter');
+        const search = searchEl ? searchEl.value.toLowerCase() : '';
+        const status = statusEl ? statusEl.value : '';
+        const level = levelEl ? levelEl.value : '';
+
+        let filtered = data.lecturers.filter(l => {
+          const matchSearch = !search || (
+            (l.name && l.name.toLowerCase().includes(search)) ||
+            (l.department && l.department.toLowerCase().includes(search)) ||
+            (l.position && l.position.toLowerCase().includes(search))
+          );
+          const matchStatus = !status || l.status === status;
+          const matchLevel = !level || l.level === level;
+          return matchSearch && matchStatus && matchLevel;
+        });
 
         const tbody = document.getElementById('lecturer-list');
         const countEl = document.getElementById('lecturer-count');
@@ -6011,7 +6110,9 @@
         intern: { class: 'bg-orange-100 text-orange-700', text: '见习讲师' }
       };
 
-      tbody.innerHTML = data.lecturers.map(lect => {
+      countEl.textContent = String(filtered.length);
+
+      tbody.innerHTML = filtered.map(lect => {
         const lv = levelMap[lect.level] || levelMap.junior;
         const courseCount = lect.courseCount ?? data.courses.filter(c => c.lecturerId === lect.id).length;
         const totalPayment = (data.lecturer_payment_records || [])
@@ -8302,9 +8403,34 @@
     async function renderTrainingList() {
       const tbody = document.getElementById('training-table-body');
       const emptyState = document.getElementById('training-list-empty');
-      const events = data.training || [];
+      let events = data.training || [];
 
-      if (events.length === 0) {
+      // 搜索和筛选
+      const searchEl = document.getElementById('training-search');
+      const projectEl = document.getElementById('training-project-filter');
+      const search = searchEl ? searchEl.value.toLowerCase() : '';
+      const project = projectEl ? projectEl.value : '';
+
+      if (search || project) {
+        events = events.filter(e => {
+          const matchSearch = !search || (
+            (e.project && e.project.toLowerCase().includes(search)) ||
+            (e.name && e.name.toLowerCase().includes(search)) ||
+            (e.instructor && e.instructor.toLowerCase().includes(search)) ||
+            (e.location && e.location.toLowerCase().includes(search))
+          );
+          const matchProject = !project || e.project === project;
+          return matchSearch && matchProject;
+        });
+      }
+
+      if (events.length === 0 && (data.training || []).length > 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-search text-3xl mb-3"></i><p>未找到匹配的培训记录</p></td></tr>`;
+        emptyState.classList.add('hidden');
+        return;
+      }
+
+      if ((data.training || []).length === 0) {
         tbody.innerHTML = '';
         emptyState.classList.remove('hidden');
         return;
@@ -8425,8 +8551,86 @@
       toast(`删除完成：成功 ${success}，失败 ${fail}`);
     }
 
+    // ========== 轮播管理 批量操作 ==========
+    function toggleBannerSelect(id) {
+      const sid = String(id);
+      if (bannerSelectedIds.has(sid)) bannerSelectedIds.delete(sid);
+      else bannerSelectedIds.add(sid);
+      updateBannerBatchActionBar();
+    }
+    function toggleBannerSelectAll() {
+      const checked = document.getElementById('bannerSelectAll').checked;
+      bannerSelectedIds.clear();
+      if (checked) {
+        document.querySelectorAll('.banner-row-check').forEach(cb => {
+          const val = cb.getAttribute('onchange')?.match(/toggleBannerSelect\(['"]?(\d+)['"]?\)/)?.[1];
+          if (val) bannerSelectedIds.add(val);
+        });
+      }
+      loadCarousels();
+      updateBannerBatchActionBar();
+    }
+    function updateBannerBatchActionBar() {
+      const bar = document.getElementById('bannerBatchActionBar');
+      const count = document.getElementById('bannerBatchCount');
+      if (!bar || !count) return;
+      if (bannerSelectedIds.size > 0) { bar.classList.remove('hidden'); count.textContent = `已选 ${bannerSelectedIds.size} 项`; }
+      else { bar.classList.add('hidden'); }
+    }
+    function clearBannerSelection() { bannerSelectedIds.clear(); loadCarousels(); updateBannerBatchActionBar(); }
+    async function batchDeleteBanners() {
+      const ids = Array.from(bannerSelectedIds); if (!ids.length) return;
+      if (!confirm(`确定删除选中的 ${ids.length} 个轮播图吗？`)) return;
+      for (const id of ids) { try { await deleteCarousel(Number(id)); } catch(e){} }
+      clearBannerSelection(); toast(`已删除 ${ids.length} 个轮播图`);
+    }
+
+    // ========== 公告管理 批量操作 ==========
+    function toggleNoticeSelect(id) {
+      const sid = String(id);
+      if (noticeSelectedIds.has(sid)) noticeSelectedIds.delete(sid); else noticeSelectedIds.add(sid);
+      updateNoticeBatchActionBar();
+    }
+    function toggleNoticeSelectAll() {
+      const checked = document.getElementById('noticeSelectAll').checked;
+      noticeSelectedIds.clear();
+      if (checked) { document.querySelectorAll('.notice-row-check').forEach(cb => { const m = cb.getAttribute('onchange')?.match(/toggleNoticeSelect\(['"]?(\d+)['"]?\)/); if(m) noticeSelectedIds.add(m[1]); }); }
+      renderPortalNotices(); updateNoticeBatchActionBar();
+    }
+    function updateNoticeBatchActionBar() {
+      const bar = document.getElementById('noticeBatchActionBar'), count = document.getElementById('noticeBatchCount');
+      if(!bar||!count)return; if(noticeSelectedIds.size>0){bar.classList.remove('hidden');count.textContent=`已选 ${noticeSelectedIds.size} 项`;}else bar.classList.add('hidden');
+    }
+    function clearNoticeSelection() { noticeSelectedIds.clear(); renderPortalNotices(); updateNoticeBatchActionBar(); }
+    async function batchDeleteNotices() {
+      const ids=Array.from(noticeSelectedIds);if(!ids.length)return;
+      if(!confirm(`确定删除选中的 ${ids.length} 条公告吗？`))return;
+      for(const id of ids){try{await deleteNotice(Number(id));}catch(e){}} clearNoticeSelection(); toast(`已删除 ${ids.length} 条公告`);
+    }
+
+    // ========== 讲师报名 批量操作 ==========
+    function toggleApplicationSelect(id) { const s=String(id); if(applicationSelectedIds.has(s)) applicationSelectedIds.delete(s); else applicationSelectedIds.add(s); updateApplicationBatchActionBar(); }
+    function toggleApplicationSelectAll() {
+      const c=document.getElementById('applicationSelectAll').checked; applicationSelectedIds.clear();
+      if(c) document.querySelectorAll('.application-row-check').forEach(cb=>{const m=cb.getAttribute('onchange')?.match(/toggleApplicationSelect\(['"]?(\d+)['"]?\)/);if(m)applicationSelectedIds.add(m[1]);});
+      loadLecturerApplications();updateApplicationBatchActionBar();
+    }
+    function updateApplicationBatchActionBar(){const b=document.getElementById('applicationBatchActionBar'),c=document.getElementById('applicationBatchCount');if(!b||!c)return;if(applicationSelectedIds.size>0){b.classList.remove('hidden');c.textContent=`已选 ${applicationSelectedIds.size} 项`;}else b.classList.add('hidden');}
+    function clearApplicationSelection(){applicationSelectedIds.clear();loadLecturerApplications();updateApplicationBatchActionBar();}
+    async function batchApproveApplications(){const ids=Array.from(applicationSelectedIds);if(!ids.length)return;if(!confirm(`批量通过 ${ids.length} 个？`))return;for(const i of ids){try{await approveApplication(Number(i),'approved');}catch(e){}}clearApplicationSelection();toast(`已通过 ${ids.length} 个`);}
+    async function batchRejectApplications(){const ids=Array.from(applicationSelectedIds);if(!ids.length)return;if(!confirm(`批量拒绝 ${ids.length} 个？`))return;for(const i of ids){try{await approveApplication(Number(i),'rejected');}catch(e){}}clearApplicationSelection();toast(`已拒绝 ${ids.length} 个`);}
+    async function batchDeleteApplications(){const ids=Array.from(applicationSelectedIds);if(!ids.length)return;if(!confirm(`删除 ${ids.length} 个？`))return;for(const i of ids){try{await deleteApplication(Number(i));}catch(e){}}clearApplicationSelection();toast(`已删除 ${ids.length} 个`);}
+
+    // ========== 培训需求 批量操作 ==========
+    function toggleTrainingReqSelect(id){const s=String(id);if(trainingReqSelectedIds.has(s))trainingReqSelectedIds.delete(s);else trainingReqSelectedIds.add(s);updateTrainingReqBatchActionBar();}
+    function toggleTrainingReqSelectAll(){const c=document.getElementById('trainingReqSelectAll').checked;trainingReqSelectedIds.clear();if(c)document.querySelectorAll('.trainingReq-row-check').forEach(cb=>{const m=cb.getAttribute('onchange')?.match(/toggleTrainingReqSelect\(['"]([^'"]+)['"]?\)/);if(m)trainingReqSelectedIds.add(m[1]);});loadTrainingRequests();updateTrainingReqBatchActionBar();}
+    function updateTrainingReqBatchActionBar(){const b=document.getElementById('trainingReqBatchActionBar'),c=document.getElementById('trainingReqBatchCount');if(!b||!c)return;if(trainingReqSelectedIds.size>0){b.classList.remove('hidden');c.textContent=`已选 ${trainingReqSelectedIds.size} 项`;}else b.classList.add('hidden');}
+    function clearTrainingReqSelection(){trainingReqSelectedIds.clear();loadTrainingRequests();updateTrainingReqBatchActionBar();}
+    async function batchApproveTrainingRequests(){const ids=Array.from(trainingReqSelectedIds);if(!ids.length)return;if(!confirm(`批量批准 ${ids.length} 条？`))return;for(const i of ids){try{await updateTrainingRequestStatus(i,'approved');}catch(e){}}clearTrainingReqSelection();toast(`已批准 ${ids.length} 条`);}
+    async function batchRejectTrainingRequests(){const ids=Array.from(trainingReqSelectedIds);if(!ids.length)return;if(!confirm(`批量拒绝 ${ids.length} 条？`))return;for(const i of ids){try{await updateTrainingRequestStatus(i,'rejected');}catch(e){}}clearTrainingReqSelection();toast(`已拒绝 ${ids.length} 条`);}
+    async function batchDeleteTrainingRequests(){const ids=Array.from(trainingReqSelectedIds);if(!ids.length)return;if(!confirm(`删除 ${ids.length} 条？`))return;for(const i of ids){try{await deleteTrainingRequest(i);}catch(e){}}clearTrainingReqSelection();toast(`已删除 ${ids.length} 条`);}
+
     function batchChangeTrainingCategory() {
-      if (trainingSelectedIds.size === 0) return;
       const trainingProjectOptions = Object.keys(trainingCategories || {}).map(name => ({ id: name, name }));
       showBatchCategoryPicker('training', async (categoryId) => {
         const ids = Array.from(trainingSelectedIds);
@@ -11850,7 +12054,7 @@
                 <button onclick="closeRoleSelector()" class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300">
                   取消
                 </button>
-                <button onclick="confirmRoleChange('${userId}', '${user.realName || user.username}')" id="confirm-role-btn" class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 hover:from-indigo-700 hover:to-purple-700 active:scale-95 flex items-center gap-2">
+                <button id="confirm-role-btn" class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 hover:from-indigo-700 hover:to-purple-700 active:scale-95 flex items-center gap-2">
                   <i class="fas fa-check-circle"></i>
                   确认更改
                 </button>
@@ -11863,6 +12067,12 @@
         dialogContainer.id = 'role-selector-container';
         dialogContainer.innerHTML = modalHTML;
         document.body.appendChild(dialogContainer);
+
+        // 绑定确认按钮事件（避免特殊字符问题）
+        const confirmBtn = dialogContainer.querySelector('#confirm-role-btn');
+        if (confirmBtn) {
+          confirmBtn.onclick = () => window.confirmRoleChange(userId, user.realName || user.username);
+        }
 
         // 关闭函数
         window.closeRoleSelector = (result) => {
@@ -12316,7 +12526,7 @@
       if (!tbody) return;
 
       if (!data.notices || data.notices.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-bullhorn text-2xl mb-2 block"></i><p>暂无公告</p></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-bullhorn text-2xl mb-2 block"></i><p>暂无公告</p></td></tr>`;
         return;
       }
 
@@ -12327,8 +12537,13 @@
         return new Date(b.publishedAt || b.createdAt) - new Date(a.publishedAt || a.createdAt);
       });
 
-      tbody.innerHTML = sorted.map(n => `
+      tbody.innerHTML = sorted.map(n => {
+        const checked = noticeSelectedIds.has(String(n.id)) ? 'checked' : '';
+        return `
         <tr class="hover:bg-slate-50 transition">
+          <td class="pl-5 pr-2 py-4 text-center" onclick="event.stopPropagation()">
+            <input type="checkbox" class="notice-row-check rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" onchange="toggleNoticeSelect('${n.id}')" ${checked}>
+          </td>
           <td class="px-6 py-4">
             <div class="text-sm font-medium text-slate-800">${n.title}</div>
           </td>
@@ -12354,8 +12569,8 @@
               <i class="fas fa-trash"></i>
             </button>
           </td>
-        </tr>
-      `).join('');
+        </tr>`;
+      }).join('');
     }
 
     function openNoticeModal(notice = null) {
@@ -13060,6 +13275,11 @@
     let trainingSelectedIds = new Set();
     let surveySelectedIds = new Set();
     let bankSelectedIds = new Set();
+    // 运营管理面板 - 多选
+    let bannerSelectedIds = new Set();
+    let noticeSelectedIds = new Set();
+    let applicationSelectedIds = new Set();
+    let trainingReqSelectedIds = new Set();
     let certSelectedIds = new Set();
     let userSelectedIds = new Set();
 
@@ -19436,7 +19656,7 @@
         if (!tbody) return;
         
         if (applications.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-inbox text-4xl mb-3 block"></i><p>暂无讲师报名申请</p></td></tr>';
+          tbody.innerHTML = '<tr><td colspan="10" class="px-6 py-12 text-center text-slate-400"><i class="fas fa-inbox text-4xl mb-3 block"></i><p>暂无讲师报名申请</p></td></tr>';
           return;
         }
         
@@ -19453,8 +19673,13 @@
           'rejected': '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">已拒绝</span>'
         };
         
-        tbody.innerHTML = applications.map(app => `
+        tbody.innerHTML = applications.map(app => {
+          const checked = applicationSelectedIds.has(String(app.id)) ? 'checked' : '';
+          return `
           <tr class="hover:bg-slate-50 transition">
+            <td class="pl-5 pr-2 py-3 text-center" onclick="event.stopPropagation()">
+              <input type="checkbox" class="application-row-check rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" onchange="toggleApplicationSelect('${app.id}')" ${checked}>
+            </td>
             <td class="px-4 py-3 text-sm text-slate-800">${escHtml(app.name)}</td>
             <td class="px-4 py-3 text-sm text-slate-600">${escHtml(app.department)}</td>
             <td class="px-4 py-3 text-sm text-slate-600">
@@ -19482,8 +19707,8 @@
                 </button>
               </div>
             </td>
-          </tr>
-        `).join('');
+          </tr>`;
+        }).join('');
       } catch (e) {
         console.error('加载讲师报名列表失败:', e);
         toast('加载失败: ' + e.message, 'error');
@@ -19659,10 +19884,7 @@
         
         // 按时间倒序排列
         requests.sort((a, b) => new Date(b.submitTime) - new Date(a.submitTime));
-        
-        // 更新统计
-        updateTrainingRequestStats();
-        
+
         // 渲染列表
         renderTrainingRequestList(requests);
         
@@ -19719,7 +19941,7 @@
       if (requests.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="9" class="px-6 py-12 text-center text-slate-400">
+            <td colspan="10" class="px-6 py-12 text-center text-slate-400">
               <i class="fas fa-inbox text-4xl mb-3 block"></i>
               <p>暂无培训需求</p>
             </td>
@@ -19735,8 +19957,13 @@
         'completed': '<span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">已完成</span>'
       };
       
-      tbody.innerHTML = requests.map(req => `
+      tbody.innerHTML = requests.map(req => {
+        const checked = trainingReqSelectedIds.has(String(req.id)) ? 'checked' : '';
+        return `
         <tr class="hover:bg-slate-50 transition">
+          <td class="pl-5 pr-2 py-3 text-center" onclick="event.stopPropagation()">
+            <input type="checkbox" class="trainingReq-row-check rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" onchange="toggleTrainingReqSelect('${req.id}')" ${checked}>
+          </td>
           <td class="px-4 py-3 text-sm font-medium text-slate-800">${escHtml(req.submitterName)}</td>
           <td class="px-4 py-3 text-sm text-slate-600">${escHtml(req.department)}</td>
           <td class="px-4 py-3 text-sm text-slate-600">
@@ -19765,8 +19992,8 @@
               </button>
             </div>
           </td>
-        </tr>
-      `).join('');
+        </tr>`;
+      }).join('');
     }
 
     // 查看培训需求详情

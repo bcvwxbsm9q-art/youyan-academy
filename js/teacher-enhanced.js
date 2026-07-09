@@ -16,7 +16,7 @@
         'senior': { class: 'level-senior', name: '高级讲师', icon: 'fa-star' },
         'intermediate': { class: 'level-intermediate', name: '中级讲师', icon: 'fa-graduation-cap' },
         'junior': { class: 'level-junior', name: '初级讲师', icon: 'fa-user' },
-        'intern': { class: 'level-intern', name: '见习讲师', icon: 'fa-seedling' }
+        'intern': { class: 'level-intern', name: '见习讲师', icon: 'fa-leaf' }
     };
 
     // 防抖定时器

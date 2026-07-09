@@ -27,7 +27,8 @@
       "avatar": "",
       "createdAt": "2026/7/9 14:22:29",
       "lastLogin": null,
-      "status": "active"
+      "status": "active",
+      "position": "招聘专员"
     },
     {
       "id": 1783563828582,
@@ -140,6 +141,44 @@
       "courseCount": 0,
       "regDate": "2026-07-09",
       "id": 1783591065437
+    },
+    {
+      "name": "罗展途",
+      "department": "里斯特",
+      "title": "前端主程",
+      "level": "intermediate",
+      "levelName": "中级讲师",
+      "avatar": "/uploads/avatars/1783591325550-529370184.png",
+      "intro": "",
+      "startTeachingDate": "2023-06-09",
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "UGUI",
+        "playable"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-07-09",
+      "id": 1783591360326
+    },
+    {
+      "name": "梁耀光",
+      "department": "美术工作室",
+      "title": "高级场景模型",
+      "level": "senior",
+      "levelName": "高级讲师",
+      "avatar": "/uploads/avatars/1783591368001-203091617.png",
+      "intro": "",
+      "startTeachingDate": "2024-10-10",
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "场景模型",
+        "U3D模型"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-07-09",
+      "id": 1783591411868
     }
   ],
   "index_banners": [],
@@ -1607,23 +1646,7 @@
       "source": "assigned"
     }
   ],
-  "papers": [
-    {
-      "id": "paper-1783585263670",
-      "name": "??????",
-      "categoryId": "cat-1",
-      "categoryName": "????",
-      "type": "fixed",
-      "description": "",
-      "questions": [],
-      "totalScore": 0,
-      "status": "draft",
-      "creator": "管理员",
-      "createdBy": "管理员",
-      "createdAt": "2026-07-09T10:00:00.000Z",
-      "updatedAt": "2026-07-09T08:21:03.670Z"
-    }
-  ],
+  "papers": [],
   "notice_visits": [],
   "training_signins": [],
   "training_assign_history": [
