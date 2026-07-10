@@ -1,7 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "试卷管理模块配置契约",
-  "description": "定义试卷模块运行时的可配置项与默认值",
+  "description": "定义试卷模块运行时的可配置项与默认值。版本：1.1.0",
+  "version": "1.1.0",
   "type": "object",
   "properties": {
     "paper": {
@@ -16,9 +17,9 @@
         },
         "defaultStatus": {
           "type": "string",
-          "enum": ["enabled", "disabled"],
-          "default": "enabled",
-          "description": "默认启用状态"
+          "enum": ["draft", "published", "enabled", "disabled"],
+          "default": "draft",
+          "description": "默认试卷状态"
         },
         "defaultCreator": {
           "type": "string",
@@ -30,6 +31,34 @@
           "minimum": 0,
           "default": 5,
           "description": "新增题目默认分值"
+        },
+        "defaultDuration": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 60,
+          "description": "默认考试时长（分钟）"
+        },
+        "defaultPassScore": {
+          "type": "number",
+          "minimum": 0,
+          "default": 60,
+          "description": "默认及格分数"
+        },
+        "defaultMaxAttempts": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "默认最大尝试次数，0 表示不限"
+        },
+        "defaultShuffle": {
+          "type": "boolean",
+          "default": false,
+          "description": "默认是否打乱题目顺序"
+        },
+        "defaultShowAnswer": {
+          "type": "boolean",
+          "default": true,
+          "description": "默认是否展示答案"
         },
         "passingScoreRatio": {
           "type": "number",

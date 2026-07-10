@@ -1,8 +1,29 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "试卷管理模块数据契约",
-  "description": "定义试卷（Paper）及其内嵌题目引用（PaperQuestion）的数据结构",
+  "description": "定义试卷（Paper）及其内嵌题目引用（PaperQuestion）的数据结构。版本：1.1.0",
+  "version": "1.1.0",
   "definitions": {
+    "PaperOption": {
+      "type": "object",
+      "required": ["label"],
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "选项标签，如 A/B/C/D"
+        },
+        "text": {
+          "type": "string",
+          "default": "",
+          "description": "选项文本内容"
+        },
+        "image": {
+          "type": "string",
+          "default": "",
+          "description": "选项图片 URL"
+        }
+      }
+    },
     "PaperQuestion": {
       "type": "object",
       "required": ["questionId"],
@@ -30,6 +51,7 @@
         },
         "content": {
           "type": "string",
+          "default": "",
           "description": "题目内容快照，用于试卷展示时减少二次查询"
         },
         "type": {
@@ -39,7 +61,7 @@
         },
         "options": {
           "type": "array",
-          "items": { "type": "object" },
+          "items": { "$ref": "#/definitions/PaperOption" },
           "description": "选项列表快照"
         },
         "answer": {
@@ -48,7 +70,18 @@
         },
         "explanation": {
           "type": "string",
+          "default": "",
           "description": "答案解析快照"
+        },
+        "image": {
+          "type": "string",
+          "default": "",
+          "description": "题目配图 URL"
+        },
+        "analysis": {
+          "type": "string",
+          "default": "",
+          "description": "题目解析"
         }
       }
     },
@@ -73,6 +106,10 @@
           "default": "",
           "description": "试卷分类名称快照"
         },
+        "category": {
+          "type": ["string", "integer", "null"],
+          "description": "试卷分类 ID 的兼容字段，建议优先使用 categoryId"
+        },
         "type": {
           "type": "string",
           "enum": ["fixed", "random"],
@@ -95,11 +132,45 @@
           "default": 0,
           "description": "试卷总分，通常为题目分值之和"
         },
+        "duration": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 60,
+          "description": "考试时长（分钟）"
+        },
+        "passScore": {
+          "type": "number",
+          "minimum": 0,
+          "default": 60,
+          "description": "及格分数"
+        },
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "最大尝试次数，0 表示不限"
+        },
+        "shuffle": {
+          "type": "boolean",
+          "default": false,
+          "description": "是否打乱题目顺序"
+        },
+        "showAnswer": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否展示答案"
+        },
+        "uniformScore": {
+          "type": "number",
+          "minimum": 0,
+          "default": 5,
+          "description": "统一题目默认分值"
+        },
         "status": {
           "type": "string",
-          "enum": ["enabled", "disabled"],
-          "default": "enabled",
-          "description": "启用状态"
+          "enum": ["draft", "published", "enabled", "disabled"],
+          "default": "draft",
+          "description": "试卷状态：草稿 / 已发布 / 已启用 / 已停用"
         },
         "creator": {
           "type": "string",

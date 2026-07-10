@@ -641,7 +641,7 @@
             ? '已完成全部培训课程，考核合格，准予结业。'
             : '表现优异，特发此证，以资鼓励。')
       };
-      return renderDesignPageInner(certificate.design, PRINT_SCALE, fill);
+      return renderDesignPageInner(certificate.design, printScale(certificate.design.layout), fill);
     }
     const user = userCert.userName || '学员';
     const company = userCert.userDepartment || '广州游雁网络科技有限公司';
@@ -726,8 +726,16 @@
   let editorState = null;     // 编辑器内正在编辑的设计副本
   let selectedElId = null;    // 当前选中元素 id（文字 id 或 'seal'）
 
-  const EDITOR_PAGE = { portrait: { w: 420, h: 594 }, landscape: { w: 594, h: 420 } };
-  const PRINT_SCALE = 2.5;    // 编辑像素 → A4 打印像素
+  // 画布尺寸严格对齐 PNG 模板原始比例，避免 background-size:cover 裁切长边
+  // 竖版 PNG 1425x2064(0.690) → 410x594(0.690) | 横版 PNG 2598x1795(1.447) → 608x420(1.448)
+  const EDITOR_PAGE = { portrait: { w: 410, h: 594 }, landscape: { w: 608, h: 420 } };
+  // 输出/打印按 PNG 原始分辨率渲染（1:1 贴合模板背景，零裁切、零放大模糊）
+  // 编辑画布(EDITOR_PAGE)是"设计稿坐标空间"，输出时按方向放大到源图原始尺寸
+  const PAGE_NATIVE = { portrait: { w: 1425, h: 2064 }, landscape: { w: 2598, h: 1795 } };
+  function printScale(layout) {
+    const l = layout || 'portrait';
+    return PAGE_NATIVE[l].w / EDITOR_PAGE[l].w;
+  }
 
   const EDITOR_SAMPLE = {
     title: '荣誉证书', name: '$姓名$', certNo: '',
@@ -744,7 +752,7 @@
       titleColor: '#1a365d',   textColor: '#334155', subtitleColor: '#64748b',
       accentColor: '#2c5282',  sealColor: '#c2410c',
       fontFamily: "'STSong','SimSun','Times New Roman',serif",
-      layoutHint: { titleY: 0.12, subtitleY: 0.18, nameY: 0.26, contentY: 0.36, companyY: 0.80, dateY: 0.86 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.235, nameY: 0.33, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
     },
     {
       key: 'v2', name: '白玉', orientation: 'portrait',
@@ -752,7 +760,7 @@
       titleColor: '#5d4e37',   textColor: '#57534e', subtitleColor: '#a8a29e',
       accentColor: '#78716c',  sealColor: '#b45309',
       fontFamily: "'STFangsong','FangSong','SimSun',serif",
-      layoutHint: { titleY: 0.13, subtitleY: 0.19, nameY: 0.27, contentY: 0.34, companyY: 0.81, dateY: 0.86 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.235, nameY: 0.33, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
     },
     {
       key: 'v3', name: '金辉', orientation: 'portrait',
@@ -760,7 +768,7 @@
       titleColor: '#7c5c00',   textColor: '#4a3c1a', subtitleColor: '#8b7355',
       accentColor: '#b8860b',  sealColor: '#a16207',
       fontFamily: "'STKaiti','KaiTi','SimSun',serif",
-      layoutHint: { titleY: 0.11, subtitleY: 0.17, nameY: 0.25, contentY: 0.35, companyY: 0.79, dateY: 0.85 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.235, nameY: 0.33, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
     },
     {
       key: 'v4', name: '墨韵', orientation: 'portrait',
@@ -768,7 +776,7 @@
       titleColor: '#1e3a5f',   textColor: '#334155', subtitleColor: '#64748b',
       accentColor: '#1e40af',  sealColor: '#be123c',
       fontFamily: "'STSong','SimSun','Times New Roman',serif",
-      layoutHint: { titleY: 0.12, subtitleY: 0.18, nameY: 0.26, contentY: 0.36, companyY: 0.81, dateY: 0.86 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.235, nameY: 0.33, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
     },
     {
       key: 'v5', name: '蔚蓝', orientation: 'portrait',
@@ -776,7 +784,7 @@
       titleColor: '#166534',   textColor: '#3f4c3a', subtitleColor: '#6b8068',
       accentColor: '#15803d',  sealColor: '#b45309',
       fontFamily: "'STSong','SimSun','Times New Roman',serif",
-      layoutHint: { titleY: 0.12, subtitleY: 0.18, nameY: 0.26, contentY: 0.36, companyY: 0.80, dateY: 0.86 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.235, nameY: 0.33, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
     },
     {
       key: 'v6', name: '朝阳', orientation: 'portrait',
@@ -784,7 +792,7 @@
       titleColor: '#92400e',   textColor: '#4a3c1a', subtitleColor: '#8b7355',
       accentColor: '#b8860b',  sealColor: '#a16207',
       fontFamily: "'STKaiti','KaiTi','SimSun',serif",
-      layoutHint: { titleY: 0.12, subtitleY: 0.18, nameY: 0.26, contentY: 0.33, companyY: 0.79, dateY: 0.84 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.235, nameY: 0.33, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
     },
     // ── 横版（landscape） ──
     {
@@ -793,7 +801,7 @@
       titleColor: '#1a365d',   textColor: '#334155', subtitleColor: '#64748b',
       accentColor: '#2c5282',  sealColor: '#c2410c',
       fontFamily: "'STSong','SimSun','Times New Roman',serif",
-      layoutHint: { titleY: 0.10, subtitleY: 0.15, nameY: 0.24, contentY: 0.40, companyY: 0.82, dateY: 0.89 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.36, contentY: 0.44, companyY: 0.82, dateY: 0.88 }
     },
     {
       key: 'h2', name: '锦绣', orientation: 'landscape',
@@ -801,7 +809,7 @@
       titleColor: '#5d4e37',   textColor: '#57534e', subtitleColor: '#a8a29e',
       accentColor: '#78716c',  sealColor: '#b45309',
       fontFamily: "'STFangsong','FangSong','SimSun',serif",
-      layoutHint: { titleY: 0.10, subtitleY: 0.15, nameY: 0.24, contentY: 0.40, companyY: 0.82, dateY: 0.89 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.36, contentY: 0.44, companyY: 0.82, dateY: 0.88 }
     },
     {
       key: 'h3', name: '丹霞', orientation: 'landscape',
@@ -809,7 +817,7 @@
       titleColor: '#92400e',   textColor: '#4a3c1a', subtitleColor: '#8b7355',
       accentColor: '#b8860b',  sealColor: '#a16207',
       fontFamily: "'STKaiti','KaiTi','SimSun',serif",
-      layoutHint: { titleY: 0.10, subtitleY: 0.15, nameY: 0.24, contentY: 0.40, companyY: 0.82, dateY: 0.89 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.36, contentY: 0.44, companyY: 0.82, dateY: 0.88 }
     },
     {
       key: 'h4', name: '春晒', orientation: 'landscape',
@@ -817,7 +825,7 @@
       titleColor: '#166534',   textColor: '#3f4c3a', subtitleColor: '#6b8068',
       accentColor: '#15803d',  sealColor: '#b45309',
       fontFamily: "'STSong','SimSun','Times New Roman',serif",
-      layoutHint: { titleY: 0.10, subtitleY: 0.15, nameY: 0.24, contentY: 0.40, companyY: 0.82, dateY: 0.89 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.36, contentY: 0.44, companyY: 0.82, dateY: 0.88 }
     },
     {
       key: 'h5', name: '银素', orientation: 'landscape',
@@ -825,7 +833,7 @@
       titleColor: '#374151',   textColor: '#4b5563', subtitleColor: '#6b7280',
       accentColor: '#4b5563',  sealColor: '#b91c1c',
       fontFamily: "'Microsoft YaHei','PingFang SC',sans-serif",
-      layoutHint: { titleY: 0.10, subtitleY: 0.15, nameY: 0.24, contentY: 0.40, companyY: 0.82, dateY: 0.89 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.36, contentY: 0.44, companyY: 0.82, dateY: 0.88 }
     },
     {
       key: 'h6', name: '紫宸', orientation: 'landscape',
@@ -833,7 +841,7 @@
       titleColor: '#5b21b6',   textColor: '#3b3654', subtitleColor: '#7e6f9e',
       accentColor: '#7c3aed',  sealColor: '#be185d',
       fontFamily: "'STSong','SimSun','Times New Roman',serif",
-      layoutHint: { titleY: 0.10, subtitleY: 0.15, nameY: 0.24, contentY: 0.40, companyY: 0.82, dateY: 0.89 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.36, contentY: 0.44, companyY: 0.82, dateY: 0.88 }
     }
   ];
 
@@ -855,6 +863,16 @@
   function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
   function fillTokens(text, fill) {
     return String(text == null ? '' : text).replace(/\{\{(\w+)\}\}/g, (m, k) => (fill[k] !== undefined ? fill[k] : m));
+  }
+  // 行内混色渲染：【文字】→ 红色加粗 span，其余正常转义。无标记时等价于 escapeHtml(fillTokens(...))
+  function renderRichText(text, fill) {
+    const t = fillTokens(text, fill);
+    return String(t).split(/(【[^】]*】)/g).map(p => {
+      if (p.startsWith('【') && p.endsWith('】')) {
+        return '<span style="color:#c41e0f;font-weight:bold;">' + escapeHtml(p.slice(1, -1)) + '</span>';
+      }
+      return escapeHtml(p);
+    }).join('');
   }
   function bgCss(bg) {
     if (!bg) return '#ffffff';
@@ -936,6 +954,8 @@
     openDrawerOverlay('certificate-editor-drawer-overlay');
     syncEditorUI();
     renderEditorPage();
+    // 抽屉滑入动画期间布局可能未稳定，下一帧再适配一次确保不被裁剪
+    requestAnimationFrame(() => fitStage());
   }
   function closeEditor() { closeDrawerOverlay('certificate-editor-drawer-overlay'); }
 
@@ -1000,36 +1020,37 @@
 
     // 构建默认元素（使用模板配色 + 模板专属坐标）
     // 竖版需要更大左右内边距避免与花边重叠，横版稍窄
-    const padX = editorState.layout === 'portrait' ? dims.w * 0.11 : dims.w * 0.08;
+    const padX = editorState.layout === 'portrait' ? dims.w * 0.11 : dims.w * 0.10;
     const innerW = dims.w - padX * 2; // 内容区宽度
+    const isLand = editorState.layout === 'landscape';
     editorState.elements = [
       { id: uid(), type: 'text', key: 'title',
-        x: padX, y: Math.round(ty), w: Math.round(innerW), h: 48,
+        x: padX, y: Math.round(ty), w: Math.round(innerW), h: isLand ? 46 : 52,
         text: existingTexts['title'] || '{{title}}',
-        fontSize: 32, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center',
+        fontSize: isLand ? 34 : 38, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center',
         color: t.titleColor, underline: false, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'subtitle',
         x: padX, y: Math.round(sy), w: Math.round(innerW), h: 20,
         text: existingTexts['subtitle'] || 'CERTIFICATE OF HONORS',
-        fontSize: 10, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center',
+        fontSize: 12, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center',
         color: '#64748b', underline: false, fontFamily: 'Arial,sans-serif' },
       { id: uid(), type: 'text', key: 'name',
-        x: padX, y: Math.round(ny), w: Math.round(innerW), h: 38,
+        x: padX, y: Math.round(ny), w: Math.round(isLand ? innerW * 0.55 : innerW * 0.60), h: 24,
         text: existingTexts['name'] || '{{name}}',
-        fontSize: 26, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center',
+        fontSize: 14, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'left',
         color: t.titleColor, underline: true, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'content',
-        x: padX, y: Math.round(cy), w: Math.round(innerW), h: 130,
-        text: existingTexts['content'] || '{{content}}',
-        fontSize: 14, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center',
+        x: padX, y: Math.round(cy), w: Math.round(innerW), h: isLand ? 100 : 120,
+        text: existingTexts['content'] || '\u3000\u3000在本公司工作期间，认真负责，表现优秀，现授予【年度优秀员工】荣誉称号。特发此证，以示表彰。',
+        fontSize: 14, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'left',
         color: t.textColor, underline: false, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'company',
-        x: dims.w * 0.46, y: Math.round(coy), w: dims.w * 0.48, h: 22,
+        x: Math.round(padX + innerW * (isLand ? 0.28 : 0.38)), y: Math.round(coy), w: Math.round(innerW * (isLand ? 0.72 : 0.62)), h: 22,
         text: existingTexts['company'] || '{{company}}',
         fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right',
         color: t.textColor, underline: false, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'date',
-        x: dims.w * 0.54, y: Math.round(dy), w: dims.w * 0.40, h: 22,
+        x: Math.round(padX + innerW * (isLand ? 0.35 : 0.44)), y: Math.round(dy), w: Math.round(innerW * (isLand ? 0.65 : 0.56)), h: 22,
         text: existingTexts['date'] || '{{date}}',
         fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right',
         color: t.textColor, underline: false, fontFamily: t.fontFamily }
@@ -1046,7 +1067,8 @@
 
   // ---------- 画布渲染（可交互） ----------
   function handleHTML() {
-    return ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'].map(dir =>
+    return `<div class="cert-el-move" data-move="1" title="拖动移动"></div>` +
+      ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'].map(dir =>
       `<div class="cert-el-handle ${dir}" data-dir="${dir}"></div>`).join('');
   }
   function createTextNode(el) {
@@ -1064,6 +1086,7 @@
     node.style.fontWeight = el.fontWeight; node.style.fontStyle = el.fontStyle;
     node.style.textAlign = el.textAlign; node.style.color = el.color; node.style.fontFamily = el.fontFamily;
     node.style.textDecoration = el.underline ? 'underline' : 'none';
+    node.style.lineHeight = el.key === 'content' ? '1.5' : '1.2';
   }
   function createSealNode(seal) {
     const node = document.createElement('div');
@@ -1180,33 +1203,66 @@
       attachEl(sn, d.seal, true);
     }
     selectElement(null);
+    fitStage();
+  }
+
+  // 让画布自动适配编辑区：竖版较高时按比例缩小，保证整张证书完整可见、不被上下裁剪
+  function fitStage() {
+    const stage = $('#et-stage'), fit = $('#et-fit'), page = $('#et-page');
+    if (!stage || !fit || !page) return;
+    const d = EDITOR_PAGE[editorState.layout];
+    const pad = 64; // 与 .cert-editor-stage 的 padding:32px*2 一致
+    const availW = Math.max(50, stage.clientWidth - pad);
+    const availH = Math.max(50, stage.clientHeight - pad);
+    const s = Math.min(availW / d.w, availH / d.h, 1); // 只缩小不放大
+    page.style.transform = 'scale(' + s + ')';
+    fit.style.width = (d.w * s) + 'px';
+    fit.style.height = (d.h * s) + 'px';
   }
 
   // ---------- 元素事件：拖拽 / 缩放 / 选中 / 编辑 ----------
   let dragState = null;
+  function openTextEdit(node, el) {
+    const span = node.querySelector('.cert-el-text');
+    if (!span || span.isContentEditable) return;
+    span.setAttribute('contenteditable', 'true');
+    span.focus();
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    const range = document.createRange();
+    range.selectNodeContents(span);
+    range.collapse(false); // 光标置于末尾
+    sel.addRange(range);
+    const finish = () => {
+      el.text = span.innerText;
+      span.removeAttribute('contenteditable');
+      span.removeEventListener('blur', finish);
+      refreshTextNode(node, el);
+      syncPropPanel();
+    };
+    span.addEventListener('blur', finish);
+  }
   function attachEl(node, el, isSeal) {
     node.addEventListener('mousedown', e => onElMouseDown(e, el, isSeal, node));
     if (!isSeal) {
       node.addEventListener('dblclick', e => {
         e.preventDefault();
-        const span = node.querySelector('.cert-el-text');
-        if (!span) return;
-        span.setAttribute('contenteditable', 'true');
-        span.focus();
-        document.execCommand && document.getSelection().selectAllChildren(span);
-        const finish = () => {
-          el.text = span.innerText;
-          span.removeAttribute('contenteditable');
-          span.removeEventListener('blur', finish);
-          refreshTextNode(node, el);
-          syncPropPanel();
-        };
-        span.addEventListener('blur', finish);
+        selectElement(el.id);
+        openTextEdit(node, el);
       });
     }
   }
   function onElMouseDown(e, el, isSeal, node) {
     if (e.target.isContentEditable) return; // 正在编辑文字
+    // 点击文字主体 → 直接进入编辑模式（而不是变成移动图标）
+    if (!isSeal && e.target.closest('.cert-el-text')) {
+      e.preventDefault();
+      selectElement(el.id);
+      openTextEdit(node, el);
+      return;
+    }
+    // 若正在编辑同元素的其他文字，禁止误触拖拽
+    if (!isSeal && node.querySelector('.cert-el-text')?.isContentEditable) { e.preventDefault(); return; }
     e.preventDefault(); e.stopPropagation();
     const handle = e.target.closest('[data-dir]');
     selectElement(isSeal ? 'seal' : el.id);
@@ -1457,11 +1513,17 @@
     document.addEventListener('keydown', e => {
       // 只在编辑器打开时响应
       if (!$('#et-stage')?.offsetParent) return;
+      // 如果正在编辑文字（contentEditable），不拦截退格/删除键
+      const active = document.activeElement;
+      if (active && (active.isContentEditable || active.classList.contains('cert-el-text'))) return;
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElId) {
         e.preventDefault();
         deleteSelected();
       }
     });
+
+    // 窗口尺寸变化时重新适配画布（竖版/横版切换、缩放窗口都不会被裁剪）
+    window.addEventListener('resize', () => fitStage());
 
     // Token 标签点击插入动态参数
     $$('.cert-token-chip').forEach(chip => {

@@ -2,13 +2,18 @@ from typing import List, Dict, Any, Optional, Union
 
 # 试卷管理模块接口契约（Python .pyi 存根）
 # 对应 server.js 中 /api/papers 下的 REST API 路由
+# 版本：1.1.0
+
+PaperStatus = Union["draft", "published", "enabled", "disabled"]
+PaperType = Union["fixed", "random"]
+QuestionType = Union["single", "multiple", "judge", "fill", "essay"]
 
 class PaperService:
     def list_papers(
         self,
         keyword: Optional[str] = None,
         category_id: Optional[Union[str, int]] = None,
-        type: Optional[str] = None
+        type: Optional[PaperType] = None
     ) -> Dict[str, Any]:
         """GET /api/papers
         返回试卷列表，支持按名称关键字、分类、出卷方式筛选。
@@ -26,6 +31,9 @@ class PaperService:
     def create_paper(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """POST /api/papers
         创建试卷，自动填充缺失字段与默认分值。
+        必填字段：name。
+        可选字段：categoryId, categoryName, type, description, questions, totalScore,
+                 duration, passScore, maxAttempts, shuffle, showAnswer, uniformScore, status。
         :raises ValueError: 必填字段缺失或格式非法
         """
         ...

@@ -2,6 +2,7 @@
  * 试卷管理模块预生成 Mock
  * 作用：开发期默认替身，真实 API 就绪后通过切换导入路径替换。
  * 与契约对齐：public/schema/paper-schema.json
+ * 版本：1.1.0
  */
 
 (function (global) {
@@ -29,6 +30,12 @@
         }
       ],
       totalScore: 5,
+      duration: 60,
+      passScore: 60,
+      maxAttempts: 0,
+      shuffle: false,
+      showAnswer: true,
+      uniformScore: 5,
       status: 'enabled',
       creator: '管理员',
       createdBy: '管理员',
