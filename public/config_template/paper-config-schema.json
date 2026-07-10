@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "试卷管理模块配置契约",
+  "description": "定义试卷模块运行时的可配置项与默认值",
+  "type": "object",
+  "properties": {
+    "paper": {
+      "type": "object",
+      "description": "试卷业务配置",
+      "properties": {
+        "defaultType": {
+          "type": "string",
+          "enum": ["fixed", "random"],
+          "default": "fixed",
+          "description": "默认出卷方式：fixed 固定试卷 / random 随机试卷"
+        },
+        "defaultStatus": {
+          "type": "string",
+          "enum": ["enabled", "disabled"],
+          "default": "enabled",
+          "description": "默认启用状态"
+        },
+        "defaultCreator": {
+          "type": "string",
+          "default": "管理员",
+          "description": "创建人默认值"
+        },
+        "defaultScore": {
+          "type": "number",
+          "minimum": 0,
+          "default": 5,
+          "description": "新增题目默认分值"
+        },
+        "passingScoreRatio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.6,
+          "description": "从试卷生成考试时默认及格分比例"
+        }
+      }
+    },
+    "migration": {
+      "type": "object",
+      "description": "localStorage 数据迁移配置",
+      "properties": {
+        "autoMigrate": {
+          "type": "boolean",
+          "default": true,
+          "description": "首次加载试卷列表时是否自动迁移旧 localStorage 数据"
+        },
+        "clearAfterMigrate": {
+          "type": "boolean",
+          "default": true,
+          "description": "迁移成功后是否清理浏览器端旧数据"
+        }
+      }
+    }
+  }
+}

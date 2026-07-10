@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1783579052402-447707856.jpg",
       "createdAt": "2026/7/9 14:22:27",
-      "lastLogin": null,
+      "lastLogin": "2026/7/9 18:38:11",
       "status": "active",
       "position": "人事经理"
     },
@@ -1661,7 +1661,12 @@
       "assignedAt": "2026-06-30T07:44:32.149Z"
     }
   ],
-  "login_logs": [],
+  "login_logs": [
+    {
+      "userId": "1780909174403",
+      "loginTime": "2026-07-09T10:38:11.620Z"
+    }
+  ],
   "lecturer_payment_records": [
     {
       "id": 1783127350084,

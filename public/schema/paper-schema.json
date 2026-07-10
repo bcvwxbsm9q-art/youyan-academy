@@ -1,0 +1,135 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "试卷管理模块数据契约",
+  "description": "定义试卷（Paper）及其内嵌题目引用（PaperQuestion）的数据结构",
+  "definitions": {
+    "PaperQuestion": {
+      "type": "object",
+      "required": ["questionId"],
+      "properties": {
+        "questionId": {
+          "type": ["string", "integer"],
+          "description": "关联题库中题目的唯一标识"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "default": 5,
+          "description": "本题在试卷中的分值"
+        },
+        "partialScore": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0,
+          "description": "多选题漏选得分；仅当题目类型为 multiple 时有效"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "题目在试卷中的显示顺序"
+        },
+        "content": {
+          "type": "string",
+          "description": "题目内容快照，用于试卷展示时减少二次查询"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["single", "multiple", "judge", "fill", "essay"],
+          "description": "题目类型：单选 / 多选 / 判断 / 填空 / 简答"
+        },
+        "options": {
+          "type": "array",
+          "items": { "type": "object" },
+          "description": "选项列表快照"
+        },
+        "answer": {
+          "type": ["string", "array", "object"],
+          "description": "标准答案快照"
+        },
+        "explanation": {
+          "type": "string",
+          "description": "答案解析快照"
+        }
+      }
+    },
+    "Paper": {
+      "type": "object",
+      "required": ["id", "name", "type", "status", "createdAt", "updatedAt"],
+      "properties": {
+        "id": {
+          "type": ["string", "integer"],
+          "description": "试卷唯一标识"
+        },
+        "name": {
+          "type": "string",
+          "description": "试卷名称"
+        },
+        "categoryId": {
+          "type": ["string", "integer", "null"],
+          "description": "试卷分类 ID"
+        },
+        "categoryName": {
+          "type": "string",
+          "default": "",
+          "description": "试卷分类名称快照"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["fixed", "random"],
+          "default": "fixed",
+          "description": "出卷方式：fixed 固定试卷 / random 随机试卷"
+        },
+        "description": {
+          "type": "string",
+          "default": "",
+          "description": "试卷说明"
+        },
+        "questions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PaperQuestion" },
+          "description": "固定试卷的题目列表；随机试卷可为空"
+        },
+        "totalScore": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0,
+          "description": "试卷总分，通常为题目分值之和"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["enabled", "disabled"],
+          "default": "enabled",
+          "description": "启用状态"
+        },
+        "creator": {
+          "type": "string",
+          "default": "管理员",
+          "description": "创建人显示名"
+        },
+        "createdBy": {
+          "type": "string",
+          "default": "管理员",
+          "description": "创建人账号标识"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "创建时间 ISO 字符串"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "最后更新时间 ISO 字符串"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "required": ["papers"],
+  "properties": {
+    "papers": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/Paper" }
+    }
+  }
+}

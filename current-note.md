@@ -925,11 +925,11 @@
 
 ### 35.2 交接状态
 - 当前任务：级联删除补全与试卷后端化收尾
-- 状态：后端与前端主体实现已完成，静态检查与 API 冒烟通过。
-- 阻塞项：登录后的各模块删除文案、级联文件清理、试卷 CRUD 真实交互需人工验证；试卷实体缺少 `public/` 下三层契约
+- 状态：后端与前端主体实现已完成，静态检查、API 冒烟、试卷 CRUD 端到端验证、试卷三层契约补充均已完成。
+- 阻塞项：其他模块（课程 / 讲师 / 培训 / 用户 / 公告 / 调研 / 分类 / 题库 / 轮播图等）的删除文案与级联文件清理建议在真实数据中进一步抽验。
 
 ### 35.3 最终结果
-- 文件：`server.js`、`routes/question-routes.js`、`dashboard.html`、`scripts/test-api.js`、`current-note.md`。
+- 文件：`server.js`、`routes/question-routes.js`、`dashboard.html`、`scripts/test-api.js`、`current-note.md`，以及新增试卷契约文件。
 - 验证：
   - `node --check server.js` 通过。
   - `node --check routes/question-routes.js` 通过。
@@ -940,9 +940,19 @@
     - Test1 API 单元测试：**PASS**
     - Test2 E2E：**PASS**（Playwright 未安装，改用 integrated_browser MCP 完成：dashboard.html 可渲染、未登录点击受保护 tab 正确跳转到登录页、登录表单正常显示）
     - Test3 Mock 回归：**PASS**（现有契约/Mock 有效，但试卷实体缺少三层契约）
+  - 浏览器端到端验证（管理员账号 15302206488）：
+    - 试卷管理 tab 可正常新建、保存并进入编辑页；
+    - 删除试卷时 confirm 文案为「确定删除这份试卷吗？试卷中的题目图片将一并清理，已关联考试将解除引用。」；
+    - 确认删除后试卷列表恢复为空，后端 `/api/papers` 返回空数组。
+  - 新增试卷契约文件语法/JSON 校验通过，Mock 回归可用。
 - 产出物：
   - `.trae/documents/20260709_模块0_级联删除补全与试卷后端化.md`
   - `.trae/documents/20260709_模块0_级联删除收尾与试卷后端化实施计划.md`
+  - `.trae/documents/20260709_模块0_补充试卷三层契约.md`
+  - `public/schema/paper-schema.json`
+  - `public/interface_stub/paper_service.pyi`
+  - `public/config_template/paper-config-schema.json`
+  - `public/pre_generated_mock/paper-mock.js`
   - `.trae/documents/test_reports/frontend_gate_20260709_164329/`
   - 备份目录 `.trae/backups/20260709_cascade_delete_v4/`
 - 待人工验证：
@@ -952,11 +962,11 @@
   - 旧 `localStorage` 中的 `papers` 是否在首次加载时迁移到后端。
 
 ### 35.4 语义标注
-- **做到哪了**：级联删除后端逻辑与试卷后端化前端改造均已完成；语法检查、API 冒烟、s0402 三重闸门（Test1/Test2/Test3）均通过。
-- **为什么**：用户要求删除记录时不保留任何关联数据/文件以节省空间，且试卷模块此前仅存于浏览器本地，无法参与级联清理。
+- **做到哪了**：级联删除后端逻辑与试卷后端化前端改造均已完成；已使用管理员账号登录并完成试卷 CRUD 端到端验证；已按 s0601 流程补充试卷实体 `public/` 下三层契约。
+- **为什么**：用户要求删除记录时不保留任何关联数据/文件以节省空间，且试卷模块此前仅存于浏览器本地，无法参与级联清理；AC 范式要求新增实体必须同步补齐三层契约与 Mock。
 - **未闭合项**：
-  - 登录后的各模块删除文案、级联文件清理、试卷 CRUD 真实交互需人工验证；
-  - 试卷实体尚未补充 `public/` 下三层契约。
+  - 已验证：试卷新建、编辑、删除确认文案、删除后端生效；
+  - 仍建议人工抽验：课程 / 讲师 / 培训 / 用户 / 公告 / 调研 / 分类 / 题库 / 轮播图等模块的删除文案与级联文件清理（后端逻辑已实现，可在真实数据中进一步验证）。
 - **接续入口**：
-  - 提供管理员账号密码后，我可以用 integrated_browser 直接登录并完成各 tab 删除/试卷 CRUD 的端到端验证；
-  - 如需补齐试卷三层契约，走 s0601 契约变更流程。
+  - 若需继续验证其他模块删除，可在对应管理 tab 创建/选择测试记录并触发删除；
+  - 新增契约文件已落盘，可作为后续契约可验证性检查与 Mock 回归的依据。
