@@ -1428,7 +1428,7 @@
                 }
 
                 if (isToday) {
-                    cellClass += ' ring-2 ring-primary/40 ring-offset-2';
+                    cellClass += ' ring-2 ring-indigo-400/40 ring-offset-2';
                 }
 
                 let coursesHtml = '';
@@ -1456,7 +1456,7 @@
                         <div class="flex flex-col h-full relative overflow-hidden">
                             ${holidayName ? '<span class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded flex items-center justify-center shadow-sm">休</span>' : ''}
                             <div class="flex justify-between items-start">
-                                <span class="${isToday ? 'bg-primary text-white' : 'bg-purple-100 text-purple-600'} rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium shadow-sm">${day}</span>
+                                <span class="${isToday ? 'bg-indigo-500 text-white' : 'bg-purple-100 text-purple-600'} rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium shadow-sm">${day}</span>
                                 <span class="text-gray-400 text-[10px]">${dayCourses.length > 0 ? dayCourses.length + '场' : ''}</span>
                             </div>
                             ${coursesHtml}

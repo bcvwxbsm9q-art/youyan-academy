@@ -14,6 +14,8 @@
   let selectedTemplateId = '';
   let editingCertificateId = null;
   let certSelectedIds = new Set();
+  let activeEdit = null; // 当前正在编辑的文字元素 { node, el, span }
+  const COLOR_PRESETS = ['#c41e0f', '#1f2937', '#1e40af', '#15803d', '#b8860b', '#7c3aed', '#ea580c', '#0ea5e9', '#000000', '#ffffff'];
 
   // ===== 工具函数 =====
   function $(selector) { return document.querySelector(selector); }
@@ -440,76 +442,16 @@
   }
 
   function updateTemplatePreview() {
-    const tpl = templates.find(t => t.id === selectedTemplateId);
     const preview = $('#cert-template-preview');
     if (!preview) return;
+    // 仅在应用样式(currentDesign)后显示真实预览图；未配置前隐藏容器保持空白
     if (currentDesign) {
+      preview.style.display = '';
       preview.innerHTML = renderDesignPreviewBox(currentDesign, 208, 160);
       return;
     }
-    if (!tpl) {
-      preview.innerHTML = '<span class="text-slate-400">请选择模板</span>';
-      return;
-    }
-
-    const bg = tpl.style.background;
-    const bc = tpl.style.borderColor;
-    const pc = tpl.style.primaryColor;
-    const ac = tpl.style.accentColor || bc;
-    const sc = tpl.style.sealColor || pc;
-    const fn = tpl.style.fontFamily;
-    const tTitle = escapeHtml(tpl.placeholders.find(p => p.key === 'title')?.defaultValue || '证书标题');
-    const tName = escapeHtml(tpl.placeholders.find(p => p.key === 'name')?.defaultValue || '姓名');
-
-    preview.innerHTML = `
-      <div class="h-full w-full rounded-xl flex flex-col items-center justify-between p-4 text-center relative overflow-hidden" style="background:${bg}; color:${pc}; border:7px double ${bc}; font-family:${fn}; box-shadow: inset 0 0 40px rgba(0,0,0,0.04);">
-
-        <!-- 内层边框 -->
-        <div style="position:absolute; inset:8px; border:1px solid ${bc}; opacity:0.28; pointer-events:none;"></div>
-        <div style="position:absolute; inset:14px; border:1px solid ${bc}; opacity:0.15; pointer-events:none; border-radius:1px;"></div>
-
-        <!-- 四角装饰 -->
-        <div style="position:absolute; top:12px; left:12px; width:22px; height:22px; border-top:3px solid ${ac}; border-left:3px solid ${ac}; opacity:0.65;"></div>
-        <div style="position:absolute; top:12px; right:12px; width:22px; height:22px; border-top:3px solid ${ac}; border-right:3px solid ${ac}; opacity:0.65;"></div>
-        <div style="position:absolute; bottom:12px; left:12px; width:22px; height:22px; border-bottom:3px solid ${ac}; border-left:3px solid ${ac}; opacity:0.65;"></div>
-        <div style="position:absolute; bottom:12px; right:12px; width:22px; height:22px; border-bottom:3px solid ${ac}; border-right:3px solid ${ac}; opacity:0.65;"></div>
-
-        <!-- 顶部装饰区 -->
-        <div class="relative z-10 w-full">
-          <div class="text-[11px] opacity-60 tracking-[0.35em] uppercase font-medium">Certificate of Achievement</div>
-          <div class="flex items-center gap-2 justify-center mt-1.5">
-            <div class="flex-1 max-w-[36px]" style="height:1px; background:${ac}; opacity:0.45;"></div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="opacity:0.55; color:${ac};"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/></svg>
-            <div class="flex-1 max-w-[36px]" style="height:1px; background:${ac}; opacity:0.45;"></div>
-          </div>
-        </div>
-
-        <!-- 中部内容 -->
-        <div class="relative z-10 flex-1 flex flex-col items-center justify-center px-2 -mt-1">
-          <div class="text-[22px] font-bold leading-tight tracking-wider mb-1" style="text-shadow:0 1px 3px rgba(0,0,0,0.07);">${tTitle}</div>
-          <div class="w-20 h-[2.5px] my-2 rounded-full" style="background:linear-gradient(90deg,transparent,${ac},transparent);"></div>
-          <div class="text-[11px] opacity-60 mb-1 tracking-wide">兹证明</div>
-          <div class="text-[17px] font-semibold px-5 py-1 rounded" style="border-bottom:2px dashed ${bc}; letter-spacing:0.15em;">${tName}</div>
-        </div>
-
-        <!-- 底部信息 + 印章 -->
-        <div class="relative z-10 w-full flex items-end justify-between pb-1 pt-2 px-2">
-          <div class="text-[10px] opacity-50 leading-relaxed text-left">
-            <div>证书编号：NO.20260001</div>
-            <div>颁发日期：2026-07-06</div>
-            <div class="opacity-40 scale-95 origin-left mt-0.5">广州游雁网络科技有限公司</div>
-          </div>
-          <!-- 印章 -->
-          <div class="w-[52px] h-[52px] rounded-full flex flex-col items-center justify-center shrink-0 ml-2" style="border:2.5px solid ${sc}; opacity:0.6; transform:rotate(-12deg); background:rgba(255,255,255,0.25);">
-            <div class="text-[9px] font-bold tracking-widest leading-tight" style="color:${sc};">认证专用章</div>
-            <div class="w-[28px] h-px my-1" style="background:${sc}; opacity:0.6;"></div>
-            <div class="text-[7px]" style="color:${sc};">游雁科技</div>
-          </div>
-        </div>
-
-      </div>
-      <p class="text-xs text-slate-500 text-center mt-2 font-medium">${escapeHtml(tpl.name)}</p>
-    `;
+    preview.style.display = 'none';
+    preview.innerHTML = '';
   }
 
   // ===== 证书详情 =====
@@ -752,7 +694,7 @@
       titleColor: '#1a365d',   textColor: '#334155', subtitleColor: '#64748b',
       accentColor: '#2c5282',  sealColor: '#c2410c',
       fontFamily: "'STSong','SimSun','Times New Roman',serif",
-      layoutHint: { titleY: 0.15, subtitleY: 0.235, nameY: 0.33, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
+      layoutHint: { titleY: 0.185, subtitleY: 0.27, nameY: 0.37, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
     },
     {
       key: 'v2', name: '白玉', orientation: 'portrait',
@@ -760,7 +702,7 @@
       titleColor: '#5d4e37',   textColor: '#57534e', subtitleColor: '#a8a29e',
       accentColor: '#78716c',  sealColor: '#b45309',
       fontFamily: "'STFangsong','FangSong','SimSun',serif",
-      layoutHint: { titleY: 0.15, subtitleY: 0.235, nameY: 0.33, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
+      layoutHint: { titleY: 0.185, subtitleY: 0.27, nameY: 0.37, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
     },
     {
       key: 'v3', name: '金辉', orientation: 'portrait',
@@ -768,7 +710,7 @@
       titleColor: '#7c5c00',   textColor: '#4a3c1a', subtitleColor: '#8b7355',
       accentColor: '#b8860b',  sealColor: '#a16207',
       fontFamily: "'STKaiti','KaiTi','SimSun',serif",
-      layoutHint: { titleY: 0.15, subtitleY: 0.235, nameY: 0.33, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
+      layoutHint: { titleY: 0.185, subtitleY: 0.27, nameY: 0.37, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
     },
     {
       key: 'v4', name: '墨韵', orientation: 'portrait',
@@ -776,7 +718,7 @@
       titleColor: '#1e3a5f',   textColor: '#334155', subtitleColor: '#64748b',
       accentColor: '#1e40af',  sealColor: '#be123c',
       fontFamily: "'STSong','SimSun','Times New Roman',serif",
-      layoutHint: { titleY: 0.15, subtitleY: 0.235, nameY: 0.33, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
+      layoutHint: { titleY: 0.185, subtitleY: 0.27, nameY: 0.37, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
     },
     {
       key: 'v5', name: '蔚蓝', orientation: 'portrait',
@@ -784,7 +726,7 @@
       titleColor: '#166534',   textColor: '#3f4c3a', subtitleColor: '#6b8068',
       accentColor: '#15803d',  sealColor: '#b45309',
       fontFamily: "'STSong','SimSun','Times New Roman',serif",
-      layoutHint: { titleY: 0.15, subtitleY: 0.235, nameY: 0.33, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
+      layoutHint: { titleY: 0.185, subtitleY: 0.27, nameY: 0.37, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
     },
     {
       key: 'v6', name: '朝阳', orientation: 'portrait',
@@ -792,7 +734,7 @@
       titleColor: '#92400e',   textColor: '#4a3c1a', subtitleColor: '#8b7355',
       accentColor: '#b8860b',  sealColor: '#a16207',
       fontFamily: "'STKaiti','KaiTi','SimSun',serif",
-      layoutHint: { titleY: 0.15, subtitleY: 0.235, nameY: 0.33, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
+      layoutHint: { titleY: 0.185, subtitleY: 0.27, nameY: 0.37, contentY: 0.41, companyY: 0.68, dateY: 0.73 }
     },
     // ── 横版（landscape） ──
     {
@@ -801,7 +743,7 @@
       titleColor: '#1a365d',   textColor: '#334155', subtitleColor: '#64748b',
       accentColor: '#2c5282',  sealColor: '#c2410c',
       fontFamily: "'STSong','SimSun','Times New Roman',serif",
-      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.36, contentY: 0.44, companyY: 0.82, dateY: 0.88 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.46, contentY: 0.47, companyY: 0.71, dateY: 0.77 }
     },
     {
       key: 'h2', name: '锦绣', orientation: 'landscape',
@@ -809,7 +751,7 @@
       titleColor: '#5d4e37',   textColor: '#57534e', subtitleColor: '#a8a29e',
       accentColor: '#78716c',  sealColor: '#b45309',
       fontFamily: "'STFangsong','FangSong','SimSun',serif",
-      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.36, contentY: 0.44, companyY: 0.82, dateY: 0.88 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.46, contentY: 0.47, companyY: 0.71, dateY: 0.77 }
     },
     {
       key: 'h3', name: '丹霞', orientation: 'landscape',
@@ -817,7 +759,7 @@
       titleColor: '#92400e',   textColor: '#4a3c1a', subtitleColor: '#8b7355',
       accentColor: '#b8860b',  sealColor: '#a16207',
       fontFamily: "'STKaiti','KaiTi','SimSun',serif",
-      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.36, contentY: 0.44, companyY: 0.82, dateY: 0.88 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.46, contentY: 0.47, companyY: 0.71, dateY: 0.77 }
     },
     {
       key: 'h4', name: '春晒', orientation: 'landscape',
@@ -825,7 +767,7 @@
       titleColor: '#166534',   textColor: '#3f4c3a', subtitleColor: '#6b8068',
       accentColor: '#15803d',  sealColor: '#b45309',
       fontFamily: "'STSong','SimSun','Times New Roman',serif",
-      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.36, contentY: 0.44, companyY: 0.82, dateY: 0.88 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.46, contentY: 0.47, companyY: 0.71, dateY: 0.77 }
     },
     {
       key: 'h5', name: '银素', orientation: 'landscape',
@@ -833,7 +775,7 @@
       titleColor: '#374151',   textColor: '#4b5563', subtitleColor: '#6b7280',
       accentColor: '#4b5563',  sealColor: '#b91c1c',
       fontFamily: "'Microsoft YaHei','PingFang SC',sans-serif",
-      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.36, contentY: 0.44, companyY: 0.82, dateY: 0.88 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.46, contentY: 0.47, companyY: 0.71, dateY: 0.77 }
     },
     {
       key: 'h6', name: '紫宸', orientation: 'landscape',
@@ -841,7 +783,7 @@
       titleColor: '#5b21b6',   textColor: '#3b3654', subtitleColor: '#7e6f9e',
       accentColor: '#7c3aed',  sealColor: '#be185d',
       fontFamily: "'STSong','SimSun','Times New Roman',serif",
-      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.36, contentY: 0.44, companyY: 0.82, dateY: 0.88 }
+      layoutHint: { titleY: 0.15, subtitleY: 0.27, nameY: 0.46, contentY: 0.47, companyY: 0.71, dateY: 0.77 }
     }
   ];
 
@@ -865,14 +807,49 @@
     return String(text == null ? '' : text).replace(/\{\{(\w+)\}\}/g, (m, k) => (fill[k] !== undefined ? fill[k] : m));
   }
   // 行内混色渲染：【文字】→ 红色加粗 span，其余正常转义。无标记时等价于 escapeHtml(fillTokens(...))
+  function normalizeColor(c) {
+    if (!c) return null;
+    c = String(c).trim();
+    if (c.charAt(0) === '#') {
+      if (/^#[0-9a-fA-F]{6}$/.test(c)) return c.toLowerCase();
+      if (/^#[0-9a-fA-F]{3}$/.test(c)) return '#' + c.slice(1).split('').map(x => x + x).join('').toLowerCase();
+      return null;
+    }
+    const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+    if (m) return '#' + [+m[1], +m[2], +m[3]].map(x => x.toString(16).padStart(2, '0')).join('');
+    return null;
+  }
+  // 【文字】→ 默认红；【#rrggbb:文字】→ 指定颜色（均加粗，作为强调着色）
   function renderRichText(text, fill) {
     const t = fillTokens(text, fill);
-    return String(t).split(/(【[^】]*】)/g).map(p => {
+    const esc = s => escapeHtml(s).replace(/\n/g, '<br>'); // 换行符转 <br>，否则 HTML 会把 \n 折叠成空格
+    return String(t).split(/(【(?:#[0-9a-fA-F]{6}:)?[^】]*】)/g).map(p => {
       if (p.startsWith('【') && p.endsWith('】')) {
-        return '<span style="color:#c41e0f;font-weight:bold;">' + escapeHtml(p.slice(1, -1)) + '</span>';
+        const inner = p.slice(1, -1);
+        const m = inner.match(/^#([0-9a-fA-F]{6}):(.*)$/);
+        if (m) return '<span style="color:#' + m[1].toLowerCase() + ';font-weight:bold;">' + esc(m[2]) + '</span>';
+        return '<span style="color:#c41e0f;font-weight:bold;">' + esc(inner) + '</span>';
       }
-      return escapeHtml(p);
+      return esc(p);
     }).join('');
+  }
+  // 将 contentEditable 产生的 HTML 转回 【】 标记（WYSIWYG 编辑保存用）
+  function htmlToMarkup(html) {
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    temp.querySelectorAll('br').forEach(br => br.replaceWith(document.createTextNode('\n')));
+    temp.querySelectorAll('div').forEach(d => { d.replaceWith(document.createTextNode('\n' + d.textContent)); });
+    const toMark = node => {
+      const c = node.getAttribute('color') || node.style.color;
+      const hex = normalizeColor(c);
+      if (hex) {
+        const prefix = (hex === '#c41e0f') ? '' : '#' + hex.slice(1).toLowerCase() + ':';
+        node.replaceWith(document.createTextNode('【' + prefix + node.textContent + '】'));
+      }
+    };
+    temp.querySelectorAll('font').forEach(toMark); // 部分浏览器用 <font color>
+    temp.querySelectorAll('span').forEach(toMark);
+    return temp.textContent || '';
   }
   function bgCss(bg) {
     if (!bg) return '#ffffff';
@@ -893,7 +870,7 @@
         { id: uid(), type: 'text', key: 'title', x: 18, y: 65, w: 384, h: 48, text: '{{title}}', fontSize: 32, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center', color: pc, underline: false, fontFamily: fn },
         { id: uid(), type: 'text', key: 'subtitle', x: 63, y: 113, w: 294, h: 20, text: 'CERTIFICATE OF HONORS', fontSize: 10, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center', color: '#64748b', underline: false, fontFamily: 'Arial,sans-serif' },
         { id: uid(), type: 'text', key: 'name', x: 34, y: 160, w: 352, h: 38, text: '{{name}}', fontSize: 26, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center', color: pc, underline: true, fontFamily: fn },
-        { id: uid(), type: 'text', key: 'content', x: 34, y: 220, w: 352, h: 130, text: '{{content}}', fontSize: 14, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center', color: '#475569', underline: false, fontFamily: fn },
+        { id: uid(), type: 'text', key: 'content', x: 34, y: 220, w: 352, h: 130, text: '{{content}}', fontSize: 14, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'left', lineHeight: 1.5, color: '#475569', underline: false, fontFamily: fn },
         { id: uid(), type: 'text', key: 'company', x: 200, y: 493, w: 185, h: 22, text: '{{company}}', fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right', color: '#475569', underline: false, fontFamily: fn },
         { id: uid(), type: 'text', key: 'date', x: 235, y: 523, w: 150, h: 22, text: '{{date}}', fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right', color: '#475569', underline: false, fontFamily: fn }
       ],
@@ -906,7 +883,7 @@
     const dims = EDITOR_PAGE[d.layout];
     const pw = dims.w * scale, ph = dims.h * scale;
     const bc = d.borderColor, ac = d.accentColor;
-    let s = `<div class="cert-design-page" style="width:${pw}px;height:${ph}px;${bgCss(d.background)}">`;
+    let s = `<div class="cert-design-page" style="width:${pw}px;height:${ph}px;position:relative;overflow:hidden;${bgCss(d.background)}">`;
     s += `<div style="position:absolute;inset:${6 * scale}px;border:${2 * scale}px solid ${bc};opacity:0.4;pointer-events:none;"></div>`;
     s += `<div style="position:absolute;inset:${12 * scale}px;border:1px solid ${bc};opacity:0.22;pointer-events:none;"></div>`;
     [['top', 'left'], ['top', 'right'], ['bottom', 'left'], ['bottom', 'right']].forEach(([v, h]) => {
@@ -915,7 +892,7 @@
     (d.elements || []).forEach(el => {
       const fs = el.fontSize * scale;
       const justify = el.textAlign === 'center' ? 'center' : el.textAlign === 'right' ? 'flex-end' : 'flex-start';
-      s += `<div class="cert-design-el" style="left:${el.x * scale}px;top:${el.y * scale}px;width:${el.w * scale}px;height:${el.h * scale}px;font-size:${fs}px;font-weight:${el.fontWeight};font-style:${el.fontStyle};text-align:${el.textAlign};color:${el.color};font-family:${el.fontFamily};text-decoration:${el.underline ? 'underline' : 'none'};display:flex;align-items:center;justify-content:${justify};padding:2px 4px;box-sizing:border-box;">${escapeHtml(fillTokens(el.text, fill))}</div>`;
+      s += `<div class="cert-design-el" style="left:${el.x * scale}px;top:${el.y * scale}px;width:${el.w * scale}px;height:${el.h * scale}px;font-size:${fs}px;font-weight:${el.fontWeight};font-style:${el.fontStyle};text-align:${el.textAlign};color:${el.color};font-family:${el.fontFamily};text-decoration:${el.underline ? 'underline' : 'none'};letter-spacing:${el.letterSpacing || 0}px;line-height:${el.lineHeight != null ? el.lineHeight : (el.key === 'content' ? 1.5 : 1.2)};display:flex;align-items:center;justify-content:${justify};padding:${el.key === 'content' ? '0 4px' : '2px 6px'};box-sizing:border-box;">${renderRichText(el.text, fill)}</div>`;
     });
     if (d.seal) {
       const sz = d.seal.size * scale, fs2 = Math.max(8, sz * 0.16);
@@ -939,18 +916,15 @@
   // ---------- 编辑器打开 / 关闭 ----------
   function openCertificateEditor() {
     // 不再需要先选模板——直接用第一套模板（蓝韵防伪）作为默认
-    const defaultTplKey = editorState?._tplKey || CERT_TEMPLATES[0].key;
-    if (!editorState || editorState._tplKey !== defaultTplKey) {
-      // 如果已有保存的 design 且模板匹配则复用，否则新建
-      if (currentDesign && currentDesign._tplKey === defaultTplKey) {
-        editorState = deepClone(currentDesign);
-      } else {
-        // 用第一套模板初始化空设计
-        editorState = { _tplKey: '', layout: 'portrait', elements: [], seal: null, background: { type: 'preset', value: '' } };
-        applyTemplate(defaultTplKey);
-        // 注意：不再 return —— applyTemplate 已设置好 state，继续往下打开抽屉
-      }
+    const defaultTplKey = (editorState && editorState._tplKey) || CERT_TEMPLATES[0].key;
+    // 先保留已编辑的文字内容（如有保存的设计），再按模板【最新 layoutHint】重建布局，
+    // 确保坐标调整（如横版 nameY/contentY/company x 等）在每次打开时都生效，而不是沿用旧的保存位置。
+    if (currentDesign && currentDesign._tplKey === defaultTplKey) {
+      editorState = deepClone(currentDesign); // 含已编辑文字
+    } else if (!editorState || editorState._tplKey !== defaultTplKey) {
+      editorState = { _tplKey: '', layout: 'portrait', elements: [], seal: null, background: { type: 'preset', value: '' } };
     }
+    applyTemplate(defaultTplKey); // 始终按最新 layoutHint 重建坐标，保留 existingTexts 中的文字
     openDrawerOverlay('certificate-editor-drawer-overlay');
     syncEditorUI();
     renderEditorPage();
@@ -1020,39 +994,41 @@
 
     // 构建默认元素（使用模板配色 + 模板专属坐标）
     // 竖版需要更大左右内边距避免与花边重叠，横版稍窄
-    const padX = editorState.layout === 'portrait' ? dims.w * 0.11 : dims.w * 0.10;
+    const padX = editorState.layout === 'portrait' ? dims.w * 0.14 : dims.w * 0.10;
     const innerW = dims.w - padX * 2; // 内容区宽度
     const isLand = editorState.layout === 'landscape';
     editorState.elements = [
       { id: uid(), type: 'text', key: 'title',
         x: padX, y: Math.round(ty), w: Math.round(innerW), h: isLand ? 46 : 52,
         text: existingTexts['title'] || '{{title}}',
-        fontSize: isLand ? 34 : 38, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center',
+        fontSize: isLand ? 34 : 38, fontWeight: 'bold', letterSpacing: isLand ? 3 : 4, fontStyle: 'normal', textAlign: 'center',
         color: t.titleColor, underline: false, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'subtitle',
         x: padX, y: Math.round(sy), w: Math.round(innerW), h: 20,
         text: existingTexts['subtitle'] || 'CERTIFICATE OF HONORS',
-        fontSize: 12, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center',
+        fontSize: 12, fontWeight: 'normal', letterSpacing: 2, fontStyle: 'normal', textAlign: 'center',
         color: '#64748b', underline: false, fontFamily: 'Arial,sans-serif' },
       { id: uid(), type: 'text', key: 'name',
         x: padX, y: Math.round(ny), w: Math.round(isLand ? innerW * 0.55 : innerW * 0.60), h: 24,
         text: existingTexts['name'] || '{{name}}',
-        fontSize: 14, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'left',
-        color: t.titleColor, underline: true, fontFamily: t.fontFamily },
+        fontSize: 15, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'left',
+        color: t.textColor, underline: true, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'content',
         x: padX, y: Math.round(cy), w: Math.round(innerW), h: isLand ? 100 : 120,
-        text: existingTexts['content'] || '\u3000\u3000在本公司工作期间，认真负责，表现优秀，现授予【年度优秀员工】荣誉称号。特发此证，以示表彰。',
-        fontSize: 14, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'left',
+        text: existingTexts['content'] || (isLand
+          ? '\u3000\u3000在本公司工作期间，认真负责，表现优秀，现授予【年度优秀员工】荣誉\n称号。特发此证，以示表彰。'
+          : '\u3000\u3000在本公司工作期间，认真负责，表现\n优秀，现授予【年度优秀员工】荣誉称号。特\n发此证，以示表彰。'),
+        fontSize: 15, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'left', lineHeight: isLand ? 1.5 : 2,
         color: t.textColor, underline: false, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'company',
-        x: Math.round(padX + innerW * (isLand ? 0.28 : 0.38)), y: Math.round(coy), w: Math.round(innerW * (isLand ? 0.72 : 0.62)), h: 22,
+        x: Math.round(padX + innerW * (isLand ? 0.50 : 0.38)), y: Math.round(coy), w: Math.round(innerW * (isLand ? 0.45 : 0.62)), h: 22,
         text: existingTexts['company'] || '{{company}}',
-        fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right',
+        fontSize: isLand ? 13 : 15, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right',
         color: t.textColor, underline: false, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'date',
-        x: Math.round(padX + innerW * (isLand ? 0.35 : 0.44)), y: Math.round(dy), w: Math.round(innerW * (isLand ? 0.65 : 0.56)), h: 22,
+        x: Math.round(padX + innerW * (isLand ? 0.55 : 0.44)), y: Math.round(dy), w: Math.round(innerW * (isLand ? 0.40 : 0.56)), h: 22,
         text: existingTexts['date'] || '{{date}}',
-        fontSize: 13, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right',
+        fontSize: isLand ? 13 : 15, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right',
         color: t.textColor, underline: false, fontFamily: t.fontFamily }
     ];
     // 默认不添加印章（用户可手动添加）
@@ -1076,7 +1052,7 @@
     node.className = 'cert-el';
     node.dataset.id = el.id;
     applyTextNodeStyle(node, el);
-    node.innerHTML = `<span class="cert-el-text">${escapeHtml(fillTokens(el.text, EDITOR_SAMPLE))}</span>` + handleHTML();
+    node.innerHTML = `<span class="cert-el-text">${renderRichText(el.text, EDITOR_SAMPLE)}</span>` + handleHTML();
     return node;
   }
   function applyTextNodeStyle(node, el) {
@@ -1086,7 +1062,9 @@
     node.style.fontWeight = el.fontWeight; node.style.fontStyle = el.fontStyle;
     node.style.textAlign = el.textAlign; node.style.color = el.color; node.style.fontFamily = el.fontFamily;
     node.style.textDecoration = el.underline ? 'underline' : 'none';
-    node.style.lineHeight = el.key === 'content' ? '1.5' : '1.2';
+    node.style.lineHeight = el.lineHeight != null ? el.lineHeight : (el.key === 'content' ? '1.5' : '1.2');
+    if (el.letterSpacing) node.style.letterSpacing = el.letterSpacing + 'px';
+    node.style.padding = el.key === 'content' ? '0 4px' : '2px 6px';
   }
   function createSealNode(seal) {
     const node = document.createElement('div');
@@ -1225,22 +1203,33 @@
   function openTextEdit(node, el) {
     const span = node.querySelector('.cert-el-text');
     if (!span || span.isContentEditable) return;
+    // WYSIWYG 编辑：保持渲染后的 HTML（红字 span 可见），不切换到原始标记
     span.setAttribute('contenteditable', 'true');
     span.focus();
+    // 光标置于末尾（不自动全选，防止误按键全删）
     const sel = window.getSelection();
     sel.removeAllRanges();
     const range = document.createRange();
     range.selectNodeContents(span);
     range.collapse(false); // 光标置于末尾
     sel.addRange(range);
-    const finish = () => {
-      el.text = span.innerText;
-      span.removeAttribute('contenteditable');
-      span.removeEventListener('blur', finish);
-      refreshTextNode(node, el);
-      syncPropPanel();
-    };
-    span.addEventListener('blur', finish);
+    activeEdit = { node, el, span };
+    span.addEventListener('blur', onEditBlur);
+  }
+  function onEditBlur() {
+    if (!activeEdit) return;
+    const { node, el, span } = activeEdit;
+    if (!span.isContentEditable) return;
+    // 将 contentEditable 产生的 HTML 转回 【】 标记保存
+    el.text = htmlToMarkup(span.innerHTML);
+    span.removeAttribute('contenteditable');
+    span.removeEventListener('blur', onEditBlur);
+    activeEdit = null;
+    refreshTextNode(node, el);
+    syncPropPanel();
+  }
+  function commitActiveEdit() {
+    if (activeEdit) activeEdit.span.blur();
   }
   function attachEl(node, el, isSeal) {
     node.addEventListener('mousedown', e => onElMouseDown(e, el, isSeal, node));
@@ -1253,17 +1242,12 @@
     }
   }
   function onElMouseDown(e, el, isSeal, node) {
-    if (e.target.isContentEditable) return; // 正在编辑文字
-    // 点击文字主体 → 直接进入编辑模式（而不是变成移动图标）
-    if (!isSeal && e.target.closest('.cert-el-text')) {
-      e.preventDefault();
-      selectElement(el.id);
-      openTextEdit(node, el);
-      return;
-    }
-    // 若正在编辑同元素的其他文字，禁止误触拖拽
-    if (!isSeal && node.querySelector('.cert-el-text')?.isContentEditable) { e.preventDefault(); return; }
+    if (e.target.isContentEditable) return; // 正在编辑文字，交给浏览器处理
+    // 先保存并退出当前正在编辑的文字（防止 preventDefault 阻止 blur）
+    const editing = document.querySelector('#et-page [contenteditable="true"]');
+    if (editing) editing.blur();
     e.preventDefault(); e.stopPropagation();
+    // 选中元素（单击 = 选中，双击 = 编辑文字，和 Canva/Figma 一致）
     const handle = e.target.closest('[data-dir]');
     selectElement(isSeal ? 'seal' : el.id);
     const page = $('#et-page');
@@ -1325,7 +1309,7 @@
   function refreshTextNode(node, el) {
     applyTextNodeStyle(node, el);
     const span = node.querySelector('.cert-el-text');
-    if (span && !span.isContentEditable) span.textContent = fillTokens(el.text, EDITOR_SAMPLE);
+    if (span && !span.isContentEditable) span.innerHTML = renderRichText(el.text, EDITOR_SAMPLE);
   }
   function refreshSealNode() {
     const node = $('#et-page [data-id="seal"]');
@@ -1376,7 +1360,8 @@
     $('#et-align-r').classList.toggle('active', el.textAlign === 'right');
     $('#et-font').value = el.fontFamily;
     $('#et-size').value = el.fontSize;
-    $('#et-color').value = el.color;
+    const lhSel = $('#et-lineheight'); if (lhSel) lhSel.value = String(el.lineHeight != null ? el.lineHeight : (el.key === 'content' ? 1.5 : 1.2));
+    const prev = $('#et-color-prev'); if (prev) prev.style.background = el.color;
   }
 
   // ---------- 工具栏操作 ----------
@@ -1390,6 +1375,46 @@
   function toggleTextStyle(prop, on, off) {
     const el = selEl(); if (!el || selectedElId === 'seal') return;
     applyTextStyle(prop, el[prop] === on ? off : on);
+  }
+  // 字体颜色色板
+  function buildColorSwatches() {
+    const box = $('#et-color-swatches'); if (!box) return;
+    box.innerHTML = '';
+    COLOR_PRESETS.forEach(c => {
+      const b = document.createElement('div');
+      b.className = 'et-color-swatch';
+      b.style.background = c;
+      b.dataset.color = c;
+      b.title = c;
+      box.appendChild(b);
+    });
+  }
+  // 给当前编辑中的局部选区着色（返回是否命中选区）
+  function applyColorToSelection(color) {
+    if (!activeEdit) return false;
+    const span = activeEdit.span;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return false;
+    if (!span.contains(sel.anchorNode) || !span.contains(sel.focusNode)) return false;
+    try { document.execCommand('foreColor', false, color); } catch (e) {}
+    activeEdit.el.text = htmlToMarkup(span.innerHTML);
+    return true;
+  }
+  // 统一入口：编辑中有选区→局部着色；否则整段改色
+  function applyFontColor(color) {
+    color = color || '#1f2937';
+    const span = document.querySelector('#et-page [contenteditable="true"]');
+    const sel = window.getSelection();
+    const editingSel = span && sel && sel.rangeCount > 0 && !sel.isCollapsed &&
+      span.contains(sel.anchorNode) && span.contains(sel.focusNode);
+    if (editingSel) {
+      applyColorToSelection(color);
+    } else {
+      commitActiveEdit();
+      applyTextStyle('color', color);
+    }
+    const prev = $('#et-color-prev'); if (prev) prev.style.background = color;
+    const pc = $('#et-prop-color'); if (pc) pc.value = color;
   }
   function addTextElement() {
     const dims = EDITOR_PAGE[editorState.layout];
@@ -1453,7 +1478,6 @@
     currentDesign = deepClone(editorState);
     closeEditor();
     updateTemplatePreview();
-    showToast('样式已应用', 'success');
   }
 
   // ===== 初始化绑定 =====
@@ -1491,11 +1515,31 @@
     $('#et-align-l')?.addEventListener('click', () => applyTextStyle('textAlign', 'left'));
     $('#et-align-c')?.addEventListener('click', () => applyTextStyle('textAlign', 'center'));
     $('#et-align-r')?.addEventListener('click', () => applyTextStyle('textAlign', 'right'));
-    $('#et-color')?.addEventListener('input', e => applyTextStyle('color', e.target.value));
     $('#et-size')?.addEventListener('input', e => applyTextStyle('fontSize', parseInt(e.target.value) || 16));
+    $('#et-lineheight')?.addEventListener('change', e => applyTextStyle('lineHeight', parseFloat(e.target.value) || 1.5));
     $('#et-font')?.addEventListener('change', e => applyTextStyle('fontFamily', e.target.value));
     $('#et-delete')?.addEventListener('click', deleteSelected);
     $('#et-bringfront')?.addEventListener('click', bringToFront);
+    // 字体颜色：色板弹层 + 选区/整段着色
+    buildColorSwatches();
+    $('#et-color-btn')?.addEventListener('mousedown', e => e.preventDefault()); // 保持编辑框焦点与选区
+    $('#et-color-btn')?.addEventListener('click', e => {
+      e.stopPropagation();
+      const pop = $('#et-color-pop'); if (!pop) return;
+      pop.classList.toggle('open');
+      const cur = (selEl() && selEl().color) || '#1f2937';
+      $$('#et-color-swatches .et-color-swatch').forEach(s => s.classList.toggle('active', !!s.dataset.color && s.dataset.color.toLowerCase() === String(cur).toLowerCase()));
+    });
+    $('#et-color-swatches')?.addEventListener('mousedown', e => { const sw = e.target.closest('.et-color-swatch'); if (sw) e.preventDefault(); });
+    $('#et-color-swatches')?.addEventListener('click', e => {
+      const sw = e.target.closest('.et-color-swatch'); if (!sw) return;
+      applyFontColor(sw.dataset.color);
+      $('#et-color-pop')?.classList.remove('open');
+    });
+    document.addEventListener('click', e => {
+      const pop = $('#et-color-pop'); if (!pop) return;
+      if (!e.target.closest('.et-color-wrap')) pop.classList.remove('open');
+    });
     $('#et-orient-portrait')?.addEventListener('click', () => setLayout('portrait'));
     $('#et-orient-landscape')?.addEventListener('click', () => setLayout('landscape'));
     $('#et-bg-upload')?.addEventListener('change', onBgUpload);
@@ -1507,15 +1551,16 @@
     $('#et-prop-seal-text')?.addEventListener('input', e => { if (editorState.seal) { editorState.seal.text = e.target.value; refreshSealNode(); } });
     $('#et-prop-seal-size')?.addEventListener('input', e => { if (editorState.seal) { editorState.seal.size = clamp(parseInt(e.target.value) || 80, 30, 220); refreshSealNode(); } });
     $('#et-prop-seal-color')?.addEventListener('input', e => { if (editorState.seal) { editorState.seal.color = e.target.value; refreshSealNode(); } });
-    $('#et-stage')?.addEventListener('mousedown', e => { if (e.target.id === 'et-stage' || e.target.id === 'et-page') selectElement(null); });
+    $('#et-stage')?.addEventListener('mousedown', e => { if (e.target.id === 'et-stage' || e.target.id === 'et-page') { const ed = document.querySelector('#et-page [contenteditable="true"]'); if (ed) ed.blur(); selectElement(null); } });
 
     // 键盘 Delete / Backspace 删除选中元素
     document.addEventListener('keydown', e => {
       // 只在编辑器打开时响应
       if (!$('#et-stage')?.offsetParent) return;
-      // 如果正在编辑文字（contentEditable），不拦截退格/删除键
+      // 编辑文字时绝不拦截退格/删除键（多重守卫）
       const active = document.activeElement;
-      if (active && (active.isContentEditable || active.classList.contains('cert-el-text'))) return;
+      if (active && (active.isContentEditable || active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+      if (document.querySelector('#et-page [contenteditable="true"]')) return;
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElId) {
         e.preventDefault();
         deleteSelected();
@@ -1565,6 +1610,7 @@
     openCertificateEditor,
     closeEditor,
     renderDesignPageInner,
+    printScale,
     toggleCertSelect,
     toggleCertSelectAll,
     updateCertSelectAllState,

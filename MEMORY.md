@@ -25,7 +25,7 @@
 - 注册接口：POST /api/auth/register
 - 登录接口：POST /api/auth/login
 - Token 验证：GET /api/auth/me
-- 默认账户：admin/admin2026 (管理员), student/student123 (学生)
+- 当前管理员账户：15302206488/000000，学生账户：student/student123
 
 ## 管理后台功能
 - 题库管理：支持 5 种题型 (单选/多选/判断/填空/简答)

@@ -908,7 +908,7 @@
                                     </div>
                                 </div>
                                 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="certificates-list">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="certificates-list">
                                     <!-- 动态渲染 -->
                                 </div>
                             </div>
@@ -1067,17 +1067,40 @@
         </div>
     </div>
 
+    <!-- 证书图片放大查看弹窗 -->
+    <div id="certificate-image-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4" onclick="if(event.target === this) closeCertificateImageModal()">
+        <div class="relative bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-3 border-b">
+                <h3 class="font-bold text-gray-800" id="certificate-image-modal-title">证书预览</h3>
+                <button onclick="closeCertificateImageModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-auto p-6 flex items-center justify-center bg-gray-50">
+                <img id="certificate-image-modal-img" src="" alt="证书大图" class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg">
+            </div>
+            <div class="px-5 py-3 border-t flex justify-end gap-3">
+                <button onclick="closeCertificateImageModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">关闭</button>
+                <button id="certificate-image-modal-download" class="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:opacity-90">
+                    <i class="fa fa-download mr-1"></i>下载图片
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/auth-modal.js?v=20260704"></script>
     <script src="js/auth-guard.js?v=20260704"></script>
     <script src="js/data-sync.js"></script>
     <script src="data-api.js"></script>
     <script src="js/notification.js?v=20260704"></script>
+    <script src="js/certificate-management.js?v=20260714"></script>
     <script>
         const api = window.DataAPI;
         let currentUser = null;
         let learningRecords = [];
         let statsChart = null;
         let userTrainingCount = 0;
+        let serverCertificateCount = 0; // 从服务端拉取的证书数量（用于徽章/经验值计算）
         const certImageData = {}; // 证书生成的图片数据 URL 缓存
 
         // HTML 转义工具（全局可用）
@@ -1165,10 +1188,10 @@ const BADGES = [
             await loadExamRecordsFromServer(); // 拉取服务端考试记录用于徽章计算
             await loadUserTrainingStatsFromServer(); // 拉取服务端培训统计用于徽章计算
             await loadLoginDaysFromServer(); // 拉取服务端登录天数用于里程碑徽章
+            await loadCertificates();
             loadAllData();
             loadActivityTimeline();
             loadBadges();
-            await loadCertificates();
             // 默认显示学习统计
             switchTab('learning-stats');
         });
@@ -1381,7 +1404,7 @@ const BADGES = [
                 examCount: examRecords.length,
                 examPassed: examRecords.filter(e => e.passed).length,
                 trainingCount: userTrainingCount,
-                certificateCount: learningData.certificates?.length || 0
+                certificateCount: serverCertificateCount
             };
 
             // 重新换算徽章：只按当前条件计算，不再合并历史解锁记录
@@ -1391,7 +1414,7 @@ const BADGES = [
             return {
                 ...baseStats,
                 badges: allUnlockedIds.length,
-                certificates: learningData.certificates?.length || 0
+                certificates: serverCertificateCount
             };
         }
 
@@ -1557,6 +1580,10 @@ const BADGES = [
         async function updateLearningStats() {
             if (!currentUser || !currentUser.id) return;
             const userId = currentUser.id;
+
+            // 先从服务端拉取最新证书数量，确保徽章/经验值计算与管理员操作同步
+            await loadCertificates();
+
             const learningData = api.getUserLearningData(userId);
             
             // 学习时长：优先用 totalSeconds 计算
@@ -1602,9 +1629,6 @@ const BADGES = [
                 const expPercent = (levelInfo.currentExp / levelInfo.requiredExp) * 100;
                 expBarEl.style.width = `${expPercent}%`;
             }
-            
-            // 证书数量（从服务端实时拉取）
-            await loadCertificates();
             
             // 进行中课程数
             let inProgressCount = 0;
@@ -2288,17 +2312,11 @@ const BADGES = [
             localStorage.setItem(getExpStorageKey(userId), String(exp));
         }
 
-        // 同步经验值：只增不减
+        // 同步经验值：以当前真实数据计算结果为准（证书被管理员删除后可下降）
         function syncExp(userId, stats) {
             const currentExp = calculateTotalExp(stats);
-            const persistedExp = getPersistedExp(userId);
-
-            if (currentExp > persistedExp) {
-                saveExp(userId, currentExp);
-                return { totalExp: currentExp };
-            }
-
-            return { totalExp: Math.max(currentExp, persistedExp) };
+            saveExp(userId, currentExp);
+            return { totalExp: currentExp };
         }
 
         // 加载证书
@@ -2317,6 +2335,7 @@ const BADGES = [
                 const result = await res.json();
                 const certs = result.data || [];
                 const validCount = certs.filter(c => c.status === 'active' || c.status === 'expired').length;
+                serverCertificateCount = validCount;
                 const countEl = document.getElementById('certificate-count');
                 if (countEl) countEl.textContent = validCount;
                 const statEl = document.getElementById('stat-certificates');
@@ -2328,6 +2347,7 @@ const BADGES = [
 
         // 渲染证书 HTML（用于预览/打印）
         function renderCertificatePreviewHTML(userCert, template) {
+            console.log('[renderCertificatePreviewHTML] design=', !!userCert.design, 'mgmt=', typeof window.CertificateMgmt, 'userCert.id=', userCert.id);
             const user = userCert.userName || '学员';
             const company = userCert.userDepartment || '广州游雁网络科技有限公司';
             const date = (userCert.issueAt || '').split('T')[0] || new Date().toISOString().split('T')[0];
@@ -2337,6 +2357,14 @@ const BADGES = [
                 : (userCert.sourceType === 'training'
                     ? '已完成全部培训课程，考核合格，准予结业。'
                     : '表现优异，特发此证，以资鼓励。');
+
+            // 优先使用管理后台可视化编辑器保存的设计稿
+            if (userCert.design && window.CertificateMgmt && window.CertificateMgmt.renderDesignPageInner && window.CertificateMgmt.printScale) {
+                const fill = { title, name: user, certNo: userCert.certNo || '', date, company, content };
+                const scale = window.CertificateMgmt.printScale(userCert.design.layout);
+                return window.CertificateMgmt.renderDesignPageInner(userCert.design, scale, fill);
+            }
+
             const isPortrait = template.layout === 'portrait';
             // html-to-image 对 mm 单位支持不稳定，使用 px 避免渲染/转图片异常
             const width = isPortrait ? '794px' : '1123px';
@@ -2430,6 +2458,34 @@ const BADGES = [
             document.body.removeChild(link);
         }
 
+        // 放大查看证书图片
+        function openCertificateImageModal(certId) {
+            const payload = certImageData[certId];
+            if (!payload || !payload.dataUrl) {
+                showToast('证书图片尚未生成，请稍后再试', 'error');
+                return;
+            }
+            const modal = document.getElementById('certificate-image-modal');
+            const img = document.getElementById('certificate-image-modal-img');
+            const title = document.getElementById('certificate-image-modal-title');
+            const downloadBtn = document.getElementById('certificate-image-modal-download');
+            if (!modal || !img || !downloadBtn) return;
+
+            const card = document.querySelector(`[data-cert-id="${certId}"]`);
+            const nameEl = card?.querySelector('h4');
+            title.textContent = nameEl ? nameEl.textContent + ' - 证书预览' : '证书预览';
+            img.src = payload.dataUrl;
+            downloadBtn.onclick = () => downloadCertificateImage(certId);
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCertificateImageModal() {
+            const modal = document.getElementById('certificate-image-modal');
+            if (modal) modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
         // 加载证书列表
         async function loadCertificatesList() {
             const container = document.getElementById('certificates-list');
@@ -2488,7 +2544,8 @@ const BADGES = [
 
                 // 渲染图片卡片骨架
                 container.innerHTML = certs.map(cert => {
-                    const isPortrait = cert.template?.layout === 'portrait';
+                    const layout = cert.design?.layout || cert.template?.layout || 'portrait';
+                    const isPortrait = layout === 'portrait';
                     return `
                         <div class="cert-image-card border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all bg-white" data-cert-id="${cert.id}">
                             <div class="relative bg-gray-50 flex items-center justify-center" style="aspect-ratio: ${isPortrait ? '210/297' : '297/210'};">
@@ -2496,8 +2553,8 @@ const BADGES = [
                                     <i class="fa fa-spinner fa-spin text-2xl mb-2"></i>
                                     <span class="text-xs">生成证书图片...</span>
                                 </div>
-                                <img class="cert-image w-full h-full object-contain hidden" alt="${escapeHtml(cert.certificateName || '证书')}">
-                                <button class="cert-download-btn absolute top-2 right-2 px-3 py-1.5 bg-white/90 backdrop-blur text-purple-700 rounded-lg text-sm shadow hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled onclick="downloadCertificateImage('${cert.id}')">
+                                <img class="cert-image w-full h-full object-contain hidden cursor-zoom-in" alt="${escapeHtml(cert.certificateName || '证书')}" onclick="openCertificateImageModal('${cert.id}'); event.stopPropagation();">
+                                <button class="cert-download-btn absolute top-2 right-2 px-3 py-1.5 bg-white/90 backdrop-blur text-purple-700 rounded-lg text-sm shadow hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled onclick="event.stopPropagation(); downloadCertificateImage('${cert.id}')">
                                     <i class="fa fa-download mr-1"></i>下载
                                 </button>
                             </div>

@@ -9,7 +9,7 @@
 
   const DEFAULT_TEMPLATES = [
     {
-      id: 'tpl-honor-blue',
+      id: 'tpl-honor-purple',
       name: '紫色考试合格证书（竖版）',
       layout: 'portrait',
       thumbnail: '',
@@ -108,7 +108,7 @@
       prefix: 'YX',
       startNumber: 1,
       digits: 4,
-      templateId: 'tpl-honor-blue',
+      templateId: 'tpl-honor-purple',
       status: 'enabled',
       creator: '许志坚',
       createdAt: '2024-05-11T11:15:00.000Z'

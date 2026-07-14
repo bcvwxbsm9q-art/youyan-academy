@@ -59,7 +59,7 @@
       "properties": {
         "defaultTemplateId": {
           "type": "string",
-          "default": "tpl-honor-blue",
+          "default": "tpl-honor-purple",
           "description": "默认证书模板 ID"
         },
         "pageSize": {

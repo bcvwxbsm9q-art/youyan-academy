@@ -518,7 +518,7 @@ function initCertificateData() {
   if (!data.certificate_templates) {
     data.certificate_templates = [
       {
-        id: 'tpl-honor-blue',
+        id: 'tpl-honor-purple',
         name: '紫色考试合格证书（竖版）',
         layout: 'portrait',
         thumbnail: '',
@@ -1802,7 +1802,7 @@ app.put('/api/auth/users/:id', (req, res) => {
   }
   
   // 更新允许的字段
-  const allowedFields = ['realName', 'email', 'phone', 'department', 'position', 'role'];
+  const allowedFields = ['realName', 'email', 'phone', 'department', 'position', 'role', 'avatar'];
   allowedFields.forEach(field => {
     if (updates[field] !== undefined) {
       data.registered_users[userIndex][field] = updates[field];
@@ -6468,6 +6468,7 @@ app.get('/api/user-certificates', (req, res) => {
       certificateName: cert.name || '',
       templateId: cert.templateId || '',
       template,
+      design: cert.design || null,
       userName: user.realName || user.username || '',
       userDepartment: user.department || '',
       userPosition: user.position || ''
@@ -6491,6 +6492,7 @@ app.get('/api/user-certificates/:id', (req, res) => {
       ...uc,
       certificateName: cert.name || '',
       template: (data.certificate_templates || []).find(t => t.id === cert.templateId) || null,
+      design: cert.design || null,
       userName: user.realName || user.username || '',
       userDepartment: user.department || '',
       userPosition: user.position || ''

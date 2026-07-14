@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1783579052402-447707856.jpg",
       "createdAt": "2026/7/9 14:22:27",
-      "lastLogin": "2026/7/9 18:38:11",
+      "lastLogin": "2026/7/14 15:35:11",
       "status": "active",
       "position": "人事经理"
     },
@@ -337,15 +337,18 @@
   ],
   "training_events": [],
   "user_learning_1": {
-    "completedCourses": [
-      "1780986505901"
-    ],
+    "completedCourses": [],
     "lastStudyTime": "2026-06-11T22:36:36",
     "videoProgress": {
       "1780986505901_0": 100
     },
     "totalHours": 1,
-    "studyDates": []
+    "studyDates": [],
+    "ratings": 0,
+    "shares": 0,
+    "likes": 0,
+    "migratedAt": "2026-07-14T07:45:49.918Z",
+    "migrationVersion": 2
   },
   "video_pos_1_1780986505901_0": {
     "position": 603,
@@ -626,6 +629,17 @@
       "certificateId": "cert-1783333691917",
       "read": false,
       "createdAt": "2026-07-08T01:51:00.760Z"
+    },
+    {
+      "id": "nt-1784018102675-0",
+      "userId": "1780909174403",
+      "title": "恭喜您获得证书",
+      "content": "您已获得《1》证书，证书编号：0001。请在个人中心-我的证书查看。",
+      "type": "certificate",
+      "certificateId": "cert-1784018093524",
+      "read": true,
+      "createdAt": "2026-07-14T08:35:02.675Z",
+      "readAt": "2026-07-14T08:40:07.291Z"
     }
   ],
   "notification_reads": [],
@@ -1320,7 +1334,144 @@
       "duration": 90
     }
   ],
-  "certificates": [],
+  "certificates": [
+    {
+      "id": "cert-1784018093524",
+      "name": "1",
+      "dept": "1",
+      "validityType": "permanent",
+      "validityDays": null,
+      "prefix": "",
+      "startNumber": 1,
+      "digits": 4,
+      "templateId": "tpl-honor-purple",
+      "status": "enabled",
+      "design": {
+        "_tplKey": "v5",
+        "layout": "portrait",
+        "elements": [
+          {
+            "id": "elmrkeb115beis",
+            "type": "text",
+            "key": "title",
+            "x": 57.400000000000006,
+            "y": 110,
+            "w": 295,
+            "h": 52,
+            "text": "{{title}}",
+            "fontSize": 38,
+            "fontWeight": "bold",
+            "letterSpacing": 4,
+            "fontStyle": "normal",
+            "textAlign": "center",
+            "color": "#166534",
+            "underline": false,
+            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
+          },
+          {
+            "id": "elmrkeb11520n3",
+            "type": "text",
+            "key": "subtitle",
+            "x": 57.400000000000006,
+            "y": 160,
+            "w": 295,
+            "h": 20,
+            "text": "CERTIFICATE OF HONORS",
+            "fontSize": 12,
+            "fontWeight": "normal",
+            "letterSpacing": 2,
+            "fontStyle": "normal",
+            "textAlign": "center",
+            "color": "#64748b",
+            "underline": false,
+            "fontFamily": "Arial,sans-serif"
+          },
+          {
+            "id": "elmrkeb115aqr4",
+            "type": "text",
+            "key": "name",
+            "x": 57.400000000000006,
+            "y": 220,
+            "w": 177,
+            "h": 24,
+            "text": "{{name}}",
+            "fontSize": 15,
+            "fontWeight": "bold",
+            "fontStyle": "normal",
+            "textAlign": "left",
+            "color": "#3f4c3a",
+            "underline": true,
+            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
+          },
+          {
+            "id": "elmrkeb115mqcw",
+            "type": "text",
+            "key": "content",
+            "x": 57.400000000000006,
+            "y": 244,
+            "w": 295,
+            "h": 120,
+            "text": "　　在本公司工作期间，认真负责，表现\n优秀，现授予【年度优秀员工】荣誉称号。特\n发此证，以示表彰。",
+            "fontSize": 15,
+            "fontWeight": "normal",
+            "fontStyle": "normal",
+            "textAlign": "left",
+            "lineHeight": 2,
+            "color": "#3f4c3a",
+            "underline": false,
+            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
+          },
+          {
+            "id": "elmrkeb115lgwk",
+            "type": "text",
+            "key": "company",
+            "x": 170,
+            "y": 404,
+            "w": 183,
+            "h": 22,
+            "text": "{{company}}",
+            "fontSize": 15,
+            "fontWeight": "normal",
+            "fontStyle": "normal",
+            "textAlign": "right",
+            "color": "#3f4c3a",
+            "underline": false,
+            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
+          },
+          {
+            "id": "elmrkeb115418j",
+            "type": "text",
+            "key": "date",
+            "x": 187,
+            "y": 434,
+            "w": 165,
+            "h": 22,
+            "text": "{{date}}",
+            "fontSize": 15,
+            "fontWeight": "normal",
+            "fontStyle": "normal",
+            "textAlign": "right",
+            "color": "#3f4c3a",
+            "underline": false,
+            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
+          }
+        ],
+        "seal": null,
+        "background": {
+          "type": "preset",
+          "value": "v5"
+        },
+        "accentColor": "#15803d",
+        "fontFamily": "'STSong','SimSun','Times New Roman',serif",
+        "titleColor": "#166534",
+        "subtitleColor": "#6b8068",
+        "textColor": "#3f4c3a",
+        "sealColor": "#b45309"
+      },
+      "creator": "许志坚",
+      "createdAt": "2026-07-14T08:34:53.524Z"
+    }
+  ],
   "current_user": {
     "id": 1,
     "name": "张小明",
@@ -1647,7 +1798,14 @@
     }
   ],
   "papers": [],
-  "notice_visits": [],
+  "notice_visits": [
+    {
+      "noticeId": 1,
+      "userId": "undefined",
+      "username": "级联测试用户",
+      "visitedAt": "2026-07-13T01:43:02.344Z"
+    }
+  ],
   "training_signins": [],
   "training_assign_history": [
     {
@@ -1665,6 +1823,30 @@
     {
       "userId": "1780909174403",
       "loginTime": "2026-07-09T10:38:11.620Z"
+    },
+    {
+      "userId": "1780909174403",
+      "loginTime": "2026-07-13T01:43:01.125Z"
+    },
+    {
+      "userId": "1780909174403",
+      "loginTime": "2026-07-13T01:43:50.171Z"
+    },
+    {
+      "userId": "1780909174403",
+      "loginTime": "2026-07-13T01:48:02.731Z"
+    },
+    {
+      "userId": "1780909174403",
+      "loginTime": "2026-07-13T01:51:24.291Z"
+    },
+    {
+      "userId": "1780909174403",
+      "loginTime": "2026-07-14T03:40:04.944Z"
+    },
+    {
+      "userId": "1780909174403",
+      "loginTime": "2026-07-14T07:35:11.862Z"
     }
   ],
   "lecturer_payment_records": [
@@ -1695,10 +1877,25 @@
       "updatedAt": "2026-07-04T01:52:20.051Z"
     }
   ],
-  "user_certificates": [],
+  "user_certificates": [
+    {
+      "id": "uc-1784018102675-386684703",
+      "certificateId": "cert-1784018093524",
+      "userId": "1780909174403",
+      "certNo": "0001",
+      "sourceType": "manual",
+      "sourceId": null,
+      "issueAt": "2026-07-14T08:35:02.675Z",
+      "effectiveAt": "2026-07-14T08:35:02.675Z",
+      "expireAt": null,
+      "status": "active",
+      "revokedAt": null,
+      "revokeReason": null
+    }
+  ],
   "certificate_templates": [
     {
-      "id": "tpl-honor-blue",
+      "id": "tpl-honor-purple",
       "name": "紫色考试合格证书（竖版）",
       "layout": "portrait",
       "thumbnail": "",
@@ -1867,6 +2064,18 @@
     }
   ],
   "user_learning_1780909174403": {
+    "totalHours": 0,
+    "completedCourses": [],
+    "videoProgress": {},
+    "videoWatchTimes": {},
+    "lastStudyTime": null,
+    "studyDates": [],
+    "ratings": 0,
+    "shares": 0,
+    "likes": 0,
+    "examRecords": []
+  },
+  "user_learning_1783563828582": {
     "totalHours": 0,
     "completedCourses": [],
     "videoProgress": {},

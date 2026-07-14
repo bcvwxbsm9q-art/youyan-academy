@@ -970,3 +970,149 @@
 - **接续入口**：
   - 若需继续验证其他模块删除，可在对应管理 tab 创建/选择测试记录并触发删除；
   - 新增契约文件已落盘，可作为后续契约可验证性检查与 Mock 回归的依据。
+
+## 三十六、修复用户删除级联测试中头像未清理问题
+
+### 36.1 工程过程
+1. 继续运行 `scripts/test-cascade-delete.js` 验证级联删除 API 时，发现**用户删除级联**用例中「用户头像已删除」断言失败。
+2. 已定位根因：`server.js` 中管理员更新用户资料接口 `PUT /api/auth/users/:id` 的 `allowedFields` 未包含 `avatar`，导致测试脚本通过该接口写入的 `avatar` 字段未实际保存到用户记录；删除用户时 `cleanupUserRelatedData` 读取不到 `user.avatar`，无法删除测试头像文件。
+3. 已将 `avatar` 加入 `allowedFields`，使管理员接口可同步头像 URL，同时让测试脚本能正确注入并验证头像清理。
+4. 已执行 `node --check server.js` 语法检查，已重启 Node 服务。
+5. 已重新运行 `node scripts/test-cascade-delete.js`：36 项断言全部通过。
+6. 已创建变更追踪文档 `.trae/documents/20260713_模块0_修复用户删除头像级联测试.md`。
+
+### 36.2 交接状态
+- 当前任务：修复用户删除级联测试中头像未清理问题
+- 状态：已完成
+- 阻塞项：无
+
+### 36.3 最终结果
+- 文件：`server.js`、`current-note.md`、新增变更追踪文档。
+- 验证：
+  - `node --check server.js` 通过。
+  - `node scripts/test-cascade-delete.js` 运行结果：`Total: 36 passed, 0 failed`。
+  - 用户删除级联用例中「用户头像已删除」「用户主记录已删除」「用户学习记录动态键已清理」均通过。
+- 产出物：`.trae/documents/20260713_模块0_修复用户删除头像级联测试.md`。
+- 待人工验证：在浏览器中创建含头像的用户并删除，确认 `uploads/avatars/` 下对应头像文件被清理。
+
+### 36.4 语义标注
+- **做到哪了**：已修复测试脚本因管理员更新接口白名单缺少 `avatar` 导致头像未清理的问题，级联删除 API 验证 36/36 全部通过。
+- **为什么**：`cleanupUserRelatedData` 本身能正确删除头像文件，但测试脚本无法通过现有接口把头像 URL 写入用户记录；扩展 `allowedFields` 是最小改动且符合管理员维护用户资料的业务场景。
+- **未闭合项**：无。
+- **接续入口**：如需继续扩大 API 级联验证覆盖范围，可在 `scripts/test-cascade-delete.js` 中补充课程、培训、考试、证书、调研、分类等实体的删除用例。
+
+## 三十七、修复日历视图今天日期不可见
+
+### 37.1 工程过程
+1. 用户反馈日历视图中今天的日期数字看不见，截图显示当天单元格仅有浅蓝色边框，日期数字区域空白。
+2. 已定位根因：日历渲染使用自定义 Tailwind 颜色类 `bg-primary text-white`，`dashboard.html` 未配置 `tailwind.config` 的 `primary` 颜色，导致 `bg-primary` 被忽略，白色日期数字显示在白色/浅灰单元格背景上不可见。
+3. 已将当天日期徽章改为 Tailwind 内置类 `bg-indigo-500 text-white`，外环改为 `ring-indigo-400/40`，确保不依赖自定义主题也能正常显示。
+4. 同步修改 `training-plan.html`，保持两处日历实现一致。
+5. 为 `dashboard.html` 补充 `tailwind.config` 主题扩展（`primary` / `secondary`），修复页面中其他 `text-primary`、`hover:text-primary` 等类失效的问题。
+6. 已使用浏览器工具验证 `training-plan.html` 当天日期徽章计算样式：背景 `rgb(99, 102, 241)`、文字白色、数字 `14` 正常显示。
+7. 已创建变更追踪文档 `.trae/documents/20260713_模块0_修复日历今天日期不可见.md`。
+
+### 37.2 交接状态
+- 当前任务：修复日历视图今天日期不可见
+- 状态：已完成
+- 阻塞项：无
+
+### 37.3 最终结果
+- 文件：`dashboard.html`、`training-plan.html`、`current-note.md`、新增变更追踪文档。
+- 验证：
+  - 浏览器工具检查 `training-plan.html` 当天日期徽章：`badgeClass` 为 `bg-indigo-500 text-white ...`，`badgeText` 为 `14`，`badgeBg` 为 `rgb(99, 102, 241)`，`badgeColor` 为 `rgb(255, 255, 255)`。
+  - `dashboard.html` 内联脚本解析通过；新增 Tailwind 配置语法正确。
+- 产出物：`.trae/documents/20260713_模块0_修复日历今天日期不可见.md`。
+- 待人工验证：刷新 `dashboard.html` 和 `training-plan.html`，确认日历视图中今天的日期以靛蓝色圆徽章 + 白色数字显示。
+
+### 37.4 语义标注
+- **做到哪了**：已修复日历视图当天日期徽章因依赖未定义主题色而不可见的问题，并统一了两处日历实现。
+- **为什么**：使用 Tailwind 内置 `indigo` 色阶类比依赖自定义 `primary` 主题更稳健，可避免因页面遗漏 Tailwind 配置导致的同类问题。
+- **未闭合项**：无。
+- **接续入口**：用户刷新页面后即可验证；若仍有其他页面出现同类 `bg-primary` 失效问题，可继续替换为具体 `indigo`/`violet` 色阶类。
+
+## 三十八、修复证书删除后荣誉徽章任务奖励与经验值未同步
+
+### 38.1 工程过程
+1. 用户反馈：获得荣誉证书后荣誉徽章任务奖励没有数据显示；管理员删除证书后，个人中心仍保留已获得的分数与徽章，未随证书删除更新。
+2. 已定位根因：
+   - `center.html` 徽章统计使用本地 `learningData.certificates?.length`，但该字段从未写入，实际证书数量应以服务端 `/api/user-certificates` 为准。
+   - `loadCertificates()` 初始化顺序在 `loadBadges()` 之后，导致徽章计算时证书数量尚未就绪。
+   - `syncExp()` 采用「只增不减」策略，证书删除后当前经验值低于持久化值时不会回退。
+3. 已创建变更追踪文档 `.trae/documents/20260709_模块0_修复证书删除后徽章与经验值未更新.md`。
+4. 已修改 `center.html`：
+   - 新增模块级变量 `serverCertificateCount`；
+   - `loadCertificates()` 拉取服务端证书后将有效数量写入 `serverCertificateCount`；
+   - 调整 `DOMContentLoaded` 初始化顺序，在 `loadBadges()` 前完成证书加载；
+   - `updateLearningStats()` 开头先 `await loadCertificates()`，确保后续徽章/经验值计算使用最新证书数量；
+   - `getBadgeStats()` 使用 `serverCertificateCount` 替代本地 `learningData.certificates?.length`；
+   - `syncExp()` 改为以当前真实计算值覆盖持久化经验值，允许随证书删除下降。
+5. 已执行 `center.html` 内联脚本语法检查，解析通过。
+
+### 38.2 交接状态
+- 当前任务：修复证书删除后荣誉徽章任务奖励与经验值未同步
+- 状态：已完成
+- 阻塞项：无
+
+### 38.3 最终结果
+- 文件：`center.html`。
+- 验证：
+  - `center.html` 内联脚本语法检查通过。
+  - 修改点：变量声明、`DOMContentLoaded` 顺序、`updateLearningStats`、`getBadgeStats`、`loadCertificates`、`syncExp`。
+- 产出物：`.trae/documents/20260709_模块0_修复证书删除后徽章与经验值未更新.md`。
+- 待人工验证：
+  - 用户获得证书后刷新个人中心，证书类徽章（如「一证在手」）应正确解锁；
+  - 管理员删除该证书后，用户刷新个人中心，证书数量减少、证书类徽章变回未解锁、总 XP 相应下降。
+
+### 38.4 语义标注
+- **做到哪了**：已将个人中心证书统计与徽章/经验值计算改为以服务端 `/api/user-certificates` 为准，并允许经验值随证书删除回退。
+- **为什么**：本地 `learningData.certificates` 从未被写入，无法反映真实证书状态；管理员删除证书后必须同步体现到用户前端数据。
+- **未闭合项**：无。
+- **接续入口**：无需接续。
+
+## 三十九、证书列表三列与设计渲染修复
+
+### 39.1 工程过程
+1. 用户反馈三个问题：旧证书样式是否已清理、最新编辑证书未生成可下载图片、个人中心证书列表期望一行三个并支持点击放大。
+2. 已创建变更追踪文档 `.trae/documents/20260714_模块0_证书列表三列与设计渲染修复.md`。
+3. 已确认并清理旧版模板 ID：将 `tpl-honor-blue` 统一重命名为 `tpl-honor-purple`，同步更新 `server.js`、`data.json`、`public/pre_generated_mock/certificate-mock.js`、`public/config_template/certificate-config-schema.json`。
+4. 已修改 `server.js`：
+   - `/api/user-certificates` 列表接口与 `/api/user-certificates/:id` 详情接口均额外返回证书定义中的 `design` 字段。
+5. 已修改 `js/certificate-management.js`：
+   - `renderDesignPageInner` 根节点增加 `position:relative;overflow:hidden;`，确保离屏渲染时绝对定位元素不错位。
+   - 向 `window.CertificateMgmt` 暴露 `renderDesignPageInner` 与 `printScale`，供个人中心复用。
+6. 已修改 `center.html`：
+   - 引入 `js/certificate-management.js?v=20260714`。
+   - `renderCertificatePreviewHTML()` 优先使用 `userCert.design` 调用 `CertificateMgmt.renderDesignPageInner` 渲染，回退到模板样式。
+   - 证书列表容器 grid 改为 `grid-cols-1 md:grid-cols-3`。
+   - 新增 `certificate-image-modal` 弹窗，点击图片放大，弹窗内保留下载按钮。
+7. 已执行语法检查：`node --check server.js`、`node --check js/certificate-management.js`、`node --check scripts/test-cert-e2e.js` 均通过；`data.json` JSON 解析通过。
+8. 已执行 s0402 前端三重闸门：
+   - Test1 `node scripts/test-api.js`：12/12 PASS。
+   - Test2 `node scripts/test-cert-e2e.js`：13/13 PASS（Playwright 浏览器验证创建/颁发/渲染/三列布局/放大弹窗/旧 ID 清理）。
+   - Test3 Mock 回归：PASS，契约/Mock/接口一致，无 `tpl-honor-blue` 残留。
+   - 证据落盘 `.trae/documents/test_reports/frontend_gate_20260714_161829/`。
+
+### 39.2 交接状态
+- 当前任务：证书列表三列与设计渲染修复
+- 状态：已完成
+- 阻塞项：无
+
+### 39.3 最终结果
+- 文件：`center.html`、`server.js`、`js/certificate-management.js`、`data.json`、`public/pre_generated_mock/certificate-mock.js`、`public/config_template/certificate-config-schema.json`、`scripts/test-cert-e2e.js`。
+- 验证：
+  - 旧版 `tpl-honor-blue` 在运行时代码与 Mock/契约中已无残留。
+  - 后端接口返回 `design`，个人中心可渲染管理后台自定义设计稿。
+  - 证书列表桌面端一行三个，点击图片可放大查看，下载按钮可用。
+  - s0402 前端三重闸门 **已闭合**（PASSED）。
+- 产出物：
+  - `.trae/documents/20260714_模块0_证书列表三列与设计渲染修复.md`
+  - `.trae/documents/test_reports/frontend_gate_20260714_161829/`
+  - `scripts/test-cert-center-screenshot.png`
+- 待人工验证：在目标浏览器中按 `Ctrl+F5` 刷新 `center.html`，确认现有证书图片按最新设计稿渲染、列表一行三个、点击放大正常。
+
+### 39.4 语义标注
+- **做到哪了**：已完成证书旧样式清理、设计稿渲染修复、三列布局与放大查看，并通过 s0402 三重闸门。
+- **为什么**：管理后台编辑的设计稿未下发到个人中心，导致用户看到旧模板；三列与放大是用户明确的交互需求。
+- **未闭合项**：无。
+- **接续入口**：用户刷新浏览器验证即可。
