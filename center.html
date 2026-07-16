@@ -1093,7 +1093,7 @@
     <script src="js/data-sync.js"></script>
     <script src="data-api.js"></script>
     <script src="js/notification.js?v=20260704"></script>
-    <script src="js/certificate-management.js?v=20260714"></script>
+    <script src="js/certificate-management.js?v=20260714b"></script>
     <script>
         const api = window.DataAPI;
         let currentUser = null;
@@ -2458,9 +2458,33 @@ const BADGES = [
             document.body.removeChild(link);
         }
 
-        // 放大查看证书图片
-        function openCertificateImageModal(certId) {
+        // 获取证书图片 URL（优先使用服务端预生成 PNG，否则触发客户端生成并缓存）
+        async function getCertificateImageUrl(certId) {
             const payload = certImageData[certId];
+            if (payload && payload.dataUrl) return payload.dataUrl;
+            try {
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+                const res = await fetch('/api/user-certificates/' + encodeURIComponent(certId) + '/image', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    const url = res.url;
+                    certImageData[certId] = { dataUrl: url, certNo: '', isServerUrl: true };
+                    return url;
+                }
+            } catch (e) {
+                console.warn('[证书] 获取服务端图片失败:', e);
+            }
+            return null;
+        }
+
+        // 放大查看证书图片
+        async function openCertificateImageModal(certId) {
+            let payload = certImageData[certId];
+            if (!payload || !payload.dataUrl) {
+                const url = await getCertificateImageUrl(certId);
+                if (url) payload = certImageData[certId];
+            }
             if (!payload || !payload.dataUrl) {
                 showToast('证书图片尚未生成，请稍后再试', 'error');
                 return;
@@ -2542,73 +2566,77 @@ const BADGES = [
                     return `<span class="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded">${text}</span>`;
                 };
 
-                // 渲染图片卡片骨架
+                // 渲染图片卡片骨架（与课程卡片保持统一风格）
                 container.innerHTML = certs.map(cert => {
-                    const layout = cert.design?.layout || cert.template?.layout || 'portrait';
-                    const isPortrait = layout === 'portrait';
                     return `
-                        <div class="cert-image-card border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all bg-white" data-cert-id="${cert.id}">
-                            <div class="relative bg-gray-50 flex items-center justify-center" style="aspect-ratio: ${isPortrait ? '210/297' : '297/210'};">
+                        <div class="cert-image-card bg-white rounded-2xl shadow-md overflow-hidden card-hover group flex flex-col" data-cert-id="${cert.id}">
+                            <div class="relative h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
                                 <div class="cert-image-placeholder flex flex-col items-center justify-center text-gray-400">
                                     <i class="fa fa-spinner fa-spin text-2xl mb-2"></i>
                                     <span class="text-xs">生成证书图片...</span>
                                 </div>
-                                <img class="cert-image w-full h-full object-contain hidden cursor-zoom-in" alt="${escapeHtml(cert.certificateName || '证书')}" onclick="openCertificateImageModal('${cert.id}'); event.stopPropagation();">
-                                <button class="cert-download-btn absolute top-2 right-2 px-3 py-1.5 bg-white/90 backdrop-blur text-purple-700 rounded-lg text-sm shadow hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled onclick="event.stopPropagation(); downloadCertificateImage('${cert.id}')">
-                                    <i class="fa fa-download mr-1"></i>下载
-                                </button>
+                                <img class="cert-image w-full h-full object-contain hidden cursor-zoom-in p-2" alt="${escapeHtml(cert.certificateName || '证书')}" onclick="openCertificateImageModal('${cert.id}'); event.stopPropagation();">
                             </div>
-                            <div class="p-3">
-                                <h4 class="font-bold text-gray-800 truncate">${escapeHtml(cert.certificateName || '证书')}</h4>
-                                <p class="text-sm text-gray-500">编号: ${escapeHtml(cert.certNo || '-')}</p>
-                                <div class="flex items-center gap-2 mt-1 flex-wrap">
+                            <div class="p-4 flex-1 flex flex-col">
+                                <h4 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2 group-hover:text-primary transition-colors">${escapeHtml(cert.certificateName || '证书')}</h4>
+                                <p class="text-xs text-gray-500 mb-2">编号: ${escapeHtml(cert.certNo || '-')}</p>
+                                <div class="flex items-center gap-2 mb-2 flex-wrap">
                                     ${statusBadge(cert)}
                                     ${sourceBadge(cert)}
-                                    <span class="text-xs text-gray-400">颁发: ${issueDate(cert)}</span>
+                                </div>
+                                <p class="text-xs text-gray-400 mb-3">颁发: ${issueDate(cert)}</p>
+                                <div class="mt-auto flex gap-2">
+                                    <button onclick="openCertificateImageModal('${cert.id}')" class="flex-1 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-xs transition-colors flex items-center justify-center gap-1">
+                                        <i class="fa fa-eye"></i>查看
+                                    </button>
+                                    <button class="cert-download-btn flex-1 py-2 rounded-xl bg-gradient-primary text-white font-medium text-xs transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1" disabled onclick="event.stopPropagation(); downloadCertificateImage('${cert.id}')">
+                                        <i class="fa fa-download"></i>下载
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     `;
                 }).join('');
 
-                // 逐个生成证书图片
+                // 逐个处理证书图片：优先使用服务端预生成 PNG，缺失时降级到客户端生成
                 const cache = document.getElementById('cert-render-cache');
                 for (let i = 0; i < certs.length; i++) {
                     const cert = certs[i];
-                    if (!cert.template) {
-                        console.warn(`[证书列表] 证书 ${cert.id} 缺少模板，跳过图片生成`);
-                        continue;
-                    }
                     try {
-                        const html = renderCertificatePreviewHTML(cert, cert.template);
-                        const wrapper = document.createElement('div');
-                        wrapper.innerHTML = html;
-                        const node = wrapper.firstElementChild;
-                        cache.innerHTML = '';
-                        cache.appendChild(node);
-
-                        // 防止 html-to-image 因字体/资源加载无限等待，加 8s 超时
-                        const dataUrl = await Promise.race([
-                            htmlToImage.toPng(node, {
-                                pixelRatio: 1.5,
-                                cacheBust: true,
-                                skipFonts: true,
-                                backgroundColor: '#ffffff'
-                            }),
-                            new Promise((_, reject) => setTimeout(() => reject(new Error('生成证书图片超时')), 8000))
-                        ]);
-                        certImageData[cert.id] = { dataUrl, certNo: cert.certNo || '' };
-                        const card = container.querySelector(`[data-cert-id="${cert.id}"]`);
-                        if (card) {
-                            const img = card.querySelector('.cert-image');
-                            const placeholder = card.querySelector('.cert-image-placeholder');
-                            const btn = card.querySelector('.cert-download-btn');
-                            if (img) {
-                                img.src = dataUrl;
-                                img.classList.remove('hidden');
+                        let dataUrl = null;
+                        if (cert.imageUrl) {
+                            dataUrl = cert.imageUrl;
+                        } else if (cert.template) {
+                            const html = renderCertificatePreviewHTML(cert, cert.template);
+                            const wrapper = document.createElement('div');
+                            wrapper.innerHTML = html;
+                            const node = wrapper.firstElementChild;
+                            cache.innerHTML = '';
+                            cache.appendChild(node);
+                            dataUrl = await Promise.race([
+                                htmlToImage.toPng(node, {
+                                    pixelRatio: 1.5,
+                                    cacheBust: true,
+                                    skipFonts: true,
+                                    backgroundColor: '#ffffff'
+                                }),
+                                new Promise((_, reject) => setTimeout(() => reject(new Error('生成证书图片超时')), 8000))
+                            ]);
+                        }
+                        if (dataUrl) {
+                            certImageData[cert.id] = { dataUrl, certNo: cert.certNo || '', isServerUrl: !!cert.imageUrl };
+                            const card = container.querySelector(`[data-cert-id="${cert.id}"]`);
+                            if (card) {
+                                const img = card.querySelector('.cert-image');
+                                const placeholder = card.querySelector('.cert-image-placeholder');
+                                const btn = card.querySelector('.cert-download-btn');
+                                if (img) {
+                                    img.src = dataUrl;
+                                    img.classList.remove('hidden');
+                                }
+                                if (placeholder) placeholder.classList.add('hidden');
+                                if (btn) btn.disabled = false;
                             }
-                            if (placeholder) placeholder.classList.add('hidden');
-                            if (btn) btn.disabled = false;
                         }
                     } catch (err) {
                         console.error(`[证书列表] 生成证书图片失败 [${cert.id}]:`, err);
@@ -2621,7 +2649,7 @@ const BADGES = [
                         }
                     }
                 }
-                cache.innerHTML = '';
+                if (cache) cache.innerHTML = '';
             } catch (e) {
                 console.error('加载证书列表失败:', e);
                 container.innerHTML = `

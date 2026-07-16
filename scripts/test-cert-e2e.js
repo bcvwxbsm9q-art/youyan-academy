@@ -58,7 +58,7 @@ async function run() {
     prefix: 'E2E',
     startNumber: 1,
     digits: 4,
-    templateId: 'tpl-honor-purple',
+    templateId: 'tpl-completion-gold',
     status: 'enabled',
     design: {
       layout: 'portrait',
@@ -71,7 +71,7 @@ async function run() {
       elements: [
         { type: 'text', x: 397, y: 180, text: '荣誉证书', fontSize: 48, color: '#764ba2', fontWeight: 'bold', textAlign: 'center' },
         { type: 'text', x: 397, y: 320, text: '{{name}}', fontSize: 36, color: '#333333', fontWeight: 'bold', textAlign: 'center' },
-        { type: 'text', x: 397, y: 420, text: '{{content}}', fontSize: 20, color: '#555555', textAlign: 'center' },
+        { type: 'text', x: 397, y: 420, text: '表现优异，特授予【年度最佳学员】称号。', fontSize: 20, color: '#555555', textAlign: 'center' },
         { type: 'text', x: 397, y: 560, text: '证书编号：{{certNo}}', fontSize: 16, color: '#666666', textAlign: 'center' },
         { type: 'text', x: 397, y: 600, text: '颁发日期：{{date}}', fontSize: 16, color: '#666666', textAlign: 'center' },
         { type: 'seal', x: 580, y: 720, text: '游雁学院\n认证专用章', size: 100, color: '#764ba2' }
@@ -113,8 +113,9 @@ async function run() {
       }
     });
 
-    // 注入 token 和用户信息
-    await page.goto(`${BASE}/center.html`);
+    // 注入 token 和用户信息（加时间戳避免页面/JS 缓存）
+    const nocache = Date.now();
+    await page.goto(`${BASE}/center.html?nocache=${nocache}`);
     const authPayload = { token, user: { id: testUserId, username: '15302206488', realName: '许志坚', role: 'admin' } };
     await page.evaluate((payload) => {
       localStorage.setItem('token', payload.token);
@@ -122,7 +123,7 @@ async function run() {
     }, authPayload);
 
     // 刷新页面加载证书列表
-    await page.goto(`${BASE}/center.html`);
+    await page.goto(`${BASE}/center.html?nocache=${nocache}`);
     await page.waitForTimeout(1500);
 
     // 切换到「我的证书」tab
@@ -143,11 +144,18 @@ async function run() {
       const uc = result.data || {};
       let renderResult = null;
       let renderError = null;
+      let markerSpanCount = 0;
+      let hasRawBrackets = false;
+      let hasBgGradient = false;
       if (uc.design && window.CertificateMgmt && window.CertificateMgmt.renderDesignPageInner) {
         try {
           const fill = { title: uc.certificateName || '荣誉证书', name: uc.userName || '学员', certNo: uc.certNo || '', date: (uc.issueAt || '').split('T')[0] || '', company: uc.userDepartment || '', content: '表现优异，特发此证，以资鼓励。' };
           const scale = window.CertificateMgmt.printScale(uc.design.layout);
-          renderResult = window.CertificateMgmt.renderDesignPageInner(uc.design, scale, fill).slice(0, 200);
+          const html = window.CertificateMgmt.renderDesignPageInner(uc.design, scale, fill);
+          renderResult = html.slice(0, 200);
+          markerSpanCount = (html.match(/<span[^>]*style="color:#c41e0f;font-weight:bold;"[^>]*>/g) || []).length;
+          hasRawBrackets = html.includes('【') || html.includes('】');
+          hasBgGradient = html.includes('linear-gradient');
         } catch (e) { renderError = e.message; }
       }
       return {
@@ -158,16 +166,23 @@ async function run() {
         hasDesign: !!(uc && uc.design),
         designKeys: uc && uc.design ? Object.keys(uc.design) : null,
         renderError,
-        renderResult
+        renderResult,
+        markerSpanCount,
+        hasRawBrackets,
+        hasBgGradient
       };
     });
     console.log('[DEBUG] cert debug:', certDebug);
+
+    if (await assert('渲染 HTML 包含一个红色强调 span', certDebug.markerSpanCount === 1, `count=${certDebug.markerSpanCount}`)) passed++; else failed++;
+    if (await assert('渲染 HTML 无残留【】标记', !certDebug.hasRawBrackets)) passed++; else failed++;
 
     // 截图
     await page.screenshot({ path: 'scripts/test-cert-center-screenshot.png', fullPage: false });
 
     // 验证一行三个布局
     const gridClass = await page.$eval('#certificates-list', el => el.className).catch(() => null);
+    console.log('[DEBUG] grid className:', gridClass);
     if (await assert('证书列表容器存在且为 grid', !!gridClass && gridClass.includes('grid'))) passed++; else failed++;
     if (await assert('证书列表容器包含 md:grid-cols-3', gridClass && gridClass.includes('md:grid-cols-3'))) passed++; else failed++;
 
@@ -186,14 +201,16 @@ async function run() {
     }
 
     // 点击放大
-    const firstCard = await page.$('[data-cert-id]');
-    if (firstCard) {
-      await firstCard.click();
+    if (firstImg) {
+      await firstImg.click();
       await page.waitForTimeout(500);
       const modalHidden = await page.$eval('#certificate-image-modal', el => el.classList.contains('hidden')).catch(() => true);
       if (await assert('点击图片后弹窗显示', !modalHidden)) passed++; else failed++;
       const modalImgSrc = await page.$eval('#certificate-image-modal-img', el => el.src).catch(() => '');
       if (await assert('弹窗内大图使用 data URL', modalImgSrc.startsWith('data:image'))) passed++; else failed++;
+      await page.screenshot({ path: 'scripts/test-cert-modal-screenshot.png', fullPage: false });
+    } else {
+      if (await assert('存在证书图片元素用于点击放大', false)) passed++; else failed++;
     }
 
     await browser.close();

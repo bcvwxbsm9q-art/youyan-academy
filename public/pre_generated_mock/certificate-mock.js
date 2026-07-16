@@ -9,28 +9,6 @@
 
   const DEFAULT_TEMPLATES = [
     {
-      id: 'tpl-honor-purple',
-      name: '紫色考试合格证书（竖版）',
-      layout: 'portrait',
-      thumbnail: '',
-      style: {
-        background: 'repeating-linear-gradient(45deg, rgba(118,75,162,0.07) 0px, rgba(118,75,162,0.07) 1px, transparent 1px, transparent 12px), radial-gradient(circle at 15% 15%, rgba(102,126,234,0.12) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(118,75,162,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f5f3ff 40%, #ede9fe 100%)',
-        borderColor: '#764ba2',
-        primaryColor: '#764ba2',
-        secondaryColor: '#667eea',
-        accentColor: '#9333ea',
-        sealColor: '#764ba2',
-        fontFamily: '"Noto Serif SC", "SimSun", serif'
-      },
-      placeholders: [
-        { key: 'name', label: '姓名', defaultValue: '张三' },
-        { key: 'title', label: '证书标题', defaultValue: '考试合格证书' },
-        { key: 'content', label: '正文', defaultValue: '已通过相关考试，成绩合格，特发此证，以资鼓励。' },
-        { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
-        { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
-      ]
-    },
-    {
       id: 'tpl-completion-gold',
       name: '金色结业证书（横版）',
       layout: 'landscape',
@@ -73,28 +51,6 @@
         { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
         { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
       ]
-    },
-    {
-      id: 'tpl-skill-purple',
-      name: '紫色技能认证证书（横版）',
-      layout: 'landscape',
-      thumbnail: '',
-      style: {
-        background: 'linear-gradient(135deg, rgba(107,76,154,0.10) 0%, transparent 50%), linear-gradient(225deg, rgba(107,76,154,0.06) 0%, transparent 50%), linear-gradient(135deg, #faf8ff 0%, #f5f2ff 50%, #efe8fc 100%)',
-        borderColor: '#6b4c9a',
-        primaryColor: '#6b4c9a',
-        secondaryColor: '#9b7fc7',
-        accentColor: '#6b4c9a',
-        sealColor: '#6b4c9a',
-        fontFamily: '"Noto Sans SC", "Microsoft YaHei", sans-serif'
-      },
-      placeholders: [
-        { key: 'name', label: '姓名', defaultValue: '赵六' },
-        { key: 'title', label: '证书标题', defaultValue: '技能认证证书' },
-        { key: 'content', label: '正文', defaultValue: '已通过相关技能考核，具备相应专业能力。' },
-        { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
-        { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
-      ]
     }
   ];
 
@@ -108,7 +64,7 @@
       prefix: 'YX',
       startNumber: 1,
       digits: 4,
-      templateId: 'tpl-honor-purple',
+      templateId: 'tpl-completion-gold',
       status: 'enabled',
       creator: '许志坚',
       createdAt: '2024-05-11T11:15:00.000Z'

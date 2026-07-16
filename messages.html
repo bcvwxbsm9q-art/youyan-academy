@@ -100,6 +100,39 @@
         .type-training { color: #22c55e; }
         .type-exam { color: #f97316; }
         .type-default { color: #94a3b8; }
+        .type-certificate { color: #a855f7; }
+
+        /* ===== 证书图片在弹窗中的样式 ===== */
+        .cert-preview-wrapper {
+            margin: 0 0 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .cert-preview-wrapper img {
+            max-width: 100%; max-height: 320px; border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(15,23,42,0.12); cursor: pointer;
+            transition: transform 0.2s ease;
+            display: block;
+            margin: 0 auto;
+        }
+        .cert-preview-wrapper img:hover { transform: scale(1.01); }
+        .cert-preview-actions {
+            display: flex; justify-content: center; gap: 12px; margin-top: 12px;
+        }
+        .cert-preview-actions button {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .cert-btn-download { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .cert-btn-download:hover { background: #dcfce7; }
+        .cert-btn-view { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+        .cert-btn-view:hover { background: #dbeafe; }
+        .cert-generating { text-align: center; color: #64748b; padding: 24px 0; }
+        .cert-generating i { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
         /* ===== 消息详情弹窗 ===== */
         .modal-overlay {
@@ -392,12 +425,17 @@
         </div>
     </div>
 
+    <!-- 证书渲染隐藏容器（供 html-to-image 捕获，不可使用 display:none） -->
+    <div id="cert-render-cache" aria-hidden="true" style="position: fixed; left: -9999px; top: -9999px;"></div>
+
     <!-- 统一数据访问层 -->
     <script src="js/data-sync.js?v=2026051301"></script>
     <script src="data-api.js?v=20260520c"></script>
     <script src="js/auth-modal.js?v=20260704"></script>
     <script src="js/auth-guard.js?v=20260704"></script>
     <script src="js/notification.js?v=20260704"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
+    <script src="js/certificate-management.js?v=20260714"></script>
     <script>
     // 退出登录
     function handleLogout() {
@@ -418,6 +456,7 @@
         const DELETED_MSG_IDS_KEY = 'messages_deleted_ids';
         const deletedMessageIds = new Set((JSON.parse(localStorage.getItem(DELETED_MSG_IDS_KEY) || '[]')).map(id => String(id)));
         const selectedIds = new Set();
+        const certImageCache = {}; // 证书图片数据 URL 缓存：{ userCertificateId: { dataUrl, certNo } }
 
         function escapeHtml(str) {
             if (!str) return '';
@@ -487,7 +526,8 @@
                 'announcement': ['📢 平台公告', 'type-announcement'],
                 'training_assign': ['🎯 培训指派', 'type-training'],
                 'training': ['📋 培训通知', 'type-training'],
-                'exam': ['📝 考试通知', 'type-exam']
+                'exam': ['📝 考试通知', 'type-exam'],
+                'certificate': ['🏆 证书通知', 'type-certificate']
             };
             const [label, cls] = map[type] || ['其他', 'type-default'];
             return '<span class="type-badge ' + cls + '">' + label + '</span>';
@@ -734,6 +774,39 @@
             document.getElementById('modal-time').textContent = formatTime(msg.createdAt);
 
             const contentEl = document.getElementById('modal-content');
+            contentEl.className = 'modal-body html-content';
+
+            // 证书通知：优先使用服务端预生成 PNG，缺失时降级到客户端生成
+            if (msg.type === 'certificate' && msg.userCertificateId) {
+                contentEl.innerHTML = '<div class="cert-generating"><i class="fas fa-spinner"></i> 正在生成证书图片...</div>';
+                document.getElementById('msg-detail-modal').style.display = 'flex';
+                try {
+                    const cached = certImageCache[msg.userCertificateId];
+                    if (cached && cached.dataUrl) {
+                        renderCertificatePreview(cached.dataUrl, cached.certNo, msg.content || '', cached.isServerUrl);
+                        return;
+                    }
+                    const res = await authFetch('/api/user-certificates/' + encodeURIComponent(msg.userCertificateId));
+                    if (!res.ok) throw new Error('加载证书记录失败');
+                    const result = await res.json();
+                    if (!result.success || !result.data) throw new Error(result.error || '证书记录不存在');
+                    const uc = result.data;
+                    let dataUrl = uc.imageUrl || null;
+                    let isServerUrl = !!dataUrl;
+                    if (!dataUrl) {
+                        if (!uc.template && !uc.design) throw new Error('证书模板不存在');
+                        dataUrl = await generateCertificateImage(uc);
+                    }
+                    certImageCache[msg.userCertificateId] = { dataUrl, certNo: uc.certNo || '', isServerUrl };
+                    renderCertificatePreview(dataUrl, uc.certNo || '', msg.content || '', isServerUrl);
+                } catch (e) {
+                    console.error('[openDetail] 证书图片生成失败:', e);
+                    contentEl.innerHTML = '<p class="text-red-500 mb-3">证书图片生成失败，请前往个人中心查看。</p>' +
+                        '<p class="text-gray-600">' + escapeHtml(msg.content || '暂无内容') + '</p>';
+                }
+                return;
+            }
+
             contentEl.className = 'modal-body ' + (msg.isHtml ? 'html-content' : 'plain-content');
             contentEl.innerHTML = msg.isHtml ? sanitizeHtml(msg.fullContent || msg.content || '暂无内容') : escapeHtml(msg.content || '暂无内容');
             document.getElementById('msg-detail-modal').style.display = 'flex';
@@ -741,6 +814,131 @@
 
         window.closeDetail = function () {
             document.getElementById('msg-detail-modal').style.display = 'none';
+        };
+
+        // 渲染证书 HTML，优先复用 certificate-management.js 的渲染器
+        function renderCertificatePreviewHTML(uc) {
+            if (window.CertificateMgmt && window.CertificateMgmt.renderCertificateHTML) {
+                return window.CertificateMgmt.renderCertificateHTML(
+                    uc,
+                    { name: uc.certificateName, design: uc.design },
+                    uc.template
+                );
+            }
+            return '';
+        }
+
+        // 使用 html-to-image 生成证书图片数据 URL
+        async function generateCertificateImage(uc) {
+            const html = renderCertificatePreviewHTML(uc);
+            if (!html) throw new Error('证书渲染函数不可用');
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            const node = wrapper.firstElementChild;
+            if (!node) throw new Error('证书 HTML 渲染失败');
+
+            const cache = document.getElementById('cert-render-cache');
+            if (cache) {
+                cache.innerHTML = '';
+                cache.appendChild(node);
+            }
+
+            try {
+                const dataUrl = await Promise.race([
+                    htmlToImage.toPng(node, {
+                        pixelRatio: 1.5,
+                        cacheBust: true,
+                        skipFonts: true,
+                        backgroundColor: '#ffffff'
+                    }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('生成证书图片超时')), 8000))
+                ]);
+                return dataUrl;
+            } finally {
+                if (cache) cache.innerHTML = '';
+            }
+        }
+
+        // 在弹窗内渲染证书图片预览、下载/查看大图按钮及文字描述
+        function renderCertificatePreview(dataUrl, certNo, text, isServerUrl) {
+            const contentEl = document.getElementById('modal-content');
+            contentEl.innerHTML =
+                '<div class="cert-preview-wrapper">' +
+                    '<img src="' + dataUrl + '" alt="证书预览" onclick="window.openCertificateImageModalFromMessages(\'' + certNo + '\')">' +
+                    '<div class="cert-preview-actions">' +
+                        '<button class="cert-btn-download" onclick="window.downloadCertificateImageFromMessages(\'' + certNo + '\')"><i class="fas fa-download"></i>下载图片</button>' +
+                        '<button class="cert-btn-view" onclick="window.openCertificateImageModalFromMessages(\'' + certNo + '\')"><i class="fas fa-search-plus"></i>查看大图</button>' +
+                    '</div>' +
+                '</div>' +
+                '<p class="text-gray-600">' + escapeHtml(text || '恭喜您获得证书！') + '</p>';
+            // 同步 certNo 对应的缓存标记为服务端 URL，便于下载/查看大图正确处理
+            if (isServerUrl) {
+                for (const key in certImageCache) {
+                    if (certImageCache[key].certNo === certNo) {
+                        certImageCache[key].isServerUrl = true;
+                    }
+                }
+            }
+        }
+
+        window.downloadCertificateImageFromMessages = function (certNo) {
+            let payload = null;
+            for (const key in certImageCache) {
+                if (certImageCache[key].certNo === certNo) {
+                    payload = certImageCache[key];
+                    break;
+                }
+            }
+            if (!payload || !payload.dataUrl) {
+                showToast('证书图片尚未生成，请稍后再试', 'error');
+                return;
+            }
+            const link = document.createElement('a');
+            link.href = payload.dataUrl;
+            link.download = '证书-' + (certNo || 'unknown') + '.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        window.openCertificateImageModalFromMessages = function (certNo) {
+            let payload = null;
+            for (const key in certImageCache) {
+                if (certImageCache[key].certNo === certNo) {
+                    payload = certImageCache[key];
+                    break;
+                }
+            }
+            if (!payload || !payload.dataUrl) {
+                showToast('证书图片尚未生成，请稍后再试', 'error');
+                return;
+            }
+            const overlay = document.createElement('div');
+            overlay.id = 'msg-cert-image-modal';
+            overlay.className = 'modal-overlay';
+            overlay.style.zIndex = '200';
+            overlay.innerHTML =
+                '<div class="modal-container" style="max-width: 900px;">' +
+                    '<div class="modal-header">' +
+                        '<h3 class="text-white font-bold">证书大图</h3>' +
+                        '<button class="modal-close" onclick="window.closeCertificateImageModalFromMessages()"><i class="fas fa-xmark"></i></button>' +
+                    '</div>' +
+                    '<div class="modal-body flex items-center justify-center p-4">' +
+                        '<img src="' + payload.dataUrl + '" alt="证书大图" style="max-width: 100%; max-height: 70vh; border-radius: 12px; box-shadow: 0 8px 24px rgba(15,23,42,0.12);">' +
+                    '</div>' +
+                    '<div class="px-6 py-4 border-t flex justify-end">' +
+                        '<button onclick="window.downloadCertificateImageFromMessages(\'' + certNo + '\');" class="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:opacity-90 mr-2"><i class="fas fa-download mr-1"></i>下载图片</button>' +
+                        '<button onclick="window.closeCertificateImageModalFromMessages()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">关闭</button>' +
+                    '</div>' +
+                '</div>';
+            overlay.onclick = function (e) { if (e.target === overlay) window.closeCertificateImageModalFromMessages(); };
+            document.body.appendChild(overlay);
+            overlay.style.display = 'flex';
+        };
+
+        window.closeCertificateImageModalFromMessages = function () {
+            const modal = document.getElementById('msg-cert-image-modal');
+            if (modal) modal.remove();
         };
 
 

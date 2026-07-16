@@ -369,7 +369,7 @@
     .cert-el:hover { border-color: rgba(139,92,246,.5); }
     .cert-el.selected { border-color: #8b5cf6; box-shadow: 0 0 0 1px rgba(139,92,246,.4); }
     .cert-el[contenteditable="true"] { cursor: text; border-color: #8b5cf6; outline: none; }
-    .cert-el .cert-el-text { user-select: none; outline: none; width: 100%; display: inline-block; cursor: move; }
+    .cert-el .cert-el-text { user-select: none; outline: none; width: 100%; display: block; cursor: move; }
     .cert-el.selected .cert-el-text { cursor: text; }
     .cert-el[contenteditable="true"] .cert-el-text { user-select: text; cursor: text; }
     .cert-el-handle {
@@ -513,7 +513,7 @@
 
     /* 详情/打印：基于 design 的渲染 */
     .cert-design-page { position: relative; box-sizing: border-box; overflow: hidden; }
-    .cert-design-el { position: absolute; box-sizing: border-box; line-height: 1.25; }
+    .cert-design-el { position: absolute; box-sizing: border-box; line-height: 1.25; overflow: hidden; }
     .cert-design-seal { position: absolute; border-radius: 50%; display: flex; flex-direction: column;
       align-items: center; justify-content: center; text-align: center; box-sizing: border-box; }
 
@@ -524,7 +524,7 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="bg-slate-50 min-h-screen overflow-x-hidden">
 
   <!-- 顶部导航 -->
   <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-40 border-b border-slate-100">
@@ -4044,6 +4044,32 @@
     // ========== 全局配置 ==========
     const API = window.location.origin + '/api';
 
+    // 弹窗生命周期内 newly 上传但未最终保存的本地文件，关闭弹窗时清理
+    let pendingBannerImages = [];
+    let pendingNoticeImages = [];
+    let pendingCourseFiles = [];      // 元素: { url, type: 'cover'|'video'|'attachment' }
+    let pendingLecturerAvatar = [];   // 讲师头像
+    let pendingTrainingCourseware = []; // 培训课件
+
+    // 当前弹窗类型，用于点击遮罩层时路由到对应的关闭清理函数
+    let currentModalType = null;
+
+    /**
+     * 根据 /uploads/{type}/{filename} 删除单个上传文件
+     * @param {string} url
+     */
+    async function deleteUploadFileByUrl(url) {
+      if (!url || typeof url !== 'string') return;
+      const match = url.match(/^\/uploads\/([^/]+)\/(.+)$/);
+      if (!match) return;
+      const [, type, filename] = match;
+      try {
+        await fetch(`${API}/upload/${type}/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+      } catch (e) {
+        console.warn('删除临时文件失败:', url, e);
+      }
+    }
+
     // ========== 登录功能（统一认证） ==========
 
     // 检查是否已登录（使用统一 token）
@@ -4510,6 +4536,10 @@
     }
 
     function closeCarouselModal() {
+      // 清理本次弹窗内上传但未保存的临时图片
+      pendingBannerImages.forEach(url => deleteUploadFileByUrl(url));
+      pendingBannerImages = [];
+
       const modal = document.getElementById('carouselModal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
@@ -4553,6 +4583,7 @@
           img.src = result.url;
           img.classList.remove('hidden');
           document.getElementById('carousel-cover-placeholder').classList.add('hidden');
+          pendingBannerImages.push(result.url);
           toast('封面上传成功');
         } else {
           toast(result.error || '上传失败', 'error');
@@ -4593,6 +4624,7 @@
         });
         const result = await res.json();
         if (result.success) {
+          pendingBannerImages = [];
           toast(id ? '轮播图已更新' : '轮播图已添加');
           closeCarouselModal();
           loadCarousels();
@@ -5033,6 +5065,7 @@
     }
 
     function openCourseModal(course = null) {
+      currentModalType = 'course';
       const isEdit = !!course;
       const parentOptions = data.categories.map(c => `<option value="${c.id}" ${course?.categoryId == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
       const lectOptions = data.lecturers.map(l => `<option value="${l.id}" ${course?.lecturerId == l.id ? 'selected' : ''}>${l.name}</option>`).join('');
@@ -5054,7 +5087,7 @@
         <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
             <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑课程' : '添加课程'}</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeCourseModal()" class="text-slate-400 hover:text-slate-600 transition"><i class="fas fa-times text-xl"></i></button>
           </div>
           <form onsubmit="saveCourse(event, ${course?.id || 'null'})" class="p-6 space-y-5">
             <!-- 课程封面 -->
@@ -5174,7 +5207,7 @@
             </div>
 
             <div class="flex justify-end space-x-3 pt-4 border-t">
-              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+              <button type="button" onclick="closeCourseModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
               <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">保存</button>
             </div>
           </form>
@@ -5232,6 +5265,7 @@
         if (result.success) {
           document.getElementById('c-cover').value = result.url;
           document.getElementById('cover-preview').innerHTML = `<img src="${result.url}" class="w-full h-full object-cover">`;
+          pendingCourseFiles.push({ url: result.url, type: 'cover' });
           toast('封面上传成功');
         } else {
           toast(result.error || '上传失败', 'error');
@@ -5325,6 +5359,8 @@
           if (result.success) {
             // 自动识别视频时长
             const videoDuration = await getVideoDuration(file);
+
+            pendingCourseFiles.push({ url: result.url, type: 'video' });
 
             videos.push({
               url: result.url,
@@ -5477,6 +5513,8 @@
           const result = await uploadWithProgress(file, uploadType, progressId);
 
           if (result.success) {
+            pendingCourseFiles.push({ url: result.url, type: 'attachment' });
+
             attachments.push({
               url: result.url,
               name: file.name,
@@ -5708,8 +5746,9 @@
         result = await res.json();
 
         if (result.success || res.ok) {
+          pendingCourseFiles = [];
           toast(id ? '课程已更新' : '课程已添加');
-          closeModal();
+          closeCourseModal();
           await loadAllData();
           renderCourses();
           // 广播课程变更,通知其他页面(如播放页)刷新数据
@@ -5736,6 +5775,13 @@
     function editCourse(id) {
       const course = data.courses.find(c => c.id === id);
       if (course) openCourseModal(course);
+    }
+
+    function closeCourseModal() {
+      pendingCourseFiles.forEach(item => deleteUploadFileByUrl(item.url));
+      pendingCourseFiles = [];
+      currentModalType = null;
+      closeModal();
     }
 
     async function toggleCourseStatus(id) {
@@ -6543,6 +6589,7 @@
     }
 
     function openLecturerModal(lecturer = null) {
+      currentModalType = 'lecturer';
       const isEdit = !!lecturer;
       const levelOptions = ['senior', 'intermediate', 'junior', 'intern'].map(l =>
         `<option value="${l}" ${lecturer?.level === l ? 'selected' : ''}>${l === 'senior' ? '高级讲师' : l === 'intermediate' ? '中级讲师' : l === 'junior' ? '初级讲师' : '见习讲师'}</option>`
@@ -6560,7 +6607,7 @@
         <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-lg">
           <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑讲师' : '添加讲师'}</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeLecturerModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
           </div>
           <form onsubmit="saveLecturer(event, ${lecturer?.id || 'null'})" class="p-6 space-y-4">
             <!-- 头像上传区域 -->
@@ -6621,7 +6668,7 @@
               <textarea id="l-intro" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none" placeholder="讲师简介">${lecturer?.intro || ''}</textarea>
             </div>
             <div class="flex justify-end space-x-3 pt-4">
-              <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
+              <button type="button" onclick="closeLecturerModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">取消</button>
               <button type="submit" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium">保存</button>
             </div>
           </form>
@@ -6648,6 +6695,7 @@
         if (result.success) {
           document.getElementById('l-avatar').value = result.url;
           document.getElementById('avatar-preview').innerHTML = `<img src="${result.url}" class="w-full h-full object-cover">`;
+          pendingLecturerAvatar.push(result.url);
           toast('头像上传成功');
         } else {
           toast(result.error || '上传失败', 'error');
@@ -6757,8 +6805,9 @@
           });
         }
         if (res.ok) {
+          pendingLecturerAvatar = [];
           toast(id ? '讲师已更新' : '讲师已添加');
-          closeModal();
+          closeLecturerModal();
           await loadAllData();
           renderLecturers();
         }
@@ -6770,6 +6819,13 @@
     function editLecturer(id) {
       const lect = data.lecturers.find(l => l.id === id);
       if (lect) openLecturerModal(lect);
+    }
+
+    function closeLecturerModal() {
+      pendingLecturerAvatar.forEach(url => deleteUploadFileByUrl(url));
+      pendingLecturerAvatar = [];
+      currentModalType = null;
+      closeModal();
     }
 
     async function toggleLecturerStatus(id) {
@@ -8952,6 +9008,8 @@
         });
         const saveData = await saveRes.json();
         if (!saveData.success) {
+          // 保存到培训记录失败，回滚删除刚上传的图片
+          newUrls.forEach(url => deleteUploadFileByUrl(url));
           toast(saveData.error || '保存图片失败', 'error');
           submitBtn.disabled = false;
           submitBtn.innerHTML = '开始上传';
@@ -9084,6 +9142,7 @@
     let trainingUserPickerTemp = new Set();
 
     async function openTrainingModal(training = null, prefillDate = null) {
+      currentModalType = 'training';
       const isEdit = !!training;
       currentEditingTraining = training;
       currentEditingTrainingId = training?.id || null;
@@ -9138,7 +9197,7 @@
         <div class="modal bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
           <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0 bg-gradient-to-r from-slate-50 to-white">
             <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑' : '添加'}培训</h3>
-            <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"><i class="fas fa-times text-lg"></i></button>
+            <button onclick="closeTrainingModal()" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"><i class="fas fa-times text-lg"></i></button>
           </div>
           <form id="training-form" onsubmit="saveTraining(event, ${training?.id || 'null'})" class="flex-1 overflow-y-auto p-6 space-y-5">
 
@@ -9313,7 +9372,7 @@
 
           </form>
           <div class="flex justify-end items-center gap-3 p-6 border-t border-slate-100 flex-shrink-0 bg-slate-50">
-            <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+            <button type="button" onclick="closeTrainingModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
             <button type="submit" form="training-form" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium transition">保存</button>
           </div>
         </div>
@@ -9508,8 +9567,9 @@
             });
           }
 
+          pendingTrainingCourseware = [];
           toast(id ? '培训已更新' : '培训已添加');
-          closeModal();
+          closeTrainingModal();
           await loadAllData();
           renderTraining();
         } else {
@@ -9519,6 +9579,13 @@
       } catch (err) {
         toast('操作失败: ' + err.message, 'error');
       }
+    }
+
+    function closeTrainingModal() {
+      pendingTrainingCourseware.forEach(item => deleteUploadFileByUrl(item.url));
+      pendingTrainingCourseware = [];
+      currentModalType = null;
+      closeModal();
     }
 
     // ========== 培训弹窗 - 折叠面板与项目内容 ==========
@@ -9874,6 +9941,7 @@
             mimetype: f.mimetype,
             filename: f.filename
           }));
+          mapped.forEach(f => pendingTrainingCourseware.push(f));
           currentEditingTraining.coursewareFiles = (currentEditingTraining.coursewareFiles || []).concat(mapped);
           document.getElementById('t-courseware-list').innerHTML = renderTrainingCoursewareList(currentEditingTraining.coursewareFiles);
           updateCoursewareCardStatus();
@@ -12623,6 +12691,7 @@
     }
 
     function openNoticeModal(notice = null) {
+      currentModalType = 'notice';
       const isEdit = !!notice;
       const content = notice?.content || '';
 
@@ -12631,7 +12700,7 @@
           <!-- 头部 - 固定 -->
           <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
             <h3 class="text-lg font-semibold text-slate-800">${isEdit ? '编辑' : '发布'}公告</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeNoticeModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
           </div>
 
           <!-- 表单内容 - 可滚动 -->
@@ -12655,7 +12724,7 @@
 
           <!-- 底部按钮 - 固定 -->
           <div class="px-6 py-4 border-t border-slate-100 flex justify-end space-x-3 flex-shrink-0 bg-white">
-            <button type="button" onclick="closeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
+            <button type="button" onclick="closeNoticeModal()" class="px-6 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition">取消</button>
             <button type="button" onclick="document.getElementById('notice-form').requestSubmit()" class="btn-primary px-6 py-2.5 text-white rounded-xl font-medium shadow-lg transition">
               <i class="fas fa-paper-plane mr-2"></i>${notice?.status === 'draft' ? '发布' : (isEdit ? '保存' : '发布')}
             </button>
@@ -12669,18 +12738,56 @@
           theme: 'snow',
           placeholder: '请输入公告内容...',
           modules: {
-            toolbar: [
-              [{ 'header': [1, 2, 3, false] }],
-              ['bold', 'italic', 'underline', 'strike'],
-              [{ 'color': [] }, { 'background': [] }],
-              [{ 'font': [] }],
-              [{ 'size': ['small', false, 'large', 'huge'] }],
-              [{ 'align': [] }],
-              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-              ['blockquote', 'code-block'],
-              ['link', 'image', 'video'],
-              ['clean']
-            ]
+            toolbar: {
+              container: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ 'font': [] }],
+                [{ 'size': ['small', false, 'large', 'huge'] }],
+                [{ 'align': [] }],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['blockquote', 'code-block'],
+                ['link', 'image', 'video'],
+                ['clean']
+              ],
+              handlers: {
+                image: function() {
+                  const input = document.createElement('input');
+                  input.setAttribute('type', 'file');
+                  input.setAttribute('accept', 'image/*');
+                  input.classList.add('hidden');
+                  input.onchange = async function() {
+                    const file = input.files && input.files[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast('图片不能超过 5MB', 'warning');
+                      return;
+                    }
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    try {
+                      const res = await fetch(API + '/upload?type=images', {
+                        method: 'POST',
+                        body: formData
+                      });
+                      const result = await res.json();
+                      if (result.success && result.url) {
+                        const range = quill.getSelection(true) || { index: quill.getLength() };
+                        quill.insertEmbed(range.index, 'image', result.url);
+                        quill.setSelection(range.index + 1);
+                        pendingNoticeImages.push(result.url);
+                      } else {
+                        toast(result.error || '图片上传失败', 'error');
+                      }
+                    } catch (err) {
+                      toast('图片上传失败', 'error');
+                    }
+                  };
+                  input.click();
+                }
+              }
+            }
           }
         });
 
@@ -12737,6 +12844,7 @@
           });
         }
         if (res.ok) {
+          pendingNoticeImages = [];
           toast(id ? '公告已更新' : '公告已发布');
           closeModal();
           await loadAllData();
@@ -12753,6 +12861,13 @@
         toast('操作失败', 'error');
         console.error('[Dashboard] 保存公告异常:', err);
       }
+    }
+
+    function closeNoticeModal() {
+      pendingNoticeImages.forEach(url => deleteUploadFileByUrl(url));
+      pendingNoticeImages = [];
+      currentModalType = null;
+      closeModal();
     }
 
     async function viewNotice(id) {
@@ -13305,7 +13420,19 @@
     }
 
     function handleModalClick(e) {
-      if (e.target.classList.contains('fixed')) closeModal();
+      if (!e.target.classList.contains('fixed')) return;
+      // 若当前弹窗有对应的清理函数，优先走清理逻辑，避免临时文件残留
+      if (currentModalType === 'course') {
+        closeCourseModal();
+      } else if (currentModalType === 'lecturer') {
+        closeLecturerModal();
+      } else if (currentModalType === 'training') {
+        closeTrainingModal();
+      } else if (currentModalType === 'notice') {
+        closeNoticeModal();
+      } else {
+        closeModal();
+      }
     }
 
     function closeModal() {

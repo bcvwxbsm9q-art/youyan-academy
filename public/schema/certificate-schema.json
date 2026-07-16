@@ -95,7 +95,8 @@
           "description": "状态：有效 / 已过期 / 已撤销"
         },
         "revokedAt": { "type": ["string", "null"], "format": "date-time", "description": "撤销时间" },
-        "revokeReason": { "type": ["string", "null"], "description": "撤销原因" }
+        "revokeReason": { "type": ["string", "null"], "description": "撤销原因" },
+        "imageUrl": { "type": ["string", "null"], "description": "服务端预生成证书 PNG 图片 URL，null 表示尚未生成" }
       }
     }
   },

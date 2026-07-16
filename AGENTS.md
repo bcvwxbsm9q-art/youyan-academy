@@ -35,3 +35,16 @@
 - [x] 修复 `favoriteIcon?.className = xxx` 可选链赋值语法错误
 - [x] `<video>` 标签添加 `playsinline muted` 支持自动播放
 - [x] 实现静音自动播放 → 尝试取消静音 → 降级提示的渐进式策略
+
+## 证书管理（2026-07-15 重构）
+
+证书管理详见 `docs/证书管理.md`。核心约定：
+
+- **12 套真实 PNG 模板**（v1-v6 竖版 + h1-h6 横版），定义在：
+  - 前端：`js/certificate-management.js` 的 `CERT_TEMPLATES`
+  - 后端：`server.js` 的 `BUILTIN_CERT_TEMPLATES`
+  - **两端必须同步维护**
+- **所见即所得**：管理后台编辑器通过 `POST /api/certificates/preview` 实时拿 PNG 预览，与颁发流程共用同一渲染管线（`certRenderDesignPageInner` + `renderDesignToPngBuffer`）
+- 旧 4 套 CSS 渐变模板（tpl-honor-purple 等）已废弃，data.json 中的 `certificate_templates` 字段保留为空数组占位
+- 证书 PNG 输出位置：`uploads/certificates/${userCertId}.png`，由 server 端 `generateCertificateImage` 在颁发时生成
+- 修改时务必同步更新 `docs/证书管理.md`

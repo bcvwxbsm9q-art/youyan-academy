@@ -125,6 +125,299 @@
             color: #9ca3af;
             border-color: #e5e7eb;
         }
+
+        /* ============================================================
+         * 讲师详情弹窗 - Premium 样式（命名空间 tc-*）
+         * ============================================================ */
+        .teacher-modal-container { position: fixed; inset: 0; z-index: 200; }
+
+        .tc-mask {
+            position: fixed; inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(10px) saturate(140%);
+            -webkit-backdrop-filter: blur(10px) saturate(140%);
+            display: flex; align-items: flex-start; justify-content: center;
+            padding: 56px 16px 24px;
+            animation: tc-mask-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes tc-mask-in { from { opacity: 0; } to { opacity: 1; } }
+
+        .tc-modal {
+            position: relative;
+            width: 100%; max-width: 440px;
+            max-height: calc(100vh - 80px);
+            background: #fff;
+            border-radius: 24px;
+            box-shadow:
+                0 24px 60px -20px rgba(102, 126, 234, 0.35),
+                0 12px 32px -12px rgba(118, 75, 162, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            opacity: 0; transform: translateY(24px) scale(0.96);
+            transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .tc-modal.tc-modal-in { opacity: 1; transform: translateY(0) scale(1); }
+
+        /* 暗色模式 */
+        .dark .tc-mask { background: rgba(0, 0, 0, 0.7); }
+        .dark .tc-modal { background: #1f2937; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05) inset; }
+
+        /* Hero 区 */
+        .tc-hero {
+            position: relative;
+            padding: 20px 22px 64px;
+            background:
+                radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.18), transparent 60%),
+                linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+        .tc-hero-glow {
+            position: absolute; border-radius: 50%; filter: blur(40px); opacity: 0.55; pointer-events: none;
+        }
+        .tc-hero-glow-1 { top: -40px; right: -30px; width: 160px; height: 160px; background: rgba(255, 255, 255, 0.35); }
+        .tc-hero-glow-2 { bottom: -30px; left: 20px; width: 100px; height: 100px; background: rgba(118, 75, 162, 0.6); }
+
+        .tc-hero-title {
+            position: relative; z-index: 2;
+            color: #fff; font-size: 16px; font-weight: 600; letter-spacing: 0.5px;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 14px; border-radius: 999px;
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .tc-hero-title::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.8); }
+
+        .tc-close {
+            position: absolute; top: 18px; right: 18px;
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #fff; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 5;
+        }
+        .tc-close:hover { background: rgba(255, 255, 255, 0.35); transform: rotate(90deg); }
+
+        /* 悬浮头像 */
+        .tc-avatar-wrap {
+            position: absolute;
+            left: 50%; top: 76px;
+            transform: translate(-50%, 0);
+            z-index: 10;
+        }
+        .tc-avatar-ring {
+            width: 88px; height: 88px;
+            border-radius: 50%;
+            padding: 4px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 10px 24px -8px rgba(102, 126, 234, 0.5);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .tc-modal-in .tc-avatar-ring { animation: tc-avatar-pop 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
+        @keyframes tc-avatar-pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.08); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .tc-avatar-ring.level-senior { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .tc-avatar-ring.level-intermediate { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .tc-avatar-ring.level-junior { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .tc-avatar-ring.level-intern { background: linear-gradient(135deg, #10b981, #059669); }
+
+        .tc-avatar {
+            width: 100%; height: 100%; border-radius: 50%;
+            object-fit: cover; display: block; background: #f3f4f6;
+        }
+
+        /* 内容区 */
+        .tc-body {
+            flex: 1; overflow-y: auto;
+            padding: 56px 20px 16px;
+        }
+        .tc-body::-webkit-scrollbar { width: 6px; }
+        .tc-body::-webkit-scrollbar-thumb { background: rgba(102, 126, 234, 0.25); border-radius: 3px; }
+
+        .tc-name-block {
+            text-align: center;
+            margin-bottom: 18px;
+            animation: tc-fade-up 0.5s ease 0.25s both;
+        }
+        @keyframes tc-fade-up {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tc-name {
+            font-size: 22px; font-weight: 700; color: #1f2937;
+            margin: 0 0 8px; letter-spacing: 0.5px;
+        }
+        .dark .tc-name { color: #f3f4f6; }
+
+        .tc-level-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 12px; border-radius: 999px;
+            color: #fff; font-size: 12px; font-weight: 600;
+            box-shadow: 0 4px 10px -3px rgba(0, 0, 0, 0.2);
+        }
+        .tc-level-badge i { font-size: 10px; }
+
+        /* 指标行 */
+        .tc-metric-row {
+            display: flex; align-items: center;
+            padding: 14px 8px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            margin-bottom: 18px;
+            animation: tc-fade-up 0.5s ease 0.35s both;
+        }
+        .dark .tc-metric-row { background: linear-gradient(135deg, #111827 0%, #0f172a 100%); }
+
+        .tc-metric { flex: 1; text-align: center; padding: 0 4px; }
+        .tc-metric-icon { font-size: 13px; color: #667eea; margin-bottom: 2px; }
+        .tc-metric-num {
+            font-size: 20px; font-weight: 700; color: #1f2937;
+            line-height: 1.2; letter-spacing: -0.5px;
+        }
+        .dark .tc-metric-num { color: #f9fafb; }
+        .tc-metric-label { font-size: 11px; color: #6b7280; margin-top: 2px; }
+        .dark .tc-metric-label { color: #9ca3af; }
+        .tc-metric-divider { width: 1px; height: 32px; background: #e5e7eb; }
+        .dark .tc-metric-divider { background: #374151; }
+
+        .tc-metric-stars { display: flex; align-items: center; justify-content: center; gap: 1px; line-height: 1.2; }
+        .tc-metric-stars i { font-size: 11px; }
+        .tc-metric-stars i.on { color: #f59e0b; }
+        .tc-metric-stars i.off { color: #e5e7eb; }
+        .tc-metric-stars .tc-metric-val { font-size: 20px; font-weight: 700; color: #1f2937; margin-left: 4px; }
+        .tc-metric-stars .tc-metric-val.muted { color: #9ca3af; font-size: 20px; font-weight: 600; }
+        .dark .tc-metric-stars .tc-metric-val { color: #f9fafb; }
+
+        /* Section 通用 */
+        .tc-section { margin-bottom: 18px; }
+        .tc-section-head {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 600; color: #374151;
+            margin-bottom: 10px;
+        }
+        .dark .tc-section-head { color: #e5e7eb; }
+        .tc-section-head i { color: #667eea; font-size: 13px; }
+        .tc-section-extra {
+            margin-left: auto; font-size: 11px; color: #9ca3af; font-weight: 500;
+            padding: 2px 8px; background: #f3f4f6; border-radius: 999px;
+        }
+        .dark .tc-section-extra { background: #374151; }
+
+        /* 个人简介卡片 */
+        .tc-intro-card {
+            position: relative;
+            padding: 14px 16px 14px 22px;
+            background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%);
+            border-radius: 14px;
+            border-left: 3px solid #667eea;
+            overflow: hidden;
+        }
+        .dark .tc-intro-card { background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%); }
+        .tc-intro-quote {
+            position: absolute; top: -4px; left: 6px;
+            font-size: 38px; font-weight: 700; line-height: 1;
+            color: #667eea; opacity: 0.25;
+            font-family: Georgia, serif;
+        }
+        .tc-intro-text {
+            font-size: 13px; line-height: 1.7; color: #4b5563;
+            margin: 0; position: relative; z-index: 1;
+        }
+        .dark .tc-intro-text { color: #d1d5db; }
+
+        /* 专长领域胶囊 */
+        .tc-skill-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tc-skill-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 5px 12px; border-radius: 999px;
+            color: #fff; font-size: 12px; font-weight: 500;
+            box-shadow: 0 2px 6px -1px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease;
+        }
+        .tc-skill-chip:hover { transform: translateY(-1px) scale(1.04); }
+
+        /* 课程项 */
+        .tc-course-list { display: flex; flex-direction: column; gap: 8px; }
+        .tc-course-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .dark .tc-course-item { background: #111827; }
+        .tc-course-item:hover {
+            background: #f3f4f6;
+            border-color: #c7d2fe;
+            transform: translateX(2px);
+        }
+        .dark .tc-course-item:hover { background: #1f2937; border-color: #4c1d95; }
+        .tc-course-cover { width: 60px; height: 44px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+        .tc-course-meta { flex: 1; min-width: 0; }
+        .tc-course-title { font-size: 13px; font-weight: 500; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .dark .tc-course-title { color: #f3f4f6; }
+        .tc-course-sub { font-size: 11px; color: #6b7280; margin-top: 3px; display: flex; gap: 10px; }
+        .dark .tc-course-sub { color: #9ca3af; }
+        .tc-course-sub i { margin-right: 3px; }
+        .tc-course-arrow { color: #9ca3af; font-size: 14px; flex-shrink: 0; }
+
+        /* 课程空状态 */
+        .tc-empty-courses {
+            text-align: center; padding: 28px 16px;
+            background: #f9fafb; border-radius: 12px;
+            border: 1px dashed #e5e7eb;
+        }
+        .dark .tc-empty-courses { background: #111827; border-color: #374151; }
+        .tc-empty-icon {
+            width: 48px; height: 48px; margin: 0 auto 8px;
+            background: linear-gradient(135deg, #ede9fe 0%, #dbeafe 100%);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #667eea; font-size: 18px;
+        }
+        .dark .tc-empty-icon { background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2)); }
+        .tc-empty-text { font-size: 12px; color: #6b7280; }
+        .dark .tc-empty-text { color: #9ca3af; }
+
+        /* 底部关闭按钮 */
+        .tc-footer {
+            padding: 12px 20px 16px;
+            background: linear-gradient(to top, #fff 70%, transparent);
+        }
+        .dark .tc-footer { background: linear-gradient(to top, #1f2937 70%, transparent); }
+        .tc-close-btn {
+            width: 100%; padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff; font-size: 14px; font-weight: 600;
+            border: none; border-radius: 14px; cursor: pointer;
+            box-shadow: 0 8px 20px -8px rgba(102, 126, 234, 0.6);
+            transition: all 0.2s ease;
+        }
+        .tc-close-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 24px -8px rgba(102, 126, 234, 0.7); }
+        .tc-close-btn:active { transform: translateY(0); }
+
+        /* 移动端适配 */
+        @media (max-width: 480px) {
+            .tc-mask { padding: 24px 12px 16px; }
+            .tc-modal { max-height: calc(100vh - 40px); border-radius: 20px; }
+            .tc-hero { padding: 18px 20px 60px; }
+            .tc-avatar-wrap { top: 70px; }
+            .tc-avatar-ring { width: 80px; height: 80px; }
+            .tc-body { padding: 50px 16px 14px; }
+            .tc-name { font-size: 20px; }
+            .tc-metric-num { font-size: 18px; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-dark text-gray-800 dark:text-gray-200">

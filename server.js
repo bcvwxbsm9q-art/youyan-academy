@@ -515,97 +515,12 @@ function initCertificateData() {
     data.user_certificates = [];
     changed = true;
   }
+  // 证书模板说明：
+  // 旧版（4 个 CSS 渐变模板：tpl-honor-purple / tpl-completion-gold / tpl-excellent-green / tpl-skill-purple）已废弃。
+  // 当前体系为 12 套真实 PNG 模板（v1-v6 竖版 + h1-h6 横版），定义在前端 CERT_TEMPLATES。
+  // 端点 GET /api/certificates/templates 改为从 uploads/cert-templates 目录动态生成基本信息。
   if (!data.certificate_templates) {
-    data.certificate_templates = [
-      {
-        id: 'tpl-honor-purple',
-        name: '紫色考试合格证书（竖版）',
-        layout: 'portrait',
-        thumbnail: '',
-        style: {
-          background: 'repeating-linear-gradient(45deg, rgba(118,75,162,0.07) 0px, rgba(118,75,162,0.07) 1px, transparent 1px, transparent 12px), radial-gradient(circle at 15% 15%, rgba(102,126,234,0.12) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(118,75,162,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f5f3ff 40%, #ede9fe 100%)',
-          borderColor: '#764ba2',
-          primaryColor: '#764ba2',
-          secondaryColor: '#667eea',
-          accentColor: '#9333ea',
-          sealColor: '#764ba2',
-          fontFamily: '"Noto Serif SC", "SimSun", serif'
-        },
-        placeholders: [
-          { key: 'name', label: '姓名', defaultValue: '张三' },
-          { key: 'title', label: '证书标题', defaultValue: '考试合格证书' },
-          { key: 'content', label: '正文', defaultValue: '已通过相关考试，成绩合格，特发此证，以资鼓励。' },
-          { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
-          { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
-        ]
-      },
-      {
-        id: 'tpl-completion-gold',
-        name: '金色结业证书',
-        layout: 'portrait',
-        thumbnail: '',
-        style: {
-          background: 'radial-gradient(ellipse at 50% 0%, rgba(191,160,95,0.18) 0%, transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(191,160,95,0.12) 0%, transparent 60%), linear-gradient(135deg, #fffdf5 0%, #fcf6e3 50%, #f9efd0 100%)',
-          borderColor: '#bfa05f',
-          primaryColor: '#8a6d2f',
-          secondaryColor: '#bfa05f',
-          accentColor: '#8a6d2f',
-          sealColor: '#bfa05f',
-          fontFamily: '"Noto Serif SC", "SimSun", serif'
-        },
-        placeholders: [
-          { key: 'name', label: '姓名', defaultValue: '李四' },
-          { key: 'title', label: '证书标题', defaultValue: '结业证书' },
-          { key: 'content', label: '正文', defaultValue: '已完成全部培训课程，考核合格，准予结业。' },
-          { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
-          { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
-        ]
-      },
-      {
-        id: 'tpl-excellent-green',
-        name: '绿色优秀学员证书（竖版）',
-        layout: 'portrait',
-        thumbnail: '',
-        style: {
-          background: 'radial-gradient(circle at 80% 20%, rgba(45,122,78,0.12) 0%, transparent 40%), radial-gradient(circle at 20% 80%, rgba(45,122,78,0.08) 0%, transparent 40%), linear-gradient(160deg, #ffffff 0%, #f2fbf5 50%, #e3f5e9 100%)',
-          borderColor: '#2d7a4e',
-          primaryColor: '#2d7a4e',
-          secondaryColor: '#5aa87a',
-          accentColor: '#2d7a4e',
-          sealColor: '#2d7a4e',
-          fontFamily: '"Noto Sans SC", "Microsoft YaHei", sans-serif'
-        },
-        placeholders: [
-          { key: 'name', label: '姓名', defaultValue: '王五' },
-          { key: 'title', label: '证书标题', defaultValue: '优秀学员证书' },
-          { key: 'content', label: '正文', defaultValue: '学习态度认真，成绩突出，被评为优秀学员。' },
-          { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
-          { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
-        ]
-      },
-      {
-        id: 'tpl-skill-purple',
-        name: '紫色技能认证证书（横版）',
-        layout: 'landscape',
-        thumbnail: '',
-        style: {
-          background: 'linear-gradient(135deg, rgba(107,76,154,0.10) 0%, transparent 50%), linear-gradient(225deg, rgba(107,76,154,0.06) 0%, transparent 50%), linear-gradient(135deg, #faf8ff 0%, #f5f2ff 50%, #efe8fc 100%)',
-          borderColor: '#6b4c9a',
-          primaryColor: '#6b4c9a',
-          secondaryColor: '#9b7fc7',
-          accentColor: '#6b4c9a',
-          sealColor: '#6b4c9a',
-          fontFamily: '"Noto Sans SC", "Microsoft YaHei", sans-serif'
-        },
-        placeholders: [
-          { key: 'name', label: '姓名', defaultValue: '赵六' },
-          { key: 'title', label: '证书标题', defaultValue: '技能认证证书' },
-          { key: 'content', label: '正文', defaultValue: '已通过相关技能考核，具备相应专业能力。' },
-          { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
-          { key: 'date', label: '颁发日期', defaultValue: '2026-07-06' }
-        ]
-      }
-    ];
+    data.certificate_templates = [];
     changed = true;
   }
 
@@ -634,7 +549,7 @@ function generateNextCertNo(data, certificate) {
   return certificate.prefix + padNumber(maxNum + 1, certificate.digits);
 }
 
-function issueCertificateInternal(data, certificateId, userId, sourceType, sourceId) {
+async function issueCertificateInternal(data, certificateId, userId, sourceType, sourceId) {
   if (!data.certificates) data.certificates = [];
   if (!data.user_certificates) data.user_certificates = [];
 
@@ -671,7 +586,255 @@ function issueCertificateInternal(data, certificateId, userId, sourceType, sourc
     revokeReason: null
   };
   data.user_certificates.push(userCert);
+
+  // 服务端生成证书 PNG（使用与管理后台一致的渲染逻辑，确保用户端看到的效果与编辑时一致）
+  try {
+    const imageUrl = await generateCertificateImage(data, userCert);
+    if (imageUrl) userCert.imageUrl = imageUrl;
+  } catch (e) {
+    console.error('[证书渲染] 颁发时生成失败:', e.message);
+  }
+
   return { success: true, data: userCert };
+}
+
+// ============================================================
+// 证书图片服务端生成
+// ============================================================
+
+const CERT_IMAGE_DIR = path.join(uploadsDir, 'certificates');
+if (!fs.existsSync(CERT_IMAGE_DIR)) {
+  fs.mkdirSync(CERT_IMAGE_DIR, { recursive: true });
+}
+
+// 复刻 certificate-management.js 的证书渲染常量
+const CERT_EDITOR_PAGE = { portrait: { w: 410, h: 594 }, landscape: { w: 608, h: 420 } };
+const CERT_PAGE_NATIVE = { portrait: { w: 1425, h: 2064 }, landscape: { w: 2598, h: 1795 } };
+
+function certPrintScale(layout) {
+  const l = layout || 'portrait';
+  return CERT_PAGE_NATIVE[l].w / CERT_EDITOR_PAGE[l].w;
+}
+
+function certEscapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function certFillTokens(text, fill) {
+  return String(text == null ? '' : text).replace(/\{\{(\w+)\}\}/g, (m, k) => (fill[k] !== undefined ? fill[k] : m));
+}
+
+function certRenderRichText(text, fill) {
+  const t = certFillTokens(text, fill);
+  const esc = s => certEscapeHtml(s).replace(/\n/g, '<br>');
+  return String(t).split(/(【(?:#[0-9a-fA-F]{6}:)?[^】]*】)/g).map(p => {
+    if (p.startsWith('【') && p.endsWith('】')) {
+      const inner = p.slice(1, -1);
+      const m = inner.match(/^#([0-9a-fA-F]{6}):(.*)$/);
+      if (m) return '<span style="color:#' + m[1].toLowerCase() + ';font-weight:bold;">' + esc(m[2]) + '</span>';
+      return '<span style="color:#c41e0f;font-weight:bold;">' + esc(inner) + '</span>';
+    }
+    return esc(p);
+  }).join('');
+}
+
+function fileToDataUri(filePath) {
+  try {
+    const ext = path.extname(filePath).toLowerCase();
+    const mime = ext === '.png' ? 'image/png' : (ext === '.jpg' || ext === '.jpeg') ? 'image/jpeg' : 'image/png';
+    const buf = fs.readFileSync(filePath);
+    return `data:${mime};base64,${buf.toString('base64')}`;
+  } catch (e) {
+    console.warn('[证书渲染] 读取背景图失败:', filePath, e.message);
+    return null;
+  }
+}
+
+function certBgCss(data, bg) {
+  if (!bg) return 'background:#ffffff;';
+  if (typeof bg === 'string') return `background:${bg};`;
+  if (bg.type === 'image') {
+    if (bg.value && (bg.value.startsWith('/') || bg.value.startsWith('file:'))) {
+      const localPath = bg.value.startsWith('/') ? path.join(__dirname, bg.value) : bg.value.replace('file://', '');
+      const dataUri = fileToDataUri(localPath);
+      if (dataUri) return `background-image:url('${dataUri}');background-size:cover;background-position:center;`;
+    }
+    return `background-image:url('${bg.value}');background-size:cover;background-position:center;`;
+  }
+  if (bg.type === 'preset') {
+    // 旧版 CSS 渐变模板（tpl-honor-purple 等）已废弃——data.certificate_templates 仅做兼容占位，不再返回任何预设背景。
+    // 12 套内置 PNG 模板（v1-v6 / h1-h6）的渲染见下方 if 分支。
+    // 再匹配内置 12 套模板键（v1/h1...）
+    if (bg.value && /^[vh]\d$/.test(bg.value)) {
+      const localPath = path.join(__dirname, 'uploads', 'cert-templates', `cert-${bg.value}.png`);
+      const dataUri = fileToDataUri(localPath);
+      if (dataUri) return `background-image:url('${dataUri}');background-size:cover;background-position:center;`;
+    }
+  }
+  return 'background:#ffffff;';
+}
+
+function certRenderDesignPageInner(data, d, scale, fill) {
+  const dims = CERT_EDITOR_PAGE[d.layout];
+  const pw = dims.w * scale, ph = dims.h * scale;
+  const bc = d.borderColor || '#764ba2';
+  const ac = d.accentColor || bc;
+  let s = `<div class="cert-design-page" style="width:${pw}px;height:${ph}px;position:relative;overflow:hidden;${certBgCss(data, d.background)}">`;
+  s += `<div style="position:absolute;inset:${6 * scale}px;border:${2 * scale}px solid ${bc};opacity:0.4;pointer-events:none;"></div>`;
+  s += `<div style="position:absolute;inset:${12 * scale}px;border:1px solid ${bc};opacity:0.22;pointer-events:none;"></div>`;
+  [['top', 'left'], ['top', 'right'], ['bottom', 'left'], ['bottom', 'right']].forEach(([v, h]) => {
+    s += `<div style="position:absolute;${v}:${10 * scale}px;${h}:${10 * scale}px;width:${10 * scale}px;height:${10 * scale}px;border-${v === 'top' ? 'top' : 'bottom'}:${3 * scale}px solid ${ac};border-${h}:${3 * scale}px solid ${ac};opacity:0.6;"></div>`;
+  });
+  (d.elements || []).forEach(el => {
+    const fs = el.fontSize * scale;
+    const lh = el.lineHeight != null ? el.lineHeight : (el.key === 'content' ? 1.5 : 1.2);
+    s += `<div class="cert-design-el" style="left:${el.x * scale}px;top:${el.y * scale}px;width:${el.w * scale}px;height:${el.h * scale}px;font-size:${fs}px;font-weight:${el.fontWeight};font-style:${el.fontStyle};color:${el.color};font-family:${el.fontFamily};letter-spacing:${el.letterSpacing || 0}px;display:flex;align-items:center;overflow:hidden;padding:${el.key === 'content' ? '0 4px' : '2px 6px'};box-sizing:border-box;"><div style="display:block;width:100%;text-align:${el.textAlign};line-height:${lh};text-decoration:${el.underline ? 'underline' : 'none'};">${certRenderRichText(el.text, fill)}</div></div>`;
+  });
+  if (d.seal) {
+    const sz = d.seal.size * scale, fs2 = Math.max(8, sz * 0.16);
+    s += `<div class="cert-design-seal" style="left:${d.seal.x * scale}px;top:${d.seal.y * scale}px;width:${sz}px;height:${sz}px;color:${d.seal.color};border:${3 * scale}px solid ${d.seal.color};font-family:${d.fontFamily};display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;transform:rotate(-12deg);"><div style="font-size:${fs2}px;font-weight:700;line-height:1.1;text-align:center;">${certEscapeHtml(certFillTokens(d.seal.text, fill))}</div></div>`;
+  }
+  s += '</div>';
+  return s;
+}
+
+function buildCertFill(userCert, certificate) {
+  const user = userCert.userName || '学员';
+  const company = userCert.userDepartment || '广州游雁网络科技有限公司';
+  const date = (userCert.issueAt || '').split('T')[0] || new Date().toISOString().split('T')[0];
+  const title = certificate.name || userCert.certificateName || '荣誉证书';
+  const content = userCert.sourceType === 'exam'
+    ? '通过考试考核，成绩合格，特发此证，以资鼓励。'
+    : (userCert.sourceType === 'training'
+      ? '已完成全部培训课程，考核合格，准予结业。'
+      : '表现优异，特发此证，以资鼓励。');
+  return { title, name: user, certNo: userCert.certNo || '', date, company, content };
+}
+
+function getCertificateImagePath(userCertId) {
+  return path.join(CERT_IMAGE_DIR, `${userCertId}.png`);
+}
+
+let certBrowserPromise = null;
+function getCertBrowser() {
+  if (!certBrowserPromise) {
+    certBrowserPromise = (async () => {
+      try {
+        const { chromium } = require('playwright');
+        return await chromium.launch({ headless: true });
+      } catch (e) {
+        console.error('[证书渲染] 启动 Playwright 失败:', e.message);
+        certBrowserPromise = null;
+        return null;
+      }
+    })();
+  }
+  return certBrowserPromise;
+}
+
+process.on('exit', () => {
+  if (certBrowserPromise) {
+    certBrowserPromise.then(b => { if (b) b.close(); }).catch(() => {});
+  }
+});
+
+async function renderDesignToPngBuffer(data, design, fill, layout) {
+  const browser = await getCertBrowser();
+  if (!browser) return null;
+  let page;
+  try {
+    const scale = certPrintScale(layout);
+    const html = certRenderDesignPageInner(data, design, scale, fill);
+    if (process.env.CERT_DEBUG_HTML) {
+      const fs = require('fs');
+      const path = require('path');
+      fs.writeFileSync(path.join(__dirname, 'scripts', 'cert-debug-render.html'), `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:0;}</style></head><body>${html}</body></html>`);
+      console.log('[CERT_DEBUG] HTML written to scripts/cert-debug-render.html');
+    }
+    page = await browser.newPage();
+    await page.setViewportSize({
+      width: Math.round(CERT_PAGE_NATIVE[layout || 'portrait'].w),
+      height: Math.round(CERT_PAGE_NATIVE[layout || 'portrait'].h)
+    });
+    await page.setContent(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:0;}</style></head><body>${html}</body></html>`, { waitUntil: 'networkidle' });
+    const buffer = await page.screenshot({ type: 'png' });
+    return buffer;
+  } catch (e) {
+    console.error('[证书渲染] 渲染 PNG 失败:', e.message);
+    return null;
+  } finally {
+    if (page) await page.close();
+  }
+}
+
+function certWrapServerHtml(innerHtml, layout) {
+  const dims = CERT_EDITOR_PAGE[layout || 'portrait'];
+  const native = CERT_PAGE_NATIVE[layout || 'portrait'];
+  const scale = native.w / dims.w;
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:0;width:${native.w}px;height:${native.h}px;overflow:hidden;background:#fff;}</style></head><body><div style="transform:scale(${scale});transform-origin:top left;width:${dims.w}px;height:${dims.h}px;">${innerHtml}</div></body></html>`;
+}
+
+async function renderHtmlToPngBuffer(html, layout, fill) {
+  const browser = await getCertBrowser();
+  if (!browser) return null;
+  let page;
+  try {
+    const filled = certFillTokens(html, fill || {});
+    page = await browser.newPage();
+    await page.setViewportSize({
+      width: Math.round(CERT_PAGE_NATIVE[layout || 'portrait'].w),
+      height: Math.round(CERT_PAGE_NATIVE[layout || 'portrait'].h)
+    });
+    await page.setContent(certWrapServerHtml(filled, layout), { waitUntil: 'networkidle' });
+    const buffer = await page.screenshot({ type: 'png' });
+    return buffer;
+  } catch (e) {
+    console.error('[证书渲染] HTML 转 PNG 失败:', e.message);
+    return null;
+  } finally {
+    if (page) await page.close();
+  }
+}
+
+async function generateCertificateImage(data, userCert) {
+  const certificate = (data.certificates || []).find(c => String(c.id) === String(userCert.certificateId)) || {};
+  const design = certificate.design || userCert.design || null;
+  if (!design) {
+    console.warn('[证书渲染] 无 design，跳过生成:', userCert.id);
+    return null;
+  }
+  const fill = buildCertFill(userCert, certificate);
+  const buffer = await renderDesignToPngBuffer(data, design, fill, design.layout);
+  if (!buffer) return null;
+  const imagePath = getCertificateImagePath(userCert.id);
+  try {
+    fs.writeFileSync(imagePath, buffer);
+    return `/uploads/certificates/${userCert.id}.png`;
+  } catch (e) {
+    console.error('[证书渲染] 写入文件失败:', e.message);
+    return null;
+  }
+}
+
+async function ensureCertificateImage(data, userCert) {
+  if (userCert.imageUrl) return userCert.imageUrl;
+  const imagePath = getCertificateImagePath(userCert.id);
+  if (fs.existsSync(imagePath)) {
+    userCert.imageUrl = `/uploads/certificates/${userCert.id}.png`;
+    return userCert.imageUrl;
+  }
+  const url = await generateCertificateImage(data, userCert);
+  if (url) {
+    userCert.imageUrl = url;
+    writeData(data);
+  }
+  return url;
 }
 
 // 从 course_ratings 计算课程平均评分
@@ -4160,7 +4323,7 @@ function judgeAnswerToAB(val) {
 }
 
 // POST /api/exams/:id/submit - 提交考试答卷
-app.post('/api/exams/:id/submit', (req, res) => {
+app.post('/api/exams/:id/submit', async (req, res) => {
   const id = parseInt(req.params.id);
   const { userId, attemptId, answers, durationUsed } = req.body;
   const data = readData();
@@ -4278,11 +4441,15 @@ app.post('/api/exams/:id/submit', (req, res) => {
 
   // 考试合格后自动发放证书
   if (passed && exam.certificateId) {
-    const autoIssue = issueCertificateInternal(data, exam.certificateId, userId, 'exam', String(id));
-    if (autoIssue.success) {
-      console.log(`  自动发放证书: ${autoIssue.data.certNo} -> 用户 ${userId}`);
-    } else {
-      console.log(`  自动发放证书失败: ${autoIssue.error} (用户 ${userId}, 考试 ${id})`);
+    try {
+      const autoIssue = await issueCertificateInternal(data, exam.certificateId, userId, 'exam', String(id));
+      if (autoIssue.success) {
+        console.log(`  自动发放证书: ${autoIssue.data.certNo} -> 用户 ${userId}`);
+      } else {
+        console.log(`  自动发放证书失败: ${autoIssue.error} (用户 ${userId}, 考试 ${id})`);
+      }
+    } catch (e) {
+      console.error(`  自动发放证书异常: ${e.message} (用户 ${userId}, 考试 ${id})`);
     }
   }
 
@@ -4494,19 +4661,34 @@ app.put('/api/users/:id', (req, res) => {
   }
 });
 
-// DELETE /api/users/:id - 删除用户
+// DELETE /api/users/:id - 删除用户（同时清理关联数据与头像）
 app.delete('/api/users/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
-  if (data.users) {
-    data.users = data.users.filter(u => u.id !== id);
-    if (writeData(data)) {
-      res.json({ success: true });
-    } else {
-      res.status(500).json({ success: false, error: '写入失败' });
-    }
+  if (!data.users) {
+    return res.status(404).json({ success: false, error: '用户列表不存在' });
+  }
+
+  const user = data.users.find(u => u.id === id);
+  if (!user) {
+    return res.status(404).json({ success: false, error: '用户不存在' });
+  }
+
+  // 清理用户头像文件
+  if (user.avatar) {
+    tryDeleteUploadFile(user.avatar, `user:${id}`);
+  }
+
+  // 清理用户关联数据（含 registered_users 中的头像）
+  cleanupUserRelatedData(data, String(id), true);
+
+  // 删除用户主记录
+  data.users = data.users.filter(u => u.id !== id);
+
+  if (writeData(data)) {
+    res.json({ success: true, message: '用户已删除，关联数据已清理' });
   } else {
-    res.status(404).json({ success: false, error: '用户列表不存在' });
+    res.status(500).json({ success: false, error: '写入失败' });
   }
 });
 
@@ -4740,6 +4922,11 @@ app.delete('/api/notices/:id', (req, res) => {
   }
 
   const notice = data.notices[noticeIndex];
+
+  // 删除公告封面图
+  if (notice.cover) {
+    tryDeleteUploadFile(notice.cover, `notice:${id}:cover`);
+  }
 
   // 删除正文中的 /uploads/ 图片
   collectUrlsFromHtml(notice.content).forEach(url => tryDeleteUploadFile(url, `notice:${id}`));
@@ -6255,10 +6442,149 @@ app.delete('/api/papers/:id', (req, res) => {
 // 证书管理 REST API
 // ============================================================
 
-// GET /api/certificates/templates - 内置模板列表
+// GET /api/certificates/templates - 内置模板列表（12 套真实 PNG 模板）
+// v1-v6 竖版 + h1-h6 横版，基于 uploads/cert-templates/ 目录下的真实 PNG。
+// 元数据（颜色/字体/版式）需与前端 certificate-management.js 的 CERT_TEMPLATES 保持一致；
+// 修改时务必同步两端。
+const BUILTIN_CERT_TEMPLATES = [
+  // ── 竖版（portrait） ──
+  { key: 'v1', name: '翠竹', layout: 'portrait', titleColor: '#1a365d', textColor: '#334155', subtitleColor: '#64748b', accentColor: '#2c5282', sealColor: '#c2410c', fontFamily: "'STSong','SimSun','Times New Roman',serif" },
+  { key: 'v2', name: '白玉', layout: 'portrait', titleColor: '#5d4e37', textColor: '#57534e', subtitleColor: '#a8a29e', accentColor: '#78716c', sealColor: '#b45309', fontFamily: "'STFangsong','FangSong','SimSun',serif" },
+  { key: 'v3', name: '金辉', layout: 'portrait', titleColor: '#7c5c00', textColor: '#4a3c1a', subtitleColor: '#8b7355', accentColor: '#b8860b', sealColor: '#a16207', fontFamily: "'STKaiti','KaiTi','SimSun',serif" },
+  { key: 'v4', name: '墨韵', layout: 'portrait', titleColor: '#1e3a5f', textColor: '#334155', subtitleColor: '#64748b', accentColor: '#1e40af', sealColor: '#be123c', fontFamily: "'STSong','SimSun','Times New Roman',serif" },
+  { key: 'v5', name: '蔚蓝', layout: 'portrait', titleColor: '#166534', textColor: '#3f4c3a', subtitleColor: '#6b8068', accentColor: '#15803d', sealColor: '#b45309', fontFamily: "'STSong','SimSun','Times New Roman',serif" },
+  { key: 'v6', name: '朝阳', layout: 'portrait', titleColor: '#92400e', textColor: '#4a3c1a', subtitleColor: '#8b7355', accentColor: '#b8860b', sealColor: '#a16207', fontFamily: "'STKaiti','KaiTi','SimSun',serif" },
+  // ── 横版（landscape） ──
+  { key: 'h1', name: '典藏', layout: 'landscape', titleColor: '#1a365d', textColor: '#334155', subtitleColor: '#64748b', accentColor: '#2c5282', sealColor: '#c2410c', fontFamily: "'STSong','SimSun','Times New Roman',serif" },
+  { key: 'h2', name: '锦绣', layout: 'landscape', titleColor: '#5d4e37', textColor: '#57534e', subtitleColor: '#a8a29e', accentColor: '#78716c', sealColor: '#b45309', fontFamily: "'STFangsong','FangSong','SimSun',serif" },
+  { key: 'h3', name: '丹霞', layout: 'landscape', titleColor: '#92400e', textColor: '#4a3c1a', subtitleColor: '#8b7355', accentColor: '#b8860b', sealColor: '#a16207', fontFamily: "'STKaiti','KaiTi','SimSun',serif" },
+  { key: 'h4', name: '春晒', layout: 'landscape', titleColor: '#166534', textColor: '#3f4c3a', subtitleColor: '#6b8068', accentColor: '#15803d', sealColor: '#b45309', fontFamily: "'STSong','SimSun','Times New Roman',serif" },
+  { key: 'h5', name: '银素', layout: 'landscape', titleColor: '#374151', textColor: '#4b5563', subtitleColor: '#6b7280', accentColor: '#4b5563', sealColor: '#b91c1c', fontFamily: "'Microsoft YaHei','PingFang SC',sans-serif" },
+  { key: 'h6', name: '紫宸', layout: 'landscape', titleColor: '#5b21b6', textColor: '#3b3654', subtitleColor: '#7e6f9e', accentColor: '#7c3aed', sealColor: '#be185d', fontFamily: "'STSong','SimSun','Times New Roman',serif" }
+];
 app.get('/api/certificates/templates', (req, res) => {
-  const data = readData();
-  res.json({ success: true, data: data.certificate_templates || [] });
+  // 转为前端模板选择器期望的格式：id/name/layout/style/thumbnail/placeholders
+  const data = BUILTIN_CERT_TEMPLATES.map(t => ({
+    id: t.key,
+    name: t.name,
+    layout: t.layout,
+    thumbnail: `/uploads/cert-templates/cert-${t.key}.png`,
+    style: {
+      background: `url('/uploads/cert-templates/cert-${t.key}.png') center/cover no-repeat`,
+      borderColor: t.titleColor,
+      primaryColor: t.titleColor,
+      secondaryColor: t.subtitleColor,
+      accentColor: t.accentColor,
+      sealColor: t.sealColor,
+      fontFamily: t.fontFamily
+    },
+    placeholders: [
+      { key: 'name', label: '姓名', defaultValue: '张三' },
+      { key: 'title', label: '证书标题', defaultValue: t.layout === 'portrait' ? '荣誉证书' : '认证证书' },
+      { key: 'content', label: '正文', defaultValue: '在本公司工作期间，认真负责，表现优\n秀，现授予 荣誉称号。特发此\n证，以示表彰。' },
+      { key: 'company', label: '企业名称', defaultValue: '广州游雁网络科技有限公司' },
+      { key: 'date', label: '颁发日期', defaultValue: new Date().toISOString().split('T')[0] }
+    ]
+  }));
+  res.json({ success: true, data });
+});
+
+// 辅助：根据 templateId（v1-v6 / h1-h6）查找内置模板元数据
+// 渲染时 cert.templateId 必须落在这 12 个键之内，旧版 tpl-* 已被清理。
+function getBuiltinTemplate(templateId) {
+  if (!templateId) return null;
+  const t = BUILTIN_CERT_TEMPLATES.find(x => x.key === templateId);
+  if (!t) return null;
+  return {
+    id: t.key,
+    name: t.name,
+    layout: t.layout,
+    thumbnail: `/uploads/cert-templates/cert-${t.key}.png`,
+    style: {
+      background: `url('/uploads/cert-templates/cert-${t.key}.png') center/cover no-repeat`,
+      borderColor: t.titleColor,
+      primaryColor: t.titleColor,
+      secondaryColor: t.subtitleColor,
+      accentColor: t.accentColor,
+      sealColor: t.sealColor,
+      fontFamily: t.fontFamily
+    }
+  };
+}
+
+// POST /api/certificates/preview
+// 管理后台"应用证书"时调用：传入当前编辑的 design，server 用 Playwright 渲染出
+// 一张所见即所得的 PNG 并以 base64 dataURL 返回。
+// 与颁发流程（issueCertificateInternal）共用同一套渲染逻辑（certRenderDesignPageInner），
+// 确保管理后台看到的预览图和最终颁发给学员的图片完全一致。
+app.post('/api/certificates/preview', async (req, res) => {
+  try {
+    const data = readData();
+    const payload = req.body || {};
+    const design = payload.design;
+    if (!design || !design.layout || !Array.isArray(design.elements)) {
+      return res.status(422).json({ success: false, error: 'design 字段不完整' });
+    }
+    if (!/^[vh]\d$/.test((design.background && design.background.value) || '')) {
+      return res.status(422).json({ success: false, error: 'design.background 必须是 12 套内置模板之一（v1-v6 / h1-h6）' });
+    }
+    // 默认 fill：使用示例数据生成与编辑界面一致的"占位"预览；
+    // 也可由调用方通过 fill 字段覆盖特定 key（如 name/title）
+    const fill = Object.assign({
+      title: '荣誉证书',
+      subtitle: 'CERTIFICATE OF HONORS',
+      name: '张三',
+      certNo: 'CERT0001',
+      date: new Date().toISOString().split('T')[0],
+      company: '广州游雁网络科技有限公司',
+      content: '在本公司工作期间，认真负责，表现优\n秀，现授予 荣誉称号。特发此\n证，以示表彰。'
+    }, payload.fill || {});
+
+    const buffer = await renderDesignToPngBuffer(data, design, fill, design.layout);
+    if (!buffer) {
+      return res.status(500).json({ success: false, error: '渲染失败：Playwright 不可用' });
+    }
+    const dataUrl = `data:image/png;base64,${buffer.toString('base64')}`;
+    res.json({ success: true, data: { dataUrl, width: CERT_PAGE_NATIVE[design.layout || 'portrait'].w, height: CERT_PAGE_NATIVE[design.layout || 'portrait'].h } });
+  } catch (e) {
+    console.error('[证书预览] 失败:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// POST /api/certificates/preview-html
+// 管理后台"应用证书"时调用：前端直接把编辑器里渲染好的 HTML（带 {{token}} 占位）传过来，
+// 服务端只做数据填充 + Playwright 截图。这样预览图与编辑器所见完全一致，不再依赖服务端重绘。
+app.post('/api/certificates/preview-html', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const html = payload.html;
+    const layout = payload.layout || 'portrait';
+    if (!html || typeof html !== 'string') {
+      return res.status(422).json({ success: false, error: 'html 字段不能为空' });
+    }
+    // 默认 fill：使用示例数据生成与编辑界面一致的"占位"预览；
+    // 也可由调用方通过 fill 字段覆盖特定 key（如 name/title）
+    const fill = Object.assign({
+      title: '荣誉证书',
+      subtitle: 'CERTIFICATE OF HONORS',
+      name: '张三',
+      certNo: 'CERT0001',
+      date: new Date().toISOString().split('T')[0],
+      company: '广州游雁网络科技有限公司',
+      content: '在本公司工作期间，认真负责，表现优\n秀，现授予 荣誉称号。特发此\n证，以示表彰。'
+    }, payload.fill || {});
+
+    const buffer = await renderHtmlToPngBuffer(html, layout, fill);
+    if (!buffer) {
+      return res.status(500).json({ success: false, error: '渲染失败：Playwright 不可用' });
+    }
+    const dataUrl = `data:image/png;base64,${buffer.toString('base64')}`;
+    res.json({ success: true, data: { dataUrl, width: CERT_PAGE_NATIVE[layout || 'portrait'].w, height: CERT_PAGE_NATIVE[layout || 'portrait'].h } });
+  } catch (e) {
+    console.error('[证书预览-html] 失败:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
 // GET /api/certificates - 证书定义列表
@@ -6313,9 +6639,9 @@ app.post('/api/certificates', (req, res) => {
     return res.status(422).json({ success: false, error: '证书名称和模板必填' });
   }
 
-  const templates = data.certificate_templates || [];
-  if (!templates.find(t => t.id === payload.templateId)) {
-    return res.status(404).json({ success: false, error: '模板不存在' });
+  // 校验 templateId：必须是 12 套内置模板之一（v1-v6 竖版 + h1-h6 横版）
+  if (!/^[vh]\d$/.test(payload.templateId)) {
+    return res.status(422).json({ success: false, error: '模板必须是 12 套内置模板之一（v1-v6 / h1-h6）' });
   }
 
   const certificate = {
@@ -6375,10 +6701,16 @@ app.delete('/api/certificates/:id', (req, res) => {
   const cert = data.certificates[index];
   const issued = (data.user_certificates || []).filter(uc => String(uc.certificateId) === String(req.params.id));
 
-  // 删除时同时清理该证书的所有颁发记录
+  // 删除时同时清理该证书的所有颁发记录及其 PNG 图片
   let cleaned = 0;
   if (issued.length > 0 && data.user_certificates) {
     const beforeLen = data.user_certificates.length;
+    // 先清理图片文件
+    issued.forEach(uc => {
+      if (uc.imageUrl) {
+        tryDeleteUploadFile(uc.imageUrl, `certificate:${req.params.id}:uc:${uc.id}`);
+      }
+    });
     data.user_certificates = data.user_certificates.filter(uc => String(uc.certificateId) !== String(req.params.id));
     cleaned = beforeLen - data.user_certificates.length;
   }
@@ -6402,7 +6734,7 @@ app.delete('/api/certificates/:id', (req, res) => {
 });
 
 // POST /api/certificates/:id/issue - 手动/批量颁发证书
-app.post('/api/certificates/:id/issue', (req, res) => {
+app.post('/api/certificates/:id/issue', async (req, res) => {
   const data = readData();
   const certificate = (data.certificates || []).find(c => String(c.id) === String(req.params.id));
   if (!certificate) return res.status(404).json({ success: false, error: '证书不存在' });
@@ -6416,31 +6748,37 @@ app.post('/api/certificates/:id/issue', (req, res) => {
   const errors = [];
   const now = Date.now();
   initNotificationsData(data);
-  userIds.forEach((uid, idx) => {
-    const result = issueCertificateInternal(data, certificate.id, uid, sourceType || 'manual', sourceId || null);
-    if (result.success) {
-      results.push(result.data);
-      data.notifications.push({
-        id: 'nt-' + now + '-' + idx,
-        userId: String(uid),
-        title: '恭喜您获得证书',
-        content: `您已获得《${certificate.name}》证书，证书编号：${result.data.certNo}。请在个人中心-我的证书查看。`,
-        type: 'certificate',
-        certificateId: String(certificate.id),
-        read: false,
-        createdAt: new Date().toISOString()
-      });
-    } else {
-      errors.push({ userId: uid, error: result.error });
+  for (let idx = 0; idx < userIds.length; idx++) {
+    const uid = userIds[idx];
+    try {
+      const result = await issueCertificateInternal(data, certificate.id, uid, sourceType || 'manual', sourceId || null);
+      if (result.success) {
+        results.push(result.data);
+        data.notifications.push({
+          id: 'nt-' + now + '-' + idx,
+          userId: String(uid),
+          title: '恭喜您获得证书',
+          content: `您已获得《${certificate.name}》证书，证书编号：${result.data.certNo}。请在个人中心-我的证书查看。`,
+          type: 'certificate',
+          certificateId: String(certificate.id),
+          userCertificateId: String(result.data.id),
+          read: false,
+          createdAt: new Date().toISOString()
+        });
+      } else {
+        errors.push({ userId: uid, error: result.error });
+      }
+    } catch (e) {
+      errors.push({ userId: uid, error: e.message || '颁发异常' });
     }
-  });
+  }
 
   writeData(data);
   res.json({ success: true, data: results, errors });
 });
 
 // GET /api/user-certificates - 用户证书实例列表
-app.get('/api/user-certificates', (req, res) => {
+app.get('/api/user-certificates', async (req, res) => {
   const data = readData();
   const { userId, certificateId, status } = req.query;
   let list = (data.user_certificates || []).slice();
@@ -6459,45 +6797,69 @@ app.get('/api/user-certificates', (req, res) => {
   const certificates = data.certificates || [];
   const templates = data.certificate_templates || [];
   const users = data.registered_users || [];
-  const enriched = list.map(uc => {
+  const enriched = await Promise.all(list.map(async uc => {
     const cert = certificates.find(c => String(c.id) === String(uc.certificateId)) || {};
-    const template = templates.find(t => t.id === cert.templateId) || null;
+    const template = getBuiltinTemplate(cert.templateId);
     const user = users.find(u => String(u.id) === String(uc.userId)) || {};
+    // 为生成图片补充临时用户信息
+    uc.userName = user.realName || user.username || '';
+    uc.userDepartment = user.department || '';
+    const imageUrl = await ensureCertificateImage(data, uc);
     return {
       ...uc,
       certificateName: cert.name || '',
       templateId: cert.templateId || '',
       template,
       design: cert.design || null,
-      userName: user.realName || user.username || '',
-      userDepartment: user.department || '',
-      userPosition: user.position || ''
+      userName: uc.userName,
+      userDepartment: uc.userDepartment,
+      userPosition: user.position || '',
+      imageUrl
     };
-  });
+  }));
 
   res.json({ success: true, data: enriched });
 });
 
 // GET /api/user-certificates/:id - 用户证书实例详情
-app.get('/api/user-certificates/:id', (req, res) => {
+app.get('/api/user-certificates/:id', async (req, res) => {
   const data = readData();
   const uc = (data.user_certificates || []).find(u => String(u.id) === String(req.params.id));
   if (!uc) return res.status(404).json({ success: false, error: '证书记录不存在' });
 
   const cert = (data.certificates || []).find(c => String(c.id) === String(uc.certificateId)) || {};
   const user = (data.registered_users || []).find(u => String(u.id) === String(uc.userId)) || {};
+  uc.userName = user.realName || user.username || '';
+  uc.userDepartment = user.department || '';
+  const imageUrl = await ensureCertificateImage(data, uc);
   res.json({
     success: true,
     data: {
       ...uc,
       certificateName: cert.name || '',
-      template: (data.certificate_templates || []).find(t => t.id === cert.templateId) || null,
+      template: getBuiltinTemplate(cert.templateId),
       design: cert.design || null,
-      userName: user.realName || user.username || '',
-      userDepartment: user.department || '',
-      userPosition: user.position || ''
+      userName: uc.userName,
+      userDepartment: uc.userDepartment,
+      userPosition: user.position || '',
+      imageUrl
     }
   });
+});
+
+// GET /api/user-certificates/:id/image - 直接获取/生成证书图片
+app.get('/api/user-certificates/:id/image', async (req, res) => {
+  const data = readData();
+  const uc = (data.user_certificates || []).find(u => String(u.id) === String(req.params.id));
+  if (!uc) return res.status(404).json({ success: false, error: '证书记录不存在' });
+
+  const cert = (data.certificates || []).find(c => String(c.id) === String(uc.certificateId)) || {};
+  const user = (data.registered_users || []).find(u => String(u.id) === String(uc.userId)) || {};
+  uc.userName = user.realName || user.username || '';
+  uc.userDepartment = user.department || '';
+  const imageUrl = await ensureCertificateImage(data, uc);
+  if (!imageUrl) return res.status(500).json({ success: false, error: '证书图片生成失败' });
+  res.redirect(imageUrl);
 });
 
 // POST /api/user-certificates/:id/revoke - 撤销证书

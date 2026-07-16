@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/avatars/1783579052402-447707856.jpg",
       "createdAt": "2026/7/9 14:22:27",
-      "lastLogin": "2026/7/14 15:35:11",
+      "lastLogin": "2026/7/16 11:29:27",
       "status": "active",
       "position": "人事经理"
     },
@@ -42,7 +42,8 @@
       "avatar": "",
       "createdAt": "2026/7/9 10:23:48",
       "lastLogin": null,
-      "status": "active"
+      "status": "active",
+      "position": "主数值"
     }
   ],
   "lecturers": [
@@ -179,6 +180,44 @@
       "courseCount": 0,
       "regDate": "2026-07-09",
       "id": 1783591411868
+    },
+    {
+      "name": "钟飞跃",
+      "department": "引擎组",
+      "title": "U3D引擎专家",
+      "level": "senior",
+      "levelName": "高级讲师",
+      "avatar": "/uploads/avatars/1784169884624-336282029.jpg",
+      "intro": "",
+      "startTeachingDate": "2024-10-16",
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "GPU",
+        "渲染"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-07-16",
+      "id": 1784169926391
+    },
+    {
+      "name": "陈志勇",
+      "department": "运维工作室",
+      "title": "高级运维程序",
+      "level": "intermediate",
+      "levelName": "中级讲师",
+      "avatar": "/uploads/avatars/1784182555729-236648961.JPG",
+      "intro": "",
+      "startTeachingDate": "2024-02-16",
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "运维",
+        "程序"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-07-16",
+      "id": 1784182583742
     }
   ],
   "index_banners": [],
@@ -320,7 +359,33 @@
     }
   ],
   "notices": [],
-  "management_courses": [],
+  "management_courses": [
+    {
+      "title": "粒子系统",
+      "cover": "/uploads/covers/1784182342405-704142190.png",
+      "categoryId": 1780974142620,
+      "subcategoryId": 1780974147097,
+      "lecturerId": 1784169926391,
+      "description": "本期课程主要讲解Unity粒子系统的核心原理，并介绍新粒子系统在小程序平台的优化方法，为客户端开发提供优化方向与思路。",
+      "status": "published",
+      "videos": [
+        {
+          "url": "/uploads/videos/1784182401852-833598915.mp4",
+          "title": "粒子系统（钟飞跃）.mp4",
+          "size": 74042744,
+          "type": "video/mp4",
+          "duration": 2249
+        }
+      ],
+      "attachments": [],
+      "duration": 2249,
+      "views": 1,
+      "rating": 0,
+      "id": 1784182455662,
+      "createdAt": "2026/7/16 14:14:15",
+      "updatedAt": "2026/7/16 14:14:15"
+    }
+  ],
   "training_projects": [
     {
       "project": "AI实践分享",
@@ -629,17 +694,6 @@
       "certificateId": "cert-1783333691917",
       "read": false,
       "createdAt": "2026-07-08T01:51:00.760Z"
-    },
-    {
-      "id": "nt-1784018102675-0",
-      "userId": "1780909174403",
-      "title": "恭喜您获得证书",
-      "content": "您已获得《1》证书，证书编号：0001。请在个人中心-我的证书查看。",
-      "type": "certificate",
-      "certificateId": "cert-1784018093524",
-      "read": true,
-      "createdAt": "2026-07-14T08:35:02.675Z",
-      "readAt": "2026-07-14T08:40:07.291Z"
     }
   ],
   "notification_reads": [],
@@ -1334,144 +1388,7 @@
       "duration": 90
     }
   ],
-  "certificates": [
-    {
-      "id": "cert-1784018093524",
-      "name": "1",
-      "dept": "1",
-      "validityType": "permanent",
-      "validityDays": null,
-      "prefix": "",
-      "startNumber": 1,
-      "digits": 4,
-      "templateId": "tpl-honor-purple",
-      "status": "enabled",
-      "design": {
-        "_tplKey": "v5",
-        "layout": "portrait",
-        "elements": [
-          {
-            "id": "elmrkeb115beis",
-            "type": "text",
-            "key": "title",
-            "x": 57.400000000000006,
-            "y": 110,
-            "w": 295,
-            "h": 52,
-            "text": "{{title}}",
-            "fontSize": 38,
-            "fontWeight": "bold",
-            "letterSpacing": 4,
-            "fontStyle": "normal",
-            "textAlign": "center",
-            "color": "#166534",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrkeb11520n3",
-            "type": "text",
-            "key": "subtitle",
-            "x": 57.400000000000006,
-            "y": 160,
-            "w": 295,
-            "h": 20,
-            "text": "CERTIFICATE OF HONORS",
-            "fontSize": 12,
-            "fontWeight": "normal",
-            "letterSpacing": 2,
-            "fontStyle": "normal",
-            "textAlign": "center",
-            "color": "#64748b",
-            "underline": false,
-            "fontFamily": "Arial,sans-serif"
-          },
-          {
-            "id": "elmrkeb115aqr4",
-            "type": "text",
-            "key": "name",
-            "x": 57.400000000000006,
-            "y": 220,
-            "w": 177,
-            "h": 24,
-            "text": "{{name}}",
-            "fontSize": 15,
-            "fontWeight": "bold",
-            "fontStyle": "normal",
-            "textAlign": "left",
-            "color": "#3f4c3a",
-            "underline": true,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrkeb115mqcw",
-            "type": "text",
-            "key": "content",
-            "x": 57.400000000000006,
-            "y": 244,
-            "w": 295,
-            "h": 120,
-            "text": "　　在本公司工作期间，认真负责，表现\n优秀，现授予【年度优秀员工】荣誉称号。特\n发此证，以示表彰。",
-            "fontSize": 15,
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textAlign": "left",
-            "lineHeight": 2,
-            "color": "#3f4c3a",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrkeb115lgwk",
-            "type": "text",
-            "key": "company",
-            "x": 170,
-            "y": 404,
-            "w": 183,
-            "h": 22,
-            "text": "{{company}}",
-            "fontSize": 15,
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textAlign": "right",
-            "color": "#3f4c3a",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrkeb115418j",
-            "type": "text",
-            "key": "date",
-            "x": 187,
-            "y": 434,
-            "w": 165,
-            "h": 22,
-            "text": "{{date}}",
-            "fontSize": 15,
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textAlign": "right",
-            "color": "#3f4c3a",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          }
-        ],
-        "seal": null,
-        "background": {
-          "type": "preset",
-          "value": "v5"
-        },
-        "accentColor": "#15803d",
-        "fontFamily": "'STSong','SimSun','Times New Roman',serif",
-        "titleColor": "#166534",
-        "subtitleColor": "#6b8068",
-        "textColor": "#3f4c3a",
-        "sealColor": "#b45309"
-      },
-      "creator": "许志坚",
-      "createdAt": "2026-07-14T08:34:53.524Z"
-    }
-  ],
+  "certificates": [],
   "current_user": {
     "id": 1,
     "name": "张小明",
@@ -1847,6 +1764,14 @@
     {
       "userId": "1780909174403",
       "loginTime": "2026-07-14T07:35:11.862Z"
+    },
+    {
+      "userId": "1780909174403",
+      "loginTime": "2026-07-16T02:38:10.042Z"
+    },
+    {
+      "userId": "1780909174403",
+      "loginTime": "2026-07-16T03:29:27.129Z"
     }
   ],
   "lecturer_payment_records": [
@@ -1877,203 +1802,457 @@
       "updatedAt": "2026-07-04T01:52:20.051Z"
     }
   ],
-  "user_certificates": [
-    {
-      "id": "uc-1784018102675-386684703",
-      "certificateId": "cert-1784018093524",
-      "userId": "1780909174403",
-      "certNo": "0001",
-      "sourceType": "manual",
-      "sourceId": null,
-      "issueAt": "2026-07-14T08:35:02.675Z",
-      "effectiveAt": "2026-07-14T08:35:02.675Z",
-      "expireAt": null,
-      "status": "active",
-      "revokedAt": null,
-      "revokeReason": null
-    }
-  ],
-  "certificate_templates": [
-    {
-      "id": "tpl-honor-purple",
-      "name": "紫色考试合格证书（竖版）",
-      "layout": "portrait",
-      "thumbnail": "",
-      "style": {
-        "background": "repeating-linear-gradient(45deg, rgba(118,75,162,0.07) 0px, rgba(118,75,162,0.07) 1px, transparent 1px, transparent 12px), radial-gradient(circle at 15% 15%, rgba(102,126,234,0.12) 0%, transparent 42%), radial-gradient(circle at 85% 85%, rgba(118,75,162,0.10) 0%, transparent 42%), linear-gradient(160deg, #ffffff 0%, #f5f3ff 40%, #ede9fe 100%)",
-        "borderColor": "#764ba2",
-        "primaryColor": "#764ba2",
-        "secondaryColor": "#667eea",
-        "accentColor": "#9333ea",
-        "sealColor": "#764ba2",
-        "fontFamily": "\"Noto Serif SC\", \"SimSun\", serif"
-      },
-      "placeholders": [
-        {
-          "key": "name",
-          "label": "姓名",
-          "defaultValue": "张三"
-        },
-        {
-          "key": "title",
-          "label": "证书标题",
-          "defaultValue": "考试合格证书"
-        },
-        {
-          "key": "content",
-          "label": "正文",
-          "defaultValue": "已通过相关考试，成绩合格，特发此证，以资鼓励。"
-        },
-        {
-          "key": "company",
-          "label": "企业名称",
-          "defaultValue": "广州游雁网络科技有限公司"
-        },
-        {
-          "key": "date",
-          "label": "颁发日期",
-          "defaultValue": "2026-07-06"
-        }
-      ]
-    },
-    {
-      "id": "tpl-completion-gold",
-      "name": "金色结业证书（横版）",
-      "layout": "landscape",
-      "thumbnail": "",
-      "style": {
-        "background": "radial-gradient(ellipse at 50% 0%, rgba(191,160,95,0.18) 0%, transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(191,160,95,0.12) 0%, transparent 60%), linear-gradient(135deg, #fffdf5 0%, #fcf6e3 50%, #f9efd0 100%)",
-        "borderColor": "#bfa05f",
-        "primaryColor": "#8a6d2f",
-        "secondaryColor": "#bfa05f",
-        "accentColor": "#8a6d2f",
-        "sealColor": "#bfa05f",
-        "fontFamily": "\"Noto Serif SC\", \"SimSun\", serif"
-      },
-      "placeholders": [
-        {
-          "key": "name",
-          "label": "姓名",
-          "defaultValue": "李四"
-        },
-        {
-          "key": "title",
-          "label": "证书标题",
-          "defaultValue": "结业证书"
-        },
-        {
-          "key": "content",
-          "label": "正文",
-          "defaultValue": "已完成全部培训课程，考核合格，准予结业。"
-        },
-        {
-          "key": "company",
-          "label": "企业名称",
-          "defaultValue": "广州游雁网络科技有限公司"
-        },
-        {
-          "key": "date",
-          "label": "颁发日期",
-          "defaultValue": "2026-07-06"
-        }
-      ]
-    },
-    {
-      "id": "tpl-excellent-green",
-      "name": "绿色优秀学员证书（竖版）",
-      "layout": "portrait",
-      "thumbnail": "",
-      "style": {
-        "background": "radial-gradient(circle at 80% 20%, rgba(45,122,78,0.12) 0%, transparent 40%), radial-gradient(circle at 20% 80%, rgba(45,122,78,0.08) 0%, transparent 40%), linear-gradient(160deg, #ffffff 0%, #f2fbf5 50%, #e3f5e9 100%)",
-        "borderColor": "#2d7a4e",
-        "primaryColor": "#2d7a4e",
-        "secondaryColor": "#5aa87a",
-        "accentColor": "#2d7a4e",
-        "sealColor": "#2d7a4e",
-        "fontFamily": "\"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
-      },
-      "placeholders": [
-        {
-          "key": "name",
-          "label": "姓名",
-          "defaultValue": "王五"
-        },
-        {
-          "key": "title",
-          "label": "证书标题",
-          "defaultValue": "优秀学员证书"
-        },
-        {
-          "key": "content",
-          "label": "正文",
-          "defaultValue": "学习态度认真，成绩突出，被评为优秀学员。"
-        },
-        {
-          "key": "company",
-          "label": "企业名称",
-          "defaultValue": "广州游雁网络科技有限公司"
-        },
-        {
-          "key": "date",
-          "label": "颁发日期",
-          "defaultValue": "2026-07-06"
-        }
-      ]
-    },
-    {
-      "id": "tpl-skill-purple",
-      "name": "紫色技能认证证书（横版）",
-      "layout": "landscape",
-      "thumbnail": "",
-      "style": {
-        "background": "linear-gradient(135deg, rgba(107,76,154,0.10) 0%, transparent 50%), linear-gradient(225deg, rgba(107,76,154,0.06) 0%, transparent 50%), linear-gradient(135deg, #faf8ff 0%, #f5f2ff 50%, #efe8fc 100%)",
-        "borderColor": "#6b4c9a",
-        "primaryColor": "#6b4c9a",
-        "secondaryColor": "#9b7fc7",
-        "accentColor": "#6b4c9a",
-        "sealColor": "#6b4c9a",
-        "fontFamily": "\"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
-      },
-      "placeholders": [
-        {
-          "key": "name",
-          "label": "姓名",
-          "defaultValue": "赵六"
-        },
-        {
-          "key": "title",
-          "label": "证书标题",
-          "defaultValue": "技能认证证书"
-        },
-        {
-          "key": "content",
-          "label": "正文",
-          "defaultValue": "已通过相关技能考核，具备相应专业能力。"
-        },
-        {
-          "key": "company",
-          "label": "企业名称",
-          "defaultValue": "广州游雁网络科技有限公司"
-        },
-        {
-          "key": "date",
-          "label": "颁发日期",
-          "defaultValue": "2026-07-06"
-        }
-      ]
-    }
-  ],
+  "user_certificates": [],
+  "certificate_templates": [],
   "user_learning_1780909174403": {
     "totalHours": 0,
     "completedCourses": [],
-    "videoProgress": {},
-    "videoWatchTimes": {},
-    "lastStudyTime": null,
-    "studyDates": [],
-    "ratings": 0,
-    "shares": 0,
-    "likes": 0,
-    "examRecords": []
+    "videoProgress": {
+      "1784182455662_0": 0
+    },
+    "videoWatchTimes": {
+      "1784019677171_0": 42,
+      "1784019483483_0": 384,
+      "1784182455662_0": 5
+    },
+    "lastStudyTime": "2026-07-16T06:14:36.774Z",
+    "studyDates": [
+      "2026-07-14",
+      "2026-07-15",
+      "2026-07-16"
+    ],
+    "ratings": 1,
+    "shares": 1,
+    "likes": 1,
+    "examRecords": [],
+    "totalSeconds": 421,
+    "studyRecords": [
+      {
+        "courseId": 1784019677171,
+        "courseTitle": "TCP简介",
+        "videoIndex": 0,
+        "videoTitle": "TCP简介.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:01:38.905Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019677171,
+        "courseTitle": "TCP简介",
+        "videoIndex": 0,
+        "videoTitle": "TCP简介.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:01:48.904Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019677171,
+        "courseTitle": "TCP简介",
+        "videoIndex": 0,
+        "videoTitle": "TCP简介.mp4",
+        "duration": 2,
+        "timestamp": "2026-07-14T09:07:48.280Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019677171,
+        "courseTitle": "TCP简介",
+        "videoIndex": 0,
+        "videoTitle": "TCP简介.mp4",
+        "duration": 4,
+        "timestamp": "2026-07-14T09:08:00.055Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019677171,
+        "courseTitle": "TCP简介",
+        "videoIndex": 0,
+        "videoTitle": "TCP简介.mp4",
+        "duration": 4,
+        "timestamp": "2026-07-14T09:08:05.672Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:13:08.410Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:13:18.404Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:13:28.406Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:13:38.408Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:13:48.408Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:13:58.405Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:14:08.406Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:14:18.403Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:14:28.415Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:14:38.407Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:14:48.402Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:14:58.401Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:15:08.407Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:15:18.401Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:15:28.407Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:15:38.403Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:15:48.408Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:15:58.410Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:16:08.408Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:16:18.406Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:16:28.409Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:16:38.402Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:16:48.407Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:16:58.413Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:17:08.406Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:17:18.402Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:17:28.407Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:17:38.416Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:17:48.404Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:17:58.402Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:18:08.403Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:18:18.402Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:18:28.404Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:18:38.405Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:18:48.402Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 8,
+        "timestamp": "2026-07-14T09:18:57.217Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:19:10.005Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 4,
+        "timestamp": "2026-07-14T09:19:14.179Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 9,
+        "timestamp": "2026-07-14T09:19:26.390Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 3,
+        "timestamp": "2026-07-14T10:20:40.798Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019677171,
+        "courseTitle": "TCP简介",
+        "videoIndex": 0,
+        "videoTitle": "TCP简介.mp4",
+        "duration": 2,
+        "timestamp": "2026-07-15T08:16:10.091Z",
+        "date": "2026-07-15"
+      },
+      {
+        "courseId": 1784182455662,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 5,
+        "timestamp": "2026-07-16T06:14:36.774Z",
+        "date": "2026-07-16"
+      }
+    ],
+    "migratedAt": "2026-07-14T09:01:38.982Z",
+    "migrationVersion": 2
   },
   "user_learning_1783563828582": {
     "totalHours": 0,
@@ -2086,5 +2265,363 @@
     "shares": 0,
     "likes": 0,
     "examRecords": []
+  },
+  "user_likes_1780909174403": {
+    "totalLikes": 1,
+    "likedCourses": [
+      1784019483483
+    ]
+  },
+  "learning_data_1780909174403": {
+    "totalHours": 0,
+    "completedCourses": [],
+    "videoProgress": {
+      "1784019677171_0": 19,
+      "1784019483483_0": 20
+    },
+    "videoWatchTimes": {
+      "1784019677171_0": 40,
+      "1784019483483_0": 290
+    },
+    "lastStudyTime": "2026-07-14T09:17:48.404Z",
+    "studyDates": [
+      "2026-07-14"
+    ],
+    "ratings": 1,
+    "shares": 1,
+    "likes": 1,
+    "examRecords": [],
+    "totalSeconds": 320,
+    "studyRecords": [
+      {
+        "courseId": 1784019677171,
+        "courseTitle": "TCP简介",
+        "videoIndex": 0,
+        "videoTitle": "TCP简介.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:01:38.905Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019677171,
+        "courseTitle": "TCP简介",
+        "videoIndex": 0,
+        "videoTitle": "TCP简介.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:01:48.904Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019677171,
+        "courseTitle": "TCP简介",
+        "videoIndex": 0,
+        "videoTitle": "TCP简介.mp4",
+        "duration": 2,
+        "timestamp": "2026-07-14T09:07:48.280Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019677171,
+        "courseTitle": "TCP简介",
+        "videoIndex": 0,
+        "videoTitle": "TCP简介.mp4",
+        "duration": 4,
+        "timestamp": "2026-07-14T09:08:00.055Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019677171,
+        "courseTitle": "TCP简介",
+        "videoIndex": 0,
+        "videoTitle": "TCP简介.mp4",
+        "duration": 4,
+        "timestamp": "2026-07-14T09:08:05.672Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:13:08.410Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:13:18.404Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:13:28.406Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:13:38.408Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:13:48.408Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:13:58.405Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:14:08.406Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:14:18.403Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:14:28.415Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:14:38.407Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:14:48.402Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:14:58.401Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:15:08.407Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:15:18.401Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:15:28.407Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:15:38.403Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:15:48.408Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:15:58.410Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:16:08.408Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:16:18.406Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:16:28.409Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:16:38.402Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:16:48.407Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:16:58.413Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:17:08.406Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:17:18.402Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:17:28.407Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:17:38.416Z",
+        "date": "2026-07-14"
+      },
+      {
+        "courseId": 1784019483483,
+        "courseTitle": "浅谈抖音小游戏接入及常见处理",
+        "videoIndex": 0,
+        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-14T09:17:48.404Z",
+        "date": "2026-07-14"
+      }
+    ],
+    "migratedAt": "2026-07-14T09:01:38.982Z",
+    "migrationVersion": 2
+  },
+  "user_shares_1780909174403": {
+    "totalShares": 1,
+    "sharedCourses": [
+      1784019483483
+    ]
+  },
+  "user_ratings_1780909174403": {
+    "totalRatings": 1,
+    "ratedCourses": [
+      1784019483483
+    ]
+  },
+  "course_interaction_1783590826474": {
+    "ratingSum": 50,
+    "ratingCount": 10,
+    "likes": 1
+  },
+  "video_pos_1780909174403_1784182455662_0": {
+    "position": 5,
+    "savedAt": "2026-07-16T06:14:36.773Z"
   }
 }

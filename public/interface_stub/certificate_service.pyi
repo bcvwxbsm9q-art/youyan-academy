@@ -92,12 +92,14 @@ class CertificateService:
     ) -> List[Dict[str, Any]]:
         """GET /api/user-certificates
         查询用户证书实例，支持按用户、证书定义、状态过滤。
+        返回字段包含 imageUrl：服务端预生成证书 PNG 图片 URL，可能为 null。
         """
         ...
 
     def get_user_certificate(self, user_certificate_id: str) -> Dict[str, Any]:
         """GET /api/user-certificates/:id
         返回用户证书实例详情，含渲染所需完整数据。
+        返回字段包含 imageUrl：服务端预生成证书 PNG 图片 URL，可能为 null。
         """
         ...
 

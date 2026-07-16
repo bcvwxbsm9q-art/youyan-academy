@@ -441,17 +441,51 @@
     updateTemplatePreview();
   }
 
+  // 防抖：编辑器文字/样式变更后等 600ms 再请求预览，避免每次按键都跑一次 Playwright
+  let _previewTimer = null;
   function updateTemplatePreview() {
     const preview = $('#cert-template-preview');
     if (!preview) return;
     // 仅在应用样式(currentDesign)后显示真实预览图；未配置前隐藏容器保持空白
     if (currentDesign) {
       preview.style.display = '';
-      preview.innerHTML = renderDesignPreviewBox(currentDesign, 208, 160);
+      preview.innerHTML = `
+        <div class="flex items-center justify-center bg-slate-50 rounded-xl border border-slate-200" style="min-height:200px;">
+          <div class="flex flex-col items-center text-slate-400 py-6">
+            <i class="fa fa-spinner fa-spin text-2xl mb-2"></i>
+            <span class="text-xs">生成预览图片…</span>
+          </div>
+        </div>
+      `;
+      if (_previewTimer) clearTimeout(_previewTimer);
+      _previewTimer = setTimeout(() => renderCertPreviewPng(currentDesign, preview), 600);
       return;
     }
     preview.style.display = 'none';
     preview.innerHTML = '';
+  }
+
+  // 调用 /api/certificates/preview-html 拿所见即所得的 PNG dataURL
+  // 前端直接把编辑器里渲染好的 HTML（保留 {{token}} 占位）传给服务端，服务端只做数据填充 + Playwright 截图，
+  // 避免服务端再用另一套逻辑重绘，确保预览图与编辑器完全一致。
+  async function renderCertPreviewPng(design, container) {
+    try {
+      const html = renderDesignPageInner(design, 1, PREVIEW_PLACEHOLDER_FILL);
+      const res = await apiPost('/api/certificates/preview-html', { html, layout: design.layout });
+      if (!res.success || !res.data || !res.data.dataUrl) {
+        container.innerHTML = `<div class="text-xs text-red-500 p-3">预览失败：${res.error || '未知错误'}</div>`;
+        return;
+      }
+      // 等比缩放到容器宽度（208px）
+      container.innerHTML = `
+        <div class="rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm" style="position:relative; width:100%; padding-top:${(res.data.height / res.data.width) * 100}%;">
+          <img src="${res.data.dataUrl}" alt="证书预览" class="absolute inset-0 w-full h-full object-contain" />
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1.5 text-center">所见即所得 · 与颁发给学员的 PNG 一致</p>
+      `;
+    } catch (e) {
+      container.innerHTML = `<div class="text-xs text-red-500 p-3">预览失败：${e.message}</div>`;
+    }
   }
 
   // ===== 证书详情 =====
@@ -685,6 +719,13 @@
     content: '在本公司工作期间，认真负责，表现优\n秀，现授予 年度优秀员工 荣誉称号。特发此\n证，以示表彰。'
   };
 
+  // 传给服务端的占位 fill，让 renderDesignPageInner 输出仍保留 {{token}}，服务端再统一替换为真实数据
+  const PREVIEW_PLACEHOLDER_FILL = {
+    title: '{{title}}', name: '{{name}}', certNo: '{{certNo}}',
+    date: '{{date}}', company: '{{company}}', content: '{{content}}',
+    subtitle: '{{subtitle}}'
+  };
+
     // ── 12 套证书模板（6 竖版 + 6 横版，基于真实 PNG 图片） ──
   const CERT_TEMPLATES = [
     // ── 竖版（portrait） ──
@@ -853,6 +894,7 @@
   }
   function bgCss(bg) {
     if (!bg) return '#ffffff';
+    if (typeof bg === 'string') return `background:${bg};`;
     if (bg.type === 'image') return `background-image:url('${bg.value}');background-size:cover;background-position:center;`;
     return `background:${BG_PRESETS.find(p => p.key === bg.value)?.css || '#fff'};`;
   }
@@ -891,8 +933,11 @@
     });
     (d.elements || []).forEach(el => {
       const fs = el.fontSize * scale;
-      const justify = el.textAlign === 'center' ? 'center' : el.textAlign === 'right' ? 'flex-end' : 'flex-start';
-      s += `<div class="cert-design-el" style="left:${el.x * scale}px;top:${el.y * scale}px;width:${el.w * scale}px;height:${el.h * scale}px;font-size:${fs}px;font-weight:${el.fontWeight};font-style:${el.fontStyle};text-align:${el.textAlign};color:${el.color};font-family:${el.fontFamily};text-decoration:${el.underline ? 'underline' : 'none'};letter-spacing:${el.letterSpacing || 0}px;line-height:${el.lineHeight != null ? el.lineHeight : (el.key === 'content' ? 1.5 : 1.2)};display:flex;align-items:center;justify-content:${justify};padding:${el.key === 'content' ? '0 4px' : '2px 6px'};box-sizing:border-box;">${renderRichText(el.text, fill)}</div>`;
+      const lh = el.lineHeight != null ? el.lineHeight : (el.key === 'content' ? 1.5 : 1.2);
+      // 使用 row flex + 内部 block 正常文本流。
+      // column flex 会把 <br> 与着色 <span> 拆成匿名 flex 项，导致换行/居中/重叠异常；
+      // inline-block 内层会导致 text-align 在部分浏览器中不被继承，因此改用 block。
+      s += `<div class="cert-design-el" style="left:${el.x * scale}px;top:${el.y * scale}px;width:${el.w * scale}px;height:${el.h * scale}px;font-size:${fs}px;font-weight:${el.fontWeight};font-style:${el.fontStyle};color:${el.color};font-family:${el.fontFamily};letter-spacing:${el.letterSpacing || 0}px;display:flex;align-items:center;overflow:hidden;padding:${el.key === 'content' ? '0 4px' : '2px 6px'};box-sizing:border-box;"><div style="display:block;width:100%;text-align:${el.textAlign};line-height:${lh};text-decoration:${el.underline ? 'underline' : 'none'};">${renderRichText(el.text, fill)}</div></div>`;
     });
     if (d.seal) {
       const sz = d.seal.size * scale, fs2 = Math.max(8, sz * 0.16);
@@ -1021,12 +1066,12 @@
         fontSize: 15, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'left', lineHeight: isLand ? 1.5 : 2,
         color: t.textColor, underline: false, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'company',
-        x: Math.round(padX + innerW * (isLand ? 0.50 : 0.38)), y: Math.round(coy), w: Math.round(innerW * (isLand ? 0.45 : 0.62)), h: 22,
+        x: Math.round(padX + innerW * (isLand ? 0.55 : 0.30)), y: Math.round(coy), w: Math.round(innerW * (isLand ? 0.45 : 0.70)), h: 22,
         text: existingTexts['company'] || '{{company}}',
         fontSize: isLand ? 13 : 15, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right',
         color: t.textColor, underline: false, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'date',
-        x: Math.round(padX + innerW * (isLand ? 0.55 : 0.44)), y: Math.round(dy), w: Math.round(innerW * (isLand ? 0.40 : 0.56)), h: 22,
+        x: Math.round(padX + innerW * (isLand ? 0.60 : 0.35)), y: Math.round(dy), w: Math.round(innerW * (isLand ? 0.40 : 0.65)), h: 22,
         text: existingTexts['date'] || '{{date}}',
         fontSize: isLand ? 13 : 15, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right',
         color: t.textColor, underline: false, fontFamily: t.fontFamily }
@@ -1052,7 +1097,8 @@
     node.className = 'cert-el';
     node.dataset.id = el.id;
     applyTextNodeStyle(node, el);
-    node.innerHTML = `<span class="cert-el-text">${renderRichText(el.text, EDITOR_SAMPLE)}</span>` + handleHTML();
+    const lh = el.lineHeight != null ? el.lineHeight : (el.key === 'content' ? 1.5 : 1.2);
+    node.innerHTML = `<div class="cert-el-text" style="display:block;width:100%;text-align:${el.textAlign};line-height:${lh};text-decoration:${el.underline ? 'underline' : 'none'};">${renderRichText(el.text, EDITOR_SAMPLE)}</div>` + handleHTML();
     return node;
   }
   function applyTextNodeStyle(node, el) {
@@ -1060,11 +1106,20 @@
     node.style.width = el.w + 'px'; node.style.height = el.h + 'px';
     node.style.fontSize = el.fontSize + 'px';
     node.style.fontWeight = el.fontWeight; node.style.fontStyle = el.fontStyle;
-    node.style.textAlign = el.textAlign; node.style.color = el.color; node.style.fontFamily = el.fontFamily;
-    node.style.textDecoration = el.underline ? 'underline' : 'none';
-    node.style.lineHeight = el.lineHeight != null ? el.lineHeight : (el.key === 'content' ? '1.5' : '1.2');
+    node.style.color = el.color; node.style.fontFamily = el.fontFamily;
+    node.style.display = 'flex'; node.style.alignItems = 'center'; node.style.overflow = 'hidden';
+    node.style.boxSizing = 'border-box';
+    // 旧版本可能在外层遗留 text-align/line-height/text-decoration，先清空再以内层为准
+    node.style.textAlign = ''; node.style.lineHeight = ''; node.style.textDecoration = '';
     if (el.letterSpacing) node.style.letterSpacing = el.letterSpacing + 'px';
     node.style.padding = el.key === 'content' ? '0 4px' : '2px 6px';
+    const text = node.querySelector('.cert-el-text');
+    if (text) {
+      const lh = el.lineHeight != null ? el.lineHeight : (el.key === 'content' ? 1.5 : 1.2);
+      text.style.display = 'block'; text.style.width = '100%';
+      text.style.textAlign = el.textAlign; text.style.lineHeight = lh;
+      text.style.textDecoration = el.underline ? 'underline' : 'none';
+    }
   }
   function createSealNode(seal) {
     const node = document.createElement('div');

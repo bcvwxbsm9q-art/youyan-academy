@@ -292,107 +292,166 @@
     }
 
     /**
-     * 显示讲师详情（弹窗）- 桌面端小窗口样式
+     * 显示讲师详情（弹窗）- Premium 升级版
      */
     window.showTeacherDetail = function(lecturerId) {
         const api = window.DataAPI;
         const lecturer = allLecturers.find(l => l.id === lecturerId);
-        
+
         if (!lecturer) return;
 
         const levelInfo = LEVEL_STYLES[lecturer.level] || LEVEL_STYLES['intern'];
-        const catName = (api && api.getCategoryName(lecturer.categoryId)) || '';
 
         // 动态计算该讲师的课程数、总点赞量和平均评分
         const courseCount = getLecturerCourseCount(lecturer.id);
         const totalLikes = getLecturerTotalLikes(lecturer.id);
         const avgRating = getLecturerAverageRating(lecturer.id);
         const ratingDisplay = avgRating !== null ? avgRating.toFixed(1) : '--';
+        const hasRating = avgRating !== null;
+
+        // 工具：基于字符串生成稳定的渐变色（用于专长标签）
+        const hash = (str) => {
+            let h = 0;
+            for (let i = 0; i < (str || '').length; i++) {
+                h = (h << 5) - h + str.charCodeAt(i);
+                h |= 0;
+            }
+            return Math.abs(h);
+        };
+        // 专长领域标签：统一主题紫色渐变（与全站 #667eea → #764ba2 一致）
+        const skillColors = () => 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+
+        // 个人简介模块：仅当有内容时渲染（用户明确要求）
+        const hasIntro = lecturer.intro && String(lecturer.intro).trim().length > 0;
+
+        // 专长领域：仅当有标签时渲染
+        const hasSkills = lecturer.skills && lecturer.skills.length > 0;
+
+        // 课程数据
+        const courses = api ? getLecturerCourses(lecturer.id) : [];
+        const coursesHtml = courses.length === 0
+            ? `<div class="tc-empty-courses">
+                    <div class="tc-empty-icon"><i class="fa fa-book"></i></div>
+                    <div class="tc-empty-text">该讲师暂无授课课程</div>
+               </div>`
+            : courses.slice(0, 3).map(c => `
+                <div class="tc-course-item" onclick="location.href='player.html?courseId=${c.id}'">
+                    <img src="${c.cover || ''}" alt="${c.title}" class="tc-course-cover" onerror="this.src='https://placehold.co/96x64/667eea/white?text=课'">
+                    <div class="tc-course-meta">
+                        <div class="tc-course-title">${c.title}</div>
+                        <div class="tc-course-sub">
+                            <span><i class="fa fa-clock-o"></i>${Math.floor((c.duration || 0) / 60)}分钟</span>
+                            <span><i class="fa fa-user-o"></i>${(c.views || 0) > 10000 ? ((c.views / 10000).toFixed(1) + '万') : (c.views || 0)}人学习</span>
+                        </div>
+                    </div>
+                    <i class="fa fa-angle-right tc-course-arrow"></i>
+                </div>
+            `).join('');
+
+        // 评分显示（去掉星星，只显示数字）
+        const starsHtml = hasRating
+            ? `<div class="tc-metric-stars"><span class="tc-metric-val">${ratingDisplay}</span></div>`
+            : `<div class="tc-metric-stars"><span class="tc-metric-val muted">--</span></div>`;
+
+        // 个人简介 HTML（条件渲染）
+        const introHtml = hasIntro ? `
+            <div class="tc-section">
+                <div class="tc-section-head">
+                    <i class="fa fa-info-circle"></i>
+                    <span>个人简介</span>
+                </div>
+                <div class="tc-intro-card">
+                    <span class="tc-intro-quote">"</span>
+                    <p class="tc-intro-text">${lecturer.intro}</p>
+                </div>
+            </div>
+        ` : '';
+
+        // 专长领域 HTML（条件渲染）
+        const skillsHtml = hasSkills ? `
+            <div class="tc-section">
+                <div class="tc-section-head">
+                    <i class="fa fa-tags"></i>
+                    <span>专长领域</span>
+                </div>
+                <div class="tc-skill-list">
+                    ${lecturer.skills.map(s => `
+                        <span class="tc-skill-chip" style="background:${skillColors()}">${s}</span>
+                    `).join('')}
+                </div>
+            </div>
+        ` : '';
 
         const modalHtml = `
-            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center pt-20 pb-8" onclick="closeTeacherModal()">
-                <div class="bg-white rounded-2xl w-full max-w-md max-h-[calc(100vh-8rem)] flex flex-col shadow-xl transform transition-all scale-100 relative overflow-hidden" onclick="event.stopPropagation()">
-                    <!-- 顶部标题栏 -->
-                    <div class="bg-gradient-primary px-6 py-4 flex-shrink-0">
-                        <h2 class="text-xl font-bold text-white">讲师简介</h2>
+            <div class="tc-mask" onclick="closeTeacherModal()">
+                <div class="tc-modal" onclick="event.stopPropagation()">
+                    <!-- 顶部 Hero 区（紫色渐变 + 装饰光斑） -->
+                    <div class="tc-hero">
+                        <div class="tc-hero-glow tc-hero-glow-1"></div>
+                        <div class="tc-hero-glow tc-hero-glow-2"></div>
+                        <button class="tc-close" onclick="closeTeacherModal()" aria-label="关闭">
+                            <i class="fa fa-times"></i>
+                        </button>
+                        <div class="tc-hero-title">讲师简介</div>
                     </div>
-                    
-                    <!-- 关闭按钮 -->
-                    <button class="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/30 hover:bg-white/50 flex items-center justify-center text-white transition-all z-[20]" onclick="closeTeacherModal()">
-                        <i class="fa fa-times"></i>
-                    </button>
-                    
-                    <!-- 内容区域 -->
-                    <div class="flex-1 overflow-y-auto px-5 py-4">
-                        <!-- 基本信息卡片 -->
-                        <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                            <div class="flex items-center gap-3">
-                                <!-- 头像 -->
-                                <img src="${lecturer.avatar || ''}" alt="${lecturer.name}" class="w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold text-lg object-cover" onerror="this.src='https://placehold.co/120x120/667eea/white?text=${encodeURIComponent(lecturer.name.charAt(0))}'">
-                                
-                                <!-- 信息 -->
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-semibold text-gray-800">${lecturer.name}</span>
-                                        <span class="inline-block ${levelInfo.class} text-white px-2 py-0.5 rounded text-xs">${levelInfo.name}</span>
-                                    </div>
-                                    <div class="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                                        <span><i class="fa fa-book mr-1"></i>${courseCount}门课程</span>
-                                        <span><i class="fa fa-thumbs-o-up mr-1"></i>${totalLikes}点赞</span>
-                                        <span><i class="fa fa-star mr-1 text-yellow-500"></i>${ratingDisplay}</span>
-                                    </div>
-                                </div>
+
+                    <!-- 悬浮头像（横跨 hero 和 body 边界） -->
+                    <div class="tc-avatar-wrap">
+                        <div class="tc-avatar-ring ${levelInfo.class}">
+                            <img src="${lecturer.avatar || ''}" alt="${lecturer.name}" class="tc-avatar" onerror="this.src='https://placehold.co/200x200/667eea/white?text=${encodeURIComponent(lecturer.name.charAt(0))}'">
+                        </div>
+                    </div>
+
+                    <!-- 滚动内容区 -->
+                    <div class="tc-body">
+                        <!-- 名字 + 级别 -->
+                        <div class="tc-name-block">
+                            <h3 class="tc-name">${lecturer.name}</h3>
+                            <span class="tc-level-badge ${levelInfo.class}">
+                                <i class="fa ${levelInfo.icon}"></i>${levelInfo.name}
+                            </span>
+                        </div>
+
+                        <!-- 三个指标卡 -->
+                        <div class="tc-metric-row">
+                            <div class="tc-metric">
+                                <div class="tc-metric-icon"><i class="fa fa-book"></i></div>
+                                <div class="tc-metric-num">${courseCount}</div>
+                                <div class="tc-metric-label">门课程</div>
+                            </div>
+                            <div class="tc-metric-divider"></div>
+                            <div class="tc-metric">
+                                <div class="tc-metric-icon"><i class="fa fa-thumbs-o-up"></i></div>
+                                <div class="tc-metric-num">${totalLikes}</div>
+                                <div class="tc-metric-label">累计点赞</div>
+                            </div>
+                            <div class="tc-metric-divider"></div>
+                            <div class="tc-metric">
+                                <div class="tc-metric-icon"><i class="fa fa-star"></i></div>
+                                ${starsHtml}
+                                <div class="tc-metric-label">学员评分</div>
                             </div>
                         </div>
 
-                        <!-- 个人简介 -->
-                        <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                            <h3 class="font-semibold text-gray-800 mb-2 flex items-center text-sm">
-                                <i class="fa fa-info-circle mr-2 text-primary"></i>个人简介
-                            </h3>
-                            <p class="text-sm text-gray-600 leading-relaxed">${lecturer.intro || '暂无简介'}</p>
-                        </div>
-
-                        <!-- 专长领域 -->
-                        ${lecturer.skills && lecturer.skills.length ? `
-                        <div class="mb-4">
-                            <h3 class="font-semibold text-gray-800 mb-3 text-sm flex items-center">
-                                <i class="fa fa-tags mr-2 text-primary"></i>专长领域
-                            </h3>
-                            <div class="flex flex-wrap gap-2">
-                                ${lecturer.skills.map(skill => `<span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">${skill}</span>`).join('')}
-                            </div>
-                        </div>
-                        ` : ''}
+                        ${introHtml}
+                        ${skillsHtml}
 
                         <!-- 授课课程 -->
-                        <div>
-                            <h3 class="font-semibold text-gray-800 mb-3 text-sm flex items-center">
-                                <i class="fa fa-book mr-2 text-primary"></i>授课课程
-                            </h3>
-                            <div class="space-y-2">
-                                ${(api && getLecturerCourses(lecturer.id).slice(0, 3).map(c => {
-                                    return `
-                                    <div class="bg-gray-50 rounded-xl p-3 cursor-pointer hover:bg-gray-100 transition-colors" onclick="location.href='player.html?courseId=${c.id}'">
-                                        <div class="flex items-center gap-3">
-                                            <img src="${c.cover || ''}" class="w-16 h-12 rounded-lg object-cover flex-shrink-0" onerror="this.src='https://placehold.co/64x48/667eea/white?text=课'">
-                                            <div class="flex-1 min-w-0">
-                                                <div class="text-sm font-medium text-gray-800 truncate">${c.title}</div>
-                                                <div class="text-xs text-gray-500 mt-1">${Math.floor((c.duration || 0) / 60)}分钟 · ${(c.views || 0) > 10000 ? ((c.views / 10000).toFixed(1) + '万') : (c.views || 0)}人学习</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    `;
-                                }).join('')) || '<p class="text-sm text-gray-400 text-center py-4">暂无课程</p>'}
+                        <div class="tc-section">
+                            <div class="tc-section-head">
+                                <i class="fa fa-book"></i>
+                                <span>授课课程</span>
+                                ${courses.length > 3 ? `<span class="tc-section-extra">共 ${courses.length} 门</span>` : ''}
+                            </div>
+                            <div class="tc-course-list">
+                                ${coursesHtml}
                             </div>
                         </div>
                     </div>
 
-                    <!-- 底部按钮 -->
-                    <div class="px-5 pb-4">
-                        <button class="w-full py-3 rounded-xl bg-gradient-primary text-white font-medium hover:opacity-90 transition-all" onclick="closeTeacherModal()">
-                            关闭
-                        </button>
+                    <!-- 底部关闭按钮 -->
+                    <div class="tc-footer">
+                        <button class="tc-close-btn" onclick="closeTeacherModal()">关闭</button>
                     </div>
                 </div>
             </div>
@@ -407,6 +466,12 @@
         modalDiv.className = 'teacher-modal-container';
         modalDiv.innerHTML = modalHtml;
         document.body.appendChild(modalDiv);
+
+        // 触发进入动画（下一帧加 class 触发动画）
+        requestAnimationFrame(() => {
+            const modal = modalDiv.querySelector('.tc-modal');
+            if (modal) modal.classList.add('tc-modal-in');
+        });
     };
 
     window.closeTeacherModal = function() {
