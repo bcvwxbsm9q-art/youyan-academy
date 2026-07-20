@@ -274,6 +274,11 @@
         .toast-info { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
+        .cert-design-page { position: relative; box-sizing: border-box; overflow: hidden; }
+        .cert-design-el { position: absolute; box-sizing: border-box; line-height: 1.25; overflow: hidden; }
+        .cert-design-seal { position: absolute; border-radius: 50%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center; box-sizing: border-box; }
+
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-white text-gray-800 min-h-screen">
@@ -434,8 +439,12 @@
     <script src="js/auth-modal.js?v=20260704"></script>
     <script src="js/auth-guard.js?v=20260704"></script>
     <script src="js/notification.js?v=20260704"></script>
+    <!-- 证书 Web 字体：宋体/楷体/仿宋/雅黑 跨浏览器一致 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@400;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
-    <script src="js/certificate-management.js?v=20260714"></script>
+    <script src="js/certificate-management.js?v=20260720c"></script>
     <script>
     // 退出登录
     function handleLogout() {
@@ -828,35 +837,14 @@
             return '';
         }
 
-        // 使用 html-to-image 生成证书图片数据 URL
+        // 使用 html-to-image 生成证书图片数据 URL（复用后台同一套渲染：等 Web 字体就绪后截图，避免文字移位）
         async function generateCertificateImage(uc) {
-            const html = renderCertificatePreviewHTML(uc);
-            if (!html) throw new Error('证书渲染函数不可用');
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = html;
-            const node = wrapper.firstElementChild;
-            if (!node) throw new Error('证书 HTML 渲染失败');
-
-            const cache = document.getElementById('cert-render-cache');
-            if (cache) {
-                cache.innerHTML = '';
-                cache.appendChild(node);
+            if (!window.CertificateMgmt || !window.CertificateMgmt.renderCertificatePng) {
+                throw new Error('证书渲染函数不可用');
             }
-
-            try {
-                const dataUrl = await Promise.race([
-                    htmlToImage.toPng(node, {
-                        pixelRatio: 1.5,
-                        cacheBust: true,
-                        skipFonts: true,
-                        backgroundColor: '#ffffff'
-                    }),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('生成证书图片超时')), 8000))
-                ]);
-                return dataUrl;
-            } finally {
-                if (cache) cache.innerHTML = '';
-            }
+            return await window.CertificateMgmt.renderCertificatePng(
+                uc, { name: uc.certificateName, design: uc.design }, uc.template
+            );
         }
 
         // 在弹窗内渲染证书图片预览、下载/查看大图按钮及文字描述

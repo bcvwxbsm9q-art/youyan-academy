@@ -5,7 +5,8 @@ const crypto = require('crypto');
 const multer = require('multer');
 
 const app = express();
-const port = 3003;
+// 端口支持环境变量（Railway 等平台通过 PORT 注入；本地默认 3003）
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3003;
 
 // 创建 uploads 目录
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -587,14 +588,8 @@ async function issueCertificateInternal(data, certificateId, userId, sourceType,
   };
   data.user_certificates.push(userCert);
 
-  // 服务端生成证书 PNG（使用与管理后台一致的渲染逻辑，确保用户端看到的效果与编辑时一致）
-  try {
-    const imageUrl = await generateCertificateImage(data, userCert);
-    if (imageUrl) userCert.imageUrl = imageUrl;
-  } catch (e) {
-    console.error('[证书渲染] 颁发时生成失败:', e.message);
-  }
-
+  // 注意：证书 PNG 不再由服务端生成（已移除 Playwright）。
+  // 学员端 / 消息端在浏览器内用 html-to-image 渲染并展示；若 userCert.imageUrl 已存在（历史文件）则优先复用。
   return { success: true, data: userCert };
 }
 
@@ -607,219 +602,11 @@ if (!fs.existsSync(CERT_IMAGE_DIR)) {
   fs.mkdirSync(CERT_IMAGE_DIR, { recursive: true });
 }
 
-// 复刻 certificate-management.js 的证书渲染常量
-const CERT_EDITOR_PAGE = { portrait: { w: 410, h: 594 }, landscape: { w: 608, h: 420 } };
-const CERT_PAGE_NATIVE = { portrait: { w: 1425, h: 2064 }, landscape: { w: 2598, h: 1795 } };
-
-function certPrintScale(layout) {
-  const l = layout || 'portrait';
-  return CERT_PAGE_NATIVE[l].w / CERT_EDITOR_PAGE[l].w;
-}
-
-function certEscapeHtml(str) {
-  if (str === null || str === undefined) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-function certFillTokens(text, fill) {
-  return String(text == null ? '' : text).replace(/\{\{(\w+)\}\}/g, (m, k) => (fill[k] !== undefined ? fill[k] : m));
-}
-
-function certRenderRichText(text, fill) {
-  const t = certFillTokens(text, fill);
-  const esc = s => certEscapeHtml(s).replace(/\n/g, '<br>');
-  return String(t).split(/(【(?:#[0-9a-fA-F]{6}:)?[^】]*】)/g).map(p => {
-    if (p.startsWith('【') && p.endsWith('】')) {
-      const inner = p.slice(1, -1);
-      const m = inner.match(/^#([0-9a-fA-F]{6}):(.*)$/);
-      if (m) return '<span style="color:#' + m[1].toLowerCase() + ';font-weight:bold;">' + esc(m[2]) + '</span>';
-      return '<span style="color:#c41e0f;font-weight:bold;">' + esc(inner) + '</span>';
-    }
-    return esc(p);
-  }).join('');
-}
-
-function fileToDataUri(filePath) {
-  try {
-    const ext = path.extname(filePath).toLowerCase();
-    const mime = ext === '.png' ? 'image/png' : (ext === '.jpg' || ext === '.jpeg') ? 'image/jpeg' : 'image/png';
-    const buf = fs.readFileSync(filePath);
-    return `data:${mime};base64,${buf.toString('base64')}`;
-  } catch (e) {
-    console.warn('[证书渲染] 读取背景图失败:', filePath, e.message);
-    return null;
-  }
-}
-
-function certBgCss(data, bg) {
-  if (!bg) return 'background:#ffffff;';
-  if (typeof bg === 'string') return `background:${bg};`;
-  if (bg.type === 'image') {
-    if (bg.value && (bg.value.startsWith('/') || bg.value.startsWith('file:'))) {
-      const localPath = bg.value.startsWith('/') ? path.join(__dirname, bg.value) : bg.value.replace('file://', '');
-      const dataUri = fileToDataUri(localPath);
-      if (dataUri) return `background-image:url('${dataUri}');background-size:cover;background-position:center;`;
-    }
-    return `background-image:url('${bg.value}');background-size:cover;background-position:center;`;
-  }
-  if (bg.type === 'preset') {
-    // 旧版 CSS 渐变模板（tpl-honor-purple 等）已废弃——data.certificate_templates 仅做兼容占位，不再返回任何预设背景。
-    // 12 套内置 PNG 模板（v1-v6 / h1-h6）的渲染见下方 if 分支。
-    // 再匹配内置 12 套模板键（v1/h1...）
-    if (bg.value && /^[vh]\d$/.test(bg.value)) {
-      const localPath = path.join(__dirname, 'uploads', 'cert-templates', `cert-${bg.value}.png`);
-      const dataUri = fileToDataUri(localPath);
-      if (dataUri) return `background-image:url('${dataUri}');background-size:cover;background-position:center;`;
-    }
-  }
-  return 'background:#ffffff;';
-}
-
-function certRenderDesignPageInner(data, d, scale, fill) {
-  const dims = CERT_EDITOR_PAGE[d.layout];
-  const pw = dims.w * scale, ph = dims.h * scale;
-  const bc = d.borderColor || '#764ba2';
-  const ac = d.accentColor || bc;
-  let s = `<div class="cert-design-page" style="width:${pw}px;height:${ph}px;position:relative;overflow:hidden;${certBgCss(data, d.background)}">`;
-  s += `<div style="position:absolute;inset:${6 * scale}px;border:${2 * scale}px solid ${bc};opacity:0.4;pointer-events:none;"></div>`;
-  s += `<div style="position:absolute;inset:${12 * scale}px;border:1px solid ${bc};opacity:0.22;pointer-events:none;"></div>`;
-  [['top', 'left'], ['top', 'right'], ['bottom', 'left'], ['bottom', 'right']].forEach(([v, h]) => {
-    s += `<div style="position:absolute;${v}:${10 * scale}px;${h}:${10 * scale}px;width:${10 * scale}px;height:${10 * scale}px;border-${v === 'top' ? 'top' : 'bottom'}:${3 * scale}px solid ${ac};border-${h}:${3 * scale}px solid ${ac};opacity:0.6;"></div>`;
-  });
-  (d.elements || []).forEach(el => {
-    const fs = el.fontSize * scale;
-    const lh = el.lineHeight != null ? el.lineHeight : (el.key === 'content' ? 1.5 : 1.2);
-    s += `<div class="cert-design-el" style="left:${el.x * scale}px;top:${el.y * scale}px;width:${el.w * scale}px;height:${el.h * scale}px;font-size:${fs}px;font-weight:${el.fontWeight};font-style:${el.fontStyle};color:${el.color};font-family:${el.fontFamily};letter-spacing:${el.letterSpacing || 0}px;display:flex;align-items:center;overflow:hidden;padding:${el.key === 'content' ? '0 4px' : '2px 6px'};box-sizing:border-box;"><div style="display:block;width:100%;text-align:${el.textAlign};line-height:${lh};text-decoration:${el.underline ? 'underline' : 'none'};">${certRenderRichText(el.text, fill)}</div></div>`;
-  });
-  if (d.seal) {
-    const sz = d.seal.size * scale, fs2 = Math.max(8, sz * 0.16);
-    s += `<div class="cert-design-seal" style="left:${d.seal.x * scale}px;top:${d.seal.y * scale}px;width:${sz}px;height:${sz}px;color:${d.seal.color};border:${3 * scale}px solid ${d.seal.color};font-family:${d.fontFamily};display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;transform:rotate(-12deg);"><div style="font-size:${fs2}px;font-weight:700;line-height:1.1;text-align:center;">${certEscapeHtml(certFillTokens(d.seal.text, fill))}</div></div>`;
-  }
-  s += '</div>';
-  return s;
-}
-
-function buildCertFill(userCert, certificate) {
-  const user = userCert.userName || '学员';
-  const company = userCert.userDepartment || '广州游雁网络科技有限公司';
-  const date = (userCert.issueAt || '').split('T')[0] || new Date().toISOString().split('T')[0];
-  const title = certificate.name || userCert.certificateName || '荣誉证书';
-  const content = userCert.sourceType === 'exam'
-    ? '通过考试考核，成绩合格，特发此证，以资鼓励。'
-    : (userCert.sourceType === 'training'
-      ? '已完成全部培训课程，考核合格，准予结业。'
-      : '表现优异，特发此证，以资鼓励。');
-  return { title, name: user, certNo: userCert.certNo || '', date, company, content };
-}
-
+// 证书 PNG 仅做「已生成文件」读取：实际渲染由前端 html-to-image 在浏览器内完成（无 Playwright 依赖）。
+// 学员端 / 消息端在展示证书时，若 imageUrl 为空会自动用前端渲染生成，确保跨环境字体/版式一致，
+// 也彻底消除了服务端无头 Chromium 在 Linux(Railway) 上字体缺失、卡死的问题。
 function getCertificateImagePath(userCertId) {
   return path.join(CERT_IMAGE_DIR, `${userCertId}.png`);
-}
-
-let certBrowserPromise = null;
-function getCertBrowser() {
-  if (!certBrowserPromise) {
-    certBrowserPromise = (async () => {
-      try {
-        const { chromium } = require('playwright');
-        return await chromium.launch({ headless: true });
-      } catch (e) {
-        console.error('[证书渲染] 启动 Playwright 失败:', e.message);
-        certBrowserPromise = null;
-        return null;
-      }
-    })();
-  }
-  return certBrowserPromise;
-}
-
-process.on('exit', () => {
-  if (certBrowserPromise) {
-    certBrowserPromise.then(b => { if (b) b.close(); }).catch(() => {});
-  }
-});
-
-async function renderDesignToPngBuffer(data, design, fill, layout) {
-  const browser = await getCertBrowser();
-  if (!browser) return null;
-  let page;
-  try {
-    const scale = certPrintScale(layout);
-    const html = certRenderDesignPageInner(data, design, scale, fill);
-    if (process.env.CERT_DEBUG_HTML) {
-      const fs = require('fs');
-      const path = require('path');
-      fs.writeFileSync(path.join(__dirname, 'scripts', 'cert-debug-render.html'), `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:0;}</style></head><body>${html}</body></html>`);
-      console.log('[CERT_DEBUG] HTML written to scripts/cert-debug-render.html');
-    }
-    page = await browser.newPage();
-    await page.setViewportSize({
-      width: Math.round(CERT_PAGE_NATIVE[layout || 'portrait'].w),
-      height: Math.round(CERT_PAGE_NATIVE[layout || 'portrait'].h)
-    });
-    await page.setContent(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:0;}</style></head><body>${html}</body></html>`, { waitUntil: 'networkidle' });
-    const buffer = await page.screenshot({ type: 'png' });
-    return buffer;
-  } catch (e) {
-    console.error('[证书渲染] 渲染 PNG 失败:', e.message);
-    return null;
-  } finally {
-    if (page) await page.close();
-  }
-}
-
-function certWrapServerHtml(innerHtml, layout) {
-  const dims = CERT_EDITOR_PAGE[layout || 'portrait'];
-  const native = CERT_PAGE_NATIVE[layout || 'portrait'];
-  const scale = native.w / dims.w;
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:0;width:${native.w}px;height:${native.h}px;overflow:hidden;background:#fff;}</style></head><body><div style="transform:scale(${scale});transform-origin:top left;width:${dims.w}px;height:${dims.h}px;">${innerHtml}</div></body></html>`;
-}
-
-async function renderHtmlToPngBuffer(html, layout, fill) {
-  const browser = await getCertBrowser();
-  if (!browser) return null;
-  let page;
-  try {
-    const filled = certFillTokens(html, fill || {});
-    page = await browser.newPage();
-    await page.setViewportSize({
-      width: Math.round(CERT_PAGE_NATIVE[layout || 'portrait'].w),
-      height: Math.round(CERT_PAGE_NATIVE[layout || 'portrait'].h)
-    });
-    await page.setContent(certWrapServerHtml(filled, layout), { waitUntil: 'networkidle' });
-    const buffer = await page.screenshot({ type: 'png' });
-    return buffer;
-  } catch (e) {
-    console.error('[证书渲染] HTML 转 PNG 失败:', e.message);
-    return null;
-  } finally {
-    if (page) await page.close();
-  }
-}
-
-async function generateCertificateImage(data, userCert) {
-  const certificate = (data.certificates || []).find(c => String(c.id) === String(userCert.certificateId)) || {};
-  const design = certificate.design || userCert.design || null;
-  if (!design) {
-    console.warn('[证书渲染] 无 design，跳过生成:', userCert.id);
-    return null;
-  }
-  const fill = buildCertFill(userCert, certificate);
-  const buffer = await renderDesignToPngBuffer(data, design, fill, design.layout);
-  if (!buffer) return null;
-  const imagePath = getCertificateImagePath(userCert.id);
-  try {
-    fs.writeFileSync(imagePath, buffer);
-    return `/uploads/certificates/${userCert.id}.png`;
-  } catch (e) {
-    console.error('[证书渲染] 写入文件失败:', e.message);
-    return null;
-  }
 }
 
 async function ensureCertificateImage(data, userCert) {
@@ -829,12 +616,7 @@ async function ensureCertificateImage(data, userCert) {
     userCert.imageUrl = `/uploads/certificates/${userCert.id}.png`;
     return userCert.imageUrl;
   }
-  const url = await generateCertificateImage(data, userCert);
-  if (url) {
-    userCert.imageUrl = url;
-    writeData(data);
-  }
-  return url;
+  return null;
 }
 
 // 从 course_ratings 计算课程平均评分
@@ -6092,7 +5874,7 @@ app.post('/api/auth/avatar', (req, res) => {
   // 创建专门的头像上传配置
   const avatarStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-      const targetDir = path.join(uploadsDir, 'avatars');
+      const targetDir = path.join(uploadsDir, 'user-avatars');
       if (!fs.existsSync(targetDir)) {
         fs.mkdirSync(targetDir, { recursive: true });
       }
@@ -6155,7 +5937,7 @@ app.post('/api/auth/avatar', (req, res) => {
     }
 
     // 更新头像 URL
-    const newAvatarUrl = `/uploads/avatars/${req.file.filename}`;
+    const newAvatarUrl = `/uploads/user-avatars/${req.file.filename}`;
     user.avatar = newAvatarUrl;
 
     if (writeData(data)) {
@@ -6512,80 +6294,7 @@ function getBuiltinTemplate(templateId) {
   };
 }
 
-// POST /api/certificates/preview
-// 管理后台"应用证书"时调用：传入当前编辑的 design，server 用 Playwright 渲染出
-// 一张所见即所得的 PNG 并以 base64 dataURL 返回。
-// 与颁发流程（issueCertificateInternal）共用同一套渲染逻辑（certRenderDesignPageInner），
-// 确保管理后台看到的预览图和最终颁发给学员的图片完全一致。
-app.post('/api/certificates/preview', async (req, res) => {
-  try {
-    const data = readData();
-    const payload = req.body || {};
-    const design = payload.design;
-    if (!design || !design.layout || !Array.isArray(design.elements)) {
-      return res.status(422).json({ success: false, error: 'design 字段不完整' });
-    }
-    if (!/^[vh]\d$/.test((design.background && design.background.value) || '')) {
-      return res.status(422).json({ success: false, error: 'design.background 必须是 12 套内置模板之一（v1-v6 / h1-h6）' });
-    }
-    // 默认 fill：使用示例数据生成与编辑界面一致的"占位"预览；
-    // 也可由调用方通过 fill 字段覆盖特定 key（如 name/title）
-    const fill = Object.assign({
-      title: '荣誉证书',
-      subtitle: 'CERTIFICATE OF HONORS',
-      name: '张三',
-      certNo: 'CERT0001',
-      date: new Date().toISOString().split('T')[0],
-      company: '广州游雁网络科技有限公司',
-      content: '在本公司工作期间，认真负责，表现优\n秀，现授予 荣誉称号。特发此\n证，以示表彰。'
-    }, payload.fill || {});
-
-    const buffer = await renderDesignToPngBuffer(data, design, fill, design.layout);
-    if (!buffer) {
-      return res.status(500).json({ success: false, error: '渲染失败：Playwright 不可用' });
-    }
-    const dataUrl = `data:image/png;base64,${buffer.toString('base64')}`;
-    res.json({ success: true, data: { dataUrl, width: CERT_PAGE_NATIVE[design.layout || 'portrait'].w, height: CERT_PAGE_NATIVE[design.layout || 'portrait'].h } });
-  } catch (e) {
-    console.error('[证书预览] 失败:', e);
-    res.status(500).json({ success: false, error: e.message });
-  }
-});
-
-// POST /api/certificates/preview-html
-// 管理后台"应用证书"时调用：前端直接把编辑器里渲染好的 HTML（带 {{token}} 占位）传过来，
-// 服务端只做数据填充 + Playwright 截图。这样预览图与编辑器所见完全一致，不再依赖服务端重绘。
-app.post('/api/certificates/preview-html', async (req, res) => {
-  try {
-    const payload = req.body || {};
-    const html = payload.html;
-    const layout = payload.layout || 'portrait';
-    if (!html || typeof html !== 'string') {
-      return res.status(422).json({ success: false, error: 'html 字段不能为空' });
-    }
-    // 默认 fill：使用示例数据生成与编辑界面一致的"占位"预览；
-    // 也可由调用方通过 fill 字段覆盖特定 key（如 name/title）
-    const fill = Object.assign({
-      title: '荣誉证书',
-      subtitle: 'CERTIFICATE OF HONORS',
-      name: '张三',
-      certNo: 'CERT0001',
-      date: new Date().toISOString().split('T')[0],
-      company: '广州游雁网络科技有限公司',
-      content: '在本公司工作期间，认真负责，表现优\n秀，现授予 荣誉称号。特发此\n证，以示表彰。'
-    }, payload.fill || {});
-
-    const buffer = await renderHtmlToPngBuffer(html, layout, fill);
-    if (!buffer) {
-      return res.status(500).json({ success: false, error: '渲染失败：Playwright 不可用' });
-    }
-    const dataUrl = `data:image/png;base64,${buffer.toString('base64')}`;
-    res.json({ success: true, data: { dataUrl, width: CERT_PAGE_NATIVE[layout || 'portrait'].w, height: CERT_PAGE_NATIVE[layout || 'portrait'].h } });
-  } catch (e) {
-    console.error('[证书预览-html] 失败:', e);
-    res.status(500).json({ success: false, error: e.message });
-  }
-});
+// 证书预览已改为前端（浏览器内 html-to-image）渲染，不再提供 Playwright 服务端预览端点。
 
 // GET /api/certificates - 证书定义列表
 app.get('/api/certificates', (req, res) => {
@@ -6858,7 +6567,9 @@ app.get('/api/user-certificates/:id/image', async (req, res) => {
   uc.userName = user.realName || user.username || '';
   uc.userDepartment = user.department || '';
   const imageUrl = await ensureCertificateImage(data, uc);
-  if (!imageUrl) return res.status(500).json({ success: false, error: '证书图片生成失败' });
+  // 新架构下证书 PNG 由前端（浏览器内 html-to-image）生成；服务端仅返回已落盘的历史图片。
+  // 无图时返回 404，前端会自动回退到客户端生成，避免产生 500 噪音。
+  if (!imageUrl) return res.status(404).json({ success: false, error: '证书图片未生成（前端将自动渲染）' });
   res.redirect(imageUrl);
 });
 

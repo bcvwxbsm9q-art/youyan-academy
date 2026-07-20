@@ -1408,6 +1408,81 @@
 - **未闭合项**：真实浏览器中临时文件取消清理与删除级联清理需人工抽验。
 - **接续入口**：用户按上述待验证步骤在浏览器中确认效果；若发现某模块未清理，请提供具体操作路径与文件路径。
 
+## 五十、Bug 修复：课程弹窗点击遮罩层未清理临时文件
+
+### 50.1 工程过程
+1. 用户反馈：课程管理创建课程弹窗中上传封面、视频、课件后关闭窗口，`uploads/` 下文件未删除。
+2. 已创建变更追踪文档 `.trae/documents/20260716_模块0_修复课程弹窗点击遮罩未清理临时文件.md`。
+3. 已定位根因：弹窗统一容器 `showModal()` 的遮罩层点击事件 `handleModalClick()` 直接调用通用 `closeModal()`，绕过 `closeCourseModal()` 等带 `pendingXxx` 清理逻辑的关闭函数。
+4. 已修复：新增 `currentModalType` 变量记录当前弹窗类型；课程/讲师/培训/公告弹窗打开时设置类型、关闭时重置；`handleModalClick()` 按类型路由到对应清理关闭函数；`closeModal()` 兜底重置类型。
+5. 已执行语法检查：
+   - `node --check server.js` 通过；
+   - `dashboard.html` 内联 script 语法检查通过（11 个 script 块）。
+
+### 50.2 交接状态
+- 当前任务：修复课程弹窗点击遮罩层未清理临时文件
+- 状态：已完成
+- 阻塞项：无
+
+### 50.3 最终结果
+- 文件：`dashboard.html`。
+- 验证：语法检查通过。
+- 产出物：`.trae/documents/20260716_模块0_修复课程弹窗点击遮罩未清理临时文件.md`。
+- 待人工验证：
+  - 重启 Node 服务；
+  - 打开课程管理 → 创建课程 → 上传封面/视频/课件；
+  - 点击弹窗外部黑色背景关闭，确认 `uploads/` 下对应临时文件已删除；
+  - 同步验证讲师、培训、公告弹窗的遮罩层关闭清理。
+
+### 50.4 语义标注
+- **做到哪了**：已修复弹窗遮罩层关闭路径绕过清理函数的问题，课程/讲师/培训/公告四个带文件上传的弹窗均覆盖。
+- **为什么**：统一弹窗容器的遮罩层点击是独立关闭路径，必须显式路由到模块级清理函数，否则临时文件会残留。
+- **未闭合项**：浏览器中真实点击遮罩层验证。
+- **接续入口**：用户按待验证步骤在浏览器中点击遮罩层关闭弹窗并检查文件目录；如仍残留请说明关闭方式（X 按钮 / 取消 / 遮罩层点击 / ESC）。
+
+## 五十一、用户与讲师头像分目录存放
+
+### 51.1 工程过程
+1. 用户反馈 `uploads/avatars/` 同时存放用户头像与讲师头像，希望分目录管理，并选择方案 B（一次性迁移旧文件并更新 data.json，无需备份）。
+2. 已创建变更追踪文档 `.trae/documents/20260716_模块0_用户与讲师头像分目录存放.md`。
+3. 已修改 `server.js`：
+   - `POST /api/auth/avatar` 上传目录改为 `uploads/user-avatars/`；
+   - `POST /api/auth/avatar` 返回 URL 改为 `/uploads/user-avatars/{filename}`。
+4. 已修改 `dashboard.html`：讲师头像上传参数由 `type=avatars` 改为 `type=lecturer-avatars`。
+5. 已执行迁移脚本：
+   - 将 `registered_users` 中 1 个用户头像移动到 `uploads/user-avatars/`；
+   - 将 `lecturers` 中 9 个讲师头像移动到 `uploads/lecturer-avatars/`；
+   - 更新 `data.json` 中 10 条头像 URL；
+   - 删除 1 个无引用 orphan 文件并移除空 `uploads/avatars/` 目录。
+6. 已执行语法检查：
+   - `node --check server.js` 通过；
+   - `data.json` JSON 解析通过；
+   - `dashboard.html` 内联 script 语法检查通过（11 个 script 块）。
+
+### 51.2 交接状态
+- 当前任务：用户与讲师头像分目录存放
+- 状态：已完成
+- 阻塞项：无
+
+### 51.3 最终结果
+- 文件：`server.js`、`dashboard.html`、`data.json`、物理头像文件。
+- 验证：
+  - `node --check server.js` 通过；
+  - `data.json` JSON 解析通过；
+  - `dashboard.html` 内联 script 语法检查通过。
+- 产出物：`.trae/documents/20260716_模块0_用户与讲师头像分目录存放.md`。
+- 待人工验证：
+  - 重启 Node 服务；
+  - 在个人中心上传新用户头像，确认存入 `uploads/user-avatars/`；
+  - 在讲师管理上传新讲师头像，确认存入 `uploads/lecturer-avatars/`；
+  - 检查原有用户/讲师头像在页面中仍能正常显示（URL 已更新为新路径）。
+
+### 51.4 语义标注
+- **做到哪了**：已完成用户头像与讲师头像的物理目录分离、代码路径更新、历史数据迁移。
+- **为什么**：两类头像业务归属不同，分目录便于管理、清理和权限控制；迁移时同步更新 data.json 可避免旧 URL 404。
+- **未闭合项**：浏览器中真实上传与显示验证。
+- **接续入口**：用户重启 Node 服务后分别在个人中心和讲师管理上测试头像上传与显示。
+
 ## 四十九、证书预览改为前端 HTML 直出 + 服务端截图
 
 ### 49.1 工程过程
@@ -1444,4 +1519,38 @@
 - **为什么**：前后端各自根据 design JSON 重绘 HTML 容易因实现细节偏离；改为前端直接输出编辑器同构 HTML，服务端只负责截图，可最大限度保证所见即所得。
 - **未闭合项**：用户侧需重启服务并清缓存后验证最终效果。
 - **接续入口**：用户按上述待验证步骤确认；如仍错位请提供截图。
+
+## 五十、修复证书预览白屏——背景图相对路径在 Playwright 中无法解析
+
+### 50.1 工程过程
+1. 用户反馈：证书样式编辑器点击「应用样式」后，右侧预览 PNG 全白，连模板背景都没渲染出来。
+2. 已定位根因：前端 `bgCss()` 输出 `url('/uploads/cert-templates/cert-v1.png')` 相对路径，传到服务端 Playwright `page.setContent()` 后无 base URL，相对路径解析为 `about:blank/uploads/...` → 背景图加载失败 → 全白。
+3. 已创建变更追踪文档 `.trae/documents/20260716_模块0_修复证书预览白屏背景图未加载.md`。
+4. 已修改 `server.js`：新增 `rewriteRelativeUrlsToDataUri(html)` 函数，在 `renderHtmlToPngBuffer` 中将所有 `url('/...')` 相对路径转为 data URI（base64 内嵌），文件不存在时回退为 `http://localhost:3003...` 绝对 URL。
+5. 已增加 `page.waitForTimeout(150)` 确保字体/布局稳定后再截图。
+6. 已编写 `scripts/test-bg-fix.js` 测试脚本，使用真实模板背景相对路径验证。
+7. 已执行 `node --check server.js` 通过；运行测试：PNG 672KB、1425x2064，背景图正确渲染。
+
+### 50.2 交接状态
+- 当前任务：修复证书预览白屏
+- 状态：已完成代码修复与本地验证
+- 阻塞项：需用户重启 Node 服务并强制刷新浏览器后确认效果
+
+### 50.3 最终结果
+- 文件：`server.js`、新增 `scripts/test-bg-fix.js`、变更追踪文档、本 note。
+- 验证：
+  - `node --check server.js` 通过。
+  - `node scripts/test-bg-fix.js`：SUCCESS，PNG 672KB、1425x2064，背景图正确渲染。
+  - 服务端日志无报错。
+- 产出物：`.trae/documents/20260716_模块0_修复证书预览白屏背景图未加载.md`、`scripts/test-bg-fix.js`、`scripts/test-bg-fix.png`。
+- 待人工验证：
+  - 彻底停止旧 Node 进程并重新启动 `node server.js`；
+  - 浏览器打开 `dashboard.html` 并按 `Ctrl+F5` 强制刷新；
+  - 进入证书样式编辑器，选择竖版/横版模板 → 点击「应用样式」，确认右侧预览 PNG 显示模板背景 + 文字，不再全白。
+
+### 50.4 语义标注
+- **做到哪了**：已定位并修复白屏根因——前端 HTML 中的相对路径背景图在 Playwright 中无法解析，改为 data URI 内嵌后渲染正常。
+- **为什么**：`page.setContent()` 没有 base URL，`url('/uploads/...')` 会被解析为 `about:blank/uploads/...` 导致加载失败；旧的服务端渲染路径 `certBgCss` 会把图片转 data URI，所以不白屏。
+- **未闭合项**：用户侧需重启服务并清缓存后验证最终效果。
+- **接续入口**：用户按上述待验证步骤确认；如仍有问题请提供截图。
 

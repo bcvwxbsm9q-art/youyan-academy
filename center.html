@@ -7,6 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- 证书 Web 字体：宋体/楷体/仿宋/雅黑 跨浏览器一致 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@400;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
     <link rel="stylesheet" href="css/mobile-enhanced.css">
     <script>
@@ -178,6 +182,10 @@
             transform: scale(1);
             opacity: 1;
         }
+        .cert-design-page { position: relative; box-sizing: border-box; overflow: hidden; }
+        .cert-design-el { position: absolute; box-sizing: border-box; line-height: 1.25; overflow: hidden; }
+        .cert-design-seal { position: absolute; border-radius: 50%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center; box-sizing: border-box; }
 
     </style>
 </head>
@@ -1093,7 +1101,7 @@
     <script src="js/data-sync.js"></script>
     <script src="data-api.js"></script>
     <script src="js/notification.js?v=20260704"></script>
-    <script src="js/certificate-management.js?v=20260714b"></script>
+    <script src="js/certificate-management.js?v=20260720c"></script>
     <script>
         const api = window.DataAPI;
         let currentUser = null;
@@ -2606,22 +2614,11 @@ const BADGES = [
                         let dataUrl = null;
                         if (cert.imageUrl) {
                             dataUrl = cert.imageUrl;
-                        } else if (cert.template) {
-                            const html = renderCertificatePreviewHTML(cert, cert.template);
-                            const wrapper = document.createElement('div');
-                            wrapper.innerHTML = html;
-                            const node = wrapper.firstElementChild;
-                            cache.innerHTML = '';
-                            cache.appendChild(node);
-                            dataUrl = await Promise.race([
-                                htmlToImage.toPng(node, {
-                                    pixelRatio: 1.5,
-                                    cacheBust: true,
-                                    skipFonts: true,
-                                    backgroundColor: '#ffffff'
-                                }),
-                                new Promise((_, reject) => setTimeout(() => reject(new Error('生成证书图片超时')), 8000))
-                            ]);
+                        } else if (cert.template && window.CertificateMgmt && window.CertificateMgmt.renderCertificatePng) {
+                            // 复用与后台同一套渲染：等 Web 字体就绪后 html-to-image 截图，避免文字移位
+                            dataUrl = await window.CertificateMgmt.renderCertificatePng(
+                                cert, { name: cert.certificateName, design: cert.design }, cert.template
+                            );
                         }
                         if (dataUrl) {
                             certImageData[cert.id] = { dataUrl, certNo: cert.certNo || '', isServerUrl: !!cert.imageUrl };

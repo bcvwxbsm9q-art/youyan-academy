@@ -44,7 +44,7 @@
   - 前端：`js/certificate-management.js` 的 `CERT_TEMPLATES`
   - 后端：`server.js` 的 `BUILTIN_CERT_TEMPLATES`
   - **两端必须同步维护**
-- **所见即所得**：管理后台编辑器通过 `POST /api/certificates/preview` 实时拿 PNG 预览，与颁发流程共用同一渲染管线（`certRenderDesignPageInner` + `renderDesignToPngBuffer`）
+- **所见即所得**：管理后台预览与学员端展示统一由浏览器内 `html-to-image` 渲染（2026-07-17 已移除服务端 Playwright），与编辑器用同一套 `renderDesignPageInner` 逻辑，字体经 `mapCertFont()` 映射为 Web 字体，彻底一致
 - 旧 4 套 CSS 渐变模板（tpl-honor-purple 等）已废弃，data.json 中的 `certificate_templates` 字段保留为空数组占位
-- 证书 PNG 输出位置：`uploads/certificates/${userCertId}.png`，由 server 端 `generateCertificateImage` 在颁发时生成
+- 证书 PNG **不再由服务端生成**：颁发时只建 `user_certificates` 记录（`imageUrl` 留空），`imageUrl` 缺失时前端自动用 `html-to-image` 渲染。详见 `docs/证书管理.md`
 - 修改时务必同步更新 `docs/证书管理.md`

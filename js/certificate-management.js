@@ -458,30 +458,47 @@
         </div>
       `;
       if (_previewTimer) clearTimeout(_previewTimer);
-      _previewTimer = setTimeout(() => renderCertPreviewPng(currentDesign, preview), 600);
+      _previewTimer = setTimeout(() => renderCertPreviewPng(currentDesign, preview, certificates.find(c => c.id === editingCertificateId)?.name || ''), 600);
       return;
     }
     preview.style.display = 'none';
     preview.innerHTML = '';
   }
 
-  // 调用 /api/certificates/preview-html 拿所见即所得的 PNG dataURL
-  // 前端直接把编辑器里渲染好的 HTML（保留 {{token}} 占位）传给服务端，服务端只做数据填充 + Playwright 截图，
-  // 避免服务端再用另一套逻辑重绘，确保预览图与编辑器完全一致。
-  async function renderCertPreviewPng(design, container) {
+  // 浏览器内直接渲染 PNG（html-to-image），不再依赖服务端 Playwright。
+  // 复用与编辑器、学员端完全相同的 renderDesignPageInner，因此：
+  //   1) 预览坐标/字体与编辑器所见 100% 一致（同一套 DOM 逻辑）；
+  //   2) 字体经 mapCertFont 映射为 Web 字体（Noto Serif SC / Ma Shan Zheng / Noto Sans SC），跨环境一致；
+  //   3) 无 Playwright 启动开销，不再卡死。
+  async function renderCertPreviewPng(design, container, titleOverride) {
     try {
-      const html = renderDesignPageInner(design, 1, PREVIEW_PLACEHOLDER_FILL);
-      const res = await apiPost('/api/certificates/preview-html', { html, layout: design.layout });
-      if (!res.success || !res.data || !res.data.dataUrl) {
-        container.innerHTML = `<div class="text-xs text-red-500 p-3">预览失败：${res.error || '未知错误'}</div>`;
+      if (typeof htmlToImage === 'undefined') {
+        container.innerHTML = `<div class="text-xs text-red-500 p-3">预览组件未加载（html-to-image），请刷新页面</div>`;
         return;
       }
-      // 等比缩放到容器宽度（208px）
+      // 后台设计预览：标题使用真实证书名称（与颁发后一致），收件人字段保留占位符
+      const html = renderDesignPageInner(design, 1, buildCertFill({
+        certName: titleOverride || PREVIEW_SAMPLE_FILL.title,
+        subtitle: PREVIEW_SAMPLE_FILL.subtitle,
+        content: PREVIEW_SAMPLE_FILL.content,
+        usePlaceholders: true
+      }));
+      const wrap = document.createElement('div');
+      wrap.style.position = 'fixed';
+      wrap.style.left = '-99999px';
+      wrap.style.top = '0';
+      wrap.style.zIndex = '-1';
+      wrap.innerHTML = html;
+      document.body.appendChild(wrap);
+      const node = wrap.firstElementChild;
+      const dataUrl = await captureCertNodeToPng(node, 3);
+      wrap.remove();
+      const nat = PAGE_NATIVE[design.layout || 'portrait'];
       container.innerHTML = `
-        <div class="rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm" style="position:relative; width:100%; padding-top:${(res.data.height / res.data.width) * 100}%;">
-          <img src="${res.data.dataUrl}" alt="证书预览" class="absolute inset-0 w-full h-full object-contain" />
+        <div class="rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm" style="position:relative; width:100%; padding-top:${(nat.h / nat.w) * 100}%;">
+          <img src="${dataUrl}" alt="证书预览" class="absolute inset-0 w-full h-full object-contain" />
         </div>
-        <p class="text-[11px] text-slate-400 mt-1.5 text-center">所见即所得 · 与颁发给学员的 PNG 一致</p>
+        <p class="text-[11px] text-slate-400 mt-1.5 text-center">所见即所得 · 浏览器内渲染（与学员端一致）</p>
       `;
     } catch (e) {
       container.innerHTML = `<div class="text-xs text-red-500 p-3">预览失败：${e.message}</div>`;
@@ -605,18 +622,15 @@
   // ===== 证书渲染（通用，用于详情弹窗和个人中心） =====
   function renderCertificateHTML(userCert, certificate, template) {
     if (certificate && certificate.design) {
-      const fill = {
-        title: certificate.name || '荣誉证书',
-        name: userCert.userName || '学员',
-        certNo: userCert.certNo || '',
-        date: (userCert.issueAt ? formatDateTime(userCert.issueAt).split(' ')[0] : ''),
-        company: userCert.userDepartment || '广州游雁网络科技有限公司',
-        content: userCert.sourceType === 'exam'
-          ? '通过考试考核，成绩合格，特发此证，以资鼓励。'
-          : (userCert.sourceType === 'training'
-            ? '已完成全部培训课程，考核合格，准予结业。'
-            : '表现优异，特发此证，以资鼓励。')
-      };
+      // 与后台设计预览共用同一套 fill 构建逻辑，保证标题/副标题等非收件人字段完全一致，
+      // 仅收件人相关字段（姓名/日期/企业名称/证书编号）在此填入真实颁发数据。
+      const fill = buildCertFill({
+        certName: certificate.name,
+        subtitle: 'CERTIFICATE OF HONORS',
+        content: '',
+        usePlaceholders: false,
+        userCert
+      });
       return renderDesignPageInner(certificate.design, printScale(certificate.design.layout), fill);
     }
     const user = userCert.userName || '学员';
@@ -637,7 +651,7 @@
     const secondaryColor = template.style.secondaryColor || template.style.primaryColor;
 
     return `
-      <div class="certificate-render-wrap" style="width:${width}; height:${height}; background:${template.style.background}; color:${template.style.primaryColor}; font-family:${template.style.fontFamily}; border:14px double ${template.style.borderColor}; box-sizing:border-box; padding:56px; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+      <div class="certificate-render-wrap" style="width:${width}; height:${height}; background:${template.style.background}; color:${template.style.primaryColor}; font-family:${mapCertFont(template.style.fontFamily)}; border:14px double ${template.style.borderColor}; box-sizing:border-box; padding:56px; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
         <div style="position:absolute; top:28px; left:28px; right:28px; bottom:28px; border:2px solid ${template.style.borderColor}; opacity:0.4;"></div>
         <div style="position:absolute; top:42px; left:42px; right:42px; bottom:42px; border:1px solid ${template.style.borderColor}; opacity:0.3;"></div>
 
@@ -668,6 +682,47 @@
         </div>
       </div>
     `;
+  }
+
+  // ===== 共享：等 Web 字体就绪后用 html-to-image 截图（前台/后台统一，根治回退字体导致文字移位）=====
+  async function ensureCertFontsReady() {
+    if (!document.fonts || !document.fonts.ready) return;
+    try {
+      // 显式触发加载，避免 document.fonts.ready 在无使用处时过早 resolve 而截到回退字体
+      await Promise.all([
+        document.fonts.load("16px 'Noto Serif SC'"),
+        document.fonts.load("700 16px 'Noto Serif SC'"),
+        document.fonts.load("16px 'Noto Sans SC'"),
+        document.fonts.load("16px 'Ma Shan Zheng'")
+      ]);
+      await document.fonts.ready;
+    } catch (e) {}
+  }
+
+  async function captureCertNodeToPng(node, pixelRatio) {
+    await ensureCertFontsReady();
+    return await Promise.race([
+      htmlToImage.toPng(node, { pixelRatio: pixelRatio || 3, cacheBust: true, skipFonts: true, backgroundColor: '#ffffff' }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('证书渲染超时')), 10000))
+    ]);
+  }
+
+  // 供前台（个人中心 / 消息中心）调用：使用真实学员数据生成证书 PNG，与后台同一套渲染
+  async function renderCertificatePng(userCert, certificate, template) {
+    const html = renderCertificateHTML(userCert, certificate, template);
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = '-99999px';
+    wrapper.style.top = '0';
+    wrapper.style.zIndex = '-1';
+    wrapper.innerHTML = html;
+    document.body.appendChild(wrapper);
+    const node = wrapper.firstElementChild;
+    try {
+      return await captureCertNodeToPng(node, 3);
+    } finally {
+      wrapper.remove();
+    }
   }
 
   function printCertificate(userCertId) {
@@ -716,7 +771,7 @@
   const EDITOR_SAMPLE = {
     title: '荣誉证书', name: '$姓名$', certNo: '',
     date: '$颁发日期$', company: '$企业名称$',
-    content: '在本公司工作期间，认真负责，表现优\n秀，现授予 年度优秀员工 荣誉称号。特发此\n证，以示表彰。'
+    content: '在本公司工作期间，认真负责，表现优秀，现授予 年度优秀员工 荣誉称号。特发此证，以示表彰。'
   };
 
   // 传给服务端的占位 fill，让 renderDesignPageInner 输出仍保留 {{token}}，服务端再统一替换为真实数据
@@ -725,6 +780,47 @@
     date: '{{date}}', company: '{{company}}', content: '{{content}}',
     subtitle: '{{subtitle}}'
   };
+
+  // 编辑器实时预览用的"样例数据"：姓名/日期/企业名称保持占位符标签（模板通用，设计时不显示具体姓名），
+  // 仅正文用样例内容。真正颁发时由 renderCertificateHTML 用真实 userCert 数据替换。
+  const PREVIEW_SAMPLE_FILL = {
+    title: '荣誉证书', subtitle: 'CERTIFICATE OF HONORS',
+    name: '$姓名$', certNo: 'CERT0001',
+    date: '$颁发日期$', company: '$企业名称$',
+    content: '在本公司工作期间，认真负责，表现优秀，现授予 年度优秀员工 荣誉称号。特发此证，以示表彰。'
+  };
+
+  // 统一构建证书填充数据：确保【后台设计预览】与【前台颁发渲染】使用完全一致的非收件人字段
+  // （标题 / 副标题 / 正文），避免两端文字"对不上"。仅 姓名 / 日期 / 企业名称 / 证书编号 在预览时
+  // 保持占位符标签（设计阶段不显示具体收件人，符合需求），颁发时填入真实收件人数据。
+  function buildCertFill(opts) {
+    const { certName, subtitle, content, usePlaceholders, userCert } = opts || {};
+    if (usePlaceholders) {
+      return {
+        title: certName || '荣誉证书',
+        subtitle: subtitle || 'CERTIFICATE OF HONORS',
+        name: '$姓名$',
+        certNo: 'CERT0001',
+        date: '$颁发日期$',
+        company: '$企业名称$',
+        content: content || ''
+      };
+    }
+    const uc = userCert || {};
+    return {
+      title: certName || '荣誉证书',
+      subtitle: subtitle || 'CERTIFICATE OF HONORS',
+      name: uc.userName || '学员',
+      certNo: uc.certNo || '',
+      date: (uc.issueAt ? formatDateTime(uc.issueAt).split(' ')[0] : ''),
+      company: uc.userDepartment || '广州游雁网络科技有限公司',
+      content: content || (uc.sourceType === 'exam'
+        ? '通过考试考核，成绩合格，特发此证，以资鼓励。'
+        : (uc.sourceType === 'training'
+          ? '已完成全部培训课程，考核合格，准予结业。'
+          : '表现优异，特发此证，以资鼓励。'))
+    };
+  }
 
     // ── 12 套证书模板（6 竖版 + 6 横版，基于真实 PNG 图片） ──
   const CERT_TEMPLATES = [
@@ -844,8 +940,40 @@
   function uid() { return 'el' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
   function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+  // 中文占位符 → {{key}} 映射，兼容用户在编辑器里直接输入的 $姓名$ / $企业名称$ / $颁发日期$ 等标签
+  const CN_TOKEN_MAP = {
+    '$姓名$': '{{name}}',
+    '$企业名称$': '{{company}}',
+    '$颁发日期$': '{{date}}',
+    '$证书编号$': '{{certNo}}',
+    '$标题$': '{{title}}',
+    '$副标题$': '{{subtitle}}',
+    '$正文$': '{{content}}'
+  };
   function fillTokens(text, fill) {
-    return String(text == null ? '' : text).replace(/\{\{(\w+)\}\}/g, (m, k) => (fill[k] !== undefined ? fill[k] : m));
+    let s = String(text == null ? '' : text);
+    // 先把中文占位符标签统一转成 {{key}}，再走标准替换
+    Object.entries(CN_TOKEN_MAP).forEach(([cn, key]) => { s = s.split(cn).join(key); });
+    return s.replace(/\{\{(\w+)\}\}/g, (m, k) => (fill[k] !== undefined ? fill[k] : m));
+  }
+  // 将 Windows 专属中文字体名映射为已加载的 Web 字体，保证所有浏览器渲染一致
+  // （STSong/SimSun→Noto Serif SC；STKaiti/KaiTi→Ma Shan Zheng；STFangsong/FangSong→Noto Serif SC；Microsoft YaHei/PingFang→Noto Sans SC）
+  function mapCertFont(ff) {
+    if (!ff) return ff;
+    const s = String(ff);
+    const repl = [
+      [/STKaiti/gi, 'Ma Shan Zheng'],
+      [/KaiTi/gi, 'Ma Shan Zheng'],
+      [/STFangsong/gi, 'Noto Serif SC'],
+      [/FangSong/gi, 'Noto Serif SC'],
+      [/STSong/gi, 'Noto Serif SC'],
+      [/SimSun/gi, 'Noto Serif SC'],
+      [/Microsoft YaHei/gi, 'Noto Sans SC'],
+      [/PingFang SC/gi, 'Noto Sans SC']
+    ];
+    let out = s;
+    repl.forEach(([re, to]) => { out = out.replace(re, to); });
+    return out;
   }
   // 行内混色渲染：【文字】→ 红色加粗 span，其余正常转义。无标记时等价于 escapeHtml(fillTokens(...))
   function normalizeColor(c) {
@@ -863,7 +991,9 @@
   // 【文字】→ 默认红；【#rrggbb:文字】→ 指定颜色（均加粗，作为强调着色）
   function renderRichText(text, fill) {
     const t = fillTokens(text, fill);
-    const esc = s => escapeHtml(s).replace(/\n/g, '<br>'); // 换行符转 <br>，否则 HTML 会把 \n 折叠成空格
+    const esc = s => escapeHtml(s)
+      .replace(/([\u4e00-\u9fa5])\n(?=[\u4e00-\u9fa5])/g, '$1') // 删掉拆分中文词的软回车，避免"优\n秀"这种不该换行的地方换行
+      .replace(/\n/g, '<br>'); // 剩余换行符转 <br>
     return String(t).split(/(【(?:#[0-9a-fA-F]{6}:)?[^】]*】)/g).map(p => {
       if (p.startsWith('【') && p.endsWith('】')) {
         const inner = p.slice(1, -1);
@@ -924,24 +1054,21 @@
   function renderDesignPageInner(d, scale, fill) {
     const dims = EDITOR_PAGE[d.layout];
     const pw = dims.w * scale, ph = dims.h * scale;
-    const bc = d.borderColor, ac = d.accentColor;
+    const bc = d.borderColor;
     let s = `<div class="cert-design-page" style="width:${pw}px;height:${ph}px;position:relative;overflow:hidden;${bgCss(d.background)}">`;
     s += `<div style="position:absolute;inset:${6 * scale}px;border:${2 * scale}px solid ${bc};opacity:0.4;pointer-events:none;"></div>`;
     s += `<div style="position:absolute;inset:${12 * scale}px;border:1px solid ${bc};opacity:0.22;pointer-events:none;"></div>`;
-    [['top', 'left'], ['top', 'right'], ['bottom', 'left'], ['bottom', 'right']].forEach(([v, h]) => {
-      s += `<div style="position:absolute;${v}:${10 * scale}px;${h}:${10 * scale}px;width:${10 * scale}px;height:${10 * scale}px;border-${v === 'top' ? 'top' : 'bottom'}:${3 * scale}px solid ${ac};border-${h}:${3 * scale}px solid ${ac};opacity:0.6;"></div>`;
-    });
     (d.elements || []).forEach(el => {
       const fs = el.fontSize * scale;
       const lh = el.lineHeight != null ? el.lineHeight : (el.key === 'content' ? 1.5 : 1.2);
       // 使用 row flex + 内部 block 正常文本流。
       // column flex 会把 <br> 与着色 <span> 拆成匿名 flex 项，导致换行/居中/重叠异常；
       // inline-block 内层会导致 text-align 在部分浏览器中不被继承，因此改用 block。
-      s += `<div class="cert-design-el" style="left:${el.x * scale}px;top:${el.y * scale}px;width:${el.w * scale}px;height:${el.h * scale}px;font-size:${fs}px;font-weight:${el.fontWeight};font-style:${el.fontStyle};color:${el.color};font-family:${el.fontFamily};letter-spacing:${el.letterSpacing || 0}px;display:flex;align-items:center;overflow:hidden;padding:${el.key === 'content' ? '0 4px' : '2px 6px'};box-sizing:border-box;"><div style="display:block;width:100%;text-align:${el.textAlign};line-height:${lh};text-decoration:${el.underline ? 'underline' : 'none'};">${renderRichText(el.text, fill)}</div></div>`;
+      s += `<div class="cert-design-el" style="left:${el.x * scale}px;top:${el.y * scale}px;width:${el.w * scale}px;height:${el.h * scale}px;font-size:${fs}px;font-weight:${el.fontWeight};font-style:${el.fontStyle};color:${el.color};font-family:${mapCertFont(el.fontFamily)};letter-spacing:${el.letterSpacing || 0}px;display:flex;align-items:center;overflow:hidden;padding:${el.key === 'content' ? '0 4px' : '2px 6px'};box-sizing:border-box;"><div style="display:block;width:100%;text-align:${el.textAlign};line-height:${lh};text-decoration:${el.underline ? 'underline' : 'none'};">${renderRichText(el.text, fill)}</div></div>`;
     });
     if (d.seal) {
       const sz = d.seal.size * scale, fs2 = Math.max(8, sz * 0.16);
-      s += `<div class="cert-design-seal" style="left:${d.seal.x * scale}px;top:${d.seal.y * scale}px;width:${sz}px;height:${sz}px;color:${d.seal.color};border:${3 * scale}px solid ${d.seal.color};font-family:${d.fontFamily};"><div style="font-size:${fs2}px;font-weight:700;line-height:1.1;">${escapeHtml(fillTokens(d.seal.text, fill))}</div></div>`;
+      s += `<div class="cert-design-seal" style="left:${d.seal.x * scale}px;top:${d.seal.y * scale}px;width:${sz}px;height:${sz}px;color:${d.seal.color};border:${3 * scale}px solid ${d.seal.color};font-family:${mapCertFont(d.fontFamily)};"><div style="font-size:${fs2}px;font-weight:700;line-height:1.1;">${escapeHtml(fillTokens(d.seal.text, fill))}</div></div>`;
     }
     s += '</div>';
     return s;
@@ -1060,9 +1187,7 @@
         color: t.textColor, underline: true, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'content',
         x: padX, y: Math.round(cy), w: Math.round(innerW), h: isLand ? 100 : 120,
-        text: existingTexts['content'] || (isLand
-          ? '\u3000\u3000在本公司工作期间，认真负责，表现优秀，现授予【年度优秀员工】荣誉\n称号。特发此证，以示表彰。'
-          : '\u3000\u3000在本公司工作期间，认真负责，表现\n优秀，现授予【年度优秀员工】荣誉称号。特\n发此证，以示表彰。'),
+        text: existingTexts['content'] || '\u3000\u3000在本公司工作期间，认真负责，表现优秀，现授予【年度优秀员工】荣誉称号。特发此证，以示表彰。',
         fontSize: 15, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'left', lineHeight: isLand ? 1.5 : 2,
         color: t.textColor, underline: false, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'company',
@@ -1106,7 +1231,7 @@
     node.style.width = el.w + 'px'; node.style.height = el.h + 'px';
     node.style.fontSize = el.fontSize + 'px';
     node.style.fontWeight = el.fontWeight; node.style.fontStyle = el.fontStyle;
-    node.style.color = el.color; node.style.fontFamily = el.fontFamily;
+    node.style.color = el.color; node.style.fontFamily = mapCertFont(el.fontFamily);
     node.style.display = 'flex'; node.style.alignItems = 'center'; node.style.overflow = 'hidden';
     node.style.boxSizing = 'border-box';
     // 旧版本可能在外层遗留 text-align/line-height/text-decoration，先清空再以内层为准
@@ -1146,7 +1271,7 @@
   function applySealNodeStyle(node, seal) {
     node.style.left = seal.x + 'px'; node.style.top = seal.y + 'px';
     node.style.width = seal.size + 'px'; node.style.height = seal.size + 'px';
-    node.style.color = seal.color; node.style.fontFamily = editorState.fontFamily;
+    node.style.color = seal.color; node.style.fontFamily = mapCertFont(editorState.fontFamily);
     // 应用形状样式
     const shape = seal.shape || 'circle';
     const c = seal.color;
@@ -1662,6 +1787,8 @@
     toggleCertificateStatus,
     printCertificate,
     renderCertificateHTML,
+    renderCertificatePng,
+    ensureCertFontsReady,
     openCertificateEditor,
     closeEditor,
     renderDesignPageInner,

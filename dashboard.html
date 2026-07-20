@@ -21,6 +21,12 @@
   <!-- Quill.js 富文本编辑器 -->
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+  <!-- 证书 Web 字体：保证宋体/楷体/仿宋/雅黑 在所有浏览器一致（替代缺失的 Windows 字体） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@400;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+  <!-- 证书前端渲染（html-to-image）：浏览器内生成 PNG，替代服务端 Playwright -->
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
   <style>
     * { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
     .fade-in { animation: fadeIn 0.3s ease-out; }
@@ -4021,7 +4027,7 @@
   <script src="js/data-sync.js"></script>
   <script src="js/auth-modal.js?v=20260704"></script>
   <script src="js/auth-guard.js?v=20260704"></script>
-  <script src="js/certificate-management.js?v=20260714q"></script>
+  <script src="js/certificate-management.js?v=20260720c"></script>
   <script>
     // dataSync 兼容层：将 window.dataSync.getData/setData 映射到 DataAPI
     if (!window.dataSync) {
@@ -6589,7 +6595,6 @@
     }
 
     function openLecturerModal(lecturer = null) {
-      currentModalType = 'lecturer';
       const isEdit = !!lecturer;
       const levelOptions = ['senior', 'intermediate', 'junior', 'intern'].map(l =>
         `<option value="${l}" ${lecturer?.level === l ? 'selected' : ''}>${l === 'senior' ? '高级讲师' : l === 'intermediate' ? '中级讲师' : l === 'junior' ? '初级讲师' : '见习讲师'}</option>`
@@ -6824,7 +6829,6 @@
     function closeLecturerModal() {
       pendingLecturerAvatar.forEach(url => deleteUploadFileByUrl(url));
       pendingLecturerAvatar = [];
-      currentModalType = null;
       closeModal();
     }
 
@@ -9142,7 +9146,6 @@
     let trainingUserPickerTemp = new Set();
 
     async function openTrainingModal(training = null, prefillDate = null) {
-      currentModalType = 'training';
       const isEdit = !!training;
       currentEditingTraining = training;
       currentEditingTrainingId = training?.id || null;
@@ -9584,7 +9587,6 @@
     function closeTrainingModal() {
       pendingTrainingCourseware.forEach(item => deleteUploadFileByUrl(item.url));
       pendingTrainingCourseware = [];
-      currentModalType = null;
       closeModal();
     }
 
@@ -12691,7 +12693,6 @@
     }
 
     function openNoticeModal(notice = null) {
-      currentModalType = 'notice';
       const isEdit = !!notice;
       const content = notice?.content || '';
 
@@ -12866,7 +12867,6 @@
     function closeNoticeModal() {
       pendingNoticeImages.forEach(url => deleteUploadFileByUrl(url));
       pendingNoticeImages = [];
-      currentModalType = null;
       closeModal();
     }
 

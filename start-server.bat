@@ -1,55 +1,55 @@
 @echo off
-chcp 65001 >nul
-title 游雁学院后端服务
-color 0A
+chcp 65001 >nul 2>&1
+setlocal EnableDelayedExpansion
 
-echo.
-echo ========================================
-echo   游雁学院 - 企业学习平台
-echo ========================================
-echo.
+cd /d "E:\培训相关\桌面\learning"
+set PORT=3003
 
-:: 检查 Node.js 是否安装
-node --version >nul 2>&1
-if errorlevel 1 (
-    echo [错误] 未检测到 Node.js，请先安装 Node.js
-    echo 下载地址: https://nodejs.org/
-    pause
-    exit /b 1
+REM 1. 若端口被占用，结束占用进程（实现"重启"语义，避免 EADDRINUSE 静默失败）
+for /f "tokens=*" %%a in ('powershell -NoProfile -Command "(Get-NetTCPConnection -LocalPort %PORT% -ErrorAction SilentlyContinue).OwningProcess"') do set OLD_PID=%%a
+if defined OLD_PID (
+  echo [信息] 端口 %PORT% 被 PID %OLD_PID% 占用，正在结束旧进程以重启...
+  taskkill /PID %OLD_PID% /F >nul 2>&1
+  timeout /t 2 /nobreak >nul
 )
 
-echo [✓] Node.js 版本: 
-node --version
-echo.
-
-:: 检查依赖是否已安装
-if not exist "node_modules" (
-    echo [提示] 首次运行，正在安装依赖...
-    call npm install
-    if errorlevel 1 (
-        echo [错误] 依赖安装失败
-        pause
-        exit /b 1
-    )
-    echo [✓] 依赖安装完成
-    echo.
+REM 2. 定位 node 可执行文件（PATH > 系统默认 > WorkBuddy managed）
+set NODE_EXE=
+for /f "tokens=*" %%i in ('where node 2^>nul') do ( if not defined NODE_EXE set NODE_EXE=%%i )
+if not defined NODE_EXE ( if exist "C:\Program Files\nodejs\node.exe" set NODE_EXE=C:\Program Files\nodejs\node.exe )
+if not defined NODE_EXE ( if exist "C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2\node.exe" set NODE_EXE=C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2\node.exe )
+if not defined NODE_EXE (
+  echo [错误] 找不到 node.exe，请先安装 Node.js 或检查路径。
+  pause
+  exit /b 1
 )
+echo [信息] 使用 node: %NODE_EXE%
 
-:: 获取端口（从 server.js 读取）
-for /f "tokens=*" %%a in ('node -e "const fs=require('fs');const m=fs.readFileSync('server.js','utf8').match(/const port = (\d+)/);console.log(m?m[1]:'3003')"') do set PORT=%%a
+REM 3. 以独立隐藏进程启动（脱离本窗口，关闭 cmd 也不退出）
+powershell -NoProfile -Command "Start-Process -FilePath '%NODE_EXE%' -ArgumentList 'server.js' -WorkingDirectory 'E:\培训相关\桌面\learning' -RedirectStandardOutput 'server.log' -RedirectStandardError 'server.err' -WindowStyle Hidden"
+echo [信息] 正在启动服务器...
 
-echo [→] 正在启动后端服务...
-echo [→] 服务地址: http://localhost:%PORT%
-echo [→] 按 Ctrl+C 停止服务
-echo.
-echo ========================================
-echo.
-
-:: 启动服务
-node server.js
-
-:: 服务停止后的提示
-echo.
-echo [→] 服务已停止
-echo.
-pause
+REM 4. 等待并真实探活，给出明确成败反馈
+set tries=0
+:wait
+curl -s -m 2 http://localhost:%PORT%/api/certificates/templates >nul 2>&1
+if !errorlevel!==0 (
+  echo.
+  echo ============================================
+  echo  [成功] 有研学院本地服务器已启动（后台常驻）
+  echo  访问地址: http://localhost:%PORT%
+  echo  运行日志: server.log / server.err
+  echo ============================================
+  timeout /t 3 /nobreak >nul
+  exit /b 0
+)
+set /a tries+=1
+if %tries% geq 12 (
+  echo.
+  echo [失败] 12 秒内端口未就绪，server.err 内容如下：
+  type server.err 2>nul
+  pause
+  exit /b 1
+)
+timeout /t 1 /nobreak >nul
+goto wait
