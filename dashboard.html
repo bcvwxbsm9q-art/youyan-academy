@@ -2617,14 +2617,7 @@
               <option value="enabled">启用</option>
               <option value="disabled">停用</option>
             </select>
-            <select id="cert-dept-filter" class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
-              <option value="">全部部门</option>
-              <option value="技术部">技术部</option>
-              <option value="产品部">产品部</option>
-              <option value="运营部">运营部</option>
-              <option value="市场部">市场部</option>
-              <option value="人事部">人事部</option>
-            </select>
+            <input type="text" id="cert-company-filter" placeholder="搜索企业名称..." class="px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
             <button id="cert-search-btn" class="px-6 py-2.5 cert-gradient text-white rounded-xl shadow-sm transition font-medium flex items-center justify-center">
               <i class="fas fa-search mr-1"></i>查询
             </button>
@@ -2684,7 +2677,7 @@
                   <input type="checkbox" id="certSelectAll" onchange="window.CertificateMgmt.toggleCertSelectAll()" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
                 </th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">证书名称</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">所属部门</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">企业名称</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">有效期</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">有效人数</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">已过期</th>
@@ -3713,8 +3706,8 @@
               class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 outline-none text-sm transition">
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">所属部门</label>
-            <input type="text" id="cert-dept" placeholder="例如：技术部"
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">企业名称</label>
+            <input type="text" id="cert-company" placeholder="广州游雁网络科技有限公司"
               class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 outline-none text-sm transition">
           </div>
           <div class="grid grid-cols-2 gap-4">
@@ -3738,8 +3731,9 @@
             <div class="grid grid-cols-3 gap-3">
               <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1">前缀</label>
-                <input type="text" id="cert-prefix" value="CERT" placeholder="CERT"
+                <input type="text" id="cert-prefix" value="" placeholder="如 CERT"
                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 outline-none transition">
+                <p id="cert-prefix-error" class="hidden text-xs text-red-500 mt-1"></p>
               </div>
               <div>
                 <label class="block text-xs font-medium text-slate-500 mb-1">起始序号</label>
@@ -4027,7 +4021,7 @@
   <script src="js/data-sync.js"></script>
   <script src="js/auth-modal.js?v=20260704"></script>
   <script src="js/auth-guard.js?v=20260704"></script>
-  <script src="js/certificate-management.js?v=20260720c"></script>
+  <script src="js/certificate-management.js?v=20260722i"></script>
   <script>
     // dataSync 兼容层：将 window.dataSync.getData/setData 映射到 DataAPI
     if (!window.dataSync) {
@@ -4056,6 +4050,9 @@
     let pendingCourseFiles = [];      // 元素: { url, type: 'cover'|'video'|'attachment' }
     let pendingLecturerAvatar = [];   // 讲师头像
     let pendingTrainingCourseware = []; // 培训课件
+    // 编辑时记录原始封面/头像路径，保存新图后清理旧文件（避免孤儿文件）
+    let originalCourseCover = '';
+    let originalLecturerAvatar = '';
 
     // 当前弹窗类型，用于点击遮罩层时路由到对应的关闭清理函数
     let currentModalType = null;
@@ -4416,6 +4413,7 @@
     let carouselCourses = [];
     let carouselAnnouncements = [];
     let carouselEditingBanner = null;
+    let originalCarouselImg = '';   // 编辑时原始封面路径，保存新图后需清理旧文件
     const initializedSearchableSelects = new Set();
 
     function initCarouselSearchableSelect(container, items, textInput, hiddenInput) {
@@ -4507,6 +4505,7 @@
 
     function openCarouselModal(banner = null) {
       carouselEditingBanner = banner || null;
+      originalCarouselImg = banner ? (banner.img || '') : '';
       document.getElementById('carousel-id').value = banner ? banner.id : '';
       document.getElementById('carousel-order').value = banner ? banner.order || '' : '';
       document.getElementById('carousel-status').value = banner ? banner.status || 'published' : 'published';
@@ -4553,6 +4552,7 @@
       document.getElementById('carousel-cover-img').classList.add('hidden');
       document.getElementById('carousel-cover-placeholder').classList.remove('hidden');
       carouselEditingBanner = null;
+      originalCarouselImg = '';
     }
 
     // 编辑时回填关联课程和公告
@@ -4573,6 +4573,9 @@
       const file = input.files[0];
       if (!file) return;
 
+      // 替换前的封面（可能是本次会话临时上传的，也可能是编辑时的原始封面）
+      const prevCover = document.getElementById('carousel-cover-url').value.trim();
+
       const formData = new FormData();
       formData.append('file', file);
 
@@ -4584,6 +4587,11 @@
         });
         const result = await res.json();
         if (result.success) {
+          // 若替换的是本次会话内已上传的临时图片，立即删除旧文件，避免项目里残留孤儿图
+          if (prevCover && pendingBannerImages.includes(prevCover) && prevCover !== result.url) {
+            pendingBannerImages = pendingBannerImages.filter(u => u !== prevCover);
+            await deleteUploadFileByUrl(prevCover);
+          }
           document.getElementById('carousel-cover-url').value = result.url;
           const img = document.getElementById('carousel-cover-img');
           img.src = result.url;
@@ -4630,7 +4638,13 @@
         });
         const result = await res.json();
         if (result.success) {
+          // 编辑时若封面被替换，清理原来的项目文件图片
+          if (id && originalCarouselImg && originalCarouselImg !== coverUrl) {
+            await deleteUploadFileByUrl(originalCarouselImg);
+          }
+          // 新封面已落到 banner 上，清空 pending（不再当作临时文件删除）
           pendingBannerImages = [];
+          originalCarouselImg = '';
           toast(id ? '轮播图已更新' : '轮播图已添加');
           closeCarouselModal();
           loadCarousels();
@@ -5073,6 +5087,7 @@
     function openCourseModal(course = null) {
       currentModalType = 'course';
       const isEdit = !!course;
+      originalCourseCover = course?.cover || '';
       const parentOptions = data.categories.map(c => `<option value="${c.id}" ${course?.categoryId == c.id ? 'selected' : ''}>${c.name}</option>`).join('');
       const lectOptions = data.lecturers.map(l => `<option value="${l.id}" ${course?.lecturerId == l.id ? 'selected' : ''}>${l.name}</option>`).join('');
       const coverUrl = course?.cover || '';
@@ -5257,6 +5272,9 @@
       const file = input.files[0];
       if (!file) return;
 
+      // 替换前的封面（可能是本次会话临时上传的，也可能是编辑时的原始封面）
+      const prevCover = document.getElementById('c-cover').value.trim();
+
       const formData = new FormData();
       formData.append('file', file);
 
@@ -5269,6 +5287,14 @@
         const result = await response.json();
 
         if (result.success) {
+          // 若替换的是本次会话内已上传的临时封面，立即删除旧文件，避免项目里残留孤儿图
+          if (prevCover && prevCover !== result.url) {
+            const pendingIdx = pendingCourseFiles.findIndex(p => p.url === prevCover && p.type === 'cover');
+            if (pendingIdx >= 0) {
+              pendingCourseFiles.splice(pendingIdx, 1);
+              await deleteUploadFileByUrl(prevCover);
+            }
+          }
           document.getElementById('c-cover').value = result.url;
           document.getElementById('cover-preview').innerHTML = `<img src="${result.url}" class="w-full h-full object-cover">`;
           pendingCourseFiles.push({ url: result.url, type: 'cover' });
@@ -5752,6 +5778,11 @@
         result = await res.json();
 
         if (result.success || res.ok) {
+          // 编辑时若封面被替换，清理原来的项目文件图片
+          const newCover = document.getElementById('c-cover').value.trim();
+          if (id && originalCourseCover && originalCourseCover !== newCover) {
+            await deleteUploadFileByUrl(originalCourseCover);
+          }
           pendingCourseFiles = [];
           toast(id ? '课程已更新' : '课程已添加');
           closeCourseModal();
@@ -5786,6 +5817,7 @@
     function closeCourseModal() {
       pendingCourseFiles.forEach(item => deleteUploadFileByUrl(item.url));
       pendingCourseFiles = [];
+      originalCourseCover = '';
       currentModalType = null;
       closeModal();
     }
@@ -6596,6 +6628,7 @@
 
     function openLecturerModal(lecturer = null) {
       const isEdit = !!lecturer;
+      originalLecturerAvatar = lecturer?.avatar || '';
       const levelOptions = ['senior', 'intermediate', 'junior', 'intern'].map(l =>
         `<option value="${l}" ${lecturer?.level === l ? 'selected' : ''}>${l === 'senior' ? '高级讲师' : l === 'intermediate' ? '中级讲师' : l === 'junior' ? '初级讲师' : '见习讲师'}</option>`
       ).join('');
@@ -6686,6 +6719,9 @@
       const file = input.files[0];
       if (!file) return;
 
+      // 替换前的头像（可能是本次会话临时上传的，也可能是编辑时的原始头像）
+      const prevAvatar = document.getElementById('l-avatar').value.trim();
+
       const formData = new FormData();
       formData.append('file', file);
 
@@ -6698,6 +6734,11 @@
         const result = await response.json();
 
         if (result.success) {
+          // 若替换的是本次会话内已上传的临时头像，立即删除旧文件，避免项目里残留孤儿图
+          if (prevAvatar && prevAvatar !== result.url && pendingLecturerAvatar.includes(prevAvatar)) {
+            pendingLecturerAvatar = pendingLecturerAvatar.filter(u => u !== prevAvatar);
+            await deleteUploadFileByUrl(prevAvatar);
+          }
           document.getElementById('l-avatar').value = result.url;
           document.getElementById('avatar-preview').innerHTML = `<img src="${result.url}" class="w-full h-full object-cover">`;
           pendingLecturerAvatar.push(result.url);
@@ -6810,6 +6851,11 @@
           });
         }
         if (res.ok) {
+          // 编辑时若头像被替换，清理原来的项目文件图片
+          const newAvatar = document.getElementById('l-avatar').value.trim();
+          if (id && originalLecturerAvatar && originalLecturerAvatar !== newAvatar) {
+            await deleteUploadFileByUrl(originalLecturerAvatar);
+          }
           pendingLecturerAvatar = [];
           toast(id ? '讲师已更新' : '讲师已添加');
           closeLecturerModal();
@@ -6829,6 +6875,7 @@
     function closeLecturerModal() {
       pendingLecturerAvatar.forEach(url => deleteUploadFileByUrl(url));
       pendingLecturerAvatar = [];
+      originalLecturerAvatar = '';
       closeModal();
     }
 
@@ -12845,6 +12892,9 @@
           });
         }
         if (res.ok) {
+          // 清理已插入又从正文删除的临时图片（含替换场景）：仅保留 content 中仍引用的
+          const orphaned = pendingNoticeImages.filter(u => !content.includes(u));
+          orphaned.forEach(url => deleteUploadFileByUrl(url));
           pendingNoticeImages = [];
           toast(id ? '公告已更新' : '公告已发布');
           closeModal();

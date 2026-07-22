@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/user-avatars/1783579052402-447707856.jpg",
       "createdAt": "2026/7/9 14:22:27",
-      "lastLogin": "2026/7/22 09:40:43",
+      "lastLogin": "2026/7/20 16:41:36",
       "status": "active",
       "position": "人事经理"
     },
@@ -220,26 +220,7 @@
       "id": 1784182583742
     }
   ],
-  "index_banners": [
-    {
-      "img": "/uploads/covers/1784706040936-845573922.jpg",
-      "courseId": 1784185505080,
-      "announcementId": null,
-      "order": 1,
-      "status": "published",
-      "id": 1784706047461,
-      "createdAt": "2026-07-22T07:40:47.461Z"
-    },
-    {
-      "img": "/uploads/covers/1784706071629-195895666.png",
-      "courseId": 1784184709620,
-      "announcementId": null,
-      "order": 2,
-      "status": "published",
-      "id": 1784706076975,
-      "createdAt": "2026-07-22T07:41:16.975Z"
-    }
-  ],
+  "index_banners": [],
   "course_categories": [
     {
       "name": "策划",
@@ -448,7 +429,7 @@
       ],
       "attachments": [],
       "duration": 1284,
-      "views": 1,
+      "views": 0,
       "rating": 0,
       "id": 1784185505080,
       "createdAt": "2026/7/16 15:05:05",
@@ -765,28 +746,28 @@
       "createdAt": "2026-07-08T01:51:00.760Z"
     },
     {
-      "id": "nt-1784705012680-0",
+      "id": "nt-1784624888516-0",
       "userId": "1780909174403",
       "title": "恭喜您获得证书",
-      "content": "您已获得《优秀讲师》证书，证书编号：CERT0001。请在个人中心-我的证书查看。",
+      "content": "您已获得《优秀讲师》证书，证书编号：0001。请在个人中心-我的证书查看。",
       "type": "certificate",
-      "certificateId": "cert-1784704957865",
-      "userCertificateId": "uc-1784705012680-393119418",
+      "certificateId": "cert-1784624882275",
+      "userCertificateId": "uc-1784624888516-801944745",
       "read": true,
-      "createdAt": "2026-07-22T07:23:32.680Z",
-      "readAt": "2026-07-22T07:27:06.103Z"
+      "createdAt": "2026-07-21T09:08:08.516Z",
+      "readAt": "2026-07-21T09:08:19.786Z"
     },
     {
-      "id": "nt-1784705016016-0",
-      "userId": "1780909174403",
+      "id": "nt-1784625649137-0",
+      "userId": "1781087021554",
       "title": "恭喜您获得证书",
-      "content": "您已获得《测试》证书，证书编号：CEAR0001。请在个人中心-我的证书查看。",
+      "content": "您已获得《优秀讲师》证书，证书编号：0002。请在个人中心-我的证书查看。",
       "type": "certificate",
-      "certificateId": "cert-1784705002618",
-      "userCertificateId": "uc-1784705016016-590833638",
+      "certificateId": "cert-1784624882275",
+      "userCertificateId": "uc-1784625649138-543393979",
       "read": true,
-      "createdAt": "2026-07-22T07:23:36.016Z",
-      "readAt": "2026-07-22T07:27:03.199Z"
+      "createdAt": "2026-07-21T09:20:49.138Z",
+      "readAt": "2026-07-21T09:21:05.713Z"
     }
   ],
   "notification_reads": [],
@@ -1483,148 +1464,12 @@
   ],
   "certificates": [
     {
-      "id": "cert-1784704957865",
+      "id": "cert-1784624882275",
       "name": "优秀讲师",
-      "company": "广州游雁网络科技有限公司",
+      "dept": "人力资源",
       "validityType": "permanent",
       "validityDays": null,
-      "prefix": "LECTURER",
-      "startNumber": 2,
-      "digits": 4,
-      "templateId": "v1",
-      "status": "enabled",
-      "design": {
-        "_tplKey": "v1",
-        "layout": "portrait",
-        "elements": [
-          {
-            "id": "elmrvr90n9tzgn",
-            "type": "text",
-            "key": "title",
-            "x": 57.400000000000006,
-            "y": 110,
-            "w": 295,
-            "h": 52,
-            "text": "{{title}}",
-            "fontSize": 38,
-            "fontWeight": "bold",
-            "letterSpacing": 4,
-            "fontStyle": "normal",
-            "textAlign": "center",
-            "color": "#1a365d",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrvr90n9ig0x",
-            "type": "text",
-            "key": "subtitle",
-            "x": 57.400000000000006,
-            "y": 160,
-            "w": 295,
-            "h": 20,
-            "text": "CERTIFICATE OF HONORS",
-            "fontSize": 12,
-            "fontWeight": "normal",
-            "letterSpacing": 2,
-            "fontStyle": "normal",
-            "textAlign": "center",
-            "color": "#64748b",
-            "underline": false,
-            "fontFamily": "Arial,sans-serif"
-          },
-          {
-            "id": "elmrvr90n912ky",
-            "type": "text",
-            "key": "name",
-            "x": 57.400000000000006,
-            "y": 220,
-            "w": 177,
-            "h": 24,
-            "text": "{{name}}",
-            "fontSize": 15,
-            "fontWeight": "bold",
-            "fontStyle": "normal",
-            "textAlign": "left",
-            "color": "#334155",
-            "underline": true,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrvr90n9cwqq",
-            "type": "text",
-            "key": "content",
-            "x": 57.400000000000006,
-            "y": 244,
-            "w": 295,
-            "h": 120,
-            "text": "　　在本公司工作期间，认真负责，表现优秀，现授予【年度优秀员工】荣誉称号。特发此证，以示表彰。",
-            "fontSize": 15,
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textAlign": "left",
-            "lineHeight": 2,
-            "color": "#334155",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrvr90n92nfd",
-            "type": "text",
-            "key": "company",
-            "x": 146,
-            "y": 404,
-            "w": 207,
-            "h": 22,
-            "text": "{{company}}",
-            "fontSize": 15,
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textAlign": "right",
-            "color": "#334155",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrvr90n93o53",
-            "type": "text",
-            "key": "date",
-            "x": 161,
-            "y": 434,
-            "w": 192,
-            "h": 22,
-            "text": "{{date}}",
-            "fontSize": 15,
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textAlign": "right",
-            "color": "#334155",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          }
-        ],
-        "seal": null,
-        "background": {
-          "type": "preset",
-          "value": "v1"
-        },
-        "accentColor": "#2c5282",
-        "fontFamily": "'STSong','SimSun','Times New Roman',serif",
-        "titleColor": "#1a365d",
-        "subtitleColor": "#64748b",
-        "textColor": "#334155",
-        "sealColor": "#c2410c"
-      },
-      "creator": "许志坚",
-      "createdAt": "2026-07-22T07:22:37.865Z"
-    },
-    {
-      "id": "cert-1784705002618",
-      "name": "测试",
-      "company": "广州游雁网络科技有限公司",
-      "validityType": "permanent",
-      "validityDays": null,
-      "prefix": "CEAR",
+      "prefix": "",
       "startNumber": 1,
       "digits": 4,
       "templateId": "v1",
@@ -1634,7 +1479,7 @@
         "layout": "portrait",
         "elements": [
           {
-            "id": "elmrvr9yrx2sij",
+            "id": "elmrufknj6cbe2",
             "type": "text",
             "key": "title",
             "x": 57.400000000000006,
@@ -1652,7 +1497,7 @@
             "fontFamily": "'STSong','SimSun','Times New Roman',serif"
           },
           {
-            "id": "elmrvr9yrxiaqd",
+            "id": "elmrufknj6maym",
             "type": "text",
             "key": "subtitle",
             "x": 57.400000000000006,
@@ -1670,7 +1515,7 @@
             "fontFamily": "Arial,sans-serif"
           },
           {
-            "id": "elmrvr9yrx7wym",
+            "id": "elmrufknj6uugv",
             "type": "text",
             "key": "name",
             "x": 57.400000000000006,
@@ -1687,7 +1532,7 @@
             "fontFamily": "'STSong','SimSun','Times New Roman',serif"
           },
           {
-            "id": "elmrvr9yrxkozp",
+            "id": "elmrufknj64ysr",
             "type": "text",
             "key": "content",
             "x": 57.400000000000006,
@@ -1705,7 +1550,7 @@
             "fontFamily": "'STSong','SimSun','Times New Roman',serif"
           },
           {
-            "id": "elmrvr9yrxl80n",
+            "id": "elmrufknj6wslk",
             "type": "text",
             "key": "company",
             "x": 146,
@@ -1722,7 +1567,7 @@
             "fontFamily": "'STSong','SimSun','Times New Roman',serif"
           },
           {
-            "id": "elmrvr9yrxjpdw",
+            "id": "elmrufknj6p69h",
             "type": "text",
             "key": "date",
             "x": 161,
@@ -1752,7 +1597,7 @@
         "sealColor": "#c2410c"
       },
       "creator": "许志坚",
-      "createdAt": "2026-07-22T07:23:22.618Z"
+      "createdAt": "2026-07-21T09:08:02.275Z"
     }
   ],
   "current_user": {
@@ -2150,10 +1995,6 @@
     {
       "userId": "1781087021554",
       "loginTime": "2026-07-21T09:21:02.282Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-07-22T01:40:43.534Z"
     }
   ],
   "lecturer_payment_records": [
@@ -2186,36 +2027,34 @@
   ],
   "user_certificates": [
     {
-      "id": "uc-1784705012680-393119418",
-      "certificateId": "cert-1784704957865",
+      "id": "uc-1784624888516-801944745",
+      "certificateId": "cert-1784624882275",
       "userId": "1780909174403",
-      "certNo": "CERT0001",
-      "company": "广州游雁网络科技有限公司",
+      "certNo": "0001",
       "sourceType": "manual",
       "sourceId": null,
-      "issueAt": "2026-07-22T07:23:32.680Z",
-      "effectiveAt": "2026-07-22T07:23:32.680Z",
+      "issueAt": "2026-07-21T09:08:08.516Z",
+      "effectiveAt": "2026-07-21T09:08:08.516Z",
       "expireAt": null,
       "status": "active",
       "revokedAt": null,
       "revokeReason": null,
-      "imageUrl": null
+      "imageUrl": "/uploads/certificates/uc-1784624888516-801944745.png"
     },
     {
-      "id": "uc-1784705016016-590833638",
-      "certificateId": "cert-1784705002618",
-      "userId": "1780909174403",
-      "certNo": "CEAR0001",
-      "company": "广州游雁网络科技有限公司",
+      "id": "uc-1784625649138-543393979",
+      "certificateId": "cert-1784624882275",
+      "userId": "1781087021554",
+      "certNo": "0002",
       "sourceType": "manual",
       "sourceId": null,
-      "issueAt": "2026-07-22T07:23:36.016Z",
-      "effectiveAt": "2026-07-22T07:23:36.016Z",
+      "issueAt": "2026-07-21T09:20:49.137Z",
+      "effectiveAt": "2026-07-21T09:20:49.137Z",
       "expireAt": null,
-      "status": "revoked",
-      "revokedAt": "2026-07-22T07:23:46.265Z",
-      "revokeReason": "管理员手动撤销",
-      "imageUrl": "/uploads/certificates/uc-1784705016016-590833638.png"
+      "status": "active",
+      "revokedAt": null,
+      "revokeReason": null,
+      "imageUrl": "/uploads/certificates/uc-1784625649138-543393979.png"
     }
   ],
   "certificate_templates": [],
@@ -2223,8 +2062,7 @@
     "totalHours": 0,
     "completedCourses": [],
     "videoProgress": {
-      "1784182455662_0": 0,
-      "1784185505080_0": 0
+      "1784182455662_0": 0
     },
     "videoWatchTimes": {
       "1784019677171_0": 42,
@@ -3039,22 +2877,5 @@
   "video_pos_1780909174403_1784182455662_0": {
     "position": 5,
     "savedAt": "2026-07-16T06:14:36.773Z"
-  },
-  "user_learning_1781087021554": {
-    "totalHours": 0,
-    "completedCourses": [],
-    "videoProgress": {},
-    "videoWatchTimes": {},
-    "lastStudyTime": null,
-    "studyDates": [],
-    "ratings": 0,
-    "shares": 0,
-    "likes": 0,
-    "examRecords": []
-  },
-  "video_pos_1780909174403_1784185505080_0": {
-    "position": 0,
-    "savedAt": "2026-07-22T07:41:24.598Z"
-  },
-  "certificate_revoke_logs": []
+  }
 }

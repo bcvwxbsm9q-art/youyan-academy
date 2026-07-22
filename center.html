@@ -1101,7 +1101,7 @@
     <script src="js/data-sync.js"></script>
     <script src="data-api.js"></script>
     <script src="js/notification.js?v=20260704"></script>
-    <script src="js/certificate-management.js?v=20260720c"></script>
+    <script src="js/certificate-management.js?v=20260722i"></script>
     <script>
         const api = window.DataAPI;
         let currentUser = null;
@@ -2357,7 +2357,7 @@ const BADGES = [
         function renderCertificatePreviewHTML(userCert, template) {
             console.log('[renderCertificatePreviewHTML] design=', !!userCert.design, 'mgmt=', typeof window.CertificateMgmt, 'userCert.id=', userCert.id);
             const user = userCert.userName || '学员';
-            const company = userCert.userDepartment || '广州游雁网络科技有限公司';
+            const company = userCert.company || '广州游雁网络科技有限公司';
             const date = (userCert.issueAt || '').split('T')[0] || new Date().toISOString().split('T')[0];
             const title = userCert.certificateName || '荣誉证书';
             const content = userCert.sourceType === 'exam'
@@ -2611,17 +2611,21 @@ const BADGES = [
                 for (let i = 0; i < certs.length; i++) {
                     const cert = certs[i];
                     try {
-                        let dataUrl = null;
-                        if (cert.imageUrl) {
-                            dataUrl = cert.imageUrl;
-                        } else if (cert.template && window.CertificateMgmt && window.CertificateMgmt.renderCertificatePng) {
-                            // 复用与后台同一套渲染：等 Web 字体就绪后 html-to-image 截图，避免文字移位
-                            dataUrl = await window.CertificateMgmt.renderCertificatePng(
-                                cert, { name: cert.certificateName, design: cert.design }, cert.template
-                            );
-                        }
-                        if (dataUrl) {
-                            certImageData[cert.id] = { dataUrl, certNo: cert.certNo || '', isServerUrl: !!cert.imageUrl };
+                    let dataUrl = null;
+                    if (window.CertificateMgmt && window.CertificateMgmt.ensureUserCertificateImage) {
+                        // 优先读取已落盘的图片；缺失则客户端渲染一次并回传服务端永久保存（只渲染一次）
+                        dataUrl = await window.CertificateMgmt.ensureUserCertificateImage(cert);
+                    } else if (cert.imageUrl) {
+                        dataUrl = cert.imageUrl;
+                    } else if (cert.template && window.CertificateMgmt && window.CertificateMgmt.renderCertificatePng) {
+                        // 复用与后台同一套渲染：等 Web 字体就绪后 html-to-image 截图，避免文字移位
+                        dataUrl = await window.CertificateMgmt.renderCertificatePng(
+                            cert, { name: cert.certificateName, design: cert.design }, cert.template
+                        );
+                    }
+                    if (dataUrl) {
+                        const isServerUrl = dataUrl.startsWith('/uploads/') || !!cert.imageUrl;
+                        certImageData[cert.id] = { dataUrl, certNo: cert.certNo || '', isServerUrl };
                             const card = container.querySelector(`[data-cert-id="${cert.id}"]`);
                             if (card) {
                                 const img = card.querySelector('.cert-image');

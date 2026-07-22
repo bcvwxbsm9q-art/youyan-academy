@@ -577,6 +577,7 @@ async function issueCertificateInternal(data, certificateId, userId, sourceType,
     certificateId: String(certificateId),
     userId: String(userId),
     certNo,
+    company: certificate.company || DEFAULT_CERT_COMPANY,
     sourceType: sourceType || 'manual',
     sourceId: sourceId || null,
     issueAt: now,
@@ -610,11 +611,15 @@ function getCertificateImagePath(userCertId) {
 }
 
 async function ensureCertificateImage(data, userCert) {
-  if (userCert.imageUrl) return userCert.imageUrl;
-  const imagePath = getCertificateImagePath(userCert.id);
-  if (fs.existsSync(imagePath)) {
-    userCert.imageUrl = `/uploads/certificates/${userCert.id}.png`;
-    return userCert.imageUrl;
+  // 仅当图片文件真实存在于磁盘时才返回 URL；否则返回 null，由前端渲染一次后回传落盘。
+  // 这杜绝了"只伪造 URL 不落盘"导致的每次打开都重新渲染的性能问题。
+  if (userCert.imageUrl) {
+    const p = path.join(uploadsDir, userCert.imageUrl.replace(/^\/uploads\//, ''));
+    if (fs.existsSync(p)) return userCert.imageUrl;
+  }
+  const stdPath = getCertificateImagePath(userCert.id);
+  if (fs.existsSync(stdPath)) {
+    return `/uploads/certificates/${userCert.id}.png`;
   }
   return null;
 }
@@ -6296,13 +6301,23 @@ function getBuiltinTemplate(templateId) {
 
 // 证书预览已改为前端（浏览器内 html-to-image）渲染，不再提供 Playwright 服务端预览端点。
 
+const DEFAULT_CERT_COMPANY = '广州游雁网络科技有限公司';
+
+// 兼容旧字段：证书定义由 dept 改为 company 后，部分历史数据仍只存了 dept。
+// 读取/返回时自动归一化为 company；写入时清理 dept 字段。
+function normalizeCertificate(c) {
+  if (!c) return c;
+  const company = c.company !== undefined && c.company !== '' ? c.company : (c.dept || DEFAULT_CERT_COMPANY);
+  return { ...c, company, dept: undefined };
+}
+
 // GET /api/certificates - 证书定义列表
 app.get('/api/certificates', (req, res) => {
   const data = readData();
-  const { dept, status, keyword } = req.query;
+  const { company, status, keyword } = req.query;
   let list = (data.certificates || []).slice();
 
-  if (dept) list = list.filter(c => c.dept && c.dept.includes(dept));
+  if (company) list = list.filter(c => c.company && c.company.includes(company));
   if (status) list = list.filter(c => c.status === status);
   if (keyword) {
     const k = String(keyword).toLowerCase();
@@ -6311,11 +6326,12 @@ app.get('/api/certificates', (req, res) => {
 
   const userCerts = data.user_certificates || [];
   const enriched = list.map(c => {
+    const cert = normalizeCertificate(c);
     const issued = userCerts.filter(uc => String(uc.certificateId) === String(c.id));
     const activeCount = issued.filter(uc => uc.status === 'active').length;
     const expiredCount = issued.filter(uc => uc.status === 'expired').length;
     const revokedCount = issued.filter(uc => uc.status === 'revoked').length;
-    return { ...c, activeCount, expiredCount, revokedCount, issuedCount: issued.length };
+    return { ...cert, activeCount, expiredCount, revokedCount, issuedCount: issued.length };
   });
 
   res.json({ success: true, data: enriched });
@@ -6334,7 +6350,7 @@ app.get('/api/certificates/:id', (req, res) => {
 
   res.json({
     success: true,
-    data: { ...certificate, activeCount, expiredCount, revokedCount, issuedCount: userCerts.length }
+    data: { ...normalizeCertificate(certificate), activeCount, expiredCount, revokedCount, issuedCount: userCerts.length }
   });
 });
 
@@ -6353,10 +6369,21 @@ app.post('/api/certificates', (req, res) => {
     return res.status(422).json({ success: false, error: '模板必须是 12 套内置模板之一（v1-v6 / h1-h6）' });
   }
 
+  // 校验证书编号前缀：必填 + 全局唯一（忽略大小写）
+  const newPrefix = (payload.prefix || '').trim();
+  if (!newPrefix) {
+    return res.status(422).json({ success: false, error: '证书编号前缀必填' });
+  }
+  const prefixConflict = (data.certificates || []).some(c => (c.prefix || '').trim().toLowerCase() === newPrefix.toLowerCase());
+  if (prefixConflict) {
+    return res.status(422).json({ success: false, error: `证书编号前缀「${newPrefix}」已存在，请使用唯一前缀` });
+  }
+
   const certificate = {
     id: 'cert-' + Date.now(),
     name: payload.name,
-    dept: payload.dept || '',
+    company: payload.company || DEFAULT_CERT_COMPANY,
+    dept: undefined,
     validityType: payload.validityType || 'permanent',
     validityDays: payload.validityType === 'fixed' ? parseInt(payload.validityDays) || 365 : null,
     prefix: payload.prefix || '',
@@ -6383,14 +6410,30 @@ app.put('/api/certificates/:id', (req, res) => {
   const certificate = data.certificates[index];
 
   if (payload.name !== undefined) certificate.name = payload.name;
-  if (payload.dept !== undefined) certificate.dept = payload.dept;
+  if (payload.company !== undefined) {
+    certificate.company = payload.company;
+    delete certificate.dept;
+  }
   if (payload.validityType !== undefined) certificate.validityType = payload.validityType;
   if (payload.validityType === 'fixed') {
     certificate.validityDays = parseInt(payload.validityDays) || 365;
   } else {
     certificate.validityDays = null;
   }
-  if (payload.prefix !== undefined) certificate.prefix = payload.prefix;
+  if (payload.prefix !== undefined) {
+    const updPrefix = (payload.prefix || '').trim();
+    if (!updPrefix) {
+      return res.status(422).json({ success: false, error: '证书编号前缀必填' });
+    }
+    const prefixConflict = (data.certificates || []).some(c =>
+      String(c.id) !== String(certificate.id) && (c.prefix || '').trim().toLowerCase() === updPrefix.toLowerCase()
+    );
+    if (prefixConflict) {
+      return res.status(422).json({ success: false, error: `证书编号前缀「${updPrefix}」已存在，请使用唯一前缀` });
+    }
+    certificate.prefix = payload.prefix;
+    delete certificate.dept;
+  }
   if (payload.startNumber !== undefined) certificate.startNumber = parseInt(payload.startNumber) || 1;
   if (payload.digits !== undefined) certificate.digits = parseInt(payload.digits) || 4;
   if (payload.templateId !== undefined) certificate.templateId = payload.templateId;
@@ -6512,7 +6555,8 @@ app.get('/api/user-certificates', async (req, res) => {
     const user = users.find(u => String(u.id) === String(uc.userId)) || {};
     // 为生成图片补充临时用户信息
     uc.userName = user.realName || user.username || '';
-    uc.userDepartment = user.department || '';
+    uc.company = uc.company || cert.company || DEFAULT_CERT_COMPANY;
+    uc.userDepartment = uc.company; // 兼容旧字段
     const imageUrl = await ensureCertificateImage(data, uc);
     return {
       ...uc,
@@ -6521,7 +6565,8 @@ app.get('/api/user-certificates', async (req, res) => {
       template,
       design: cert.design || null,
       userName: uc.userName,
-      userDepartment: uc.userDepartment,
+      company: uc.company,
+      userDepartment: uc.company, // 兼容旧字段
       userPosition: user.position || '',
       imageUrl
     };
@@ -6539,7 +6584,8 @@ app.get('/api/user-certificates/:id', async (req, res) => {
   const cert = (data.certificates || []).find(c => String(c.id) === String(uc.certificateId)) || {};
   const user = (data.registered_users || []).find(u => String(u.id) === String(uc.userId)) || {};
   uc.userName = user.realName || user.username || '';
-  uc.userDepartment = user.department || '';
+  uc.company = uc.company || cert.company || DEFAULT_CERT_COMPANY;
+  uc.userDepartment = uc.company; // 兼容旧字段
   const imageUrl = await ensureCertificateImage(data, uc);
   res.json({
     success: true,
@@ -6549,7 +6595,8 @@ app.get('/api/user-certificates/:id', async (req, res) => {
       template: getBuiltinTemplate(cert.templateId),
       design: cert.design || null,
       userName: uc.userName,
-      userDepartment: uc.userDepartment,
+      company: uc.company,
+      userDepartment: uc.company, // 兼容旧字段
       userPosition: user.position || '',
       imageUrl
     }
@@ -6565,7 +6612,8 @@ app.get('/api/user-certificates/:id/image', async (req, res) => {
   const cert = (data.certificates || []).find(c => String(c.id) === String(uc.certificateId)) || {};
   const user = (data.registered_users || []).find(u => String(u.id) === String(uc.userId)) || {};
   uc.userName = user.realName || user.username || '';
-  uc.userDepartment = user.department || '';
+  uc.company = uc.company || cert.company || DEFAULT_CERT_COMPANY;
+  uc.userDepartment = uc.company; // 兼容旧字段
   const imageUrl = await ensureCertificateImage(data, uc);
   // 新架构下证书 PNG 由前端（浏览器内 html-to-image）生成；服务端仅返回已落盘的历史图片。
   // 无图时返回 404，前端会自动回退到客户端生成，避免产生 500 噪音。
@@ -6573,18 +6621,92 @@ app.get('/api/user-certificates/:id/image', async (req, res) => {
   res.redirect(imageUrl);
 });
 
-// POST /api/user-certificates/:id/revoke - 撤销证书
-app.post('/api/user-certificates/:id/revoke', (req, res) => {
+// POST /api/user-certificates/:id/image - 接收前端（浏览器内 html-to-image）渲染的证书 PNG 并落盘持久化
+// 实现"首次加载渲染一次 → 永久保存至项目文件"，后续打开直接读取磁盘图片，避免重复渲染/大数据量性能问题。
+// 管理员删除证书记录时，DELETE /api/certificates/:id 会经 tryDeleteUploadFile 清理该图片文件。
+app.post('/api/user-certificates/:id/image', (req, res) => {
   const data = readData();
   const uc = (data.user_certificates || []).find(u => String(u.id) === String(req.params.id));
   if (!uc) return res.status(404).json({ success: false, error: '证书记录不存在' });
+
+  const { dataUrl } = req.body || {};
+  if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image')) {
+    return res.status(400).json({ success: false, error: '缺少有效的图片数据' });
+  }
+  const matches = dataUrl.match(/^data:image\/[a-zA-Z+]+;base64,(.+)$/);
+  if (!matches) return res.status(400).json({ success: false, error: '图片格式不支持' });
+
+  const imagePath = getCertificateImagePath(uc.id); // uploads/certificates/{id}.png
+  try {
+    if (!fs.existsSync(CERT_IMAGE_DIR)) fs.mkdirSync(CERT_IMAGE_DIR, { recursive: true });
+    fs.writeFileSync(imagePath, Buffer.from(matches[1], 'base64'));
+    const url = `/uploads/certificates/${uc.id}.png`;
+    uc.imageUrl = url;
+    writeData(data);
+    console.log(`[证书图片已落盘][uc:${uc.id}] ${imagePath}`);
+    res.json({ success: true, data: { imageUrl: url } });
+  } catch (e) {
+    console.error('[证书图片落盘失败]', e);
+    res.status(500).json({ success: false, error: '保存证书图片失败' });
+  }
+});
+
+// POST /api/user-certificates/:id/revoke - 撤销证书（硬删除颁发记录+图片，保留撤销日志）
+app.post('/api/user-certificates/:id/revoke', (req, res) => {
+  const data = readData();
+  const ucs = data.user_certificates || [];
+  const idx = ucs.findIndex(u => String(u.id) === String(req.params.id));
+  if (idx === -1) return res.status(404).json({ success: false, error: '证书记录不存在' });
+  const uc = ucs[idx];
   if (uc.status !== 'active') return res.status(400).json({ success: false, error: '仅可撤销有效状态的证书' });
 
-  uc.status = 'revoked';
-  uc.revokedAt = new Date().toISOString();
-  uc.revokeReason = req.body?.reason || '';
+  // 1. 删除证书图片文件（标准路径 + imageUrl 指向的历史文件）
+  try {
+    if (uc.imageUrl) {
+      const p = path.join(uploadsDir, String(uc.imageUrl).replace(/^\/uploads\//, ''));
+      if (fs.existsSync(p)) fs.unlinkSync(p);
+    }
+    const stdPath = getCertificateImagePath(uc.id);
+    if (fs.existsSync(stdPath)) fs.unlinkSync(stdPath);
+  } catch (e) {
+    console.warn('[撤销] 删除证书图片失败:', e.message);
+  }
+
+  // 2. 补全撤销日志所需信息
+  const user = (data.registered_users || []).find(u => String(u.id) === String(uc.userId)) || {};
+  const certDef = (data.certificates || []).find(c => String(c.id) === String(uc.certificateId)) || {};
+  if (!data.certificate_revoke_logs) data.certificate_revoke_logs = [];
+  const log = {
+    id: 'rvk-' + Date.now() + '-' + Math.round(Math.random() * 1e9),
+    userCertId: uc.id,
+    userId: uc.userId,
+    userName: uc.userName || user.realName || user.username || String(uc.userId),
+    certificateId: uc.certificateId,
+    certificateName: uc.certificateName || certDef.name || '',
+    certNo: uc.certNo || '',
+    company: uc.company || certDef.company || DEFAULT_CERT_COMPANY,
+    sourceType: uc.sourceType || '',
+    issueAt: uc.issueAt || null,
+    revokedAt: new Date().toISOString(),
+    reason: req.body?.reason || '',
+    operator: req.body?.operator || '管理员'
+  };
+  data.certificate_revoke_logs.push(log);
+
+  // 3. 硬删除该颁发记录
+  ucs.splice(idx, 1);
   writeData(data);
-  res.json({ success: true, data: uc });
+  res.json({ success: true, data: log });
+});
+
+// GET /api/certificate-revoke-logs - 撤销记录列表（支持按 certificateId 过滤）
+app.get('/api/certificate-revoke-logs', (req, res) => {
+  const data = readData();
+  let logs = data.certificate_revoke_logs || [];
+  if (req.query.certificateId) {
+    logs = logs.filter(l => String(l.certificateId) === String(req.query.certificateId));
+  }
+  res.json({ success: true, data: logs });
 });
 
 // ============================================================

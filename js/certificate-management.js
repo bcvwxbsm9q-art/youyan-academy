@@ -16,6 +16,7 @@
   let certSelectedIds = new Set();
   let activeEdit = null; // 当前正在编辑的文字元素 { node, el, span }
   const COLOR_PRESETS = ['#c41e0f', '#1f2937', '#1e40af', '#15803d', '#b8860b', '#7c3aed', '#ea580c', '#0ea5e9', '#000000', '#ffffff'];
+  const DEFAULT_CERT_COMPANY = '广州游雁网络科技有限公司';
 
   // ===== 工具函数 =====
   function $(selector) { return document.querySelector(selector); }
@@ -28,6 +29,14 @@
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   }
 
+  // 证书颁发日期专用格式：XXXX年XX月XX日
+  function formatCertDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return `${d.getFullYear()}年${String(d.getMonth() + 1).padStart(2, '0')}月${String(d.getDate()).padStart(2, '0')}日`;
+  }
+
   function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)
@@ -36,6 +45,14 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  function debounce(fn, wait) {
+    let t;
+    return function (...args) {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), wait);
+    };
   }
 
   function showToast(message, type) {
@@ -110,11 +127,11 @@
   async function loadCertificates() {
     const keyword = $('#cert-search-input')?.value || '';
     const status = $('#cert-status-filter')?.value || '';
-    const dept = $('#cert-dept-filter')?.value || '';
+    const company = $('#cert-company-filter')?.value || '';
     let url = '/api/certificates?';
     if (keyword) url += 'keyword=' + encodeURIComponent(keyword) + '&';
     if (status) url += 'status=' + encodeURIComponent(status) + '&';
-    if (dept) url += 'dept=' + encodeURIComponent(dept) + '&';
+    if (company) url += 'company=' + encodeURIComponent(company) + '&';
     const res = await apiGet(url);
     certificates = res.data || [];
     renderCertificateList();
@@ -163,7 +180,7 @@
             <input type="checkbox" class="cert-row-check rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" onchange="window.CertificateMgmt.toggleCertSelect('${cert.id}')" ${checked}>
           </td>
           <td class="px-4 py-3 text-sm">${escapeHtml(cert.name)}</td>
-          <td class="px-4 py-3 text-sm text-slate-600">${escapeHtml(cert.dept || '-')}</td>
+          <td class="px-4 py-3 text-sm text-slate-600">${escapeHtml(cert.company || cert.dept || '-')}</td>
           <td class="px-4 py-3 text-sm text-slate-600">${validityText}</td>
           <td class="px-4 py-3 text-sm text-slate-600">${cert.activeCount || 0}</td>
           <td class="px-4 py-3 text-sm text-slate-600">${cert.expiredCount || 0}</td>
@@ -255,7 +272,7 @@
 
     $('#cert-modal-title').textContent = certId ? '编辑证书' : '新建证书';
     $('#cert-name').value = cert ? cert.name : '';
-    $('#cert-dept').value = cert ? (cert.dept || '') : '';
+    $('#cert-company').value = cert ? (cert.company || DEFAULT_CERT_COMPANY) : DEFAULT_CERT_COMPANY;
     $('#cert-validity-type').value = cert ? cert.validityType : 'permanent';
     $('#cert-validity-days').value = cert ? (cert.validityDays || '') : '';
     $('#cert-prefix').value = cert ? (cert.prefix || '') : '';
@@ -270,7 +287,50 @@
     updateTemplatePreview();
     toggleValidityDays();
 
+    // 打开时先清空前缀标红，并绑定实时唯一性校验
+    clearPrefixError();
+    $('#cert-prefix').oninput = () => validatePrefix();
+
     openDrawerOverlay('certificate-drawer-overlay');
+  }
+
+  // 清空前缀错误标红
+  function clearPrefixError() {
+    const el = $('#cert-prefix');
+    const errEl = $('#cert-prefix-error');
+    if (!el || !errEl) return;
+    el.classList.remove('border-red-500');
+    el.classList.add('border-slate-200');
+    errEl.classList.add('hidden');
+    errEl.textContent = '';
+  }
+
+  // 校验前缀：必填 + 与已有证书不重复（忽略大小写，编辑时排除自身）
+  function validatePrefix() {
+    const el = $('#cert-prefix');
+    const errEl = $('#cert-prefix-error');
+    if (!el || !errEl) return true;
+    const val = (el.value || '').trim();
+    const mark = (msg) => {
+      el.classList.add('border-red-500');
+      el.classList.remove('border-slate-200');
+      errEl.textContent = msg;
+      errEl.classList.remove('hidden');
+    };
+    const clear = () => {
+      el.classList.remove('border-red-500');
+      el.classList.add('border-slate-200');
+      errEl.classList.add('hidden');
+      errEl.textContent = '';
+    };
+    if (!val) { mark('请输入证书编号前缀'); return false; }
+    const conflict = (certificates || []).some(c =>
+      String(c.id) !== String(editingCertificateId) &&
+      (c.prefix || '').trim().toLowerCase() === val.toLowerCase()
+    );
+    if (conflict) { mark('该前缀已存在，请使用唯一前缀'); return false; }
+    clear();
+    return true;
   }
 
   function closeCertificateModal() {
@@ -292,7 +352,7 @@
   async function saveCertificate() {
     const payload = {
       name: $('#cert-name').value.trim(),
-      dept: $('#cert-dept').value.trim(),
+      company: $('#cert-company').value.trim() || DEFAULT_CERT_COMPANY,
       validityType: $('#cert-validity-type').value,
       validityDays: $('#cert-validity-days').value,
       prefix: $('#cert-prefix').value.trim(),
@@ -305,6 +365,10 @@
 
     if (!payload.name) return showToast('请输入证书名称', 'error');
     if (!payload.templateId) return showToast('请选择证书模板', 'error');
+    if (!validatePrefix()) {
+      $('#cert-prefix').focus();
+      return;
+    }
 
     let res;
     if (editingCertificateId) {
@@ -458,7 +522,7 @@
         </div>
       `;
       if (_previewTimer) clearTimeout(_previewTimer);
-      _previewTimer = setTimeout(() => renderCertPreviewPng(currentDesign, preview, certificates.find(c => c.id === editingCertificateId)?.name || ''), 600);
+      _previewTimer = setTimeout(() => renderCertPreviewPng(currentDesign, preview, ''), 600);
       return;
     }
     preview.style.display = 'none';
@@ -542,13 +606,36 @@
     });
 
     const statusMap = { active: 'active', expired: 'expired', revoked: 'revoked' };
-    const targetStatus = statusMap[currentDetailTab];
-    const res = await apiGet('/api/user-certificates?certificateId=' + cert.id + '&status=' + targetStatus);
-    const list = res.data || [];
+    const tab = currentDetailTab;
+    let list = [];
+    if (tab === 'revoked') {
+      // 硬删除后，已撤销人员改从撤销日志读取
+      const r = await apiGet('/api/certificate-revoke-logs?certificateId=' + cert.id);
+      list = r.data || [];
+    } else {
+      const targetStatus = statusMap[tab];
+      const r = await apiGet('/api/user-certificates?certificateId=' + cert.id + '&status=' + targetStatus);
+      list = r.data || [];
+    }
     const tbody = $('#certificate-detail-body');
 
     if (list.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">暂无${currentDetailTab === 'active' ? '有效' : currentDetailTab === 'expired' ? '已过期' : '已撤销'}人员</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">暂无${tab === 'active' ? '有效' : tab === 'expired' ? '已过期' : '已撤销'}记录</td></tr>`;
+      return;
+    }
+
+    if (tab === 'revoked') {
+      tbody.innerHTML = list.map(l => `
+        <tr class="border-b hover:bg-indigo-50/50 transition-colors">
+          <td class="px-4 py-3 text-sm">${escapeHtml(l.userName || l.userId)}</td>
+          <td class="px-4 py-3 text-sm text-blue-600">${escapeHtml(l.certNo)}</td>
+          <td class="px-4 py-3 text-sm text-slate-600">${l.sourceType === 'manual' ? '手动发放' : l.sourceType === 'exam' ? '考试通过' : l.sourceType === 'training' ? '培训完成' : (l.sourceType || '-')}</td>
+          <td class="px-4 py-3 text-sm text-slate-600">${l.issueAt ? formatDateTime(l.issueAt) : '-'}</td>
+          <td class="px-4 py-3 text-sm text-slate-600">${formatDateTime(l.revokedAt)}</td>
+          <td class="px-4 py-3 text-sm text-slate-600">${escapeHtml(l.reason || '-')}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${escapeHtml(l.operator || '-')}</td>
+        </tr>
+      `).join('');
       return;
     }
 
@@ -561,7 +648,7 @@
         <td class="px-4 py-3 text-sm text-slate-600">${formatDateTime(uc.effectiveAt)}</td>
         <td class="px-4 py-3 text-sm text-slate-600">${uc.expireAt ? formatDateTime(uc.expireAt) : '无期限'}</td>
         <td class="px-4 py-3 text-sm">
-          ${currentDetailTab === 'active'
+          ${tab === 'active'
             ? `<button onclick="window.CertificateMgmt.revokeUserCertificate('${uc.id}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 transition"><i class="fas fa-undo"></i> 撤销</button>`
             : `<span class="text-slate-300">-</span>`}
         </td>
@@ -625,7 +712,7 @@
       // 与后台设计预览共用同一套 fill 构建逻辑，保证标题/副标题等非收件人字段完全一致，
       // 仅收件人相关字段（姓名/日期/企业名称/证书编号）在此填入真实颁发数据。
       const fill = buildCertFill({
-        certName: certificate.name,
+        certName: '荣誉证书',
         subtitle: 'CERTIFICATE OF HONORS',
         content: '',
         usePlaceholders: false,
@@ -634,9 +721,9 @@
       return renderDesignPageInner(certificate.design, printScale(certificate.design.layout), fill);
     }
     const user = userCert.userName || '学员';
-    const company = userCert.userDepartment || '广州游雁网络科技有限公司';
-    const date = formatDateTime(userCert.issueAt).split(' ')[0];
-    const title = certificate.name || '荣誉证书';
+    const company = userCert.company || DEFAULT_CERT_COMPANY;
+    const date = formatCertDate(userCert.issueAt);
+    const title = '荣誉证书';
     const content = userCert.sourceType === 'exam'
       ? '通过考试考核，成绩合格，特发此证，以资鼓励。'
       : (userCert.sourceType === 'training'
@@ -725,6 +812,42 @@
     }
   }
 
+  // 首次渲染并落盘：优先返回已持久化的服务端图片 URL；
+  // 若 imageUrl 缺失则客户端渲染一次（html-to-image），上传至服务端永久保存，后续直接读图。
+  // 这样个人中心 / 消息中心每次打开只加载一次，避免大数据量时反复渲染的性能问题。
+  async function ensureUserCertificateImage(userCert) {
+    if (userCert.imageUrl) return userCert.imageUrl;
+    if (!userCert.template && !userCert.design) return null;
+    const dataUrl = await renderCertificatePng(
+      userCert,
+      { name: userCert.certificateName, design: userCert.design },
+      userCert.template
+    );
+    if (!dataUrl) return null;
+    try {
+      const uploaded = await uploadCertificateImage(userCert.id, dataUrl);
+      if (uploaded) return uploaded; // 落盘成功，返回服务端 URL
+    } catch (e) {
+      console.warn('[证书] 图片落盘失败，降级为内存图:', e);
+    }
+    return dataUrl; // 落盘失败仍展示（内存 dataUrl）
+  }
+
+  async function uploadCertificateImage(userCertId, dataUrl) {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+    const res = await fetch(`/api/user-certificates/${encodeURIComponent(userCertId)}/image`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ dataUrl })
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error('上传失败(' + res.status + '): ' + t);
+    }
+    const r = await res.json();
+    return r.data && r.data.imageUrl ? r.data.imageUrl : null;
+  }
+
   function printCertificate(userCertId) {
     apiGet('/api/user-certificates/' + userCertId).then(res => {
       if (!res.success) return showToast(res.error || '加载失败', 'error');
@@ -771,7 +894,7 @@
   const EDITOR_SAMPLE = {
     title: '荣誉证书', name: '$姓名$', certNo: '',
     date: '$颁发日期$', company: '$企业名称$',
-    content: '在本公司工作期间，认真负责，表现优秀，现授予 年度优秀员工 荣誉称号。特发此证，以示表彰。'
+    content: '\u3000\u3000在本公司工作期间，认真负责，表现优秀，现授予【年度优秀员工】荣誉称号。特发此证，以示表彰。'
   };
 
   // 传给服务端的占位 fill，让 renderDesignPageInner 输出仍保留 {{token}}，服务端再统一替换为真实数据
@@ -787,7 +910,7 @@
     title: '荣誉证书', subtitle: 'CERTIFICATE OF HONORS',
     name: '$姓名$', certNo: 'CERT0001',
     date: '$颁发日期$', company: '$企业名称$',
-    content: '在本公司工作期间，认真负责，表现优秀，现授予 年度优秀员工 荣誉称号。特发此证，以示表彰。'
+    content: '\u3000\u3000在本公司工作期间，认真负责，表现优秀，现授予【年度优秀员工】荣誉称号。特发此证，以示表彰。'
   };
 
   // 统一构建证书填充数据：确保【后台设计预览】与【前台颁发渲染】使用完全一致的非收件人字段
@@ -812,8 +935,8 @@
       subtitle: subtitle || 'CERTIFICATE OF HONORS',
       name: uc.userName || '学员',
       certNo: uc.certNo || '',
-      date: (uc.issueAt ? formatDateTime(uc.issueAt).split(' ')[0] : ''),
-      company: uc.userDepartment || '广州游雁网络科技有限公司',
+      date: (uc.issueAt ? formatCertDate(uc.issueAt) : ''),
+      company: uc.company || DEFAULT_CERT_COMPANY,
       content: content || (uc.sourceType === 'exam'
         ? '通过考试考核，成绩合格，特发此证，以资鼓励。'
         : (uc.sourceType === 'training'
@@ -1054,21 +1177,52 @@
   function renderDesignPageInner(d, scale, fill) {
     const dims = EDITOR_PAGE[d.layout];
     const pw = dims.w * scale, ph = dims.h * scale;
+    // 渲染输出必须与编辑器所见即所得保持一致，因此元素坐标直接使用设计稿坐标，
+    // 不再额外压缩/偏移。左右安全边距已由 applyTemplate 的 padX 控制，
+    // 避免横版输出比编辑预览窄导致文案换行不一致。
+    const hPad = 0;
+    const hScale = 1;
     const bc = d.borderColor;
+
+    // 横版证书：渲染时强制让企业名称、颁发日期的右边缘与正文右边缘对齐
+    // （兼容历史保存的设计，也避免 applyTemplate 之外的编辑导致错位）
+    let elements = d.elements || [];
+    if (d.layout === 'landscape') {
+      const contentEl = elements.find(e => e.type === 'text' && e.key === 'content');
+      const companyEl = elements.find(e => e.type === 'text' && e.key === 'company');
+      const dateEl = elements.find(e => e.type === 'text' && e.key === 'date');
+      if (contentEl && (companyEl || dateEl)) {
+        // 正文块有 4px 右内边距，第一行又有缩进，可见文本右边缘比块边缘靠内；
+        // 企业/日期右边缘比正文块右边缘再左移 10px（≈往右移 1mm 微调），避免渲染时贴到/超出正文文本红线。
+        const contentVisibleRight = contentEl.x + contentEl.w - 10;
+        const alignRight = (el) => ({ ...el, x: contentVisibleRight - el.w });
+        elements = elements.map(e => {
+          if (e === companyEl || e === dateEl) return alignRight(e);
+          return e;
+        });
+      }
+    }
+
     let s = `<div class="cert-design-page" style="width:${pw}px;height:${ph}px;position:relative;overflow:hidden;${bgCss(d.background)}">`;
     s += `<div style="position:absolute;inset:${6 * scale}px;border:${2 * scale}px solid ${bc};opacity:0.4;pointer-events:none;"></div>`;
     s += `<div style="position:absolute;inset:${12 * scale}px;border:1px solid ${bc};opacity:0.22;pointer-events:none;"></div>`;
-    (d.elements || []).forEach(el => {
+    elements.forEach(el => {
       const fs = el.fontSize * scale;
       const lh = el.lineHeight != null ? el.lineHeight : (el.key === 'content' ? 1.5 : 1.2);
+      const left = (hPad + el.x * hScale) * scale;
+      const top = el.y * scale;
+      const width = el.w * hScale * scale;
+      const height = el.h * scale;
       // 使用 row flex + 内部 block 正常文本流。
       // column flex 会把 <br> 与着色 <span> 拆成匿名 flex 项，导致换行/居中/重叠异常；
       // inline-block 内层会导致 text-align 在部分浏览器中不被继承，因此改用 block。
-      s += `<div class="cert-design-el" style="left:${el.x * scale}px;top:${el.y * scale}px;width:${el.w * scale}px;height:${el.h * scale}px;font-size:${fs}px;font-weight:${el.fontWeight};font-style:${el.fontStyle};color:${el.color};font-family:${mapCertFont(el.fontFamily)};letter-spacing:${el.letterSpacing || 0}px;display:flex;align-items:center;overflow:hidden;padding:${el.key === 'content' ? '0 4px' : '2px 6px'};box-sizing:border-box;"><div style="display:block;width:100%;text-align:${el.textAlign};line-height:${lh};text-decoration:${el.underline ? 'underline' : 'none'};">${renderRichText(el.text, fill)}</div></div>`;
+      s += `<div class="cert-design-el" style="left:${left}px;top:${top}px;width:${width}px;height:${height}px;font-size:${fs}px;font-weight:${el.fontWeight};font-style:${el.fontStyle};color:${el.color};font-family:${mapCertFont(el.fontFamily)};letter-spacing:${el.letterSpacing || 0}px;display:flex;align-items:center;overflow:hidden;padding:${el.key === 'content' ? '0 4px' : '2px 6px'};box-sizing:border-box;"><div style="display:block;width:100%;text-align:${el.textAlign};line-height:${lh};text-decoration:${el.underline ? 'underline' : 'none'};">${renderRichText(el.text, fill)}</div></div>`;
     });
     if (d.seal) {
       const sz = d.seal.size * scale, fs2 = Math.max(8, sz * 0.16);
-      s += `<div class="cert-design-seal" style="left:${d.seal.x * scale}px;top:${d.seal.y * scale}px;width:${sz}px;height:${sz}px;color:${d.seal.color};border:${3 * scale}px solid ${d.seal.color};font-family:${mapCertFont(d.fontFamily)};"><div style="font-size:${fs2}px;font-weight:700;line-height:1.1;">${escapeHtml(fillTokens(d.seal.text, fill))}</div></div>`;
+      const sx = (hPad + d.seal.x * hScale) * scale;
+      const sy = d.seal.y * scale;
+      s += `<div class="cert-design-seal" style="left:${sx}px;top:${sy}px;width:${sz}px;height:${sz}px;color:${d.seal.color};border:${3 * scale}px solid ${d.seal.color};font-family:${mapCertFont(d.fontFamily)};"><div style="font-size:${fs2}px;font-weight:700;line-height:1.1;">${escapeHtml(fillTokens(d.seal.text, fill))}</div></div>`;
     }
     s += '</div>';
     return s;
@@ -1169,6 +1323,12 @@
     const padX = editorState.layout === 'portrait' ? dims.w * 0.14 : dims.w * 0.10;
     const innerW = dims.w - padX * 2; // 内容区宽度
     const isLand = editorState.layout === 'landscape';
+    const landShift = isLand ? 11 : 0; // 横版正文/企业/日期整体右移量
+    const contentW = Math.round(isLand ? innerW - landShift : innerW);
+    const contentRight = padX + contentW; // 正文块右边缘
+    // 横版正文第一行有缩进，实际可见文本右边缘比块边缘稍靠内；
+    // 企业/日期右边缘对齐正文可见文本右侧，并留小间距避免贴线。
+    const landRightAlign = isLand ? contentRight - 10 : contentRight;
     editorState.elements = [
       { id: uid(), type: 'text', key: 'title',
         x: padX, y: Math.round(ty), w: Math.round(innerW), h: isLand ? 46 : 52,
@@ -1186,17 +1346,17 @@
         fontSize: 15, fontWeight: 'bold', fontStyle: 'normal', textAlign: 'left',
         color: t.textColor, underline: true, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'content',
-        x: padX, y: Math.round(cy), w: Math.round(innerW), h: isLand ? 100 : 120,
+        x: padX, y: Math.round(cy), w: contentW, h: isLand ? 100 : 120,
         text: existingTexts['content'] || '\u3000\u3000在本公司工作期间，认真负责，表现优秀，现授予【年度优秀员工】荣誉称号。特发此证，以示表彰。',
         fontSize: 15, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'left', lineHeight: isLand ? 1.5 : 2,
         color: t.textColor, underline: false, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'company',
-        x: Math.round(padX + innerW * (isLand ? 0.55 : 0.30)), y: Math.round(coy), w: Math.round(innerW * (isLand ? 0.45 : 0.70)), h: 22,
+        x: Math.round(isLand ? landRightAlign - innerW * 0.45 : padX + innerW * 0.30), y: Math.round(coy), w: Math.round(innerW * (isLand ? 0.45 : 0.70)), h: 22,
         text: existingTexts['company'] || '{{company}}',
         fontSize: isLand ? 13 : 15, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right',
         color: t.textColor, underline: false, fontFamily: t.fontFamily },
       { id: uid(), type: 'text', key: 'date',
-        x: Math.round(padX + innerW * (isLand ? 0.60 : 0.35)), y: Math.round(dy), w: Math.round(innerW * (isLand ? 0.40 : 0.65)), h: 22,
+        x: Math.round(isLand ? landRightAlign - innerW * 0.40 : padX + innerW * 0.35), y: Math.round(dy), w: Math.round(innerW * (isLand ? 0.40 : 0.65)), h: 22,
         text: existingTexts['date'] || '{{date}}',
         fontSize: isLand ? 13 : 15, fontWeight: 'normal', fontStyle: 'normal', textAlign: 'right',
         color: t.textColor, underline: false, fontFamily: t.fontFamily }
@@ -1682,7 +1842,7 @@
     $('#cert-search-btn')?.addEventListener('click', loadCertificates);
     $('#cert-search-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadCertificates(); });
     $('#cert-status-filter')?.addEventListener('change', loadCertificates);
-    $('#cert-dept-filter')?.addEventListener('change', loadCertificates);
+    $('#cert-company-filter')?.addEventListener('input', debounce(loadCertificates, 300));
     $('#cert-new-btn')?.addEventListener('click', () => openCertificateModal());
 
     // 编辑器
@@ -1788,6 +1948,7 @@
     printCertificate,
     renderCertificateHTML,
     renderCertificatePng,
+    ensureUserCertificateImage,
     ensureCertFontsReady,
     openCertificateEditor,
     closeEditor,

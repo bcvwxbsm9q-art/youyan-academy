@@ -444,7 +444,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@400;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
-    <script src="js/certificate-management.js?v=20260720c"></script>
+    <script src="js/certificate-management.js?v=20260722i"></script>
     <script>
     // 退出登录
     function handleLogout() {
@@ -800,12 +800,19 @@
                     const result = await res.json();
                     if (!result.success || !result.data) throw new Error(result.error || '证书记录不存在');
                     const uc = result.data;
-                    let dataUrl = uc.imageUrl || null;
-                    let isServerUrl = !!dataUrl;
-                    if (!dataUrl) {
-                        if (!uc.template && !uc.design) throw new Error('证书模板不存在');
-                        dataUrl = await generateCertificateImage(uc);
+                    let dataUrl = null;
+                    let isServerUrl = false;
+                    if (window.CertificateMgmt && window.CertificateMgmt.ensureUserCertificateImage) {
+                        // 优先读盘；缺失则客户端渲染一次并落盘（只渲染一次），后续打开直接读图
+                        dataUrl = await window.CertificateMgmt.ensureUserCertificateImage(uc);
+                    } else {
+                        dataUrl = uc.imageUrl || null;
+                        if (!dataUrl) {
+                            if (!uc.template && !uc.design) throw new Error('证书模板不存在');
+                            dataUrl = await generateCertificateImage(uc);
+                        }
                     }
+                    isServerUrl = !!dataUrl && dataUrl.startsWith('/uploads/');
                     certImageCache[msg.userCertificateId] = { dataUrl, certNo: uc.certNo || '', isServerUrl };
                     renderCertificatePreview(dataUrl, uc.certNo || '', msg.content || '', isServerUrl);
                 } catch (e) {
