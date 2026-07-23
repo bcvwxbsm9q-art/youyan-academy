@@ -260,7 +260,14 @@ function collectQuestionFiles(question) {
       }
     });
   }
-  return urls;
+  // 兜底：递归扫描题目所有字段（含题干/解析富文本里内嵌的 /uploads/ 图片），避免遗漏
+  try {
+    const blob = JSON.stringify(question);
+    const re = /\/uploads\/[^"'\s)\\]+/g;
+    let m;
+    while ((m = re.exec(blob)) !== null) urls.push(m[0]);
+  } catch (e) {}
+  return [...new Set(urls)].filter(u => typeof u === 'string' && u.startsWith('/uploads/'));
 }
 
 /**
@@ -2019,8 +2026,20 @@ app.put('/api/courses/:id', (req, res) => {
   const data = readData();
   const index = data.management_courses?.findIndex(c => c.id === id);
   if (index !== -1) {
+    const oldCourse = data.management_courses[index];
     updates.updatedAt = new Date().toLocaleString('zh-CN');
-    data.management_courses[index] = { ...data.management_courses[index], ...updates };
+    // 编辑时若移除了视频/附件，删除对应物理文件，避免项目里残留孤儿文件
+    if (updates.videos !== undefined) {
+      const oldUrls = collectFilesFromEntity(oldCourse, ['videos']);
+      const newUrls = collectFilesFromEntity({ videos: updates.videos }, ['videos']);
+      oldUrls.filter(u => !newUrls.includes(u)).forEach(u => tryDeleteUploadFile(u, `course:${id}:video-removed`));
+    }
+    if (updates.attachments !== undefined) {
+      const oldUrls = collectFilesFromEntity(oldCourse, ['attachments']);
+      const newUrls = collectFilesFromEntity({ attachments: updates.attachments }, ['attachments']);
+      oldUrls.filter(u => !newUrls.includes(u)).forEach(u => tryDeleteUploadFile(u, `course:${id}:attach-removed`));
+    }
+    data.management_courses[index] = { ...oldCourse, ...updates };
     if (writeData(data)) {
       res.json({ success: true, course: data.management_courses[index] });
     } else {
@@ -2104,6 +2123,241 @@ app.delete('/api/courses/:id', (req, res) => {
   } else {
     res.status(500).json({ success: false, error: '删除失败' });
   }
+});
+
+// ============================================================
+// 互动视频 API（制作互动视频 / 学员作答 / 数据统计）
+// ============================================================
+
+// 校验课程与节点是否存在，返回 { data, course, video, videoIndex, node }
+function resolveInteractionNode(courseId, videoIndex, nodeId) {
+  const data = readData();
+  const course = (data.management_courses || []).find(c => c.id === parseInt(courseId));
+  if (!course) return { error: '课程不存在' };
+  const video = (course.videos || [])[parseInt(videoIndex)];
+  if (!video) return { error: '视频不存在' };
+  const node = (video.interactionNodes || []).find(n => String(n.id) === String(nodeId));
+  if (!node) return { error: '互动节点不存在' };
+  return { data, course, video, videoIndex: parseInt(videoIndex), node };
+}
+
+// 通用答案判分（参考 /api/exams/:id/question-stats 的对比逻辑）
+function judgeInteractionAnswer(question, userAnswer) {
+  if (!question) return { isCorrect: false, score: 0 };
+  const type = question.type || 'single';
+  const correct = Array.isArray(question.answer) ? question.answer : [question.answer];
+  // 规范化用户作答为数组
+  let ua;
+  if (Array.isArray(userAnswer)) ua = userAnswer;
+  else if (userAnswer === '' || userAnswer === null || userAnswer === undefined) ua = [];
+  else ua = [userAnswer];
+  ua = ua.map(v => String(v).trim());
+
+  if (type === 'multiple') {
+    const caSorted = correct.map(v => String(v).trim()).sort().join(',');
+    const uaSorted = ua.slice().sort().join(',');
+    const isCorrect = uaSorted === caSorted && uaSorted !== '';
+    return { isCorrect, score: isCorrect ? 1 : 0 };
+  }
+  if (type === 'judge') {
+    const userBool = ua.length ? normalizeJudgeAnswer(ua[0]) : null;
+    const correctBool = normalizeJudgeAnswer(correct[0]);
+    const isCorrect = userBool !== null && userBool === correctBool;
+    return { isCorrect, score: isCorrect ? 1 : 0 };
+  }
+  if (type === 'fill') {
+    // 填空：答案可能多个，任一匹配（归一化后）即算对
+    const isCorrect = ua.length > 0 && ua.every(u =>
+      correct.map(v => String(v).trim().toLowerCase()).includes(u.toLowerCase())
+    );
+    return { isCorrect, score: isCorrect ? 1 : 0 };
+  }
+  // single / essay：单选严格相等；简答仅记录不判（按配置 score）
+  if (type === 'essay') {
+    const isCorrect = ua.length > 0; // 简答：有作答即视为已提交，不直接判对错
+    return { isCorrect, score: isCorrect ? 1 : 0 };
+  }
+  const isCorrect = ua.length > 0 && ua[0] === String(correct[0]).trim();
+  return { isCorrect, score: isCorrect ? 1 : 0 };
+}
+
+// POST /api/courses/:id/videos/:vid/nodes/:nodeId/answer - 学员作答上报
+app.post('/api/courses/:id/videos/:vid/nodes/:nodeId/answer', (req, res) => {
+  const { id, vid, nodeId } = req.params;
+  const { userId, userName, department, userAnswer, timeSpentSec } = req.body || {};
+  const resolved = resolveInteractionNode(id, vid, nodeId);
+  if (resolved.error) return res.status(404).json({ success: false, error: resolved.error });
+  const { data, course, video, videoIndex, node } = resolved;
+
+  if (!data.course_interaction_answers) data.course_interaction_answers = [];
+  const users = data.registered_users || [];
+  const user = userId ? users.find(u => String(u.id) === String(userId)) : null;
+
+  let isCorrect = null;
+  let score = null;
+  let questionId = null;
+  let answerRecord = { questionId: null };
+
+  if (node.type === 'question') {
+    const ref = (node.questionRefs || [])[0];
+    questionId = ref ? ref.questionId : null;
+    answerRecord.questionId = questionId;
+    if (ref && questionId != null) {
+      const q = (data.questions || []).find(qq => String(qq.id) === String(questionId));
+      const verdict = judgeInteractionAnswer(q, userAnswer);
+      isCorrect = verdict.isCorrect;
+      score = isCorrect ? (ref.score || q.score || 0) : 0;
+    }
+  } else if (node.type === 'survey') {
+    // 问卷：userAnswer 为 {questionId: answer} 对象
+    answerRecord.questionId = (node.questionRefs || [])[0]?.questionId || null;
+  } else if (node.type === 'knowledge') {
+    answerRecord.questionId = null;
+  }
+
+  const record = {
+    id: Date.now(),
+    courseId: parseInt(id),
+    videoIndex,
+    videoTitle: video.title || '',
+    nodeId: String(nodeId),
+    nodeType: node.type,
+    nodeTime: node.time,
+    questionId,
+    userId: userId || null,
+    userName: userName || (user ? (user.realName || user.username) : '匿名用户'),
+    department: department || (user ? (user.department || '') : ''),
+    userAnswer: node.type === 'survey' ? (userAnswer || {}) : (userAnswer ?? null),
+    isCorrect,
+    score,
+    timeSpentSec: timeSpentSec != null ? Number(timeSpentSec) : null,
+    answeredAt: new Date().toISOString()
+  };
+  data.course_interaction_answers.push(record);
+  if (writeData(data)) {
+    res.json({
+      success: true,
+      isCorrect,
+      score,
+      nodeId: String(nodeId),
+      record
+    });
+  } else {
+    res.status(500).json({ success: false, error: '提交失败' });
+  }
+});
+
+// GET /api/courses/:id/interaction-stats - 互动视频作答统计（明细 + 聚合）
+app.get('/api/courses/:id/interaction-stats', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const course = (data.management_courses || []).find(c => c.id === id);
+  if (!course) return res.status(404).json({ success: false, error: '课程不存在' });
+  const answers = (data.course_interaction_answers || []).filter(a => a.courseId === id);
+
+  // 明细
+  const detail = answers.map(a => ({
+    id: a.id,
+    学员: a.userName || '匿名用户',
+    部门: a.department || '',
+    课程: course.title || '',
+    视频: a.videoTitle || '',
+    节点序号: a.nodeId,
+    节点类型: a.nodeType === 'question' ? '试题' : (a.nodeType === 'survey' ? '问卷' : '知识点'),
+    题目: a.nodeType === 'knowledge' ? '(知识点)' : '',
+    作答: a.nodeType === 'survey'
+      ? JSON.stringify(a.userAnswer || {})
+      : (a.userAnswer != null ? String(a.userAnswer) : ''),
+    对错: a.isCorrect === true ? '正确' : (a.isCorrect === false ? '错误' : '-'),
+    得分: a.score != null ? a.score : '-',
+    耗时秒: a.timeSpentSec != null ? a.timeSpentSec : '-',
+    时间: a.answeredAt
+  }));
+
+  // 聚合：每节点
+  const perNodeMap = {};
+  const perQuestionMap = {};
+  let totalAttempts = answers.length;
+  answers.forEach(a => {
+    const nKey = a.nodeId;
+    if (!perNodeMap[nKey]) perNodeMap[nKey] = { nodeId: nKey, type: a.nodeType, total: 0, correct: 0, scoreSum: 0, scoreMax: 0 };
+    perNodeMap[nKey].total++;
+    if (a.nodeType === 'question') {
+      if (a.isCorrect === true) { perNodeMap[nKey].correct++; perNodeMap[nKey].scoreSum += (a.score || 0); }
+      if ((a.score || 0) > perNodeMap[nKey].scoreMax) perNodeMap[nKey].scoreMax = (a.score || 0);
+    }
+    if (a.questionId != null && a.nodeType === 'question') {
+      const qKey = String(a.questionId);
+      if (!perQuestionMap[qKey]) {
+        const q = (data.questions || []).find(qq => String(qq.id) === qKey);
+        perQuestionMap[qKey] = { questionId: qKey, title: q ? (q.title || q.content || '(无标题)') : '(未知题目)', total: 0, correct: 0 };
+      }
+      perQuestionMap[qKey].total++;
+      if (a.isCorrect === true) perQuestionMap[qKey].correct++;
+    }
+  });
+  const perNode = Object.values(perNodeMap).map(n => ({
+    节点序号: n.nodeId,
+    类型: n.type === 'question' ? '试题' : (n.type === 'survey' ? '问卷' : '知识点'),
+    总作答数: n.total,
+    正确数: n.type === 'question' ? n.correct : '-',
+    正确率: n.type === 'question' ? (n.total > 0 ? Math.round(n.correct / n.total * 100) : 0) : '-',
+    最高得分: n.type === 'question' ? n.scoreMax : '-'
+  }));
+  const perQuestion = Object.values(perQuestionMap).map(q => ({
+    题目: q.title,
+    总作答数: q.total,
+    正确数: q.correct,
+    正确率: q.total > 0 ? Math.round(q.correct / q.total * 100) : 0
+  }));
+
+  // 完成率：有作答记录的学员数 / 选课学员数（粗略：已学学员）
+  const learnerKeys = Object.keys(data).filter(k => k.startsWith('user_learning_'));
+  let learnerCount = 0;
+  learnerKeys.forEach(k => {
+    const rec = data[k];
+    if (rec && rec.completedCourses && rec.completedCourses.includes(id)) learnerCount++;
+  });
+  const answerers = new Set(answers.map(a => a.userId)).size;
+  const completion = learnerCount > 0 ? Math.round(answerers / learnerCount * 100) : 0;
+
+  res.json({
+    success: true,
+    detail,
+    aggregate: {
+      perNode,
+      perQuestion,
+      completion,
+      totalAttempts,
+      answererCount: answerers
+    }
+  });
+});
+
+// GET /api/courses/:id/interaction-answers - 仅明细（供统计弹窗表格按需拉取）
+app.get('/api/courses/:id/interaction-answers', (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const course = (data.management_courses || []).find(c => c.id === id);
+  if (!course) return res.status(404).json({ success: false, error: '课程不存在' });
+  const answers = (data.course_interaction_answers || [])
+    .filter(a => a.courseId === id)
+    .map(a => ({
+      id: a.id,
+      学员: a.userName || '匿名用户',
+      部门: a.department || '',
+      课程: course.title || '',
+      视频: a.videoTitle || '',
+      节点序号: a.nodeId,
+      节点类型: a.nodeType === 'question' ? '试题' : (a.nodeType === 'survey' ? '问卷' : '知识点'),
+      题目: a.nodeType === 'knowledge' ? '(知识点)' : '',
+      作答: a.nodeType === 'survey' ? JSON.stringify(a.userAnswer || {}) : (a.userAnswer != null ? String(a.userAnswer) : ''),
+      对错: a.isCorrect === true ? '正确' : (a.isCorrect === false ? '错误' : '-'),
+      得分: a.score != null ? a.score : '-',
+      耗时秒: a.timeSpentSec != null ? a.timeSpentSec : '-',
+      时间: a.answeredAt
+    }));
+  res.json({ success: true, answers });
 });
 
 // ============================================================
@@ -5638,6 +5892,9 @@ app.get('/api/questions', (req, res) => {
     pageSize: limit
   });
 });
+
+// 注：GET /api/questions/:id 由 routes/question-routes.js 提供（返回 { success:true, data: 题目 }），
+// 互动视频播放器按 { success, data } 信封解析即可，无需在此重复定义。
 
 // ============================================================
 // 数据统计 API

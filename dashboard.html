@@ -2701,6 +2701,8 @@
 
   <!-- 模态框容器 -->
   <div id="modal-container" class="hidden"></div>
+  <!-- 互动视频编辑器：内嵌式全屏编辑视图（替代遮罩弹窗） -->
+  <div id="ivAppView" class="hidden fixed inset-0 z-[60] bg-slate-900 overflow-hidden"></div>
 
   <!-- Toast 提示 -->
   <div id="toast" class="fixed bottom-6 right-6 px-6 py-3 rounded-xl shadow-lg z-50 hidden transform transition-all duration-300 translate-y-4 opacity-0">
@@ -3307,7 +3309,7 @@
   </div>
 
   <!-- ========== 题目选择器弹窗 ========== -->
-  <div id="questionPickerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] items-center justify-center hidden">
+  <div id="questionPickerModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] items-center justify-center hidden">
     <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden m-4 flex flex-col shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
         <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-check-square mr-2 text-indigo-500"></i>从题库选择题目</h3>
@@ -3315,6 +3317,9 @@
       </div>
       <!-- 筛选栏 -->
       <div class="px-6 py-3 border-b border-slate-100 bg-slate-50 flex-shrink-0 flex gap-3 flex-wrap">
+        <select id="qpBankFilter" onchange="loadQuestionPool()" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none min-w-[160px]">
+          <option value="">全部题库</option>
+        </select>
         <select id="qpTypeFilter" onchange="loadQuestionPool()" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
           <option value="all">全部题型</option>
           <option value="single">单选题</option>
@@ -3339,13 +3344,14 @@
             <tr class="text-left text-xs text-slate-500 uppercase border-b border-slate-200">
               <th class="py-2 w-10"><input type="checkbox" id="qpSelectAll" onchange="toggleQpSelectAll()"></th>
               <th class="py-2">题目内容</th>
+              <th class="py-2 w-28">题库</th>
               <th class="py-2 w-20">题型</th>
               <th class="py-2 w-16">难度</th>
               <th class="py-2 w-14">分值</th>
             </tr>
           </thead>
           <tbody id="questionPoolBody" class="divide-y divide-slate-100 text-sm">
-            <tr><td colspan="5" class="py-8 text-center text-slate-400">请先选择分类筛选题目</td></tr>
+            <tr><td colspan="6" class="py-8 text-center text-slate-400">请先选择分类筛选题目</td></tr>
           </tbody>
         </table>
       </div>
@@ -3621,12 +3627,13 @@
             <tr class="text-left text-xs text-slate-500 uppercase border-b border-slate-200">
               <th class="py-2 w-10"><input type="checkbox" id="paperQpSelectAll" onchange="togglePaperQpSelectAll()"></th>
               <th class="py-2">题目内容</th>
+              <th class="py-2 w-28">题库</th>
               <th class="py-2 w-20">题型</th>
               <th class="py-2 w-16">难度</th>
             </tr>
           </thead>
           <tbody id="paperQuestionPoolBody" class="divide-y divide-slate-100 text-sm">
-            <tr><td colspan="4" class="py-8 text-center text-slate-400">请先选择分类筛选题目</td></tr>
+            <tr><td colspan="5" class="py-8 text-center text-slate-400">请先选择分类筛选题目</td></tr>
           </tbody>
         </table>
       </div>
@@ -4050,9 +4057,27 @@
     let pendingCourseFiles = [];      // 元素: { url, type: 'cover'|'video'|'attachment' }
     let pendingLecturerAvatar = [];   // 讲师头像
     let pendingTrainingCourseware = []; // 培训课件
+    // 编辑公告时记录原始正文里的图片 URL，保存后若被删除则清理磁盘文件（避免孤儿文件）
+    let originalNoticeImages = [];
+
     // 编辑时记录原始封面/头像路径，保存新图后清理旧文件（避免孤儿文件）
     let originalCourseCover = '';
     let originalLecturerAvatar = '';
+
+    // 从富文本 HTML 中提取所有图片 URL（兼容带查询参数的情况）
+    function extractImageUrls(html) {
+      if (!html || typeof html !== 'string') return [];
+      const urls = [];
+      const re = /<img[^>]+src=["']([^"']+)["']/gi;
+      let m;
+      while ((m = re.exec(html)) !== null) {
+        // 归一化：去掉查询字符串，统一以 /uploads/ 开头用于后续比对
+        let u = m[1];
+        try { u = new URL(u, location.origin).pathname; } catch (e) { /* 相对路径容错 */ }
+        if (u) urls.push(u);
+      }
+      return [...new Set(urls)];
+    }
 
     // 当前弹窗类型，用于点击遮罩层时路由到对应的关闭清理函数
     let currentModalType = null;
@@ -4970,6 +4995,12 @@
                 <button onclick="editCourse(${c.id})" class="p-1.5 text-blue-500 hover:bg-blue-50 rounded-md transition" title="编辑">
                   <i class="fas fa-edit text-sm"></i>
                 </button>
+                <button onclick="openInteractionEditor(${c.id})" class="p-1.5 text-purple-600 hover:bg-purple-50 rounded-md transition" title="制作互动视频">
+                  <i class="fas fa-film text-sm"></i>
+                </button>
+                <button onclick="openInteractionStats(${c.id})" class="p-1.5 text-indigo-500 hover:bg-indigo-50 rounded-md transition" title="互动数据">
+                  <i class="fas fa-chart-bar text-sm"></i>
+                </button>
                 <button onclick="toggleCourseStatus(${c.id})" class="p-1.5 ${c.status === 'published' ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'} rounded-md transition" title="${c.status === 'published' ? '下架' : '发布'}">
                   <i class="fas ${c.status === 'published' ? 'fa-arrow-down' : 'fa-arrow-up'} text-sm"></i>
                 </button>
@@ -5167,7 +5198,12 @@
 
             <!-- 视频上传 -->
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-2">课程视频</label>
+              <div class="flex items-center justify-between mb-2">
+                <label class="block text-sm font-medium text-slate-700">课程视频</label>
+                <button type="button" onclick="openInteractionEditor(${course?.id || 'null'})" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition" title="为已上传的视频制作互动节点">
+                  <i class="fas fa-film mr-1.5"></i>制作互动视频
+                </button>
+              </div>
               <div id="video-upload-area" class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-indigo-400 transition cursor-pointer" onclick="document.getElementById('c-video-file').click()">
                 <i class="fas fa-video text-slate-400 text-2xl mb-2"></i>
                 <p class="text-sm text-slate-500">点击或拖拽上传视频</p>
@@ -12743,6 +12779,10 @@
       const isEdit = !!notice;
       const content = notice?.content || '';
 
+      // 重置本次会话的上传追踪，并捕获编辑前的原始图片集合（用于保存时清理被删的孤儿文件）
+      pendingNoticeImages = [];
+      originalNoticeImages = extractImageUrls(content);
+
       showModal(`
         <div class="modal bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
           <!-- 头部 - 固定 -->
@@ -12892,10 +12932,18 @@
           });
         }
         if (res.ok) {
-          // 清理已插入又从正文删除的临时图片（含替换场景）：仅保留 content 中仍引用的
-          const orphaned = pendingNoticeImages.filter(u => !content.includes(u));
-          orphaned.forEach(url => deleteUploadFileByUrl(url));
+          // 以正文最终引用为准，清理两类孤儿图片：
+          // 1) 本次会话上传但正文已删除的临时图
+          // 2) 编辑前已存在、本次被删除的旧图（避免磁盘残留）
+          const norm = (u) => { try { return new URL(u, location.origin).pathname; } catch (e) { return u; } };
+          const finalImages = extractImageUrls(content); // 已归一化为 pathname
+          const orphaned = [
+            ...pendingNoticeImages.map(norm).filter(u => !finalImages.includes(u)),
+            ...originalNoticeImages.map(norm).filter(u => !finalImages.includes(u))
+          ];
+          await Promise.all([...new Set(orphaned)].map(u => deleteUploadFileByUrl(u)));
           pendingNoticeImages = [];
+          originalNoticeImages = [];
           toast(id ? '公告已更新' : '公告已发布');
           closeModal();
           await loadAllData();
@@ -12917,6 +12965,7 @@
     function closeNoticeModal() {
       pendingNoticeImages.forEach(url => deleteUploadFileByUrl(url));
       pendingNoticeImages = [];
+      originalNoticeImages = [];
       closeModal();
     }
 
@@ -17896,12 +17945,14 @@
       loadPaperQuestionPool();
     }
 
+    let paperQpBanks = []; // 缓存题库列表，供表格显示题库名称
     async function loadBankFilterOptions() {
       const sel = document.getElementById('paperQpBankFilter');
       try {
         const res = await fetch('/api/question-banks');
         const result = await res.json();
         const banks = result.data || [];
+        paperQpBanks = banks;
         sel.innerHTML = '<option value="">全部题库</option>' + 
           banks.map(b => `<option value="${b.id}">${escHtml(b.name)}${b.questionCount ? ' (' + b.questionCount + '题)' : ''}</option>`).join('');
       } catch (e) {
@@ -17918,7 +17969,7 @@
 
     async function loadPaperQuestionPool() {
       const tbody = document.getElementById('paperQuestionPoolBody');
-      tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-slate-400">加载中...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">加载中...</td></tr>';
       
       const bankFilter = document.getElementById('paperQpBankFilter').value;
       const typeFilter = document.getElementById('paperQpTypeFilter').value;
@@ -17946,13 +17997,17 @@
         });
         
         if (!paperQpAllQuestions.length) {
-          tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-slate-400">暂无符合条件的题目</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">暂无符合条件的题目</td></tr>';
           return;
         }
         
         const typeNames = { single: '单选', multiple: '多选', judge: '判断', fill: '填空', essay: '问答' };
-        
-        tbody.innerHTML = paperQpAllQuestions.map(q => `
+        const bankById = id => (paperQpBanks || []).find(b => String(b.id) === String(id));
+
+        tbody.innerHTML = paperQpAllQuestions.map(q => {
+          const bank = bankById(q.bankId);
+          const bankName = bank ? bank.name : (q.bankId ? '未知题库' : '未分类');
+          return `
           <tr class="hover:bg-slate-50">
             <td class="py-3">
               <input type="checkbox" value="${q.id}" onchange="togglePaperQpSelection('${q.id}')" 
@@ -17960,6 +18015,9 @@
             </td>
             <td class="py-3">
               <div class="text-sm text-slate-700 line-clamp-2">${escHtml(q.title || q.content || '(无标题)')}</div>
+            </td>
+            <td class="py-3">
+              <span class="px-2 py-0.5 text-xs rounded bg-indigo-50 text-indigo-600 truncate max-w-[120px] inline-block" title="${escHtml(bankName)}">${escHtml(bankName)}</span>
             </td>
             <td class="py-3 text-center">
               <span class="px-2 py-0.5 text-xs rounded bg-slate-100 text-slate-600">${typeNames[q.type] || q.type}</span>
@@ -17970,11 +18028,11 @@
               </span>
             </td>
           </tr>
-        `).join('');
+        `}).join('');
         
         updatePaperQpCheckedCount();
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-red-500">加载失败</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-red-500">加载失败</td></tr>';
       }
     }
 
@@ -18245,17 +18303,35 @@
     // ========== 题目选择器 ==========
     let qpAllQuestions = [];
 
+    let qpBanks = []; // 缓存题库列表，供考试选题表格显示题库名称
     function openQuestionPicker() {
       document.getElementById('qpSearch').value = '';
       document.getElementById('qpTypeFilter').value = 'all';
       document.getElementById('qpDiffFilter').value = '';
+      document.getElementById('qpBankFilter').value = '';
       const modal = document.getElementById('questionPickerModal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
+      loadQpBankFilterOptions();
       loadQuestionPool();
     }
 
+    async function loadQpBankFilterOptions() {
+      const sel = document.getElementById('qpBankFilter');
+      try {
+        const res = await fetch('/api/question-banks');
+        const result = await res.json();
+        const banks = result.data || [];
+        qpBanks = banks;
+        sel.innerHTML = '<option value="">全部题库</option>' +
+          banks.map(b => `<option value="${b.id}">${escHtml(b.name)}${b.questionCount ? ' (' + b.questionCount + '题)' : ''}</option>`).join('');
+      } catch (e) {
+        console.warn('加载题库列表失败:', e);
+      }
+    }
+
     function closeQuestionPicker() {
+      ivPickerTarget = null; // 关闭选择器时清理互动视频状态，避免影响考试/试卷选题
       const modal = document.getElementById('questionPickerModal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
@@ -18263,12 +18339,14 @@
 
     async function loadQuestionPool() {
       const tbody = document.getElementById('questionPoolBody');
-      tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">加载中...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-400">加载中...</td></tr>';
       try {
         const params = new URLSearchParams({ pageSize: 200 });
+        const bankFilter = document.getElementById('qpBankFilter').value;
         const typeFilter = document.getElementById('qpTypeFilter').value;
         const diffFilter = document.getElementById('qpDiffFilter').value;
         const search = document.getElementById('qpSearch').value.trim();
+        if (bankFilter) params.set('bankId', bankFilter);
         if (typeFilter && typeFilter !== 'all') params.set('type', typeFilter);
         if (diffFilter && diffFilter !== 'all') params.set('difficulty', diffFilter);
         if (search) params.set('keyword', search);
@@ -18279,21 +18357,26 @@
         qpAllQuestions = questions;
         updateQpCheckState();
         if (!questions.length) {
-          tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">没有符合条件的题目</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-400">没有符合条件的题目</td></tr>';
           return;
         }
         const typeName = t => ({ single:'单选题', multiple:'多选题', judge:'判断题', fill:'填空题', essay:'问答题' })[t] || t;
         const diffName = d => ({ easy:'简单', medium:'中等', hard:'困难' })[d] || d;
-        tbody.innerHTML = questions.map((q, i) => `
+        const bankById = id => (qpBanks || []).find(b => String(b.id) === String(id));
+        tbody.innerHTML = questions.map((q, i) => {
+          const bank = bankById(q.bankId);
+          const bankName = bank ? bank.name : (q.bankId ? '未知题库' : '未分类');
+          return `
           <tr class="hover:bg-slate-50 transition">
             <td class="py-2"><input type="checkbox" class="qp-cb" data-idx="${i}" onchange="updateQpCheckedCount()" ${isQpSelected(q.id) ? 'checked disabled' : ''}></td>
             <td class="py-2 pr-4"><span class="line-clamp-2">${escHtml(q.title || q.content || '')}</span></td>
+            <td class="py-2"><span class="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-xs truncate max-w-[120px] inline-block" title="${escHtml(bankName)}">${escHtml(bankName)}</span></td>
             <td class="py-2"><span class="px-1.5 py-0.5 bg-slate-100 rounded text-xs">${typeName(q.type)}</span></td>
             <td class="py-2"><span class="px-1.5 py-0.5 rounded text-xs ${q.difficulty==='hard'?'bg-red-100 text-red-600':q.difficulty==='easy'?'bg-green-100 text-green-600':'bg-yellow-100 text-yellow-700'}">${diffName(q.difficulty)}</span></td>
             <td class="py-2"><input type="number" value="${getQpScore(q.id)}" min="1" max="100" class="w-12 px-1 border border-slate-200 rounded text-center text-xs qp-score" data-qid="${q.id}" ${!isQpSelected(q.id)?'disabled':''}></td>
-          </tr>`).join('');
+          </tr>`}).join('');
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-red-500">加载失败</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-red-500">加载失败</td></tr>';
       }
     }
 
@@ -18326,42 +18409,1174 @@
     }
 
     function confirmQuestionPick() {
-      const checkedCbs = document.querySelectorAll('.qp-cb:checked');
-      if (!checkedCbs.length) { toast('请先勾选要添加的题目', 'warning'); return; }
-      const isPaperEditor = editorMode === 'paper' || (document.getElementById('unifiedEditorContainer') && document.getElementById('unifiedEditorContainer').style.display !== 'none');
+      try {
+        const checkedCbs = document.querySelectorAll('.qp-cb:checked');
+        if (!checkedCbs.length) { toast('请先勾选要添加的题目', 'warning'); return; }
+        // 互动视频模式：只有 ivState 仍存在时才落入互动节点，避免状态残留污染考试/试卷
+        if (ivPickerTarget && ivState) {
+          ivHandlePickedQuestions(checkedCbs);
+          closeQuestionPicker();
+          return;
+        }
+        const isPaperEditor = editorMode === 'paper' || (document.getElementById('unifiedEditorContainer') && document.getElementById('unifiedEditorContainer').style.display !== 'none');
+        checkedCbs.forEach(cb => {
+          const idx = parseInt(cb.dataset.idx);
+          const q = qpAllQuestions[idx];
+          if (q) {
+            const scoreInput = document.querySelector(`.qp-score[data-qid="${q.id}"]`);
+            const score = scoreInput ? parseInt(scoreInput.value) || 5 : 5;
+            const qObj = {
+              questionId: q.id,
+              score: score,
+              partialScore: q.type === 'multiple' ? 0 : undefined,
+              content: q.title || q.content,
+              type: q.type || 'single'
+            };
+            if (isPaperEditor) {
+              if (!paperQuestions.some(pq => pq.questionId === q.id)) {
+                qObj.order = paperQuestions.length;
+                paperQuestions.push(qObj);
+              }
+            } else {
+              if (!selectedExamQuestions.some(eq => eq.questionId === q.id)) {
+                qObj.order = selectedExamQuestions.length;
+                selectedExamQuestions.push(qObj);
+              }
+            }
+          }
+        });
+        if (isPaperEditor) {
+          if (editorMode) { renderUnifiedEditor(); } else { renderPaperQuestions(); }
+        } else {
+          renderSelectedQuestions();
+        }
+        closeQuestionPicker();
+        toast(`已添加 ${checkedCbs.length} 道题目`);
+      } catch (err) {
+        console.error('confirmQuestionPick error:', err);
+        toast('添加题目失败：' + (err && err.message ? err.message : '未知错误'), 'error');
+      }
+    }
+
+    // ========== 互动视频编辑器（制作互动视频） ==========
+    const IV_MAX_NODES = 20;
+    let ivState = null;            // { courseId, course, videos:[...], currentVideoIndex }
+    let ivPickerTarget = null;     // { videoIndex, nodeType, time }
+    let ivPreviewCurrentQuestion = null; // 预览模式当前试题详情（用于渲染对错与解析）
+    let ivInsertTime = 0;          // 当前插入位置（秒）
+    let ivSelectedNodeId = null;   // 当前选中的节点 id
+    let ivPreviewMode = false;
+    let ivPreviewFired = new Set();
+    let ivPreviewWatchdog = null;   // 预览模式节点触发看门狗定时器
+
+    function fmtIvTime(sec) {
+      sec = Math.max(0, Math.floor(sec || 0));
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+    }
+    function ivCurrentVideo() { return ivState ? ivState.videos[ivState.currentVideoIndex] : null; }
+    function ivSecToPct(t, dur) { return dur ? Math.min(100, Math.max(0, (t / dur) * 100)) : 0; }
+
+    function openInteractionEditor(courseId) {
+      courseId = parseInt(courseId);
+      if (!courseId || isNaN(courseId)) { toast('请先从课程列表进入', 'warning'); return; }
+      Promise.all([
+        fetch('/api/courses').then(r => r.json()),
+        fetch('/api/questions?pageSize=100000').then(r => r.json()).catch(() => null)
+      ]).then(([courses, qres]) => {
+        const course = (courses || []).find(c => c.id === courseId);
+        if (!course) { toast('未找到课程', 'error'); return; }
+        const videos = JSON.parse(JSON.stringify(course.videos || []));
+        videos.forEach(v => { if (!Array.isArray(v.interactionNodes)) v.interactionNodes = []; });
+        // 恢复草稿
+        const draftKey = 'ivideo_draft_' + courseId;
+        let draft = null;
+        try { draft = JSON.parse(localStorage.getItem(draftKey) || 'null'); } catch (e) {}
+        if (draft && Array.isArray(draft.videos)) {
+          draft.videos.forEach((dv, i) => {
+            if (videos[i] && Array.isArray(dv.interactionNodes)) videos[i].interactionNodes = dv.interactionNodes;
+          });
+        }
+        // 清理失效节点：引用的试题已被删除（避免编辑器里仍显示已删的题）
+        const qArr = (qres && Array.isArray(qres.data)) ? qres.data : (Array.isArray(qres) ? qres : null);
+        const questionsLoaded = qArr !== null;
+        const validIds = new Set((qArr || []).map(q => Number(q.id)));
+        let pruned = 0;
+        if (questionsLoaded) {
+          videos.forEach(v => {
+            if (!Array.isArray(v.interactionNodes)) return;
+            const before = v.interactionNodes.length;
+            v.interactionNodes = v.interactionNodes.filter(node => {
+              if (!node) return false;
+              const refs = Array.isArray(node.questionRefs)
+                ? node.questionRefs
+                : (node.questionId !== undefined && node.questionId !== null ? [{ questionId: node.questionId }] : null);
+              // 非题/问卷节点（如知识点）保留
+              if (!refs && node.type !== 'question' && node.type !== 'survey') return true;
+              // 题库未能成功加载时保守保留，避免误删
+              if (!questionsLoaded) return true;
+              // 题库已空 → 所有题/问卷节点均失效
+              if (validIds.size === 0) return false;
+              const remaining = refs ? refs.filter(r => !(r && validIds.has(Number(r.questionId)))) : [];
+              if (Array.isArray(node.questionRefs)) node.questionRefs = remaining;
+              return remaining.length > 0;
+            });
+            pruned += before - v.interactionNodes.length;
+          });
+        }
+        ivState = { courseId, course, videos, currentVideoIndex: 0 };
+        ivInsertTime = 0; ivSelectedNodeId = null; ivPreviewMode = false; ivPreviewFired.clear();
+        const view = document.getElementById('ivAppView');
+        if (view) view.classList.remove('hidden');
+        renderInteractionEditor();
+        // 若有失效节点被清理，自动回写课程数据，使清理持久化
+        if (pruned > 0) {
+          const payload = { videos: ivState.videos, updatedAt: new Date().toLocaleString('zh-CN') };
+          fetch('/api/courses/' + ivState.courseId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).then(r => r.json()).then(res => {
+            if (res.success) {
+              localStorage.removeItem('ivideo_draft_' + ivState.courseId);
+              toast(`已自动清理 ${pruned} 个失效节点（引用的试题已删除）`, 'success');
+            }
+          }).catch(() => {});
+        }
+      })
+      .catch(() => toast('加载课程失败', 'error'));
+    }
+
+    function ivSelectVideo(i) {
+      if (!ivState) return;
+      ivState.currentVideoIndex = i;
+      ivInsertTime = 0; ivSelectedNodeId = null; ivPreviewFired.clear();
+      ivStopPreview();
+      renderInteractionEditor();
+    }
+
+    function ivTrackClick(e) {
+      const track = e.currentTarget;
+      const rect = track.getBoundingClientRect();
+      const frac = (e.clientX - rect.left) / rect.width;
+      const v = ivCurrentVideo();
+      const dur = v ? (v.duration || 0) : 0;
+      const t = Math.max(0, Math.min(dur, frac * dur));
+      // 预览模式：点击轨道仅跳转，不自动弹题（试题由 timeupdate 自然触发）
+      if (ivPreviewMode) {
+        ivResumePreview(); // 先关闭可能存在的 overlay
+        const pv = document.getElementById('ivPreviewVideo');
+        if (!pv) return;
+        pv.currentTime = t;
+        // 重置已触发集合：t 之前的节点视为已播放（不再弹出），t 及之后的节点待播放时触发
+        (v.interactionNodes || []).forEach(n => {
+          if (n.time < t - 0.001) ivPreviewFired.add(n.id);
+          else ivPreviewFired.delete(n.id);
+        });
+        ivUpdateTrackFill();
+        pv.play().catch(() => {});
+        return;
+      }
+      // 编辑模式：点击轨道 → 同步视频位置 + 设置插入位置（两者联动）
+      // 注意：不要调用 renderInteractionEditor() 重建 DOM，否则视频元素被替换、currentTime 丢失
+      const pv = document.getElementById('ivPreviewVideo');
+      if (pv) pv.currentTime = t;
+      ivInsertTime = t;
+      ivSelectedNodeId = null;
+      ivUpdateTrackFill();
+      // 仅更新插入位置线的显示，不重建视频
+      const oldLine = document.querySelector('.iv-insert-line');
+      if (oldLine) oldLine.remove();
+      if (!ivPreviewMode) {
+        const track = e.currentTarget;
+        const insertLine = document.createElement('div');
+        insertLine.className = 'absolute top-0 bottom-0 w-0.5 bg-purple-400 pointer-events-none z-20 iv-insert-line';
+        insertLine.style.left = ivSecToPct(t, dur) + '%';
+        const label = document.createElement('div');
+        label.className = 'absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-purple-400 whitespace-nowrap font-medium bg-slate-800 px-1.5 rounded';
+        label.textContent = '插入@' + fmtIvTime(t);
+        insertLine.appendChild(label);
+        track.appendChild(insertLine);
+      }
+    }
+
+    // 预览模式下，点击视频本身也可以跳转（增强可用性）
+    function ivPreviewVideoClick(e) {
+      if (!ivPreviewMode) return;
+      const pv = e.currentTarget;
+      const rect = pv.getBoundingClientRect();
+      const frac = (e.clientX - rect.left) / rect.width;
+      const t = frac * (pv.duration || 0);
+      if (t < 0 || !isFinite(t)) return;
+      // 预览模式点击视频画面：仅跳转，不自动弹题（与轨道行为一致）
+      const v = ivCurrentVideo();
+      ivResumePreview(); // 先关掉可能存在的 overlay
+      pv.currentTime = t;
+      (v.interactionNodes || []).forEach(n => {
+        if (n.time < t - 0.001) ivPreviewFired.add(n.id);
+        else ivPreviewFired.delete(n.id);
+      });
+      ivUpdateTrackFill();
+      pv.play().catch(() => {});
+    }
+
+    // 轻量更新轨道「已播放/插入」进度填充，不触发整屏重绘
+    function ivUpdateTrackFill() {
+      const pv = document.getElementById('ivPreviewVideo');
+      const v = ivCurrentVideo();
+      const dur = v ? (v.duration || 0) : 0;
+      // 优先用视频实际播放位置（编辑模式下视频也在播放），否则用插入光标位置
+      let pct;
+      if (pv && pv.currentTime > 0 && !ivPreviewMode) {
+        // 编辑模式：视频播放中 → 轨道跟随视频进度
+        pct = ivSecToPct(pv.currentTime, dur);
+      } else if (ivPreviewMode && pv) {
+        // 预览模式：轨道跟随预览进度
+        pct = ivSecToPct(pv.currentTime, dur);
+      } else {
+        // 编辑模式未播放：显示插入光标
+        pct = ivSecToPct(ivInsertTime, dur);
+      }
+      const fill = document.getElementById('ivTrackFill');
+      if (fill) fill.style.width = pct + '%';
+    }
+
+    function ivSelectNode(id, e) {
+      if (e) e.stopPropagation();
+      // 预览模式：点击节点标记直接跳转到该节点并立即弹出预览，不整屏重绘
+      if (ivPreviewMode) {
+        const v = ivCurrentVideo();
+        const n = (v && v.interactionNodes || []).find(x => x.id === id);
+        if (n) {
+          const pv = document.getElementById('ivPreviewVideo');
+          if (pv) {
+            pv.currentTime = n.time;
+            (v.interactionNodes || []).forEach(m => { if (m.time < n.time - 0.001) ivPreviewFired.add(m.id); else ivPreviewFired.delete(m.id); });
+            ivPreviewFired.add(n.id);
+            ivUpdateTrackFill();
+            ivShowPreviewOverlay(n, pv); // 直接弹出该题预览
+          }
+        }
+        return;
+      }
+      ivSelectedNodeId = (ivSelectedNodeId === id) ? null : id;
+      renderInteractionEditor();
+    }
+
+    function ivAddNode(node) {
+      const v = ivCurrentVideo();
+      if (!v) return;
+      if (!Array.isArray(v.interactionNodes)) v.interactionNodes = [];
+      if (v.interactionNodes.length >= IV_MAX_NODES) {
+        toast('单个视频最多添加 ' + IV_MAX_NODES + ' 个节点', 'warning');
+        return;
+      }
+      const dur = v.duration || 0;
+      if (node.time >= dur) {
+        toast('节点时间必须小于视频时长', 'warning');
+        return;
+      }
+      if (node.time < 0) node.time = 0;
+      node.id = 'n_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+      node.createdAt = new Date().toLocaleString('zh-CN');
+      v.interactionNodes.push(node);
+      v.interactionNodes.sort((a, b) => a.time - b.time);
+      renderInteractionEditor();
+    }
+
+    function ivSetNodeTime(id, val) {
+      const v = ivCurrentVideo();
+      if (!v) return;
+      const n = (v.interactionNodes || []).find(x => x.id === id);
+      if (!n) return;
+      let t = parseFloat(val);
+      if (isNaN(t)) return;
+      const dur = v.duration || 0;
+      t = Math.max(0, Math.min(dur - 0.1, t));
+      n.time = t;
+      v.interactionNodes.sort((a, b) => a.time - b.time);
+      renderInteractionEditor();
+    }
+
+    function ivRemoveNode(id) {
+      const v = ivCurrentVideo();
+      if (!v) return;
+      v.interactionNodes = (v.interactionNodes || []).filter(x => x.id !== id);
+      if (ivSelectedNodeId === id) ivSelectedNodeId = null;
+      renderInteractionEditor();
+    }
+
+    function ivAddQuestion() {
+      const v = ivCurrentVideo();
+      if (!v) { toast('请先选择视频', 'warning'); return; }
+      ivPickerTarget = { videoIndex: ivState.currentVideoIndex, nodeType: 'question', time: ivInsertTime };
+      openQuestionPicker();
+    }
+
+    function ivAddSurvey() {
+      const v = ivCurrentVideo();
+      if (!v) { toast('请先选择视频', 'warning'); return; }
+      ivPickerTarget = { videoIndex: ivState.currentVideoIndex, nodeType: 'survey', time: ivInsertTime };
+      openQuestionPicker();
+    }
+
+    function ivAddKnowledge() {
+      const v = ivCurrentVideo();
+      if (!v) { toast('请先选择视频', 'warning'); return; }
+      const html = `
+        <div class="p-6">
+          <h3 class="text-lg font-semibold text-slate-800 mb-4">插入知识点</h3>
+          <div class="space-y-3">
+            <div><label class="block text-sm text-slate-600 mb-1">标题</label><input id="ivKnowTitle" class="w-full px-3 py-2 border rounded-lg" placeholder="知识点标题"></div>
+            <div><label class="block text-sm text-slate-600 mb-1">内容</label><textarea id="ivKnowContent" rows="3" class="w-full px-3 py-2 border rounded-lg" placeholder="知识点说明"></textarea></div>
+            <div><label class="block text-sm text-slate-600 mb-1">图片URL（可选）</label><input id="ivKnowImg" class="w-full px-3 py-2 border rounded-lg" placeholder="https://..."></div>
+            <div class="text-xs text-slate-400">插入位置：${fmtIvTime(ivInsertTime)}</div>
+          </div>
+          <div class="flex justify-end space-x-2 mt-5">
+            <button onclick="closeModal()" class="px-4 py-2 text-sm rounded-lg border">取消</button>
+            <button onclick="ivConfirmKnowledge()" class="px-4 py-2 text-sm rounded-lg text-white bg-gradient-to-r from-purple-500 to-indigo-600">确定</button>
+          </div>
+        </div>`;
+      showModal(html);
+    }
+
+    function ivConfirmKnowledge() {
+      const title = document.getElementById('ivKnowTitle').value.trim();
+      const content = document.getElementById('ivKnowContent').value.trim();
+      if (!title && !content) { toast('请填写标题或内容', 'warning'); return; }
+      ivAddNode({ type: 'knowledge', time: ivInsertTime, title: title || '知识点', content, imageUrl: document.getElementById('ivKnowImg').value.trim() });
+      closeModal();
+    }
+
+    // 题目选择器确认后落到互动节点
+    function ivHandlePickedQuestions(checkedCbs) {
+      const target = ivPickerTarget;
+      if (!target || !ivState) return;
+      const picked = [];
       checkedCbs.forEach(cb => {
         const idx = parseInt(cb.dataset.idx);
         const q = qpAllQuestions[idx];
-        if (q) {
-          const scoreInput = document.querySelector(`.qp-score[data-qid="${q.id}"]`);
-          const score = scoreInput ? parseInt(scoreInput.value) || 5 : 5;
-          const qObj = {
-            questionId: q.id,
-            score: score,
-            partialScore: q.type === 'multiple' ? 0 : undefined,
-            content: q.title || q.content,
-            type: q.type || 'single'
-          };
-          if (isPaperEditor) {
-            if (!paperQuestions.some(pq => pq.questionId === q.id)) {
-              qObj.order = paperQuestions.length;
-              paperQuestions.push(qObj);
-            }
-          } else {
-            if (!selectedExamQuestions.some(eq => eq.questionId === q.id)) {
-              qObj.order = selectedExamQuestions.length;
-              selectedExamQuestions.push(qObj);
-            }
-          }
-        }
+        if (q) picked.push(q);
       });
-      if (isPaperEditor) {
-        if (editorMode) { renderUnifiedEditor(); } else { renderPaperQuestions(); }
-      } else {
-        renderSelectedQuestions();
+      if (!picked.length) { ivPickerTarget = null; return; }
+      if (target.nodeType === 'question') {
+        const q = picked[0];
+        ivAddNode({ type: 'question', time: target.time, questionRefs: [{ questionId: q.id, score: q.score || 5, content: q.title || q.content, type: q.type }] });
+        toast('已插入试题节点');
+      } else if (target.nodeType === 'survey') {
+        const refs = picked.map(q => ({ questionId: q.id, score: q.score || 5, content: q.title || q.content, type: q.type }));
+        ivAddNode({ type: 'survey', time: target.time, surveyTitle: '互动问卷', questionRefs: refs });
+        toast('已插入问卷节点（' + refs.length + ' 题）');
       }
-      closeQuestionPicker();
-      toast(`已添加 ${checkedCbs.length} 道题目`);
+      ivPickerTarget = null;
+      renderInteractionEditor();
+    }
+
+    function ivAutosaveDraft() {
+      if (!ivState) return;
+      const draftKey = 'ivideo_draft_' + ivState.courseId;
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ videos: ivState.videos, updatedAt: new Date().toLocaleString('zh-CN') }));
+        toast('草稿已暂存');
+      } catch (e) { toast('暂存失败', 'error'); }
+    }
+
+    function ivSaveEditor() {
+      if (!ivState) return;
+      const payload = { videos: ivState.videos, updatedAt: new Date().toLocaleString('zh-CN') };
+      fetch('/api/courses/' + ivState.courseId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            localStorage.removeItem('ivideo_draft_' + ivState.courseId);
+            ivStopPreview();
+            ivCloseEditor();
+            toast('互动视频已保存并生效');
+            if (typeof renderCourses === 'function') renderCourses();
+          } else {
+            toast('保存失败：' + (res.error || ''), 'error');
+          }
+        })
+        .catch(() => toast('保存失败', 'error'));
+    }
+
+    function ivCloseEditor() {
+      ivStopPreview();
+      ivState = null;
+      ivPickerTarget = null;
+      const view = document.getElementById('ivAppView');
+      if (view) { view.classList.add('hidden'); view.innerHTML = ''; }
+    }
+
+    function renderInteractionEditor() {
+      if (!ivState) return;
+      const v = ivCurrentVideo();
+      const dur = v ? (v.duration || 0) : 0;
+
+      // ========== 左侧：视频列表（带序号+节点数标签）==========
+      const videoListHtml = ivState.videos.map((vid, i) => {
+        const nc = (vid.interactionNodes || []).length;
+        const nodeTag = nc > 0
+          ? `<span class="ml-1.5 text-[11px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-600 font-medium">互动节点数(${nc})</span>`
+          : '';
+        const activeCls = i === ivState.currentVideoIndex
+          ? 'bg-purple-50 border-purple-300 text-purple-700'
+          : 'border-transparent hover:bg-slate-50 text-slate-700';
+        return `
+          <button type="button" onclick="ivSelectVideo(${i})" class="w-full text-left px-3 py-2.5 rounded-lg border mb-1 transition text-sm ${activeCls}">
+            <div class="flex items-center">
+              <span class="w-5 h-5 flex items-center justify-center rounded bg-slate-200 text-slate-600 text-xs font-semibold mr-2 flex-shrink-0">${i + 1}</span>
+              <span class="truncate flex-1">${escHtml(vid.title || vid.url || ('视频' + (i + 1)))}</span>
+            </div>
+            ${nodeTag ? `<div class="mt-0.5 ml-7">${nodeTag}</div>` : ''}
+          </button>`;
+      }).join('');
+
+      // ========== 中间：节点列表区 ==========
+      const nodes = (v && v.interactionNodes) ? v.interactionNodes : [];
+      let centerPanel = '';
+      if (nodes.length === 0) {
+        centerPanel = `
+          <div class="flex flex-col items-center justify-center h-full text-slate-500 py-16">
+            <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center mb-4 border border-slate-700">
+              <i class="far fa-image text-xl text-slate-500"></i>
+            </div>
+            <p class="text-sm font-medium text-slate-400 mb-1">暂未添加任何互动内容</p>
+            <p class="text-xs text-slate-600">单个视频最多可添加${IV_MAX_NODES}个时间节点</p>
+          </div>`;
+      } else {
+        // 节点卡片列表 — 仿参考图：时间+类型标签 | 内容预览 | 编辑/删除按钮
+        const nodeCards = nodes.map((n, idx) => {
+          const typeLabel = n.type === 'question' ? '试题' : (n.type === 'survey' ? '问卷' : '知识点');
+          const typeColor = n.type === 'question' ? 'text-orange-400' : (n.type === 'survey' ? 'text-teal-400' : 'text-sky-400');
+          const typeBg   = n.type === 'question' ? 'bg-orange-500/15 border-orange-500/25' : (n.type === 'survey' ? 'bg-teal-500/15 border-teal-500/25' : 'bg-sky-500/15 border-sky-500/25');
+          const selCls = ivSelectedNodeId === n.id ? 'ring-1 ring-purple-500 bg-purple-500/5' : 'hover:bg-slate-800/60';
+          // 内容预览文本
+          let contentPreview = '';
+          if (n.type === 'knowledge') contentPreview = escHtml(n.title || '');
+          else if (n.type === 'survey') contentPreview = escHtml(n.surveyTitle || '');
+          else if (n.questionRefs && n.questionRefs[0]) {
+            const ref = n.questionRefs[0];
+            const qType = ({ single:'单选题', multiple:'多选题', judge:'判断题', fill:'填空题', essay:'简答题' }[ref.type] || '');
+            contentPreview = qType ? `<span class="text-slate-500">【${qType}】</span> ` : '';
+            contentPreview += escHtml(ref.content || '');
+          }
+          return `
+            <div class="group flex items-center px-3 py-2.5 rounded-lg border border-slate-700/50 cursor-pointer transition ${selCls}" onclick="ivSelectNode('${n.id}')">
+              <!-- 时间 + 类型 -->
+              <div class="flex items-center mr-3 flex-shrink-0 min-w-[85px]">
+                <span class="text-xs text-slate-400 font-mono">${fmtIvTime(n.time)}</span>
+                <span class="ml-2 text-xs px-1.5 py-0.5 rounded border ${typeBg} ${typeColor} font-medium">${typeLabel}</span>
+              </div>
+              <!-- 内容预览 -->
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-slate-300 truncate" title="${contentPreview.replace(/<[^>]+>/g, '')}">${contentPreview}</p>
+              </div>
+              <!-- 操作按钮（hover 显示） -->
+              <div class="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                <button onclick="event.stopPropagation(); ivSelectNode('${n.id}')" class="w-7 h-7 rounded flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-700 transition" title="编辑时间"><i class="fas fa-pen text-xs"></i></button>
+                <button onclick="event.stopPropagation(); ivRemoveNode('${n.id}')" class="w-7 h-7 rounded flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition" title="删除节点"><i class="fas fa-times text-xs"></i></button>
+              </div>
+            </div>`;
+        }).join('');
+        centerPanel = `
+          <div class="overflow-y-auto p-2 space-y-1" style="max-height:100%;">
+            ${nodeCards}
+          </div>`;
+
+      }
+
+      // ========== 右侧：视频播放器 ==========
+      const previewSrc = v ? (v.url || '') : '';
+      const previewHtml = v ? `
+        <div class="relative bg-black rounded-xl overflow-hidden shadow-lg h-full flex flex-col">
+          <video id="ivPreviewVideo" class="w-full h-full object-contain flex-1" controls src="${previewSrc.startsWith('http') ? previewSrc : (previewSrc.startsWith('/') ? previewSrc : '/' + previewSrc)}"></video>
+          <div id="ivOverlay" class="absolute inset-0 hidden items-center justify-center bg-black/60 p-4 z-10"></div>
+        </div>` : '<div class="h-full flex items-center justify-center bg-slate-50 rounded-xl"><p class="text-slate-400 text-sm">该视频暂无可播放地址</p></div>';
+
+      // ========== 底部：轨道 + 操作按钮 ==========
+      const markersHtml = nodes.map(n => {
+        const pct = ivSecToPct(n.time, dur);
+        const color = n.type === 'question' ? 'bg-orange-500' : (n.type === 'survey' ? 'bg-teal-500' : 'bg-sky-500');
+        const label = n.type === 'question' ? '题' : (n.type === 'survey' ? '卷' : '知');
+        const selected = ivSelectedNodeId === n.id ? 'ring-2 ring-white ring-offset-1 ring-offset-slate-800' : '';
+        return `<div class="absolute -top-1 bottom-0 w-2.5 ${color} ${selected} rounded cursor-pointer z-10" style="left:calc(${pct}% - 5px)" onclick="event.stopPropagation(); ivSelectNode('${n.id}', event)" title="${n.type === 'question' ? '试题' : n.type === 'survey' ? '问卷' : '知识点'} @ ${fmtIvTime(n.time)}"></div>`;
+      }).join('');
+
+      const insertPct = ivSecToPct(ivInsertTime, dur);
+      const insertLine = ivPreviewMode ? '' : `<div class="absolute top-0 bottom-0 w-0.5 bg-purple-400 pointer-events-none z-20 iv-insert-line" style="left:${insertPct}%"><div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-purple-400 whitespace-nowrap font-medium bg-slate-800 px-1.5 rounded">插入@${fmtIvTime(ivInsertTime)}</div></div>`;
+
+      const totalNodes = ivState.videos.reduce((s, vid) => s + (vid.interactionNodes || []).length, 0);
+
+      const panel = `
+        <div class="w-screen h-screen flex flex-col bg-slate-900 text-slate-200">
+          <!-- ====== 顶部栏 ====== -->
+          <div class="flex items-center justify-between px-4 py-2.5 bg-slate-800 border-b border-slate-700 flex-shrink-0">
+            <div class="flex items-center space-x-3">
+              <button onclick="ivCloseEditor()" class="text-slate-400 hover:text-white transition"><i class="fas fa-arrow-left mr-1"></i>返回</button>
+              <span class="text-slate-600">|</span>
+              <h3 class="text-sm font-medium text-white"><i class="fas fa-film text-purple-400 mr-1.5"></i>视频编辑器<span class="ml-1.5 text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300">${totalNodes}</span></h3>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="ivPreviewToggle()" class="px-3 py-1.5 text-sm rounded-lg transition flex items-center ${ivPreviewMode ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}">
+                <i class="fas fa-eye mr-1.5"></i>${ivPreviewMode ? '退出预览' : '预览'}
+              </button>
+              <button onclick="ivAutosaveDraft()" class="px-3 py-1.5 text-sm rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition"><i class="fas fa-save mr-1.5"></i>暂存</button>
+              <button onclick="ivSaveEditor()" class="px-4 py-1.5 text-sm rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:opacity-90 transition font-medium"><i class="fas fa-check mr-1.5"></i>保存</button>
+            </div>
+          </div>
+
+          <!-- ====== 上部：三栏布局（视频列表 | 节点列表 | 播放器）====== -->
+          <div class="flex flex-1 min-h-0 overflow-hidden">
+            <!-- 左栏：视频列表 -->
+            <div class="w-60 border-r border-slate-700 bg-slate-850 flex flex-col flex-shrink-0" style="background:#1a1f2e;">
+              <div class="px-3 pt-3 pb-2 border-b border-slate-700/50">
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">课程视频</p>
+              </div>
+              <div class="flex-1 overflow-y-auto p-2">
+                ${videoListHtml || '<p class="text-xs text-slate-500 text-center py-4">暂无视频</p>'}
+              </div>
+            </div>
+
+            <!-- 中栏：互动节点列表 -->
+            <div class="w-72 border-r border-slate-700 bg-slate-850 flex flex-col flex-shrink-0" style="background:#151a27;">
+              <div class="px-3 pt-3 pb-2 border-b border-slate-700/50 flex items-center justify-between">
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">互动内容</p>
+                <span class="text-[10px] text-slate-500">${nodes.length}/${IV_MAX_NODES}</span>
+              </div>
+              <div class="flex-1 overflow-y-auto min-h-0">
+                ${centerPanel}
+              </div>
+            </div>
+
+            <!-- 右栏：视频播放器 -->
+            <div class="flex-1 bg-slate-950 p-3 flex flex-col min-w-0">
+              ${previewHtml}
+            </div>
+          </div>
+
+          <!-- ====== 底部：时间轴轨道（全宽）====== -->
+          <div class="flex-shrink-0 border-t border-slate-700 bg-slate-800 px-4 pb-3 pt-2">
+            <!-- 操作按钮行 -->
+            <div class="flex items-center space-x-2 mb-2">
+              <button onclick="ivAddQuestion()" class="px-3 py-1.5 text-xs rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 transition"><i class="fas fa-plus mr-1"></i>插入试题</button>
+              <button onclick="ivAddKnowledge()" class="px-3 py-1.5 text-xs rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 hover:bg-sky-500/30 transition"><i class="fas fa-plus mr-1"></i>插入知识点</button>
+              <button onclick="ivAddSurvey()" class="px-3 py-1.5 text-xs rounded-lg bg-teal-500/20 text-teal-400 border border-teal-500/30 hover:bg-teal-500/30 transition"><i class="fas fa-plus mr-1"></i>插入问卷</button>
+              <span class="ml-auto text-[10px] text-slate-500">${ivPreviewMode ? '点击轨道或画面可跳转 · 播放到节点自动弹出' : `点击轨道设置插入位置 · 当前 ${fmtIvTime(ivInsertTime)} / ${fmtIvTime(dur)}`}</span>
+            </div>
+            <!-- 轨道主体（加高，无刻度线） -->
+            <div class="relative h-20 bg-slate-900 rounded-lg cursor-pointer select-none overflow-visible" style="box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);" onclick="ivTrackClick(event)">
+              <!-- 进度填充 -->
+              <div id="ivTrackFill" class="absolute top-0 bottom-0 left-0 bg-purple-500/15 pointer-events-none ${ivPreviewMode ? 'rounded-l-lg' : ''}" style="width:${ivSecToPct(ivPreviewMode ? 0 : ivInsertTime, dur)}%"></div>
+              <!-- 节点标记 -->
+              ${markersHtml}
+              ${insertLine}
+            </div>
+          </div>
+        </div>`;
+      const ivView = document.getElementById('ivAppView');
+      if (ivView) ivView.innerHTML = panel;
+      if (v && previewSrc) {
+        const pv = document.getElementById('ivPreviewVideo');
+        if (pv) {
+          pv.addEventListener('timeupdate', ivPreviewTimeupdate);
+          pv.addEventListener('seeked', () => { ivUpdateTrackFill(); });
+          pv.addEventListener('click', ivPreviewVideoClick);
+          pv.style.cursor = ivPreviewMode ? 'pointer' : 'default';
+        }
+      }
+    }
+
+    function ivPreviewToggle() {
+      if (!ivState) return;
+      if (ivPreviewMode) { ivStopPreview(); return; }
+      ivPreviewMode = true;
+      ivPreviewFired.clear();
+      ivSelectedNodeId = null;
+      renderInteractionEditor();
+      const pv = document.getElementById('ivPreviewVideo');
+      if (pv) {
+        pv.currentTime = 0;
+        pv.style.cursor = 'pointer';
+        // 确保视频加载后自动播放（兼容自动播放策略：失败则静音重试）
+        let played = false;
+        const tryPlay = (muted) => {
+          if (muted) pv.muted = true;
+          pv.play().then(() => { played = true; }).catch(() => {
+            if (!muted) tryPlay(true); // 带声音失败 → 静音重试
+          });
+        };
+        pv.addEventListener('loadeddata', function onLoaded() {
+          if (ivPreviewMode && !played) tryPlay(false);
+          pv.removeEventListener('loadeddata', onLoaded);
+        });
+        pv.addEventListener('error', () => toast('视频加载失败，请检查视频地址', 'error'));
+        pv.load();
+        tryPlay(false);
+      }
+      // 启动看门狗：每 200ms 检查节点触发（即使 timeupdate 不可靠也能触发）
+      if (ivPreviewWatchdog) clearInterval(ivPreviewWatchdog);
+      ivPreviewWatchdog = setInterval(() => {
+        if (!ivPreviewMode) { clearInterval(ivPreviewWatchdog); ivPreviewWatchdog = null; return; }
+        ivPreviewTimeupdate();
+      }, 200);
+      toast('预览模式：点击视频/轨道可跳转，播放到节点自动弹出互动');
+    }
+
+    function ivStopPreview() {
+      ivPreviewMode = false;
+      if (ivPreviewWatchdog) { clearInterval(ivPreviewWatchdog); ivPreviewWatchdog = null; }
+      const pv = document.getElementById('ivPreviewVideo');
+      if (pv) { try { pv.pause(); } catch (e) {} pv.style.cursor = 'default'; pv.muted = false; }
+      const ov = document.getElementById('ivOverlay');
+      if (ov) { ov.classList.add('hidden'); ov.classList.remove('flex'); ov.innerHTML = ''; }
+      // 重新渲染以更新按钮状态（"退出预览" → "预览"）
+      if (ivState) renderInteractionEditor();
+    }
+
+    function ivPreviewTimeupdate() {
+      const pv = document.getElementById('ivPreviewVideo');
+      if (!pv) return;
+      // 始终同步轨道填充（编辑模式下视频播放时轨道也跟随）
+      ivUpdateTrackFill();
+      // 仅预览模式触发互动节点
+      if (!ivPreviewMode) return;
+      const v = ivCurrentVideo();
+      const nodes = (v && v.interactionNodes) || [];
+      for (const n of nodes) {
+        if (!ivPreviewFired.has(n.id) && pv.currentTime >= n.time) {
+          ivPreviewFired.add(n.id);
+          ivShowPreviewOverlay(n, pv);
+          break;
+        }
+      }
+    }
+
+    function ivShowPreviewOverlay(node, video) {
+      video.pause();
+      const ov = document.getElementById('ivOverlay');
+      if (!ov) return;
+      ov.classList.remove('hidden');
+      ov.classList.add('flex');
+      if (node.type === 'knowledge') {
+        ov.innerHTML = `
+          <div class="bg-white rounded-xl p-6 max-w-md w-full shadow-xl">
+            <h4 class="font-semibold text-slate-800 mb-2">${escHtml(node.title || '知识点')}</h4>
+            <p class="text-sm text-slate-600 mb-4 whitespace-pre-wrap">${escHtml(node.content || '')}</p>
+            ${node.imageUrl ? `<img src="${node.imageUrl}" class="max-h-40 rounded mb-3">` : ''}
+            <button onclick="ivResumePreview()" class="w-full py-2 rounded-lg text-white bg-indigo-600">继续播放</button>
+          </div>`;
+        return;
+      }
+      if (node.type === 'survey') {
+        const refs = node.questionRefs || [];
+        const items = refs.map((r, i) => `<div class="mb-3"><p class="text-sm font-medium text-slate-700 mb-1">${i + 1}. ${escHtml(r.content || '')}</p><input class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="请输入你的回答"></div>`).join('');
+        ov.innerHTML = `
+          <div class="bg-white rounded-xl p-6 max-w-lg w-full shadow-xl max-h-[80%] overflow-y-auto">
+            <h4 class="font-semibold text-slate-800 mb-3">${escHtml(node.surveyTitle || '互动问卷')}</h4>
+            ${items}
+            <button onclick="ivResumePreview()" class="w-full py-2 rounded-lg text-white bg-indigo-600">提交并继续播放</button>
+          </div>`;
+        return;
+      }
+      // question：拉取题目详情以试判（兼容 questionRefs[].questionId 与旧格式 node.questionId）
+      const qid = (node.questionRefs && node.questionRefs[0])
+        ? node.questionRefs[0].questionId
+        : (node.questionId != null ? node.questionId : null);
+      if (qid == null) { ivResumePreview(); return; }
+      fetch('/api/questions/' + qid)
+        .then(r => r.json())
+        .then(res => {
+          const q = (res && res.data) ? res.data : res;
+          if (!q || (res && res.success === false) || res.error) { ivResumePreview(); return; }
+          ivRenderPreviewQuestion(q, ov, video);
+        })
+        .catch(() => ivResumePreview());
+    }
+
+        function ivRenderPreviewQuestion(q, ov, video) {
+          ivPreviewCurrentQuestion = q;
+          const type = q.type || 'single';
+          const options = q.options || [];
+          let body = '';
+          if (type === 'multiple') {
+            body = options.map((o, i) => {
+              const letter = String.fromCharCode(65 + i);
+              return `<label data-opt="${letter}" class="iv-opt-row flex items-center space-x-2 p-2 rounded hover:bg-slate-100 cursor-pointer"><input type="checkbox" class="iv-opt" value="${letter}"><span>${escHtml(o)}</span></label>`;
+            }).join('');
+          } else if (type === 'judge') {
+            body = `
+              <label data-opt="A" class="iv-opt-row flex items-center space-x-2 p-2 rounded hover:bg-slate-100 cursor-pointer"><input type="radio" name="ivq" class="iv-opt" value="A"><span>正确</span></label>
+              <label data-opt="B" class="iv-opt-row flex items-center space-x-2 p-2 rounded hover:bg-slate-100 cursor-pointer"><input type="radio" name="ivq" class="iv-opt" value="B"><span>错误</span></label>`;
+          } else if (type === 'fill' || type === 'essay') {
+            body = `<textarea class="w-full px-3 py-2 border rounded-lg text-sm" rows="3" placeholder="请输入你的答案"></textarea>`;
+          } else {
+            body = options.map((o, i) => {
+              const letter = String.fromCharCode(65 + i);
+              return `<label data-opt="${letter}" class="iv-opt-row flex items-center space-x-2 p-2 rounded hover:bg-slate-100 cursor-pointer"><input type="radio" name="ivq" class="iv-opt" value="${letter}"><span>${escHtml(o)}</span></label>`;
+            }).join('');
+          }
+          ov.innerHTML = `
+            <div class="bg-white rounded-2xl p-8 md:p-10 w-[90%] max-w-3xl shadow-2xl mx-auto max-h-[85%] overflow-y-auto">
+              <p class="text-sm text-orange-500 font-semibold mb-2 tracking-wide">互动试题</p>
+              <p class="font-medium text-slate-800 text-lg mb-5 leading-relaxed">${escHtml(q.title || q.content || '')}</p>
+              <div class="mb-6 space-y-3" id="ivOptions">${body}</div>
+              <div id="ivResult" class="text-base mb-5"></div>
+              <div class="flex space-x-3">
+                <button id="ivPreviewSubmitBtn" onclick="ivPreviewSubmit('${type.replace(/'/g, '')}')" class="px-7 py-3 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-semibold transition text-base">提交</button>
+                <button onclick="ivResumePreview()" class="px-7 py-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 font-semibold transition text-base">继续播放</button>
+              </div>
+            </div>`;
+        }
+
+        function ivPreviewSubmit(type) {
+          // 取当前覆盖的节点（最后一个 fired）
+          const v = ivCurrentVideo();
+          const nodes = (v && v.interactionNodes) || [];
+          let node = null;
+          for (const n of nodes) { if (ivPreviewFired.has(n.id)) node = n; }
+          const q = ivPreviewCurrentQuestion;
+          if (!q) { ivResumePreview(); return; }
+          let userAnswer;
+          if (type === 'multiple') {
+            userAnswer = Array.from(document.querySelectorAll('#ivOverlay .iv-opt:checked')).map(c => c.value);
+          } else if (type === 'judge') {
+            const sel = document.querySelector('#ivOverlay input[name="ivq"]:checked');
+            userAnswer = sel ? sel.value : '';
+          } else if (type === 'fill' || type === 'essay') {
+            const ta = document.querySelector('#ivOverlay textarea');
+            userAnswer = ta ? ta.value : '';
+          } else {
+            const sel = document.querySelector('#ivOverlay input[name="ivq"]:checked');
+            userAnswer = sel ? sel.value : '';
+          }
+          const verdict = ivJudgeLocal(q, userAnswer, type);
+
+          // 正确选项字母集合（judge 归一化为 A/B）
+          let correct = [];
+          if (type === 'judge') {
+            const ans = Array.isArray(q.answer) ? q.answer[0] : q.answer;
+            const a = String(ans == null ? '' : ans).trim();
+            correct = [(a.toUpperCase() === 'A' || a === '正确' || a.toLowerCase() === 'true') ? 'A' : 'B'];
+          } else if (type === 'multiple' || type === 'single') {
+            correct = (Array.isArray(q.answer) ? q.answer : [q.answer]).map(x => String(x == null ? '' : x).trim()).filter(Boolean);
+          }
+          document.querySelectorAll('#ivOverlay .iv-opt-row').forEach(row => {
+            const val = row.getAttribute('data-opt');
+            const inp = row.querySelector('.iv-opt');
+            const checked = inp && inp.checked;
+            if (correct.includes(val)) {
+              row.classList.add('bg-green-50', 'border', 'border-green-400');
+              const tag = document.createElement('span'); tag.className = 'ml-auto text-green-600 text-xs font-medium whitespace-nowrap'; tag.textContent = '正确答案'; row.appendChild(tag);
+            } else if (checked) {
+              row.classList.add('bg-red-50', 'border', 'border-red-400');
+              const tag = document.createElement('span'); tag.className = 'ml-auto text-red-600 text-xs font-medium whitespace-nowrap'; tag.textContent = '你的选择'; row.appendChild(tag);
+            }
+            if (inp) inp.disabled = true;
+          });
+
+          const resEl = document.getElementById('ivResult');
+          const analysis = String(q.analysis || q.explanation || '').trim();
+          let html = verdict
+            ? '<div class="mb-2"><span class="inline-flex items-center px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">✅ 回答正确！</span></div>'
+            : '<div class="mb-2"><span class="inline-flex items-center px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-sm font-medium">❌ 回答错误</span></div>';
+          if (analysis) {
+            html += `<div class="mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200"><p class="text-xs font-semibold text-slate-500 mb-1">📖 解析</p><p class="text-sm text-slate-700 whitespace-pre-wrap">${escHtml(analysis)}</p></div>`;
+          } else if (!verdict) {
+            html += '<p class="text-xs text-slate-400 mt-1">本题暂未配置解析</p>';
+          }
+          resEl.innerHTML = html;
+
+          const sb = document.getElementById('ivPreviewSubmitBtn');
+          if (sb) sb.style.display = 'none';
+          let actions = document.getElementById('ivPreviewActions');
+          if (!actions) {
+            actions = document.createElement('div');
+            actions.id = 'ivPreviewActions';
+            actions.className = 'flex space-x-2 mt-3';
+            resEl.appendChild(actions);
+          }
+          actions.innerHTML = verdict ? '' : `<button onclick="ivJumpPrevInPreview()" class="px-4 py-2 rounded-lg bg-amber-500 text-white">返回上一节点重新学习</button>`;
+        }
+
+    function ivJudgeLocal(q, userAnswer, type) {
+      const correct = Array.isArray(q.answer) ? q.answer : [q.answer];
+      if (type === 'multiple') {
+        const ca = correct.map(x => String(x).trim()).sort().join(',');
+        const ua = (Array.isArray(userAnswer) ? userAnswer : [userAnswer]).map(x => String(x).trim()).sort().join(',');
+        return ua === ca && ua !== '';
+      }
+      if (type === 'judge') {
+        const ub = (userAnswer === 'A');
+        const cb = (String(correct[0]).trim().toUpperCase() === 'A' || String(correct[0]).trim() === '正确' || String(correct[0]).trim() === 'true');
+        return ub === cb;
+      }
+      if (type === 'fill') {
+        const ua = String(userAnswer || '').trim().toLowerCase();
+        return ua !== '' && correct.map(x => String(x).trim().toLowerCase()).includes(ua);
+      }
+      return String(userAnswer || '').trim() === String(correct[0]).trim();
+    }
+
+    function ivResumePreview() {
+      const ov = document.getElementById('ivOverlay');
+      if (ov) { ov.classList.add('hidden'); ov.classList.remove('flex'); ov.innerHTML = ''; }
+      const pv = document.getElementById('ivPreviewVideo');
+      if (pv && ivPreviewMode) pv.play().catch(() => {});
+    }
+
+    function ivJumpPrevInPreview() {
+      const v = ivCurrentVideo();
+      const nodes = (v && v.interactionNodes) || [];
+      const pv = document.getElementById('ivPreviewVideo');
+      if (!pv) return;
+      // 当前节点
+      let cur = null;
+      for (const n of nodes) { if (ivPreviewFired.has(n.id)) cur = n; }
+      const prev = nodes.filter(n => cur && n.time < cur.time).sort((a, b) => b.time - a.time)[0];
+      if (prev) {
+        // 清除目标节点及之后所有节点的已触发标记，使它们可以重新弹出
+        const targetTime = prev.time;
+        ivPreviewFired.forEach(id => {
+          const nd = nodes.find(n => n.id === id);
+          if (nd && nd.time >= targetTime) ivPreviewFired.delete(id);
+        });
+        pv.currentTime = prev.time;
+        ivResumePreview();
+      } else {
+        ivPreviewFired.clear();
+        pv.currentTime = 0;
+        ivResumePreview();
+      }
+    }
+
+    // ========== 互动数据统计（内嵌面板） ==========
+    let ivStatsCurrentTab = 'data'; // 'data' | 'interaction'
+
+    function openInteractionStats(courseId) {
+      courseId = parseInt(courseId);
+      if (!courseId || isNaN(courseId)) { toast('请先从课程列表进入', 'warning'); return; }
+      fetch('/api/courses/' + courseId + '/interaction-stats')
+        .then(r => r.json())
+        .then(res => {
+          if (!res.success) { toast('加载统计失败', 'error'); return; }
+          const agg = res.aggregate || {};
+          const detail = res.detail || [];
+          const course = (ivState && ivState.course) || (Array.isArray(window._dashboardCourses) ? window._dashboardCourses.find(c => c.id === courseId) : null) || { title: '课程详情' };
+
+          // 查找课程信息
+          const courseTitle = course.title || '课程详情';
+          const creator = course.createdBy || course.creator || '';
+          const durationStr = course.duration ? Math.floor(course.duration / 60) + '分钟' : '--';
+          const learnerCount = agg.answererCount || 0;
+
+          // 渲染内嵌面板
+          const panel = document.getElementById('ivStatsPanel');
+          if (!panel) {
+            const el = document.createElement('div');
+            el.id = 'ivStatsPanel';
+            el.className = 'fixed inset-0 z-50 bg-white overflow-y-auto';
+            document.body.appendChild(el);
+          }
+          document.getElementById('ivStatsPanel').innerHTML = renderIvStatsPanel(courseId, courseTitle, creator, durationStr, learnerCount, agg, detail, res);
+          document.getElementById('ivStatsPanel').classList.remove('hidden');
+
+          // 默认显示"数据"tab
+          ivStatsCurrentTab = 'data';
+          switchIvStatsTab('data', courseId, agg, detail, res);
+        })
+        .catch(() => toast('加载统计失败', 'error'));
+    }
+
+    function closeIvStatsPanel() {
+      const panel = document.getElementById('ivStatsPanel');
+      if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
+    }
+
+    function renderIvStatsPanel(courseId, title, creator, duration, learnerCount, agg, detail, res) {
+      return `
+        <div class="min-h-screen bg-slate-50">
+          <!-- 顶部导航栏 -->
+          <div class="sticky top-0 z-10 bg-white border-b px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <button onclick="closeIvStatsPanel()" class="text-slate-500 hover:text-slate-700 text-sm">&lt; 返回课程</button>
+              <span class="text-slate-300">|</span>
+              <h2 class="text-lg font-semibold text-slate-800">${escHtml(title)}</h2>
+            </div>
+            <div class="flex items-center space-x-6 text-sm text-slate-500">
+              <span>创建人：${escHtml(creator)}</span>
+              <span>课程时长：${duration}</span>
+              <span>学习领：${learnerCount}</span>
+            </div>
+          </div>
+
+          <!-- Tab 切换 -->
+          <div class="bg-white border-b px-6">
+            <div class="flex space-x-1">
+              <button id="ivstab-data" onclick="switchIvStatsTab('data', ${courseId}, this)" class="px-4 py-3 text-sm font-medium border-b-2 border-orange-500 text-orange-600">数据</button>
+              <button id="ivstab-interaction" onclick="switchIvStatsTab('interaction', ${courseId}, this)" class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700">视频答题互动</button>
+            </div>
+          </div>
+
+          <!-- 内容区域 -->
+          <div id="ivstats-content" class="p-6"></div>
+        </div>`;
+    }
+
+    function switchIvStatsTab(tab, courseId, btn) {
+      ivStatsCurrentTab = tab;
+      // 更新 tab 样式
+      document.querySelectorAll('[id^="ivstab-"]').forEach(b => {
+        b.classList.remove('border-orange-500', 'text-orange-600');
+        b.classList.add('border-transparent', 'text-slate-500');
+      });
+      const activeBtn = btn || document.getElementById('ivstab-' + tab);
+      if (activeBtn) {
+        activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        activeBtn.classList.add('border-orange-500', 'text-orange-600');
+      }
+
+      // 重新加载数据（缓存避免重复请求）
+      if (!window._ivStatsCache) {
+        fetch('/api/courses/' + courseId + '/interaction-stats')
+          .then(r => r.json())
+          .then(res => { window._ivStatsCache = res; renderIvStatsContent(tab, courseId, res); })
+          .catch(() => {});
+      } else {
+        renderIvStatsContent(tab, courseId, window._ivStatsCache);
+      }
+    }
+
+    function renderIvStatsContent(tab, courseId, res) {
+      const container = document.getElementById('ivstats-content');
+      if (!container) return;
+      const agg = res.aggregate || {};
+      const detail = res.detail || [];
+
+      if (tab === 'data') {
+        container.innerHTML = renderIvStatsDataTab(agg, detail, courseId);
+      } else {
+        container.innerHTML = renderIvStatsInteractionTab(agg, detail, courseId);
+      }
+    }
+
+    /* ===== "数据" Tab：概览统计卡片 + 学员明细表格 ===== */
+    function renderIvStatsDataTab(agg, detail, courseId) {
+      const totalLearners = agg.answererCount || 0;
+      const completedCount = (detail || []).filter(d => d.isCorrect === true).length || 0; // 粗略估算
+      const incompleteCount = Math.max(0, totalLearners - completedCount);
+      const avgAccuracy = agg.avgAccuracy != null ? agg.avgAccuracy : (agg.totalAttempts > 0 ? Math.round((agg.correctCount || 0) / agg.totalAttempts * 10000) / 100 : 0);
+
+      // 学员明细行
+      const learnerMap = {};
+      (detail || []).forEach(d => {
+        const key = d.userId || d.学员 || '_anon';
+        if (!learnerMap[key]) {
+          learnerMap[key] = { name: d.学员 || '匿名', dept: d.部门 || '', pos: d.岗位 || '', firstTime: d.时间 || '', lastTime: d.时间, totalTime: d.timeSpentSec || 0, attempts: 0, correct: 0, totalScore: 0 };
+        }
+        const rec = learnerMap[key];
+        rec.attempts++;
+        if (d.isCorrect) rec.correct++;
+        rec.totalScore += d.score || 0;
+        if (d.时间 && (!rec.firstTime || d.时间 < rec.firstTime)) rec.firstTime = d.时间;
+        if (d.时间 && d.时间 > rec.lastTime) rec.lastTime = d.时间;
+        rec.totalTime += d.timeSpentSec || 0;
+      });
+
+      const learners = Object.values(learnerMap);
+      const learnerRows = learners.length ? learners.map(l => {
+        const accPct = l.attempts > 0 ? Math.round(l.correct / l.attempts * 10000) / 100 : 0;
+        const accColor = accPct >= 80 ? 'text-green-600' : accPct >= 50 ? 'text-orange-500' : 'text-red-500';
+        const progressPct = Math.min(100, Math.round(l.totalTime / 3)); // 粗略进度
+        return `<tr class="border-b hover:bg-slate-50">
+          <td class="px-4 py-3 text-sm">${escHtml(l.name)}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${escHtml(l.dept)}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${escHtml(l.pos)}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${l.firstTime}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${l.lastTime}</td>
+          <td class="px-4 py-3 text-sm">${l.totalTime}秒</td>
+          <td class="px-4 py-3"><div class="w-20 h-2 bg-slate-200 rounded-full"><div class="h-full rounded-full ${accPct >= 80 ? 'bg-green-500' : accPct >= 50 ? 'bg-orange-500' : 'bg-red-400'}" style="width:${progressPct}%"></div></div></td>
+          <td class="px-4 py-3 text-sm font-medium ${accColor}">${accPct}%${l.attempts > 1 ? ' <span class="text-xs text-slate-400">(' + l.correct + '/' + l.attempts + ')</span>' : ''}</td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">暂无作答数据</td></tr>';
+
+      return `
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-3 gap-5 mb-6">
+          <!-- 学习人数 -->
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <h3 class="text-sm font-medium text-slate-500 mb-3">学习人数</h3>
+            <div class="flex items-end justify-between">
+              <div>
+                <div class="flex items-center space-x-1 text-slate-400 text-xs mb-1"><i class="fas fa-info-circle"></i><span>总人数</span></div>
+                <div class="text-2xl font-bold text-slate-800">${totalLearners}</div>
+                <div class="flex space-x-4 mt-2 text-sm"><span class="text-slate-600">已完成 <b>${completedCount}</b></span><span class="text-slate-400">未完成 <b>${incompleteCount}</b></span></div>
+              </div>
+              <button onclick="exportInteractionStatsExcel(${courseId})" class="px-3 py-1.5 text-sm rounded-lg bg-orange-500 text-white hover:bg-orange-600"><i class="fas fa-download mr-1"></i>导出</button>
+            </div>
+          </div>
+          <!-- 视频答题互动 -->
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <h3 class="text-sm font-medium text-slate-500 mb-3">视频答题互动</h3>
+            <div class="flex items-center space-x-1 text-slate-400 text-xs mb-1"><i class="fas fa-info-circle"></i><span>总人数</span></div>
+            <div class="flex items-end justify-between">
+              <div><div class="text-2xl font-bold text-slate-800">${totalLearners}</div><div class="text-green-600 font-semibold mt-1">${avgAccuracy}%<span class="text-xs text-slate-400 font-normal ml-1">平均正确率</span></div></div>
+            </div>
+          </div>
+          <!-- 课程数据 -->
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <h3 class="text-sm font-medium text-slate-500 mb-3">课程数据</h3>
+            <div class="grid grid-cols-4 gap-3 text-center">
+              <div><div class="text-lg font-bold text-slate-800">${agg.playCount || 0}</div><div class="text-xs text-slate-400">播放次数</div></div>
+              <div><div class="text-lg font-bold text-slate-800">${agg.likeCount || 0}</div><div class="text-xs text-slate-400">点赞数</div></div>
+              <div><div class="text-lg font-bold text-slate-800">${agg.commentCount || 0}</div><div class="text-xs text-slate-400">评论数</div></div>
+              <div><div class="text-lg font-bold text-slate-800">${agg.ratingAvg || 0}</div><div class="text-xs text-slate-400">评分</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 学员明细表格 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+          <div class="px-5 py-3 border-b flex items-center justify-between">
+            <h3 class="font-medium text-slate-700">学员作答明细</h3>
+            <input type="text" placeholder="根据姓名搜索" class="px-3 py-1.5 text-sm border rounded-lg w-48" oninput="filterIvStatsTable(this.value)">
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-slate-50 text-slate-500 text-left">
+                <th class="px-4 py-3 font-medium">姓名</th>
+                <th class="px-4 py-3 font-medium">部门</th>
+                <th class="px-4 py-3 font-medium">岗位</th>
+                <th class="px-4 py-3 font-medium">首次学习时间</th>
+                <th class="px-4 py-3 font-medium">末次学习时间</th>
+                <th class="px-4 py-3 font-medium">学习时长</th>
+                <th class="px-4 py-3 font-medium">学习进度</th>
+                <th class="px-4 py-3 font-medium">答题正确率</th>
+              </tr></thead>
+              <tbody id="ivstats-tbody">${learnerRows}</tbody>
+            </table>
+          </div>
+          <div class="px-5 py-3 border-t text-right text-sm text-slate-400">共 ${learners.length} 条</div>
+        </div>`;
+    }
+
+    /* ===== "视频答题互动" Tab：按视频/节点展开的详细统计 ===== */
+    function renderIvStatsInteractionTab(agg, detail, courseId) {
+      const totalAnswerers = agg.answererCount || 0;
+      const avgAcc = agg.avgAccuracy != null ? agg.avgAccuracy : (agg.totalAttempts > 0 ? Math.round((agg.correctCount || 0) / agg.totalAttempts * 10000) / 100 : 0);
+
+      // 按视频分组
+      const videoGroups = {};
+      (detail || []).forEach(d => {
+        const vKey = d.videoTitle || ('视频' + (d.videoIndex || 0));
+        if (!videoGroups[vKey]) videoGroups[vKey] = { title: vKey, nodes: {} };
+        const nKey = d.nodeTime != null ? fmtIvTime(d.nodeTime) : (d.节点序号 || '?');
+        if (!videoGroups[vKey].nodes[nKey]) videoGroups[vKey].nodes[nKey] = { time: nKey, type: d.nodeType || d.节点类型 || '试题', attempts: 0, correct: 0, totalTime: 0, answerers: {} };
+        const nd = videoGroups[vKey].nodes[nKey];
+        nd.attempts++;
+        if (d.isCorrect) nd.correct++;
+        nd.totalTime += d.timeSpentSec || 0;
+        const uKey = d.userId || d.学员 || '_anon';
+        nd.answerers[uKey] = (nd.answerers[uKey] || 0) + 1;
+      });
+
+      let videoSections = '';
+      Object.keys(videoGroups).forEach(vTitle => {
+        const vg = videoGroups[vTitle];
+        const nodeKeys = Object.keys(vg.nodes).sort();
+        const nodeTotalAttempts = nodeKeys.reduce((s, k) => s + vg.nodes[k].attempts, 0);
+        const nodeTotalCorrect = nodeKeys.reduce((s, k) => s + vg.nodes[k].correct, 0);
+        const nodeAvgAcc = nodeTotalAttempts > 0 ? Math.round(nodeTotalCorrect / nodeTotalAttempts * 10000) / 100 : 0;
+
+        const nodeRows = nodeKeys.map(nk => {
+          const n = vg.nodes[k];
+          const nAcc = n.attempts > 0 ? Math.round(n.correct / n.attempts * 10000) / 100 : 0;
+          const nColor = nAcc >= 80 ? 'text-green-600' : nAcc >= 50 ? 'text-orange-500' : 'text-red-500';
+          return `<tr class="border-b hover:bg-slate-50">
+            <td class="px-4 py-3 text-sm text-slate-600">${nk}</td>
+            <td class="px-4 py-3"><span class="px-2 py-0.5 text-xs rounded bg-orange-100 text-orange-700">${n.type === 'question' ? '试题' : n.type === 'survey' ? '问卷' : n.type === 'knowledge' ? '知识点' : n.type}</span></td>
+            <td class="px-4 py-3 text-sm">${Object.keys(n.answerers).length}</td>
+            <td class="px-4 py-3 text-sm font-medium ${nColor}">${nAcc}.00%</td>
+            <td class="px-4 py-3 text-sm text-slate-500">${Math.round(n.totalTime)}秒</td>
+          </tr>`;
+        }).join('');
+
+        videoSections += `
+          <div class="border border-slate-200 rounded-lg mb-4 overflow-hidden">
+            <div class="bg-slate-50 px-4 py-3 flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+              <div class="flex items-center space-x-3">
+                <i class="fas fa-chevron-down text-slate-400 transition"></i>
+                <span class="font-medium text-slate-700">${escHtml(vTitle)}</span>
+              </div>
+              <div class="flex items-center space-x-6 text-sm text-slate-500">
+                <span>互动节点数：<b>${nodeKeys.length}</b></span>
+                <span>平均正确率：<b class="${nodeAvgAcc >= 80 ? 'text-green-600' : nodeAvgAcc >= 50 ? 'text-orange-500' : 'text-red-500'}">${nodeAvgAcc}%</b></span>
+              </div>
+            </div>
+            <div>
+              <table class="w-full text-sm">
+                <thead><tr class="bg-white text-slate-500 text-left border-b">
+                  <th class="px-4 py-2 font-medium">时间节点</th>
+                  <th class="px-4 py-2 font-medium">互动类型</th>
+                  <th class="px-4 py-2 font-medium">互动人数</th>
+                  <th class="px-4 py-2 font-medium">平均正确率</th>
+                  <th class="px-4 py-2 font-medium">平均耗时</th>
+                </tr></thead>
+                <tbody>${nodeRows || '<tr><td colspan="5" class="px-4 py-4 text-center text-slate-400">暂无数据</td></tr>'}</tbody>
+              </table>
+            </div>
+          </div>`;
+      });
+
+      return `
+        <!-- 总览 -->
+        <div class="mb-6 flex items-center space-x-4 text-sm">
+          <span class="text-slate-500"><i class="fas fa-info-circle mr-1"></i>总人数：<b class="text-slate-800">${totalAnswerers}</b></span>
+          <span class="text-slate-500">平均正确率：<b class="${avgAcc >= 80 ? 'text-green-600' : avgAcc >= 50 ? 'text-orange-500' : 'text-red-600'}">${avgAcc}.00%</b></span>
+        </div>
+
+        <!-- 按视频展开的节点详情 -->
+        ${videoSections || '<div class="bg-white rounded-xl p-8 text-center text-slate-400 border border-dashed">暂无互动数据</div>'}`;
+    }
+
+    function filterIvStatsTable(keyword) {
+      const rows = document.querySelectorAll('#ivstats-tbody tr');
+      const kw = (keyword || '').toLowerCase();
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = (!kw || text.includes(kw)) ? '' : 'none';
+      });
+    }
+
+    function exportInteractionStatsExcel(courseId) {
+      fetch('/api/courses/' + courseId + '/interaction-stats')
+        .then(r => r.json())
+        .then(res => {
+          if (!res.success) { toast('导出失败', 'error'); return; }
+          const agg = res.aggregate || {};
+          const detail = res.detail || [];
+          const nodeHeaders = ['节点序号', '类型', '总作答数', '正确数', '正确率', '最高得分'];
+          const nodeRows = (agg.perNode || []).map(n => [n.节点序号, n.类型, n.总作答数, n.正确数, n.正确率 + '%', n.最高得分]);
+          const qHeaders = ['题目', '总作答数', '正确数', '正确率'];
+          const qRows = (agg.perQuestion || []).map(q => [q.题目, q.总作答数, q.正确数, q.正确率 + '%']);
+          const dHeaders = ['学员', '部门', '课程', '视频', '节点序号', '节点类型', '题目', '作答', '对错', '得分', '耗时秒', '时间'];
+          const dRows = detail.map(d => [d.学员, d.部门, d.课程, d.视频, d.节点序号, d.节点类型, d.题目, d.作答, d.对错, d.得分, d.耗时秒, d.时间]);
+          const wsNode = XLSX.utils.aoa_to_sheet([nodeHeaders, ...nodeRows]);
+          const wsQ = XLSX.utils.aoa_to_sheet([qHeaders, ...qRows]);
+          const wsD = XLSX.utils.aoa_to_sheet([dHeaders, ...dRows]);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, wsD, '作答明细');
+          XLSX.utils.book_append_sheet(wb, wsNode, '节点正确率');
+          XLSX.utils.book_append_sheet(wb, wsQ, '题目正确率');
+          XLSX.writeFile(wb, '互动视频数据_' + courseId + '_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
+          toast('导出成功');
+        })
+        .catch(() => toast('导出失败', 'error'));
     }
 
     // ========== 跨页面数据同步 ==========

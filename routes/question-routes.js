@@ -82,7 +82,72 @@ function collectQuestionFiles(question) {
       }
     });
   }
-  return urls;
+  // 兜底：递归扫描题目所有字段（含题干/解析富文本里内嵌的 /uploads/ 图片），避免遗漏
+  try {
+    const blob = JSON.stringify(question);
+    const re = /\/uploads\/[^"'\s)\\]+/g;
+    let m;
+    while ((m = re.exec(blob)) !== null) urls.push(m[0]);
+  } catch (e) {}
+  return [...new Set(urls)].filter(u => typeof u === 'string' && u.startsWith('/uploads/'));
+}
+
+/**
+ * 删除试题后，清理所有课程互动视频里引用了这些题的节点
+ * （避免从题库删除试题后，互动视频编辑器中仍显示已删的题）
+ * @param {Array<number>|Set<number>|number} ids
+ * @param {Object} data
+ * @returns {number} 清理的节点数
+ */
+function purgeInteractionNodesForQuestions(ids, data) {
+  const idSet = ids instanceof Set ? ids : new Set(Array.isArray(ids) ? ids : [ids]);
+  if (!data || !Array.isArray(data.management_courses)) return 0;
+  let removed = 0;
+  data.management_courses.forEach(course => {
+    if (!course || !Array.isArray(course.videos)) return;
+    course.videos.forEach(video => {
+      if (!video || !Array.isArray(video.interactionNodes)) return;
+      const before = video.interactionNodes.length;
+      video.interactionNodes = video.interactionNodes.filter(node => {
+        if (!node) return false;
+        // 仅处理引用了试题的节点（question / survey 都通过 questionRefs 引用题）
+        const refs = Array.isArray(node.questionRefs)
+          ? node.questionRefs
+          : (node.questionId !== undefined && node.questionId !== null ? [{ questionId: node.questionId }] : null);
+        if (!refs) return true; // 知识点等无题引用的节点保留
+        const remaining = refs.filter(r => !(r && idSet.has(Number(r.questionId))));
+        if (Array.isArray(node.questionRefs)) node.questionRefs = remaining;
+        // 题引用全部失效 → 整节点删除
+        return remaining.length > 0;
+      });
+      removed += before - video.interactionNodes.length;
+    });
+  });
+  return removed;
+}
+
+/**
+ * 清理"孤儿题"：bankId 在现存题库中找不到对应题库的题
+ * 场景：创建题时若没选/没找到题库会得到 bankId=0；删完所有题库后这些题仍残留
+ * @param {Object} data
+ * @returns {number} 清理的题数
+ */
+function pruneOrphanQuestions(data) {
+  if (!data) return 0;
+  const banks = data.question_banks || [];
+  const validIds = new Set();
+  banks.forEach(b => {
+    const n = Number(b.id);
+    if (!isNaN(n)) validIds.add(n);
+  });
+  const before = (data.questions || []).length;
+  data.questions = (data.questions || []).filter(q => {
+    const bid = q.bankId;
+    if (bid == null) return false;
+    const n = Number(bid);
+    return !isNaN(n) && validIds.has(n);
+  });
+  return before - data.questions.length;
 }
 
 const TYPE_NAMES = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' };
@@ -183,8 +248,15 @@ router.delete('/question-banks/:id', (req, res) => {
 
   // 同时删除该题库下的所有试题
   data.questions = (data.questions || []).filter(q => q.bankId !== id);
+  // 清理互动视频里引用了这些题的节点
+  purgeInteractionNodesForQuestions(questionsToDelete.map(q => q.id), data);
   banks.splice(index, 1);
   data.question_banks = banks;
+  // 兜底：如果删完后没有任何题库了，清理所有 bankId 对不上现存题库的"孤儿题"
+  // 避免"删完所有题库但题还在 picker 里"的残留
+  if ((data.question_banks || []).length === 0) {
+    pruneOrphanQuestions(data);
+  }
   writeData(data);
   res.json({ success: true, message: '题库已删除，关联题目及图片已清理' });
 });
@@ -306,6 +378,8 @@ router.delete('/questions/:id', (req, res) => {
       if (exam.questions) exam.questions = exam.questions.filter(q => q.questionId !== id);
     });
   }
+  // 清理互动视频里引用了该题的节点
+  purgeInteractionNodesForQuestions([id], data);
   writeData(data);
   res.json({ success: true, message: '试题已删除，关联图片已清理' });
 });
@@ -331,6 +405,8 @@ router.delete('/questions/batch', (req, res) => {
       if (exam.questions) exam.questions = exam.questions.filter(q => !idSet.has(q.questionId));
     });
   }
+  // 清理互动视频里引用了这些题的节点
+  purgeInteractionNodesForQuestions(ids, data);
   writeData(data);
   res.json({ success: true, deleted: ids.length, message: '试题已删除，关联图片已清理' });
 });

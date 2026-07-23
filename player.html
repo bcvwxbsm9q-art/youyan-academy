@@ -166,6 +166,30 @@
             .progress-track:hover .chapter-tooltip {
                 opacity: 1;
             }
+
+            /* 互动视频节点圆点（试题=红 / 问卷=蓝 / 知识点=绿） */
+            #iv-nodes-track { z-index: 2; }
+            .iv-node-dot {
+                position: absolute;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                border: 2px solid #fff;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+                pointer-events: auto;
+                cursor: pointer;
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+            }
+            .iv-node-dot:hover {
+                transform: translate(-50%, -50%) scale(1.5);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.55);
+            }
+            .iv-node-dot.type-question { background: #ef4444; }
+            .iv-node-dot.type-survey { background: #3b82f6; }
+            .iv-node-dot.type-knowledge { background: #10b981; }
+            .iv-node-dot.fired { opacity: 0.35; }
             
             /* 章节样式 */
             .chapter-active {
@@ -433,6 +457,8 @@
                                             <div class="progress-fill" id="progress-bar" style="width: 0%">
                                                 <div class="chapter-tooltip" id="chapter-tooltip">00:00</div>
                                             </div>
+                                            <!-- 互动视频节点圆点（试题/问卷/知识点） -->
+                                            <div id="iv-nodes-track" class="absolute inset-0" style="pointer-events:none;"></div>
                                         </div>
                                     </div>
                                     
@@ -686,6 +712,11 @@
         let controlsTimeout = null;
         let isMuted = false;
         let previousVolume = 1;
+        // 互动视频相关状态
+        const ivFiredNodes = new Set();   // 当前视频已触发节点 id
+        let ivCorrectCount = 0;           // 本次播放累计答对题数
+        let ivOverlayActive = false;
+        let ivNodeShownAt = 0;            // 当前节点显示时间戳（用于统计耗时）
         
         // ==================== 学习时长记录 ====================
         function getUserId() {
@@ -1292,6 +1323,7 @@
             }
 
             lastVideoIndex = videoIdx;
+            ivFiredNodes.clear(); // 切换章节时重置已触发节点
             // 处理视频URL：优先用当前章节的url，其次用课程的video字段
             let src = v.url || courseData?.video || '';
             if (src && !src.startsWith('http://') && !src.startsWith('https://') && !src.startsWith('data:')) {
@@ -2344,6 +2376,17 @@
             if (Math.floor(video.currentTime) % 10 === 0 && video.currentTime > 0) {
                 saveVideoPosition(`${courseId}_${lastVideoIndex}`, video.currentTime);
             }
+
+            // ===== 互动视频节点触发检测 =====
+            const ivNodes = (currentCourseData?.videos?.[lastVideoIndex]?.interactionNodes) || [];
+            for (const n of ivNodes) {
+                if (!ivFiredNodes.has(n.id) && video.currentTime >= n.time) {
+                    ivFiredNodes.add(n.id);
+                    markIvDotFired(n.id); // 已触发的圆点淡化
+                    triggerInteractionNode(n);
+                    break;
+                }
+            }
         }
         
         video.addEventListener('timeupdate', updateProgress);
@@ -2366,6 +2409,342 @@
             document.getElementById('chapter-tooltip').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         });
 
+        // ===================================================================
+        // 互动视频：节点触发 / 覆盖层 / 对错分支 / 返回上一节点
+        // ===================================================================
+        let ivCurrentQuestion = null;   // 当前互动试题详情（用于作答后渲染对错与解析）
+
+        function ivGetNodes() {
+            return (currentCourseData?.videos?.[lastVideoIndex]?.interactionNodes) || [];
+        }
+
+        // 在进度条上渲染所有互动节点的彩色圆点（按类型上色，点击可跳转）
+        function renderIvDots() {
+            const track = document.getElementById('iv-nodes-track');
+            if (!track) return;
+            track.innerHTML = '';
+            const nodes = ivGetNodes();
+            const dur = video && video.duration;
+            if (!dur || !isFinite(dur) || dur <= 0) return;
+            nodes.forEach(n => {
+                if (typeof n.time !== 'number' || n.time < 0) return;
+                const dot = document.createElement('div');
+                const type = n.type || 'question';
+                dot.className = 'iv-node-dot type-' + type;
+                dot.dataset.nodeId = n.id;
+                const ratio = Math.max(0, Math.min(1, n.time / dur));
+                dot.style.left = (ratio * 100) + '%';
+                const typeLabel = type === 'knowledge' ? '知识点' : type === 'survey' ? '问卷' : '试题';
+                const title = n.title || n.surveyTitle || (n.questionRefs && n.questionRefs[0] && n.questionRefs[0].content) || typeLabel;
+                const mm = Math.floor(n.time / 60), ss = String(Math.floor(n.time % 60)).padStart(2, '0');
+                const ts = mm > 0 ? `${mm}:${ss}` : `${Math.floor(n.time)}s`;
+                dot.title = `[${typeLabel}] ${title} @ ${ts}`;
+                dot.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (ivOverlayActive) return; // 弹层已开就不抢焦点
+                    video.currentTime = Math.max(0, n.time);
+                });
+                track.appendChild(dot);
+            });
+        }
+
+        // 节点触发后把对应圆点淡化（视觉反馈：哪些已经播过）
+        function markIvDotFired(nodeId) {
+            const track = document.getElementById('iv-nodes-track');
+            if (!track) return;
+            const dot = track.querySelector(`.iv-node-dot[data-node-id="${nodeId}"]`);
+            if (dot) dot.classList.add('fired');
+        }
+
+        function triggerInteractionNode(node) {
+            if (ivOverlayActive) return;
+            video.pause();
+            ivOverlayActive = true;
+            ivNodeShownAt = Date.now();
+            renderInteractionOverlay(node);
+        }
+
+        function renderInteractionOverlay(node) {
+            // 全屏固定定位 overlay，确保用户只能答题
+            let overlay = document.getElementById('iv-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'iv-overlay';
+                overlay.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm';
+                document.body.appendChild(overlay);
+            }
+            overlay.classList.remove('hidden');
+            overlay.style.display = 'flex';
+
+            if (node.type === 'knowledge') {
+                overlay.innerHTML = `
+                    <div class="bg-white rounded-2xl p-8 md:p-12 w-[92%] max-w-5xl shadow-2xl mx-auto max-h-[88vh] overflow-y-auto">
+                        <h4 class="font-semibold text-slate-800 text-xl md:text-2xl mb-4">${ivEsc(node.title || '知识点')}</h4>
+                        <p class="text-base text-slate-600 mb-6 whitespace-pre-wrap leading-relaxed">${ivEsc(node.content || '')}</p>
+                        ${node.imageUrl ? `<img src="${ivEsc(node.imageUrl)}" class="max-h-64 rounded-xl mb-5 object-contain">` : ''}
+                        <button onclick="ivResumePlay()" class="w-full py-3.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-medium transition text-lg">继续播放</button>
+                    </div>`;
+                return;
+            }
+            if (node.type === 'survey') {
+                const refs = node.questionRefs || [];
+                const items = refs.map((r, i) => `<div class="mb-3"><p class="text-sm font-medium text-slate-700 mb-1">${i + 1}. ${ivEsc(r.content || '')}</p><input class="w-full px-3 py-2 border rounded-lg text-sm" data-qid="${r.questionId}" placeholder="请输入你的回答"></div>`).join('');
+                overlay.innerHTML = `
+                    <div class="bg-white rounded-2xl p-8 md:p-12 w-[92%] max-w-5xl shadow-2xl mx-auto max-h-[88vh] overflow-y-auto">
+                        <h4 class="font-semibold text-slate-800 text-xl mb-5">${ivEsc(node.surveyTitle || '互动问卷')}</h4>
+                        ${items}
+                        <button onclick="ivSubmitSurvey('${node.id}')" class="w-full py-3.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-medium transition mt-3 text-lg">提交并继续播放</button>
+                    </div>`;
+                return;
+            }
+            // 试题节点：拉取题目详情（含答案）用于判分
+            const ref = node.questionRefs && node.questionRefs[0] ? node.questionRefs[0] : null;
+            const qid = ref ? ref.questionId : null;
+            if (qid == null) {
+                // 节点上没有题引用——若有快照则显示历史快照（只读），否则跳过
+                if (ref && ref.content) { ivRenderDeletedQuestionFallback(ref, node, overlay); return; }
+                ivResumePlay(); return;
+            }
+            fetch('/api/questions/' + qid)
+                .then(r => r.json())
+                .then(res => {
+                    const q = (res && res.data) ? res.data : res;
+                    if (!q || (res && res.success === false) || res.error) {
+                        // 原题已被删除：若有快照则显示历史快照（只读，提示用户），否则跳过
+                        if (ref && ref.content) { ivRenderDeletedQuestionFallback(ref, node, overlay); return; }
+                        ivResumePlay(); return;
+                    }
+                    ivRenderQuestion(q, node, overlay);
+                })
+                .catch(() => {
+                    if (ref && ref.content) { ivRenderDeletedQuestionFallback(ref, node, overlay); return; }
+                    ivResumePlay();
+                });
+        }
+
+        function ivRenderQuestion(q, node, overlay) {
+            ivCurrentQuestion = q;
+            const type = q.type || 'single';
+            const options = q.options || [];
+            let body = '';
+            if (type === 'multiple') {
+                body = options.map((o, i) => {
+                    const letter = String.fromCharCode(65 + i);
+                    return `<label data-opt="${letter}" class="iv-opt-row flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-100 cursor-pointer transition"><input type="checkbox" class="iv-opt w-4 h-4" value="${letter}"><span class="text-base">${ivEsc(o)}</span></label>`;
+                }).join('');
+            } else if (type === 'judge') {
+                body = `
+                    <label data-opt="A" class="iv-opt-row flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-100 cursor-pointer transition"><input type="radio" name="ivq" class="iv-opt w-4 h-4" value="A"><span class="text-base">正确</span></label>
+                    <label data-opt="B" class="iv-opt-row flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-100 cursor-pointer transition"><input type="radio" name="ivq" class="iv-opt w-4 h-4" value="B"><span class="text-base">错误</span></label>`;
+            } else if (type === 'fill' || type === 'essay') {
+                body = `<textarea class="w-full px-4 py-3 border rounded-xl text-base" rows="3" placeholder="请输入你的答案"></textarea>`;
+            } else {
+                body = options.map((o, i) => {
+                    const letter = String.fromCharCode(65 + i);
+                    return `<label data-opt="${letter}" class="iv-opt-row flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-100 cursor-pointer transition"><input type="radio" name="ivq" class="iv-opt w-4 h-4" value="${letter}"><span class="text-base">${ivEsc(o)}</span></label>`;
+                }).join('');
+            }
+            overlay.innerHTML = `
+                <div class="bg-white rounded-2xl p-8 md:p-12 lg:p-16 w-[95vw] max-w-none shadow-2xl mx-auto max-h-[90vh] overflow-y-auto">
+                    <p class="text-sm text-orange-500 font-semibold mb-3 tracking-wide">互动试题</p>
+                    <p class="font-medium text-slate-800 text-xl md:text-2xl mb-8 leading-relaxed">${ivEsc(q.title || q.content || '')}</p>
+                    <div class="mb-8 space-y-4" id="iv-options">${body}</div>
+                    <div id="iv-result" class="text-base mb-6"></div>
+                    <div class="flex space-x-4" id="iv-btn-row">
+                        <button id="iv-submit-btn" onclick="ivSubmitQuestion('${node.id}', '${type}')" class="px-10 py-4 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-semibold transition text-lg">提交答案</button>
+                        <button onclick="ivResumePlay()" class="px-10 py-4 rounded-xl border-2 border-slate-300 text-slate-600 hover:bg-slate-50 font-semibold transition text-lg">继续播放</button>
+                    </div>
+                </div>`;
+        }
+
+        // 原题已被删除时的兜底渲染：显示历史快照（content）+ 提示「不可作答」+ 继续播放
+        function ivRenderDeletedQuestionFallback(ref, node, overlay) {
+            const typeLabel = ({ single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' }[ref.type] || '试题');
+            const ts = node.time ? ` · 节点 @ ${Math.floor(node.time/60)}:${String(Math.floor(node.time%60)).padStart(2,'0')}` : '';
+            overlay.innerHTML = `
+                <div class="bg-white rounded-2xl p-8 md:p-12 w-[95vw] max-w-none shadow-2xl mx-auto max-h-[90vh] overflow-y-auto">
+                    <div class="flex items-center text-amber-600 text-base font-medium mb-5 bg-amber-50 px-5 py-4 rounded-xl">
+                        <i class="fa fa-exclamation-triangle mr-3 text-lg"></i>
+                        <span>原题已被删除，以下为插入时的历史快照（不可作答）${ivEsc(ts)}</span>
+                    </div>
+                    <p class="text-sm text-orange-500 font-semibold mb-3">互动试题 · ${ivEsc(typeLabel)}${ref.score != null ? ` · ${ref.score} 分` : ''}</p>
+                    <p class="font-medium text-slate-800 mb-8 whitespace-pre-wrap leading-relaxed text-lg">${ivEsc(ref.content || '（该题无内容快照）')}</p>
+                    <button onclick="ivResumePlay()" class="w-full py-3.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-medium transition text-lg">继续播放</button>
+                </div>`;
+        }
+
+        function ivCollectAnswer(type) {
+            if (type === 'multiple') {
+                return Array.from(document.querySelectorAll('#iv-overlay .iv-opt:checked')).map(c => c.value);
+            }
+            if (type === 'judge') {
+                const sel = document.querySelector('#iv-overlay input[name="ivq"]:checked');
+                return sel ? sel.value : '';
+            }
+            if (type === 'fill' || type === 'essay') {
+                const ta = document.querySelector('#iv-overlay textarea');
+                return ta ? ta.value : '';
+            }
+            const sel = document.querySelector('#iv-overlay input[name="ivq"]:checked');
+            return sel ? sel.value : '';
+        }
+
+        // 浏览器侧先做即时判分（仅用于展示对错），服务端为权威记录
+        function ivJudge(q, userAnswer, type) {
+            const correct = Array.isArray(q.answer) ? q.answer : [q.answer];
+            if (type === 'multiple') {
+                const ca = correct.map(x => String(x).trim()).sort().join(',');
+                const ua = (Array.isArray(userAnswer) ? userAnswer : [userAnswer]).map(x => String(x).trim()).sort().join(',');
+                return ua === ca && ua !== '';
+            }
+            if (type === 'judge') {
+                const ub = (userAnswer === 'A');
+                const cb = (String(correct[0]).trim().toUpperCase() === 'A' || String(correct[0]).trim() === '正确' || String(correct[0]).trim() === 'true');
+                return ub === cb;
+            }
+            if (type === 'fill') {
+                const ua = String(userAnswer || '').trim().toLowerCase();
+                return ua !== '' && correct.map(x => String(x).trim().toLowerCase()).includes(ua);
+            }
+            return String(userAnswer || '').trim() === String(correct[0]).trim();
+        }
+
+        function ivSubmitQuestion(nodeId, type) {
+            const node = ivGetNodes().find(n => n.id === nodeId);
+            if (!node) { ivResumePlay(); return; }
+            const q = ivCurrentQuestion;
+            if (!q) { ivResumePlay(); return; }
+            const userAnswer = ivCollectAnswer(type);
+            const isCorrect = ivJudge(q, userAnswer, type);
+            if (isCorrect) ivCorrectCount++;
+            ivRenderResult(q, node, type, userAnswer, isCorrect);
+
+            // 上报作答（不阻塞）
+            const qid = node.questionRefs && node.questionRefs[0] ? node.questionRefs[0].questionId : null;
+            const timeSpent = Math.max(0, Math.round((Date.now() - ivNodeShownAt) / 1000));
+            const payload = {
+                userId: getUserId(),
+                userAnswer: (type === 'multiple') ? userAnswer : (type === 'fill' || type === 'essay' ? userAnswer : (Array.isArray(userAnswer) ? userAnswer[0] : userAnswer)),
+                timeSpentSec: timeSpent
+            };
+            fetch(`/api/courses/${courseId}/videos/${lastVideoIndex}/nodes/${nodeId}/answer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).catch(() => {});
+        }
+
+        // 作答后渲染：对错标识 + 选项高亮 + 解析 + 返回上一节点
+        function ivRenderResult(q, node, type, userAnswer, isCorrect) {
+            // 正确选项的字母集合（judge 归一化为 A/B）
+            let correct = [];
+            if (type === 'judge') {
+                const ans = Array.isArray(q.answer) ? q.answer[0] : q.answer;
+                const a = String(ans == null ? '' : ans).trim();
+                const isTrue = a.toUpperCase() === 'A' || a === '正确' || a.toLowerCase() === 'true';
+                correct = [isTrue ? 'A' : 'B'];
+            } else if (type === 'multiple' || type === 'single') {
+                correct = (Array.isArray(q.answer) ? q.answer : [q.answer]).map(x => String(x == null ? '' : x).trim()).filter(Boolean);
+            }
+
+            document.querySelectorAll('#iv-overlay .iv-opt-row').forEach(row => {
+                const v = row.getAttribute('data-opt');
+                const inp = row.querySelector('.iv-opt');
+                const checked = inp && inp.checked;
+                const isCorrectOpt = correct.includes(v);
+                if (isCorrectOpt) {
+                    row.classList.add('bg-green-50', 'border', 'border-green-400');
+                    const tag = document.createElement('span');
+                    tag.className = 'ml-auto text-green-600 text-xs font-medium whitespace-nowrap';
+                    tag.textContent = '正确答案';
+                    row.appendChild(tag);
+                } else if (checked) {
+                    row.classList.add('bg-red-50', 'border', 'border-red-400');
+                    const tag = document.createElement('span');
+                    tag.className = 'ml-auto text-red-600 text-xs font-medium whitespace-nowrap';
+                    tag.textContent = '你的选择';
+                    row.appendChild(tag);
+                }
+                if (inp) inp.disabled = true;
+            });
+
+            const resultEl = document.getElementById('iv-result');
+            const analysis = String(q.analysis || q.explanation || '').trim();
+            let html = isCorrect
+                ? '<div class="mb-2"><span class="inline-flex items-center px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">✅ 回答正确</span></div>'
+                : '<div class="mb-2"><span class="inline-flex items-center px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-sm font-medium">❌ 回答错误</span></div>';
+            if (analysis) {
+                html += `<div class="mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200"><p class="text-xs font-semibold text-slate-500 mb-1">📖 解析</p><p class="text-sm text-slate-700 whitespace-pre-wrap">${ivEsc(analysis)}</p></div>`;
+            } else if (!isCorrect) {
+                html += '<p class="text-xs text-slate-400 mt-1">本题暂未配置解析</p>';
+            }
+            resultEl.innerHTML = html;
+
+            // 隐藏「提交」按钮，避免重复作答
+            const submitBtn = document.getElementById('iv-submit-btn');
+            if (submitBtn) submitBtn.style.display = 'none';
+
+            // 答错时提供「返回上一节点重新学习」
+            let actions = document.getElementById('iv-actions');
+            if (!actions) {
+                actions = document.createElement('div');
+                actions.id = 'iv-actions';
+                actions.className = 'flex space-x-2 mt-3';
+                resultEl.appendChild(actions);
+            }
+            actions.innerHTML = isCorrect
+                ? ''
+                : `<button onclick="ivJumpPrevNode()" class="px-4 py-2 rounded-lg bg-amber-500 text-white">返回上一节点重新学习</button>`;
+        }
+
+        function ivSubmitSurvey(nodeId) {
+            const node = ivGetNodes().find(n => n.id === nodeId);
+            if (!node) { ivResumePlay(); return; }
+            const inputs = document.querySelectorAll('#iv-overlay input[data-qid]');
+            const answers = {};
+            inputs.forEach(inp => { answers[inp.dataset.qid] = inp.value; });
+            fetch(`/api/courses/${courseId}/videos/${lastVideoIndex}/nodes/${nodeId}/answer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: getUserId(), userAnswer: answers })
+            }).catch(() => {});
+            ivResumePlay();
+        }
+
+        function ivResumePlay() {
+            const overlay = document.getElementById('iv-overlay');
+            if (overlay) { overlay.style.display = 'none'; overlay.classList.add('hidden'); overlay.innerHTML = ''; }
+            ivOverlayActive = false;
+            if (video.paused) video.play().catch(() => {});
+        }
+
+        function ivJumpPrevNode() {
+            const nodes = ivGetNodes();
+            // 当前节点 = 最后一个已触发的节点
+            let current = null;
+            for (const n of nodes) { if (ivFiredNodes.has(n.id)) current = n; }
+            const prev = nodes.filter(n => current && n.time < current.time).sort((a, b) => b.time - a.time)[0];
+            if (prev) {
+                // 清除目标节点及之后所有节点的已触发标记，使它们可以重新弹出
+                const targetTime = prev.time;
+                ivFiredNodes.forEach(id => {
+                    const nd = nodes.find(n => n.id === id);
+                    if (nd && nd.time >= targetTime) ivFiredNodes.delete(id);
+                });
+                video.currentTime = prev.time;
+            } else {
+                // 没有更早的节点，跳到开头并重置所有标记
+                ivFiredNodes.clear();
+                video.currentTime = 0;
+            }
+            ivResumePlay();
+        }
+
+        function ivEsc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+
         // 时长（增强：自动检测并回写数据模型 + 更新章节列表）
         function updateDuration() {
             if (video.duration && !isNaN(video.duration) && video.duration > 0) {
@@ -2376,6 +2755,7 @@
                 updateDurationDisplay();
                 updateCurrentChapterDuration();
                 syncVideoDurationToData();
+                renderIvDots(); // 章节时长确定后渲染互动节点圆点
             }
         }
 

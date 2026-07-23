@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/user-avatars/1783579052402-447707856.jpg",
       "createdAt": "2026/7/9 14:22:27",
-      "lastLogin": "2026/7/22 09:40:43",
+      "lastLogin": "2026/7/23 09:35:22",
       "status": "active",
       "position": "人事经理"
     },
@@ -218,6 +218,24 @@
       "courseCount": 0,
       "regDate": "2026-07-16",
       "id": 1784182583742
+    },
+    {
+      "name": "苏浩",
+      "department": "运营工作室",
+      "title": "高级角色原画",
+      "level": "senior",
+      "levelName": "高级讲师",
+      "avatar": "/uploads/avatars/1784776239262-833090357.JPG",
+      "intro": "",
+      "startTeachingDate": "2026-07-23",
+      "status": "enabled",
+      "type": "internal",
+      "skills": [
+        "原画"
+      ],
+      "courseCount": 0,
+      "regDate": "2026-07-23",
+      "id": 1784776262196
     }
   ],
   "index_banners": [
@@ -238,6 +256,15 @@
       "status": "published",
       "id": 1784706076975,
       "createdAt": "2026-07-22T07:41:16.975Z"
+    },
+    {
+      "img": "/uploads/covers/1784776101415-966740672.png",
+      "courseId": 1784182455662,
+      "announcementId": null,
+      "order": 3,
+      "status": "published",
+      "id": 1784776110651,
+      "createdAt": "2026-07-23T03:08:30.651Z"
     }
   ],
   "course_categories": [
@@ -377,7 +404,28 @@
       "id": 1780974276172
     }
   ],
-  "notices": [],
+  "notices": [
+    {
+      "title": "如何超越自我——元气职场第一期",
+      "content": "<p><img src=\"/uploads/images/1784776328364-261469722.png\"></p>",
+      "status": "published",
+      "pinned": 0,
+      "publishedAt": "2026-07-23",
+      "id": 1784776331823,
+      "createdAt": "2026-07-23T03:12:11.823Z",
+      "updatedAt": "2026-07-23T03:12:11.823Z"
+    },
+    {
+      "title": "职场礼仪规范——元气职场第二期",
+      "content": "<p><img src=\"/uploads/images/1784777545978-602281985.png\"></p>",
+      "status": "published",
+      "pinned": 0,
+      "publishedAt": "2026-07-23",
+      "id": 1784777551572,
+      "createdAt": "2026-07-23T03:32:31.572Z",
+      "updatedAt": "2026-07-23T03:32:31.572Z"
+    }
+  ],
   "management_courses": [
     {
       "title": "粒子系统",
@@ -393,16 +441,17 @@
           "title": "粒子系统（钟飞跃）.mp4",
           "size": 74042744,
           "type": "video/mp4",
-          "duration": 2249
+          "duration": 2249,
+          "interactionNodes": []
         }
       ],
       "attachments": [],
       "duration": 2249,
-      "views": 1,
+      "views": 3,
       "rating": 0,
       "id": 1784182455662,
       "createdAt": "2026/7/16 14:14:15",
-      "updatedAt": "2026/7/16 14:14:15"
+      "updatedAt": "2026/7/23 14:42:33"
     },
     {
       "title": "游戏项目上线与故障排查",
@@ -453,6 +502,31 @@
       "id": 1784185505080,
       "createdAt": "2026/7/16 15:05:05",
       "updatedAt": "2026/7/16 15:05:05"
+    },
+    {
+      "title": "AI绘画技巧分享",
+      "cover": "/uploads/covers/1784776134416-184012043.png",
+      "categoryId": 1780974099732,
+      "subcategoryId": 1780974104353,
+      "lecturerId": 1784776262196,
+      "description": "",
+      "status": "published",
+      "videos": [
+        {
+          "url": "/uploads/videos/1784776147371-592460789.mp4",
+          "title": "AI绘画技巧分享.mp4",
+          "size": 84008754,
+          "type": "video/mp4",
+          "duration": 1359
+        }
+      ],
+      "attachments": [],
+      "duration": 1359,
+      "views": 0,
+      "rating": 0,
+      "id": 1784776157906,
+      "createdAt": "2026/7/23 11:09:17",
+      "updatedAt": "2026/7/23 11:11:15"
     }
   ],
   "training_projects": [
@@ -763,30 +837,6 @@
       "certificateId": "cert-1783333691917",
       "read": false,
       "createdAt": "2026-07-08T01:51:00.760Z"
-    },
-    {
-      "id": "nt-1784705012680-0",
-      "userId": "1780909174403",
-      "title": "恭喜您获得证书",
-      "content": "您已获得《优秀讲师》证书，证书编号：CERT0001。请在个人中心-我的证书查看。",
-      "type": "certificate",
-      "certificateId": "cert-1784704957865",
-      "userCertificateId": "uc-1784705012680-393119418",
-      "read": true,
-      "createdAt": "2026-07-22T07:23:32.680Z",
-      "readAt": "2026-07-22T07:27:06.103Z"
-    },
-    {
-      "id": "nt-1784705016016-0",
-      "userId": "1780909174403",
-      "title": "恭喜您获得证书",
-      "content": "您已获得《测试》证书，证书编号：CEAR0001。请在个人中心-我的证书查看。",
-      "type": "certificate",
-      "certificateId": "cert-1784705002618",
-      "userCertificateId": "uc-1784705016016-590833638",
-      "read": true,
-      "createdAt": "2026-07-22T07:23:36.016Z",
-      "readAt": "2026-07-22T07:27:03.199Z"
     }
   ],
   "notification_reads": [],
@@ -941,261 +991,67 @@
   "questions": [
     {
       "type": "single",
-      "title": "画面色彩中，主色调应该占（   ）？",
-      "content": "画面色彩中，主色调应该占（   ）？",
+      "title": "在 Lua 中，关于变量访问效率的说法，正确的是（          ）？",
+      "content": "在 Lua 中，关于变量访问效率的说法，正确的是（          ）？",
       "options": [
-        "7分",
-        "6分",
-        "8分"
+        "全局变量访问效率高于局部变量",
+        "局部变量访问无需查表，效率更高",
+        "UpValue 变量与全局变量效率一致"
       ],
-      "answer": "A",
-      "explanation": "画面色彩中主色调占7分。",
-      "analysis": "画面色彩中主色调占7分。",
+      "answer": "B",
+      "explanation": "非local局部变量，即UpValue（全局变量其实也是记录在名为_ENV的第一个Table类型的UpValue中）的访问通常需更多的指令操作，而Local变量的访问，只需要一条简单寄存器读取指令，所以能节省出数据查询带来的性能开销",
+      "analysis": "非local局部变量，即UpValue（全局变量其实也是记录在名为_ENV的第一个Table类型的UpValue中）的访问通常需更多的指令操作，而Local变量的访问，只需要一条简单寄存器读取指令，所以能节省出数据查询带来的性能开销",
       "difficulty": "easy",
       "knowledge": "",
       "score": 3,
-      "bankId": 0,
-      "id": 1781515331433,
-      "createdAt": "2026/6/15 17:22:11",
-      "updatedAt": "2026/6/15 17:22:11"
+      "bankId": 1784777614877,
+      "id": 1784777637112,
+      "createdAt": "2026/7/23 11:33:57",
+      "updatedAt": "2026/7/23 11:33:57"
     },
     {
       "type": "single",
-      "title": "在163构图模型布局比例下，前景、中景、背景分别应该占多少比例？（   ）",
-      "content": "在163构图模型布局比例下，前景、中景、背景分别应该占多少比例？（   ）",
+      "title": "由于require会有一个package.loaded[name] 的判断，所以当要重新require的时候，必须将其置为（           ）？",
+      "content": "由于require会有一个package.loaded[name] 的判断，所以当要重新require的时候，必须将其置为（           ）？",
       "options": [
-        "10%，60%，30%",
-        "30%，60%，10%",
-        "10%，30%，60%"
+        "nil",
+        "ture",
+        "false"
       ],
       "answer": "A",
-      "explanation": "在163构图模型布局比例下，前景、中景、背景分别应该占10%、60%、30%",
-      "analysis": "在163构图模型布局比例下，前景、中景、背景分别应该占10%、60%、30%",
+      "explanation": "由于require会有一个package.loaded[name] 的判断，所以当要重新require的时候，必须将其置为nil。\npackage.loaded[name] = nil",
+      "analysis": "由于require会有一个package.loaded[name] 的判断，所以当要重新require的时候，必须将其置为nil。\npackage.loaded[name] = nil",
       "difficulty": "easy",
       "knowledge": "",
       "score": 3,
-      "bankId": 0,
-      "id": 1781515331435,
-      "createdAt": "2026/6/15 17:22:11",
-      "updatedAt": "2026/6/15 17:22:11"
+      "bankId": 1784777614877,
+      "id": 1784777637114,
+      "createdAt": "2026/7/23 11:33:57",
+      "updatedAt": "2026/7/23 11:33:57"
     },
     {
       "type": "multiple",
-      "title": "在课堂中提到的721色彩比例规则和163场景构图模型中，以下哪些表述符合标准化流程？（   ）",
-      "content": "在课堂中提到的721色彩比例规则和163场景构图模型中，以下哪些表述符合标准化流程？（   ）",
+      "title": "以下哪些是 Lua 的基本数据类型\n（      ）？",
+      "content": "以下哪些是 Lua 的基本数据类型\n（      ）？",
       "options": [
-        "中景是承载叙事主体的视觉重心区域",
-        "背景需通过强化细节来与中景形成视觉对比，突出主体",
-        "对比色可利用补色关系制造冷暖冲突，牵引观众注意力"
+        "Boolean",
+        "String",
+        "Table"
       ],
       "answer": [
         "A",
+        "B",
         "C"
       ],
-      "explanation": "A正确：中景60%是163模型的核心区域，承载叙事主体与视觉重心，决定构图稳定性；\nB错误：背景30%的设计要点是弱化细节、利用雾效制造虚实对比，而非强化细节，目的是减少干扰、突出中景主体；\nE正确：对比色10%作为点睛之笔，补色关系的冷暖冲突是制造视觉张力、引导视线的重要方式。",
-      "analysis": "A正确：中景60%是163模型的核心区域，承载叙事主体与视觉重心，决定构图稳定性；\nB错误：背景30%的设计要点是弱化细节、利用雾效制造虚实对比，而非强化细节，目的是减少干扰、突出中景主体；\nE正确：对比色10%作为点睛之笔，补色关系的冷暖冲突是制造视觉张力、引导视线的重要方式。",
+      "explanation": "Lua的数据类型有Nil、Boolean、Number、String、Function、User data(Heavy 、Light)、Thread、Table(Metatable、Environment)、Rider 调试通过断点可以获得类型",
+      "analysis": "Lua的数据类型有Nil、Boolean、Number、String、Function、User data(Heavy 、Light)、Thread、Table(Metatable、Environment)、Rider 调试通过断点可以获得类型",
       "difficulty": "easy",
       "knowledge": "",
       "score": 5,
-      "bankId": 0,
-      "id": 1781515331437,
-      "createdAt": "2026/6/15 17:22:11",
-      "updatedAt": "2026/6/15 17:22:11"
-    },
-    {
-      "type": "single",
-      "title": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
-      "content": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
-      "options": [
-        "计算Mesh的每个顶点的位置信息",
-        "计算Local的每个顶点的位置信息"
-      ],
-      "answer": "A",
-      "explanation": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
-      "analysis": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
-      "difficulty": "easy",
-      "knowledge": "",
-      "score": 3,
-      "bankId": 0,
-      "id": 1782110426420,
-      "createdAt": "2026/6/22 14:40:26",
-      "updatedAt": "2026/6/22 14:40:26"
-    },
-    {
-      "type": "single",
-      "title": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
-      "content": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
-      "options": [
-        "简单粒子",
-        "多元粒子",
-        "高级粒子"
-      ],
-      "answer": "A",
-      "explanation": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
-      "analysis": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
-      "difficulty": "easy",
-      "knowledge": "",
-      "score": 3,
-      "bankId": 0,
-      "id": 1782110426423,
-      "createdAt": "2026/6/22 14:40:26",
-      "updatedAt": "2026/6/22 14:40:26"
-    },
-    {
-      "type": "multiple",
-      "title": "使用简单粒子所带来的问题有哪些？",
-      "content": "使用简单粒子所带来的问题有哪些？",
-      "options": [
-        "CG需要支持该脚本",
-        "项目特效优化框架需要支持此脚本",
-        "广告板效果需要独立的材质，防止合批导致效果错误",
-        "美术需要适应此脚本，制作上更加繁琐等等"
-      ],
-      "answer": [
-        "A",
-        "B",
-        "C",
-        "D"
-      ],
-      "explanation": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
-      "analysis": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
-      "difficulty": "easy",
-      "knowledge": "",
-      "score": 5,
-      "bankId": 0,
-      "id": 1782110426425,
-      "createdAt": "2026/6/22 14:40:26",
-      "updatedAt": "2026/6/22 14:40:26"
-    },
-    {
-      "type": "single",
-      "title": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
-      "content": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
-      "options": [
-        "计算Mesh的每个顶点的位置信息",
-        "计算Local的每个顶点的位置信息"
-      ],
-      "answer": "A",
-      "explanation": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
-      "analysis": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
-      "difficulty": "easy",
-      "knowledge": "",
-      "score": 3,
-      "bankId": 0,
-      "id": 1782110435798,
-      "createdAt": "2026/6/22 14:40:35",
-      "updatedAt": "2026/6/22 14:40:35"
-    },
-    {
-      "type": "single",
-      "title": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
-      "content": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
-      "options": [
-        "简单粒子",
-        "多元粒子",
-        "高级粒子"
-      ],
-      "answer": "A",
-      "explanation": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
-      "analysis": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
-      "difficulty": "easy",
-      "knowledge": "",
-      "score": 3,
-      "bankId": 0,
-      "id": 1782110435800,
-      "createdAt": "2026/6/22 14:40:35",
-      "updatedAt": "2026/6/22 14:40:35"
-    },
-    {
-      "type": "multiple",
-      "title": "使用简单粒子所带来的问题有哪些？",
-      "content": "使用简单粒子所带来的问题有哪些？",
-      "options": [
-        "CG需要支持该脚本",
-        "项目特效优化框架需要支持此脚本",
-        "广告板效果需要独立的材质，防止合批导致效果错误",
-        "美术需要适应此脚本，制作上更加繁琐等等"
-      ],
-      "answer": [
-        "A",
-        "B",
-        "C",
-        "D"
-      ],
-      "explanation": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
-      "analysis": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
-      "difficulty": "easy",
-      "knowledge": "",
-      "score": 5,
-      "bankId": 0,
-      "id": 1782110435802,
-      "createdAt": "2026/6/22 14:40:35",
-      "updatedAt": "2026/6/22 14:40:35"
-    },
-    {
-      "type": "single",
-      "title": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
-      "content": "粒子系统合并粒子的Mesh时，会（            ）写入到合并Mesh内，保证了位置、旋转、缩放正确。",
-      "options": [
-        "计算Mesh的每个顶点的位置信息",
-        "计算Local的每个顶点的位置信息"
-      ],
-      "answer": "A",
-      "explanation": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
-      "analysis": "粒子系统合并粒子的Mesh时，会计算Mesh的每个顶点的位置信息写入到合并Mesh内，保证了位置、旋转、缩放正确。",
-      "difficulty": "easy",
-      "knowledge": "",
-      "score": 3,
-      "bankId": 0,
-      "id": 1782110720241,
-      "createdAt": "2026/6/22 14:45:20",
-      "updatedAt": "2026/6/22 14:45:20"
-    },
-    {
-      "type": "single",
-      "title": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
-      "content": "使用了（             ）后，在开启相同功能，平均体积仅仅是Unity的1/10。",
-      "options": [
-        "简单粒子",
-        "多元粒子",
-        "高级粒子"
-      ],
-      "answer": "A",
-      "explanation": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
-      "analysis": "使用了简单粒子后，在开启相同功能，平均体积仅仅是Unity的1/10。",
-      "difficulty": "easy",
-      "knowledge": "",
-      "score": 3,
-      "bankId": 0,
-      "id": 1782110720243,
-      "createdAt": "2026/6/22 14:45:20",
-      "updatedAt": "2026/6/22 14:45:20"
-    },
-    {
-      "type": "multiple",
-      "title": "使用简单粒子所带来的问题有哪些？",
-      "content": "使用简单粒子所带来的问题有哪些？",
-      "options": [
-        "CG需要支持该脚本",
-        "项目特效优化框架需要支持此脚本",
-        "广告板效果需要独立的材质，防止合批导致效果错误",
-        "美术需要适应此脚本，制作上更加繁琐等等"
-      ],
-      "answer": [
-        "A",
-        "B",
-        "C",
-        "D"
-      ],
-      "explanation": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
-      "analysis": "带来的问题：\n1、CG需要支持该脚本。\n2、项目特效优化框架需要支持此脚本。\n3、广告板效果需要独立的材质，防止合批导致效果错误。\n4、美术需要适应此脚本，制作上更加繁琐等等。",
-      "difficulty": "easy",
-      "knowledge": "",
-      "score": 5,
-      "bankId": 0,
-      "id": 1782110720245,
-      "createdAt": "2026/6/22 14:45:20",
-      "updatedAt": "2026/6/22 14:45:20"
+      "bankId": 1784777614877,
+      "id": 1784777637116,
+      "createdAt": "2026/7/23 11:33:57",
+      "updatedAt": "2026/7/23 11:33:57"
     }
   ],
   "exams": [],
@@ -1220,7 +1076,18 @@
     }
   ],
   "lecturer_applications": [],
-  "question_banks": [],
+  "question_banks": [
+    {
+      "id": 1784777614877,
+      "name": "LUA性能优化",
+      "categoryId": 1780974142620,
+      "description": "",
+      "status": "active",
+      "createdBy": "管理员",
+      "createdAt": "2026/7/23 11:33:34",
+      "updatedAt": "2026/7/23 11:33:34"
+    }
+  ],
   "index_featured_courses": [
     1781065281803,
     1781065453648,
@@ -1481,280 +1348,7 @@
       "duration": 90
     }
   ],
-  "certificates": [
-    {
-      "id": "cert-1784704957865",
-      "name": "优秀讲师",
-      "company": "广州游雁网络科技有限公司",
-      "validityType": "permanent",
-      "validityDays": null,
-      "prefix": "LECTURER",
-      "startNumber": 2,
-      "digits": 4,
-      "templateId": "v1",
-      "status": "enabled",
-      "design": {
-        "_tplKey": "v1",
-        "layout": "portrait",
-        "elements": [
-          {
-            "id": "elmrvr90n9tzgn",
-            "type": "text",
-            "key": "title",
-            "x": 57.400000000000006,
-            "y": 110,
-            "w": 295,
-            "h": 52,
-            "text": "{{title}}",
-            "fontSize": 38,
-            "fontWeight": "bold",
-            "letterSpacing": 4,
-            "fontStyle": "normal",
-            "textAlign": "center",
-            "color": "#1a365d",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrvr90n9ig0x",
-            "type": "text",
-            "key": "subtitle",
-            "x": 57.400000000000006,
-            "y": 160,
-            "w": 295,
-            "h": 20,
-            "text": "CERTIFICATE OF HONORS",
-            "fontSize": 12,
-            "fontWeight": "normal",
-            "letterSpacing": 2,
-            "fontStyle": "normal",
-            "textAlign": "center",
-            "color": "#64748b",
-            "underline": false,
-            "fontFamily": "Arial,sans-serif"
-          },
-          {
-            "id": "elmrvr90n912ky",
-            "type": "text",
-            "key": "name",
-            "x": 57.400000000000006,
-            "y": 220,
-            "w": 177,
-            "h": 24,
-            "text": "{{name}}",
-            "fontSize": 15,
-            "fontWeight": "bold",
-            "fontStyle": "normal",
-            "textAlign": "left",
-            "color": "#334155",
-            "underline": true,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrvr90n9cwqq",
-            "type": "text",
-            "key": "content",
-            "x": 57.400000000000006,
-            "y": 244,
-            "w": 295,
-            "h": 120,
-            "text": "　　在本公司工作期间，认真负责，表现优秀，现授予【年度优秀员工】荣誉称号。特发此证，以示表彰。",
-            "fontSize": 15,
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textAlign": "left",
-            "lineHeight": 2,
-            "color": "#334155",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrvr90n92nfd",
-            "type": "text",
-            "key": "company",
-            "x": 146,
-            "y": 404,
-            "w": 207,
-            "h": 22,
-            "text": "{{company}}",
-            "fontSize": 15,
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textAlign": "right",
-            "color": "#334155",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrvr90n93o53",
-            "type": "text",
-            "key": "date",
-            "x": 161,
-            "y": 434,
-            "w": 192,
-            "h": 22,
-            "text": "{{date}}",
-            "fontSize": 15,
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textAlign": "right",
-            "color": "#334155",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          }
-        ],
-        "seal": null,
-        "background": {
-          "type": "preset",
-          "value": "v1"
-        },
-        "accentColor": "#2c5282",
-        "fontFamily": "'STSong','SimSun','Times New Roman',serif",
-        "titleColor": "#1a365d",
-        "subtitleColor": "#64748b",
-        "textColor": "#334155",
-        "sealColor": "#c2410c"
-      },
-      "creator": "许志坚",
-      "createdAt": "2026-07-22T07:22:37.865Z"
-    },
-    {
-      "id": "cert-1784705002618",
-      "name": "测试",
-      "company": "广州游雁网络科技有限公司",
-      "validityType": "permanent",
-      "validityDays": null,
-      "prefix": "CEAR",
-      "startNumber": 1,
-      "digits": 4,
-      "templateId": "v1",
-      "status": "enabled",
-      "design": {
-        "_tplKey": "v1",
-        "layout": "portrait",
-        "elements": [
-          {
-            "id": "elmrvr9yrx2sij",
-            "type": "text",
-            "key": "title",
-            "x": 57.400000000000006,
-            "y": 110,
-            "w": 295,
-            "h": 52,
-            "text": "{{title}}",
-            "fontSize": 38,
-            "fontWeight": "bold",
-            "letterSpacing": 4,
-            "fontStyle": "normal",
-            "textAlign": "center",
-            "color": "#1a365d",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrvr9yrxiaqd",
-            "type": "text",
-            "key": "subtitle",
-            "x": 57.400000000000006,
-            "y": 160,
-            "w": 295,
-            "h": 20,
-            "text": "CERTIFICATE OF HONORS",
-            "fontSize": 12,
-            "fontWeight": "normal",
-            "letterSpacing": 2,
-            "fontStyle": "normal",
-            "textAlign": "center",
-            "color": "#64748b",
-            "underline": false,
-            "fontFamily": "Arial,sans-serif"
-          },
-          {
-            "id": "elmrvr9yrx7wym",
-            "type": "text",
-            "key": "name",
-            "x": 57.400000000000006,
-            "y": 220,
-            "w": 177,
-            "h": 24,
-            "text": "{{name}}",
-            "fontSize": 15,
-            "fontWeight": "bold",
-            "fontStyle": "normal",
-            "textAlign": "left",
-            "color": "#334155",
-            "underline": true,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrvr9yrxkozp",
-            "type": "text",
-            "key": "content",
-            "x": 57.400000000000006,
-            "y": 244,
-            "w": 295,
-            "h": 120,
-            "text": "　　在本公司工作期间，认真负责，表现优秀，现授予【年度优秀员工】荣誉称号。特发此证，以示表彰。",
-            "fontSize": 15,
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textAlign": "left",
-            "lineHeight": 2,
-            "color": "#334155",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrvr9yrxl80n",
-            "type": "text",
-            "key": "company",
-            "x": 146,
-            "y": 404,
-            "w": 207,
-            "h": 22,
-            "text": "{{company}}",
-            "fontSize": 15,
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textAlign": "right",
-            "color": "#334155",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          },
-          {
-            "id": "elmrvr9yrxjpdw",
-            "type": "text",
-            "key": "date",
-            "x": 161,
-            "y": 434,
-            "w": 192,
-            "h": 22,
-            "text": "{{date}}",
-            "fontSize": 15,
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textAlign": "right",
-            "color": "#334155",
-            "underline": false,
-            "fontFamily": "'STSong','SimSun','Times New Roman',serif"
-          }
-        ],
-        "seal": null,
-        "background": {
-          "type": "preset",
-          "value": "v1"
-        },
-        "accentColor": "#2c5282",
-        "fontFamily": "'STSong','SimSun','Times New Roman',serif",
-        "titleColor": "#1a365d",
-        "subtitleColor": "#64748b",
-        "textColor": "#334155",
-        "sealColor": "#c2410c"
-      },
-      "creator": "许志坚",
-      "createdAt": "2026-07-22T07:23:22.618Z"
-    }
-  ],
+  "certificates": [],
   "current_user": {
     "id": 1,
     "name": "张小明",
@@ -2080,7 +1674,23 @@
       "source": "assigned"
     }
   ],
-  "papers": [],
+  "papers": [
+    {
+      "id": "paper_1784778722069",
+      "name": "LUA性能优化",
+      "categoryId": "1780974142620",
+      "categoryName": "技术",
+      "type": "fixed",
+      "description": "",
+      "questions": [],
+      "totalScore": 0,
+      "status": "draft",
+      "creator": "当前用户",
+      "createdBy": "当前用户",
+      "createdAt": "2026-07-23T03:52:02.069Z",
+      "updatedAt": "2026-07-23T03:52:02.082Z"
+    }
+  ],
   "notice_visits": [
     {
       "noticeId": 1,
@@ -2154,6 +1764,10 @@
     {
       "userId": "1780909174403",
       "loginTime": "2026-07-22T01:40:43.534Z"
+    },
+    {
+      "userId": "1780909174403",
+      "loginTime": "2026-07-23T01:35:22.407Z"
     }
   ],
   "lecturer_payment_records": [
@@ -2184,64 +1798,32 @@
       "updatedAt": "2026-07-04T01:52:20.051Z"
     }
   ],
-  "user_certificates": [
-    {
-      "id": "uc-1784705012680-393119418",
-      "certificateId": "cert-1784704957865",
-      "userId": "1780909174403",
-      "certNo": "CERT0001",
-      "company": "广州游雁网络科技有限公司",
-      "sourceType": "manual",
-      "sourceId": null,
-      "issueAt": "2026-07-22T07:23:32.680Z",
-      "effectiveAt": "2026-07-22T07:23:32.680Z",
-      "expireAt": null,
-      "status": "active",
-      "revokedAt": null,
-      "revokeReason": null,
-      "imageUrl": null
-    },
-    {
-      "id": "uc-1784705016016-590833638",
-      "certificateId": "cert-1784705002618",
-      "userId": "1780909174403",
-      "certNo": "CEAR0001",
-      "company": "广州游雁网络科技有限公司",
-      "sourceType": "manual",
-      "sourceId": null,
-      "issueAt": "2026-07-22T07:23:36.016Z",
-      "effectiveAt": "2026-07-22T07:23:36.016Z",
-      "expireAt": null,
-      "status": "revoked",
-      "revokedAt": "2026-07-22T07:23:46.265Z",
-      "revokeReason": "管理员手动撤销",
-      "imageUrl": "/uploads/certificates/uc-1784705016016-590833638.png"
-    }
-  ],
+  "user_certificates": [],
   "certificate_templates": [],
   "user_learning_1780909174403": {
     "totalHours": 0,
     "completedCourses": [],
     "videoProgress": {
-      "1784182455662_0": 0,
+      "1784182455662_0": 22,
       "1784185505080_0": 0
     },
     "videoWatchTimes": {
       "1784019677171_0": 42,
       "1784019483483_0": 384,
-      "1784182455662_0": 5
+      "1784182455662_0": 27
     },
-    "lastStudyTime": "2026-07-16T06:14:36.774Z",
+    "lastStudyTime": "2026-07-23T06:08:34.235Z",
     "studyDates": [
       "2026-07-14",
       "2026-07-15",
-      "2026-07-16"
+      "2026-07-16",
+      "2026-07-23"
     ],
     "ratings": 1,
     "shares": 1,
     "likes": 1,
     "examRecords": [],
-    "totalSeconds": 421,
+    "totalSeconds": 443,
     "studyRecords": [
       {
         "courseId": 1784019677171,
@@ -2665,6 +2247,33 @@
         "duration": 5,
         "timestamp": "2026-07-16T06:14:36.774Z",
         "date": "2026-07-16"
+      },
+      {
+        "courseId": 1784182455662,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 8,
+        "timestamp": "2026-07-23T02:58:29.487Z",
+        "date": "2026-07-23"
+      },
+      {
+        "courseId": 1784182455662,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 10,
+        "timestamp": "2026-07-23T06:08:30.132Z",
+        "date": "2026-07-23"
+      },
+      {
+        "courseId": 1784182455662,
+        "courseTitle": "粒子系统",
+        "videoIndex": 0,
+        "videoTitle": "粒子系统（钟飞跃）.mp4",
+        "duration": 4,
+        "timestamp": "2026-07-23T06:08:34.235Z",
+        "date": "2026-07-23"
       }
     ],
     "migratedAt": "2026-07-14T09:01:38.982Z",
@@ -3037,8 +2646,8 @@
     "likes": 1
   },
   "video_pos_1780909174403_1784182455662_0": {
-    "position": 5,
-    "savedAt": "2026-07-16T06:14:36.773Z"
+    "position": 14,
+    "savedAt": "2026-07-23T06:09:20.568Z"
   },
   "user_learning_1781087021554": {
     "totalHours": 0,
@@ -3056,5 +2665,25 @@
     "position": 0,
     "savedAt": "2026-07-22T07:41:24.598Z"
   },
-  "certificate_revoke_logs": []
+  "certificate_revoke_logs": [],
+  "course_interaction_answers": [
+    {
+      "id": 1784786898945,
+      "courseId": 1784182455662,
+      "videoIndex": 0,
+      "videoTitle": "粒子系统（钟飞跃）.mp4",
+      "nodeId": "n_1784786577653_795",
+      "nodeType": "question",
+      "nodeTime": 12.387392900856794,
+      "questionId": 1784777637112,
+      "userId": 1780909174403,
+      "userName": "许志坚",
+      "department": "人力资源部",
+      "userAnswer": "C",
+      "isCorrect": false,
+      "score": 0,
+      "timeSpentSec": 8,
+      "answeredAt": "2026-07-23T06:08:18.945Z"
+    }
+  ]
 }
