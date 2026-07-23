@@ -2465,24 +2465,24 @@
         }
 
         function renderInteractionOverlay(node) {
-            // 全屏固定定位 overlay，确保用户只能答题
+            // 在播放器容器内绝对定位 overlay，铺满视频画面区域
             let overlay = document.getElementById('iv-overlay');
             if (!overlay) {
                 overlay = document.createElement('div');
                 overlay.id = 'iv-overlay';
-                overlay.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm';
-                document.body.appendChild(overlay);
+                overlay.className = 'absolute inset-0 z-30 flex items-center justify-center bg-black/75 backdrop-blur-sm rounded-2xl';
+                document.getElementById('video-container').appendChild(overlay);
             }
             overlay.classList.remove('hidden');
             overlay.style.display = 'flex';
 
             if (node.type === 'knowledge') {
                 overlay.innerHTML = `
-                    <div class="bg-white rounded-2xl p-8 md:p-12 w-[92%] max-w-5xl shadow-2xl mx-auto max-h-[88vh] overflow-y-auto">
-                        <h4 class="font-semibold text-slate-800 text-xl md:text-2xl mb-4">${ivEsc(node.title || '知识点')}</h4>
-                        <p class="text-base text-slate-600 mb-6 whitespace-pre-wrap leading-relaxed">${ivEsc(node.content || '')}</p>
-                        ${node.imageUrl ? `<img src="${ivEsc(node.imageUrl)}" class="max-h-64 rounded-xl mb-5 object-contain">` : ''}
-                        <button onclick="ivResumePlay()" class="w-full py-3.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-medium transition text-lg">继续播放</button>
+                    <div class="absolute inset-4 bg-white rounded-2xl shadow-2xl overflow-y-auto flex flex-col">
+                        <h4 class="font-semibold text-slate-800 text-xl md:text-2xl mb-4 pt-2 px-6">${ivEsc(node.title || '知识点')}</h4>
+                        <p class="text-base text-slate-600 mb-6 whitespace-pre-wrap leading-relaxed px-6 flex-1">${ivEsc(node.content || '')}</p>
+                        ${node.imageUrl ? `<div class="px-6 mb-4"><img src="${ivEsc(node.imageUrl)}" class="max-h-64 rounded-xl object-contain"></div>` : ''}
+                        <div class="pb-6 px-6"><button onclick="ivResumePlay()" class="w-full py-3.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-medium transition text-lg">继续播放</button></div>
                     </div>`;
                 return;
             }
@@ -2490,10 +2490,10 @@
                 const refs = node.questionRefs || [];
                 const items = refs.map((r, i) => `<div class="mb-3"><p class="text-sm font-medium text-slate-700 mb-1">${i + 1}. ${ivEsc(r.content || '')}</p><input class="w-full px-3 py-2 border rounded-lg text-sm" data-qid="${r.questionId}" placeholder="请输入你的回答"></div>`).join('');
                 overlay.innerHTML = `
-                    <div class="bg-white rounded-2xl p-8 md:p-12 w-[92%] max-w-5xl shadow-2xl mx-auto max-h-[88vh] overflow-y-auto">
-                        <h4 class="font-semibold text-slate-800 text-xl mb-5">${ivEsc(node.surveyTitle || '互动问卷')}</h4>
-                        ${items}
-                        <button onclick="ivSubmitSurvey('${node.id}')" class="w-full py-3.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-medium transition mt-3 text-lg">提交并继续播放</button>
+                    <div class="absolute inset-4 bg-white rounded-2xl shadow-2xl overflow-y-auto flex flex-col">
+                        <h4 class="font-semibold text-slate-800 text-xl mb-5 pt-2 px-6">${ivEsc(node.surveyTitle || '互动问卷')}</h4>
+                        <div class="px-6 flex-1">${items}</div>
+                        <div class="pb-6 px-6"><button onclick="ivSubmitSurvey('${node.id}')" class="w-full py-3.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-medium transition text-lg">提交并继续播放</button></div>
                     </div>`;
                 return;
             }
@@ -2530,29 +2530,32 @@
             if (type === 'multiple') {
                 body = options.map((o, i) => {
                     const letter = String.fromCharCode(65 + i);
-                    return `<label data-opt="${letter}" class="iv-opt-row flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-100 cursor-pointer transition"><input type="checkbox" class="iv-opt w-4 h-4" value="${letter}"><span class="text-base">${ivEsc(o)}</span></label>`;
+                    return `<label data-opt="${letter}" class="iv-opt-row flex items-center space-x-3 p-4 rounded-xl hover:bg-indigo-50 cursor-pointer transition border border-slate-200"><input type="checkbox" class="iv-opt w-5 h-5 accent-indigo-600" value="${letter}"><span class="text-base text-slate-800 font-medium">${ivEsc(o)}</span></label>`;
                 }).join('');
             } else if (type === 'judge') {
                 body = `
-                    <label data-opt="A" class="iv-opt-row flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-100 cursor-pointer transition"><input type="radio" name="ivq" class="iv-opt w-4 h-4" value="A"><span class="text-base">正确</span></label>
-                    <label data-opt="B" class="iv-opt-row flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-100 cursor-pointer transition"><input type="radio" name="ivq" class="iv-opt w-4 h-4" value="B"><span class="text-base">错误</span></label>`;
+                    <label data-opt="A" class="iv-opt-row flex items-center space-x-3 p-4 rounded-xl hover:bg-indigo-50 cursor-pointer transition border border-slate-200"><input type="radio" name="ivq" class="iv-opt w-5 h-5 accent-indigo-600" value="A"><span class="text-base text-slate-800 font-medium">正确</span></label>
+                    <label data-opt="B" class="iv-opt-row flex items-center space-x-3 p-4 rounded-xl hover:bg-indigo-50 cursor-pointer transition border border-slate-200"><input type="radio" name="ivq" class="iv-opt w-5 h-5 accent-indigo-600" value="B"><span class="text-base text-slate-800 font-medium">错误</span></label>`;
             } else if (type === 'fill' || type === 'essay') {
-                body = `<textarea class="w-full px-4 py-3 border rounded-xl text-base" rows="3" placeholder="请输入你的答案"></textarea>`;
+                body = `<textarea class="w-full px-4 py-3 border-2 border-slate-300 rounded-xl text-base text-slate-800 focus:border-indigo-500 focus:outline-none" rows="3" placeholder="请输入你的答案"></textarea>`;
             } else {
                 body = options.map((o, i) => {
                     const letter = String.fromCharCode(65 + i);
-                    return `<label data-opt="${letter}" class="iv-opt-row flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-100 cursor-pointer transition"><input type="radio" name="ivq" class="iv-opt w-4 h-4" value="${letter}"><span class="text-base">${ivEsc(o)}</span></label>`;
+                    return `<label data-opt="${letter}" class="iv-opt-row flex items-center space-x-3 p-4 rounded-xl hover:bg-indigo-50 cursor-pointer transition border border-slate-200"><input type="radio" name="ivq" class="iv-opt w-5 h-5 accent-indigo-600" value="${letter}"><span class="text-base text-slate-800 font-medium">${ivEsc(o)}</span></label>`;
                 }).join('');
             }
             overlay.innerHTML = `
-                <div class="bg-white rounded-2xl p-8 md:p-12 lg:p-16 w-[95vw] max-w-none shadow-2xl mx-auto max-h-[90vh] overflow-y-auto">
-                    <p class="text-sm text-orange-500 font-semibold mb-3 tracking-wide">互动试题</p>
-                    <p class="font-medium text-slate-800 text-xl md:text-2xl mb-8 leading-relaxed">${ivEsc(q.title || q.content || '')}</p>
-                    <div class="mb-8 space-y-4" id="iv-options">${body}</div>
-                    <div id="iv-result" class="text-base mb-6"></div>
-                    <div class="flex space-x-4" id="iv-btn-row">
-                        <button id="iv-submit-btn" onclick="ivSubmitQuestion('${node.id}', '${type}')" class="px-10 py-4 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-semibold transition text-lg">提交答案</button>
-                        <button onclick="ivResumePlay()" class="px-10 py-4 rounded-xl border-2 border-slate-300 text-slate-600 hover:bg-slate-50 font-semibold transition text-lg">继续播放</button>
+                <div class="absolute inset-4 bg-white rounded-2xl shadow-2xl overflow-y-auto flex flex-col">
+                    <div class="flex items-center mb-5 pt-2 px-6">
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-full bg-orange-100 text-orange-600 text-sm font-bold tracking-wide">互动试题</span>
+                        <span class="ml-3 text-sm text-slate-400">${({single:'单选题',multiple:'多选题',judge:'判断题',fill:'填空题',essay:'简答题'}[type]||'��题')}</span>
+                    </div>
+                    <p class="font-bold text-slate-900 text-lg md:text-xl lg:text-2xl mb-6 px-6 leading-relaxed">${ivEsc(q.title || q.content || '')}</p>
+                    <div class="flex-1 mb-6 space-y-3 px-6" id="iv-options">${body}</div>
+                    <div id="iv-result" class="text-base mb-4 px-6"></div>
+                    <div class="flex flex-nowrap justify-center gap-4 pb-6 px-6" id="iv-btn-row">
+                        <button id="iv-submit-btn" onclick="ivSubmitQuestion('${node.id}', '${type}')" class="px-10 py-3 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-bold transition text-base shadow-lg shadow-indigo-300 whitespace-nowrap">提交答案</button>
+                        <button onclick="ivResumePlay()" class="px-10 py-3 rounded-xl border-2 border-slate-300 text-slate-700 hover:bg-slate-50 font-bold transition text-base whitespace-nowrap">继续播放</button>
                     </div>
                 </div>`;
         }
@@ -2562,14 +2565,14 @@
             const typeLabel = ({ single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' }[ref.type] || '试题');
             const ts = node.time ? ` · 节点 @ ${Math.floor(node.time/60)}:${String(Math.floor(node.time%60)).padStart(2,'0')}` : '';
             overlay.innerHTML = `
-                <div class="bg-white rounded-2xl p-8 md:p-12 w-[95vw] max-w-none shadow-2xl mx-auto max-h-[90vh] overflow-y-auto">
-                    <div class="flex items-center text-amber-600 text-base font-medium mb-5 bg-amber-50 px-5 py-4 rounded-xl">
+                <div class="absolute inset-4 bg-white rounded-2xl shadow-2xl overflow-y-auto flex flex-col">
+                    <div class="flex items-center text-amber-600 text-base font-medium mb-5 bg-amber-50 px-5 py-4 rounded-xl mx-6 mt-2">
                         <i class="fa fa-exclamation-triangle mr-3 text-lg"></i>
                         <span>原题已被删除，以下为插入时的历史快照（不可作答）${ivEsc(ts)}</span>
                     </div>
-                    <p class="text-sm text-orange-500 font-semibold mb-3">互动试题 · ${ivEsc(typeLabel)}${ref.score != null ? ` · ${ref.score} 分` : ''}</p>
-                    <p class="font-medium text-slate-800 mb-8 whitespace-pre-wrap leading-relaxed text-lg">${ivEsc(ref.content || '（该题无内容快照）')}</p>
-                    <button onclick="ivResumePlay()" class="w-full py-3.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-medium transition text-lg">继续播放</button>
+                    <p class="text-sm text-orange-500 font-semibold mb-3 px-6">互动试题 · ${ivEsc(typeLabel)}${ref.score != null ? ` · ${ref.score} 分` : ''}</p>
+                    <p class="font-medium text-slate-800 mb-8 whitespace-pre-wrap leading-relaxed text-lg px-6 flex-1">${ivEsc(ref.content || '（该题无内容快照）')}</p>
+                    <div class="pb-6 px-6"><button onclick="ivResumePlay()" class="w-full py-3.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-medium transition text-lg">继续播放</button></div>
                 </div>`;
         }
 
