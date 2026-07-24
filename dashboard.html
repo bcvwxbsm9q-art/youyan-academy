@@ -8673,6 +8673,7 @@
                 <button onclick="openTrainingImageUpload(${e.id})" class="p-2 text-pink-500 hover:bg-pink-50 rounded-lg transition cursor-pointer" title="上传图片"><i class="fas fa-image"></i></button>
                 <button onclick="openTrainingAnalytics(${e.id})" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="数据分析"><i class="fas fa-chart-pie"></i></button>
                 <button onclick="openTrainingShareModal(${e.id})" class="p-2 text-purple-500 hover:bg-purple-50 rounded-lg transition" title="分享"><i class="fas fa-share-alt"></i></button>
+                <button onclick="downloadTrainingQR(${e.id})" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="下载移动端二维码"><i class="fas fa-qrcode"></i></button>
                 <button onclick="editTraining(${e.id})" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="编辑"><i class="fas fa-edit"></i></button>
                 <button onclick="deleteTraining(${e.id})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="删除"><i class="fas fa-trash"></i></button>
               </div>
@@ -8680,6 +8681,40 @@
           </tr>
         `;
       }).join('');
+    }
+
+    // 下载移动端培训二维码（员工扫码进入 /m/training.html?id=ID）
+    function downloadTrainingQR(id) {
+      try {
+        if (typeof QRCode === 'undefined') { alert('二维码组件未加载'); return; }
+        const url = location.origin + '/m/training.html?id=' + id;
+        const holder = document.createElement('div');
+        holder.style.cssText = 'position:fixed;left:-9999px;top:0;width:320px;height:320px;';
+        document.body.appendChild(holder);
+        new QRCode(holder, { text: url, width: 320, height: 320, colorDark: '#1e293b', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+        setTimeout(function () {
+          try {
+            const canvas = holder.querySelector('canvas');
+            const img = holder.querySelector('img');
+            let dataUrl = null;
+            if (canvas && canvas.toDataURL) { try { dataUrl = canvas.toDataURL('image/png'); } catch (e) {} }
+            if (!dataUrl && img && img.src) dataUrl = img.src;
+            if (dataUrl) {
+              const a = document.createElement('a');
+              a.href = dataUrl;
+              a.download = 'training-' + id + '-qrcode.png';
+              document.body.appendChild(a); a.click(); a.remove();
+            } else {
+              alert('二维码生成失败，请重试');
+            }
+          } finally {
+            holder.remove();
+          }
+        }, 400);
+      } catch (e) {
+        console.error('[QR] 生成失败', e);
+        alert('二维码生成失败：' + (e && e.message));
+      }
     }
 
     function toggleTrainingSelect(id) {
@@ -18468,6 +18503,7 @@
     let ivPreviewMode = false;
     let ivPreviewFired = new Set();
     let ivPreviewWatchdog = null;   // 预览模式节点触发看门狗定时器
+    let ivLastRendered = { videoIndex: null, videoSrc: null }; // 记录上次完整渲染状态，用于增量刷新
 
     function fmtIvTime(sec) {
       sec = Math.max(0, Math.floor(sec || 0));
@@ -18489,60 +18525,38 @@
         if (!course) { toast('未找到课程', 'error'); return; }
         const videos = JSON.parse(JSON.stringify(course.videos || []));
         videos.forEach(v => { if (!Array.isArray(v.interactionNodes)) v.interactionNodes = []; });
-        // 恢复草稿
+
+        // ====== 本地草稿（储存记录）：双保险，避免服务端/题库异常导致节点丢失 ======
         const draftKey = 'ivideo_draft_' + courseId;
         let draft = null;
+        let draftRestored = 0;
         try { draft = JSON.parse(localStorage.getItem(draftKey) || 'null'); } catch (e) {}
         if (draft && Array.isArray(draft.videos)) {
           draft.videos.forEach((dv, i) => {
-            if (videos[i] && Array.isArray(dv.interactionNodes)) videos[i].interactionNodes = dv.interactionNodes;
+            if (videos[i] && Array.isArray(dv.interactionNodes)) {
+              const srvNodes = videos[i].interactionNodes;
+              // 取「节点更多」的一份，确保任何一侧的修改都不会丢
+              if (dv.interactionNodes.length >= srvNodes.length) {
+                const srvIds = new Set(srvNodes.map(n => n.id));
+                // 合并：服务端有而草稿没有的也补回来（并集），避免草稿覆盖掉服务端新增
+                const merged = dv.interactionNodes.slice();
+                srvNodes.forEach(n => { if (!srvIds.has(n.id)) merged.push(n); });
+                draftRestored += merged.length - srvNodes.length; // 仅统计从草稿补回的节点数
+                videos[i].interactionNodes = merged;
+              }
+            }
           });
         }
-        // 清理失效节点：引用的试题已被删除（避免编辑器里仍显示已删的题）
-        const qArr = (qres && Array.isArray(qres.data)) ? qres.data : (Array.isArray(qres) ? qres : null);
-        const questionsLoaded = qArr !== null;
-        const validIds = new Set((qArr || []).map(q => Number(q.id)));
-        let pruned = 0;
-        if (questionsLoaded) {
-          videos.forEach(v => {
-            if (!Array.isArray(v.interactionNodes)) return;
-            const before = v.interactionNodes.length;
-            v.interactionNodes = v.interactionNodes.filter(node => {
-              if (!node) return false;
-              const refs = Array.isArray(node.questionRefs)
-                ? node.questionRefs
-                : (node.questionId !== undefined && node.questionId !== null ? [{ questionId: node.questionId }] : null);
-              // 非题/问卷节点（如知识点）保留
-              if (!refs && node.type !== 'question' && node.type !== 'survey') return true;
-              // 题库未能成功加载时保守保留，避免误删
-              if (!questionsLoaded) return true;
-              // 题库已空 → 所有题/问卷节点均失效
-              if (validIds.size === 0) return false;
-              const remaining = refs ? refs.filter(r => !(r && validIds.has(Number(r.questionId)))) : [];
-              if (Array.isArray(node.questionRefs)) node.questionRefs = remaining;
-              return remaining.length > 0;
-            });
-            pruned += before - v.interactionNodes.length;
-          });
-        }
+        // 注意：不再做任何「根据题库比对自动删除节点」的操作——题库查询异常绝不应删除用户已插入的互动内容
+
         ivState = { courseId, course, videos, currentVideoIndex: 0 };
         ivInsertTime = 0; ivSelectedNodeId = null; ivPreviewMode = false; ivPreviewFired.clear();
         const view = document.getElementById('ivAppView');
         if (view) view.classList.remove('hidden');
         renderInteractionEditor();
-        // 若有失效节点被清理，自动回写课程数据，使清理持久化
-        if (pruned > 0) {
-          const payload = { videos: ivState.videos, updatedAt: new Date().toLocaleString('zh-CN') };
-          fetch('/api/courses/' + ivState.courseId, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          }).then(r => r.json()).then(res => {
-            if (res.success) {
-              localStorage.removeItem('ivideo_draft_' + ivState.courseId);
-              toast(`已自动清理 ${pruned} 个失效节点（引用的试题已删除）`, 'success');
-            }
-          }).catch(() => {});
+        // 若有本地草稿比服务端多，提示已用本地记录恢复（不自动覆盖服务端，等用户点保存再同步）
+        if (draftRestored > 0) {
+          toast(`已从本地记录恢复 ${draftRestored} 处互动内容，记得点保存同步到服务端`, 'success');
         }
       })
       .catch(() => toast('加载课程失败', 'error'));
@@ -18685,6 +18699,56 @@
       renderInteractionEditor();
     }
 
+    // 更换节点的题目/问卷：重新打开选择器，替换后保留原节点时间
+    function ivReplaceNodeQuestion(nodeId) {
+      const v = ivCurrentVideo();
+      if (!v) return;
+      const node = (v.interactionNodes || []).find(n => n.id === nodeId);
+      if (!node) { toast('节点不存在', 'error'); return; }
+      if (node.type === 'survey' && node.surveyId) {
+        // 问卷节点：从调研管理重新选择问卷
+        fetch('/api/surveys')
+          .then(r => r.json())
+          .then(res => {
+            const surveys = Array.isArray(res) ? res : (res.data || []);
+            const options = surveys.map(s =>
+              `<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 cursor-pointer border border-slate-200 mb-2">
+                <input type="radio" name="iv-survey-replace" value="${s.id}" class="w-4 h-4 accent-teal-600 mr-3" ${s.id === node.surveyId ? 'checked' : ''}>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-slate-800 truncate">${escHtml(s.title || '未命名调研')}</p>
+                  <p class="text-xs text-slate-400">${(s.questions || []).length} 题</p>
+                </div>
+              </label>`
+            ).join('');
+            showModal('更换问卷',
+              `<p class="text-sm text-slate-500 mb-3">当前：${escHtml(node.surveyTitle || '互动问卷')}</p>
+               <div class="max-h-60 overflow-y-auto">${options}</div>`,
+              () => {
+                const selected = document.querySelector('input[name="iv-survey-replace"]:checked');
+                if (!selected) { toast('请选择问卷', 'warning'); return false; }
+                const surveyId = parseInt(selected.value);
+                const survey = surveys.find(s => s.id === surveyId);
+                if (survey) {
+                  node.surveyId = surveyId;
+                  node.surveyTitle = survey.title || '互动问卷';
+                  node.questionRefs = (survey.questions || []).map(q => ({
+                    questionId: q.id, score: q.score || 5,
+                    content: q.title || q.content || '', type: q.type || 'single'
+                  }));
+                  renderInteractionEditor();
+                  toast('已更换为：' + (survey.title || '未命名调研'));
+                }
+                return true;
+              }, null, '确认更换');
+          })
+          .catch(() => toast('加载问卷失败', 'error'));
+      } else {
+        // 试题节点：打开题库选择器
+        ivPickerTarget = { videoIndex: ivState.currentVideoIndex, nodeType: 'question', time: node.time, replaceNodeId: nodeId };
+        openQuestionPicker();
+      }
+    }
+
     function ivSetNodeTime(id, val) {
       const v = ivCurrentVideo();
       if (!v) return;
@@ -18717,8 +18781,56 @@
     function ivAddSurvey() {
       const v = ivCurrentVideo();
       if (!v) { toast('请先选择视频', 'warning'); return; }
-      ivPickerTarget = { videoIndex: ivState.currentVideoIndex, nodeType: 'survey', time: ivInsertTime };
-      openQuestionPicker();
+      // 从调研管理获取问卷列表
+      fetch('/api/surveys')
+        .then(r => r.json())
+        .then(res => {
+          const surveys = Array.isArray(res) ? res : (res.data || []);
+          if (surveys.length === 0) {
+            toast('暂无调研问卷，请先在调研管理中创建', 'warning');
+            return;
+          }
+          // 渲染问卷选择弹窗
+          const options = surveys.map(s =>
+            `<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 cursor-pointer border border-slate-200 mb-2">
+              <input type="radio" name="iv-survey-pick" value="${s.id}" class="w-4 h-4 accent-teal-600 mr-3">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-slate-800 truncate">${escHtml(s.title || '未命名调研')}</p>
+                <p class="text-xs text-slate-400">${(s.questions || []).length} 题 · ${s.status === 'published' ? '已发布' : '草稿'}</p>
+              </div>
+            </label>`
+          ).join('');
+          showModal('选择调研问卷',
+            `<div class="max-h-60 overflow-y-auto">${options}</div>
+             <p class="text-xs text-slate-400 mt-2">选择后将在 ${fmtIvTime(ivInsertTime)} 处插入问卷节点，播放时弹出该调研问卷</p>`,
+            () => {
+              const selected = document.querySelector('input[name="iv-survey-pick"]:checked');
+              if (!selected) { toast('请选择一个问卷', 'warning'); return false; }
+              const surveyId = parseInt(selected.value);
+              const survey = surveys.find(s => s.id === surveyId);
+              if (survey) {
+                const refs = (survey.questions || []).map(q => ({
+                  questionId: q.id,
+                  score: q.score || 5,
+                  content: q.title || q.content || '',
+                  type: q.type || 'single'
+                }));
+                ivAddNode({
+                  type: 'survey',
+                  time: ivInsertTime,
+                  surveyTitle: survey.title || '互动问卷',
+                  surveyId: surveyId,
+                  questionRefs: refs
+                });
+                toast('已插入问卷：' + (survey.title || '未命名调研') + '（' + refs.length + ' 题）');
+              }
+              return true;
+            },
+            null,
+            '确认插入'
+          );
+        })
+        .catch(() => toast('加载问卷列表失败', 'error'));
     }
 
     function ivAddKnowledge() {
@@ -18760,6 +18872,21 @@
         if (q) picked.push(q);
       });
       if (!picked.length) { ivPickerTarget = null; return; }
+
+      // 更换模式：替换已有节点的题目
+      if (target.replaceNodeId) {
+        const v = ivCurrentVideo();
+        const node = (v && v.interactionNodes || []).find(n => n.id === target.replaceNodeId);
+        if (node) {
+          const q = picked[0];
+          node.questionRefs = [{ questionId: q.id, score: q.score || 5, content: q.title || q.content, type: q.type }];
+          toast('已更换题目');
+        }
+        ivPickerTarget = null;
+        renderInteractionEditor();
+        return;
+      }
+
       if (target.nodeType === 'question') {
         const q = picked[0];
         ivAddNode({ type: 'question', time: target.time, questionRefs: [{ questionId: q.id, score: q.score || 5, content: q.title || q.content, type: q.type }] });
@@ -18773,13 +18900,28 @@
       renderInteractionEditor();
     }
 
-    function ivAutosaveDraft() {
+    function ivAutosaveDraft(showToast = false) {
       if (!ivState) return;
       const draftKey = 'ivideo_draft_' + ivState.courseId;
       try {
         localStorage.setItem(draftKey, JSON.stringify({ videos: ivState.videos, updatedAt: new Date().toLocaleString('zh-CN') }));
-        toast('草稿已暂存');
-      } catch (e) { toast('暂存失败', 'error'); }
+        if (showToast) {
+          toast('草稿已暂存（仅本地，学员端不可见）');
+          const btn = document.getElementById('ivDraftBtn');
+          if (btn) {
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-1.5"></i>已暂存';
+            btn.classList.add('bg-emerald-600', 'text-white');
+            btn.classList.remove('bg-slate-700', 'text-slate-300');
+            setTimeout(() => {
+              if (!btn) return;
+              btn.innerHTML = original;
+              btn.classList.remove('bg-emerald-600', 'text-white');
+              btn.classList.add('bg-slate-700', 'text-slate-300');
+            }, 1500);
+          }
+        }
+      } catch (e) { if (showToast) toast('暂存失败', 'error'); }
     }
 
     function ivSaveEditor() {
@@ -18804,10 +18946,12 @@
               console.error('[IV Save] ⚠️ 警告：发送了', totalNodes, '个节点但服务器返回 0 个节点！data.json 可能未正确写入');
               toast('保存可能未完全生效，请刷新后检查', 'warning');
             }
-            localStorage.removeItem('ivideo_draft_' + ivState.courseId);
+            // 保存成功后同步本地草稿为最新（双保险：即使服务端出问题，本地记录仍在）
+            try {
+              localStorage.setItem('ivideo_draft_' + ivState.courseId, JSON.stringify({ videos: ivState.videos, updatedAt: new Date().toLocaleString('zh-CN') }));
+            } catch (e) {}
             ivStopPreview();
             ivCloseEditor();
-            toast('互动视频已保存并生效（' + totalNodes + ' 个互动节点）');
             if (typeof renderCourses === 'function') renderCourses();
           } else {
             toast('保存失败：' + (res.error || ''), 'error');
@@ -18820,6 +18964,7 @@
       ivStopPreview();
       ivState = null;
       ivPickerTarget = null;
+      ivLastRendered = { videoIndex: null, videoSrc: null };
       const view = document.getElementById('ivAppView');
       if (view) { view.classList.add('hidden'); view.innerHTML = ''; }
     }
@@ -18827,6 +18972,14 @@
     function renderInteractionEditor() {
       if (!ivState) return;
       const v = ivCurrentVideo();
+      const previewSrc = v ? (v.url || '') : '';
+      const normalizedSrc = previewSrc ? (previewSrc.startsWith('http') ? previewSrc : (previewSrc.startsWith('/') ? previewSrc : '/' + previewSrc)) : '';
+      const root = document.getElementById('ivEditorRoot');
+      const sameVideo = root && ivLastRendered.videoIndex === ivState.currentVideoIndex && ivLastRendered.videoSrc === normalizedSrc;
+      if (sameVideo) {
+        ivRefresh();
+        return;
+      }
       const dur = v ? (v.duration || 0) : 0;
 
       // ========== 左侧：视频列表（带序号+节点数标签）==========
@@ -18890,7 +19043,7 @@
               </div>
               <!-- 操作按钮（hover 显示） -->
               <div class="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
-                <button onclick="event.stopPropagation(); ivSelectNode('${n.id}')" class="w-7 h-7 rounded flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-700 transition" title="编辑时间"><i class="fas fa-pen text-xs"></i></button>
+                <button onclick="event.stopPropagation(); ivReplaceNodeQuestion('${n.id}')" class="w-7 h-7 rounded flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-700 transition" title="更换题目"><i class="fas fa-pen text-xs"></i></button>
                 <button onclick="event.stopPropagation(); ivRemoveNode('${n.id}')" class="w-7 h-7 rounded flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition" title="删除节点"><i class="fas fa-times text-xs"></i></button>
               </div>
             </div>`;
@@ -18903,7 +19056,6 @@
       }
 
       // ========== 右侧：视频播放器 ==========
-      const previewSrc = v ? (v.url || '') : '';
       const previewHtml = v ? `
         <div class="relative bg-black rounded-xl overflow-hidden shadow-lg h-full flex flex-col">
           <video id="ivPreviewVideo" class="w-full h-full object-contain flex-1" controls src="${previewSrc.startsWith('http') ? previewSrc : (previewSrc.startsWith('/') ? previewSrc : '/' + previewSrc)}"></video>
@@ -18925,19 +19077,19 @@
       const totalNodes = ivState.videos.reduce((s, vid) => s + (vid.interactionNodes || []).length, 0);
 
       const panel = `
-        <div class="w-screen h-screen flex flex-col bg-slate-900 text-slate-200">
+        <div id="ivEditorRoot" class="w-screen h-screen flex flex-col bg-slate-900 text-slate-200">
           <!-- ====== 顶部栏 ====== -->
-          <div class="flex items-center justify-between px-4 py-2.5 bg-slate-800 border-b border-slate-700 flex-shrink-0">
+          <div id="ivHeaderBar" class="flex items-center justify-between px-4 py-2.5 bg-slate-800 border-b border-slate-700 flex-shrink-0">
             <div class="flex items-center space-x-3">
               <button onclick="ivCloseEditor()" class="text-slate-400 hover:text-white transition"><i class="fas fa-arrow-left mr-1"></i>返回</button>
               <span class="text-slate-600">|</span>
-              <h3 class="text-sm font-medium text-white"><i class="fas fa-film text-purple-400 mr-1.5"></i>视频编辑器<span class="ml-1.5 text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300">${totalNodes}</span></h3>
+              <h3 class="text-sm font-medium text-white"><i class="fas fa-film text-purple-400 mr-1.5"></i>视频编辑器<span id="ivTotalNodesBadge" class="ml-1.5 text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300">${totalNodes}</span></h3>
             </div>
             <div class="flex items-center space-x-2">
-              <button onclick="ivPreviewToggle()" class="px-3 py-1.5 text-sm rounded-lg transition flex items-center ${ivPreviewMode ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}">
+              <button id="ivPreviewBtn" onclick="ivPreviewToggle()" class="px-3 py-1.5 text-sm rounded-lg transition flex items-center ${ivPreviewMode ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}">
                 <i class="fas fa-eye mr-1.5"></i>${ivPreviewMode ? '退出预览' : '预览'}
               </button>
-              <button onclick="ivAutosaveDraft()" class="px-3 py-1.5 text-sm rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition"><i class="fas fa-save mr-1.5"></i>暂存</button>
+              <button id="ivDraftBtn" onclick="ivAutosaveDraft(true)" class="px-3 py-1.5 text-sm rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition"><i class="fas fa-save mr-1.5"></i>暂存</button>
               <button onclick="ivSaveEditor()" class="px-4 py-1.5 text-sm rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:opacity-90 transition font-medium"><i class="fas fa-check mr-1.5"></i>保存</button>
             </div>
           </div>
@@ -18949,7 +19101,7 @@
               <div class="px-3 pt-3 pb-2 border-b border-slate-700/50">
                 <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">课程视频</p>
               </div>
-              <div class="flex-1 overflow-y-auto p-2">
+              <div id="ivVideoListPanel" class="flex-1 overflow-y-auto p-2">
                 ${videoListHtml || '<p class="text-xs text-slate-500 text-center py-4">暂无视频</p>'}
               </div>
             </div>
@@ -18958,25 +19110,24 @@
             <div class="w-72 border-r border-slate-700 bg-slate-850 flex flex-col flex-shrink-0" style="background:#151a27;">
               <div class="px-3 pt-3 pb-2 border-b border-slate-700/50 flex items-center justify-between">
                 <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">互动内容</p>
-                <span class="text-[10px] text-slate-500">${nodes.length}/${IV_MAX_NODES}</span>
+                <span id="ivNodeCountBadge" class="text-[10px] text-slate-500">${nodes.length}/${IV_MAX_NODES}</span>
               </div>
-              <div class="flex-1 overflow-y-auto min-h-0">
+              <div id="ivNodeListPanel" class="flex-1 overflow-y-auto min-h-0">
                 ${centerPanel}
               </div>
             </div>
 
             <!-- 右栏：视频播放器 -->
-            <div class="flex-1 bg-slate-950 p-3 flex flex-col min-w-0">
+            <div id="ivPlayerPanel" class="flex-1 bg-slate-950 p-3 flex flex-col min-w-0">
               ${previewHtml}
             </div>
           </div>
 
           <!-- ====== 底部：时间轴轨道（全宽）====== -->
-          <div class="flex-shrink-0 border-t border-slate-700 bg-slate-800 px-4 pb-3 pt-2">
+          <div id="ivTrackPanel" class="flex-shrink-0 border-t border-slate-700 bg-slate-800 px-4 pb-3 pt-2">
             <!-- 操作按钮行 -->
             <div class="flex items-center space-x-2 mb-2">
               <button onclick="ivAddQuestion()" class="px-3 py-1.5 text-xs rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 transition"><i class="fas fa-plus mr-1"></i>插入试题</button>
-              <button onclick="ivAddKnowledge()" class="px-3 py-1.5 text-xs rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 hover:bg-sky-500/30 transition"><i class="fas fa-plus mr-1"></i>插入知识点</button>
               <button onclick="ivAddSurvey()" class="px-3 py-1.5 text-xs rounded-lg bg-teal-500/20 text-teal-400 border border-teal-500/30 hover:bg-teal-500/30 transition"><i class="fas fa-plus mr-1"></i>插入问卷</button>
               <span class="ml-auto text-[10px] text-slate-500">${ivPreviewMode ? '点击轨道或画面可跳转 · 播放到节点自动弹出' : `点击轨道设置插入位置 · 当前 ${fmtIvTime(ivInsertTime)} / ${fmtIvTime(dur)}`}</span>
             </div>
@@ -19001,6 +19152,123 @@
           pv.style.cursor = ivPreviewMode ? 'pointer' : 'default';
         }
       }
+      // 每次渲染后自动写入本地草稿（储存记录），确保修改不丢；静默保存不弹 toast
+      ivLastRendered = { videoIndex: ivState.currentVideoIndex, videoSrc: normalizedSrc };
+      ivAutosaveDraft(false);
+    }
+
+    function ivBuildVideoListHtml() {
+      return ivState.videos.map((vid, i) => {
+        const nc = (vid.interactionNodes || []).length;
+        const nodeTag = nc > 0
+          ? `<span class="ml-1.5 text-[11px] px-1.5 py-0.5 rounded font-medium ${i === ivState.currentVideoIndex ? 'bg-indigo-500/20 text-indigo-300' : 'bg-purple-500/15 text-purple-400'}">互动节点数(${nc})</span>`
+          : '';
+        const activeCls = i === ivState.currentVideoIndex
+          ? 'bg-slate-800/60 border-indigo-500/40 text-indigo-300 l-3'
+          : 'border-transparent hover:bg-slate-800/40 text-slate-400 hover:text-slate-200';
+        return `
+          <button type="button" onclick="ivSelectVideo(${i})" class="w-full text-left px-3 py-2.5 rounded-lg border mb-1 transition text-sm ${activeCls}" style="${i === ivState.currentVideoIndex ? 'border-left:3px solid #818cf8; background:rgba(30,41,59,0.6);' : ''}">
+            <div class="flex items-center">
+              <span class="w-5 h-5 flex items-center justify-center rounded bg-slate-200 text-slate-600 text-xs font-semibold mr-2 flex-shrink-0">${i + 1}</span>
+              <span class="truncate flex-1">${escHtml(vid.title || vid.url || ('视频' + (i + 1)))}</span>
+            </div>
+            ${nodeTag ? `<div class="mt-0.5 ml-7">${nodeTag}</div>` : ''}
+          </button>`;
+      }).join('');
+    }
+
+    function ivBuildNodeListHtml() {
+      const v = ivCurrentVideo();
+      const nodes = (v && v.interactionNodes) ? v.interactionNodes : [];
+      if (nodes.length === 0) {
+        return `
+          <div class="flex flex-col items-center justify-center h-full text-slate-500 py-16">
+            <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center mb-4 border border-slate-700">
+              <i class="far fa-image text-xl text-slate-500"></i>
+            </div>
+            <p class="text-sm font-medium text-slate-400 mb-1">暂未添加任何互动内容</p>
+            <p class="text-xs text-slate-600">单个视频最多可添加${IV_MAX_NODES}个时间节点</p>
+          </div>`;
+      }
+      const nodeCards = nodes.map((n) => {
+        const typeLabel = n.type === 'question' ? '试题' : (n.type === 'survey' ? '问卷' : '知识点');
+        const typeColor = n.type === 'question' ? 'text-orange-400' : (n.type === 'survey' ? 'text-teal-400' : 'text-sky-400');
+        const typeBg   = n.type === 'question' ? 'bg-orange-500/15 border-orange-500/25' : (n.type === 'survey' ? 'bg-teal-500/15 border-teal-500/25' : 'bg-sky-500/15 border-sky-500/25');
+        const selCls = ivSelectedNodeId === n.id ? 'ring-1 ring-purple-500 bg-purple-500/5' : 'hover:bg-slate-800/60';
+        let contentPreview = '';
+        if (n.type === 'knowledge') contentPreview = escHtml(n.title || '');
+        else if (n.type === 'survey') contentPreview = escHtml(n.surveyTitle || '');
+        else if (n.questionRefs && n.questionRefs[0]) {
+          const ref = n.questionRefs[0];
+          const qType = ({ single:'单选题', multiple:'多选题', judge:'判断题', fill:'填空题', essay:'简答题' }[ref.type] || '');
+          contentPreview = qType ? `<span class="text-slate-500">【${qType}】</span> ` : '';
+          contentPreview += escHtml(ref.content || '');
+        }
+        return `
+          <div class="group flex items-center px-3 py-2.5 rounded-lg border border-slate-700/50 cursor-pointer transition ${selCls}" onclick="ivSelectNode('${n.id}')">
+            <div class="flex items-center mr-3 flex-shrink-0 min-w-[85px]">
+              <span class="text-xs text-slate-400 font-mono">${fmtIvTime(n.time)}</span>
+              <span class="ml-2 text-xs px-1.5 py-0.5 rounded border ${typeBg} ${typeColor} font-medium">${typeLabel}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-slate-300 truncate" title="${contentPreview.replace(/<[^>]+>/g, '')}">${contentPreview}</p>
+            </div>
+            <div class="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+              <button onclick="event.stopPropagation(); ivReplaceNodeQuestion('${n.id}')" class="w-7 h-7 rounded flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-700 transition" title="更换题目"><i class="fas fa-pen text-xs"></i></button>
+              <button onclick="event.stopPropagation(); ivRemoveNode('${n.id}')" class="w-7 h-7 rounded flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition" title="删除节点"><i class="fas fa-times text-xs"></i></button>
+            </div>
+          </div>`;
+      }).join('');
+      return `<div class="overflow-y-auto p-2 space-y-1" style="max-height:100%;">${nodeCards}</div>`;
+    }
+
+    function ivBuildTrackPanelHtml() {
+      const v = ivCurrentVideo();
+      const dur = v ? (v.duration || 0) : 0;
+      const nodes = (v && v.interactionNodes) ? v.interactionNodes : [];
+      const markersHtml = nodes.map(n => {
+        const pct = ivSecToPct(n.time, dur);
+        const color = n.type === 'question' ? 'bg-orange-500' : (n.type === 'survey' ? 'bg-teal-500' : 'bg-sky-500');
+        const selected = ivSelectedNodeId === n.id ? 'ring-2 ring-white ring-offset-1 ring-offset-slate-800' : '';
+        return `<div class="absolute -top-1 bottom-0 w-2.5 ${color} ${selected} rounded cursor-pointer z-10" style="left:calc(${pct}% - 5px)" onclick="event.stopPropagation(); ivSelectNode('${n.id}', event)" title="${n.type === 'question' ? '试题' : n.type === 'survey' ? '问卷' : '知识点'} @ ${fmtIvTime(n.time)}"></div>`;
+      }).join('');
+      const insertPct = ivSecToPct(ivInsertTime, dur);
+      const insertLine = ivPreviewMode ? '' : `<div class="absolute top-0 bottom-0 w-0.5 bg-purple-400 pointer-events-none z-20 iv-insert-line" style="left:${insertPct}%"><div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] text-purple-400 whitespace-nowrap font-medium bg-slate-800 px-1.5 rounded">插入@${fmtIvTime(ivInsertTime)}</div></div>`;
+      return `
+        <div class="flex items-center space-x-2 mb-2">
+          <button onclick="ivAddQuestion()" class="px-3 py-1.5 text-xs rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 transition"><i class="fas fa-plus mr-1"></i>插入试题</button>
+          <button onclick="ivAddSurvey()" class="px-3 py-1.5 text-xs rounded-lg bg-teal-500/20 text-teal-400 border border-teal-500/30 hover:bg-teal-500/30 transition"><i class="fas fa-plus mr-1"></i>插入问卷</button>
+          <span id="ivTrackHint" class="ml-auto text-[10px] text-slate-500">${ivPreviewMode ? '点击轨道或画面可跳转 · 播放到节点自动弹出' : `点击轨道设置插入位置 · 当前 ${fmtIvTime(ivInsertTime)} / ${fmtIvTime(dur)}`}</span>
+        </div>
+        <div class="relative h-20 bg-slate-900 rounded-lg cursor-pointer select-none overflow-visible" style="box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);" onclick="ivTrackClick(event)">
+          <div id="ivTrackFill" class="absolute top-0 bottom-0 left-0 bg-purple-500/15 pointer-events-none ${ivPreviewMode ? 'rounded-l-lg' : ''}" style="width:${ivSecToPct(ivPreviewMode ? 0 : ivInsertTime, dur)}%"></div>
+          ${markersHtml}
+          ${insertLine}
+        </div>`;
+    }
+
+    function ivRefresh() {
+      if (!ivState) return;
+      const v = ivCurrentVideo();
+      const videoListPanel = document.getElementById('ivVideoListPanel');
+      const nodeListPanel = document.getElementById('ivNodeListPanel');
+      const trackPanel = document.getElementById('ivTrackPanel');
+      const totalBadge = document.getElementById('ivTotalNodesBadge');
+      const nodeCountBadge = document.getElementById('ivNodeCountBadge');
+      const previewBtn = document.getElementById('ivPreviewBtn');
+      const pv = document.getElementById('ivPreviewVideo');
+      if (videoListPanel) videoListPanel.innerHTML = ivBuildVideoListHtml() || '<p class="text-xs text-slate-500 text-center py-4">暂无视频</p>';
+      if (nodeListPanel) nodeListPanel.innerHTML = ivBuildNodeListHtml();
+      if (trackPanel) trackPanel.innerHTML = ivBuildTrackPanelHtml();
+      const totalNodes = ivState.videos.reduce((s, vid) => s + (vid.interactionNodes || []).length, 0);
+      if (totalBadge) totalBadge.textContent = totalNodes;
+      if (nodeCountBadge) nodeCountBadge.textContent = (((v && v.interactionNodes) ? v.interactionNodes : []).length) + '/' + IV_MAX_NODES;
+      if (previewBtn) {
+        previewBtn.className = 'px-3 py-1.5 text-sm rounded-lg transition flex items-center ' + (ivPreviewMode ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600');
+        previewBtn.innerHTML = `<i class="fas fa-eye mr-1.5"></i>${ivPreviewMode ? '退出预览' : '预览'}`;
+      }
+      if (pv) pv.style.cursor = ivPreviewMode ? 'pointer' : 'default';
+      ivAutosaveDraft(false);
     }
 
     function ivPreviewToggle() {
@@ -19141,7 +19409,7 @@
               <p class="font-bold text-slate-900 text-lg md:text-xl lg:text-2xl mb-6 px-6 leading-relaxed">${escHtml(q.title || q.content || '')}</p>
               <div class="flex-1 mb-6 space-y-3 px-6" id="ivOptions">${body}</div>
               <div id="ivResult" class="text-base mb-4 px-6"></div>
-              <div class="flex flex-nowrap justify-center gap-4 pb-5 px-6">
+              <div class="flex flex-nowrap justify-start gap-4 pb-5 px-6" id="ivPreviewBtnRow">
                 <button id="ivPreviewSubmitBtn" onclick="ivPreviewSubmit('${type.replace(/'/g, '')}')" class="px-10 py-3 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-bold transition text-base shadow-lg shadow-indigo-300 whitespace-nowrap">提交答案</button>
                 <button onclick="ivResumePreview()" class="px-10 py-3 rounded-xl border-2 border-slate-300 text-slate-700 hover:bg-slate-50 font-bold transition text-base whitespace-nowrap">继续播放</button>
               </div>
@@ -19208,14 +19476,16 @@
 
           const sb = document.getElementById('ivPreviewSubmitBtn');
           if (sb) sb.style.display = 'none';
+          // 答错时在按钮行追加「返回上一节点重新学习」，与「继续播放」并排左下角
+          const btnRow = document.getElementById('ivPreviewBtnRow');
           let actions = document.getElementById('ivPreviewActions');
           if (!actions) {
             actions = document.createElement('div');
             actions.id = 'ivPreviewActions';
-            actions.className = 'flex space-x-2 mt-3';
-            resEl.appendChild(actions);
+            if (btnRow) btnRow.appendChild(actions);
+            else { actions.className = 'flex space-x-2 mt-3'; resEl.appendChild(actions); }
           }
-          actions.innerHTML = verdict ? '' : `<button onclick="ivJumpPrevInPreview()" class="px-4 py-2 rounded-lg bg-amber-500 text-white">返回上一节点重新学习</button>`;
+          actions.innerHTML = verdict ? '' : `<button onclick="ivJumpPrevInPreview()" class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold transition text-base whitespace-nowrap shadow-md">返回上一节点重新学习</button>`;
         }
 
     function ivJudgeLocal(q, userAnswer, type) {
@@ -19249,24 +19519,26 @@
       const nodes = (v && v.interactionNodes) || [];
       const pv = document.getElementById('ivPreviewVideo');
       if (!pv) return;
+      if (!nodes.length) { ivResumePreview(); return; }
       // 当前节点
       let cur = null;
       for (const n of nodes) { if (ivPreviewFired.has(n.id)) cur = n; }
       const prev = nodes.filter(n => cur && n.time < cur.time).sort((a, b) => b.time - a.time)[0];
+
+      ivPreviewCurrentQuestion = null;
       if (prev) {
-        // 清除目标节点及之后所有节点的已触发标记，使它们可以重新弹出
-        const targetTime = prev.time;
+        // 回到上一题“结束后”的位置：标记 prev 为已触发（不弹），清除 prev 之后节点的已触发
+        ivPreviewFired.add(prev.id);
         ivPreviewFired.forEach(id => {
           const nd = nodes.find(n => n.id === id);
-          if (nd && nd.time >= targetTime) ivPreviewFired.delete(id);
+          if (nd && nd.time > prev.time) ivPreviewFired.delete(id);
         });
         pv.currentTime = prev.time;
-        ivResumePreview();
       } else {
         ivPreviewFired.clear();
         pv.currentTime = 0;
-        ivResumePreview();
       }
+      ivResumePreview();
     }
 
     // ========== 互动数据统计（内嵌面板） ==========

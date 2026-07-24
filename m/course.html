@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>课程 · 游雁学院</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { primary: '#667eea', secondary: '#764ba2' } } } };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/m/css/mobile.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="m-nav">
+      <div class="m-nav__left"><span class="m-nav__title">课程</span></div>
+      <div class="m-nav__right"></div>
+    </header>
+
+    <!-- 分类筛选 -->
+    <section class="m-section" style="margin-bottom:6px">
+      <div id="m-cat" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px"></div>
+    </section>
+
+    <section class="m-section" style="margin-top:8px">
+      <div id="m-course-list"><div class="m-loading"><div class="m-spin"></div><div style="margin-left:10px">加载中...</div></div></div>
+    </section>
+  </div>
+
+  <script src="/js/auth-modal.js?v=20260723m"></script>
+  <script src="/m/js/api-client.js"></script>
+  <script src="/m/js/common.js"></script>
+  <script src="/m/js/scan.js"></script>
+  <script>
+    var lecturerMap = {};
+    var allCourses = [];
+    var curCat = 'all';
+
+    function fmtDur(s) {
+      if (!s) return '';
+      var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+      if (h > 0) return h + '小时' + m + '分钟';
+      return m + '分钟';
+    }
+
+    async function loadCourses() {
+      App.showLoading();
+      try {
+        var courses = await Api.courses() || [];
+        var lecs = [];
+        try { lecs = await Api.lecturers() || []; } catch (e) {}
+        lecturerMap = {};
+        lecs.forEach(function (l) { lecturerMap[l.id] = l; });
+        allCourses = courses.filter(function (c) { return c.status === 'published' || c.status === undefined; });
+        renderCats();
+        renderList(allCourses);
+      } catch (e) {
+        document.getElementById('m-course-list').innerHTML = '<div class="m-empty"><i class="fa-regular fa-circle-xmark"></i>加载失败</div>';
+      } finally { App.hideLoading(); }
+    }
+
+    function renderCats() {
+      var cats = [];
+      allCourses.forEach(function (c) { if (c.categoryId && cats.indexOf(c.categoryId) < 0) cats.push(c.categoryId); });
+      var html = '<div class="m-quick__item" style="padding:8px 14px;min-width:64px" data-cat="all"><span class="m-quick__label">全部</span></div>';
+      html += cats.map(function (cid) {
+        var c = lecturerMap; // not used
+        var name = catName(cid);
+        return '<div class="m-quick__item" style="padding:8px 14px;min-width:64px" data-cat="' + cid + '"><span class="m-quick__label">' + App.esc(name) + '</span></div>';
+      }).join('');
+      var box = document.getElementById('m-cat');
+      box.innerHTML = html;
+      Array.prototype.forEach.call(box.querySelectorAll('[data-cat]'), function (el) {
+        el.addEventListener('click', function () {
+          curCat = el.getAttribute('data-cat');
+          Array.prototype.forEach.call(box.querySelectorAll('[data-cat]'), function (x) {
+            x.style.background = (x === el) ? 'var(--brand-soft)' : '#fff';
+            x.querySelector('.m-quick__label').style.color = (x === el) ? 'var(--brand-from)' : 'var(--ink-2)';
+          });
+          renderList(curCat === 'all' ? allCourses : allCourses.filter(function (c) { return String(c.categoryId) === String(curCat); }));
+        });
+      });
+    }
+
+    function catName(id) {
+      // 尝试从课程的分类名取；这里仅做简单映射兜底
+      return '分类' + id;
+    }
+
+    function renderList(list) {
+      var box = document.getElementById('m-course-list');
+      if (!list.length) { box.innerHTML = '<div class="m-empty"><i class="fa-regular fa-folder-open"></i>暂无课程</div>'; return; }
+      box.innerHTML = list.map(function (c) {
+        var lec = lecturerMap[c.lecturerId];
+        var lecName = lec ? (lec.name || lec.realName || '讲师') : '讲师';
+        var cover = c.cover || 'https://placehold.co/200x200/667eea/ffffff?text=课程';
+        return '<div class="m-item" data-id="' + c.id + '">' +
+          '<img class="m-item__thumb" src="' + App.esc(cover) + '" alt="" onerror="this.src=\'https://placehold.co/200x200/667eea/ffffff?text=课程\'">' +
+          '<div class="m-item__body">' +
+            '<div class="m-item__title">' + App.esc(c.title) + '</div>' +
+            '<div class="m-item__meta"><span><i class="fa-solid fa-user-tie"></i>' + App.esc(lecName) + '</span>' +
+              '<span><i class="fa-solid fa-star" style="color:#f59e0b"></i> ' + (c.rating || '0') + '</span>' +
+              '<span><i class="fa-regular fa-eye"></i> ' + (c.views || 0) + '</span></div>' +
+            '<div class="m-item__meta"><span><i class="fa-regular fa-circle-play"></i> ' + (c.videos ? c.videos.length : 0) + ' 节 · ' + fmtDur(c.duration) + '</span></div>' +
+          '</div></div>';
+      }).join('');
+      Array.prototype.forEach.call(box.querySelectorAll('.m-item'), function (el) {
+        el.addEventListener('click', function () {
+          var c = allCourses.find(function (x) { return String(x.id) === el.getAttribute('data-id'); });
+          if (c) openCourse(c);
+        });
+      });
+    }
+
+    function openCourse(c) {
+      var lec = lecturerMap[c.lecturerId];
+      var lecName = lec ? (lec.name || lec.realName || '讲师') : '讲师';
+      var videos = c.videos || [];
+      var videoHtml = videos.length ? videos.map(function (v, i) {
+        var prog = v.progress ? Math.round(v.progress) : 0;
+        return '<div class="m-row" data-i="' + i + '" style="cursor:pointer">' +
+          '<div class="m-row__ic"><i class="fa-solid fa-circle-play"></i></div>' +
+          '<div class="m-row__bd"><div class="m-row__t" style="font-size:13.5px">' + (i + 1) + '. ' + App.esc(v.title || ('第' + (i + 1) + '节')) + '</div>' +
+            '<div class="m-row__s">' + fmtDur(v.duration || 0) + (prog > 0 ? ' · 已学 ' + prog + '%' : '') + '</div></div>' +
+          '<i class="m-row__arrow fa-solid fa-chevron-right"></i></div>';
+      }).join('') : '<p style="color:var(--ink-3);font-size:13px;text-align:center;padding:14px">暂无可播放视频</p>';
+
+      var atts = c.attachments || [];
+      var attHtml = atts.length ? '<h3 class="m-section__title" style="margin:16px 0 8px"><i class="fa-solid fa-file-arrow-down"></i>课件下载</h3>' +
+        atts.map(function (a) {
+          var url = a.url || a, name = a.name || (a.url || a).split('/').pop();
+          return '<a class="m-row" href="' + App.esc(url) + '" download style="text-decoration:none">' +
+            '<div class="m-row__ic"><i class="fa-solid fa-file-pdf"></i></div>' +
+            '<div class="m-row__bd"><div class="m-row__t" style="font-size:13px">' + App.esc(name) + '</div></div>' +
+            '<i class="m-row__arrow fa-solid fa-download"></i></a>';
+        }).join('') : '';
+
+      var html = '<div class="m-sheet__hd"><div class="m-sheet__title">课程详情</div></div><div class="m-sheet__body">' +
+        '<div style="font-size:17px;font-weight:800;margin-bottom:6px">' + App.esc(c.title) + '</div>' +
+        '<div style="display:flex;gap:10px;font-size:12.5px;color:var(--ink-2);margin-bottom:10px">' +
+          '<span><i class="fa-solid fa-user-tie" style="color:var(--brand-from)"></i> ' + App.esc(lecName) + '</span>' +
+          '<span><i class="fa-solid fa-star" style="color:#f59e0b"></i> ' + (c.rating || '0') + '</span>' +
+          '<span><i class="fa-regular fa-eye" style="color:var(--brand-from)"></i> ' + (c.views || 0) + '</span>' +
+          '<span><i class="fa-regular fa-clock" style="color:var(--brand-from)"></i> ' + fmtDur(c.duration) + '</span>' +
+        '</div>' +
+        (c.description ? '<div style="font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:12px">' + App.esc(c.description) + '</div>' : '') +
+        '<h3 class="m-section__title" style="margin-bottom:8px"><i class="fa-solid fa-list-ol"></i>课程目录</h3>' +
+        videoHtml + attHtml + '</div>';
+      App.openSheet(html);
+
+      var body = document.getElementById('m-sheet-body');
+      body.querySelectorAll('[data-i]').forEach(function (row) {
+        row.addEventListener('click', function () {
+          var i = row.getAttribute('data-i');
+          var back = encodeURIComponent('m/course.html');
+          location.href = '/player.html?id=' + c.id + '&index=' + i + '&returnUrl=' + back;
+        });
+      });
+    }
+
+    App.initPage({ active: 'course', requireAuth: true, onReady: loadCourses });
+  </script>
+</body>
+</html>

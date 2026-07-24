@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>游雁学院 · 移动端</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { primary: '#667eea', secondary: '#764ba2' } } } };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/m/css/mobile.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- 顶部导航 -->
+    <header class="m-nav">
+      <div class="m-nav__left"><span class="m-nav__title">游雁学院</span></div>
+      <div class="m-nav__right">
+        <button class="m-nav__btn" onclick="App.startScan()" title="扫码进入培训">
+          <i class="fa-solid fa-qrcode"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- 品牌头图 -->
+    <section class="m-hero">
+      <div class="m-hero__hi" id="m-greet">你好</div>
+      <div class="m-hero__name" id="m-hero-name">同学</div>
+      <div class="m-hero__sub">学习成就更好的自己 · 移动学习随时随地进行</div>
+    </section>
+
+    <!-- 轮播 -->
+    <section class="m-swiper" id="m-swiper" style="display:none">
+      <div class="m-swiper__track" id="m-swiper-track"></div>
+      <div class="m-swiper__dots" id="m-swiper-dots"></div>
+    </section>
+
+    <!-- 快捷入口 -->
+    <section class="m-section">
+      <div class="m-quick">
+        <a class="m-quick__item" href="/m/training.html">
+          <span class="m-quick__ic"><i class="fa-solid fa-calendar-check"></i></span>
+          <span class="m-quick__label">培训安排</span>
+        </a>
+        <a class="m-quick__item" href="/m/course.html">
+          <span class="m-quick__ic"><i class="fa-solid fa-book-open"></i></span>
+          <span class="m-quick__label">课程学习</span>
+        </a>
+        <a class="m-quick__item" href="/m/mine.html#cert">
+          <span class="m-quick__ic"><i class="fa-solid fa-award"></i></span>
+          <span class="m-quick__label">我的证书</span>
+        </a>
+        <a class="m-quick__item" href="/m/mine.html#notice">
+          <span class="m-quick__ic"><i class="fa-solid fa-bell"></i></span>
+          <span class="m-quick__label">消息通知</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- 公告 -->
+    <section class="m-section">
+      <div class="m-section__hd">
+        <div class="m-section__title"><i class="fa-solid fa-bullhorn"></i>平台公告</div>
+        <a class="m-section__more" href="/m/mine.html#notice">全部</a>
+      </div>
+      <div id="m-notice-list"><div class="m-empty"><i class="fa-regular fa-bell"></i>暂无公告</div></div>
+    </section>
+  </div>
+
+  <!-- 共享登录弹窗（复用 PC 端 auth-modal.js） -->
+  <script src="/js/auth-modal.js?v=20260723m"></script>
+  <script src="/m/js/api-client.js"></script>
+  <script src="/m/js/common.js"></script>
+  <script src="/m/js/scan.js"></script>
+  <script>
+    // 轮播控制
+    var swiper = { idx: 0, timer: null, len: 0 };
+    function renderSwiper(banners) {
+      var track = document.getElementById('m-swiper-track');
+      var dots = document.getElementById('m-swiper-dots');
+      var box = document.getElementById('m-swiper');
+      if (!banners.length) { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      swiper.len = banners.length;
+      track.innerHTML = banners.map(function (b) {
+        return '<div class="m-swiper__slide"><img src="' + App.esc(b.img) + '" alt=""><div class="m-swiper__cap"><b>' +
+          App.esc(b.title || '') + '</b><span>' + App.esc(b.description || '') + '</span></div></div>';
+      }).join('');
+      dots.innerHTML = banners.map(function (_, i) {
+        return '<span class="m-swiper__dot' + (i === 0 ? ' is-active' : '') + '"></span>';
+      }).join('');
+      startSwiper();
+    }
+    function startSwiper() {
+      clearInterval(swiper.timer);
+      if (swiper.len <= 1) return;
+      swiper.timer = setInterval(function () {
+        swiper.idx = (swiper.idx + 1) % swiper.len;
+        goSlide(swiper.idx);
+      }, 3500);
+    }
+    function goSlide(i) {
+      document.getElementById('m-swiper-track').style.transform = 'translateX(' + (-100 * i) + '%)';
+      Array.prototype.forEach.call(document.querySelectorAll('.m-swiper__dot'), function (d, idx) {
+        d.classList.toggle('is-active', idx === i);
+      });
+    }
+
+    function greet() {
+      var h = new Date().getHours();
+      return h < 6 ? '凌晨好' : h < 12 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
+    }
+
+    async function initHome() {
+      document.getElementById('m-greet').textContent = greet();
+      document.getElementById('m-hero-name').textContent = App.userName();
+
+      try {
+        var banners = await Api.banners() || [];
+        banners = banners.filter(function (b) { return b && b.img; });
+        renderSwiper(banners);
+      } catch (e) { /* 忽略 */ }
+
+      try {
+        var notices = await Api.notices() || [];
+        notices = notices.filter(function (n) { return n && (n.status === 'published' || n.status === undefined); });
+        notices.sort(function (a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+        var top = notices.slice(0, 4);
+        var box = document.getElementById('m-notice-list');
+        if (!top.length) {
+          box.innerHTML = '<div class="m-empty"><i class="fa-regular fa-bell"></i>暂无公告</div>';
+        } else {
+          box.innerHTML = top.map(function (n) {
+            return '<div class="m-notice"><div class="m-notice__ic"><i class="fa-solid fa-bullhorn"></i></div>' +
+              '<div class="m-notice__bd"><div class="m-notice__t">' + App.esc(n.title) + '</div>' +
+              '<div class="m-notice__d">' + App.esc(n.createdAt ? App.fmtDate(n.createdAt) : '') + '</div></div></div>';
+          }).join('');
+        }
+      } catch (e) { /* 忽略 */ }
+    }
+
+    App.initPage({ active: 'home', requireAuth: true, onReady: initHome });
+  </script>
+</body>
+</html>

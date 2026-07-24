@@ -49,6 +49,7 @@
         }
     </script>
     <style type="text/tailwindcss">
+        html { scrollbar-gutter: stable; }
         @layer utilities {
             .content-auto {
                 content-visibility: auto;
@@ -167,28 +168,30 @@
                 opacity: 1;
             }
 
-            /* 互动视频节点圆点（试题=红 / 问卷=蓝 / 知识点=绿） */
+            /* 互动视频节点标记：菱形小标，与主题紫色渐变协调 */
             #iv-nodes-track { z-index: 2; }
             .iv-node-dot {
                 position: absolute;
                 top: 50%;
-                transform: translate(-50%, -50%);
-                width: 10px;
-                height: 10px;
-                border-radius: 50%;
-                border: 2px solid #fff;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+                transform: translate(-50%, -50%) rotate(45deg);
+                width: 8px;
+                height: 8px;
+                border-radius: 2px;
+                border: 1.5px solid rgba(255,255,255,0.9);
+                background: currentColor;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.35);
                 pointer-events: auto;
                 cursor: pointer;
-                transition: transform 0.15s ease, box-shadow 0.15s ease;
+                transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
             }
             .iv-node-dot:hover {
-                transform: translate(-50%, -50%) scale(1.5);
-                box-shadow: 0 2px 6px rgba(0,0,0,0.55);
+                transform: translate(-50%, -65%) rotate(45deg) scale(1.35);
+                filter: drop-shadow(0 0 4px currentColor);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.5);
             }
-            .iv-node-dot.type-question { background: #ef4444; }
-            .iv-node-dot.type-survey { background: #3b82f6; }
-            .iv-node-dot.type-knowledge { background: #10b981; }
+            .iv-node-dot.type-question { color: #9333ea; }   /* purple-600 试题 */
+            .iv-node-dot.type-survey { color: #4f46e5; }     /* indigo-600 问卷 */
+            .iv-node-dot.type-knowledge { color: #7c3aed; }  /* violet-600 知识点 */
             .iv-node-dot.fired { opacity: 0.35; }
             
             /* 章节样式 */
@@ -2553,7 +2556,7 @@
                     <p class="font-bold text-slate-900 text-lg md:text-xl lg:text-2xl mb-6 px-6 leading-relaxed">${ivEsc(q.title || q.content || '')}</p>
                     <div class="flex-1 mb-6 space-y-3 px-6" id="iv-options">${body}</div>
                     <div id="iv-result" class="text-base mb-4 px-6"></div>
-                    <div class="flex flex-nowrap justify-center gap-4 pb-6 px-6" id="iv-btn-row">
+                    <div class="flex flex-nowrap justify-start gap-4 pb-6 px-6" id="iv-btn-row">
                         <button id="iv-submit-btn" onclick="ivSubmitQuestion('${node.id}', '${type}')" class="px-10 py-3 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 font-bold transition text-base shadow-lg shadow-indigo-300 whitespace-nowrap">提交答案</button>
                         <button onclick="ivResumePlay()" class="px-10 py-3 rounded-xl border-2 border-slate-300 text-slate-700 hover:bg-slate-50 font-bold transition text-base whitespace-nowrap">继续播放</button>
                     </div>
@@ -2687,17 +2690,18 @@
             const submitBtn = document.getElementById('iv-submit-btn');
             if (submitBtn) submitBtn.style.display = 'none';
 
-            // 答错时提供「返回上一节点重新学习」
+            // 答错时在按钮行追加「返回上一节点重新学习」，与「继续播放」并排左下角
+            const btnRow = document.getElementById('iv-btn-row');
             let actions = document.getElementById('iv-actions');
             if (!actions) {
                 actions = document.createElement('div');
                 actions.id = 'iv-actions';
-                actions.className = 'flex space-x-2 mt-3';
-                resultEl.appendChild(actions);
+                if (btnRow) btnRow.appendChild(actions);
+                else { actions.className = 'flex space-x-2 mt-3'; resultEl.appendChild(actions); }
             }
             actions.innerHTML = isCorrect
                 ? ''
-                : `<button onclick="ivJumpPrevNode()" class="px-4 py-2 rounded-lg bg-amber-500 text-white">返回上一节点重新学习</button>`;
+                : `<button onclick="ivJumpPrevNode()" class="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold transition text-base whitespace-nowrap shadow-md">返回上一节点重新学习</button>`;
         }
 
         function ivSubmitSurvey(nodeId) {
@@ -2723,23 +2727,30 @@
 
         function ivJumpPrevNode() {
             const nodes = ivGetNodes();
+            if (!nodes.length) { ivResumePlay(); return; }
             // 当前节点 = 最后一个已触发的节点
             let current = null;
             for (const n of nodes) { if (ivFiredNodes.has(n.id)) current = n; }
             const prev = nodes.filter(n => current && n.time < current.time).sort((a, b) => b.time - a.time)[0];
+
+            // 清除当前题目引用、重置作答状态
+            ivCurrentQuestion = null;
+
             if (prev) {
-                // 清除目标节点及之后所有节点的已触发标记，使它们可以重新弹出
-                const targetTime = prev.time;
+                // 回到上一题“结束后”的位置：标记 prev 为已触发（不再弹出），
+                // 并清除 prev 之后所有节点的已触发标记，使它们可重新弹出
+                ivFiredNodes.add(prev.id);
                 ivFiredNodes.forEach(id => {
                     const nd = nodes.find(n => n.id === id);
-                    if (nd && nd.time >= targetTime) ivFiredNodes.delete(id);
+                    if (nd && nd.time > prev.time) ivFiredNodes.delete(id);
                 });
                 video.currentTime = prev.time;
             } else {
-                // 没有更早的节点，跳到开头并重置所有标记
+                // 没有更早的节点（当前是第一题）：回到开头，全部重置
                 ivFiredNodes.clear();
                 video.currentTime = 0;
             }
+            // 隐藏overlay并恢复播放（overlay内的作答/结果/解析全部清掉）
             ivResumePlay();
         }
 

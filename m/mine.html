@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>我的 · 游雁学院</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { primary: '#667eea', secondary: '#764ba2' } } } };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/m/css/mobile.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="m-nav">
+      <div class="m-nav__left"><span class="m-nav__title">我的</span></div>
+      <div class="m-nav__right"></div>
+    </header>
+
+    <!-- 用户卡片 -->
+    <section class="m-hero" style="display:flex;align-items:center;gap:14px">
+      <div class="m-avatar" id="m-avatar">学</div>
+      <div style="flex:1;min-width:0">
+        <div class="m-hero__name" id="m-name" style="font-size:18px">学员</div>
+        <div class="m-hero__sub" id="m-dep">—</div>
+      </div>
+    </section>
+
+    <!-- 数据概览 -->
+    <section class="m-section" style="margin-top:0">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <div class="m-card" style="text-align:center;margin:0"><div style="font-size:20px;font-weight:800;color:var(--brand-from)" id="st-hours">0</div><div style="font-size:12px;color:var(--ink-3)">学习时长(h)</div></div>
+        <div class="m-card" style="text-align:center;margin:0"><div style="font-size:20px;font-weight:800;color:var(--brand-from)" id="st-certs">0</div><div style="font-size:12px;color:var(--ink-3)">证书</div></div>
+        <div class="m-card" style="text-align:center;margin:0"><div style="font-size:20px;font-weight:800;color:var(--brand-from)" id="st-exams">0</div><div style="font-size:12px;color:var(--ink-3)">考试</div></div>
+      </div>
+    </section>
+
+    <!-- 菜单 -->
+    <section class="m-section">
+      <div class="m-card" style="padding:4px 14px">
+        <div class="m-row" data-act="cert"><div class="m-row__ic"><i class="fa-solid fa-award"></i></div><div class="m-row__bd"><div class="m-row__t">我的证书</div></div><i class="m-row__arrow fa-solid fa-chevron-right"></i></div>
+        <div class="m-row" data-act="exam"><div class="m-row__ic"><i class="fa-solid fa-file-pen"></i></div><div class="m-row__bd"><div class="m-row__t">考试记录</div></div><i class="m-row__arrow fa-solid fa-chevron-right"></i></div>
+        <div class="m-row" data-act="learn"><div class="m-row__ic"><i class="fa-solid fa-graduation-cap"></i></div><div class="m-row__bd"><div class="m-row__t">学习记录</div></div><i class="m-row__arrow fa-solid fa-chevron-right"></i></div>
+        <div class="m-row" data-act="notice"><div class="m-row__bd"><div class="m-row__t">消息通知</div></div><i class="m-row__arrow fa-solid fa-chevron-right"></i></div>
+        <div class="m-row" data-act="profile"><div class="m-row__ic"><i class="fa-solid fa-user-pen"></i></div><div class="m-row__bd"><div class="m-row__t">个人资料</div></div><i class="m-row__arrow fa-solid fa-chevron-right"></i></div>
+        <div class="m-row" data-act="logout"><div class="m-row__ic" style="background:#fde8e8;color:#ef4444"><i class="fa-solid fa-right-from-bracket"></i></div><div class="m-row__bd"><div class="m-row__t" style="color:#ef4444">退出登录</div></div><i class="m-row__arrow fa-solid fa-chevron-right"></i></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/auth-modal.js?v=20260723m"></script>
+  <script src="/m/js/api-client.js"></script>
+  <script src="/m/js/common.js"></script>
+  <script src="/m/js/scan.js"></script>
+  <script>
+    function avatarText(name) { return name ? name.charAt(0) : '学'; }
+
+    async function initMine() {
+      var u = App.user() || {};
+      var name = App.userName();
+      document.getElementById('m-name').textContent = name;
+      document.getElementById('m-dep').textContent = [u.department, u.position].filter(Boolean).join(' · ') || '游雁学院学员';
+      var av = document.getElementById('m-avatar');
+      if (u.avatar) { av.outerHTML = '<img class="m-avatar" id="m-avatar" src="' + App.esc(u.avatar) + '">'; }
+      else { av.textContent = avatarText(name); }
+
+      // 概览数据
+      try {
+        var certs = await Api.certificates() || [];
+        document.getElementById('st-certs').textContent = certs.length;
+      } catch (e) {}
+      try {
+        var exams = await Api.examRecords() || [];
+        document.getElementById('st-exams').textContent = exams.length;
+      } catch (e) {}
+      try {
+        var key = 'user_learning_' + App.userId();
+        var ld = JSON.parse(localStorage.getItem(key) || '{}');
+        document.getElementById('st-hours').textContent = Math.floor((ld.totalSeconds || ld.totalHours * 3600 || 0) / 3600) || (ld.totalHours || 0);
+      } catch (e) {}
+
+      // 菜单
+      document.querySelectorAll('[data-act]').forEach(function (row) {
+        row.addEventListener('click', function () {
+          var a = row.getAttribute('data-act');
+          if (a === 'logout') return App.logout();
+          ({ cert: openCert, exam: openExam, learn: openLearn, notice: openNotice, profile: openProfile })[a]();
+        });
+      });
+
+      // 深链
+      var h = location.hash.replace('#', '');
+      if (h === 'cert') setTimeout(openCert, 200);
+      else if (h === 'notice') setTimeout(openNotice, 200);
+    }
+
+    /* 证书 */
+    async function openCert() {
+      App.showLoading();
+      try {
+        var list = await Api.certificates() || [];
+        App.hideLoading();
+        var html = '<div class="m-sheet__hd"><div class="m-sheet__title">我的证书</div></div><div class="m-sheet__body">';
+        if (!list.length) html += '<div class="m-empty"><i class="fa-regular fa-award"></i>暂无证书</div>';
+        else html += list.map(function (c) {
+          var img = c.imageUrl ? '<img src="' + App.esc(c.imageUrl) + '" style="width:100%;border-radius:10px">' :
+            '<div style="height:120px;border-radius:10px;background:var(--brand-grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">' + App.esc(c.title || '证书') + '</div>';
+          return '<div class="m-cert"><div style="padding:10px">' + img + '</div>' +
+            '<div class="m-cert__bd"><div class="m-cert__t">' + App.esc(c.title || '培训证书') + '</div>' +
+            '<div class="m-cert__s">颁发：' + App.fmtDate(c.issuedAt || c.createdAt) + '</div></div></div>';
+        }).join('');
+        html += '</div>';
+        App.openSheet(html);
+      } catch (e) { App.hideLoading(); App.toast('证书加载失败', 'error'); }
+    }
+
+    /* 考试记录 */
+    async function openExam() {
+      App.showLoading();
+      try {
+        var list = await Api.examRecords() || [];
+        App.hideLoading();
+        var html = '<div class="m-sheet__hd"><div class="m-sheet__title">考试记录</div></div><div class="m-sheet__body">';
+        if (!list.length) html += '<div class="m-empty"><i class="fa-regular fa-file-pen"></i>暂无考试记录</div>';
+        else html += list.slice().reverse().map(function (r) {
+          var title = r.examName || r.title || ('考试 #' + r.examId);
+          var score = (r.score != null) ? r.score : '-';
+          var pass = r.passed || r.isPassed;
+          var when = App.fmtDateTime(r.submittedAt || r.createdAt || r.time);
+          var badge = pass ? '<span class="m-badge m-badge--signin">及格</span>' : '<span class="m-badge m-badge--exam">未及格</span>';
+          return '<div class="m-row"><div class="m-row__ic"><i class="fa-solid fa-file-pen"></i></div>' +
+            '<div class="m-row__bd"><div class="m-row__t" style="font-size:13.5px">' + App.esc(title) + '</div>' +
+            '<div class="m-row__s">得分 ' + score + ' · ' + when + '</div></div>' + badge + '</div>';
+        }).join('');
+        html += '</div>';
+        App.openSheet(html);
+      } catch (e) { App.hideLoading(); App.toast('记录加载失败', 'error'); }
+    }
+
+    /* 学习记录 */
+    function openLearn() {
+      var key = 'user_learning_' + App.userId();
+      var ld = {};
+      try { ld = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+      var hours = Math.floor((ld.totalSeconds || (ld.totalHours || 0) * 3600) / 3600);
+      var completed = (ld.completedCourses || []).length;
+      var days = (ld.studyDates || []).length;
+      var html = '<div class="m-sheet__hd"><div class="m-sheet__title">学习记录</div></div><div class="m-sheet__body">' +
+        '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px">' +
+          '<div class="m-card" style="margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--brand-from)">' + hours + '</div><div style="font-size:12px;color:var(--ink-3)">累计学时(小时)</div></div>' +
+          '<div class="m-card" style="margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--brand-from)">' + completed + '</div><div style="font-size:12px;color:var(--ink-3)">完成课程</div></div>' +
+          '<div class="m-card" style="margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--brand-from)">' + days + '</div><div style="font-size:12px;color:var(--ink-3)">学习天数</div></div>' +
+          '<div class="m-card" style="margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--brand-from)">' + (ld.ratings || 0) + '</div><div style="font-size:12px;color:var(--ink-3)">好评</div></div>' +
+        '</div>' +
+        '<div class="m-row"><div class="m-row__ic"><i class="fa-solid fa-share"></i></div><div class="m-row__bd"><div class="m-row__t" style="font-size:13.5px">分享次数</div></div><span class="m-row__s">' + (ld.shares || 0) + '</span></div>' +
+        '<div class="m-row"><div class="m-row__ic"><i class="fa-solid fa-heart"></i></div><div class="m-row__bd"><div class="m-row__t" style="font-size:13.5px">点赞次数</div></div><span class="m-row__s">' + (ld.likes || 0) + '</span></div>' +
+        '</div>';
+      App.openSheet(html);
+    }
+
+    /* 消息通知 */
+    async function openNotice() {
+      App.showLoading();
+      try {
+        var list = await Api.notifications() || [];
+        App.hideLoading();
+        var html = '<div class="m-sheet__hd"><div class="m-sheet__title">消息通知</div></div><div class="m-sheet__body">';
+        if (!list.length) html += '<div class="m-empty"><i class="fa-regular fa-bell"></i>暂无消息</div>';
+        else html += list.slice().reverse().map(function (n) {
+          var unread = !n.read;
+          return '<div class="m-notice" data-id="' + n.id + '" style="cursor:pointer">' +
+            '<div class="m-notice__ic"><i class="fa-solid fa-bell' + (unread ? '' : '') + '"></i></div>' +
+            '<div class="m-notice__bd"><div class="m-notice__t">' + App.esc(n.title) + (unread ? ' <span class="m-badge m-badge--exam">未读</span>' : '') + '</div>' +
+            '<div class="m-notice__d">' + App.esc(n.content ? n.content.replace(/<[^>]+>/g, '').slice(0, 40) : '') + '</div></div></div>';
+        }).join('');
+        html += '</div>';
+        App.openSheet(html);
+        document.querySelectorAll('#m-sheet-body .m-notice[data-id]').forEach(function (el) {
+          el.addEventListener('click', async function () {
+            var id = el.getAttribute('data-id');
+            try { await Api.markRead(id); } catch (e) {}
+            el.querySelector('.m-badge') && el.querySelector('.m-badge').remove();
+          });
+        });
+      } catch (e) { App.hideLoading(); App.toast('消息加载失败', 'error'); }
+    }
+
+    /* 个人资料 */
+    function openProfile() {
+      var u = App.user() || {};
+      var html = '<div class="m-sheet__hd"><div class="m-sheet__title">个人资料</div></div><div class="m-sheet__body">' +
+        '<label class="m-label">姓名</label><input class="m-input" id="pf-name" value="' + App.esc(u.realName || u.real_name || u.username || '') + '" style="margin-bottom:12px">' +
+        '<label class="m-label">部门</label><input class="m-input" id="pf-dep" value="' + App.esc(u.department || '') + '" style="margin-bottom:12px">' +
+        '<label class="m-label">职位</label><input class="m-input" id="pf-pos" value="' + App.esc(u.position || '') + '" style="margin-bottom:12px">' +
+        '<label class="m-label">手机号</label><input class="m-input" id="pf-phone" value="' + App.esc(u.phone || '') + '" style="margin-bottom:16px">' +
+        '<button class="m-btn m-btn--block" id="pf-save">保存</button></div>';
+      App.openSheet(html);
+      document.getElementById('pf-save').addEventListener('click', saveProfile);
+    }
+
+    async function saveProfile() {
+      var payload = {
+        realName: document.getElementById('pf-name').value.trim(),
+        department: document.getElementById('pf-dep').value.trim(),
+        position: document.getElementById('pf-pos').value.trim(),
+        phone: document.getElementById('pf-phone').value.trim()
+      };
+      App.showLoading('保存中...');
+      try {
+        var r = await Api.profileUpdate(payload);
+        // 同步本地 user
+        var u = App.user() || {};
+        Object.assign(u, payload);
+        try { localStorage.setItem('user', JSON.stringify(u)); sessionStorage.setItem('user', JSON.stringify(u)); } catch (e) {}
+        App.hideLoading();
+        App.toast('资料已保存');
+        App.closeSheet();
+        initMine();
+      } catch (e) {
+        App.hideLoading();
+        App.toast(e.message || '保存失败', 'error');
+      }
+    }
+
+    App.initPage({ active: 'mine', requireAuth: true, onReady: initMine });
+  </script>
+</body>
+</html>

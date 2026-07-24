@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>培训 · 游雁学院</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { primary: '#667eea', secondary: '#764ba2' } } } };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/m/css/mobile.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="m-nav">
+      <div class="m-nav__left"><span class="m-nav__title">培训</span></div>
+      <div class="m-nav__right"></div>
+    </header>
+
+    <section class="m-section" style="margin-top:14px">
+      <div id="m-training-list"><div class="m-loading"><div class="m-spin"></div><div style="margin-left:10px">加载中...</div></div></div>
+    </section>
+  </div>
+
+  <script src="/js/auth-modal.js?v=20260723m"></script>
+  <script src="/m/js/api-client.js"></script>
+  <script src="/m/js/common.js"></script>
+  <script src="/m/js/scan.js"></script>
+  <script>
+    /* ============ 数据获取 ============ */
+    async function getTraining(id) {
+      // 优先从用户日程中取（已含 done 状态与全部字段）
+      try {
+        var sch = await Api.trainingSchedule();
+        if (Array.isArray(sch)) {
+          var hit = sch.find(function (x) { return String(x.id) === String(id); });
+          if (hit) return hit;
+        }
+      } catch (e) {}
+      // 兜底：按 ID 拉详情，并补全完成状态
+      var ev = await Api.trainingDetail(id);
+      return await enrichDetail(ev);
+    }
+
+    async function enrichDetail(ev) {
+      var uid = App.userId();
+      var t = {
+        id: ev.id, name: ev.name, project: ev.project, instructor: ev.instructor,
+        location: ev.location, content: ev.content, date: App.fmtDate(ev.startTime),
+        time: (App.fmtHM(ev.startTime) + (ev.endTime ? ' - ' + App.fmtHM(ev.endTime) : '')),
+        signinEnabled: ev.signinEnabled, signinStartTime: ev.signinStartTime, signinEndTime: ev.signinEndTime, signinDone: false,
+        surveyEnabled: ev.surveyEnabled, linkedSurveyId: ev.linkedSurveyId, surveyDone: false,
+        examEnabled: ev.examEnabled, linkedExamId: ev.linkedExamId, examDone: false,
+        coursewareEnabled: ev.coursewareEnabled, coursewareFiles: ev.coursewareFiles || []
+      };
+      if (uid) {
+        try {
+          var s = await Api.trainingSignins(t.id);
+          var arr = (s && s.data) ? s.data : (Array.isArray(s) ? s : []);
+          t.signinDone = arr.some(function (x) { return String(x.userId) == String(uid); });
+        } catch (e) {}
+        if (t.linkedSurveyId) {
+          try { var c = await Api.surveyCheck(t.linkedSurveyId, uid, t.id); t.surveyDone = !!(c && c.responded); } catch (e) {}
+        }
+        if (t.linkedExamId) {
+          try {
+            var recs = await Api.examRecords() || [];
+            t.examDone = recs.some(function (r) { return String(r.examId) == String(t.linkedExamId); });
+          } catch (e) {}
+        }
+      }
+      return t;
+    }
+
+    /* ============ 列表 ============ */
+    function badge(enabled, label, cls) {
+      return enabled ? '<span class="m-badge ' + cls + '">' + label + '</span>' : '';
+    }
+    function renderList(list) {
+      var box = document.getElementById('m-training-list');
+      if (!list || !list.length) {
+        box.innerHTML = '<div class="m-empty"><i class="fa-regular fa-calendar-xmark"></i>暂无培训安排</div>';
+        return;
+      }
+      box.innerHTML = list.map(function (t) {
+        var req = (t.signinEnabled ? 1 : 0) + (t.surveyEnabled && t.linkedSurveyId ? 1 : 0) + (t.examEnabled && t.linkedExamId ? 1 : 0);
+        var done = (t.signinDone ? 1 : 0) + (t.surveyDone ? 1 : 0) + (t.examDone ? 1 : 0);
+        var prog = req ? Math.round(done / req * 100) : 0;
+        return '<div class="m-item" data-id="' + t.id + '">' +
+          '<div class="m-item__body">' +
+            '<div class="m-item__title">' + App.esc(t.name) + '</div>' +
+            '<div class="m-item__meta"><span><i class="fa-regular fa-calendar"></i>' + App.esc(t.date || '') + '</span>' +
+              '<span><i class="fa-regular fa-clock"></i>' + App.esc(t.time || '') + '</span></div>' +
+            '<div class="m-item__meta"><span><i class="fa-solid fa-location-dot"></i>' + App.esc(t.location || '待定') + '</span></div>' +
+            '<div class="m-item__foot">' +
+              '<div class="m-badges">' + badge(t.signinEnabled, '签到', 'm-badge--signin') + badge(t.surveyEnabled && t.linkedSurveyId, '调研', 'm-badge--survey') + badge(t.examEnabled && t.linkedExamId, '考试', 'm-badge--exam') + '</div>' +
+              '<div class="m-prog">完成 <b>' + done + '/' + req + '</b></div>' +
+            '</div>' +
+          '</div></div>';
+      }).join('');
+      Array.prototype.forEach.call(box.querySelectorAll('.m-item'), function (el) {
+        el.addEventListener('click', function () { openTraining(el.getAttribute('data-id')); });
+      });
+    }
+
+    async function loadTrainings() {
+      App.showLoading();
+      try {
+        var list = await Api.trainingSchedule() || [];
+        renderList(list);
+      } catch (e) {
+        document.getElementById('m-training-list').innerHTML = '<div class="m-empty"><i class="fa-regular fa-circle-xmark"></i>加载失败</div>';
+      } finally { App.hideLoading(); }
+    }
+
+    /* ============ 培训详情弹层 ============ */
+    function fmtSigninTime(start, end) {
+      if (!start) return '';
+      var s = App.fmtHM(start);
+      var e = end ? App.fmtHM(end) : '';
+      return e ? ('签到时间 ' + s + ' - ' + e) : ('签到时间 ' + s);
+    }
+
+    function buildTasks(t) {
+      var items = [];
+      if (t.signinEnabled) items.push({
+        key: 'signin', icon: 'fa-circle-check', title: '考勤签到', tag: '必修',
+        color: '#10b981', sub: fmtSigninTime(t.signinStartTime, t.signinEndTime),
+        done: t.signinDone, act: 'signin'
+      });
+      if (t.surveyEnabled && t.linkedSurveyId) items.push({
+        key: 'survey', icon: 'fa-chart-bar', title: '培训满意度调研', tag: '必修',
+        color: '#2563eb', sub: '请根据本次培训真实感受填写',
+        done: t.surveyDone, act: 'survey'
+      });
+      if (t.examEnabled && t.linkedExamId) items.push({
+        key: 'exam', icon: 'fa-file-lines', title: '《' + t.name + '》培训考核', tag: '必修',
+        color: '#d97706', sub: '完成考核以巩固学习成果',
+        done: t.examDone, act: 'exam'
+      });
+      if (t.coursewareEnabled && t.coursewareFiles && t.coursewareFiles.length) items.push({
+        key: 'courseware', icon: 'fa-folder-open', title: '培训课件（' + t.coursewareFiles.length + '个）', tag: '资料',
+        color: '#8b5cf6', sub: '培训相关资料，可自由下载',
+        done: false, act: 'courseware'
+      });
+      return items;
+    }
+
+    function renderTrainingSheet(t) {
+      var tasks = buildTasks(t);
+      var req = tasks.filter(function (x) { return x.tag === '必修'; }).length;
+      var done = tasks.filter(function (x) { return x.done; }).length;
+      var prog = req ? Math.round(done / req * 100) : 0;
+
+      var taskHtml = tasks.length ? tasks.map(function (it) {
+        var btn = it.done
+          ? '<button class="m-task__btn m-task__btn--done" disabled>已完成</button>'
+          : '<button class="m-task__btn m-task__btn--go" data-act="' + it.act + '">去完成</button>';
+        return '<div class="m-task">' +
+          '<div class="m-task__ic" style="background:' + it.color + '18;color:' + it.color + '"><i class="fa-solid ' + it.icon + '"></i></div>' +
+          '<div class="m-task__main"><div class="m-task__title">' + App.esc(it.title) +
+            ' <span class="m-task__tag" style="color:' + it.color + ';background:' + it.color + '18">' + it.tag + '</span></div>' +
+            '<div class="m-task__sub">' + App.esc(it.sub) + '</div></div>' + btn + '</div>';
+      }).join('') : '<p style="color:var(--ink-3);font-size:13px;text-align:center;padding:14px">暂无项目内容</p>';
+
+      var html =
+        '<div class="m-sheet__hd"><div class="m-sheet__title">培训详情</div></div>' +
+        '<div class="m-sheet__body">' +
+          '<h3 class="m-section__title" style="margin-bottom:8px"><i class="fa-solid fa-circle-info"></i>基本信息</h3>' +
+          '<div class="m-card" style="margin-bottom:14px">' +
+            '<div style="font-size:16px;font-weight:800;margin-bottom:8px">' + App.esc(t.name) + '</div>' +
+            (t.content ? '<div style="font-size:13px;color:var(--ink-2);margin-bottom:10px;line-height:1.6">' + App.esc(t.content) + '</div>' : '') +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12.5px;color:var(--ink-2)">' +
+              '<div><i class="fa-regular fa-calendar" style="color:var(--brand-from)"></i> ' + App.esc(t.date || '') + '</div>' +
+              '<div><i class="fa-regular fa-clock" style="color:var(--brand-from)"></i> ' + App.esc(t.time || '') + '</div>' +
+              '<div><i class="fa-solid fa-user" style="color:var(--brand-from)"></i> ' + App.esc(t.instructor || '-') + '</div>' +
+              '<div><i class="fa-solid fa-location-dot" style="color:var(--brand-from)"></i> ' + App.esc(t.location || '待定') + '</div>' +
+            '</div>' +
+          '</div>' +
+          (tasks.length ? '<h3 class="m-section__title" style="margin-bottom:8px"><i class="fa-solid fa-list-check"></i>项目内容</h3>' : '') +
+          taskHtml +
+          (req ? '<div class="m-prog" style="margin-top:6px">培训进度 <b>' + done + '/' + req + '</b></div><div class="m-bar"><div class="m-bar__fill" style="width:' + prog + '%"></div></div>' : '') +
+        '</div>';
+
+      App.openSheet(html);
+      var body = document.getElementById('m-sheet-body');
+      body.setAttribute('data-training', JSON.stringify(t));
+      body.querySelectorAll('[data-act]').forEach(function (btn) {
+        btn.addEventListener('click', function () { handleTask(btn.getAttribute('data-act'), t); });
+      });
+    }
+
+    async function openTraining(id) {
+      App.showLoading();
+      try {
+        var t = await getTraining(id);
+        App.hideLoading();
+        renderTrainingSheet(t);
+      } catch (e) {
+        App.hideLoading();
+        App.toast('培训信息加载失败', 'error');
+      }
+    }
+
+    /* ============ 任务动作 ============ */
+    async function handleTask(act, t) {
+      if (act === 'signin') return doSignin(t);
+      if (act === 'survey') return openSurvey(t.linkedSurveyId, t.id, t);
+      if (act === 'exam') {
+        var back = encodeURIComponent(location.pathname + location.search);
+        location.href = '/exam.html?id=' + t.linkedExamId + '&returnUrl=' + back + '&trainingId=' + t.id;
+        return;
+      }
+      if (act === 'courseware') return openCourseware(t.coursewareFiles);
+    }
+
+    async function doSignin(t) {
+      if (!confirm('确认签到「' + t.name + '」？')) return;
+      App.showLoading('签到中...');
+      try {
+        await Api.signin(t.id, App.userId());
+        t.signinDone = true;
+        App.hideLoading();
+        App.toast('签到成功');
+        renderTrainingSheet(t);
+      } catch (e) {
+        App.hideLoading();
+        App.toast(e.message || '签到失败', 'error');
+      }
+    }
+
+    function openCourseware(files) {
+      var html = '<div class="m-sheet__hd"><div class="m-sheet__title">培训课件</div></div><div class="m-sheet__body">' +
+        files.map(function (f, i) {
+          var name = (f.url || f).split('/').pop();
+          return '<a class="m-row" href="' + App.esc(f.url || f) + '" download style="text-decoration:none">' +
+            '<div class="m-row__ic"><i class="fa-solid fa-file-arrow-down"></i></div>' +
+            '<div class="m-row__bd"><div class="m-row__t" style="font-size:13px">' + App.esc(name) + '</div></div>' +
+            '<i class="m-row__arrow fa-solid fa-download"></i></a>';
+        }).join('') + '</div>';
+      App.openSheet(html);
+    }
+
+    /* ============ 调研 ============ */
+    async function openSurvey(surveyId, trainingId, t) {
+      App.showLoading();
+      try {
+        var survey = await Api.survey(surveyId);
+        App.hideLoading();
+        renderSurveySheet(survey, surveyId, trainingId, t);
+      } catch (e) {
+        App.hideLoading();
+        App.toast('调研加载失败', 'error');
+      }
+    }
+
+    function renderSurveySheet(survey, surveyId, trainingId, t) {
+      var answers = {};
+      var qs = survey.questions || [];
+      var qHtml = qs.map(function (q, idx) {
+        var reqMark = q.required ? '<span class="m-q__req">*</span>' : '';
+        var inner = '';
+        if (q.type === 'rating') {
+          inner = '<div class="m-stars" data-q="' + q.id + '" data-type="rating">' +
+            [1, 2, 3, 4, 5].map(function (n) {
+              return '<i class="fa-solid fa-star" data-v="' + n + '"></i>';
+            }).join('') + '<span class="m-rate-val" id="rv-' + q.id + '"></span></div>';
+        } else if (q.type === 'multiple') {
+          inner = '<div data-q="' + q.id + '" data-type="multiple">' + (q.options || []).map(function (o) {
+            return '<div class="m-opt" data-v="' + App.esc(o) + '"><i class="fa-regular fa-square"></i><span>' + App.esc(o) + '</span></div>';
+          }).join('') + '</div>';
+        } else if (q.type === 'judge') {
+          inner = '<div data-q="' + q.id + '" data-type="single">' +
+            ['正确', '错误'].map(function (o) {
+              return '<div class="m-opt" data-v="' + App.esc(o) + '"><i class="fa-regular fa-circle"></i><span>' + o + '</span></div>';
+            }).join('') + '</div>';
+        } else if (q.type === 'text') {
+          inner = '<textarea class="m-input" data-q="' + q.id + '" data-type="text" rows="3" placeholder="请输入..."></textarea>';
+        } else { // radio / single / choice
+          inner = '<div data-q="' + q.id + '" data-type="single">' + (q.options || []).map(function (o) {
+            return '<div class="m-opt" data-v="' + App.esc(o) + '"><i class="fa-regular fa-circle"></i><span>' + App.esc(o) + '</span></div>';
+          }).join('') + '</div>';
+        }
+        return '<div class="m-q"><div class="m-q__t">' + (idx + 1) + '. ' + App.esc(q.title) + reqMark + '</div>' + inner + '</div>';
+      }).join('');
+
+      var doneNote = t.surveyDone ? '<div class="m-badge m-badge--done" style="margin-bottom:12px;display:inline-block">您已填写过本调研</div>' : '';
+      var html = '<div class="m-sheet__hd"><div class="m-sheet__title">' + App.esc(survey.title || '培训调研') + '</div></div>' +
+        '<div class="m-sheet__body">' + doneNote +
+          (survey.description ? '<p style="font-size:13px;color:var(--ink-2);margin-bottom:12px">' + App.esc(survey.description) + '</p>' : '') +
+          qHtml +
+          (t.surveyDone ? '' : '<button class="m-btn m-btn--block" id="survey-submit" style="margin-top:16px">提交调研</button>') +
+        '</div>';
+      App.openSheet(html);
+
+      // 绑定交互
+      var body = document.getElementById('m-sheet-body');
+      body.querySelectorAll('.m-stars').forEach(function (box) {
+        var qid = box.getAttribute('data-q');
+        box.querySelectorAll('i').forEach(function (star) {
+          star.addEventListener('click', function () {
+            var v = parseInt(star.getAttribute('data-v'));
+            answers[qid] = v;
+            box.querySelectorAll('i').forEach(function (s, i) { s.classList.toggle('is-on', i < v); });
+            document.getElementById('rv-' + qid).textContent = v + ' 分';
+          });
+        });
+      });
+      body.querySelectorAll('[data-type="single"]').forEach(function (box) {
+        var qid = box.getAttribute('data-q');
+        box.querySelectorAll('.m-opt').forEach(function (opt) {
+          opt.addEventListener('click', function () {
+            box.querySelectorAll('.m-opt').forEach(function (o) {
+              o.classList.remove('is-sel'); o.querySelector('i').className = 'fa-regular fa-circle';
+            });
+            opt.classList.add('is-sel'); opt.querySelector('i').className = 'fa-solid fa-circle-dot';
+            answers[qid] = opt.getAttribute('data-v');
+          });
+        });
+      });
+      body.querySelectorAll('[data-type="multiple"]').forEach(function (box) {
+        var qid = box.getAttribute('data-q');
+        answers[qid] = [];
+        box.querySelectorAll('.m-opt').forEach(function (opt) {
+          opt.addEventListener('click', function () {
+            opt.classList.toggle('is-sel');
+            var on = opt.classList.contains('is-sel');
+            opt.querySelector('i').className = on ? 'fa-regular fa-square-check' : 'fa-regular fa-square';
+            var v = opt.getAttribute('data-v');
+            var arr = answers[qid];
+            if (on) { if (arr.indexOf(v) < 0) arr.push(v); } else { answers[qid] = arr.filter(function (x) { return x !== v; }); }
+          });
+        });
+      });
+      body.querySelectorAll('[data-type="text"]').forEach(function (ta) {
+        var qid = ta.getAttribute('data-q');
+        ta.addEventListener('input', function () { answers[qid] = ta.value; });
+      });
+
+      var submit = document.getElementById('survey-submit');
+      if (submit) submit.addEventListener('click', function () { submitSurvey(survey, surveyId, trainingId, t, answers); });
+    }
+
+    async function submitSurvey(survey, surveyId, trainingId, t, answers) {
+      // 必填校验
+      for (var i = 0; i < survey.questions.length; i++) {
+        var q = survey.questions[i];
+        if (!q.required) continue;
+        var v = answers[q.id];
+        if (q.type === 'multiple') { if (!v || !v.length) return App.toast('第' + (i + 1) + '题为必填', 'error'); }
+        else if (v === undefined || v === null || v === '' ) return App.toast('第' + (i + 1) + '题为必填', 'error');
+      }
+      App.showLoading('提交中...');
+      try {
+        await Api.surveyRespond(surveyId, {
+          userId: App.userId(), userName: App.userName(), trainingId: trainingId, answers: answers
+        });
+        t.surveyDone = true;
+        App.hideLoading();
+        App.toast('调研提交成功');
+        renderTrainingSheet(t);
+      } catch (e) {
+        App.hideLoading();
+        App.toast(e.message || '提交失败', 'error');
+      }
+    }
+
+    /* ============ 初始化 ============ */
+    function onReady() {
+      loadTrainings();
+      var id = new URLSearchParams(location.search).get('id');
+      if (id) setTimeout(function () { openTraining(id); }, 300);
+    }
+    App.initPage({ active: 'training', requireAuth: true, onReady: onReady });
+  </script>
+</body>
+</html>

@@ -550,8 +550,8 @@
         };
         document.addEventListener('keydown', handleEsc);
         
-        // 锁定滚动
-        document.body.style.overflow = 'hidden';
+        // 锁定滚动（带 scrollbar-gutter 兜底，永不抖动）
+        window.lockScroll();
     };
 
     window.closeNoticeModal = function() {
@@ -570,7 +570,7 @@
             }
             setTimeout(() => {
                 modal.remove();
-                document.body.style.overflow = '';
+                window.unlockScroll();
             }, 280);
         }
     };

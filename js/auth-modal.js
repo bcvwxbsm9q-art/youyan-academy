@@ -7,6 +7,59 @@
 (function() {
     'use strict';
 
+    // ============================================================
+    // 弹窗滚动锁（带兜底，彻底杜绝「打开/关闭弹窗页面或导航栏抖动」）
+    // - 现代浏览器：html 已设 `scrollbar-gutter: stable` 预留滚动条空间，
+    //   直接锁 overflow 即可，宽度恒定 → 零位移（主方案）。
+    // - 老浏览器（不支持 scrollbar-gutter）：自动切换 body 冻结法
+    //   (position:fixed + 记录滚动位置)，主体内容不跳转；
+    //   该路径下 fixed 导航栏表现与浏览器原生 overflow:hidden 一致，不会更差。
+    // ============================================================
+    const _supportsScrollbarGutter = (function () {
+        try {
+            return typeof CSS !== 'undefined' && !!(CSS.supports && CSS.supports('scrollbar-gutter', 'stable'));
+        } catch (e) { return false; }
+    })();
+
+    // 锁滚动（打开弹窗时调用）
+    window.lockScroll = function () {
+        const de = document.documentElement;
+        if (_supportsScrollbarGutter) {
+            de.style.overflow = 'hidden';
+            return;
+        }
+        // 兜底：body 冻结法
+        const scrollY = window.scrollY || window.pageYOffset || 0;
+        const body = document.body;
+        body.setAttribute('data-scroll-lock-y', String(scrollY));
+        body.style.position = 'fixed';
+        body.style.top = '-' + scrollY + 'px';
+        body.style.left = '0';
+        body.style.right = '0';
+        body.style.width = '100%';
+        de.style.overflow = 'hidden';
+    };
+
+    // 解锁滚动（关闭弹窗时调用）
+    window.unlockScroll = function () {
+        const de = document.documentElement;
+        if (_supportsScrollbarGutter) {
+            de.style.overflow = '';
+            return;
+        }
+        // 兜底：还原 body 冻结法
+        const body = document.body;
+        const scrollY = parseFloat(body.getAttribute('data-scroll-lock-y') || '0') || 0;
+        body.style.position = '';
+        body.style.top = '';
+        body.style.left = '';
+        body.style.right = '';
+        body.style.width = '';
+        body.removeAttribute('data-scroll-lock-y');
+        de.style.overflow = '';
+        window.scrollTo(0, scrollY);
+    };
+
     const API_BASE = window.location.origin + '/api';
 
     // 扫码登录提供商配置
@@ -227,7 +280,8 @@
             modal.classList.remove('hidden');
             modal.style.opacity = '1';
             modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+            // 锁定滚动（带 scrollbar-gutter 兜底，永不抖动）
+            window.lockScroll();
 
             clearForms();
             switchMode('account');
@@ -252,7 +306,7 @@
             modal.style.opacity = '0';
             setTimeout(() => {
                 modal.classList.add('hidden');
-                document.body.style.overflow = '';
+                window.unlockScroll();
             }, 200);
         }
     }
