@@ -19,35 +19,94 @@
       <div class="m-nav__right"></div>
     </header>
 
-    <!-- 用户卡片 -->
-    <section class="m-hero" style="display:flex;align-items:center;gap:14px">
-      <div class="m-avatar" id="m-avatar">学</div>
-      <div style="flex:1;min-width:0">
-        <div class="m-hero__name" id="m-name" style="font-size:18px">学员</div>
-        <div class="m-hero__sub" id="m-dep">—</div>
+    <!-- 个人主卡片（渐变背景） -->
+    <section style="margin:14px">
+      <div class="m-profile" id="m-profile-card">
+        <div class="m-profile__top">
+          <div class="m-profile__av" id="m-avatar">学</div>
+          <div class="m-profile__info">
+            <div class="m-profile__name" id="m-name">学员</div>
+            <div class="m-profile__dep" id="m-dep">游雁学院学员</div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- 数据概览 -->
-    <section class="m-section" style="margin-top:0">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-        <div class="m-card" style="text-align:center;margin:0"><div style="font-size:20px;font-weight:800;color:var(--brand-from)" id="st-hours">0</div><div style="font-size:12px;color:var(--ink-3)">学习时长(h)</div></div>
-        <div class="m-card" style="text-align:center;margin:0"><div style="font-size:20px;font-weight:800;color:var(--brand-from)" id="st-certs">0</div><div style="font-size:12px;color:var(--ink-3)">证书</div></div>
-        <div class="m-card" style="text-align:center;margin:0"><div style="font-size:20px;font-weight:800;color:var(--brand-from)" id="st-exams">0</div><div style="font-size:12px;color:var(--ink-3)">考试</div></div>
-      </div>
-    </section>
+    <!-- 数据统计 -->
+    <div class="m-stats" id="m-stats-row">
+      <div class="m-stat"><div class="m-stat__v" id="st-hours">0</div><div class="m-stat__l">学习时长</div></div>
+      <div class="m-stat"><div class="m-stat__v" id="st-certs">0</div><div class="m-stat__l">证书</div></div>
+      <div class="m-stat"><div class="m-stat__v" id="st-exams">0</div><div class="m-stat__l">考试</div></div>
+      <div class="m-stat"><div class="m-stat__v" id="st-days">0</div><div class="m-stat__l">学习天数</div></div>
+    </div>
 
-    <!-- 菜单 -->
-    <section class="m-section">
-      <div class="m-card" style="padding:4px 14px">
-        <div class="m-row" data-act="cert"><div class="m-row__ic"><i class="fa-solid fa-award"></i></div><div class="m-row__bd"><div class="m-row__t">我的证书</div></div><i class="m-row__arrow fa-solid fa-chevron-right"></i></div>
-        <div class="m-row" data-act="exam"><div class="m-row__ic"><i class="fa-solid fa-file-pen"></i></div><div class="m-row__bd"><div class="m-row__t">考试记录</div></div><i class="m-row__arrow fa-solid fa-chevron-right"></i></div>
-        <div class="m-row" data-act="learn"><div class="m-row__ic"><i class="fa-solid fa-graduation-cap"></i></div><div class="m-row__bd"><div class="m-row__t">学习记录</div></div><i class="m-row__arrow fa-solid fa-chevron-right"></i></div>
-        <div class="m-row" data-act="notice"><div class="m-row__bd"><div class="m-row__t">消息通知</div></div><i class="m-row__arrow fa-solid fa-chevron-right"></i></div>
-        <div class="m-row" data-act="profile"><div class="m-row__ic"><i class="fa-solid fa-user-pen"></i></div><div class="m-row__bd"><div class="m-row__t">个人资料</div></div><i class="m-row__arrow fa-solid fa-chevron-right"></i></div>
-        <div class="m-row" data-act="logout"><div class="m-row__ic" style="background:#fde8e8;color:#ef4444"><i class="fa-solid fa-right-from-bracket"></i></div><div class="m-row__bd"><div class="m-row__t" style="color:#ef4444">退出登录</div></div><i class="m-row__arrow fa-solid fa-chevron-right"></i></div>
+    <!-- 成就数据卡片（参考图风格） -->
+    <div class="m-badges-section">
+      <div class="m-hd" style="margin:0 0 12px">
+        <div class="m-hd__t"><i class="fa-solid fa-trophy"></i> 我的成就</div>
       </div>
-    </section>
+      <div class="m-achievement-grid" id="m-achieve-grid">
+        <div class="m-achieve-card" data-act="cert">
+          <span class="m-achieve-card__icon" style="color:#f59e0b"><i class="fa-solid fa-certificate"></i></span>
+          <div class="m-achieve-card__label">荣誉证书</div>
+          <div><span class="m-achieve-card__value" id="bd-cert">0</span><span class="m-achieve-card__unit">本</span></div>
+        </div>
+        <div class="m-achieve-card" data-act="course">
+          <span class="m-achieve-card__icon" style="color:#10b981"><i class="fa-solid fa-graduation-cap"></i></span>
+          <div class="m-achieve-card__label">完成课程</div>
+          <div><span class="m-achieve-card__value" id="bd-course">0</span><span class="m-achieve-card__unit">门</span></div>
+        </div>
+        <div class="m-achieve-card" data-act="exam">
+          <span class="m-achieve-card__icon" style="color:#3b82f6"><i class="fa-solid fa-file-pen"></i></span>
+          <div class="m-achieve-card__label">通过考试</div>
+          <div><span class="m-achieve-card__value" id="bd-exam">0</span><span class="m-achieve-card__unit">次</span></div>
+        </div>
+        <div class="m-achieve-card" data-act="learn">
+          <span class="m-achieve-card__icon" style="color:#8b5cf6"><i class="fa-solid fa-clock"></i></span>
+          <div class="m-achieve-card__label">学习时长</div>
+          <div><span class="m-achieve-card__value" id="bd-hours">0</span><span class="m-achieve-card__unit">小时</span></div>
+        </div>
+        <div class="m-achieve-card" data-act="streak">
+          <span class="m-achieve-card__icon" style="color:#ef4444"><i class="fa-solid fa-fire"></i></span>
+          <div class="m-achieve-card__label">连续学习</div>
+          <div><span class="m-achieve-card__value" id="bd-streak">0</span><span class="m-achieve-card__unit">天</span></div>
+        </div>
+        <div class="m-achieve-card" data-act="notice">
+          <span class="m-achieve-card__icon" style="color:#ec4899"><i class="fa-solid fa-bell"></i></span>
+          <div class="m-achieve-card__label">消息通知</div>
+          <div><span class="m-achieve-card__value" id="bd-msg">0</span><span class="m-achieve-card__unit">条</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 功能菜单 -->
+    <div class="m-menu-group" id="m-menu-group">
+      <div class="m-menu-row" data-act="cert">
+        <div class="m-menu-row__ic" style="background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fa-solid fa-certificate"></i></div>
+        <div class="m-menu-row__bd"><div class="m-menu-row__t">我的证书</div></div>
+        <i class="m-menu-row__arrow fa-solid fa-chevron-right"></i>
+      </div>
+      <div class="m-menu-row" data-act="exam">
+        <div class="m-menu-row__ic" style="background:linear-gradient(135deg,#3b82f6,#2563eb)"><i class="fa-solid fa-file-pen"></i></div>
+        <div class="m-menu-row__bd"><div class="m-menu-row__t">考试记录</div></div>
+        <i class="m-menu-row__arrow fa-solid fa-chevron-right"></i>
+      </div>
+      <div class="m-menu-row" data-act="learn">
+        <div class="m-menu-row__ic" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="fa-solid fa-chart-line"></i></div>
+        <div class="m-menu-row__bd"><div class="m-menu-row__t">学习记录</div></div>
+        <i class="m-menu-row__arrow fa-solid fa-chevron-right"></i>
+      </div>
+      <div class="m-menu-row" data-act="notice">
+        <div class="m-menu-row__ic" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)"><i class="fa-solid fa-bell"></i></div>
+        <div class="m-menu-row__bd"><div class="m-menu-row__t">消息通知</div></div>
+        <i class="m-menu-row__arrow fa-solid fa-chevron-right"></i>
+      </div>
+      <div class="m-menu-row" data-act="logout">
+        <div class="m-menu-row__ic" style="background:#fef2f2;color:#ef4444"><i class="fa-solid fa-right-from-bracket"></i></div>
+        <div class="m-menu-row__bd"><div class="m-menu-row__t" style="color:#ef4444">退出登录</div></div>
+        <i class="m-menu-row__arrow fa-solid fa-chevron-right" style="color:#ef4444"></i>
+      </div>
+    </div>
   </div>
 
   <script src="/js/auth-modal.js?v=20260723m"></script>
@@ -62,31 +121,54 @@
       var name = App.userName();
       document.getElementById('m-name').textContent = name;
       document.getElementById('m-dep').textContent = [u.department, u.position].filter(Boolean).join(' · ') || '游雁学院学员';
+
+      // 头像
       var av = document.getElementById('m-avatar');
-      if (u.avatar) { av.outerHTML = '<img class="m-avatar" id="m-avatar" src="' + App.esc(u.avatar) + '">'; }
+      if (u.avatar) { av.outerHTML = '<img class="m-profile__av" id="m-avatar" src="' + App.esc(u.avatar) + '">'; }
       else { av.textContent = avatarText(name); }
 
-      // 概览数据
-      try {
-        var certs = await Api.certificates() || [];
-        document.getElementById('st-certs').textContent = certs.length;
-      } catch (e) {}
-      try {
-        var exams = await Api.examRecords() || [];
-        document.getElementById('st-exams').textContent = exams.length;
-      } catch (e) {}
-      try {
-        var key = 'user_learning_' + App.userId();
-        var ld = JSON.parse(localStorage.getItem(key) || '{}');
-        document.getElementById('st-hours').textContent = Math.floor((ld.totalSeconds || ld.totalHours * 3600 || 0) / 3600) || (ld.totalHours || 0);
-      } catch (e) {}
+      // 数据
+      var certs = [], exams = [];
+      try { certs = await Api.certificates() || []; } catch (e) {}
+      try { exams = await Api.examRecords() || []; } catch (e) {}
 
-      // 菜单
-      document.querySelectorAll('[data-act]').forEach(function (row) {
-        row.addEventListener('click', function () {
-          var a = row.getAttribute('data-act');
+      var certCount = certs.length;
+      var examCount = exams.length;
+      var passCount = exams.filter(function (r) { return r.passed || r.isPassed; }).length;
+
+      // 学习数据
+      var key = 'user_learning_' + App.userId();
+      var ld = {};
+      try { ld = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+      var hours = Math.floor((ld.totalSeconds || (ld.totalHours || 0) * 3600) / 3600) || (ld.totalHours || 0);
+      var completed = (ld.completedCourses || []).length;
+      var studyDays = (ld.studyDates || []).length;
+
+      // 统计数字
+      document.getElementById('st-hours').textContent = hours;
+      document.getElementById('st-certs').textContent = certCount;
+      document.getElementById('st-exams').textContent = examCount;
+      document.getElementById('st-days').textContent = studyDays;
+
+      // 勋章数字（成就卡片）
+      document.getElementById('bd-cert').textContent = certCount;
+      document.getElementById('bd-exam').textContent = passCount;
+      document.getElementById('bd-course').textContent = completed;
+      document.getElementById('bd-streak').textContent = studyDays > 1 ? studyDays : studyDays;
+      document.getElementById('bd-hours').textContent = hours;
+      try {
+        var notifs = await Api.notifications() || [];
+        var unread = notifs.filter(function (n) { return !n.read; }).length;
+        document.getElementById('bd-msg').textContent = unread;
+      } catch (e) { document.getElementById('bd-msg').textContent = '-'; }
+
+      // 菜单事件
+      document.querySelectorAll('[data-act]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var a = el.getAttribute('data-act');
+          if (!a) return;
           if (a === 'logout') return App.logout();
-          ({ cert: openCert, exam: openExam, learn: openLearn, notice: openNotice, profile: openProfile })[a]();
+          ({ cert: openCert, exam: openExam, learn: openLearn, streak: openLearn, notice: openNotice, hours: openLearn, profile: openProfile })[a]();
         });
       });
 
@@ -96,18 +178,19 @@
       else if (h === 'notice') setTimeout(openNotice, 200);
     }
 
-    /* 证书 */
+    /* ========== 各弹层功能（复用原有逻辑，UI升级） ========== */
+
     async function openCert() {
       App.showLoading();
       try {
         var list = await Api.certificates() || [];
         App.hideLoading();
         var html = '<div class="m-sheet__hd"><div class="m-sheet__title">我的证书</div></div><div class="m-sheet__body">';
-        if (!list.length) html += '<div class="m-empty"><i class="fa-regular fa-award"></i>暂无证书</div>';
+        if (!list.length) html += '<div class="m-empty"><i class="fa-regular fa-award"></i>暂无证书<br><span style="font-size:12px">完成培训课程后即可获得证书</span></div>';
         else html += list.map(function (c) {
-          var img = c.imageUrl ? '<img src="' + App.esc(c.imageUrl) + '" style="width:100%;border-radius:10px">' :
-            '<div style="height:120px;border-radius:10px;background:var(--brand-grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">' + App.esc(c.title || '证书') + '</div>';
-          return '<div class="m-cert"><div style="padding:10px">' + img + '</div>' +
+          var img = c.imageUrl ? '<img src="' + App.esc(c.imageUrl) + '" style="width:100%;border-radius:12px">' :
+            '<div style="height:120px;border-radius:12px;background:var(--brand-grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px">' + App.esc(c.title || '证书') + '</div>';
+          return '<div class="m-cert"><div style="padding:8px">' + img + '</div>' +
             '<div class="m-cert__bd"><div class="m-cert__t">' + App.esc(c.title || '培训证书') + '</div>' +
             '<div class="m-cert__s">颁发：' + App.fmtDate(c.issuedAt || c.createdAt) + '</div></div></div>';
         }).join('');
@@ -116,7 +199,6 @@
       } catch (e) { App.hideLoading(); App.toast('证书加载失败', 'error'); }
     }
 
-    /* 考试记录 */
     async function openExam() {
       App.showLoading();
       try {
@@ -139,7 +221,6 @@
       } catch (e) { App.hideLoading(); App.toast('记录加载失败', 'error'); }
     }
 
-    /* 学习记录 */
     function openLearn() {
       var key = 'user_learning_' + App.userId();
       var ld = {};
@@ -148,11 +229,11 @@
       var completed = (ld.completedCourses || []).length;
       var days = (ld.studyDates || []).length;
       var html = '<div class="m-sheet__hd"><div class="m-sheet__title">学习记录</div></div><div class="m-sheet__body">' +
-        '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px">' +
-          '<div class="m-card" style="margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--brand-from)">' + hours + '</div><div style="font-size:12px;color:var(--ink-3)">累计学时(小时)</div></div>' +
-          '<div class="m-card" style="margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--brand-from)">' + completed + '</div><div style="font-size:12px;color:var(--ink-3)">完成课程</div></div>' +
-          '<div class="m-card" style="margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--brand-from)">' + days + '</div><div style="font-size:12px;color:var(--ink-3)">学习天数</div></div>' +
-          '<div class="m-card" style="margin:0;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--brand-from)">' + (ld.ratings || 0) + '</div><div style="font-size:12px;color:var(--ink-3)">好评</div></div>' +
+        '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px">' +
+          '<div class="m-stat" style="margin:0"><div class="m-stat__v">' + hours + '</div><div class="m-stat__l">累计学时(h)</div></div>' +
+          '<div class="m-stat" style="margin:0"><div class="m-stat__v">' + completed + '</div><div class="m-stat__l">完成课程</div></div>' +
+          '<div class="m-stat" style="margin:0"><div class="m-stat__v">' + days + '</div><div class="m-stat__l">学习天数</div></div>' +
+          '<div class="m-stat" style="margin:0"><div class="m-stat__v">' + (ld.ratings || 0) + '</div><div class="m-stat__l">好评数</div></div>' +
         '</div>' +
         '<div class="m-row"><div class="m-row__ic"><i class="fa-solid fa-share"></i></div><div class="m-row__bd"><div class="m-row__t" style="font-size:13.5px">分享次数</div></div><span class="m-row__s">' + (ld.shares || 0) + '</span></div>' +
         '<div class="m-row"><div class="m-row__ic"><i class="fa-solid fa-heart"></i></div><div class="m-row__bd"><div class="m-row__t" style="font-size:13.5px">点赞次数</div></div><span class="m-row__s">' + (ld.likes || 0) + '</span></div>' +
@@ -160,7 +241,6 @@
       App.openSheet(html);
     }
 
-    /* 消息通知 */
     async function openNotice() {
       App.showLoading();
       try {
@@ -179,15 +259,14 @@
         App.openSheet(html);
         document.querySelectorAll('#m-sheet-body .m-notice[data-id]').forEach(function (el) {
           el.addEventListener('click', async function () {
-            var id = el.getAttribute('data-id');
-            try { await Api.markRead(id); } catch (e) {}
+            var id = el.getAttribute('id') ? el.getAttribute('id').replace('notice-','') : el.getAttribute('data-id');
+            try { await Api.markRead(el.getAttribute('data-id')); } catch (e) {}
             el.querySelector('.m-badge') && el.querySelector('.m-badge').remove();
           });
         });
       } catch (e) { App.hideLoading(); App.toast('消息加载失败', 'error'); }
     }
 
-    /* 个人资料 */
     function openProfile() {
       var u = App.user() || {};
       var html = '<div class="m-sheet__hd"><div class="m-sheet__title">个人资料</div></div><div class="m-sheet__body">' +
@@ -210,18 +289,11 @@
       App.showLoading('保存中...');
       try {
         var r = await Api.profileUpdate(payload);
-        // 同步本地 user
         var u = App.user() || {};
         Object.assign(u, payload);
         try { localStorage.setItem('user', JSON.stringify(u)); sessionStorage.setItem('user', JSON.stringify(u)); } catch (e) {}
-        App.hideLoading();
-        App.toast('资料已保存');
-        App.closeSheet();
-        initMine();
-      } catch (e) {
-        App.hideLoading();
-        App.toast(e.message || '保存失败', 'error');
-      }
+        App.hideLoading(); App.toast('资料已保存'); App.closeSheet(); initMine();
+      } catch (e) { App.hideLoading(); App.toast(e.message || '保存失败', 'error'); }
     }
 
     App.initPage({ active: 'mine', requireAuth: true, onReady: initMine });

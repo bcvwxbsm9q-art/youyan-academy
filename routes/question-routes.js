@@ -36,6 +36,23 @@ function writeData(data) {
   }
 }
 
+// 管理员鉴权助手（由 server.js 注入 verifyToken，避免密钥重复）
+let _verifyToken = null;
+router.setVerifyToken = (fn) => { _verifyToken = fn; };
+function requireAdmin(req, res) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ success: false, error: '未提供认证令牌' });
+    return null;
+  }
+  const payload = _verifyToken ? _verifyToken(authHeader.slice(7)) : null;
+  if (!payload || payload.role !== 'admin') {
+    res.status(403).json({ success: false, error: '需要管理员权限' });
+    return null;
+  }
+  return payload;
+}
+
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 
 /**
@@ -157,7 +174,7 @@ const DIFF_NAMES = { easy: '简单', medium: '中等', hard: '困难' };
 
 router.get('/question-banks', (req, res) => {
   const data = readData();
-  const banks = data.question_banks || [];
+  const banks = (data.question_banks || []).filter(b => !b.isDeleted);
   const questions = data.questions || [];
 
   const enriched = banks.map(bank => {
@@ -177,7 +194,7 @@ router.get('/question-banks', (req, res) => {
 router.get('/question-banks/search', (req, res) => {
   const { name, category, date } = req.query;
   const data = readData();
-  let banks = data.question_banks || [];
+  let banks = (data.question_banks || []).filter(b => !b.isDeleted);
   if (name) banks = banks.filter(b => b.name.includes(name));
   if (category) banks = banks.filter(b => b.category === category);
   if (date) banks = banks.filter(b => (b.createdAt || '').startsWith(date));
@@ -189,6 +206,7 @@ router.get('/question-banks/:id', (req, res) => {
   const data = readData();
   const bank = (data.question_banks || []).find(b => b.id === id);
   if (!bank) return res.status(404).json({ success: false, error: '题库不存在' });
+  if (bank.isDeleted) return res.status(404).json({ success: false, error: '题库不存在' });
 
   const qs = (data.questions || []).filter(q => q.bankId === id);
   res.json({ success: true, data: { ...bank, questions: qs, questionCount: qs.length } });
@@ -240,17 +258,10 @@ router.delete('/question-banks/:id', (req, res) => {
   const index = banks.findIndex(b => b.id === id);
   if (index === -1) return res.status(404).json({ success: false, error: '题库不存在' });
 
-  // 删除该题库下所有题目的图片
-  const questionsToDelete = (data.questions || []).filter(q => q.bankId === id);
-  questionsToDelete.forEach(q => {
-    collectQuestionFiles(q).forEach(url => tryDeleteUploadFile(url, `question-bank:${id}:question:${q.id}`));
-  });
-
-  // 同时删除该题库下的所有试题
-  data.questions = (data.questions || []).filter(q => q.bankId !== id);
-  // 清理互动视频里引用了这些题的节点
-  purgeInteractionNodesForQuestions(questionsToDelete.map(q => q.id), data);
-  banks.splice(index, 1);
+  const bank = banks[index];
+  // 软删除：标记 isDeleted，保留题库下所有题目（可复用），仅隐藏题库本身
+  bank.isDeleted = true;
+  bank.deletedAt = new Date().toISOString();
   data.question_banks = banks;
   // 题库是共享可复用资产：删除题库【绝不】连带删除引用它的考试。
   // 仅把引用了本题库的考试 bankId 置空，避免留下指向已删题库的悬空引用（脏数据会导致前端考试异常）。
@@ -259,13 +270,24 @@ router.delete('/question-banks/:id', (req, res) => {
       if (exam.bankId === id) exam.bankId = null;
     });
   }
-  // 兜底：如果删完后没有任何题库了，清理所有 bankId 对不上现存题库的"孤儿题"
-  // 避免"删完所有题库但题还在 picker 里"的残留
-  if ((data.question_banks || []).length === 0) {
-    pruneOrphanQuestions(data);
-  }
   writeData(data);
-  res.json({ success: true, message: '题库已删除，关联题目及图片已清理' });
+  res.json({ success: true, message: '题库已软删除（题目保留，可恢复）' });
+});
+
+// 恢复软删除的题库（管理员）
+router.post('/question-banks/:id/restore', (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const id = parseInt(req.params.id);
+  const data = readData();
+  const banks = data.question_banks || [];
+  const index = banks.findIndex(b => b.id === id);
+  if (index === -1) return res.status(404).json({ success: false, error: '题库不存在' });
+
+  banks[index].isDeleted = false;
+  banks[index].deletedAt = null;
+  data.question_banks = banks;
+  writeData(data);
+  res.json({ success: true, message: '题库已恢复' });
 });
 
 // ========== 试题管理 API ==========

@@ -129,6 +129,39 @@ button { font-family: inherit; cursor: pointer; }
 .m-notice__t { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .m-notice__d { font-size: 11.5px; color: var(--ink-3); margin-top: 2px; }
 
+/* ---------- 公告滚动条（首页单行 Ticker） ---------- */
+.m-notice-bar {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 14px 12px; padding: 11px 14px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 14px; box-shadow: 0 3px 12px -6px rgba(31,35,48,.15);
+}
+.m-notice-bar__ic {
+  width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(102,126,234,.1), rgba(118,75,162,.08));
+  color: var(--brand-from); display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.m-notice-bar__body {
+  flex: 1; min-width: 0; height: 22px; overflow: hidden; position: relative;
+}
+.m-notice-bar__track {
+  position: relative; width: 100%; height: 100%;
+}
+.m-notice-bar__item {
+  display: block; position: absolute; top: 0; left: 0; right: 0;
+  font-size: 13.5px; font-weight: 600; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer; line-height: 22px;
+  transition: transform .45s ease, opacity .45s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-notice-bar__item:active { color: var(--brand-from); }
+.m-notice-bar__more {
+  flex-shrink: 0; font-size: 12px; color: var(--ink-3);
+  display: flex; align-items: center; gap: 3px; text-decoration: none;
+}
+.m-notice-bar__more i { font-size: 10px; }
+
 /* ---------- 培训 / 课程 列表卡 ---------- */
 .m-item {
   background: var(--card); border: 1px solid var(--line); border-radius: 16px;
@@ -164,6 +197,7 @@ button { font-family: inherit; cursor: pointer; }
 .m-btn--block { width: 100%; }
 .m-btn--sm { padding: 6px 12px; font-size: 12px; border-radius: 10px; }
 .m-btn[disabled] { opacity: .5; pointer-events: none; }
+.m-btn--danger { background: linear-gradient(135deg, #f87171, #ef4444); box-shadow: 0 8px 18px -10px rgba(239,68,68,.7); }
 
 /* ---------- 底部 Tab ---------- */
 .m-tabbar {
@@ -292,8 +326,433 @@ button { font-family: inherit; cursor: pointer; }
 .m-cert__s { font-size: 11.5px; color: var(--ink-3); margin-top: 3px; }
 
 /* =========================================================
+   首页专属：LOGO / 分区标题 / 精选课程 / 推荐讲师
+   ========================================================= */
+/* ---------- LOGO ---------- */
+.m-logo { width: 30px; height: 30px; flex-shrink: 0; border-radius: 9px; display: block; box-shadow: 0 4px 10px -4px rgba(102,126,234,.6); }
+
+/* ---------- 分区标题（左侧强调条） ---------- */
+.m-hd { display: flex; align-items: center; justify-content: space-between; margin: 22px 14px 12px; }
+.m-hd__t { font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--ink); }
+.m-hd__t::before { content: ""; width: 4px; height: 16px; border-radius: 4px; background: var(--brand-grad); }
+.m-hd__more { font-size: 12px; color: var(--ink-3); }
+
+/* ---------- 精选课程 2x2 ---------- */
+.m-course-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 0 14px; }
+.m-course-grid .m-empty { grid-column: 1 / -1; }
+.m-course {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+  box-shadow: 0 6px 18px -12px rgba(31,35,48,.28);
+  transition: transform .18s ease, box-shadow .18s ease; display: flex; flex-direction: column;
+}
+.m-course:active { transform: translateY(1px) scale(.99); }
+.m-course__cover {
+  position: relative; height: 0; padding-top: 62.5%; background: var(--brand-grad);
+  overflow: hidden;
+}
+.m-course__cover > img,
+.m-course__cover > .m-cover-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center; display: block; z-index: 0;
+}
+.m-course__cover .m-cover-fallback {
+  position: absolute; inset: 0; z-index: 0; display: flex; align-items: center; justify-content: center;
+  background: var(--brand-grad);
+}
+.m-course__cover .m-cover-fallback i { font-size: 34px; color: rgba(255,255,255,.55); }
+.m-course__cover::after { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,.3)); }
+.m-course__play {
+  position: absolute; right: 10px; bottom: 10px; z-index: 2; width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255,255,255,.92); color: var(--brand-from); display: flex; align-items: center; justify-content: center; font-size: 13px;
+  box-shadow: 0 4px 10px -3px rgba(0,0,0,.4);
+}
+.m-course__bd { padding: 10px 12px 12px; flex: 1; display: flex; flex-direction: column; }
+.m-course__t { font-size: 14px; font-weight: 700; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* 讲师行：👤 图标 + 名字（对齐 PC 端） */
+.m-course__lec {
+  margin-top: 5px; font-size: 12.5px; color: var(--ink-2);
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.m-course__lec i { font-size: 14px; color: var(--ink-3); }
+.m-course__meta { font-size: 11.5px; color: var(--ink-3); margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+.m-course__meta i { color: #f59e0b; }
+/* 讲师小圆头像（卡片内真实头像，对齐 PC 端讲师行） */
+.m-lec-mini {
+  width: 19px; height: 19px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  background: var(--brand-soft); color: var(--brand-from);
+  font-size: 10px; font-weight: 700; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center; overflow: hidden;
+}
+
+/* ---------- 推荐讲师（底部横滑） ---------- */
+.m-lec-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 0 14px 6px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+.m-lec-scroll::-webkit-scrollbar { display: none; }
+.m-lec-scroll .m-empty { width: 100%; }
+.m-lec {
+  flex: 0 0 auto; width: 116px; scroll-snap-align: start; background: var(--card); border: 1px solid var(--line);
+  border-radius: 16px; padding: 14px 10px; text-align: center; box-shadow: 0 6px 18px -14px rgba(31,35,48,.3);
+}
+.m-lec__av {
+  width: 56px; height: 56px; border-radius: 50%; object-fit: cover; margin: 0 auto 8px;
+  background: var(--brand-soft); display: flex; align-items: center; justify-content: center;
+  color: var(--brand-from); font-weight: 800; font-size: 20px;
+}
+.m-lec__name { font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-lec__role { font-size: 11px; color: var(--ink-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* =========================================================
+   课程页：搜索框 / 筛选标签 / 两列卡片（参考酷学院风格）
+   ========================================================= */
+
+/* 搜索框 */
+.m-search {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; border: 1px solid var(--line); border-radius: 14px;
+  padding: 10px 16px; box-shadow: 0 2px 8px -4px rgba(31,35,48,.12);
+}
+.m-search__ic { color: var(--ink-3); font-size: 15px; }
+.m-search__input {
+  flex: 1; border: none; outline: none; background: none; font-size: 14px; color: var(--ink);
+}
+.m-search__input::placeholder { color: var(--ink-3); }
+
+/* 筛选标签 */
+.m-chips { display: flex; gap: 9px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.m-chips::-webkit-scrollbar { display: none; }
+.m-chip {
+  flex-shrink: 0; padding: 7px 16px; border-radius: 999px; border: 1px solid var(--line);
+  background: #fff; font-size: 13px; color: var(--ink-2); cursor: pointer;
+  transition: all .18s ease;
+}
+.m-chip.is-active { background: linear-gradient(135deg, rgba(102,126,234,.1), rgba(118,75,162,.08)); border-color: var(--brand-from); color: var(--brand-from); font-weight: 700; }
+.m-chip:active { transform: scale(.96); }
+
+/* 课程两列卡片（参考图风格） */
+.m-ccard {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  overflow: hidden; box-shadow: 0 6px 20px -12px rgba(31,35,48,.22);
+  transition: transform .18s ease, box-shadow .18s ease; display: flex; flex-direction: column;
+}
+.m-ccard:active { transform: translateY(1px) scale(.99); }
+.m-ccard__cover {
+  position: relative; height: 0; padding-top: 62.5%; background: var(--brand-grad);
+  overflow: hidden;
+}
+.m-ccard__cover > img,
+.m-ccard__cover > .m-cover-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center; display: block; z-index: 0;
+}
+.m-ccard__cover-fallback {
+  position: absolute; inset: 0; z-index: 0; display: flex; align-items: center; justify-content: center;
+  background: var(--brand-grad);
+}
+.m-ccard__cover-fallback i { font-size: 36px; color: rgba(255,255,255,.5); }
+.m-ccard__play {
+  position: absolute; right: 10px; bottom: 10px; z-index: 2;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255,255,255,.92); color: var(--brand-from);
+  display: flex; align-items: center; justify-content: center; font-size: 13px;
+  box-shadow: 0 4px 12px -3px rgba(0,0,0,.35);
+}
+.m-ccard__bd { padding: 11px 13px 13px; flex: 1; display: flex; flex-direction: column; }
+.m-ccard__t {
+  font-size: 14.5px; font-weight: 700; line-height: 1.38;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  min-height: 40px;
+}
+/* 课程卡片底部信息行：👁浏览 | 👍点赞 | ⭐评分（对齐 PC 端） */
+.m-ccard__lec {
+  margin-top: 5px; font-size: 12.5px; color: var(--ink-2);
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.m-ccard__lec i { font-size: 14px; color: var(--ink-3); }
+.m-ccard__meta {
+  margin-top: 8px; display: flex; align-items: center; gap: 12px;
+  font-size: 12px; color: var(--ink-3);
+}
+.m-ccard__meta span { display: inline-flex; align-items: center; gap: 4px; }
+.m-ccard__meta i { font-size: 12px; }
+.m-ccard__cred {
+  font-size: 11.5px; font-weight: 700; color: #f97316; background: #fff7ed;
+  padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+}
+
+/* =========================================================
+   培训页：钉钉风格 · 周视图 + 干净日程列表
+   ========================================================= */
+
+/* 页面标题区（标题 + 副标题 + 装饰图标） */
+.m-page-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 18px 8px;
+}
+.m-page-hd__bd { }
+.m-page-hd__title {
+  font-size: 22px; font-weight: 800; color: var(--ink); line-height: 1.25; letter-spacing: .3px;
+}
+.m-page-hd__sub {
+  font-size: 13px; color: var(--ink-3); margin-top: 4px;
+}
+.m-page-hd__icon { flex-shrink: 0; opacity: .9; }
+/* 页头刷新按钮（替代原蓝色装饰 SVG） */
+.m-page-hd__btn {
+  flex-shrink: 0; width: 42px; height: 42px; border-radius: 14px; border: none;
+  background: var(--brand-soft); color: var(--brand-from);
+  display: inline-flex; align-items: center; justify-content: center; font-size: 17px;
+  transition: transform .25s ease, background .2s;
+}
+.m-page-hd__btn:active { transform: rotate(-90deg) scale(.94); background: rgba(102,126,234,.16); }
+
+/* 周视图品牌紫色渐变卡片（与全站 #667eea→#764ba2 统一） */
+.m-week-card {
+  margin: 6px 14px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px; padding: 18px 18px 14px;
+  color: #fff; position: relative; overflow: hidden;
+  box-shadow: 0 12px 32px -10px rgba(102,126,234,.55);
+}
+.m-week-card::before {
+  content: ""; position: absolute; right: -18px; top: -28px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(255,255,255,.1);
+}
+.m-week-card__hd {
+  display: flex; align-items: center; justify-content: space-between;
+  position: relative; z-index: 1; margin-bottom: 16px;
+}
+.m-week-card__label { display: flex; align-items: baseline; gap: 8px; }
+.m-week-card__hd span:first-child { font-size: 15px; font-weight: 600; opacity: .92; }
+.m-week-card__count b { font-size: 22px; font-weight: 800; }
+.m-week-card__signed {
+  font-size: 12px; font-weight: 600; opacity: .9;
+  background: rgba(255,255,255,.16); padding: 4px 10px; border-radius: 999px;
+}
+.m-week-card__signed b { font-size: 13px; font-weight: 800; }
+
+/* 单行周日历 */
+.m-week-cal {
+  display: flex; justify-content: space-between;
+  position: relative; z-index: 1; padding: 0 2px;
+}
+.m-wcd {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  flex: 1; padding: 6px 0 8px; cursor: default;
+}
+.m-wcd__dw {
+  font-size: 11.5px; font-weight: 600; opacity: .65; letter-spacing: .5px;
+}
+.m-wcd__d {
+  width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-size: 15px; font-weight: 700;
+  transition: all .2s; position: relative;
+}
+.m-wcd.is-today .m-wcd__d {
+  background: #fff; color: var(--brand-from); box-shadow: 0 0 0 3px rgba(255,255,255,.35);
+  font-size: 16px;
+}
+.m-wcd__d.is-signed { color: #86efac !important; }
+.m-wcd.is-today .m-wcd__d.is-signed { background: #34d399; color: #fff !important; box-shadow: none; }
+/* 有培训的日期下方小圆点 */
+.m-wcd__dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: rgba(255,255,255,.7); margin-top: 2px;
+}
+
+/* 展开/收起按钮 */
+.m-week-card__expand {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 12px; padding: 5px 14px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.1);
+  color: #fff; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  transition: background .2s; position: relative; z-index: 1;
+}
+.m-week-card__expand:active { background: rgba(255,255,255,.2); }
+.m-week-card__expand i { font-size: 11px; transition: transform .25s; }
+
+/* 月视图网格（展开后显示） */
+.m-month-view {
+  margin-top: 14px; position: relative; z-index: 1;
+  border-top: 1px solid rgba(255,255,255,.16); padding-top: 14px;
+}
+.m-mg-row { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 4px 0; }
+.m-mg-dw { font-size: 11px; opacity: .55; padding-bottom: 8px; font-weight: 600; letter-spacing: 1px; }
+.m-mg-d {
+  aspect-ratio: 1; max-width: 36px; margin: 0 auto; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600;
+}
+.m-mg-d.is-empty { visibility: hidden; }
+.m-mg-d.is-today { background: rgba(255,255,255,.28); color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.4); }
+.m-mg-d.is-done { color: #86efac; }
+.m-mg-d.is-today.is-done { background: #34d399; color: #fff; box-shadow: none; }
+
+/* 列表头部：我的培训(N) + tab */
+.m-list-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 14px; margin-bottom: 10px;
+}
+.m-list-hd__title { font-size: 17px; font-weight: 700; color: var(--ink); }
+.m-list-hd__n { font-size: 14px; color: var(--ink-3); font-weight: 400; }
+.m-list-tabs { display: flex; gap: 0; background: var(--bg); border-radius: 10px; padding: 3px; }
+.m-tab-btn {
+  padding: 5px 14px; border: none; border-radius: 8px; background: transparent;
+  font-size: 13px; font-weight: 600; color: var(--ink-3); cursor: pointer;
+  transition: all .2s;
+}
+.m-tab-btn.is-active { background: #fff; color: var(--brand-from); box-shadow: 0 2px 6px -2px rgba(31,35,48,.2); }
+
+/* 干净日程事件卡（品牌化：左侧色条 + 状态徽章 + 项目标签 + 进度） */
+.m-sched-list { padding: 0 14px; }
+.m-ev {
+  position: relative; display: flex; gap: 14px; align-items: stretch;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 16px; padding: 15px 15px 15px 18px; margin-bottom: 12px;
+  box-shadow: 0 4px 16px -12px rgba(31,35,48,.14);
+  transition: transform .15s ease, box-shadow .15s ease;
+  cursor: pointer; overflow: hidden;
+  animation: evIn .35s ease both;
+  animation-delay: calc(var(--i, 0) * 42ms);
+}
+@keyframes evIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.m-ev:active { transform: scale(.993); box-shadow: 0 2px 8px -4px rgba(31,35,48,.1); }
+/* 左侧品牌色条 */
+.m-ev__bar {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--brand-grad); border-radius: 4px 0 0 4px;
+}
+.m-ev__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+/* 状态徽章 */
+.m-ev__status {
+  flex-shrink: 0; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+}
+.m-ev__status.is-done { color: #059669; background: #ecfdf5; }
+.m-ev__status.is-doing { color: #d97706; background: #fffbeb; }
+.m-ev__status.is-todo { color: var(--ink-2); background: #f1f2f6; }
+.m-ev__status.is-upcoming { color: var(--brand-from); background: var(--brand-soft); }
+/* 项目标签 */
+.m-ev__chip {
+  display: inline-block; align-self: flex-start; margin-top: 7px;
+  font-size: 11px; font-weight: 600; color: var(--brand-from);
+  background: var(--brand-soft); padding: 2px 8px; border-radius: 7px;
+}
+/* 必修进度 */
+.m-ev__prog {
+  margin-top: 8px; font-size: 11px; color: var(--ink-3);
+  display: flex; align-items: center; gap: 5px;
+}
+.m-ev__prog span { color: var(--ink-3); }
+.m-ev__prog b { color: var(--brand-from); font-weight: 800; }
+
+/* 左侧时间列 */
+.m-ev__time {
+  flex-shrink: 0; width: 52px; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center;
+}
+.m-ev__day {
+  font-size: 13px; font-weight: 700; color: var(--ink-2); line-height: 1.2;
+}
+.m-ev__hm {
+  font-size: 19px; font-weight: 800; color: var(--ink); line-height: 1.2; margin-top: 3px;
+  letter-spacing: -.3px;
+}
+
+/* 右侧信息列 */
+.m-ev__main { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.m-ev__title {
+  font-size: 15.5px; font-weight: 700; line-height: 1.38;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.m-ev__row {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12.5px; color: var(--ink-3); margin-top: 5px;
+}
+.m-ev__row i { width: 15px; text-align: center; font-size: 12px; color: var(--ink-3); }
+.m-ev__tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+/* 空态操作按钮组（切换 tab / 重试） */
+.m-empty__acts { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+@media (prefers-reduced-motion: reduce) {
+  .m-ev { animation: none; }
+}
+
+/* 小标签（签到/调研/考试/课件） */
+.m-stag {
+  font-size: 10.5px; padding: 2px 9px; border-radius: 999px; font-weight: 700;
+}
+.m-stag--green { color: #059669; background: #ecfdf5; }
+.m-stag--blue { color: #0891b2; background: #e0f2fe; }
+.m-stag--orange { color: #d97706; background: #fffbeb; }
+.m-stag--purple { color: #7c3aed; background: #f5f3ff; }
+
+/* =========================================================
+   我的页：等级 / 成就勋章 / 精美个人卡
+   ========================================================= */
+
+/* 个人主卡片（渐变背景大卡） */
+.m-profile {
+  background: var(--brand-grad); border-radius: 22px; padding: 22px 18px 18px;
+  color: #fff; position: relative; overflow: hidden; box-shadow: 0 14px 36px -14px rgba(102,126,234,.6);
+}
+.m-profile::after {
+  content: ""; position: absolute; right: -20px; top: -30px;
+  width: 140px; height: 140px; border-radius: 50%; background: rgba(255,255,255,.1);
+}
+.m-profile__top { display: flex; align-items: center; gap: 16px; position: relative; z-index: 1; }
+.m-profile__av {
+  width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,.5);
+  background: rgba(255,255,255,.18); display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 800; flex-shrink: 0;
+  box-shadow: 0 6px 16px -6px rgba(0,0,0,.4);
+}
+.m-profile__info { flex: 1; min-width: 0; }
+.m-profile__name { font-size: 20px; font-weight: 800; }
+.m-profile__dep { font-size: 12.5px; opacity: .85; margin-top: 3px; }
+
+/* 数据统计行 */
+.m-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 14px 0; }
+.m-stat {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: 14px 8px; text-align: center; box-shadow: 0 4px 14px -10px rgba(31,35,48,.16);
+}
+.m-stat__v { font-size: 20px; font-weight: 800; color: var(--brand-from); }
+.m-stat__l { font-size: 11px; color: var(--ink-3); margin-top: 4px; }
+
+/* 成就数据卡片（参考图风格：图标+标题+大数字，横向排列） */
+.m-badges-section { margin: 18px 14px 0; }
+.m-achievement-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.m-achieve-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: 16px 12px; text-align: center;
+  box-shadow: 0 4px 14px -10px rgba(31,35,48,.18);
+  transition: transform .18s ease, box-shadow .18s ease;
+  cursor: pointer; position: relative; overflow: hidden;
+}
+.m-achieve-card:active { transform: scale(.96); }
+.m-achieve-card__icon { font-size: 28px; margin-bottom: 8px; display: block; }
+.m-achieve-card__label { font-size: 12.5px; color: var(--ink-2); font-weight: 600; margin-bottom: 6px; }
+.m-achieve-card__value { font-size: 28px; font-weight: 800; color: var(--ink); line-height: 1.1; }
+.m-achieve-card__unit { font-size: 11px; color: var(--ink-3); font-weight: 400; margin-left: 2px; }
+
+/* 菜单组 */
+.m-menu-group { background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: 0 4px 16px -12px rgba(31,35,48,.14); margin: 14px; }
+.m-menu-row {
+  display: flex; align-items: center; gap: 12px; padding: 15px 16px;
+  border-bottom: 1px solid var(--line); cursor: pointer; transition: background .15s;
+}
+.m-menu-row:last-child { border-bottom: none; }
+.m-menu-row:active { background: var(--bg); }
+.m-menu-row__ic {
+  width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: #fff; flex-shrink: 0;
+}
+.m-menu-row__bd { flex: 1; min-width: 0; }
+.m-menu-row__t { font-size: 14.5px; font-weight: 600; }
+.m-menu-row__arrow { color: var(--ink-3); font-size: 13px; }
+
+/* =========================================================
    桌面端：自动模拟手机视窗
-   避免宽屏把移动页拉伸成“网页版”，也不再依赖浏览器设备模拟
+   避免宽屏把移动页拉伸成"网页版"，也不再依赖浏览器设备模拟
    ========================================================= */
 @media (min-width: 600px) {
   html, body { background: #e7e9f1; }

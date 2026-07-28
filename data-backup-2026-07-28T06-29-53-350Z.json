@@ -579,28 +579,33 @@
   ],
   "training_events": [
     {
-      "project": "新雁计划",
-      "name": "LUA优化",
-      "content": "本期课主要介绍游戏UI字体设计要点，分享与游戏风格适配的字体应用技巧与AI辅助设计方法，帮助UI伙伴们梳理与掌握专业的字体设计规范及其优化体系。",
-      "instructor": "魏少银",
-      "location": "B区培训室",
-      "date": "2026-07-28",
-      "startTime": "2026-07-28T14:30",
-      "endTime": "2026-07-28T15:30",
+      "name": "产品知识专业培训",
+      "project": "产品培训",
+      "instructor": "张经理",
+      "location": "线上腾讯会议",
+      "content": "系统讲解公司产品知识、应用场景及核心卖点。",
+      "startTime": "2026-07-18T14:00:00",
+      "endTime": "2026-07-18T16:30:00",
       "signinEnabled": true,
-      "signinCode": null,
-      "signinStartTime": "2026-07-28 14:30",
-      "signinEndTime": "2026-07-28 15:30",
-      "examEnabled": false,
       "surveyEnabled": true,
-      "coursewareEnabled": false,
       "linkedSurveyId": 1781170180951,
-      "linkedExamId": null,
-      "accessType": "none",
-      "allowedUsers": null,
+      "id": 1785210958199,
+      "createdAt": "2026/7/28 11:55:58",
+      "coursewareFiles": []
+    },
+    {
+      "name": "信息安全意识培训",
+      "project": "安全培训",
+      "instructor": "李主管",
+      "location": "总部 1 楼会议室",
+      "content": "提升全员信息安全意识，防范钓鱼邮件、数据泄露等风险。",
+      "startTime": "2026-07-28T15:00:00",
+      "endTime": "2026-07-28T17:00:00",
+      "signinEnabled": true,
+      "coursewareEnabled": true,
       "coursewareFiles": [],
-      "id": 1785220231747,
-      "createdAt": "2026/7/28 14:30:31"
+      "id": 1785210958516,
+      "createdAt": "2026/7/28 11:55:58"
     }
   ],
   "user_learning_1": {
@@ -1197,7 +1202,7 @@
     {
       "id": 1,
       "title": "视频课程在线学习 - 从小白到专家的进阶之路",
-      "cover": "/uploads/covers/1784182342405-704142190.png",
+      "cover": "https://p26-doubao-search-sign.byteimg.com/labis/3e50046a89d633ced89e4d242d60f064~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
       "lecturerId": 1,
       "categoryId": 31,
       "duration": 6300,
@@ -1211,7 +1216,7 @@
     {
       "id": 2,
       "title": "新年回好课 - 2024年企业运营策略与实践",
-      "cover": "/uploads/covers/1784184672110-653497740.png",
+      "cover": "https://p11-doubao-search-sign.byteimg.com/labis/56e578a8ce507c83f91f47e08e2ec86d~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
       "lecturerId": 3,
       "categoryId": 41,
       "duration": 3300,
@@ -1225,7 +1230,7 @@
     {
       "id": 3,
       "title": "平面设计进阶课程 - 14天在家安心学",
-      "cover": "/uploads/covers/1784185482368-555839254.jpg",
+      "cover": "https://p3-doubao-search-sign.byteimg.com/labis/7cf2d040059ee347d85e5b21237a98b7~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32",
       "lecturerId": 2,
       "categoryId": 21,
       "duration": 4500,
@@ -1891,13 +1896,6 @@
       "userId": 1782805459054,
       "enrolledAt": "2026-06-30T07:44:32.149Z",
       "source": "assigned"
-    },
-    {
-      "id": 1785220273010,
-      "trainingId": 1785220231747,
-      "userId": 1780909174403,
-      "enrolledAt": "2026-07-28T06:31:13.010Z",
-      "source": "self"
     }
   ],
   "papers": [
@@ -1931,17 +1929,7 @@
       "visitedAt": "2026-07-23T10:11:03.402Z"
     }
   ],
-  "training_signins": [
-    {
-      "id": 1785220294606,
-      "trainingId": 1785220231747,
-      "userId": 1780909174403,
-      "userName": "许志坚",
-      "department": "人力资源部",
-      "signedAt": "2026-07-28T06:31:34.606Z",
-      "method": "direct"
-    }
-  ],
+  "training_signins": [],
   "training_assign_history": [
     {
       "id": 1782805472149,

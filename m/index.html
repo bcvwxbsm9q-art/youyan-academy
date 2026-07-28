@@ -16,9 +16,23 @@
   <div class="app-shell">
     <!-- 顶部导航 -->
     <header class="m-nav">
-      <div class="m-nav__left"><span class="m-nav__title">游雁学院</span></div>
+      <div class="m-nav__left">
+        <svg class="m-logo" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+          <defs>
+            <linearGradient id="mlogoGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#667eea"/>
+              <stop offset="1" stop-color="#764ba2"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="32" height="32" rx="9" fill="url(#mlogoGrad)"/>
+          <path d="M16 7 L27 12 L16 17 L5 12 Z" fill="#fff"/>
+          <path d="M9.5 13.5 V19.5 C9.5 19.5 12.5 21.6 16 21.6 C19.5 21.6 22.5 19.5 22.5 19.5 V13.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="27" cy="12" r="1.7" fill="#fff"/>
+        </svg>
+        <span class="m-nav__title">游雁学院</span>
+      </div>
       <div class="m-nav__right">
-        <button class="m-nav__btn" onclick="App.startScan()" title="扫码进入培训">
+        <button class="m-nav__btn" onclick="App.startScan()" title="扫码进入培训" aria-label="扫码">
           <i class="fa-solid fa-qrcode"></i>
         </button>
       </div>
@@ -59,14 +73,22 @@
       </div>
     </section>
 
-    <!-- 公告 -->
-    <section class="m-section">
-      <div class="m-section__hd">
-        <div class="m-section__title"><i class="fa-solid fa-bullhorn"></i>平台公告</div>
-        <a class="m-section__more" href="/m/mine.html#notice">全部</a>
+    <!-- 精选课程 -->
+    <div class="m-hd"><div class="m-hd__t">精选课程</div><a class="m-hd__more" href="/m/course.html">查看全部</a></div>
+    <div class="m-course-grid" id="m-course-grid"><div class="m-empty"><i class="fa-solid fa-spinner fa-spin"></i>加载中...</div></div>
+
+    <!-- 公告滚动条（单行 + 上下翻滚 + 点击跳转） -->
+    <div class="m-notice-bar" id="m-notice-bar">
+      <div class="m-notice-bar__ic"><i class="fa-solid fa-volume-high"></i></div>
+      <div class="m-notice-bar__body">
+        <div class="m-notice-bar__track" id="m-notice-track"><span class="m-notice-bar__item">暂无公告</span></div>
       </div>
-      <div id="m-notice-list"><div class="m-empty"><i class="fa-regular fa-bell"></i>暂无公告</div></div>
-    </section>
+      <a class="m-notice-bar__more" href="/m/mine.html#notice">全部 <i class="fa-solid fa-chevron-right"></i></a>
+    </div>
+
+    <!-- 推荐讲师（最底部） -->
+    <div class="m-hd"><div class="m-hd__t">推荐讲师</div></div>
+    <div class="m-lec-scroll" id="m-lec-scroll"><div class="m-empty"><i class="fa-solid fa-spinner fa-spin"></i>加载中...</div></div>
   </div>
 
   <!-- 共享登录弹窗（复用 PC 端 auth-modal.js） -->
@@ -75,6 +97,9 @@
   <script src="/m/js/common.js"></script>
   <script src="/m/js/scan.js"></script>
   <script>
+    // 封面加载失败时的占位图（同品牌紫渐变 + 播放图标），避免只留紫块导致"显示不全"
+    var COVER_FALLBACK = "data:image/svg+xml;charset=utf-8," + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='400' height='250'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#667eea'/><stop offset='1' stop-color='#764ba2'/></linearGradient></defs><rect width='400' height='250' fill='url(#g)'/><circle cx='200' cy='125' r='34' fill='rgba(255,255,255,0.92)'/><path d='M190 108 L222 125 L190 142 Z' fill='#667eea'/></svg>");
+
     // 轮播控制
     var swiper = { idx: 0, timer: null, len: 0 };
     function renderSwiper(banners) {
@@ -113,32 +138,160 @@
       return h < 6 ? '凌晨好' : h < 12 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
     }
 
+    // 公告滚动条控制
+    var noticeTicker = { idx: 0, timer: null, len: 0 };
+    function startNoticeTicker(len) {
+      var track = document.getElementById('m-notice-track');
+      if (!track || len <= 1) return;
+      noticeTicker.len = len;
+      noticeTicker.idx = 0;
+      clearInterval(noticeTicker.timer);
+      // 每 3 秒切换下一条
+      noticeTicker.timer = setInterval(function () {
+        noticeTicker.idx = (noticeTicker.idx + 1) % noticeTicker.len;
+        goNoticeSlide(noticeTicker.idx);
+      }, 3000);
+    }
+    function goNoticeSlide(i) {
+      var track = document.getElementById('m-notice-track');
+      if (!track) return;
+      var items = track.querySelectorAll('.m-notice-bar__item');
+      if (!items.length) return;
+      items.forEach(function (el, k) {
+        el.style.transition = 'transform .45s ease, opacity .45s ease';
+        el.style.transform = 'translateY(-' + (i * 100) + '%)';
+        el.style.opacity = (k === i) ? '1' : '0';
+      });
+    }
+
     async function initHome() {
       document.getElementById('m-greet').textContent = greet();
       document.getElementById('m-hero-name').textContent = App.userName();
 
+      // 讲师表（一次加载，供精选课程关联真实头像/姓名，底部讲师横滑复用）
+      var lecsAll = [];
+      try { lecsAll = (await Api.lecturers() || []); } catch (e) {}
+      var lecMap = {};
+      lecsAll.forEach(function (l) { lecMap[String(l.id)] = l; });
+
+      // 轮播
       try {
-        var banners = await Api.banners() || [];
-        banners = banners.filter(function (b) { return b && b.img; });
+        var banners = (await Api.banners() || []).filter(function (b) { return b && b.img; });
         renderSwiper(banners);
       } catch (e) { /* 忽略 */ }
 
+      // 公告（单行滚动条）
       try {
-        var notices = await Api.notices() || [];
-        notices = notices.filter(function (n) { return n && (n.status === 'published' || n.status === undefined); });
+        var notices = (await Api.notices() || []).filter(function (n) { return n && (n.status === 'published' || n.status === undefined); });
         notices.sort(function (a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); });
-        var top = notices.slice(0, 4);
-        var box = document.getElementById('m-notice-list');
-        if (!top.length) {
-          box.innerHTML = '<div class="m-empty"><i class="fa-regular fa-bell"></i>暂无公告</div>';
+        var track = document.getElementById('m-notice-track');
+        var bar = document.getElementById('m-notice-bar');
+        if (!notices.length) {
+          track.innerHTML = '<span class="m-notice-bar__item">暂无公告</span>';
+          bar.style.display = 'none';
         } else {
-          box.innerHTML = top.map(function (n) {
-            return '<div class="m-notice"><div class="m-notice__ic"><i class="fa-solid fa-bullhorn"></i></div>' +
-              '<div class="m-notice__bd"><div class="m-notice__t">' + App.esc(n.title) + '</div>' +
-              '<div class="m-notice__d">' + App.esc(n.createdAt ? App.fmtDate(n.createdAt) : '') + '</div></div></div>';
+          bar.style.display = '';
+          track.innerHTML = notices.map(function (n, i) {
+            return '<span class="m-notice-bar__item" data-id="' + (n.id || '') + '" data-idx="' + i + '">' + App.esc(n.title || '') + '</span>';
           }).join('');
+          // 点击公告 → 打开详情弹层
+          Array.prototype.forEach.call(track.querySelectorAll('.m-notice-bar__item'), function (el) {
+            el.addEventListener('click', function () {
+              var id = el.getAttribute('data-id');
+              var n = notices[parseInt(el.getAttribute('data-idx') || '0')];
+              if (!n) return;
+              var html = '<div class="m-sheet__hd"><div class="m-sheet__title">' + App.esc(n.title || '公告详情') + '</div></div>' +
+                '<div class="m-sheet__body" style="font-size:14px;line-height:1.7;color:var(--ink)">' +
+                  '<div style="font-size:12px;color:var(--ink-3);margin-bottom:12px">' + App.esc(n.createdAt ? App.fmtDateTime(n.createdAt) : '') + '</div>' +
+                  '<div>' + (n.content ? App.esc(n.content.replace(/<[^>]+>/g, '')) : '暂无内容') + '</div></div>';
+              App.openSheet(html);
+            });
+          });
+          // 上下翻滚动画：超过 1 条时启动
+          if (notices.length > 1) startNoticeTicker(notices.length);
         }
       } catch (e) { /* 忽略 */ }
+
+      // 精选课程 2x2（取前 4 门）
+      try {
+        var courses = (await Api.courses() || []).filter(function (c) { return c.status === 'published' || c.status === undefined; });
+        var grid = document.getElementById('m-course-grid');
+        if (!courses.length) {
+          grid.innerHTML = '<div class="m-empty"><i class="fa-regular fa-folder-open"></i>暂无课程</div>';
+        } else {
+          grid.innerHTML = courses.slice(0, 4).map(function (c) {
+            var cover = c.cover || '';
+            var rating = parseFloat(c.rating) || 0;
+            var views = c.views || 0;
+            var likes = c.likes || 0;
+            // 关联讲师表，取真实头像 + 真实姓名（不再用图标凑数）
+            var lm = lecMap[String(c.lecturerId)];
+            var av = lm ? (lm.avatar || lm.photo || lm.cover || '') : '';
+            var lname = lm ? (lm.name || lm.realName || '讲师') : '讲师';
+            var init = App.esc((lname || '?').slice(0, 1));
+            var avHtml = av
+              ? '<img class="m-lec-mini" src="' + App.esc(av) + '" data-init="' + init + '" alt="' + App.esc(lname) + '">'
+              : '<span class="m-lec-mini">' + init + '</span>';
+            var coverHtml = cover
+              ? '<img class="m-cover-img" src="' + App.esc(cover) + '" alt="' + App.esc(c.title) + '" loading="lazy" onerror="this.src=\'' + COVER_FALLBACK + '\';this.onerror=null;">'
+              : '<div class="m-cover-fallback"><i class="fa-solid fa-play-circle"></i></div>';
+            return '<a class="m-course" href="/m/course.html">' +
+              '<div class="m-course__cover">' + coverHtml +
+                '<span class="m-course__play"><i class="fa-solid fa-play"></i></span></div>' +
+              '<div class="m-course__bd">' +
+                '<div class="m-course__t">' + App.esc(c.title) + '</div>' +
+                '<div class="m-course__lec">' + avHtml + ' <span>' + App.esc(lname) + '</span></div>' +
+                '<div class="m-course__meta">' +
+                  '<span><i class="fa-regular fa-eye"></i> ' + views + '</span>' +
+                  '<span><i class="fa-regular fa-thumbs-up"></i> ' + likes + '</span>' +
+                  '<span><i class="fa-solid fa-star" style="color:#f59e0b"></i> ' + rating.toFixed(1) + '</span>' +
+                '</div>' +
+              '</div></a>';
+          }).join('');
+          // 讲师头像加载失败 → 降级为首字母圆
+          Array.prototype.forEach.call(grid.querySelectorAll('img.m-lec-mini'), function (img) {
+            img.addEventListener('error', function () {
+              var d = document.createElement('span');
+              d.className = 'm-lec-mini';
+              d.textContent = img.getAttribute('data-init') || '?';
+              img.parentNode.replaceChild(d, img);
+            });
+          });
+        }
+      } catch (e) {
+        document.getElementById('m-course-grid').innerHTML = '<div class="m-empty"><i class="fa-regular fa-circle-xmark"></i>加载失败</div>';
+      }
+
+      // 推荐讲师（底部横滑）
+      try {
+        var lecs = (await Api.lecturers() || []).slice(0, 10);
+        var lbox = document.getElementById('m-lec-scroll');
+        if (!lecs.length) {
+          lbox.innerHTML = '<div class="m-empty"><i class="fa-regular fa-user"></i>暂无讲师</div>';
+        } else {
+          lbox.innerHTML = lecs.map(function (l) {
+            var av = l.avatar || l.photo || l.cover || '';
+            var name = l.name || l.realName || '讲师';
+            var init = App.esc((name || '?').slice(0, 1));
+            var avHtml = av
+              ? '<img class="m-lec__av" src="' + App.esc(av) + '" data-init="' + init + '" alt="">'
+              : '<div class="m-lec__av">' + init + '</div>';
+            return '<div class="m-lec">' + avHtml +
+              '<div class="m-lec__name">' + App.esc(name) + '</div>' +
+              '<div class="m-lec__role">' + App.esc(l.title || l.position || l.role || '讲师') + '</div></div>';
+          }).join('');
+          Array.prototype.forEach.call(lbox.querySelectorAll('img.m-lec__av'), function (img) {
+            img.addEventListener('error', function () {
+              var d = document.createElement('div');
+              d.className = 'm-lec__av';
+              d.textContent = img.getAttribute('data-init') || '?';
+              img.parentNode.replaceChild(d, img);
+            });
+          });
+        }
+      } catch (e) {
+        document.getElementById('m-lec-scroll').innerHTML = '<div class="m-empty">加载失败</div>';
+      }
     }
 
     App.initPage({ active: 'home', requireAuth: true, onReady: initHome });

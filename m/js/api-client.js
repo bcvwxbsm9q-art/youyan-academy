@@ -67,6 +67,9 @@
     banners: function () { return Api.get('/banners'); },
     notices: function () { return Api.get('/notices'); },
 
+    // ---- 分类 ----
+    categories: function () { return Api.get('/categories'); },
+
     // ---- 课程 ----
     courses: function () { return Api.get('/courses'); },
     course:  function (id) { return Api.get('/courses/' + id); },

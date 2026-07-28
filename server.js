@@ -118,6 +118,8 @@ function hashPassword(password) {
 
 // 导入题库管理路由
 const questionRoutes = require('./routes/question-routes');
+// 向题库路由注入管理员鉴权（与 server.js 统一 verifyToken，避免密钥重复）
+questionRoutes.setVerifyToken(verifyToken);
 
 // 中间件
 app.use(express.static(__dirname, {
@@ -167,6 +169,55 @@ function writeData(data) {
     console.error('写入数据失败:', e.message);
     return false;
   }
+}
+
+// ============================================================
+// 删除前自动备份（审计 + 秒恢复）
+// ============================================================
+// 任何破坏性删除前自动拷贝 data.json 为带时间戳的快照，保留最近 N 份。
+// 用途：误删任何数据后，可将对应快照复制回 data.json 即可秒级恢复。
+const BACKUP_KEEP = 20;
+function backupDataFile(reason) {
+  try {
+    if (!fs.existsSync(DATA_FILE)) return;
+    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupName = `data-backup-${ts}.json`;
+    fs.copyFileSync(DATA_FILE, path.join(__dirname, backupName));
+    // 保留策略：仅保留最近 BACKUP_KEEP 份，避免无限增长
+    const files = fs.readdirSync(__dirname)
+      .filter(f => f.startsWith('data-backup-') && f.endsWith('.json'))
+      .map(f => ({ f, mtime: fs.statSync(path.join(__dirname, f)).mtimeMs }))
+      .sort((a, b) => b.mtime - a.mtime);
+    files.slice(BACKUP_KEEP).forEach(x => {
+      try { fs.unlinkSync(path.join(__dirname, x.f)); } catch (e) { /* ignore */ }
+    });
+    console.log(`[backup] 已备份 data.json -> ${backupName} (原因: ${reason || 'delete'})`);
+  } catch (e) {
+    console.error('[backup] 备份失败:', e.message);
+  }
+}
+
+// 全局中间件：在任意 DELETE 请求执行业务前自动备份（排除纯文件删除 /api/upload）
+app.use((req, res, next) => {
+  if (req.method === 'DELETE' && !(req.path || '').startsWith('/api/upload')) {
+    backupDataFile(req.path);
+  }
+  next();
+});
+
+// 从 Authorization: Bearer <token> 解析并校验管理员身份；非管理员返回 null 并已响应
+function getAdminPayload(req, res) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ success: false, error: '未提供认证令牌' });
+    return null;
+  }
+  const payload = verifyToken(authHeader.slice(7));
+  if (!payload || payload.role !== 'admin') {
+    res.status(403).json({ success: false, error: '需要管理员权限' });
+    return null;
+  }
+  return payload;
 }
 
 // ============================================================
@@ -3662,7 +3713,7 @@ app.post('/api/courses/:id/ratings', (req, res) => {
 // GET /api/exams - 获取所有考试
 app.get('/api/exams', (req, res) => {
   const data = readData();
-  const exams = data.exams || [];
+  const exams = (data.exams || []).filter(e => !e.isDeleted);
   const papers = data.papers || [];
   const banks = data.question_banks || [];
   const bankCategories = data.bank_categories || [];
@@ -3811,17 +3862,11 @@ app.delete('/api/exams/:id', (req, res) => {
     // 仅确认引用存在，不做任何删除操作：题库可在其它考试中继续复用。
   }
 
-  // 删除考试题目相关文件
-  deleteExamFiles(exam);
+  // 软删除：标记 isDeleted，保留题目/图片/答卷，便于审计与秒恢复
+  exam.isDeleted = true;
+  exam.deletedAt = new Date().toISOString();
 
-  exams.splice(index, 1);
-
-  // 删除相关成绩记录
-  if (data.exam_attempts) {
-    data.exam_attempts = data.exam_attempts.filter(a => a.examId !== id);
-  }
-
-  // 解除培训关联
+  // 解除培训关联（隐藏已删除考试）
   (data.training_events || []).forEach(t => {
     if (t.linkedExamId === id) t.linkedExamId = null;
   });
@@ -3837,9 +3882,25 @@ app.delete('/api/exams/:id', (req, res) => {
   }
 
   if (writeData(data)) {
-    res.json({ success: true, message: '考试已删除，关联数据已清理' });
+    res.json({ success: true, message: '考试已软删除（保留数据，可恢复）' });
   } else {
     res.status(500).json({ success: false, error: '删除失败' });
+  }
+});
+
+// POST /api/exams/:id/restore - 恢复软删除的考试（需要管理员权限）
+app.post('/api/exams/:id/restore', (req, res) => {
+  if (!getAdminPayload(req, res)) return;
+  const data = readData();
+  const id = parseInt(req.params.id);
+  const exam = (data.exams || []).find(e => e.id === id);
+  if (!exam) return res.status(404).json({ success: false, error: '考试不存在' });
+  exam.isDeleted = false;
+  exam.deletedAt = null;
+  if (writeData(data)) {
+    res.json({ success: true, message: '考试已恢复' });
+  } else {
+    res.status(500).json({ success: false, error: '恢复失败' });
   }
 });
 
@@ -4153,7 +4214,7 @@ app.get('/api/exams/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const data = readData();
   const exam = (data.exams || []).find(e => e.id === id);
-  if (!exam) {
+  if (!exam || exam.isDeleted) {
     return res.status(404).json({ success: false, error: '考试不存在' });
   }
   res.json({ success: true, data: exam });
@@ -4346,7 +4407,7 @@ const takeExamHandler = (req, res) => {
   const id = parseInt(req.params.id);
   const userId = req.query.userId || (req.body && req.body.userId);
   const data = readData();
-  const exam = (data.exams || []).find(e => e.id === id && e.status === 'published');
+  const exam = (data.exams || []).find(e => e.id === id && e.status === 'published' && !e.isDeleted);
   if (!exam) {
     return res.status(404).json({ success: false, error: '考试不存在或未发布' });
   }
@@ -4408,6 +4469,7 @@ app.post('/api/exams/:id/enter', (req, res) => {
   const { userId, trainingId } = req.body;
   const data = readData();
   const exam = (data.exams || []).find(e => e.id === id);
+  if (!exam || exam.isDeleted) return res.status(404).json({ success: false, error: '考试不存在' });
   if (!data.exam_attempts) data.exam_attempts = [];
   const attemptId = Date.now();
   const attempt = {
@@ -5160,7 +5222,7 @@ app.get('/api/notices/:id/visits', (req, res) => {
 // GET /api/surveys/stats - 获取调研统计概览（轻量接口，必须在 :id 路由之前）
 app.get('/api/surveys/stats', (req, res) => {
   const data = readData();
-  const surveys = data.surveys || [];
+  const surveys = (data.surveys || []).filter(s => !s.isDeleted);
   const responses = data.survey_responses || [];
   res.json({
     success: true,
@@ -5178,11 +5240,12 @@ app.get('/api/surveys/stats', (req, res) => {
   });
 });
 
-// GET /api/surveys - 获取所有调研
+// GET /api/surveys - 获取所有调研（软删除的已排除）
 app.get('/api/surveys', (req, res) => {
   const data = readData();
   if (!data.surveys) data.surveys = [];
-  res.json({ success: true, data: data.surveys });
+  const surveys = data.surveys.filter(s => !s.isDeleted);
+  res.json({ success: true, data: surveys });
 });
 
 // GET /api/surveys/:id - 获取单个调研（含题目）
@@ -5190,7 +5253,7 @@ app.get('/api/surveys/:id', (req, res) => {
   const data = readData();
   const id = parseInt(req.params.id);
   const survey = (data.surveys || []).find(s => s.id === id);
-  if (!survey) return res.status(404).json({ success: false, error: '调研不存在' });
+  if (!survey || survey.isDeleted) return res.status(404).json({ success: false, error: '调研不存在' });
   res.json({ success: true, data: survey });
 });
 
@@ -5244,33 +5307,40 @@ app.delete('/api/surveys/:id', (req, res) => {
 
   const survey = data.surveys[surveyIndex];
 
-  // 删除题目相关图片
-  deleteSurveyFiles(survey);
+  // 软删除：标记 isDeleted，保留题目/图片/答卷，便于审计与秒恢复
+  survey.isDeleted = true;
+  survey.deletedAt = new Date().toISOString();
 
-  // 删除调研主记录
-  data.surveys.splice(surveyIndex, 1);
-
-  // 清理调研答卷
-  if (data.survey_responses) {
-    data.survey_responses = data.survey_responses.filter(r => r.surveyId !== id);
-  }
-
-  // 解除培训关联
+  // 解除培训关联（隐藏已删除调研）
   if (data.training_events) {
     data.training_events.forEach(t => {
       if (t.linkedSurveyId === id) t.linkedSurveyId = null;
     });
   }
-
-  // 清理培训-调研关联表
   if (data.training_surveys) {
     data.training_surveys = data.training_surveys.filter(r => r.surveyId !== id);
   }
 
   if (writeData(data)) {
-    res.json({ success: true, message: '调研已删除，关联数据已清理' });
+    res.json({ success: true, message: '调研已软删除（保留数据，可恢复）' });
   } else {
     res.status(500).json({ success: false, error: '删除失败' });
+  }
+});
+
+// POST /api/surveys/:id/restore - 恢复软删除的调研（需要管理员权限）
+app.post('/api/surveys/:id/restore', (req, res) => {
+  if (!getAdminPayload(req, res)) return;
+  const data = readData();
+  const id = parseInt(req.params.id);
+  const survey = (data.surveys || []).find(s => s.id === id);
+  if (!survey) return res.status(404).json({ success: false, error: '调研不存在' });
+  survey.isDeleted = false;
+  survey.deletedAt = null;
+  if (writeData(data)) {
+    res.json({ success: true, message: '调研已恢复' });
+  } else {
+    res.status(500).json({ success: false, error: '恢复失败' });
   }
 });
 
@@ -5291,6 +5361,8 @@ app.get('/api/surveys/:id/responses', (req, res) => {
 app.get('/api/surveys/:id/check-responded', (req, res) => {
   const data = readData();
   const id = parseInt(req.params.id);
+  const survey = (data.surveys || []).find(s => s.id === id);
+  if (!survey || survey.isDeleted) return res.status(404).json({ success: false, error: '调研不存在' });
   const userId = req.query.userId;
   const trainingId = req.query.trainingId;
   const stageIdx = req.query.stageIdx;
@@ -5314,7 +5386,7 @@ app.post('/api/surveys/:id/responses', (req, res) => {
   const data = readData();
   const id = parseInt(req.params.id);
   const survey = (data.surveys || []).find(s => s.id === id);
-  if (!survey) return res.status(404).json({ success: false, error: '调研不存在' });
+  if (!survey || survey.isDeleted) return res.status(404).json({ success: false, error: '调研不存在' });
   if (!data.survey_responses) data.survey_responses = [];
   const users = data.registered_users || [];
   const userId = req.body.userId || null;
@@ -5343,7 +5415,7 @@ app.post('/api/surveys/:id/respond', (req, res) => {
   const data = readData();
   const id = parseInt(req.params.id);
   const survey = (data.surveys || []).find(s => s.id === id);
-  if (!survey) return res.status(404).json({ success: false, error: '调研不存在' });
+  if (!survey || survey.isDeleted) return res.status(404).json({ success: false, error: '调研不存在' });
   if (!data.survey_responses) data.survey_responses = [];
   const users = data.registered_users || [];
   const userId = req.body.userId || null;

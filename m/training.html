@@ -14,13 +14,69 @@
 </head>
 <body>
   <div class="app-shell">
+    <!-- 顶部导航（与首页/课程页统一：Logo + 扫码） -->
     <header class="m-nav">
-      <div class="m-nav__left"><span class="m-nav__title">培训</span></div>
-      <div class="m-nav__right"></div>
+      <div class="m-nav__left">
+        <svg class="m-logo" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+          <defs>
+            <linearGradient id="mlogoGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#667eea"/>
+              <stop offset="1" stop-color="#764ba2"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="32" height="32" rx="9" fill="url(#mlogoGrad)"/>
+          <path d="M16 7 L27 12 L16 17 L5 12 Z" fill="#fff"/>
+          <path d="M9.5 13.5 V19.5 C9.5 19.5 12.5 21.6 16 21.6 C19.5 21.6 22.5 19.5 22.5 19.5 V13.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="27" cy="12" r="1.7" fill="#fff"/>
+        </svg>
+        <span class="m-nav__title">游雁学院</span>
+      </div>
+      <div class="m-nav__right">
+        <button class="m-nav__btn" onclick="App.startScan()" title="扫码进入培训" aria-label="扫码">
+          <i class="fa-solid fa-qrcode"></i>
+        </button>
+      </div>
     </header>
 
-    <section class="m-section" style="margin-top:14px">
-      <div id="m-training-list"><div class="m-loading"><div class="m-spin"></div><div style="margin-left:10px">加载中...</div></div></div>
+    <!-- 页面标题区（刷新按钮替代原蓝色装饰 SVG） -->
+    <div class="m-page-hd">
+      <div class="m-page-hd__bd">
+        <h1 class="m-page-hd__title">培训安排</h1>
+        <p class="m-page-hd__sub" id="m-page-sub">查看你的培训日程与签到</p>
+      </div>
+      <button class="m-page-hd__btn" onclick="reloadTraining()" aria-label="刷新" title="刷新">
+        <i class="fa-solid fa-rotate"></i>
+      </button>
+    </div>
+
+    <!-- 周视图卡片（品牌紫色渐变） -->
+    <section class="m-week-card" id="m-week-card">
+      <div class="m-week-card__hd">
+        <div class="m-week-card__label"><span id="wk-label">本周培训</span><span class="m-week-card__count"><b id="wk-count">0</b></span></div>
+        <div class="m-week-card__signed">已签到 <b id="wk-signed">0</b></div>
+      </div>
+      <!-- 单行周日历 -->
+      <div class="m-week-cal" id="m-week-cal"></div>
+      <button class="m-week-card__expand" id="wk-expand" onclick="toggleMonthView()">
+        <span>展开月历</span><i class="fa-solid fa-chevron-down"></i>
+      </button>
+      <!-- 月视图（默认隐藏） -->
+      <div class="m-month-view" id="m-month-view" style="display:none"></div>
+    </section>
+
+    <!-- 列表头部：我的培训(N) + 今日/本周 tab -->
+    <div class="m-list-hd">
+      <span class="m-list-hd__title">我的培训<span class="m-list-hd__n" id="list-n">(0)</span></span>
+      <div class="m-list-tabs">
+        <button class="m-tab-btn is-active" data-filter="today" onclick="switchFilter('today',this)">今日</button>
+        <button class="m-tab-btn" data-filter="week" onclick="switchFilter('week',this)">本周</button>
+        <button class="m-tab-btn" data-filter="all" onclick="switchFilter('all',this)">全部</button>
+      </div>
+    </div>
+
+    <!-- 日程列表 -->
+    <section class="m-sched-list" id="m-training-list">
+      <div class="m-loading"><div class="m-spin"></div><div style="margin-left:10px">加载中...</div></div>
     </section>
   </div>
 
@@ -29,17 +85,221 @@
   <script src="/m/js/common.js"></script>
   <script src="/m/js/scan.js"></script>
   <script>
-    /* ============ 数据获取 ============ */
-    async function getTraining(id) {
-      // 优先从用户日程中取（已含 done 状态与全部字段）
-      try {
-        var sch = await Api.trainingSchedule();
-        if (Array.isArray(sch)) {
-          var hit = sch.find(function (x) { return String(x.id) === String(id); });
-          if (hit) return hit;
+    /* ========== 数据 ========== */
+    var allTrainings = [];
+    var curFilter = 'today';
+    var signedDates = [];
+
+    /* ========== 周日历渲染 ========== */
+    function renderWeekCal() {
+      var now = new Date();
+      var day = now.getDay(); // 0=Sun
+      var mondayOffset = day === 0 ? -6 : 1 - day; // 周一偏移
+      var mon = new Date(now);
+      mon.setDate(now.getDate() + mondayOffset);
+
+      var dw = ['一','二','三','四','五','六','日'];
+      var todayStr = App.fmtDate(new Date());
+
+      var html = '';
+      for (var i = 0; i < 7; i++) {
+        var d = new Date(mon);
+        d.setDate(mon.getDate() + i);
+        var dNum = d.getDate();
+        var ds = App.fmtDate(d);
+        var isToday = ds === todayStr;
+        var hasDot = allTrainings.some(function(t) { return t.startTime && App.fmtDate(new Date(t.startTime)) === ds; });
+        var hasSignin = signedDates.indexOf(d.getDate()) > -1;
+
+        html += '<div class="m-wcd' + (isToday ? ' is-today' : '') + '">' +
+          '<div class="m-wcd__dw">周' + dw[i] + '</div>' +
+          '<div class="m-wcd__d' + (hasSignin ? ' is-signed' : '') + '">' + dNum + '</div>' +
+          (hasDot ? '<div class="m-wcd__dot"></div>' : '') +
+        '</div>';
+      }
+      document.getElementById('m-week-cal').innerHTML = html;
+
+      // 更新标签：本周培训数 + 本周已签到数
+      var weekCount = 0, weekSigned = 0;
+      allTrainings.forEach(function(t) {
+        if (!t.startTime) return;
+        var sd = new Date(t.startTime);
+        var diff = (sd - mon) / 86400000;
+        if (diff >= 0 && diff < 7) {
+          weekCount++;
+          if (t.signinDone) weekSigned++;
         }
-      } catch (e) {}
-      // 兜底：按 ID 拉详情，并补全完成状态
+      });
+      document.getElementById('wk-count').textContent = weekCount;
+      document.getElementById('wk-signed').textContent = weekSigned;
+    }
+
+    function toggleMonthView() {
+      var mv = document.getElementById('m-month-view');
+      var btn = document.getElementById('wk-expand');
+      if (mv.style.display === 'none') {
+        mv.style.display = '';
+        btn.querySelector('span').textContent = '收起月历';
+        btn.querySelector('i').style.transform = 'rotate(180deg)';
+        renderMonthGrid();
+      } else {
+        mv.style.display = 'none';
+        btn.querySelector('span').textContent = '展开月历';
+        btn.querySelector('i').style.transform = '';
+      }
+    }
+
+    function renderMonthGrid() {
+      var now = new Date();
+      var y = now.getFullYear(), m = now.getMonth();
+      var firstDay = new Date(y, m, 1).getDay();
+      var daysInMonth = new Date(y, m + 1, 0).getDate();
+      var today = now.getDate();
+      var dw = ['日','一','二','三','四','五','六'];
+
+      var html = '<div class="m-mg-row">';
+      dw.forEach(function(d) { html += '<div class="m-mg-dw">' + d + '</div>'; });
+      html += '</div><div class="m-mg-row">';
+      for (var i = 0; i < firstDay; i++) html += '<div class="m-mg-d is-empty"></div>';
+      for (var d = 1; d <= daysInMonth; d++) {
+        var cls = '';
+        if (d === today) cls += ' is-today';
+        if (signedDates.indexOf(d) > -1) cls += ' is-done';
+        html += '<div class="m-mg-d' + cls + '">' + d + '</div>';
+      }
+      html += '</div>';
+      document.getElementById('m-month-view').innerHTML = html;
+    }
+
+    /* ========== 筛选切换 ========== */
+    function switchFilter(f, btn) {
+      curFilter = f;
+      document.querySelectorAll('.m-tab-btn').forEach(function(b) { b.classList.toggle('is-active', b === btn); });
+      renderFiltered();
+    }
+
+    function getFiltered() {
+      var now = new Date();
+      var todayStr = App.fmtDate(now);
+      // 计算本周一起止
+      var day = now.getDay();
+      var monOff = day === 0 ? -6 : 1 - day;
+      var weekMon = new Date(now); weekMon.setDate(now.getDate() + monOff);
+      var weekSun = new Date(weekMon); weekSun.setDate(weekMon.getDate() + 6);
+
+      return allTrainings.filter(function(t) {
+        if (!t.startTime) return true;
+        var sd = App.fmtDate(new Date(t.startTime));
+        if (curFilter === 'today') return sd === todayStr;
+        if (curFilter === 'week') return sd >= App.fmtDate(weekMon) && sd <= App.fmtDate(weekSun);
+        return true;
+      });
+    }
+
+    function renderFiltered() {
+      var list = getFiltered();
+      document.getElementById('list-n').textContent = '(' + list.length + ')';
+      renderSchedList(list);
+    }
+
+    /* ========== 状态计算（已完成/进行中/待完成/未开始） ========== */
+    function calcStatus(t) {
+      var req = (t.signinEnabled ? 1 : 0) +
+                (t.surveyEnabled && t.linkedSurveyId ? 1 : 0) +
+                (t.examEnabled && t.linkedExamId ? 1 : 0);
+      if (!req) return null;
+      var done = (t.signinDone ? 1 : 0) + (t.surveyDone ? 1 : 0) + (t.examDone ? 1 : 0);
+      if (done === req) return { cls: 'is-done', label: '已完成' };
+      if (done > 0) return { cls: 'is-doing', label: '进行中' };
+      var sd = t.startTime ? new Date(t.startTime) : null;
+      var past = sd ? sd <= now() : true;
+      return past ? { cls: 'is-todo', label: '待完成' } : { cls: 'is-upcoming', label: '未开始' };
+    }
+    function now() { return new Date(); }
+
+    /* ========== 日程列表（品牌化卡片） ========== */
+    function renderSchedList(list) {
+      var box = document.getElementById('m-training-list');
+      if (!list || !list.length) {
+        var guide = '';
+        if (curFilter === 'today') {
+          guide = '<div class="m-empty__acts">' +
+            '<button class="m-btn m-btn--ghost m-btn--sm" onclick="switchFilter(\'week\',document.querySelector(\'[data-filter=week]\'))">看本周</button>' +
+            '<button class="m-btn m-btn--ghost m-btn--sm" onclick="switchFilter(\'all\',document.querySelector(\'[data-filter=all]\'))">看全部</button>' +
+          '</div>';
+        }
+        box.innerHTML = '<div class="m-empty"><i class="fa-regular fa-calendar-xmark"></i>' +
+          (curFilter === 'today' ? '今天还没有培训安排' : '暂无培训安排') + guide + '</div>';
+        return;
+      }
+      var todayStr = App.fmtDate(new Date());
+
+      box.innerHTML = list.map(function(t, idx) {
+        var sd = t.startTime ? new Date(t.startTime) : null;
+        var dateStr = sd ? App.fmtDate(sd) : '';
+        var timeStr = sd ? App.fmtHM(sd) : (t.time || '');
+        var endStr = t.endTime ? App.fmtHM(new Date(t.endTime)) : '';
+
+        // 左侧时间标签
+        var timeLabel, subLabel;
+        if (dateStr === todayStr) {
+          timeLabel = '今天'; subLabel = timeStr + (endStr ? '-' + endStr : '');
+        } else if (sd) {
+          var m = sd.getMonth() + 1;
+          timeLabel = m + '月' + sd.getDate() + '日'; subLabel = timeStr + (endStr ? '-' + endStr : '');
+        } else {
+          timeLabel = ''; subLabel = timeStr;
+        }
+
+        // 任务标签
+        var tags = [];
+        if (t.signinEnabled) tags.push('<span class="m-stag m-stag--green">签到</span>');
+        if (t.surveyEnabled && t.linkedSurveyId) tags.push('<span class="m-stag m-stag--blue">调研</span>');
+        if (t.examEnabled && t.linkedExamId) tags.push('<span class="m-stag m-stag--orange">考试</span>');
+        if (t.coursewareEnabled && t.coursewareFiles && t.coursewareFiles.length) tags.push('<span class="m-stag m-stag--purple">课件</span>');
+
+        // 状态徽章
+        var st = calcStatus(t);
+        var statusHtml = st ? '<span class="m-ev__status ' + st.cls + '">' + st.label + '</span>' : '';
+
+        // 项目标签
+        var proj = t.projectName || t.project || t.category || '';
+        var projHtml = proj ? '<span class="m-ev__chip">' + App.esc(proj) + '</span>' : '';
+
+        // 必修进度
+        var req = (t.signinEnabled ? 1 : 0) + (t.surveyEnabled && t.linkedSurveyId ? 1 : 0) + (t.examEnabled && t.linkedExamId ? 1 : 0);
+        var done = (t.signinDone ? 1 : 0) + (t.surveyDone ? 1 : 0) + (t.examDone ? 1 : 0);
+        var progHtml = req ? '<div class="m-ev__prog"><span>必修</span><b>' + done + '/' + req + '</b></div>' : '';
+
+        return '<div class="m-ev" data-id="' + t.id + '" style="--i:' + idx + '">' +
+          '<div class="m-ev__bar"></div>' +
+          '<div class="m-ev__time">' +
+            (timeLabel ? '<div class="m-ev__day">' + App.esc(timeLabel) + '</div>' : '') +
+            (subLabel ? '<div class="m-ev__hm">' + App.esc(subLabel) + '</div>' : '') +
+          '</div>' +
+          '<div class="m-ev__main">' +
+            '<div class="m-ev__top"><div class="m-ev__title">' + App.esc(t.name) + '</div>' + statusHtml + '</div>' +
+            projHtml +
+            '<div class="m-ev__row"><i class="fa-solid fa-location-dot"></i>' + App.esc(t.location || '待定') + '</div>' +
+            '<div class="m-ev__row"><i class="fa-regular fa-clock"></i>' + App.esc(dateStr + ' ' + (t.time || '')) + '</div>' +
+            (tags.length ? '<div class="m-ev__tags">' + tags.join('') + '</div>' : '') +
+            progHtml +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      Array.prototype.forEach.call(box.querySelectorAll('.m-ev'), function(el) {
+        el.addEventListener('click', function() { openTraining(el.getAttribute('data-id')); });
+      });
+    }
+
+    /* ========== 数据获取（零冗余请求） ========== */
+    // schedule 已随每个培训返回 signinDone / surveyDone / examDone，
+    // 直接本地计算已签到日期，避免对每个培训再发一次 /signins（N+1）。
+    async function getTraining(id) {
+      var hit = allTrainings.find(function(x) { return String(x.id) === String(id); });
+      if (hit) return hit;
+      // 兜底：深链 ?id= 在列表加载前到达
       var ev = await Api.trainingDetail(id);
       return await enrichDetail(ev);
     }
@@ -48,113 +308,91 @@
       var uid = App.userId();
       var t = {
         id: ev.id, name: ev.name, project: ev.project, instructor: ev.instructor,
-        location: ev.location, content: ev.content, date: App.fmtDate(ev.startTime),
+        location: ev.location, content: ev.content,
+        date: App.fmtDate(ev.startTime),
         time: (App.fmtHM(ev.startTime) + (ev.endTime ? ' - ' + App.fmtHM(ev.endTime) : '')),
         signinEnabled: ev.signinEnabled, signinStartTime: ev.signinStartTime, signinEndTime: ev.signinEndTime, signinDone: false,
         surveyEnabled: ev.surveyEnabled, linkedSurveyId: ev.linkedSurveyId, surveyDone: false,
         examEnabled: ev.examEnabled, linkedExamId: ev.linkedExamId, examDone: false,
-        coursewareEnabled: ev.coursewareEnabled, coursewareFiles: ev.coursewareFiles || []
+        coursewareEnabled: ev.coursewareEnabled, coursewareFiles: ev.coursewareFiles || [],
+        startTime: ev.startTime, endTime: ev.endTime
       };
       if (uid) {
         try {
           var s = await Api.trainingSignins(t.id);
           var arr = (s && s.data) ? s.data : (Array.isArray(s) ? s : []);
-          t.signinDone = arr.some(function (x) { return String(x.userId) == String(uid); });
-        } catch (e) {}
+          t.signinDone = arr.some(function(x) { return String(x.userId) == String(uid); });
+        } catch(e) {}
         if (t.linkedSurveyId) {
-          try { var c = await Api.surveyCheck(t.linkedSurveyId, uid, t.id); t.surveyDone = !!(c && c.responded); } catch (e) {}
+          try { var c = await Api.surveyCheck(t.linkedSurveyId, uid, t.id); t.surveyDone = !!(c && c.responded); } catch(e) {}
         }
         if (t.linkedExamId) {
           try {
             var recs = await Api.examRecords() || [];
-            t.examDone = recs.some(function (r) { return String(r.examId) == String(t.linkedExamId); });
-          } catch (e) {}
+            t.examDone = recs.some(function(r) { return String(r.examId) == String(t.linkedExamId); });
+          } catch(e) {}
         }
       }
       return t;
-    }
-
-    /* ============ 列表 ============ */
-    function badge(enabled, label, cls) {
-      return enabled ? '<span class="m-badge ' + cls + '">' + label + '</span>' : '';
-    }
-    function renderList(list) {
-      var box = document.getElementById('m-training-list');
-      if (!list || !list.length) {
-        box.innerHTML = '<div class="m-empty"><i class="fa-regular fa-calendar-xmark"></i>暂无培训安排</div>';
-        return;
-      }
-      box.innerHTML = list.map(function (t) {
-        var req = (t.signinEnabled ? 1 : 0) + (t.surveyEnabled && t.linkedSurveyId ? 1 : 0) + (t.examEnabled && t.linkedExamId ? 1 : 0);
-        var done = (t.signinDone ? 1 : 0) + (t.surveyDone ? 1 : 0) + (t.examDone ? 1 : 0);
-        var prog = req ? Math.round(done / req * 100) : 0;
-        return '<div class="m-item" data-id="' + t.id + '">' +
-          '<div class="m-item__body">' +
-            '<div class="m-item__title">' + App.esc(t.name) + '</div>' +
-            '<div class="m-item__meta"><span><i class="fa-regular fa-calendar"></i>' + App.esc(t.date || '') + '</span>' +
-              '<span><i class="fa-regular fa-clock"></i>' + App.esc(t.time || '') + '</span></div>' +
-            '<div class="m-item__meta"><span><i class="fa-solid fa-location-dot"></i>' + App.esc(t.location || '待定') + '</span></div>' +
-            '<div class="m-item__foot">' +
-              '<div class="m-badges">' + badge(t.signinEnabled, '签到', 'm-badge--signin') + badge(t.surveyEnabled && t.linkedSurveyId, '调研', 'm-badge--survey') + badge(t.examEnabled && t.linkedExamId, '考试', 'm-badge--exam') + '</div>' +
-              '<div class="m-prog">完成 <b>' + done + '/' + req + '</b></div>' +
-            '</div>' +
-          '</div></div>';
-      }).join('');
-      Array.prototype.forEach.call(box.querySelectorAll('.m-item'), function (el) {
-        el.addEventListener('click', function () { openTraining(el.getAttribute('data-id')); });
-      });
     }
 
     async function loadTrainings() {
       App.showLoading();
       try {
         var list = await Api.trainingSchedule() || [];
-        renderList(list);
-      } catch (e) {
-        document.getElementById('m-training-list').innerHTML = '<div class="m-empty"><i class="fa-regular fa-circle-xmark"></i>加载失败</div>';
+        allTrainings = Array.isArray(list) ? list : [];
+
+        // 本地计算已签到日期（day-of-month），无需任何额外请求
+        signedDates = allTrainings.filter(function(t) {
+          return t.signinDone && t.startTime;
+        }).map(function(t) {
+          var d = new Date(t.startTime);
+          return isNaN(d.getDate()) ? -1 : d.getDate();
+        }).filter(function(n) { return n > 0; });
+
+        renderWeekCal();
+        renderFiltered();
+
+        // 副标题动态化
+        var total = allTrainings.length;
+        var signed = allTrainings.filter(function(t) { return t.signinDone; }).length;
+        document.getElementById('m-page-sub').textContent =
+          total ? ('共 ' + total + ' 场培训 · 已签到 ' + signed + ' 场') : '暂无培训安排';
+
+        document.getElementById('list-n').textContent = '(' + allTrainings.length + ')';
+      } catch(e) {
+        document.getElementById('m-training-list').innerHTML =
+          '<div class="m-empty"><i class="fa-regular fa-circle-xmark"></i>加载失败' +
+          '<div class="m-empty__acts"><button class="m-btn m-btn--ghost m-btn--sm" onclick="reloadTraining()">重新加载</button></div></div>';
       } finally { App.hideLoading(); }
     }
 
-    /* ============ 培训详情弹层 ============ */
+    // 供页头刷新按钮与错误重试调用
+    function reloadTraining() { loadTrainings(); }
+
+    /* ========== 培训详情弹层 ========== */
     function fmtSigninTime(start, end) {
       if (!start) return '';
-      var s = App.fmtHM(start);
-      var e = end ? App.fmtHM(end) : '';
+      var s = App.fmtHM(start), e = end ? App.fmtHM(end) : '';
       return e ? ('签到时间 ' + s + ' - ' + e) : ('签到时间 ' + s);
     }
 
     function buildTasks(t) {
       var items = [];
-      if (t.signinEnabled) items.push({
-        key: 'signin', icon: 'fa-circle-check', title: '考勤签到', tag: '必修',
-        color: '#10b981', sub: fmtSigninTime(t.signinStartTime, t.signinEndTime),
-        done: t.signinDone, act: 'signin'
-      });
-      if (t.surveyEnabled && t.linkedSurveyId) items.push({
-        key: 'survey', icon: 'fa-chart-bar', title: '培训满意度调研', tag: '必修',
-        color: '#2563eb', sub: '请根据本次培训真实感受填写',
-        done: t.surveyDone, act: 'survey'
-      });
-      if (t.examEnabled && t.linkedExamId) items.push({
-        key: 'exam', icon: 'fa-file-lines', title: '《' + t.name + '》培训考核', tag: '必修',
-        color: '#d97706', sub: '完成考核以巩固学习成果',
-        done: t.examDone, act: 'exam'
-      });
-      if (t.coursewareEnabled && t.coursewareFiles && t.coursewareFiles.length) items.push({
-        key: 'courseware', icon: 'fa-folder-open', title: '培训课件（' + t.coursewareFiles.length + '个）', tag: '资料',
-        color: '#8b5cf6', sub: '培训相关资料，可自由下载',
-        done: false, act: 'courseware'
-      });
+      if (t.signinEnabled) items.push({ key:'signin', icon:'fa-circle-check', title:'考勤签到', tag:'必修', color:'#10b981', sub:fmtSigninTime(t.signinStartTime,t.signinEndTime), done:t.signinDone, act:'signin' });
+      if (t.surveyEnabled && t.linkedSurveyId) items.push({ key:'survey', icon:'fa-chart-bar', title:'培训满意度调研', tag:'必修', color:'#0891b2', sub:'请根据本次培训真实感受填写', done:t.surveyDone, act:'survey' });
+      if (t.examEnabled && t.linkedExamId) items.push({ key:'exam', icon:'fa-file-lines', title:'《' + t.name + '》培训考核', tag:'必修', color:'#d97706', sub:'完成考核以巩固学习成果', done:t.examDone, act:'exam' });
+      if (t.coursewareEnabled && t.coursewareFiles && t.coursewareFiles.length) items.push({ key:'courseware', icon:'fa-folder-open', title:'培训课件（'+t.coursewareFiles.length+'个）', tag:'资料', color:'#7c3aed', sub:'培训相关资料，可自由下载', done:false, act:'courseware' });
       return items;
     }
 
     function renderTrainingSheet(t) {
       var tasks = buildTasks(t);
-      var req = tasks.filter(function (x) { return x.tag === '必修'; }).length;
-      var done = tasks.filter(function (x) { return x.done; }).length;
+      var req = tasks.filter(function(x) { return x.tag === '必修'; }).length;
+      var done = tasks.filter(function(x) { return x.done; }).length;
       var prog = req ? Math.round(done / req * 100) : 0;
 
-      var taskHtml = tasks.length ? tasks.map(function (it) {
+      var taskHtml = tasks.length ? tasks.map(function(it) {
         var btn = it.done
           ? '<button class="m-task__btn m-task__btn--done" disabled>已完成</button>'
           : '<button class="m-task__btn m-task__btn--go" data-act="' + it.act + '">去完成</button>';
@@ -187,8 +425,8 @@
       App.openSheet(html);
       var body = document.getElementById('m-sheet-body');
       body.setAttribute('data-training', JSON.stringify(t));
-      body.querySelectorAll('[data-act]').forEach(function (btn) {
-        btn.addEventListener('click', function () { handleTask(btn.getAttribute('data-act'), t); });
+      body.querySelectorAll('[data-act]').forEach(function(btn) {
+        btn.addEventListener('click', function() { handleTask(btn.getAttribute('data-act'), t); });
       });
     }
 
@@ -198,13 +436,13 @@
         var t = await getTraining(id);
         App.hideLoading();
         renderTrainingSheet(t);
-      } catch (e) {
+      } catch(e) {
         App.hideLoading();
         App.toast('培训信息加载失败', 'error');
       }
     }
 
-    /* ============ 任务动作 ============ */
+    /* ========== 任务动作 ========== */
     async function handleTask(act, t) {
       if (act === 'signin') return doSignin(t);
       if (act === 'survey') return openSurvey(t.linkedSurveyId, t.id, t);
@@ -216,16 +454,34 @@
       if (act === 'courseware') return openCourseware(t.coursewareFiles);
     }
 
-    async function doSignin(t) {
-      if (!confirm('确认签到「' + t.name + '」？')) return;
+    // 用自定义弹层替代原生 confirm，统一交互质感
+    function doSignin(t) {
+      App.confirm({
+        title: '考勤签到',
+        message: '确认签到「' + t.name + '」？签到后将记录你的参训情况。',
+        confirmText: '确认签到',
+        onConfirm: function () { doSigninActual(t); }
+      });
+    }
+
+    async function doSigninActual(t) {
       App.showLoading('签到中...');
       try {
         await Api.signin(t.id, App.userId());
         t.signinDone = true;
+        // 同步缓存，列表/周历即时反映
+        var cached = allTrainings.find(function(x) { return String(x.id) === String(t.id); });
+        if (cached) cached.signinDone = true;
         App.hideLoading();
         App.toast('签到成功');
+        var d = t.startTime ? new Date(t.startTime) : null;
+        if (d && !isNaN(d.getDate()) && signedDates.indexOf(d.getDate()) < 0) {
+          signedDates.push(d.getDate());
+        }
+        renderWeekCal();
+        renderFiltered();
         renderTrainingSheet(t);
-      } catch (e) {
+      } catch(e) {
         App.hideLoading();
         App.toast(e.message || '签到失败', 'error');
       }
@@ -233,7 +489,7 @@
 
     function openCourseware(files) {
       var html = '<div class="m-sheet__hd"><div class="m-sheet__title">培训课件</div></div><div class="m-sheet__body">' +
-        files.map(function (f, i) {
+        files.map(function(f, i) {
           var name = (f.url || f).split('/').pop();
           return '<a class="m-row" href="' + App.esc(f.url || f) + '" download style="text-decoration:none">' +
             '<div class="m-row__ic"><i class="fa-solid fa-file-arrow-down"></i></div>' +
@@ -243,14 +499,14 @@
       App.openSheet(html);
     }
 
-    /* ============ 调研 ============ */
+    /* ========== 调研 ========== */
     async function openSurvey(surveyId, trainingId, t) {
       App.showLoading();
       try {
         var survey = await Api.survey(surveyId);
         App.hideLoading();
         renderSurveySheet(survey, surveyId, trainingId, t);
-      } catch (e) {
+      } catch(e) {
         App.hideLoading();
         App.toast('调研加载失败', 'error');
       }
@@ -259,31 +515,29 @@
     function renderSurveySheet(survey, surveyId, trainingId, t) {
       var answers = {};
       var qs = survey.questions || [];
-      var qHtml = qs.map(function (q, idx) {
+      var qHtml = qs.map(function(q, idx) {
         var reqMark = q.required ? '<span class="m-q__req">*</span>' : '';
         var inner = '';
         if (q.type === 'rating') {
           inner = '<div class="m-stars" data-q="' + q.id + '" data-type="rating">' +
-            [1, 2, 3, 4, 5].map(function (n) {
-              return '<i class="fa-solid fa-star" data-v="' + n + '"></i>';
-            }).join('') + '<span class="m-rate-val" id="rv-' + q.id + '"></span></div>';
+            [1,2,3,4,5].map(function(n) { return '<i class="fa-solid fa-star" data-v="' + n + '"></i>'; }).join('') +
+            '<span class="m-rate-val" id="rv-' + q.id + '"></span></div>';
         } else if (q.type === 'multiple') {
-          inner = '<div data-q="' + q.id + '" data-type="multiple">' + (q.options || []).map(function (o) {
+          inner = '<div data-q="' + q.id + '" data-type="multiple">' + (q.options || []).map(function(o) {
             return '<div class="m-opt" data-v="' + App.esc(o) + '"><i class="fa-regular fa-square"></i><span>' + App.esc(o) + '</span></div>';
           }).join('') + '</div>';
         } else if (q.type === 'judge') {
-          inner = '<div data-q="' + q.id + '" data-type="single">' +
-            ['正确', '错误'].map(function (o) {
-              return '<div class="m-opt" data-v="' + App.esc(o) + '"><i class="fa-regular fa-circle"></i><span>' + o + '</span></div>';
-            }).join('') + '</div>';
+          inner = '<div data-q="' + q.id + '" data-type="single">' + ['正确','错误'].map(function(o) {
+            return '<div class="m-opt" data-v="' + App.esc(o) + '"><i class="fa-regular fa-circle"></i><span>' + o + '</span></div>';
+          }).join('') + '</div>';
         } else if (q.type === 'text') {
           inner = '<textarea class="m-input" data-q="' + q.id + '" data-type="text" rows="3" placeholder="请输入..."></textarea>';
-        } else { // radio / single / choice
-          inner = '<div data-q="' + q.id + '" data-type="single">' + (q.options || []).map(function (o) {
+        } else {
+          inner = '<div data-q="' + q.id + '" data-type="single">' + (q.options || []).map(function(o) {
             return '<div class="m-opt" data-v="' + App.esc(o) + '"><i class="fa-regular fa-circle"></i><span>' + App.esc(o) + '</span></div>';
           }).join('') + '</div>';
         }
-        return '<div class="m-q"><div class="m-q__t">' + (idx + 1) + '. ' + App.esc(q.title) + reqMark + '</div>' + inner + '</div>';
+        return '<div class="m-q"><div class="m-q__t">' + (idx+1) + '. ' + App.esc(q.title) + reqMark + '</div>' + inner + '</div>';
       }).join('');
 
       var doneNote = t.surveyDone ? '<div class="m-badge m-badge--done" style="margin-bottom:12px;display:inline-block">您已填写过本调研</div>' : '';
@@ -295,83 +549,73 @@
         '</div>';
       App.openSheet(html);
 
-      // 绑定交互
       var body = document.getElementById('m-sheet-body');
-      body.querySelectorAll('.m-stars').forEach(function (box) {
+      body.querySelectorAll('.m-stars').forEach(function(box) {
         var qid = box.getAttribute('data-q');
-        box.querySelectorAll('i').forEach(function (star) {
-          star.addEventListener('click', function () {
+        box.querySelectorAll('i').forEach(function(star) {
+          star.addEventListener('click', function() {
             var v = parseInt(star.getAttribute('data-v'));
             answers[qid] = v;
-            box.querySelectorAll('i').forEach(function (s, i) { s.classList.toggle('is-on', i < v); });
+            box.querySelectorAll('i').forEach(function(s, i) { s.classList.toggle('is-on', i < v); });
             document.getElementById('rv-' + qid).textContent = v + ' 分';
           });
         });
       });
-      body.querySelectorAll('[data-type="single"]').forEach(function (box) {
+      body.querySelectorAll('[data-type="single"]').forEach(function(box) {
         var qid = box.getAttribute('data-q');
-        box.querySelectorAll('.m-opt').forEach(function (opt) {
-          opt.addEventListener('click', function () {
-            box.querySelectorAll('.m-opt').forEach(function (o) {
-              o.classList.remove('is-sel'); o.querySelector('i').className = 'fa-regular fa-circle';
-            });
+        box.querySelectorAll('.m-opt').forEach(function(opt) {
+          opt.addEventListener('click', function() {
+            box.querySelectorAll('.m-opt').forEach(function(o) { o.classList.remove('is-sel'); o.querySelector('i').className = 'fa-regular fa-circle'; });
             opt.classList.add('is-sel'); opt.querySelector('i').className = 'fa-solid fa-circle-dot';
             answers[qid] = opt.getAttribute('data-v');
           });
         });
       });
-      body.querySelectorAll('[data-type="multiple"]').forEach(function (box) {
+      body.querySelectorAll('[data-type="multiple"]').forEach(function(box) {
         var qid = box.getAttribute('data-q');
         answers[qid] = [];
-        box.querySelectorAll('.m-opt').forEach(function (opt) {
-          opt.addEventListener('click', function () {
+        box.querySelectorAll('.m-opt').forEach(function(opt) {
+          opt.addEventListener('click', function() {
             opt.classList.toggle('is-sel');
             var on = opt.classList.contains('is-sel');
             opt.querySelector('i').className = on ? 'fa-regular fa-square-check' : 'fa-regular fa-square';
-            var v = opt.getAttribute('data-v');
-            var arr = answers[qid];
-            if (on) { if (arr.indexOf(v) < 0) arr.push(v); } else { answers[qid] = arr.filter(function (x) { return x !== v; }); }
+            var v = opt.getAttribute('data-v'), arr = answers[qid];
+            if (on) { if (arr.indexOf(v) < 0) arr.push(v); } else { answers[qid] = arr.filter(function(x) { return x !== v; }); }
           });
         });
       });
-      body.querySelectorAll('[data-type="text"]').forEach(function (ta) {
+      body.querySelectorAll('[data-type="text"]').forEach(function(ta) {
         var qid = ta.getAttribute('data-q');
-        ta.addEventListener('input', function () { answers[qid] = ta.value; });
+        ta.addEventListener('input', function() { answers[qid] = ta.value; });
       });
 
       var submit = document.getElementById('survey-submit');
-      if (submit) submit.addEventListener('click', function () { submitSurvey(survey, surveyId, trainingId, t, answers); });
+      if (submit) submit.addEventListener('click', function() { submitSurvey(survey, surveyId, trainingId, t, answers); });
     }
 
     async function submitSurvey(survey, surveyId, trainingId, t, answers) {
-      // 必填校验
       for (var i = 0; i < survey.questions.length; i++) {
         var q = survey.questions[i];
         if (!q.required) continue;
         var v = answers[q.id];
-        if (q.type === 'multiple') { if (!v || !v.length) return App.toast('第' + (i + 1) + '题为必填', 'error'); }
-        else if (v === undefined || v === null || v === '' ) return App.toast('第' + (i + 1) + '题为必填', 'error');
+        if (q.type === 'multiple') { if (!v || !v.length) return App.toast('第' + (i+1) + '题为必填', 'error'); }
+        else if (v === undefined || v === null || v === '') return App.toast('第' + (i+1) + '题为必填', 'error');
       }
       App.showLoading('提交中...');
       try {
-        await Api.surveyRespond(surveyId, {
-          userId: App.userId(), userName: App.userName(), trainingId: trainingId, answers: answers
-        });
+        await Api.surveyRespond(surveyId, { userId: App.userId(), userName: App.userName(), trainingId: trainingId, answers: answers });
         t.surveyDone = true;
-        App.hideLoading();
-        App.toast('调研提交成功');
-        renderTrainingSheet(t);
-      } catch (e) {
-        App.hideLoading();
-        App.toast(e.message || '提交失败', 'error');
-      }
+        var cached = allTrainings.find(function(x) { return String(x.id) === String(trainingId); });
+        if (cached) cached.surveyDone = true;
+        App.hideLoading(); App.toast('调研提交成功'); renderTrainingSheet(t);
+      } catch(e) { App.hideLoading(); App.toast(e.message || '提交失败', 'error'); }
     }
 
-    /* ============ 初始化 ============ */
+    /* ========== 初始化 ========== */
     function onReady() {
       loadTrainings();
       var id = new URLSearchParams(location.search).get('id');
-      if (id) setTimeout(function () { openTraining(id); }, 300);
+      if (id) setTimeout(function() { openTraining(id); }, 500);
     }
     App.initPage({ active: 'training', requireAuth: true, onReady: onReady });
   </script>

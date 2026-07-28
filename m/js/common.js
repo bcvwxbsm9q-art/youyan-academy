@@ -61,7 +61,7 @@
     },
 
     /* ---------- 导航 ---------- */
-    nav: function (page) { location.href = '/' + page; },
+    nav: function (page) { location.href = '/m/' + page; },
 
     /* ---------- Toast ---------- */
     toast: function (msg, type) {
@@ -180,6 +180,38 @@
       if (mask) mask.classList.remove('is-open');
       if (sheet) sheet.classList.remove('is-open');
       window.unlockScroll();
+    },
+
+    /* ---------- 自定义确认 / 提示弹层（替代原生 confirm/alert） ---------- */
+    // cfg: { title, message, confirmText, cancelText, danger, onConfirm, onCancel }
+    confirm: function (cfg) {
+      cfg = cfg || {};
+      var html =
+        '<div class="m-sheet__hd"><div class="m-sheet__title">' + App.esc(cfg.title || '确认操作') + '</div></div>' +
+        '<div class="m-sheet__body">' +
+          (cfg.message ? '<p style="font-size:14px;color:var(--ink-2);line-height:1.6;margin:0 0 16px">' + App.esc(cfg.message) + '</p>' : '') +
+          '<div style="display:flex;gap:10px">' +
+            '<button class="m-btn m-btn--ghost m-btn--block" id="m-cfm-cancel">' + App.esc(cfg.cancelText || '取消') + '</button>' +
+            '<button class="m-btn m-btn--block' + (cfg.danger ? ' m-btn--danger' : '') + '" id="m-cfm-ok">' + App.esc(cfg.confirmText || '确定') + '</button>' +
+          '</div>' +
+        '</div>';
+      App.openSheet(html);
+      var cancel = document.getElementById('m-cfm-cancel');
+      var ok = document.getElementById('m-cfm-ok');
+      if (cancel) cancel.addEventListener('click', function () { App.closeSheet(); if (cfg.onCancel) cfg.onCancel(); });
+      if (ok) ok.addEventListener('click', function () { App.closeSheet(); if (cfg.onConfirm) cfg.onConfirm(); });
+    },
+    alert: function (cfg) {
+      cfg = cfg || {};
+      var html =
+        '<div class="m-sheet__hd"><div class="m-sheet__title">' + App.esc(cfg.title || '提示') + '</div></div>' +
+        '<div class="m-sheet__body">' +
+          (cfg.message ? '<p style="font-size:14px;color:var(--ink-2);line-height:1.6;margin:0 0 16px">' + App.esc(cfg.message) + '</p>' : '') +
+          '<button class="m-btn m-btn--block" id="m-alt-ok">' + App.esc(cfg.confirmText || '我知道了') + '</button>' +
+        '</div>';
+      App.openSheet(html);
+      var ok = document.getElementById('m-alt-ok');
+      if (ok) ok.addEventListener('click', function () { App.closeSheet(); if (cfg.onConfirm) cfg.onConfirm(); });
     },
 
     /* ---------- 工具 ---------- */

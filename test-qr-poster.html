@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>签到二维码海报测试</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; background: #f1f5f9; padding: 40px; text-align: center; }
+    #poster { margin: 20px auto; box-shadow: 0 20px 60px rgba(0,0,0,0.15); border-radius: 8px; }
+    .hint { color: #64748b; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h2>签到二维码海报预览</h2>
+  <div id="container"></div>
+  <p class="hint">实际下载时会保存为 PNG 文件</p>
+
+  <script>
+    const training = {
+      id: 1785220231747,
+      name: 'LUA优化',
+      project: '新雁计划',
+      startTime: '2026-07-28T14:30',
+      endTime: '2026-07-28T15:30',
+      signinStartTime: '2026-07-28 14:30',
+      signinEndTime: '2026-07-28 15:30'
+    };
+
+    function roundRect(ctx, x, y, width, height, radius) {
+      let r = radius;
+      if (typeof radius === 'number') {
+        r = { tl: radius, tr: radius, br: radius, bl: radius };
+      }
+      ctx.beginPath();
+      ctx.moveTo(x + r.tl, y);
+      ctx.lineTo(x + width - r.tr, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + r.tr);
+      ctx.lineTo(x + width, y + height - r.br);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - r.br, y + height);
+      ctx.lineTo(x + r.bl, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - r.bl);
+      ctx.lineTo(x, y + r.tl);
+      ctx.quadraticCurveTo(x, y, x + r.tl, y);
+      ctx.closePath();
+    }
+
+    function fillTextWithWrap(ctx, text, x, y, maxWidth, lineHeight, align) {
+      const chars = (text || '').split('');
+      let line = '';
+      const lines = [];
+      for (let i = 0; i < chars.length; i++) {
+        const testLine = line + chars[i];
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && line) {
+          lines.push(line);
+          line = chars[i];
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+      lines.slice(0, 2).forEach((l, i) => {
+        ctx.textAlign = align || 'left';
+        ctx.fillText(l, x, y + i * lineHeight);
+      });
+    }
+
+    function renderPoster() {
+      if (typeof QRCode === 'undefined') { alert('二维码组件未加载'); return; }
+
+      const canvas = document.createElement('canvas');
+      canvas.id = 'poster';
+      canvas.width = 750; canvas.height = 1200;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const fontBase = '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif';
+
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, '#f8fafc');
+      bgGrad.addColorStop(1, '#eef2ff');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      const headerH = 380;
+      const headerGrad = ctx.createLinearGradient(0, 0, W, headerH);
+      headerGrad.addColorStop(0, '#667eea');
+      headerGrad.addColorStop(1, '#764ba2');
+      ctx.fillStyle = headerGrad;
+      roundRect(ctx, 0, 0, W, headerH, { tl: 0, tr: 0, br: 44, bl: 44 });
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(255,255,255,0.10)';
+      ctx.beginPath(); ctx.arc(W - 60, 70, 130, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.beginPath(); ctx.arc(70, headerH - 40, 100, 0, Math.PI * 2); ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.font = `bold 48px ${fontBase}`;
+      ctx.fillText('签到二维码', W / 2, 100);
+
+      ctx.font = `32px ${fontBase}`;
+      fillTextWithWrap(ctx, training.name || training.project || '未命名培训', W / 2, 160, W - 120, 46, 'center');
+
+      const cardW = 660, cardH = 560, cardX = (W - cardW) / 2, cardY = 260;
+      ctx.fillStyle = 'rgba(102, 126, 234, 0.14)';
+      roundRect(ctx, cardX + 8, cardY + 10, cardW, cardH, 28);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, cardX, cardY, cardW, cardH, 28);
+      ctx.fill();
+
+      const tagW = 168, tagH = 46, tagX = (W - tagW) / 2, tagY = cardY - 23;
+      ctx.fillStyle = '#764ba2';
+      roundRect(ctx, tagX, tagY, tagW, tagH, 23);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold 24px ${fontBase}`;
+      ctx.textAlign = 'center';
+      ctx.fillText('扫码签到', W / 2, tagY + 32);
+
+      const url = location.origin + '/m/training.html?id=' + training.id;
+      const qrSize = 460;
+      const qrContainer = document.createElement('div');
+      qrContainer.style.position = 'fixed';
+      qrContainer.style.left = '-9999px';
+      document.body.appendChild(qrContainer);
+
+      new QRCode(qrContainer, {
+        text: url,
+        width: qrSize,
+        height: qrSize,
+        colorDark: '#1e293b',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      setTimeout(() => {
+        const qrCanvas = qrContainer.querySelector('canvas');
+        const qrX = (W - qrSize) / 2;
+        const qrY = cardY + 62;
+        if (qrCanvas) {
+          ctx.fillStyle = '#ffffff';
+          roundRect(ctx, qrX - 18, qrY - 18, qrSize + 36, qrSize + 36, 16);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(118, 75, 162, 0.15)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+        }
+        qrContainer.remove();
+
+        const formatTime = (v) => {
+          if (!v) return '';
+          return v.includes('T') ? v.replace('T', ' ') : String(v);
+        };
+        const signinStart = formatTime(training.signinStartTime || training.startTime);
+        const signinEnd = formatTime(training.signinEndTime || training.endTime);
+        let timeText = '签到时间：';
+        if (signinStart && signinEnd) timeText += `${signinStart}  ~  ${signinEnd}`;
+        else if (signinStart) timeText += signinStart;
+        else timeText += '待定，请关注培训通知';
+
+        ctx.fillStyle = '#475569';
+        ctx.font = `26px ${fontBase}`;
+        ctx.textAlign = 'center';
+        fillTextWithWrap(ctx, timeText, W / 2, cardY + cardH - 58, cardW - 80, 36, 'center');
+
+        ctx.fillStyle = '#764ba2';
+        ctx.font = `28px ${fontBase}`;
+        ctx.textAlign = 'center';
+        ctx.fillText('长按或扫描查看', W / 2, H - 92);
+
+        ctx.strokeStyle = 'rgba(118, 75, 162, 0.25)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(W / 2 - 90, H - 62);
+        ctx.lineTo(W / 2 + 90, H - 62);
+        ctx.stroke();
+
+        document.getElementById('container').appendChild(canvas);
+      }, 200);
+    }
+
+    renderPoster();
+  </script>
+</body>
+</html>
