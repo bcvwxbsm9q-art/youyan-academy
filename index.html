@@ -6,6 +6,11 @@
     <title>游雁学院 - 企业在线学习平台</title>
     <!-- Tailwind CSS v3 -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* 防止 Tailwind CDN 加载前 FOUC：移动端菜单与桌面导航的初始 hidden 状态用原生 CSS 兜底，避免页面加载瞬间出现两份导航链接 */
+      #mobile-menu.hidden { display: none !important; }
+      @media (max-width: 767px) { nav.hidden { display: none !important; } }
+    </style>
     <!-- Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <!-- 移动端增强样式 -->

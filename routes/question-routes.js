@@ -252,6 +252,13 @@ router.delete('/question-banks/:id', (req, res) => {
   purgeInteractionNodesForQuestions(questionsToDelete.map(q => q.id), data);
   banks.splice(index, 1);
   data.question_banks = banks;
+  // 题库是共享可复用资产：删除题库【绝不】连带删除引用它的考试。
+  // 仅把引用了本题库的考试 bankId 置空，避免留下指向已删题库的悬空引用（脏数据会导致前端考试异常）。
+  if (data.exams) {
+    data.exams.forEach(exam => {
+      if (exam.bankId === id) exam.bankId = null;
+    });
+  }
   // 兜底：如果删完后没有任何题库了，清理所有 bankId 对不上现存题库的"孤儿题"
   // 避免"删完所有题库但题还在 picker 里"的残留
   if ((data.question_banks || []).length === 0) {

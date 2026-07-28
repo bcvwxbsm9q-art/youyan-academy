@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>个人中心 - 游雁学院</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* 防止 Tailwind CDN 加载前 FOUC：移动端菜单与桌面导航的初始 hidden 状态用原生 CSS 兜底，避免页面加载瞬间出现两份导航链接 */
+      #mobile-menu.hidden { display: none !important; }
+      @media (max-width: 767px) { nav.hidden { display: none !important; } }
+    </style>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <!-- 证书 Web 字体：宋体/楷体/仿宋/雅黑 跨浏览器一致 -->

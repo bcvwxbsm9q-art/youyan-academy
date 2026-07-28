@@ -151,7 +151,8 @@
             <div style="font-size: 14px; opacity: 0.8;">正在验证登录状态...</div>
             <div style="margin-top: 24px;"><i class="fa fa-spinner fa-spin fa-2x"></i></div>
         `;
-        document.body.appendChild(overlay);
+        // 挂在 documentElement 上，避免受 body 的 opacity 淡入动画影响导致遮罩半透明、透视到后方页面
+        (document.documentElement || document.body).appendChild(overlay);
     }
 
     /**
@@ -312,7 +313,7 @@
                 }
             }
         } else {
-            // 未登录：隐藏用户信息区域
+            // 未登录：隐藏用户信息区域 + 管理端链接
             if (userInfoEl) {
                 userInfoEl.classList.add('hidden');
                 userInfoEl.classList.remove('flex');
@@ -321,6 +322,10 @@
                 mobileUserInfoEl.classList.add('hidden');
                 mobileUserInfoEl.classList.remove('flex');
             }
+            const desktopAdminLink2 = document.getElementById('desktop-admin-link');
+            if (desktopAdminLink2) desktopAdminLink2.classList.add('hidden');
+            const mobileAdminLink2 = document.getElementById('mobile-admin-link');
+            if (mobileAdminLink2) mobileAdminLink2.classList.add('hidden');
         }
     }
 
@@ -383,6 +388,10 @@
             return;
         }
 
+        // 有 token → 先用本地缓存的 user 同步渲染导航（含管理端链接），
+        // 避免等待服务端校验期间「管理端」链接闪现缺失（~0.5s 空白）
+        updateUserInfo();
+
         // 有 token → 显示加载遮罩，去服务端验证
         showLoadingOverlay();
         const isValid = await validateToken();
@@ -390,6 +399,7 @@
         if (!isValid) {
             // Token 无效 → 清除 → 弹登录框
             clearAuth();
+            updateUserInfo(); // 重新隐藏管理端/用户信息（清库后已无 user）
             if (getCurrentPage() === 'dashboard.html') {
                 window.location.href = 'index.html';
                 return;

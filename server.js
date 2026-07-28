@@ -2253,13 +2253,87 @@ app.get('/api/courses/:id/interaction-stats', (req, res) => {
   const data = readData();
   const course = (data.management_courses || []).find(c => c.id === id);
   if (!course) return res.status(404).json({ success: false, error: '课程不存在' });
-  const answers = (data.course_interaction_answers || []).filter(a => a.courseId === id);
 
-  // 明细
-  const detail = answers.map(a => ({
+  // 课程内全部互动节点：用于过滤历史脏数据（课程被重新编辑后遗留的旧节点作答）& 计算学习进度分母
+  const courseNodeIds = [];
+  const courseQuestionNodeIds = [];
+  let totalNodes = 0, totalQuestionNodes = 0;
+  (course.videos || []).forEach(v => {
+    (v.interactionNodes || []).forEach(n => {
+      const nid = String(n.id);
+      courseNodeIds.push(nid);
+      totalNodes++;
+      if (n.type === 'question') { totalQuestionNodes++; courseQuestionNodeIds.push(nid); }
+    });
+  });
+
+  // 仅统计"当前课程结构内"的作答记录（剔除旧节点作答脏数据）
+  const allAnswers = (data.course_interaction_answers || []).filter(a => a.courseId === id);
+  const answers = allAnswers.filter(a => courseNodeIds.includes(String(a.nodeId)));
+
+  // ★ 最高分去重：按「用户 × 题目节点」只保留该用户这道题的最高分那次作答
+  //   规则：① 最高分优先；② 同分优先「正确」；③ 仍同分取最近一次作答
+  //   原始每次作答仍正常入库（便于追溯），此处仅用于统计口径
+  const bestMap = {};
+  answers.forEach(a => {
+    const uid = String(a.userId || '_anon');
+    const nid = String(a.nodeId || '');
+    const key = uid + '||' + nid;
+    const sc = (a.score != null) ? Number(a.score) : (a.isCorrect === true ? 1 : 0);
+    const cur = bestMap[key];
+    if (!cur) { bestMap[key] = { a, sc }; return; }
+    if (sc > cur.sc) { bestMap[key] = { a, sc }; return; }
+    if (sc === cur.sc) {
+      const cCorrect = a.isCorrect === true, pCorrect = cur.a.isCorrect === true;
+      if (cCorrect && !pCorrect) { bestMap[key] = { a, sc }; return; }
+      if (cCorrect === pCorrect) {
+        const ct = a.answeredAt || '', pt = cur.a.answeredAt || '';
+        if (ct >= pt) bestMap[key] = { a, sc };
+      }
+    }
+  });
+  const bestAnswers = Object.values(bestMap).map(x => x.a);
+
+  // 总作答次数 = 去重前的原始作答条数（同一用户多次作答均计入），沿用下方聚合段中的 totalAttempts
+  // 去重后作答条数（用于明细展示 & 聚合分母）
+  const uniqueAnswerCount = bestAnswers.length;
+
+  // 明细（同时保留中英文双字段，兼容前端渲染）
+  // 预查用户信息（岗位等），避免每条记录重复查找
+  const userCache = {};
+  const users = data.registered_users || [];
+  bestAnswers.forEach(a => {
+    const uid = String(a.userId || '');
+    if (!userCache[uid] && uid) {
+      const u = users.find(uu => String(uu.id) === uid);
+      if (u) userCache[uid] = { position: u.position || '', realName: u.realName || u.username || '' };
+    }
+  });
+  const detail = bestAnswers.map(a => {
+    const uc = userCache[String(a.userId || '')] || {};
+    return {
     id: a.id,
-    学员: a.userName || '匿名用户',
+    // 英文字段（前端聚合计算使用）
+    userId: a.userId,
+    userName: a.userName || uc.realName || '匿名用户',
+    department: a.department || '',
+    position: uc.position || '',
+    courseId: a.courseId,
+    videoTitle: a.videoTitle || '',
+    videoIndex: a.videoIndex,
+    nodeId: a.nodeId,
+    nodeType: a.nodeType,
+    nodeTime: a.nodeTime,
+    questionId: a.questionId,
+    userAnswer: a.userAnswer,
+    isCorrect: a.isCorrect,
+    score: a.score,
+    timeSpentSec: a.timeSpentSec != null ? a.timeSpentSec : null,
+    answeredAt: a.answeredAt,
+    // 中文字段（表格展示使用）
+    学员: a.userName || uc.realName || '匿名用户',
     部门: a.department || '',
+    岗位: uc.position || '',
     课程: course.title || '',
     视频: a.videoTitle || '',
     节点序号: a.nodeId,
@@ -2272,13 +2346,14 @@ app.get('/api/courses/:id/interaction-stats', (req, res) => {
     得分: a.score != null ? a.score : '-',
     耗时秒: a.timeSpentSec != null ? a.timeSpentSec : '-',
     时间: a.answeredAt
-  }));
+  };
+  });
 
   // 聚合：每节点
+  const totalAttempts = answers.length; // 总作答次数 = 去重前的原始作答条数
   const perNodeMap = {};
   const perQuestionMap = {};
-  let totalAttempts = answers.length;
-  answers.forEach(a => {
+  bestAnswers.forEach(a => {
     const nKey = a.nodeId;
     if (!perNodeMap[nKey]) perNodeMap[nKey] = { nodeId: nKey, type: a.nodeType, total: 0, correct: 0, scoreSum: 0, scoreMax: 0 };
     perNodeMap[nKey].total++;
@@ -2318,8 +2393,20 @@ app.get('/api/courses/:id/interaction-stats', (req, res) => {
     const rec = data[k];
     if (rec && rec.completedCourses && rec.completedCourses.includes(id)) learnerCount++;
   });
-  const answerers = new Set(answers.map(a => a.userId)).size;
+  const answerers = new Set(bestAnswers.map(a => a.userId)).size;
   const completion = learnerCount > 0 ? Math.round(answerers / learnerCount * 100) : 0;
+
+  // 补充前端渲染所需的聚合字段
+  const questionAnswers = bestAnswers.filter(a => a.nodeType === 'question');
+  const correctCount = questionAnswers.filter(a => a.isCorrect === true).length;
+  const avgAccuracy = questionAnswers.length > 0 ? Math.round(correctCount / questionAnswers.length * 10000) / 100 : 0;
+  // 按学员聚合学习时长
+  const learnerTimeMap = {};
+  bestAnswers.forEach(a => {
+    const uk = a.userId || '_anon';
+    learnerTimeMap[uk] = (learnerTimeMap[uk] || 0) + (a.timeSpentSec || 0);
+  });
+  const totalTimeSec = Object.values(learnerTimeMap).reduce((s, t) => s + t, 0);
 
   res.json({
     success: true,
@@ -2329,7 +2416,21 @@ app.get('/api/courses/:id/interaction-stats', (req, res) => {
       perQuestion,
       completion,
       totalAttempts,
-      answererCount: answerers
+      uniqueAnswerCount,
+      answererCount: answerers,
+      // 前端渲染面板所需字段
+      correctCount,
+      avgAccuracy,
+      playCount: course.playCount || 0,
+      likeCount: course.likeCount || 0,
+      commentCount: course.commentCount || 0,
+      ratingAvg: course.ratingAvg || 0,
+      totalTimeSec,
+      completedCount: correctCount > 0 ? answerers : 0,  // 有答对记录的视为"已完成"
+      // 课程结构元数据（学习进度分母 & 互动题数展示）
+      totalNodes,
+      totalQuestionNodes,
+      courseQuestionNodeIds
     }
   });
 });
@@ -2942,36 +3043,16 @@ app.delete('/api/training/:id', (req, res) => {
     data.notifications = data.notifications.filter(n => n.trainingId !== id);
   }
 
-  // 处理关联的考试：仅删除被当前培训独占的，共享的解除引用
+  // 处理关联的考试：考试是独立可复用资产（题库经 exam.bankId 关联），
+  // 删培训只解除引用，绝不物理删除考试、题库、答卷及其文件。
+  // 培训主记录删除后，linkedExamId 引用随培训记录一并消失，无需额外处理。
   if (training.linkedExamId) {
-    const examId = training.linkedExamId;
-    const otherTrainingRefs = (data.training_events || []).filter(t => t.id !== id && t.linkedExamId === examId).length;
-    if (otherTrainingRefs === 0) {
-      const exam = (data.exams || []).find(e => e.id === examId);
-      if (exam) {
-        deleteExamFiles(exam);
-        if (data.exam_attempts) {
-          data.exam_attempts = data.exam_attempts.filter(a => a.examId !== examId);
-        }
-        data.exams = (data.exams || []).filter(e => e.id !== examId);
-      }
-    }
+    // 仅保留引用确认，不做删除：考试与题库可在其它培训中继续复用。
   }
 
-  // 处理关联的调研：仅删除被当前培训独占的，共享的解除引用
+  // 处理关联的调研：调研问卷是独立可复用资产，删培训只解除引用，绝不物理删除问卷、答卷及其文件。
   if (training.linkedSurveyId) {
-    const surveyId = training.linkedSurveyId;
-    const otherTrainingRefs = (data.training_events || []).filter(t => t.id !== id && t.linkedSurveyId === surveyId).length;
-    if (otherTrainingRefs === 0) {
-      const survey = (data.surveys || []).find(s => s.id === surveyId);
-      if (survey) {
-        deleteSurveyFiles(survey);
-        if (data.survey_responses) {
-          data.survey_responses = data.survey_responses.filter(r => r.surveyId !== surveyId);
-        }
-        data.surveys = (data.surveys || []).filter(s => s.id !== surveyId);
-      }
-    }
+    // 仅保留引用确认，不做删除：问卷可在其它培训中继续复用。
   }
 
   // 处理关联的课程：解除 training_events 引用
@@ -3722,6 +3803,13 @@ app.delete('/api/exams/:id', (req, res) => {
   }
 
   const exam = exams[index];
+
+  // 题库是独立于考试的共享可复用资产（经 exam.bankId 引用）。
+  // 删除考试【绝不】连带删除题库、题库内题目及其文件；仅解除本考试对题库的引用即可。
+  // 任何后续维护者请勿在此处添加对 data.question_banks 的 filter/splice 或删除逻辑。
+  if (exam.bankId) {
+    // 仅确认引用存在，不做任何删除操作：题库可在其它考试中继续复用。
+  }
 
   // 删除考试题目相关文件
   deleteExamFiles(exam);

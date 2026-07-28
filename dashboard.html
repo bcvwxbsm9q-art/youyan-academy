@@ -19572,9 +19572,9 @@
           document.getElementById('ivStatsPanel').innerHTML = renderIvStatsPanel(courseId, courseTitle, creator, durationStr, learnerCount, agg, detail, res);
           document.getElementById('ivStatsPanel').classList.remove('hidden');
 
-          // 默认显示"数据"tab
+          // 默认显示"数据"tab（直接传入已拉取的数据，避免重复请求与参数错位）
           ivStatsCurrentTab = 'data';
-          switchIvStatsTab('data', courseId, agg, detail, res);
+          switchIvStatsTab('data', courseId, null, res);
         })
         .catch(() => toast('加载统计失败', 'error'));
     }
@@ -19597,7 +19597,7 @@
             <div class="flex items-center space-x-6 text-sm text-slate-500">
               <span>创建人：${escHtml(creator)}</span>
               <span>课程时长：${duration}</span>
-              <span>学习领：${learnerCount}</span>
+              <span>学习人数：${learnerCount}</span>
             </div>
           </div>
 
@@ -19614,27 +19614,36 @@
         </div>`;
     }
 
-    function switchIvStatsTab(tab, courseId, btn) {
+    function switchIvStatsTab(tab, courseId, btn, res) {
       ivStatsCurrentTab = tab;
       // 更新 tab 样式
       document.querySelectorAll('[id^="ivstab-"]').forEach(b => {
         b.classList.remove('border-orange-500', 'text-orange-600');
         b.classList.add('border-transparent', 'text-slate-500');
       });
-      const activeBtn = btn || document.getElementById('ivstab-' + tab);
-      if (activeBtn) {
+      // 防御：只有传入的是真实 DOM 元素才当作按钮处理（旧调用把数据对象误传为 btn）
+      const activeBtn = (btn && btn.classList) ? btn : document.getElementById('ivstab-' + tab);
+      if (activeBtn && activeBtn.classList) {
         activeBtn.classList.remove('border-transparent', 'text-slate-500');
         activeBtn.classList.add('border-orange-500', 'text-orange-600');
       }
 
-      // 重新加载数据（缓存避免重复请求）
-      if (!window._ivStatsCache) {
+      // 已传入数据 → 直接渲染并写入缓存（避免重复请求）；其次走缓存；最后才重新拉取
+      if (res) {
+        window._ivStatsCache = res;
+        renderIvStatsContent(tab, courseId, res);
+      } else if (window._ivStatsCache && window._ivStatsCache.detail) {
+        renderIvStatsContent(tab, courseId, window._ivStatsCache);
+      } else {
+        const box = document.getElementById('ivstats-content');
+        if (box) box.innerHTML = '<div class="text-center text-slate-400 py-12"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</div>';
         fetch('/api/courses/' + courseId + '/interaction-stats')
           .then(r => r.json())
-          .then(res => { window._ivStatsCache = res; renderIvStatsContent(tab, courseId, res); })
-          .catch(() => {});
-      } else {
-        renderIvStatsContent(tab, courseId, window._ivStatsCache);
+          .then(r => { window._ivStatsCache = r; renderIvStatsContent(tab, courseId, r); })
+          .catch(() => {
+            const b = document.getElementById('ivstats-content');
+            if (b) b.innerHTML = '<div class="text-center text-red-400 py-12">加载失败，请重试</div>';
+          });
       }
     }
 
@@ -19654,40 +19663,81 @@
     /* ===== "数据" Tab：概览统计卡片 + 学员明细表格 ===== */
     function renderIvStatsDataTab(agg, detail, courseId) {
       const totalLearners = agg.answererCount || 0;
-      const completedCount = (detail || []).filter(d => d.isCorrect === true).length || 0; // 粗略估算
+      const completedCount = agg.completedCount || (detail || []).filter(d => d.isCorrect === true).length || 0;
       const incompleteCount = Math.max(0, totalLearners - completedCount);
-      const avgAccuracy = agg.avgAccuracy != null ? agg.avgAccuracy : (agg.totalAttempts > 0 ? Math.round((agg.correctCount || 0) / agg.totalAttempts * 10000) / 100 : 0);
+      const avgAccuracy = agg.avgAccuracy != null ? agg.avgAccuracy : 0;
 
-      // 学员明细行
+      // 格式化 ISO 时间为 YYYY-MM-DD HH:mm
+      function fmtDt(iso) {
+        if (!iso) return '';
+        try { const d = new Date(iso); return d.getFullYear() + '-' +
+          String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' +
+          String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+        catch(e) { return iso; }
+      }
+      // 格式化秒数为 X分Y秒 或 X秒
+      function fmtDur(sec) {
+        if (!sec && sec !== 0) return '0秒';
+        sec = Number(sec) || 0;
+        if (sec < 60) return sec + '秒';
+        const m = Math.floor(sec / 60), s = sec % 60;
+        return m + '分' + (s > 0 ? s + '秒' : '');
+      }
+
+      // 学员明细行（统一使用英文字段，中文做 fallback）
+      // 课程内"试题"节点集合（学习进度分母；正确率仅统计试题节点）
+      const courseQNodeSet = new Set(agg.courseQuestionNodeIds || []);
       const learnerMap = {};
       (detail || []).forEach(d => {
         const key = d.userId || d.学员 || '_anon';
         if (!learnerMap[key]) {
-          learnerMap[key] = { name: d.学员 || '匿名', dept: d.部门 || '', pos: d.岗位 || '', firstTime: d.时间 || '', lastTime: d.时间, totalTime: d.timeSpentSec || 0, attempts: 0, correct: 0, totalScore: 0 };
+          learnerMap[key] = { name: d.userName || d.学员 || '匿名', dept: d.department || d.部门 || '', pos: d.position || d.岗位 || '', firstTime: null, lastTime: null, totalTime: 0, attempts: 0, correct: 0, totalScore: 0, nodeSet: new Set(), nodeLast: {} };
         }
         const rec = learnerMap[key];
         rec.attempts++;
-        if (d.isCorrect) rec.correct++;
+        const nid = String(d.nodeId || '');
+        if (nid) rec.nodeSet.add(nid);
+        const t = d.answeredAt || d.时间 || '';
+        // 以"每个节点最高分那次作答"为准记录对错（与后端去重口径一致）
+        if (nid && d.nodeType === 'question') {
+          const sc = (d.score != null) ? Number(d.score) : (d.isCorrect === true ? 1 : 0);
+          const prev = rec.nodeLast[nid];
+          if (!prev
+            || sc > prev.sc
+            || (sc === prev.sc && d.isCorrect === true && !prev.isCorrect)
+            || (sc === prev.sc && d.isCorrect === prev.isCorrect && (t || '') >= (prev.t || ''))) {
+            rec.nodeLast[nid] = { t, isCorrect: d.isCorrect === true, score: d.score || 0, sc };
+          }
+        }
         rec.totalScore += d.score || 0;
-        if (d.时间 && (!rec.firstTime || d.时间 < rec.firstTime)) rec.firstTime = d.时间;
-        if (d.时间 && d.时间 > rec.lastTime) rec.lastTime = d.时间;
-        rec.totalTime += d.timeSpentSec || 0;
+        if (t) {
+          if (!rec.firstTime || t < rec.firstTime) rec.firstTime = t;
+          if (!rec.lastTime || t > rec.lastTime) rec.lastTime = t;
+        }
+        rec.totalTime += (d.timeSpentSec != null ? d.timeSpentSec : (d['耗时秒'] != null && d['耗时秒'] !== '-' ? Number(d['耗时秒']) : 0)) || 0;
       });
 
       const learners = Object.values(learnerMap);
       const learnerRows = learners.length ? learners.map(l => {
-        const accPct = l.attempts > 0 ? Math.round(l.correct / l.attempts * 10000) / 100 : 0;
+        // 正确率：仅统计"试题"节点，取每个节点最新一次作答
+        let qCorrect = 0, qTotal = 0;
+        Object.keys(l.nodeLast).forEach(nid => { qTotal++; if (l.nodeLast[nid].isCorrect) qCorrect++; });
+        const accPct = qTotal > 0 ? Math.round(qCorrect / qTotal * 10000) / 100 : 0;
         const accColor = accPct >= 80 ? 'text-green-600' : accPct >= 50 ? 'text-orange-500' : 'text-red-500';
-        const progressPct = Math.min(100, Math.round(l.totalTime / 3)); // 粗略进度
+        // 学习进度：已作答的"课程内试题节点" / 课程内试题节点总数（完成度，与对错无关）
+        const answeredQ = [...l.nodeSet].filter(id => courseQNodeSet.has(id)).length;
+        const totalQ = (agg.totalQuestionNodes || 0);
+        const progressPct = totalQ > 0 ? Math.min(100, Math.round(answeredQ / totalQ * 100)) : (l.attempts > 0 ? 100 : 0);
+        const progColor = progressPct >= 80 ? 'bg-green-500' : progressPct >= 50 ? 'bg-orange-500' : 'bg-slate-300';
         return `<tr class="border-b hover:bg-slate-50">
           <td class="px-4 py-3 text-sm">${escHtml(l.name)}</td>
           <td class="px-4 py-3 text-sm text-slate-500">${escHtml(l.dept)}</td>
           <td class="px-4 py-3 text-sm text-slate-500">${escHtml(l.pos)}</td>
-          <td class="px-4 py-3 text-sm text-slate-500">${l.firstTime}</td>
-          <td class="px-4 py-3 text-sm text-slate-500">${l.lastTime}</td>
-          <td class="px-4 py-3 text-sm">${l.totalTime}秒</td>
-          <td class="px-4 py-3"><div class="w-20 h-2 bg-slate-200 rounded-full"><div class="h-full rounded-full ${accPct >= 80 ? 'bg-green-500' : accPct >= 50 ? 'bg-orange-500' : 'bg-red-400'}" style="width:${progressPct}%"></div></div></td>
-          <td class="px-4 py-3 text-sm font-medium ${accColor}">${accPct}%${l.attempts > 1 ? ' <span class="text-xs text-slate-400">(' + l.correct + '/' + l.attempts + ')</span>' : ''}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${fmtDt(l.firstTime)}</td>
+          <td class="px-4 py-3 text-sm text-slate-500">${fmtDt(l.lastTime)}</td>
+          <td class="px-4 py-3 text-sm">${fmtDur(l.totalTime)}</td>
+          <td class="px-4 py-3"><div class="flex items-center"><div class="w-20 h-2 bg-slate-200 rounded-full"><div class="h-full rounded-full ${progColor}" style="width:${progressPct}%"></div></div><span class="text-xs text-slate-400 ml-2">${progressPct}%</span></div></td>
+          <td class="px-4 py-3 text-sm font-medium ${accColor}">${accPct.toFixed(2)}%${qTotal > 1 ? ' <span class="text-xs text-slate-400">(' + qCorrect + '/' + qTotal + ')</span>' : ''}</td>
         </tr>`;
       }).join('') : '<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400">暂无作答数据</td></tr>';
 
@@ -19709,10 +19759,12 @@
           <!-- 视频答题互动 -->
           <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
             <h3 class="text-sm font-medium text-slate-500 mb-3">视频答题互动</h3>
-            <div class="flex items-center space-x-1 text-slate-400 text-xs mb-1"><i class="fas fa-info-circle"></i><span>总人数</span></div>
-            <div class="flex items-end justify-between">
-              <div><div class="text-2xl font-bold text-slate-800">${totalLearners}</div><div class="text-green-600 font-semibold mt-1">${avgAccuracy}%<span class="text-xs text-slate-400 font-normal ml-1">平均正确率</span></div></div>
+            <div class="grid grid-cols-3 gap-2 text-center">
+              <div><div class="text-2xl font-bold text-slate-800">${totalLearners}</div><div class="text-xs text-slate-400 mt-1">学习人数</div></div>
+              <div><div class="text-2xl font-bold text-slate-800">${agg.totalQuestionNodes || 0}</div><div class="text-xs text-slate-400 mt-1">互动题数</div></div>
+              <div><div class="text-2xl font-bold text-slate-800">${agg.totalAttempts || 0}</div><div class="text-xs text-slate-400 mt-1">总作答次数</div></div>
             </div>
+            <div class="text-green-600 font-semibold mt-3">${avgAccuracy}%<span class="text-xs text-slate-400 font-normal ml-1">平均正确率</span></div>
           </div>
           <!-- 课程数据 -->
           <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
@@ -19754,19 +19806,22 @@
     /* ===== "视频答题互动" Tab：按视频/节点展开的详细统计 ===== */
     function renderIvStatsInteractionTab(agg, detail, courseId) {
       const totalAnswerers = agg.answererCount || 0;
-      const avgAcc = agg.avgAccuracy != null ? agg.avgAccuracy : (agg.totalAttempts > 0 ? Math.round((agg.correctCount || 0) / agg.totalAttempts * 10000) / 100 : 0);
+      const avgAcc = agg.avgAccuracy != null ? agg.avgAccuracy : 0;
+
+      // 格式化秒数为 X分Y秒 或 X秒
+      function fmtDur(sec) { if (!sec && sec !== 0) return '0秒'; sec = Number(sec) || 0; return sec < 60 ? sec + '秒' : Math.floor(sec / 60) + '分' + (sec % 60 > 0 ? (sec % 60) + '秒' : ''); }
 
       // 按视频分组
       const videoGroups = {};
       (detail || []).forEach(d => {
-        const vKey = d.videoTitle || ('视频' + (d.videoIndex || 0));
+        const vKey = d.videoTitle || d.视频 || ('视频' + (d.videoIndex || 0));
         if (!videoGroups[vKey]) videoGroups[vKey] = { title: vKey, nodes: {} };
         const nKey = d.nodeTime != null ? fmtIvTime(d.nodeTime) : (d.节点序号 || '?');
         if (!videoGroups[vKey].nodes[nKey]) videoGroups[vKey].nodes[nKey] = { time: nKey, type: d.nodeType || d.节点类型 || '试题', attempts: 0, correct: 0, totalTime: 0, answerers: {} };
         const nd = videoGroups[vKey].nodes[nKey];
         nd.attempts++;
-        if (d.isCorrect) nd.correct++;
-        nd.totalTime += d.timeSpentSec || 0;
+        if (d.isCorrect === true) nd.correct++;
+        nd.totalTime += (d.timeSpentSec != null ? d.timeSpentSec : (d['耗时秒'] != null && d['耗时秒'] !== '-' ? Number(d['耗时秒']) : 0)) || 0;
         const uKey = d.userId || d.学员 || '_anon';
         nd.answerers[uKey] = (nd.answerers[uKey] || 0) + 1;
       });
@@ -19787,8 +19842,8 @@
             <td class="px-4 py-3 text-sm text-slate-600">${nk}</td>
             <td class="px-4 py-3"><span class="px-2 py-0.5 text-xs rounded bg-orange-100 text-orange-700">${n.type === 'question' ? '试题' : n.type === 'survey' ? '问卷' : n.type === 'knowledge' ? '知识点' : n.type}</span></td>
             <td class="px-4 py-3 text-sm">${Object.keys(n.answerers).length}</td>
-            <td class="px-4 py-3 text-sm font-medium ${nColor}">${nAcc}.00%</td>
-            <td class="px-4 py-3 text-sm text-slate-500">${Math.round(n.totalTime)}秒</td>
+            <td class="px-4 py-3 text-sm font-medium ${nColor}">${nAcc.toFixed(2)}%</td>
+            <td class="px-4 py-3 text-sm text-slate-500">${fmtDur(n.totalTime)}</td>
           </tr>`;
         }).join('');
 
