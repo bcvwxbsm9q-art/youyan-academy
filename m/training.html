@@ -32,50 +32,52 @@
         <span class="m-nav__title">游雁学院</span>
       </div>
       <div class="m-nav__right">
-        <button class="m-nav__btn" onclick="App.startScan()" title="扫码进入培训" aria-label="扫码">
-          <i class="fa-solid fa-qrcode"></i>
+        <button class="m-nav__pill" onclick="App.openSharePanel()" aria-label="更多">
+          <i class="fa-solid fa-ellipsis"></i>
+        </button>
+        <button class="m-nav__pill" onclick="history.back()" aria-label="关闭">
+          <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
     </header>
 
-    <!-- 页面标题区（刷新按钮替代原蓝色装饰 SVG） -->
-    <div class="m-page-hd">
-      <div class="m-page-hd__bd">
-        <h1 class="m-page-hd__title">培训安排</h1>
-        <p class="m-page-hd__sub" id="m-page-sub">查看你的培训日程与签到</p>
+    <!-- 顶部品牌区 + 横向日期条（参考 Univ 风格） -->
+    <section class="m-train-hero">
+      <div class="m-train-hero__inner">
+        <div class="m-train-hero__info">
+          <h1 class="m-train-hero__title">培训安排</h1>
+          <p class="m-train-hero__sub" id="m-page-sub">查看你的培训日程与签到</p>
+        </div>
+        <button class="m-train-hero__cal" id="m-cal-toggle" onclick="toggleMonthPanel()" aria-label="日历" title="日历">
+          <span class="m-train-hero__cal-icon"><i class="fa-regular fa-calendar"></i></span>
+          <span class="m-train-hero__cal-txt">日历</span>
+          <span class="m-train-hero__cal-arrow"><i class="fa-solid fa-caret-down"></i></span>
+        </button>
       </div>
-      <button class="m-page-hd__btn" onclick="reloadTraining()" aria-label="刷新" title="刷新">
-        <i class="fa-solid fa-rotate"></i>
-      </button>
-    </div>
 
-    <!-- 周视图卡片（品牌紫色渐变） -->
-    <section class="m-week-card" id="m-week-card">
-      <div class="m-week-card__hd">
-        <div class="m-week-card__label"><span id="wk-label">本周培训</span><span class="m-week-card__count"><b id="wk-count">0</b></span></div>
-        <div class="m-week-card__signed">已签到 <b id="wk-signed">0</b></div>
+      <!-- 横向日期条（周视图，默认显示） -->
+      <div class="m-date-strip" id="m-date-strip"></div>
+
+      <!-- 月历网格（点击"日历"按钮切换显示，默认隐藏） -->
+      <div class="m-month-panel" id="m-month-panel" style="display:none">
+        <div class="m-cal-head">
+          <button class="m-cal-nav" id="cal-prev" aria-label="上个月"><i class="fa-solid fa-chevron-left"></i></button>
+          <span class="m-cal-title" id="m-cal-title">2026年7月</span>
+          <button class="m-cal-nav" id="cal-next" aria-label="下个月"><i class="fa-solid fa-chevron-right"></i></button>
+          <button class="m-cal-today" id="cal-today">今天</button>
+        </div>
+        <div class="m-month-view" id="m-month-view"></div>
       </div>
-      <!-- 单行周日历 -->
-      <div class="m-week-cal" id="m-week-cal"></div>
-      <button class="m-week-card__expand" id="wk-expand" onclick="toggleMonthView()">
-        <span>展开月历</span><i class="fa-solid fa-chevron-down"></i>
-      </button>
-      <!-- 月视图（默认隐藏） -->
-      <div class="m-month-view" id="m-month-view" style="display:none"></div>
     </section>
 
-    <!-- 列表头部：我的培训(N) + 今日/本周 tab -->
-    <div class="m-list-hd">
-      <span class="m-list-hd__title">我的培训<span class="m-list-hd__n" id="list-n">(0)</span></span>
-      <div class="m-list-tabs">
-        <button class="m-tab-btn is-active" data-filter="today" onclick="switchFilter('today',this)">今日</button>
-        <button class="m-tab-btn" data-filter="week" onclick="switchFilter('week',this)">本周</button>
-        <button class="m-tab-btn" data-filter="all" onclick="switchFilter('all',this)">全部</button>
-      </div>
+    <!-- 列表头部 -->
+    <div class="m-tl-hd">
+      <span class="m-tl-hd__title" id="tl-title">今日培训</span>
+      <span class="m-tl-hd__count" id="list-n">(0)</span>
     </div>
 
-    <!-- 日程列表 -->
-    <section class="m-sched-list" id="m-training-list">
+    <!-- 时间轴式日程列表 -->
+    <section class="m-timeline" id="m-training-list">
       <div class="m-loading"><div class="m-spin"></div><div style="margin-left:10px">加载中...</div></div>
     </section>
   </div>
@@ -87,118 +89,189 @@
   <script>
     /* ========== 数据 ========== */
     var allTrainings = [];
-    var curFilter = 'today';
-    var signedDates = [];
+    var signedDates = [];     // 已签到日期（day-of-month）
+    var viewY, viewM;         // 当前查看的年月
+    var selectedDate = null;  // 选中的日期（App.fmtDate 格式 'YYYY/M/D'），null=未选中
 
-    /* ========== 周日历渲染 ========== */
-    function renderWeekCal() {
-      var now = new Date();
-      var day = now.getDay(); // 0=Sun
-      var mondayOffset = day === 0 ? -6 : 1 - day; // 周一偏移
-      var mon = new Date(now);
-      mon.setDate(now.getDate() + mondayOffset);
-
+    /* ========== 月历渲染（可翻月、可点选日期联动列表） ========== */
+    function renderMonthGrid(y, m) {
+      var firstDay = (new Date(y, m, 1).getDay() + 6) % 7; // 周一为每周起点，与上方周日期条对齐
+      var daysInMonth = new Date(y, m + 1, 0).getDate();
+      var isCur = (viewY === y && viewM === m);
+      var today = isCur ? new Date().getDate() : -1;
       var dw = ['一','二','三','四','五','六','日'];
-      var todayStr = App.fmtDate(new Date());
 
-      var html = '';
-      for (var i = 0; i < 7; i++) {
-        var d = new Date(mon);
-        d.setDate(mon.getDate() + i);
-        var dNum = d.getDate();
-        var ds = App.fmtDate(d);
-        var isToday = ds === todayStr;
-        var hasDot = allTrainings.some(function(t) { return t.startTime && App.fmtDate(new Date(t.startTime)) === ds; });
-        var hasSignin = signedDates.indexOf(d.getDate()) > -1;
-
-        html += '<div class="m-wcd' + (isToday ? ' is-today' : '') + '">' +
-          '<div class="m-wcd__dw">周' + dw[i] + '</div>' +
-          '<div class="m-wcd__d' + (hasSignin ? ' is-signed' : '') + '">' + dNum + '</div>' +
-          (hasDot ? '<div class="m-wcd__dot"></div>' : '') +
-        '</div>';
-      }
-      document.getElementById('m-week-cal').innerHTML = html;
-
-      // 更新标签：本周培训数 + 本周已签到数
-      var weekCount = 0, weekSigned = 0;
+      // 该月有培训的日期集合
+      var trainingDays = {};
       allTrainings.forEach(function(t) {
         if (!t.startTime) return;
-        var sd = new Date(t.startTime);
-        var diff = (sd - mon) / 86400000;
-        if (diff >= 0 && diff < 7) {
-          weekCount++;
-          if (t.signinDone) weekSigned++;
-        }
+        var d = new Date(t.startTime);
+        if (d.getFullYear() === y && d.getMonth() === m) trainingDays[d.getDate()] = true;
       });
-      document.getElementById('wk-count').textContent = weekCount;
-      document.getElementById('wk-signed').textContent = weekSigned;
-    }
-
-    function toggleMonthView() {
-      var mv = document.getElementById('m-month-view');
-      var btn = document.getElementById('wk-expand');
-      if (mv.style.display === 'none') {
-        mv.style.display = '';
-        btn.querySelector('span').textContent = '收起月历';
-        btn.querySelector('i').style.transform = 'rotate(180deg)';
-        renderMonthGrid();
-      } else {
-        mv.style.display = 'none';
-        btn.querySelector('span').textContent = '展开月历';
-        btn.querySelector('i').style.transform = '';
-      }
-    }
-
-    function renderMonthGrid() {
-      var now = new Date();
-      var y = now.getFullYear(), m = now.getMonth();
-      var firstDay = new Date(y, m, 1).getDay();
-      var daysInMonth = new Date(y, m + 1, 0).getDate();
-      var today = now.getDate();
-      var dw = ['日','一','二','三','四','五','六'];
 
       var html = '<div class="m-mg-row">';
       dw.forEach(function(d) { html += '<div class="m-mg-dw">' + d + '</div>'; });
       html += '</div><div class="m-mg-row">';
       for (var i = 0; i < firstDay; i++) html += '<div class="m-mg-d is-empty"></div>';
       for (var d = 1; d <= daysInMonth; d++) {
-        var cls = '';
+        var dateKey = App.fmtDate(new Date(y, m, d));
+        var cls = 'm-mg-d m-mg-d--click';
         if (d === today) cls += ' is-today';
-        if (signedDates.indexOf(d) > -1) cls += ' is-done';
-        html += '<div class="m-mg-d' + cls + '">' + d + '</div>';
+        if (selectedDate && selectedDate === dateKey) cls += ' is-sel';
+        else if (signedDates.indexOf(d) > -1) cls += ' is-done';
+        else if (trainingDays[d]) cls += ' is-has';
+        html += '<div class="' + cls + '" data-d="' + d + '">' + d + '</div>';
       }
       html += '</div>';
-      document.getElementById('m-month-view').innerHTML = html;
+      var box = document.getElementById('m-month-view');
+      box.innerHTML = html;
+      box.querySelectorAll('.m-mg-d--click').forEach(function(el) {
+        el.addEventListener('click', function() {
+          var day = parseInt(el.getAttribute('data-d'), 10);
+          var picked = App.fmtDate(new Date(y, m, day));
+          selectedDate = (selectedDate === picked) ? null : picked;  // 再次点击取消选中
+          document.getElementById('m-month-panel').style.display = 'none';
+          renderMonthGrid(y, m);
+          renderWeekStrip();
+          renderFiltered();
+        });
+      });
     }
 
-    /* ========== 筛选切换 ========== */
-    function switchFilter(f, btn) {
-      curFilter = f;
-      document.querySelectorAll('.m-tab-btn').forEach(function(b) { b.classList.toggle('is-active', b === btn); });
+    // 头部统计（当前查看月的培训数 / 已签到数）+ 渲染月历
+    function renderCalendar(y, m) {
+      var monthCount = 0, monthSigned = 0;
+      allTrainings.forEach(function(t) {
+        if (!t.startTime) return;
+        var d = new Date(t.startTime);
+        if (d.getFullYear() === y && d.getMonth() === m) {
+          monthCount++;
+          if (t.signinDone) monthSigned++;
+        }
+      });
+      document.getElementById('m-cal-title').textContent = y + '年' + (m + 1) + '月';
+      renderMonthGrid(y, m);
+    }
+
+    // 翻月 / 回到今天
+    function shiftMonth(delta) {
+      var d = new Date(viewY, viewM + delta, 1);
+      viewY = d.getFullYear(); viewM = d.getMonth();
+      var box = document.getElementById('m-month-view');
+      if (box) {
+        box.classList.remove('is-slide-left', 'is-slide-right');
+        void box.offsetWidth; // 强制 reflow，保证每次翻月动画都重放
+        box.classList.add(delta < 0 ? 'is-slide-right' : 'is-slide-left');
+      }
+      renderCalendar(viewY, viewM);
+    }
+    function resetCalView() {
+      selectedDate = null;
+      var now = new Date();
+      viewY = now.getFullYear(); viewM = now.getMonth();
+      document.getElementById('m-month-panel').style.display = 'none';
+      var btn = document.getElementById('m-cal-toggle');
+      if (btn) btn.classList.remove('is-open');
+      renderCalendar(viewY, viewM);
+      renderWeekStrip();
       renderFiltered();
     }
 
-    function getFiltered() {
-      var now = new Date();
-      var todayStr = App.fmtDate(now);
-      // 计算本周一起止
-      var day = now.getDay();
-      var monOff = day === 0 ? -6 : 1 - day;
-      var weekMon = new Date(now); weekMon.setDate(now.getDate() + monOff);
-      var weekSun = new Date(weekMon); weekSun.setDate(weekMon.getDate() + 6);
+    // 仅清除日期选中、保留当前筛选（用于列表区"查看全部"）
+    function clearDateSel() {
+      selectedDate = null;
+      renderWeekStrip();
+      renderMonthGrid(viewY, viewM);
+      renderFiltered();
+    }
 
+    // 选中日期的友好标签（M月D日 + 周X）
+    function fmtSelectedLabel() {
+      if (!selectedDate) return null;
+      var p = selectedDate.split('/');
+      var dt = new Date(+p[0], +p[1] - 1, +p[2]);
+      var wd = ['周日','周一','周二','周三','周四','周五','周六'][dt.getDay()];
+      return { m: (+p[1]) + '月' + (+p[2]) + '日', w: wd };
+    }
+
+    /* ========== 横向日期条（周视图） ========== */
+    function renderWeekStrip() {
+      var strip = document.getElementById('m-date-strip');
+      var anchor = selectedDate ? new Date(selectedDate.replace(/\//g, '-')) : new Date();
+      var day = anchor.getDay();
+      var monOff = day === 0 ? -6 : 1 - day;
+      var mon = new Date(anchor); mon.setDate(anchor.getDate() + monOff);
+      var wd = ['日', '一', '二', '三', '四', '五', '六'];
+      var todayStr = App.fmtDate(new Date());
+      var trainingDates = {};
+      allTrainings.forEach(function(t) {
+        if (!t.startTime) return;
+        trainingDates[App.fmtDate(new Date(t.startTime))] = true;
+      });
+      var html = '';
+      for (var i = 0; i < 7; i++) {
+        var d = new Date(mon); d.setDate(mon.getDate() + i);
+        var key = App.fmtDate(d);
+        var cls = 'm-ds-day';
+        if (key === todayStr) cls += ' is-today';
+        if (selectedDate && selectedDate === key) cls += ' is-sel';
+        else if (trainingDates[key]) cls += ' has-training';
+        else if (signedDates.indexOf(d.getDate()) > -1) cls += ' is-done';
+        var badge = (key === todayStr) ? '<span class="m-ds-day__badge">今</span>' : '';
+        html += '<div class="' + cls + '" data-date="' + key + '">' +
+                  badge +
+                  '<span class="m-ds-day__wd">周' + wd[d.getDay()] + '</span>' +
+                  '<span class="m-ds-day__num">' + d.getDate() + '</span>' +
+                  '<span class="m-ds-day__dot"></span>' +
+                '</div>';
+      }
+      strip.innerHTML = html;
+      strip.querySelectorAll('.m-ds-day').forEach(function(el) {
+        el.addEventListener('click', function() {
+          var dt = el.getAttribute('data-date');
+          selectedDate = (selectedDate === dt) ? null : dt;
+          renderWeekStrip();
+          renderFiltered();
+        });
+      });
+      var focus = strip.querySelector('.m-ds-day.is-sel') || strip.querySelector('.m-ds-day.is-today');
+      if (focus) focus.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    }
+
+    function toggleMonthPanel() {
+      var panel = document.getElementById('m-month-panel');
+      var open = panel.style.display === 'none';
+      panel.style.display = open ? 'block' : 'none';
+      var btn = document.getElementById('m-cal-toggle');
+      if (btn) btn.classList.toggle('is-open', open);
+      if (open) renderCalendar(viewY, viewM);
+    }
+
+    /* ========== 列表数据源（默认今日 / 选中某天） ========== */
+    function getFiltered() {
+      if (selectedDate) {
+        return allTrainings.filter(function(t) {
+          if (!t.startTime) return false;
+          return App.fmtDate(new Date(t.startTime)) === selectedDate;
+        });
+      }
+      var today = App.fmtDate(new Date());
       return allTrainings.filter(function(t) {
-        if (!t.startTime) return true;
-        var sd = App.fmtDate(new Date(t.startTime));
-        if (curFilter === 'today') return sd === todayStr;
-        if (curFilter === 'week') return sd >= App.fmtDate(weekMon) && sd <= App.fmtDate(weekSun);
-        return true;
+        if (!t.startTime) return false;
+        return App.fmtDate(new Date(t.startTime)) === today;
       });
     }
 
     function renderFiltered() {
       var list = getFiltered();
       document.getElementById('list-n').textContent = '(' + list.length + ')';
+      var titleEl = document.getElementById('tl-title');
+      if (selectedDate) {
+        var lbl = fmtSelectedLabel();
+        titleEl.textContent = lbl.m + ' 培训';
+      } else {
+        titleEl.textContent = '今日培训';
+      }
       renderSchedList(list);
     }
 
@@ -212,94 +285,88 @@
       if (done === req) return { cls: 'is-done', label: '已完成' };
       if (done > 0) return { cls: 'is-doing', label: '进行中' };
       var sd = t.startTime ? new Date(t.startTime) : null;
-      var past = sd ? sd <= now() : true;
+      var past = sd ? sd <= new Date() : true;
       return past ? { cls: 'is-todo', label: '待完成' } : { cls: 'is-upcoming', label: '未开始' };
     }
-    function now() { return new Date(); }
 
-    /* ========== 日程列表（品牌化卡片） ========== */
+    /* ========== 时间轴日程列表（左时间列 + 中轴圆点 + 右卡片） ========== */
     function renderSchedList(list) {
       var box = document.getElementById('m-training-list');
       if (!list || !list.length) {
-        var guide = '';
-        if (curFilter === 'today') {
-          guide = '<div class="m-empty__acts">' +
-            '<button class="m-btn m-btn--ghost m-btn--sm" onclick="switchFilter(\'week\',document.querySelector(\'[data-filter=week]\'))">看本周</button>' +
-            '<button class="m-btn m-btn--ghost m-btn--sm" onclick="switchFilter(\'all\',document.querySelector(\'[data-filter=all]\'))">看全部</button>' +
-          '</div>';
+        var emptyText, guide = '';
+        if (selectedDate) {
+          var parts = selectedDate.split('/');
+          emptyText = parts[1] + '月' + parts[2] + '日 没有培训安排';
+          guide = '<div class="m-empty__acts"><button class="m-btn m-btn--ghost m-btn--sm" onclick="clearDateSel()">查看今日</button></div>';
+        } else {
+          emptyText = '今天还没有培训安排';
+          guide = '<div class="m-empty__acts"><button class="m-btn m-btn--ghost m-btn--sm" onclick="toggleMonthPanel()">选择日期</button></div>';
         }
-        box.innerHTML = '<div class="m-empty"><i class="fa-regular fa-calendar-xmark"></i>' +
-          (curFilter === 'today' ? '今天还没有培训安排' : '暂无培训安排') + guide + '</div>';
+        box.innerHTML = '<div class="m-empty"><i class="fa-regular fa-calendar-xmark"></i>' + emptyText + guide + '</div>';
         return;
       }
-      var todayStr = App.fmtDate(new Date());
 
-      box.innerHTML = list.map(function(t, idx) {
+      // 选中某天时，列表顶部加一条日期分隔标题，强化"正在看哪天"的视觉
+      var sep = '';
+      if (selectedDate) {
+        var lbl = fmtSelectedLabel();
+        sep = '<div class="m-date-sep">' +
+                '<span class="m-date-sep__d">' + App.esc(lbl.m) + '</span>' +
+                '<span class="m-date-sep__w">' + App.esc(lbl.w) + '</span>' +
+                '<span class="m-date-sep__tip">当日培训</span>' +
+                '<button class="m-date-sep__btn" onclick="clearDateSel()">查看全部</button>' +
+              '</div>';
+      }
+
+      box.innerHTML = sep + list.map(function(t, idx) {
         var sd = t.startTime ? new Date(t.startTime) : null;
-        var dateStr = sd ? App.fmtDate(sd) : '';
         var timeStr = sd ? App.fmtHM(sd) : (t.time || '');
         var endStr = t.endTime ? App.fmtHM(new Date(t.endTime)) : '';
 
-        // 左侧时间标签
-        var timeLabel, subLabel;
-        if (dateStr === todayStr) {
-          timeLabel = '今天'; subLabel = timeStr + (endStr ? '-' + endStr : '');
-        } else if (sd) {
-          var m = sd.getMonth() + 1;
-          timeLabel = m + '月' + sd.getDate() + '日'; subLabel = timeStr + (endStr ? '-' + endStr : '');
-        } else {
-          timeLabel = ''; subLabel = timeStr;
-        }
-
-        // 任务标签
         var tags = [];
         if (t.signinEnabled) tags.push('<span class="m-stag m-stag--green">签到</span>');
         if (t.surveyEnabled && t.linkedSurveyId) tags.push('<span class="m-stag m-stag--blue">调研</span>');
         if (t.examEnabled && t.linkedExamId) tags.push('<span class="m-stag m-stag--orange">考试</span>');
         if (t.coursewareEnabled && t.coursewareFiles && t.coursewareFiles.length) tags.push('<span class="m-stag m-stag--purple">课件</span>');
 
-        // 状态徽章
         var st = calcStatus(t);
-        var statusHtml = st ? '<span class="m-ev__status ' + st.cls + '">' + st.label + '</span>' : '';
+        var statusHtml = st ? '<span class="tl-card__status ' + st.cls + '">' + st.label + '</span>' : '';
 
-        // 项目标签
         var proj = t.projectName || t.project || t.category || '';
-        var projHtml = proj ? '<span class="m-ev__chip">' + App.esc(proj) + '</span>' : '';
+        var projHtml = proj ? '<span class="tl-card__chip">' + App.esc(proj) + '</span>' : '';
 
-        // 必修进度
         var req = (t.signinEnabled ? 1 : 0) + (t.surveyEnabled && t.linkedSurveyId ? 1 : 0) + (t.examEnabled && t.linkedExamId ? 1 : 0);
         var done = (t.signinDone ? 1 : 0) + (t.surveyDone ? 1 : 0) + (t.examDone ? 1 : 0);
-        var progHtml = req ? '<div class="m-ev__prog"><span>必修</span><b>' + done + '/' + req + '</b></div>' : '';
+        var progHtml = req ? '<div class="tl-card__prog"><span>必修</span><b>' + done + '/' + req + '</b></div>' : '';
 
-        return '<div class="m-ev" data-id="' + t.id + '" style="--i:' + idx + '">' +
-          '<div class="m-ev__bar"></div>' +
-          '<div class="m-ev__time">' +
-            (timeLabel ? '<div class="m-ev__day">' + App.esc(timeLabel) + '</div>' : '') +
-            (subLabel ? '<div class="m-ev__hm">' + App.esc(subLabel) + '</div>' : '') +
+        return '<div class="tl-item" data-id="' + t.id + '" style="--i:' + idx + '">' +
+          '<div class="tl-time">' +
+            '<div class="tl-time__start">' + App.esc(timeStr) + '</div>' +
+            (endStr ? '<div class="tl-time__end">' + App.esc(endStr) + '</div>' : '') +
           '</div>' +
-          '<div class="m-ev__main">' +
-            '<div class="m-ev__top"><div class="m-ev__title">' + App.esc(t.name) + '</div>' + statusHtml + '</div>' +
+          '<div class="tl-axis">' +
+            '<span class="tl-dot' + (t.signinDone ? ' is-done' : '') + '"></span>' +
+            '<span class="tl-line"></span>' +
+          '</div>' +
+          '<div class="tl-card">' +
+            '<div class="tl-card__top"><div class="tl-card__title">' + App.esc(t.name) + '</div>' + statusHtml + '</div>' +
             projHtml +
-            '<div class="m-ev__row"><i class="fa-solid fa-location-dot"></i>' + App.esc(t.location || '待定') + '</div>' +
-            '<div class="m-ev__row"><i class="fa-regular fa-clock"></i>' + App.esc(dateStr + ' ' + (t.time || '')) + '</div>' +
-            (tags.length ? '<div class="m-ev__tags">' + tags.join('') + '</div>' : '') +
+            '<div class="tl-card__row"><i class="fa-solid fa-location-dot"></i>' + App.esc(t.location || '待定') + '</div>' +
+            (tags.length ? '<div class="tl-card__tags">' + tags.join('') + '</div>' : '') +
             progHtml +
           '</div>' +
         '</div>';
       }).join('');
 
-      Array.prototype.forEach.call(box.querySelectorAll('.m-ev'), function(el) {
+      Array.prototype.forEach.call(box.querySelectorAll('.tl-item'), function(el) {
         el.addEventListener('click', function() { openTraining(el.getAttribute('data-id')); });
       });
     }
 
     /* ========== 数据获取（零冗余请求） ========== */
-    // schedule 已随每个培训返回 signinDone / surveyDone / examDone，
-    // 直接本地计算已签到日期，避免对每个培训再发一次 /signins（N+1）。
     async function getTraining(id) {
       var hit = allTrainings.find(function(x) { return String(x.id) === String(id); });
       if (hit) return hit;
-      // 兜底：深链 ?id= 在列表加载前到达
       var ev = await Api.trainingDetail(id);
       return await enrichDetail(ev);
     }
@@ -350,16 +417,16 @@
           return isNaN(d.getDate()) ? -1 : d.getDate();
         }).filter(function(n) { return n > 0; });
 
-        renderWeekCal();
+        var now = new Date();
+        viewY = now.getFullYear(); viewM = now.getMonth();
+        renderCalendar(viewY, viewM);
+        renderWeekStrip();
         renderFiltered();
 
-        // 副标题动态化
         var total = allTrainings.length;
         var signed = allTrainings.filter(function(t) { return t.signinDone; }).length;
         document.getElementById('m-page-sub').textContent =
           total ? ('共 ' + total + ' 场培训 · 已签到 ' + signed + ' 场') : '暂无培训安排';
-
-        document.getElementById('list-n').textContent = '(' + allTrainings.length + ')';
       } catch(e) {
         document.getElementById('m-training-list').innerHTML =
           '<div class="m-empty"><i class="fa-regular fa-circle-xmark"></i>加载失败' +
@@ -367,7 +434,6 @@
       } finally { App.hideLoading(); }
     }
 
-    // 供页头刷新按钮与错误重试调用
     function reloadTraining() { loadTrainings(); }
 
     /* ========== 培训详情弹层 ========== */
@@ -454,7 +520,6 @@
       if (act === 'courseware') return openCourseware(t.coursewareFiles);
     }
 
-    // 用自定义弹层替代原生 confirm，统一交互质感
     function doSignin(t) {
       App.confirm({
         title: '考勤签到',
@@ -469,7 +534,6 @@
       try {
         await Api.signin(t.id, App.userId());
         t.signinDone = true;
-        // 同步缓存，列表/周历即时反映
         var cached = allTrainings.find(function(x) { return String(x.id) === String(t.id); });
         if (cached) cached.signinDone = true;
         App.hideLoading();
@@ -478,7 +542,8 @@
         if (d && !isNaN(d.getDate()) && signedDates.indexOf(d.getDate()) < 0) {
           signedDates.push(d.getDate());
         }
-        renderWeekCal();
+        renderCalendar(viewY, viewM);
+        renderWeekStrip();
         renderFiltered();
         renderTrainingSheet(t);
       } catch(e) {
@@ -613,6 +678,9 @@
 
     /* ========== 初始化 ========== */
     function onReady() {
+      document.getElementById('cal-prev').addEventListener('click', function () { shiftMonth(-1); });
+      document.getElementById('cal-next').addEventListener('click', function () { shiftMonth(1); });
+      document.getElementById('cal-today').addEventListener('click', resetCalView);
       loadTrainings();
       var id = new URLSearchParams(location.search).get('id');
       if (id) setTimeout(function() { openTraining(id); }, 500);

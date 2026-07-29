@@ -16,9 +16,28 @@
   <div class="app-shell">
     <!-- 顶部导航 + 搜索 -->
     <header class="m-nav" style="padding-bottom:10px">
-      <div class="m-nav__left"><span class="m-nav__title">游雁学院</span></div>
+      <div class="m-nav__left">
+        <svg class="m-logo" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+          <defs>
+            <linearGradient id="mlogoGradC" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#667eea"/>
+              <stop offset="1" stop-color="#764ba2"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="32" height="32" rx="9" fill="url(#mlogoGradC)"/>
+          <path d="M16 7 L27 12 L16 17 L5 12 Z" fill="#fff"/>
+          <path d="M9.5 13.5 V19.5 C9.5 19.5 12.5 21.6 16 21.6 C19.5 21.6 22.5 19.5 22.5 19.5 V13.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="27" cy="12" r="1.7" fill="#fff"/>
+        </svg>
+        <span class="m-nav__title">游雁学院</span>
+      </div>
       <div class="m-nav__right">
-        <button class="m-nav__btn" onclick="App.startScan()" title="扫码进入培训"><i class="fa-solid fa-qrcode"></i></button>
+        <button class="m-nav__pill" onclick="App.openSharePanel()" aria-label="更多">
+          <i class="fa-solid fa-ellipsis"></i>
+        </button>
+        <button class="m-nav__pill" onclick="history.back()" aria-label="关闭">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
     </header>
 
@@ -226,9 +245,11 @@
             '<div class="m-ccard__t">' + App.esc(c.title) + '</div>' +
             '<div class="m-ccard__lec">' + avHtml + ' <span>' + App.esc(lecName) + '</span></div>' +
             '<div class="m-ccard__meta">' +
-              '<span><i class="fa-regular fa-eye"></i> ' + views + '</span>' +
-              '<span><i class="fa-regular fa-thumbs-up"></i> ' + likes + '</span>' +
-              '<span><i class="fa-solid fa-star" style="color:#f59e0b"></i> ' + rating.toFixed(1) + '</span>' +
+              '<div class="m-ccard__meta__left">' +
+                '<span><i class="fa-regular fa-eye"></i> ' + views + '</span>' +
+                '<span><i class="fa-regular fa-thumbs-up"></i> ' + likes + '</span>' +
+              '</div>' +
+              '<span class="m-ccard__meta__rating"><i class="fa-solid fa-star"></i> ' + rating.toFixed(1) + '</span>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -260,9 +281,9 @@
         App.toast('该课程暂无视频', 'error');
         return;
       }
-      // 默认播放第一个视频
+      // 默认播放第一个视频（移动端专属播放器）
       var back = encodeURIComponent('m/course.html');
-      location.href = '/player.html?id=' + c.id + '&index=0&returnUrl=' + back;
+      location.href = '/m/player.html?id=' + c.id + '&index=0&returnUrl=' + back;
     }
 
     App.initPage({ active: 'course', requireAuth: true, onReady: loadCourses });

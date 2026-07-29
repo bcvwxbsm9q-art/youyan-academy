@@ -72,7 +72,13 @@
 
     // ---- 课程 ----
     courses: function () { return Api.get('/courses'); },
-    course:  function (id) { return Api.get('/courses/' + id); },
+    // 后端无「按 id 取单门」路由：拉列表前端过滤（与 PC 播放器 loadCourseData 一致）
+    course:  function (id) {
+      return Api.get('/courses').then(function (list) {
+        var arr = Array.isArray(list) ? list : [];
+        return arr.filter(function (c) { return String(c.id) === String(id); })[0] || null;
+      });
+    },
     lecturers: function () { return Api.get('/lecturers'); },
 
     // ---- 培训 ----

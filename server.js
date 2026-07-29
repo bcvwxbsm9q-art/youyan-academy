@@ -2054,6 +2054,27 @@ app.get('/api/courses', (req, res) => {
   res.json(courses);
 });
 
+// GET /api/courses/:id - 获取单门课程详情（移动端播放器 Api.course 使用）
+app.get('/api/courses/:id', (req, res) => {
+  const data = readData();
+  const courseId = req.params.id;
+  const course = (data.management_courses || []).find(c => String(c.id) === String(courseId));
+  if (!course) {
+    return res.status(404).json({ error: '课程不存在' });
+  }
+  const reportStats = getCourseReportStats(data, course.id);
+  const result = {
+    ...course,
+    rating: getCourseAvgRating(data, course.id) ?? course.rating ?? 0,
+    likes: reportStats.likes,
+    shares: reportStats.shares,
+    learners: reportStats.learners,
+    finishers: reportStats.finishers,
+    createdBy: course.createdBy || course.creator || '许志坚'
+  };
+  res.json(result);
+});
+
 // POST /api/courses - 添加课程
 app.post('/api/courses', (req, res) => {
   const course = req.body;
@@ -2734,6 +2755,25 @@ app.get('/api/training/:id/survey-average', (req, res) => {
 // 培训项目管理 API (新版 - 扁平化培训事件)
 // ============================================================
 
+// 生成唯一 4 位签到码（1000~9999），确保与现有培训不冲突
+function generateSigninId(data) {
+  const used = new Set((data.training_events || []).map(e => e.signinId).filter(Boolean));
+  let code;
+  do {
+    code = String(1000 + Math.floor(Math.random() * 9000));
+  } while (used.has(code));
+  return code;
+}
+
+// GET /api/training/by-signin/:code - 手机端按签到码定位培训（扫码/输码通用）
+app.get('/api/training/by-signin/:code', (req, res) => {
+  const code = String(req.params.code).trim();
+  const data = readData();
+  const event = (data.training_events || []).find(e => e.signinId === code && !e.isDeleted);
+  if (!event) return res.status(404).json({ success: false, error: '签到码无效或培训不存在' });
+  res.json({ success: true, event });
+});
+
 // GET /api/training - 获取所有培训事件
 app.get('/api/training', (req, res) => {
   const data = readData();
@@ -3016,6 +3056,8 @@ app.post('/api/training', (req, res) => {
   if (!data.training_events) data.training_events = [];
   event.id = Date.now();
   event.createdAt = new Date().toLocaleString('zh-CN');
+  // 自动分配唯一 4 位签到码（若前端未提供）
+  if (!event.signinId) event.signinId = generateSigninId(data);
   data.training_events.push(event);
   // 自动同步 allowedUsers 到报名记录和指派历史
   syncTrainingAllowedUsers(data, event.id, event.allowedUsers);

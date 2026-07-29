@@ -32,8 +32,11 @@
         <span class="m-nav__title">游雁学院</span>
       </div>
       <div class="m-nav__right">
-        <button class="m-nav__btn" onclick="App.startScan()" title="扫码进入培训" aria-label="扫码">
-          <i class="fa-solid fa-qrcode"></i>
+        <button class="m-nav__pill" onclick="App.openSharePanel()" aria-label="更多">
+          <i class="fa-solid fa-ellipsis"></i>
+        </button>
+        <button class="m-nav__pill" onclick="history.back()" aria-label="关闭">
+          <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
     </header>
@@ -73,18 +76,18 @@
       </div>
     </section>
 
-    <!-- 精选课程 -->
-    <div class="m-hd"><div class="m-hd__t">精选课程</div><a class="m-hd__more" href="/m/course.html">查看全部</a></div>
-    <div class="m-course-grid" id="m-course-grid"><div class="m-empty"><i class="fa-solid fa-spinner fa-spin"></i>加载中...</div></div>
-
-    <!-- 公告滚动条（单行 + 上下翻滚 + 点击跳转） -->
+    <!-- 公告滚动条（单行 + 上下翻滚 + 点击跳转，置于精选课程上方） -->
     <div class="m-notice-bar" id="m-notice-bar">
       <div class="m-notice-bar__ic"><i class="fa-solid fa-volume-high"></i></div>
       <div class="m-notice-bar__body">
         <div class="m-notice-bar__track" id="m-notice-track"><span class="m-notice-bar__item">暂无公告</span></div>
       </div>
-      <a class="m-notice-bar__more" href="/m/mine.html#notice">全部 <i class="fa-solid fa-chevron-right"></i></a>
+      <a class="m-notice-bar__more" href="/m/notices.html">全部 <i class="fa-solid fa-chevron-right"></i></a>
     </div>
+
+    <!-- 精选课程 -->
+    <div class="m-hd"><div class="m-hd__t">精选课程</div><a class="m-hd__more" href="/m/course.html">查看全部</a></div>
+    <div class="m-course-grid" id="m-course-grid"><div class="m-empty"><i class="fa-solid fa-spinner fa-spin"></i>加载中...</div></div>
 
     <!-- 推荐讲师（最底部） -->
     <div class="m-hd"><div class="m-hd__t">推荐讲师</div></div>
@@ -157,11 +160,9 @@
       if (!track) return;
       var items = track.querySelectorAll('.m-notice-bar__item');
       if (!items.length) return;
-      items.forEach(function (el, k) {
-        el.style.transition = 'transform .45s ease, opacity .45s ease';
-        el.style.transform = 'translateY(-' + (i * 100) + '%)';
-        el.style.opacity = (k === i) ? '1' : '0';
-      });
+      if (i < 0 || i >= items.length) i = 0;
+      // 推入式：整条 track 往上移 i * 22px（每条高度），下一条从底部顶上来
+      track.style.transform = 'translateY(-' + (i * 22) + 'px)';
     }
 
     async function initHome() {
@@ -194,20 +195,15 @@
           track.innerHTML = notices.map(function (n, i) {
             return '<span class="m-notice-bar__item" data-id="' + (n.id || '') + '" data-idx="' + i + '">' + App.esc(n.title || '') + '</span>';
           }).join('');
-          // 点击公告 → 打开详情弹层
+          // 点击公告 → 跳转到独立的移动端详情页（m/notice.html?id=）
           Array.prototype.forEach.call(track.querySelectorAll('.m-notice-bar__item'), function (el) {
             el.addEventListener('click', function () {
-              var id = el.getAttribute('data-id');
-              var n = notices[parseInt(el.getAttribute('data-idx') || '0')];
-              if (!n) return;
-              var html = '<div class="m-sheet__hd"><div class="m-sheet__title">' + App.esc(n.title || '公告详情') + '</div></div>' +
-                '<div class="m-sheet__body" style="font-size:14px;line-height:1.7;color:var(--ink)">' +
-                  '<div style="font-size:12px;color:var(--ink-3);margin-bottom:12px">' + App.esc(n.createdAt ? App.fmtDateTime(n.createdAt) : '') + '</div>' +
-                  '<div>' + (n.content ? App.esc(n.content.replace(/<[^>]+>/g, '')) : '暂无内容') + '</div></div>';
-              App.openSheet(html);
+              App.goNotice(el.getAttribute('data-id'));
             });
           });
-          // 上下翻滚动画：超过 1 条时启动
+          // 初始化定位：只显示第一条，其余隐藏（消除空白/重叠）
+          goNoticeSlide(0);
+          // 上下翻滚动画：超过 1 条时启动定时切换
           if (notices.length > 1) startNoticeTicker(notices.length);
         }
       } catch (e) { /* 忽略 */ }
@@ -235,16 +231,18 @@
             var coverHtml = cover
               ? '<img class="m-cover-img" src="' + App.esc(cover) + '" alt="' + App.esc(c.title) + '" loading="lazy" onerror="this.src=\'' + COVER_FALLBACK + '\';this.onerror=null;">'
               : '<div class="m-cover-fallback"><i class="fa-solid fa-play-circle"></i></div>';
-            return '<a class="m-course" href="/m/course.html">' +
+            return '<a class="m-course" href="/m/player.html?id=' + App.esc(c.id) + '&index=0&returnUrl=' + encodeURIComponent('m/index.html') + '">' +
               '<div class="m-course__cover">' + coverHtml +
                 '<span class="m-course__play"><i class="fa-solid fa-play"></i></span></div>' +
               '<div class="m-course__bd">' +
                 '<div class="m-course__t">' + App.esc(c.title) + '</div>' +
                 '<div class="m-course__lec">' + avHtml + ' <span>' + App.esc(lname) + '</span></div>' +
                 '<div class="m-course__meta">' +
-                  '<span><i class="fa-regular fa-eye"></i> ' + views + '</span>' +
-                  '<span><i class="fa-regular fa-thumbs-up"></i> ' + likes + '</span>' +
-                  '<span><i class="fa-solid fa-star" style="color:#f59e0b"></i> ' + rating.toFixed(1) + '</span>' +
+                  '<div class="m-course__meta__left">' +
+                    '<span><i class="fa-regular fa-eye"></i> ' + views + '</span>' +
+                    '<span><i class="fa-regular fa-thumbs-up"></i> ' + likes + '</span>' +
+                  '</div>' +
+                  '<span class="m-course__meta__rating"><i class="fa-solid fa-star"></i> ' + rating.toFixed(1) + '</span>' +
                 '</div>' +
               '</div></a>';
           }).join('');

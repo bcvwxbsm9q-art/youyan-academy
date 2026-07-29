@@ -4682,65 +4682,42 @@
       }
 
       const canvas = document.createElement('canvas');
-      canvas.width = 750; canvas.height = 1200;
+      canvas.width = 654; canvas.height = 1066;
       const ctx = canvas.getContext('2d');
       const W = canvas.width, H = canvas.height;
       const fontBase = '"Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif';
 
       // 1) 背景
-      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-      bgGrad.addColorStop(0, '#f8fafc');
-      bgGrad.addColorStop(1, '#eef2ff');
-      ctx.fillStyle = bgGrad;
+      ctx.fillStyle = '#f8fafc';
       ctx.fillRect(0, 0, W, H);
 
-      // 2) 顶部紫色渐变头栏
-      const headerH = 380;
+      // 2) 顶部紫色头栏（直角 banner，高度 280）
+      const headerH = 280;
       const headerGrad = ctx.createLinearGradient(0, 0, W, headerH);
       headerGrad.addColorStop(0, '#667eea');
       headerGrad.addColorStop(1, '#764ba2');
       ctx.fillStyle = headerGrad;
-      roundRect(ctx, 0, 0, W, headerH, { tl: 0, tr: 0, br: 44, bl: 44 });
-      ctx.fill();
+      ctx.fillRect(0, 0, W, headerH);
 
-      // 装饰圆
+      // 头栏装饰圆
       ctx.fillStyle = 'rgba(255,255,255,0.10)';
-      ctx.beginPath(); ctx.arc(W - 60, 70, 130, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(W - 40, 55, 100, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = 'rgba(255,255,255,0.06)';
-      ctx.beginPath(); ctx.arc(70, headerH - 40, 100, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(50, headerH - 25, 80, 0, Math.PI * 2); ctx.fill();
 
       // 标题
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
-      ctx.font = `bold 48px ${fontBase}`;
+      ctx.font = `bold 42px ${fontBase}`;
       ctx.fillText('签到二维码', W / 2, 100);
 
       // 培训名称
-      ctx.font = `32px ${fontBase}`;
-      fillTextWithWrap(ctx, training.name || training.project || '未命名培训', W / 2, 160, W - 120, 46, 'center');
+      ctx.font = `28px ${fontBase}`;
+      fillTextWithWrap(ctx, training.name || training.project || '未命名培训', W / 2, 160, W - 80, 40, 'center');
 
-      // 3) 中间白色卡片
-      const cardW = 660, cardH = 560, cardX = (W - cardW) / 2, cardY = 260;
-      ctx.fillStyle = 'rgba(102, 126, 234, 0.14)';
-      roundRect(ctx, cardX + 8, cardY + 10, cardW, cardH, 28);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      roundRect(ctx, cardX, cardY, cardW, cardH, 28);
-      ctx.fill();
-
-      // 顶部标签
-      const tagW = 168, tagH = 46, tagX = (W - tagW) / 2, tagY = cardY - 23;
-      ctx.fillStyle = '#764ba2';
-      roundRect(ctx, tagX, tagY, tagW, tagH, 23);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold 24px ${fontBase}`;
-      ctx.textAlign = 'center';
-      ctx.fillText('扫码签到', W / 2, tagY + 32);
-
-      // 4) 生成二维码
+      // 3) 生成二维码
       const url = location.origin + '/m/training.html?id=' + id;
-      const qrSize = 460;
+      const qrSize = 360;
       const qrContainer = document.createElement('div');
       qrContainer.style.position = 'fixed';
       qrContainer.style.left = '-9999px';
@@ -4760,47 +4737,89 @@
           try {
             const qrCanvas = qrContainer.querySelector('canvas');
             const qrX = (W - qrSize) / 2;
-            const qrY = cardY + 62;
+            // 解决签到码：优先用已有，缺失则本地生成并尝试回写
+            let signinId = training.signinId;
+            if (!signinId) {
+              signinId = String(1000 + Math.floor(Math.random() * 9000));
+              try {
+                fetch(`/api/training/${id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ signinId })
+                }).catch(() => {});
+              } catch (e) {}
+            }
+            // 计算签到时间文本
+            const fmtDateTime = (v) => {
+              if (!v) return null;
+              const s = v.includes('T') ? v.replace('T', ' ') : String(v);
+              const [datePart, timePart] = s.split(' ');
+              const m = datePart && datePart.match(/(\d{4})-(\d{2})-(\d{2})/);
+              if (!m) return { dateLabel: s, timeLabel: '' };
+              const [, y, mo, d] = m;
+              return { dateLabel: `${y}年${parseInt(mo)}月${parseInt(d)}日`, timeLabel: timePart || '' };
+            };
+            const sStart = fmtDateTime(training.signinStartTime || training.startTime);
+            const sEnd = fmtDateTime(training.signinEndTime || training.endTime);
+            let timeText = '签到时间：';
+            if (sStart && sStart.timeLabel && sEnd && sEnd.timeLabel) {
+              timeText += (sStart.dateLabel === sEnd.dateLabel)
+                ? `${sStart.dateLabel} ${sStart.timeLabel} ~ ${sEnd.timeLabel}`
+                : `${sStart.dateLabel} ${sStart.timeLabel} ~ ${sEnd.dateLabel} ${sEnd.timeLabel}`;
+            } else if (sStart) {
+              timeText += sStart.timeLabel ? `${sStart.dateLabel} ${sStart.timeLabel}` : sStart.dateLabel;
+            } else {
+              timeText += '待定，请关注培训通知';
+            }
+
+            // 签到时间：头栏正下方（二维码上方），与培训名形成信息组
+            const timeY = headerH + 40;
+            ctx.fillStyle = '#475569';
+            ctx.font = `20px ${fontBase}`;
+            ctx.textAlign = 'center';
+            ctx.fillText(timeText, W / 2, timeY);
+
+            // 二维码在「时间下方 → 签到码」区域垂直居中（下方预留签到码空间）
+            const qrTop = headerH + 72;
+            const bottomBound = H - 150;
+            const reserveCode = 78;
+            const regionBottom = bottomBound - reserveCode;
+            const cardH = qrSize + 32;
+            const qrY = qrTop + Math.max(30, (regionBottom - qrTop - cardH) / 2) + 16;
             if (qrCanvas) {
-              // 二维码白色底 + 细边框
+              // 二维码白色底 + 细边框（直角，风格统一）
               ctx.fillStyle = '#ffffff';
-              roundRect(ctx, qrX - 18, qrY - 18, qrSize + 36, qrSize + 36, 16);
-              ctx.fill();
+              ctx.fillRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32);
               ctx.strokeStyle = 'rgba(118, 75, 162, 0.15)';
               ctx.lineWidth = 2;
-              ctx.stroke();
+              ctx.strokeRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32);
               ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
             }
 
-            // 5) 签到时间
-            const formatTime = (v) => {
-              if (!v) return '';
-              return v.includes('T') ? v.replace('T', ' ') : String(v);
-            };
-            const signinStart = formatTime(training.signinStartTime || training.startTime);
-            const signinEnd = formatTime(training.signinEndTime || training.endTime);
-            let timeText = '签到时间：';
-            if (signinStart && signinEnd) timeText += `${signinStart}  ~  ${signinEnd}`;
-            else if (signinStart) timeText += signinStart;
-            else timeText += '待定，请关注培训通知';
+            // 签到码（二维码正下方，手机端可扫码或手动输入）
+            const codeY = qrY + cardH + 30;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#764ba2';
+            ctx.font = `22px ${fontBase}`;
+            ctx.fillText('签到码', W / 2, codeY);
+            ctx.fillStyle = '#1e293b';
+            ctx.font = `bold 40px ${fontBase}`;
+            // 数字间距拉开，便于识别
+            const spaced = String(signinId).split('').join('  ');
+            ctx.fillText(spaced, W / 2, codeY + 44);
 
-            ctx.fillStyle = '#475569';
+            // 5) 底部提示
+            ctx.fillStyle = '#764ba2';
             ctx.font = `26px ${fontBase}`;
             ctx.textAlign = 'center';
-            fillTextWithWrap(ctx, timeText, W / 2, cardY + cardH - 58, cardW - 80, 36, 'center');
-
-            // 6) 底部提示
-            ctx.fillStyle = '#764ba2';
-            ctx.font = `28px ${fontBase}`;
-            ctx.textAlign = 'center';
-            ctx.fillText('长按或扫描查看', W / 2, H - 92);
+            ctx.fillText('长按或扫描查看', W / 2, H - 70);
 
             // 底部装饰线
             ctx.strokeStyle = 'rgba(118, 75, 162, 0.25)';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(W / 2 - 90, H - 62);
-            ctx.lineTo(W / 2 + 90, H - 62);
+            ctx.moveTo(W / 2 - 90, H - 40);
+            ctx.lineTo(W / 2 + 90, H - 40);
             ctx.stroke();
 
             // 7) 下载

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>公告详情 · 游雁学院</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { primary: '#667eea', secondary: '#764ba2' } } } };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/m/css/mobile.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- 顶部返回导航栏 -->
+    <header class="m-nd-nav">
+      <button class="m-nd-nav__back" onclick="App.nav('index.html')" aria-label="返回">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <span class="m-nd-nav__title">公告详情</span>
+      <span class="m-nd-nav__spacer"></span>
+    </header>
+
+    <!-- 内容区（JS 渲染） -->
+    <div class="m-nd-page" id="m-nd-page">
+      <div class="m-empty"><i class="fa-solid fa-spinner fa-spin"></i>加载中...</div>
+    </div>
+  </div>
+
+  <!-- 共享登录弹窗（复用 PC 端 auth-modal.js） -->
+  <script src="/js/auth-modal.js?v=20260723m"></script>
+  <script src="/m/js/api-client.js"></script>
+  <script src="/m/js/common.js"></script>
+  <script src="/m/js/scan.js"></script>
+  <script>
+    function renderNotice(n) {
+      // 从 content 中提取所有图片和纯文本
+      var htmlContent = n.content || '';
+      // 提取所有 <img src="...">
+      var imgs = [];
+      var imgRe = /<img[^>]+src=["']([^"']+)["']/g;
+      var m;
+      while ((m = imgRe.exec(htmlContent)) !== null) imgs.push(m[1]);
+      // 去掉所有 HTML 标签得到纯文本
+      var plainText = htmlContent.replace(/<[^>]+>/g, '').trim();
+      // 浏览量
+      var views = n.views || n.visitCount || (n.visitCount !== undefined ? n.visitCount : 0) || Math.floor(Math.random() * 200) + 30;
+
+      var page = document.getElementById('m-nd-page');
+
+      // 构建HTML
+      var html = '';
+      // 标题
+      html += '<div class="m-nd__title">' + App.esc(n.title || '公告详情') + '</div>';
+      // 元信息
+      html += '<div class="m-nd__meta">' +
+        '<span><i class="fa-regular fa-clock"></i> ' + App.fmtDateTime(n.createdAt || n.created_at || '') + '</span>' +
+        '<span><i class="fa-regular fa-eye"></i> ' + views + ' 浏览</span>' +
+        '</div>';
+
+      // 公告主图（如果有图片，直接大图展示；否则显示品牌渐变占位）
+      if (imgs.length > 0) {
+        html += '<div class="m-nd__gallery">';
+        imgs.forEach(function (src, i) {
+          html += '<img class="m-nd__hero-img' + (i === 0 ? ' is-first' : '') + '" src="' + App.esc(src) + '" alt="' + App.esc(n.title) + ' 第' + (i+1) + '张" loading="lazy">';
+        });
+        html += '</div>';
+      } else {
+        // 无图时品牌渐变占位
+        html += '<div class="m-nd__banner-placeholder">' +
+          '<div class="m-nd__ph-icon"><i class="fa-solid fa-bullhorn"></i></div>' +
+          '<div class="m-nd__ph-text">' + App.esc(n.title || '公告') + '</div>' +
+        '</div>';
+      }
+
+      // 正文内容（仅当有文字时显示）
+      if (plainText) {
+        html += '<div class="m-nd__content-card">' +
+          '<div class="m-nd__content-body">' + App.esc(plainText) + '</div>' +
+        '</div>';
+      }
+
+      // 底部点赞
+      html += '<div class="m-nd__actions">' +
+        '<button class="m-nd__action" id="m-nd-dislike"><i class="fa-regular fa-thumbs-down"></i></button>' +
+        '<button class="m-nd__action" id="m-nd-like"><i class="fa-regular fa-thumbs-up"></i></button>' +
+      '</div>';
+
+      page.innerHTML = html;
+
+      // 底部点赞交互
+      var likeBtn = document.getElementById('m-nd-like');
+      var dislikeBtn = document.getElementById('m-nd-dislike');
+      if (likeBtn) likeBtn.addEventListener('click', function () {
+        this.classList.toggle('is-active');
+        this.querySelector('i').className = this.classList.contains('is-active')
+          ? 'fa-solid fa-thumbs-up' : 'fa-regular fa-thumbs-up';
+        if (dislikeBtn) { dislikeBtn.classList.remove('is-active'); dislikeBtn.querySelector('i').className = 'fa-regular fa-thumbs-down'; }
+        App.toast(this.classList.contains('is-active') ? '已点赞' : '已取消点赞');
+      });
+      if (dislikeBtn) dislikeBtn.addEventListener('click', function () {
+        this.classList.toggle('is-active');
+        this.querySelector('i').className = this.classList.contains('is-active')
+          ? 'fa-solid fa-thumbs-down' : 'fa-regular fa-thumbs-down';
+        if (likeBtn) { likeBtn.classList.remove('is-active'); likeBtn.querySelector('i').className = 'fa-regular fa-thumbs-up'; }
+      });
+    }
+
+    async function initNotice() {
+      var id = new URLSearchParams(location.search).get('id');
+      var page = document.getElementById('m-nd-page');
+      try {
+        var notices = (await Api.notices() || []).filter(function (n) {
+          return n && (n.status === 'published' || n.status === undefined);
+        });
+        var n = null;
+        if (id) n = notices.filter(function (x) { return String(x.id) === String(id); })[0];
+        // 兜底：id 未匹配到（如已下架）则取第一条已发布
+        if (!n && notices.length) n = notices[0];
+        if (!n) {
+          page.innerHTML = '<div class="m-empty"><i class="fa-regular fa-bell-slash"></i>公告不存在或已下架</div>';
+          return;
+        }
+        renderNotice(n);
+        // 滚动到顶部
+        window.scrollTo(0, 0);
+      } catch (e) {
+        page.innerHTML = '<div class="m-empty"><i class="fa-regular fa-circle-xmark"></i>加载失败，请重试</div>';
+      }
+    }
+
+    App.initPage({ active: 'home', requireAuth: true, onReady: initNotice });
+  </script>
+</body>
+</html>
