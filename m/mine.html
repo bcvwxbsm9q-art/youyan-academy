@@ -11,56 +11,153 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="/m/css/mobile.css">
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script src="/js/xp-system.js"></script>
 </head>
 <body>
   <div class="app-shell">
-    <header class="m-nav">
-      <div class="m-nav__left">
-        <svg class="m-logo" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-          <defs>
-            <linearGradient id="mlogoGradM" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#667eea"/>
-              <stop offset="1" stop-color="#764ba2"/>
-            </linearGradient>
-          </defs>
-          <rect x="0" y="0" width="32" height="32" rx="9" fill="url(#mlogoGradM)"/>
-          <path d="M16 7 L27 12 L16 17 L5 12 Z" fill="#fff"/>
-          <path d="M9.5 13.5 V19.5 C9.5 19.5 12.5 21.6 16 21.6 C19.5 21.6 22.5 19.5 22.5 19.5 V13.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
-          <circle cx="27" cy="12" r="1.7" fill="#fff"/>
-        </svg>
-        <span class="m-nav__title">我的</span>
-      </div>
-      <div class="m-nav__right"></div>
-    </header>
 
-    <!-- 个人主卡片（玻璃质感渐变大卡） -->
-    <section class="m-sec m-sec--hero m-rise">
-      <div class="m-profile">
-        <button class="m-profile__edit" data-act="profile" aria-label="编辑资料"><i class="fa-solid fa-pen"></i></button>
-        <div class="m-profile__top">
-          <div class="m-profile__av-wrap" data-act="profile">
-            <div class="m-profile__av" id="m-avatar">学</div>
-            <span class="m-profile__dot" title="在线"></span>
-            <span class="m-profile__edit-badge"><i class="fa-solid fa-camera"></i></span>
+    <!-- ====== 个人信息区（无框体 · 含铃铛+设置按钮） ====== -->
+    <section class="m-profile-header m-rise">
+      <div class="m-ph__main">
+        <div class="m-ph__av-wrap" data-act="profile">
+          <div class="m-ph__av" id="m-avatar">学</div>
+        </div>
+        <div class="m-ph__info">
+          <div class="m-ph__name-row">
+            <span class="m-ph__name" id="m-name">学员</span>
+            <span class="m-ph__lv">Lv.<span id="m-lv">1</span></span>
           </div>
-          <div class="m-profile__info">
-            <div class="m-profile__name" id="m-name">学员</div>
-            <div class="m-profile__dep" id="m-dep">游雁学院学员</div>
+          <div class="m-ph__role-row">
+            <span id="m-role">学员</span>
+            <span style="color:var(--line);margin:0 3px">·</span>
+            <span id="m-dep">游雁学院学员</span>
           </div>
         </div>
-        <div class="m-profile__welcome"><i class="fa-solid fa-sparkles"></i> <span id="m-welcome">今天也要坚持学习哦</span></div>
+        <div class="m-ph__actions">
+          <button class="m-ph__btn" id="m-bell-btn" aria-label="消息通知">
+            <i class="fa-regular fa-bell"></i>
+            <span id="m-nav-badge" class="m-ph__dot" hidden></span>
+          </button>
+          <button class="m-ph__btn" data-act="settings" aria-label="设置">
+            <i class="fa-solid fa-gear"></i>
+          </button>
+        </div>
       </div>
     </section>
 
-    <!-- 数据统计 -->
-    <div class="m-stats m-rise" id="m-stats-row">
-      <div class="m-stat" data-act="learn"><div class="m-stat__v" id="st-hours">0</div><div class="m-stat__l">学习时长(h)</div></div>
-      <div class="m-stat" data-act="cert"><div class="m-stat__v" id="st-certs">0</div><div class="m-stat__l">获得证书</div></div>
-      <div class="m-stat" data-act="exam"><div class="m-stat__v" id="st-exams">0</div><div class="m-stat__l">参与考试</div></div>
-      <div class="m-stat" data-act="learn"><div class="m-stat__v" id="st-days">0</div><div class="m-stat__l">学习天数</div></div>
+    <!-- ====== 深色VIP学习卡（参考图核心特色） ====== -->
+    <section class="m-vip-card m-rise" data-act="level">
+      <div class="m-vip-card__bg">
+        <div class="m-vip-card__content">
+          <div class="m-vip-card__left">
+            <div class="m-vip-card__title" id="m-lvname">新手学员</div>
+            <div class="m-vip-card__desc">享受专属课程 · 专业计划 · 数据分析等特权</div>
+            <button class="m-vip-card__btn" onclick="event.stopPropagation();openLevelInfo()">查看等级</button>
+          </div>
+          <div class="m-vip-card__right">
+            <!-- 3D 等级勋章（CSS 纯绘制） -->
+            <div class="m-vip-card__badge">
+              <div class="m-vip-card__badge-inner">
+                <span class="m-vip-card__badge-lv" id="m-lvring-n">Lv.1</span>
+              </div>
+              <div class="m-vip-card__badge-ring" id="m-lvring" style="--p:0%"></div>
+            </div>
+            <div class="m-vip-card__xp" id="m-lvxp">0 XP</div>
+          </div>
+        </div>
+        <!-- 进度条 -->
+        <div class="m-vip-card__bar"><div class="m-vip-card__bar-fill" id="m-lvfill"></div></div>
+        <div class="m-vip-card__hint" id="m-lvhint">继续学习，解锁更高等级称号</div>
+      </div>
+    </section>
+
+    <!-- ====== 学习统计（3列 · 实际数据） ====== -->
+    <div class="m-today-stats m-rise">
+      <div class="m-today-stats__hd">
+        <span class="m-today-stats__title">学习统计</span>
+        <span class="m-today-stats__more" data-act="learn">查看全部 <i class="fa-solid fa-chevron-right" style="font-size:10px"></i></span>
+      </div>
+      <div class="m-today-stats__grid">
+        <div class="m-ts-item" data-act="ach">
+          <div class="m-ts-item__ic" style="background:#fef9c3;color:#ca8a04"><i class="fa-solid fa-medal"></i></div>
+          <div class="m-ts-item__v"><span id="ts-badge">0</span><span class="m-ts-item__unit">枚</span></div>
+          <div class="m-ts-item__sub">获得徽章</div>
+        </div>
+        <div class="m-ts-item" data-act="courses">
+          <div class="m-ts-item__ic" style="background:#eff6ff;color:#3b82f6"><i class="fa-solid fa-book-open"></i></div>
+          <div class="m-ts-item__v"><span id="ts-done">0</span><span class="m-ts-item__unit">门</span></div>
+          <div class="m-ts-item__sub">完成课程</div>
+        </div>
+        <div class="m-ts-item" data-act="cert">
+          <div class="m-ts-item__ic" style="background:#fef2f2;color:#ef4444"><i class="fa-solid fa-award"></i></div>
+          <div class="m-ts-item__v"><span id="ts-cert">0</span><span class="m-ts-item__unit">张</span></div>
+          <div class="m-ts-item__sub">获得证书</div>
+        </div>
+      </div>
     </div>
 
-    <!-- 学习概览卡 -->
+    <!-- ====== 功能网格菜单（4×2 · 对齐参考图） ====== -->
+    <div class="m-grid-menu m-rise">
+      <div class="m-gm-item" data-act="trainings">
+        <div class="m-gm-item__ic"><i class="fa-solid fa-clipboard-list"></i></div>
+        <div class="m-gm-item__bd">
+          <div class="m-gm-item__t">我的培训</div>
+          <div class="m-gm-item__s">全部培训</div>
+        </div>
+      </div>
+      <div class="m-gm-item" data-act="courses">
+        <div class="m-gm-item__ic"><i class="fa-solid fa-play-circle"></i></div>
+        <div class="m-gm-item__bd">
+          <div class="m-gm-item__t">我的课程</div>
+          <div class="m-gm-item__s">已学 <b id="gm-courses">0</b> 门</div>
+        </div>
+      </div>
+      <div class="m-gm-item" data-act="cert">
+        <div class="m-gm-item__ic"><i class="fa-solid fa-heart"></i></div>
+        <div class="m-gm-item__bd">
+          <div class="m-gm-item__t">我的证书</div>
+          <div class="m-gm-item__s">已获得 <b id="gm-certs">0</b> 张</div>
+        </div>
+      </div>
+      <div class="m-gm-item" data-act="exam">
+        <div class="m-gm-item__ic"><i class="fa-solid fa-chart-simple"></i></div>
+        <div class="m-gm-item__bd">
+          <div class="m-gm-item__t">我的考试</div>
+          <div class="m-gm-item__s">累计 <b id="gm-exams">0</b> 次</div>
+        </div>
+      </div>
+      <div class="m-gm-item" data-act="ach">
+        <div class="m-gm-item__ic"><i class="fa-solid fa-ticket"></i></div>
+        <div class="m-gm-item__bd">
+          <div class="m-gm-item__t">成就徽章</div>
+          <div class="m-gm-item__s">已解锁 <b id="gm-ach">0</b>/<b id="gm-ach-total">42</b></div>
+        </div>
+      </div>
+      <div class="m-gm-item" data-act="notice">
+        <div class="m-gm-item__ic"><i class="fa-solid fa-headset"></i></div>
+        <div class="m-gm-item__bd">
+          <div class="m-gm-item__t">消息通知</div>
+          <div class="m-gm-item__s">常见问题</div>
+        </div>
+        <span class="m-menu-row__badge" id="m-notice-badge" hidden>0</span>
+      </div>
+      <div class="m-gm-item" data-act="settings">
+        <div class="m-gm-item__ic"><i class="fa-solid fa-gear"></i></div>
+        <div class="m-gm-item__bd">
+          <div class="m-gm-item__t">设置</div>
+          <div class="m-gm-item__s">账号与安全</div>
+        </div>
+      </div>
+      <div class="m-gm-item" data-act="about">
+        <div class="m-gm-item__ic"><i class="fa-solid fa-circle-info"></i></div>
+        <div class="m-gm-item__bd">
+          <div class="m-gm-item__t">关于我们</div>
+          <div class="m-gm-item__s">了解游雁学院</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 学习概览卡（保留原有逻辑） ====== -->
     <section class="m-sec m-rise">
       <div class="m-card m-overview">
         <div class="m-overview__head">
@@ -76,50 +173,43 @@
       </div>
     </section>
 
-    <!-- 学习成就（横滑徽章墙，带解锁态） -->
-    <div class="m-hd m-rise"><div class="m-hd__t"><i class="fa-solid fa-trophy"></i> 学习成就</div><span class="m-hd__more" id="m-ach-more">0/0</span></div>
+    <!-- ====== 学习成就横滑墙 ====== -->
+    <div class="m-hd m-rise"><div class="m-hd__t"><i class="fa-solid fa-trophy"></i> 成就徽章</div><span class="m-hd__more" id="m-ach-more">0/42</span></div>
     <div class="m-ach-scroll m-rise" id="m-ach-scroll"></div>
 
-    <!-- 我的学习 -->
-    <div class="m-hd m-rise"><div class="m-hd__t"><i class="fa-solid fa-graduation-cap"></i> 我的学习</div></div>
-    <div class="m-menu-group m-rise">
-      <div class="m-menu-row" data-act="cert">
-        <div class="m-menu-row__ic" style="background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fa-solid fa-certificate"></i></div>
-        <div class="m-menu-row__bd"><div class="m-menu-row__t">我的证书</div><div class="m-menu-row__s">查看与分享你的荣誉</div></div>
-        <i class="m-menu-row__arrow fa-solid fa-chevron-right"></i>
+    <!-- ====== 邀请好友横幅 ====== -->
+    <div class="m-invite-banner m-rise">
+      <div class="m-invite-banner__text">
+        <div class="m-invite-banner__t">邀请同事一起尚动</div>
+        <div class="m-invite-banner__s">好友通过邀请注册，你将获得奖励</div>
       </div>
-      <div class="m-menu-row" data-act="exam">
-        <div class="m-menu-row__ic" style="background:linear-gradient(135deg,#3b82f6,#2563eb)"><i class="fa-solid fa-file-pen"></i></div>
-        <div class="m-menu-row__bd"><div class="m-menu-row__t">考试记录</div><div class="m-menu-row__s">查看成绩与作答详情</div></div>
-        <i class="m-menu-row__arrow fa-solid fa-chevron-right"></i>
+      <div class="m-invite-banner__action">
+        <button class="m-invite-banner__btn" onclick="App.toast('邀请链接已复制')">去邀请</button>
       </div>
-      <div class="m-menu-row" data-act="learn">
-        <div class="m-menu-row__ic" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="fa-solid fa-chart-line"></i></div>
-        <div class="m-menu-row__bd"><div class="m-menu-row__t">学习记录</div><div class="m-menu-row__s">学时 / 课程 / 互动数据</div></div>
-        <i class="m-menu-row__arrow fa-solid fa-chevron-right"></i>
-      </div>
-      <div class="m-menu-row" data-act="notice">
-        <div class="m-menu-row__ic" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)"><i class="fa-solid fa-bell"></i></div>
-        <div class="m-menu-row__bd"><div class="m-menu-row__t">消息通知</div><div class="m-menu-row__s" id="m-notice-sub">系统提醒与公告</div></div>
-        <span class="m-menu-row__badge" id="m-notice-badge" hidden>0</span>
-        <i class="m-menu-row__arrow fa-solid fa-chevron-right"></i>
+      <div class="m-invite-banner__art">
+        <!-- CSS 绘制简约人物剪影 -->
+        <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="35" cy="65" rx="18" ry="12" fill="#c7d2fe" opacity=".6"/>
+          <circle cx="35" cy="48" r="14" fill="#a5b4fc" opacity=".7"/>
+          <ellipse cx="85" cy="67" rx="16" ry="11" fill="#ddd6fe" opacity=".5"/>
+          <circle cx="85" cy="52" r="13" fill="#c4b5fd" opacity=".6"/>
+          <path d="M42 40 L78 44" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round" opacity=".4"/>
+        </svg>
       </div>
     </div>
 
-    <!-- 账号设置 -->
-    <div class="m-hd m-rise"><div class="m-hd__t"><i class="fa-solid fa-gear"></i> 账号设置</div></div>
-    <div class="m-menu-group m-rise">
-      <div class="m-menu-row" data-act="profile">
-        <div class="m-menu-row__ic" style="background:linear-gradient(135deg,#64748b,#475569)"><i class="fa-solid fa-user-pen"></i></div>
-        <div class="m-menu-row__bd"><div class="m-menu-row__t">个人资料</div><div class="m-menu-row__s">姓名 / 部门 / 联系方式</div></div>
-        <i class="m-menu-row__arrow fa-solid fa-chevron-right"></i>
-      </div>
-      <div class="m-menu-row" data-act="logout">
-        <div class="m-menu-row__ic" style="background:#fef2f2;color:#ef4444"><i class="fa-solid fa-right-from-bracket"></i></div>
-        <div class="m-menu-row__bd"><div class="m-menu-row__t" style="color:#ef4444">退出登录</div></div>
-        <i class="m-menu-row__arrow fa-solid fa-chevron-right" style="color:#ef4444"></i>
-      </div>
+    <!-- 原有隐藏数据容器（JS需要这些ID） -->
+    <div hidden>
+      <span id="st-hours">0</span><span id="st-courses">0</span><span id="st-certs">0</span><span id="st-ach">0</span>
+      <span id="m-welcome"></span>
     </div>
+
+    <!-- 设置相关弹层入口（hidden triggers for settings group items） -->
+    <div hidden>
+      <label class="m-switch"><input type="checkbox" id="sw-notify"><span class="m-switch__track"></span></label>
+      <label class="m-switch"><input type="checkbox" id="sw-remind"><span class="m-switch__track"></span></label>
+    </div>
+
   </div>
 
   <script src="/js/auth-modal.js?v=20260723m"></script>
@@ -128,18 +218,26 @@
   <script src="/m/js/scan.js"></script>
   <script>
     function avatarText(name) { return name ? name.charAt(0) : '学'; }
-
     function pad2(n) { return n < 10 ? '0' + n : '' + n; }
     function ymd(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+    function fmtDateTimeShort(s) {
+      if (!s) return '';
+      var d = new Date(s); if (isNaN(d)) return '';
+      return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    }
     function calcStreak(dates) {
       if (!dates || !dates.length) return 0;
       var set = {}; dates.forEach(function (d) { set[d] = 1; });
       var d = new Date(); d.setHours(0, 0, 0, 0);
-      if (!set[ymd(d)]) d.setDate(d.getDate() - 1); // 今天还没学，从昨天起算连续
+      if (!set[ymd(d)]) d.setDate(d.getDate() - 1);
       var n = 0;
       while (set[ymd(d)]) { n++; d.setDate(d.getDate() - 1); }
       return n;
     }
+
+    /* 等级体系 / XP 计算已统一收敛到 window.XP（js/xp-system.js），本文件不再重复定义 */
+
+
 
     function animateValue(o) {
       var el = o.el || null, to = o.to || 0, dur = o.dur || 850, fmt = o.fmt, onFrame = o.onFrame;
@@ -158,25 +256,100 @@
       requestAnimationFrame(step);
     }
 
+    /* ========== 42 枚成就徽章定义（与 PC 端 center.html BADGES / 服务端 calculateBadgeCount 完全一致） ========== */
+    var MOBILE_BADGES = [
+      // 学习时长类
+      { id: 'learner-1', name: '学习新手', icon: 'fa-hourglass-start', color: '#9ca3af', desc: '累计学习 1 小时', test: function (d) { return d.hours >= 1; } },
+      { id: 'learner-10', name: '学习达人', icon: 'fa-fire', color: '#f59e0b', desc: '累计学习 10 小时', test: function (d) { return d.hours >= 10; } },
+      { id: 'learner-50', name: '学习高手', icon: 'fa-rocket', color: '#ef4444', desc: '累计学习 50 小时', test: function (d) { return d.hours >= 50; } },
+      { id: 'learner-100', name: '学习专家', icon: 'fa-flask', color: '#3b82f6', desc: '累计学习 100 小时', test: function (d) { return d.hours >= 100; } },
+      { id: 'learner-300', name: '学习大师', icon: 'fa-bolt', color: '#8b5cf6', desc: '累计学习 300 小时', test: function (d) { return d.hours >= 300; } },
+      { id: 'learner-500', name: '学习宗师', icon: 'fa-gem', color: '#6366f1', desc: '累计学习 500 小时', test: function (d) { return d.hours >= 500; } },
+      // 课程完成类
+      { id: 'course-1', name: '课程新手', icon: 'fa-play-circle', color: '#eab308', desc: '完成第 1 门课程', test: function (d) { return d.completed >= 1; } },
+      { id: 'course-5', name: '课程达人', icon: 'fa-square-check', color: '#3b82f6', desc: '完成 5 门课程', test: function (d) { return d.completed >= 5; } },
+      { id: 'course-10', name: '课程高手', icon: 'fa-book', color: '#14b8a6', desc: '完成 10 门课程', test: function (d) { return d.completed >= 10; } },
+      { id: 'course-20', name: '课程专家', icon: 'fa-university', color: '#8b5cf6', desc: '完成 20 门课程', test: function (d) { return d.completed >= 20; } },
+      { id: 'course-30', name: '课程大师', icon: 'fa-plane', color: '#eab308', desc: '完成 30 门课程', test: function (d) { return d.completed >= 30; } },
+      { id: 'course-50', name: '课程宗师', icon: 'fa-building-columns', color: '#ef4444', desc: '完成 50 门课程', test: function (d) { return d.completed >= 50; } },
+      // 连续学习类
+      { id: 'streak-3', name: '初露锋芒', icon: 'fa-leaf', color: '#10b981', desc: '连续学习 3 天', test: function (d) { return d.streak >= 3; } },
+      { id: 'streak-7', name: '坚持不懈', icon: 'fa-calendar', color: '#10b981', desc: '连续学习 7 天', test: function (d) { return d.streak >= 7; } },
+      { id: 'streak-30', name: '持之以恒', icon: 'fa-flag-checkered', color: '#8b5cf6', desc: '连续学习 30 天', test: function (d) { return d.streak >= 30; } },
+      { id: 'streak-60', name: '两月达人', icon: 'fa-calendar', color: '#f59e0b', desc: '连续学习 60 天', test: function (d) { return d.streak >= 60; } },
+      { id: 'streak-90', name: '季度学霸', icon: 'fa-line-chart', color: '#3b82f6', desc: '连续学习 90 天', test: function (d) { return d.streak >= 90; } },
+      { id: 'streak-100', name: '百日树人', icon: 'fa-tree', color: '#10b981', desc: '连续学习 100 天', test: function (d) { return d.streak >= 100; } },
+      // 特殊时段类
+      { id: 'early-bird', name: '早起鸟', icon: 'fa-sun', color: '#eab308', desc: '早上 6 点前学习', test: function (d) { return d.earlyStudy; } },
+      { id: 'night-owl', name: '夜猫子', icon: 'fa-moon', color: '#6366f1', desc: '晚上 10 点后学习', test: function (d) { return d.nightStudy; } },
+      { id: 'weekend-warrior', name: '周末充电', icon: 'fa-coffee', color: '#f59e0b', desc: '周末坚持学习', test: function (d) { return d.weekendStudy; } },
+      // 考试类
+      { id: 'first-exam', name: '初试锋芒', icon: 'fa-pencil', color: '#3b82f6', desc: '首次参加考试', test: function (d) { return d.examCount >= 1; } },
+      { id: 'exam-pass', name: '金榜题名', icon: 'fa-certificate', color: '#10b981', desc: '通过 3 场考试', test: function (d) { return d.examPassed >= 3; } },
+      { id: 'perfect-score', name: '满分学霸', icon: 'fa-check-circle', color: '#10b981', desc: '考试获得满分', test: function (d) { return d.perfectScore; } },
+      // 社交互动类
+      { id: 'rater', name: '评分达人', icon: 'fa-thumbs-up', color: '#3b82f6', desc: '评分 5 个课程', test: function (d) { return d.ratings >= 5; } },
+      { id: 'sharer', name: '分享达人', icon: 'fa-share-nodes', color: '#10b981', desc: '分享 5 个课程', test: function (d) { return d.shares >= 5; } },
+      { id: 'liker', name: '点赞达人', icon: 'fa-heart', color: '#ef4444', desc: '点赞 5 个课程', test: function (d) { return d.likes >= 5; } },
+      // 里程碑类
+      { id: 'day-7', name: '新人报到', icon: 'fa-hand-pointer', color: '#10b981', desc: '登录满 7 天', test: function (d) { return d.days >= 7; } },
+      { id: 'day-30', name: '月度之星', icon: 'fa-star', color: '#f59e0b', desc: '登录满 30 天', test: function (d) { return d.days >= 30; } },
+      { id: 'day-100', name: '百日纪念', icon: 'fa-birthday-cake', color: '#ec4899', desc: '登录满 100 天', test: function (d) { return d.days >= 100; } },
+      { id: 'day-200', name: '半年纪念', icon: 'fa-clock', color: '#8b5cf6', desc: '登录满 200 天', test: function (d) { return d.days >= 200; } },
+      { id: 'day-365', name: '资深学员', icon: 'fa-user', color: '#eab308', desc: '登录满一年', test: function (d) { return d.days >= 365; } },
+      // 培训参与类
+      { id: 'training-1', name: '初出茅庐', icon: 'fa-envira', color: '#84cc16', desc: '参加 1 场培训', test: function (d) { return d.trainingCount >= 1; } },
+      { id: 'training-5', name: '勤学好问', icon: 'fa-folder-open', color: '#0ea5e9', desc: '参加 5 场培训', test: function (d) { return d.trainingCount >= 5; } },
+      { id: 'training-10', name: '孜孜不倦', icon: 'fa-file', color: '#1e40af', desc: '参加 10 场培训', test: function (d) { return d.trainingCount >= 10; } },
+      { id: 'training-20', name: '学海无涯', icon: 'fa-ship', color: '#8b5cf6', desc: '参加 20 场培训', test: function (d) { return d.trainingCount >= 20; } },
+      { id: 'training-30', name: '百炼成钢', icon: 'fa-cogs', color: '#f59e0b', desc: '参加 30 场培训', test: function (d) { return d.trainingCount >= 30; } },
+      // 证书获得类
+      { id: 'certificate-1', name: '一证在手', icon: 'fa-shield', color: '#b45309', desc: '获得第 1 张证书', test: function (d) { return d.certificateCount >= 1; } },
+      { id: 'certificate-3', name: '小有成就', icon: 'fa-key', color: '#94a3b8', desc: '获得第 3 张证书', test: function (d) { return d.certificateCount >= 3; } },
+      { id: 'certificate-5', name: '证书达人', icon: 'fa-trophy', color: '#f59e0b', desc: '获得第 5 张证书', test: function (d) { return d.certificateCount >= 5; } },
+      { id: 'certificate-10', name: '荣誉满载', icon: 'fa-flag', color: '#a78bfa', desc: '获得第 10 张证书', test: function (d) { return d.certificateCount >= 10; } },
+      { id: 'certificate-20', name: '权威认证', icon: 'fa-balance-scale', color: '#ef4444', desc: '获得第 20 张证书', test: function (d) { return d.certificateCount >= 20; } }
+    ];
+
     async function initMine() {
       var u = App.user() || {};
       var name = App.userName();
+      if (!name || name === 'admin') name = '学员';
+
+      // ===== 渲染：个人信息区 =====
       document.getElementById('m-name').textContent = name;
       document.getElementById('m-dep').textContent = [u.department, u.position].filter(Boolean).join(' · ') || '游雁学院学员';
-
-      // 头像
+      document.getElementById('m-role').textContent = (u.roleName === 'admin' || u.role === 'admin') ? '管理员' : (u.roleName || u.role || '学员');
       var av = document.getElementById('m-avatar');
-      if (u.avatar) { av.outerHTML = '<img class="m-profile__av" id="m-avatar" src="' + App.esc(u.avatar) + '">'; }
+      if (u.avatar) { av.outerHTML = '<img class="m-ph__av" id="m-avatar" src="' + App.esc(u.avatar) + '">'; }
       else { av.textContent = avatarText(name); }
 
-      // 数据
-      var certs = [], exams = [];
-      try { certs = await Api.certificates() || []; } catch (e) {}
-      try { exams = await Api.examRecords() || []; } catch (e) {}
-
+      // 数据（均为服务端真实数据）
+      // 各接口返回结构不统一（data / examRecords / list），统一归一化为数组，避免 .filter/.length 在非数组上抛错中断整页
+      function toArr(x) {
+        if (Array.isArray(x)) return x;
+        if (x && Array.isArray(x.data)) return x.data;
+        if (x && Array.isArray(x.examRecords)) return x.examRecords;
+        if (x && Array.isArray(x.list)) return x.list;
+        if (x && Array.isArray(x.certificates)) return x.certificates;
+        if (x && Array.isArray(x.trainings)) return x.trainings;
+        return [];
+      }
+      var certs = [], exams = [], trains = [];
+      try { certs = toArr(await Api.certificates()); } catch (e) {}
+      try { exams = toArr(await Api.examRecords()); } catch (e) {}
+      try { trains = toArr(await Api.userTrainings()); } catch (e) {}
       var certCount = certs.length;
       var examCount = exams.length;
-      var passCount = exams.filter(function (r) { return r.passed || r.isPassed; }).length;
+      var trainingsCount = trains.length;
+
+      // 服务端学习统计（单一权威来源；旧服务器若无此接口则回退到本地 localStorage）
+      // 注意：Api.get 已自动拆包 json.data，返回的 lsRes 本身就是数据对象，不可再取 .data
+      var srvStats = null;
+      try {
+        var lsRes = await Api.get('/user/learning-stats');
+        if (lsRes) srvStats = lsRes;
+      } catch (e) { srvStats = null; }
 
       // 学习数据
       var key = 'user_learning_' + App.userId();
@@ -186,20 +359,106 @@
       var completed = (ld.completedCourses || []).length;
       var studyDays = (ld.studyDates || []).length;
 
-      // 统计数字（count-up 动效）
-      animateValue({ el: document.getElementById('st-hours'), to: hours });
-      animateValue({ el: document.getElementById('st-certs'), to: certCount });
-      animateValue({ el: document.getElementById('st-exams'), to: examCount });
-      animateValue({ el: document.getElementById('st-days'), to: studyDays });
-
-      // 学习概览卡
-      var streak = calcStreak(ld.studyDates);
+      // ===== 42 枚成就徽章（条件与 PC 端 center.html / 服务端 calculateBadgeCount 完全一致） =====
       var now = new Date();
       var ym = now.getFullYear() + '-' + pad2(now.getMonth() + 1);
       var daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      var streak = calcStreak(ld.studyDates);
       var monthStudied = (ld.studyDates || []).filter(function (d) { return d && d.indexOf(ym) === 0; }).length;
-      var pct = daysInMonth ? Math.round(monthStudied / daysInMonth * 100) : 0;
 
+      // 若服务端统计可用，以服务端为准（覆盖本地估算，保证与 PC/后台一致）
+      if (srvStats) {
+        if (srvStats.certificateCount != null) certCount = srvStats.certificateCount;
+        // 注意：不要对 hours 取整，服务端按 Math.floor(totalHours*5) 计算（totalHours 为1位小数），取整会少算 XP
+        if (srvStats.hours != null) hours = srvStats.hours;
+        if (srvStats.completed != null) completed = srvStats.completed;
+        if (srvStats.streak != null) streak = srvStats.streak;
+      }
+
+      // 考试统计（与服务端规则一致）
+      var examValid = exams.filter(function (r) { return r.status === 'completed' || r.passed === true || r.isPassed === true; }).length;
+      var examPassed = exams.filter(function (r) { return r.passed === true || r.isPassed === true; }).length;
+      var perfectScore = exams.some(function (r) { return Number(r.score) === 100; });
+
+      // 注册天数（PC 端里程碑徽章口径）
+      var u0 = App.user() || {};
+      var registerDays = 0;
+      if (u0.createdAt) { var reg = new Date(u0.createdAt); if (!isNaN(reg)) registerDays = Math.max(0, Math.floor((Date.now() - reg.getTime()) / 86400000)); }
+
+      // 特殊时段学习（早/晚/周末）
+      var earlyStudy = false, nightStudy = false, weekendStudy = false;
+      (ld.studyRecords || []).forEach(function (r) {
+        if (!r || !r.timestamp) return;
+        var dt = new Date(r.timestamp); var hh = dt.getHours(); var dw = dt.getDay();
+        if (hh <= 6) earlyStudy = true;
+        if (hh >= 22) nightStudy = true;
+        if (dw === 0 || dw === 6) weekendStudy = true;
+      });
+      var likes = ld.likes || 0, ratings = ld.ratings || 0, shares = ld.shares || 0;
+
+      // 与服务端一致的统计对象 d
+      var d = {
+        hours: hours, completed: completed, streak: streak, days: registerDays,
+        nightStudy: nightStudy, earlyStudy: earlyStudy, weekendStudy: weekendStudy,
+        examCount: examValid, examPassed: examPassed, perfectScore: perfectScore,
+        trainingCount: trainingsCount, certificateCount: certCount,
+        likes: likes, ratings: ratings, shares: shares
+      };
+      var achievements = MOBILE_BADGES.map(function (b) {
+        var ok = false; try { ok = !!b.test(d); } catch (e) {}
+        return { key: b.id, name: b.name, icon: b.icon, color: b.color, desc: b.desc, ok: ok };
+      });
+      var badgeCount = achievements.filter(function (a) { return a.ok; }).length;
+      var achUnlocked = badgeCount;
+      // 服务端徽章数（calculateBadgeCount）为权威值，覆盖本地 MOBILE_BADGES 估算，保证与 PC 端一致
+      if (srvStats && srvStats.badgeCount != null) { badgeCount = srvStats.badgeCount; achUnlocked = badgeCount; }
+
+      // 等级 / 经验值（统一走 window.XP 计算；优先用服务端 XP，其次共享持久化值，最后本地计算）
+      var xp = (srvStats && srvStats.xp != null) ? srvStats.xp : XP.loadPersistedXp(App.userId());
+      if (xp === null || xp === undefined) {
+        xp = XP.calcXp({ hours: hours, completed: completed, streak: streak, badges: badgeCount, certificates: certCount });
+      }
+      // 持久化，保证下次即时展示且与 PC 端同步
+      try { XP.saveXp(App.userId(), xp); } catch (e) {}
+      // 供设置面板复用，避免重复拉取
+      window.__mineStats = { hours: hours, completed: completed, streak: streak, badgeCount: badgeCount, certCount: certCount, xp: xp };
+
+      var lv = XP.getLevelInfo(xp);
+      var lvPct = Math.round(lv.currentExp / lv.requiredExp * 100);
+
+      // ===== 个人信息区：仅显示等级（无经验条/连续学习） =====
+      document.getElementById('m-lv').textContent = lv.level;
+
+      // ===== 深色VIP卡 =====
+      document.getElementById('m-lvring').style.setProperty('--p', lvPct + '%');
+      document.getElementById('m-lvring-n').textContent = 'Lv.' + lv.level;
+      document.getElementById('m-lvname').textContent = lv.name;
+      document.getElementById('m-lvxp').textContent = xp + ' XP';
+      document.getElementById('m-lvfill').style.width = lvPct + '%';
+      document.getElementById('m-lvhint').innerHTML = lv.remainingExp > 0
+        ? '距离 <b>Lv.' + (lv.level + 1) + '</b> 还需 <b>' + lv.remainingExp + ' XP</b>'
+        : '已达成最高等级 <b>' + lv.name + '</b>，继续保持！';
+
+      // ===== 学习统计（3列，全部为实际数据） =====
+      animateValue({ el: document.getElementById('ts-badge'), to: badgeCount });
+      animateValue({ el: document.getElementById('ts-done'), to: completed });
+      document.getElementById('ts-cert').textContent = certCount;
+
+      // ===== 原有统计数字（hidden 容器中保持兼容） =====
+      animateValue({ el: document.getElementById('st-hours'), to: hours });
+      animateValue({ el: document.getElementById('st-courses'), to: completed });
+      animateValue({ el: document.getElementById('st-certs'), to: certCount });
+      animateValue({ el: document.getElementById('st-ach'), to: achUnlocked });
+
+      // ===== 功能网格数字 =====
+      document.getElementById('gm-courses').textContent = completed;
+      document.getElementById('gm-certs').textContent = certCount;
+      document.getElementById('gm-exams').textContent = examCount;
+      document.getElementById('gm-ach').textContent = achUnlocked;
+      document.getElementById('gm-ach-total').textContent = '42';
+
+      // ===== 学习概览卡 =====
+      var pct = daysInMonth ? Math.round(monthStudied / daysInMonth * 100) : 0;
       animateValue({ el: document.getElementById('ov-hours'), to: hours });
       animateValue({ el: document.getElementById('ov-course'), to: completed });
       animateValue({ el: document.getElementById('ov-streak'), to: streak });
@@ -219,27 +478,7 @@
       // 欢迎语
       document.getElementById('m-welcome').textContent = name + '，今天也要坚持学习哦';
 
-      // 未读消息角标
-      try {
-        var notifs = await Api.notifications() || [];
-        var unread = notifs.filter(function (n) { return !n.read; }).length;
-        if (unread > 0) {
-          var badge = document.getElementById('m-notice-badge');
-          badge.textContent = unread > 99 ? '99+' : unread;
-          badge.hidden = false;
-          document.getElementById('m-notice-sub').textContent = unread + ' 条未读消息';
-        }
-      } catch (e) {}
-
-      // 学习成就（横滑徽章墙，带解锁态）
-      var achievements = [
-        { key: 'firstCourse', name: '初出茅庐', icon: 'fa-seedling', color: '#10b981', desc: '完成你的第一门课程', ok: completed >= 1 },
-        { key: 'firstCert', name: '持证上岗', icon: 'fa-certificate', color: '#f59e0b', desc: '获得第一张培训证书', ok: certCount >= 1 },
-        { key: 'streak7', name: '坚持不懈', icon: 'fa-fire', color: '#ef4444', desc: '连续学习满 7 天', ok: streak >= 7 },
-        { key: 'hours10', name: '学有所成', icon: 'fa-clock', color: '#8b5cf6', desc: '累计学习满 10 小时', ok: hours >= 10 },
-        { key: 'courses5', name: '博学多才', icon: 'fa-graduation-cap', color: '#3b82f6', desc: '累计完成 5 门课程', ok: completed >= 5 },
-        { key: 'fullMonth', name: '全勤标兵', icon: 'fa-calendar-check', color: '#0891b2', desc: '当月学习全勤（每天打卡）', ok: daysInMonth > 1 && monthStudied >= daysInMonth }
-      ];
+      // ===== 学习成就横滑墙 =====
       var achHtml = achievements.map(function (a) {
         var bg = a.ok ? 'background:linear-gradient(135deg,' + a.color + ',' + a.color + 'cc);' : '';
         var badge = '<div class="m-ach__badge" style="' + bg + '"><i class="fa-solid ' + a.icon + '"></i>' +
@@ -247,8 +486,134 @@
         return '<div class="m-ach' + (a.ok ? '' : ' is-locked') + '" data-ach="' + a.key + '">' + badge + '<div class="m-ach__name">' + a.name + '</div></div>';
       }).join('');
       document.getElementById('m-ach-scroll').innerHTML = achHtml;
-      var achUnlocked = achievements.filter(function (a) { return a.ok; }).length;
-      document.getElementById('m-ach-more').textContent = achUnlocked + '/' + achievements.length;
+      document.getElementById('m-ach-more').textContent = badgeCount + '/42';
+
+      // （我的课程 / 我的培训 改为点网格按钮弹窗显示，不再内联渲染）
+
+      // ===== 未读消息角标 =====
+      try {
+        var notifs = await Api.notifications() || [];
+        var unread = notifs.filter(function (n) { return !n.read; }).length;
+        if (unread > 0) {
+          var badge = document.getElementById('m-notice-badge');
+          badge.textContent = unread > 99 ? '99+' : unread;
+          badge.hidden = false;
+          document.getElementById('m-notice-sub') && (document.getElementById('m-notice-sub').textContent = unread + ' 条未读消息');
+          // 导航栏红点
+          var navBadge = document.getElementById('m-nav-badge');
+          if (navBadge) { navBadge.hidden = false; navBadge.textContent = unread > 99 ? '99+' : unread; }
+        }
+      } catch (e) {}
+
+      // ===== 设置开关回显 =====
+      document.getElementById('sw-notify').checked = localStorage.getItem('m_set_notify') !== '0';
+      document.getElementById('sw-remind').checked = localStorage.getItem('m_set_remind') !== '0';
+
+      // ===== 事件绑定 =====
+      bindMenuActions();
+      bindAchPopover(achievements);
+
+      // 铃铛按钮 → 消息中心
+      var bellBtn = document.getElementById('m-bell-btn');
+      if (bellBtn) bellBtn.addEventListener('click', function () { location.href = '/m/messages.html'; });
+
+      // 深链
+      var h = location.hash.replace('#', '');
+      if (h === 'cert') setTimeout(openCert, 200);
+      else if (h === 'notice') setTimeout(openNotice, 200);
+
+      // 入场动画依次延迟
+      document.querySelectorAll('.m-rise').forEach(function (el, i) {
+        el.style.animationDelay = (i * 0.06) + 's';
+      });
+    }
+
+    /* ========== 我的课程（改为点网格按钮弹窗显示） ========== */
+    function courseItem(c, kind) {
+      var cover = c.coverUrl || c.cover
+        ? '<img src="' + App.esc(c.coverUrl || c.cover) + '">'
+        : '<i class="fa-solid fa-book"></i>';
+      var tag = kind === 'done'
+        ? '<span class="m-course-item__tag m-course-item__tag--done">已完成</span>'
+        : '<span class="m-course-item__tag m-course-item__tag--go">继续</span>';
+      return '<div class="m-course-item" data-course="' + App.esc(c.id) + '">' +
+        '<div class="m-course-item__cover">' + cover + '</div>' +
+        '<div class="m-course-item__bd">' +
+          '<div class="m-course-item__t">' + App.esc(c.title || '未命名课程') + '</div>' +
+          '<div class="m-course-item__s">' + (c.lecturer || c.instructor ? '讲师 ' + App.esc(c.lecturer || c.instructor) : '点击开始学习') + '</div>' +
+        '</div>' + tag + '</div>';
+    }
+    function buildCoursesHtml(courses, ld) {
+      if (!Array.isArray(courses)) courses = [];
+      var completedSet = {};
+      (ld.completedCourses || []).forEach(function (id) { completedSet[String(id)] = 1; });
+      var cont = [], done = [], discover = [];
+      courses.forEach(function (c) {
+        var id = String(c.id);
+        var hasProgress = !!localStorage.getItem('mplayer:' + id);
+        if (completedSet[id]) { done.push(c); }
+        else if (hasProgress) { cont.push(c); }
+        else { discover.push(c); }
+      });
+      if (!courses.length) return '<div class="m-sec-empty">暂无课程，去课程中心看看吧</div>';
+      var html = '';
+      if (cont.length) {
+        html += '<div style="font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:8px"><i class="fa-solid fa-spinner fa-spin" style="color:#f59e0b"></i> 继续学习</div>';
+        html += cont.slice(0, 3).map(function (c) { return courseItem(c, 'go'); }).join('');
+      }
+      if (done.length) {
+        html += '<div style="font-size:13px;font-weight:700;color:var(--ink-2);margin:' + (cont.length ? '14px 0 8px' : '0 0 8px') + '"><i class="fa-solid fa-check-circle" style="color:#059669"></i> 已完成</div>';
+        html += done.slice(0, 3).map(function (c) { return courseItem(c, 'done'); }).join('');
+      }
+      if (discover.length) {
+        html += '<div style="margin-top:14px"><a href="/m/course.html" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:1px dashed var(--line);border-radius:12px;color:var(--brand-from);font-size:13px;font-weight:600">发现更多课程 <i class="fa-solid fa-arrow-right"></i></a></div>';
+      }
+      return html || '<div class="m-sec-empty">去课程中心开始第一门课程吧</div>';
+    }
+    async function openCoursesSheet() {
+      var ld = {};
+      try { ld = JSON.parse(localStorage.getItem('user_learning_' + App.userId()) || '{}'); } catch (e) {}
+      var courses = [];
+      try { courses = await Api.courses() || []; } catch (e) {}
+      App.openSheet('<div class="m-sheet__hd"><div class="m-sheet__title">我的课程</div></div><div class="m-sheet__body">' + buildCoursesHtml(courses, ld) + '</div>');
+      var body = document.querySelector('.m-sheet.is-open .m-sheet__body');
+      if (body) body.querySelectorAll('[data-course]').forEach(function (el) {
+        el.addEventListener('click', function () { App.closeSheet(); setTimeout(function () { location.href = '/m/course.html?id=' + el.getAttribute('data-course'); }, 200); });
+      });
+    }
+
+    /* ========== 我的培训（改为点网格按钮弹窗显示） ========== */
+    async function openTrainingsSheet() {
+      var res = null;
+      try { res = await Api.userTrainings(); } catch (e) {}
+      var list = (res && res.list) || [];
+      var html;
+      if (!list.length) { html = '<div class="m-sec-empty">你还没有参与的培训，去扫码签到吧</div>'; }
+      else {
+        var map = { '进行中': 'm-status--ing', '未开始': 'm-status--wait', '已结束': 'm-status--end' };
+        var order = { '进行中': 0, '未开始': 1, '已结束': 2 };
+        list.sort(function (a, b) { return (order[a.trainingStatus] || 9) - (order[b.trainingStatus] || 9); });
+        html = '<div class="m-train-list">' + list.slice(0, 20).map(function (t) {
+          var cls = map[t.trainingStatus] || 'm-status--end';
+          return '<div class="m-train-item" data-train="' + App.esc(t.id) + '">' +
+            '<div class="m-train-item__ic"><i class="fa-solid fa-users"></i></div>' +
+            '<div class="m-train-item__bd">' +
+              '<div class="m-train-item__t">' + App.esc(t.name || '未命名培训') + '</div>' +
+              '<div class="m-train-item__s">' + (t.startTime ? fmtDateTimeShort(t.startTime) : (t.location || '')) + (t.location ? ' · ' + App.esc(t.location) : '') + '</div>' +
+            '</div>' +
+            '<span class="m-train-item__status ' + cls + '">' + t.trainingStatus + '</span>' +
+          '</div>';
+        }).join('') + '</div>';
+      }
+      App.openSheet('<div class="m-sheet__hd"><div class="m-sheet__title">我的培训</div></div><div class="m-sheet__body">' + html + '</div>');
+      var body = document.querySelector('.m-sheet.is-open .m-sheet__body');
+      if (body) body.querySelectorAll('[data-train]').forEach(function (el) {
+        el.addEventListener('click', function () { App.closeSheet(); setTimeout(function () { location.href = '/m/training.html?id=' + el.getAttribute('data-train'); }, 200); });
+      });
+    }
+
+    /* ========== 学习成就弹层 ========== */
+    function bindAchPopover(achievements) {
       document.querySelectorAll('#m-ach-scroll .m-ach').forEach(function (el) {
         el.addEventListener('click', function () {
           var a = null;
@@ -266,30 +631,207 @@
           App.openSheet(html);
         });
       });
+    }
 
-      // 菜单事件
+    /* ========== 等级说明弹层 ========== */
+    function openLevelInfo() {
+      var rows = XP.LEVEL_CONFIG.map(function (cfg) {
+        return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px">' +
+          '<span><b style="color:var(--brand-from)">Lv.' + cfg.level + '</b> ' + cfg.name + '</span>' +
+          '<span style="color:var(--ink-3)">' + cfg.expRequired + ' XP</span></div>';
+      }).join('');
+      var html = '<div class="m-sheet__hd"><div class="m-sheet__title">等级说明</div></div><div class="m-sheet__body">' +
+        '<p style="font-size:13px;color:var(--ink-2);line-height:1.7;margin:0 0 10px">通过学习行为和完成平台任务积累经验值（XP），达到下一等级要求即自动升级。</p>' +
+        '<div style="background:#f7f8fc;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--ink-2)">' +
+        '每 1 小时学习 = 5 XP · 每完成 1 门课程 = 5 XP · 连续学习每天 = 1 XP · 每获得 1 个成就/证书 = 5 XP</div>' +
+        '<div style="max-height:50vh;overflow:auto">' + rows + '</div></div>';
+      App.openSheet(html);
+    }
+
+    /* ========== 菜单事件（增强：支持新网格+设置面板） ========== */
+    var _menuBound = false;
+    function bindMenuActions() {
+      if (_menuBound) return;
+      _menuBound = true;
+      // 开关
+      var sn = document.getElementById('sw-notify'), sr = document.getElementById('sw-remind');
+      sn.addEventListener('change', function () { localStorage.setItem('m_set_notify', sn.checked ? '1' : '0'); App.toast(sn.checked ? '已开启消息通知' : '已关闭消息通知'); });
+      sr.addEventListener('change', function () { localStorage.setItem('m_set_remind', sr.checked ? '1' : '0'); App.toast(sr.checked ? '已开启学习提醒' : '已关闭学习提醒'); });
+
       document.querySelectorAll('[data-act]').forEach(function (el) {
-        el.addEventListener('click', function () {
+        el.addEventListener('click', function (ev) {
+          if (ev.target.closest('.m-switch')) return;
           var a = el.getAttribute('data-act');
           if (!a) return;
           if (a === 'logout') return App.logout();
-          ({ cert: openCert, exam: openExam, learn: openLearn, streak: openLearn, notice: openNotice, hours: openLearn, profile: openProfile })[a]();
+          if (a === 'level') return openLevelInfo();
+          if (a === 'courses') return openCoursesSheet();
+          if (a === 'ach') { document.getElementById('m-ach-scroll').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+          if (a === 'pwd') return openChangePwd();
+          if (a === 'export') return exportData();
+          if (a === 'del') return confirmDelete();
+          if (a === 'notify' || a === 'remind') { var s = el.querySelector('input'); if (s) { s.checked = !s.checked; s.dispatchEvent(new Event('change')); } return; }
+          if (a === 'trainings') return openTrainingsSheet();
+          if (a === 'settings') return openSettingsPanel();
+          if (a === 'about') return App.toast('游雁学院 v1.0 · 让学习更美好');
+          ({ cert: openCert, exam: openExam, learn: openLearn, streak: openLearn, notice: function () { location.href = '/m/messages.html'; }, hours: openLearn, profile: openProfile })[a]();
         });
-      });
-
-      // 深链
-      var h = location.hash.replace('#', '');
-      if (h === 'cert') setTimeout(openCert, 200);
-      else if (h === 'notice') setTimeout(openNotice, 200);
-
-      // 入场动画依次延迟
-      document.querySelectorAll('.m-rise').forEach(function (el, i) {
-        el.style.animationDelay = (i * 0.07) + 's';
       });
     }
 
-    /* ========== 各弹层功能（复用原有逻辑，UI升级） ========== */
+    /* ========== 设置面板（从网格入口打开 · 顶部含等级卡） ========== */
+    function openSettingsPanel() {
+      // 动态读取当前用户等级数据（统一走 window.XP，优先使用共享持久化 XP，确保与 PC 端一致）
+      var u = App.user || {};
+      var ms = window.__mineStats || {};
+      var xp = (ms.xp != null) ? ms.xp : XP.loadPersistedXp(App.userId());
+      if (xp === null || xp === undefined) {
+        xp = XP.calcXp({
+          hours: parseFloat(u.hours||0) || (ms.hours||0), completed: parseInt(u.coursesCompleted||0) || (ms.completed||0),
+          streak: parseInt(u.streak||0) || (ms.streak||0), badges: parseInt((u.badges&&u.badges.length)||0) || (ms.badgeCount||0),
+          certificates: parseInt((u.certificates&&u.certificates.length)||0) || (ms.certCount||0)
+        });
+      }
+      var li = XP.getLevelInfo(xp);
+      var prevReq = li.level > 0 ? XP.LEVEL_CONFIG[li.level-1].expRequired : 0;
+      var pct = li.level >= XP.LEVEL_CONFIG.length ? 100 : Math.round((xp - prevReq) / (li.requiredExp - prevReq) * 100);
 
+      // 等级信息卡（深色VIP风格）
+      var vipCard =
+        '<div style="background:linear-gradient(135deg,#1e293b,#334155,#1e293b);border-radius:16px;padding:18px 16px 14px;margin-bottom:14px;position:relative;overflow:hidden;box-shadow:0 8px 24px -8px rgba(30,41,59,.5)">' +
+        '<div style="position:absolute;right:-20px;top:-25px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.12),transparent 70%);pointer-events:none"></div>' +
+        '<div style="display:flex;align-items:center;gap:12px;position:relative;z-index:1">' +
+          // 头像
+          '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-weight:800;font-size:19px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid rgba(255,255,255,.15);box-shadow:0 2px 10px -3px rgba(102,126,234,.45)">' + (u.name ? u.name.charAt(0) : '学') + '</div>' +
+          // 信息
+          '<div style="flex:1;min-width:0">' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<span style="font-size:16px;font-weight:800;color:#fff">' + App.esc(u.name||'学员') + '</span>' +
+              '<span style="display:inline-flex;align-items:center;padding:1px 8px;border-radius:8px;background:linear-gradient(135deg,#f0e6ff,#ede8fe);color:#7c3aed;font-size:10.5px;font-weight:700">Lv.' + li.level + '</span>' +
+            '</div>' +
+            '<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px">' + App.esc(u.role||'学员') + ' · ' + App.esc(u.department||'游雁学院') + '</div>' +
+          '</div>' +
+          // 勋章
+          '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;gap:2px">' +
+            '<div style="width:52px;height:56px;position:relative;display:flex;align-items:center;justify-content:center">' +
+              '<div style="width:42px;height:46px;background:linear-gradient(180deg,#e0e7ff,#c7d2fe,#a5b4fc);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px -3px rgba(99,102,244,.5),inset 0 1px 0 rgba(255,255,255,.7);z-index:2;position:relative"><span style="font-size:11px;font-weight:900;color:#3730a3;text-shadow:0 1px 0 rgba(255,255,255,.5)">Lv.' + li.level + '</span></div>' +
+              '<div style="position:absolute;inset:0;border-radius:50%;-webkit-mask:radial-gradient(circle,transparent 60%,black 61%);mask:radial-gradient(circle,transparent 60%,black 61%);background:conic-gradient(from 180deg,#818cf8 ' + pct + '%,rgba(129,140,248,.15) 0)"></div>' +
+            '</div>' +
+            '<span style="font-size:10.5px;font-weight:700;color:rgba(255,255,255,.6)">' + xp + ' XP</span>' +
+          '</div>' +
+        '</div>' +
+        // 进度条
+        '<div style="height:5px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:12px;position:relative;z-index:1"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#818cf8,#a78bfa,#c084fc);border-radius:99px"></div></div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,.42);margin-top:6px;position:relative;z-index:1">' +
+          (li.isMax ? '已达到最高等级！' : '距离 <b style="color:rgba(255,255,255,.8)">Lv.'+(li.level+1)+' '+li.nextName+'</b> 还需 <b style="color:rgba(255,255,255,.8)">'+li.remainingExp+' XP</b>') +
+        '</div></div>';
+
+      var html = '<div class="m-sheet__hd"><div class="m-sheet__title">我的</div></div><div class="m-sheet__body">' + vipCard +
+        '<div class="m-menu-group" style="margin:0;box-shadow:none;border:1px solid var(--line)">' +
+        '<div class="m-menu-row" data-act="profile"><div class="m-menu-row__ic" style="background:linear-gradient(135deg,#64748b,#475569)"><i class="fa-solid fa-user-pen"></i></div><div class="m-menu-row__bd"><div class="m-menu-row__t">个人资料</div><div class="m-menu-row__s">姓名 / 部门 / 联系方式</div></div><i class="m-menu-row__arrow fa-solid fa-chevron-right"></i></div>' +
+        '<div class="m-menu-row" data-act="pwd"><div class="m-menu-row__ic" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)"><i class="fa-solid fa-lock"></i></div><div class="m-menu-row__bd"><div class="m-menu-row__t">修改密码</div><div class="m-menu-row__s">定期修改保护账户安全</div></div><i class="m-menu-row__arrow fa-solid fa-chevron-right"></i></div>' +
+        '<div class="m-menu-row" data-act="notify"><div class="m-menu-row__ic" style="background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fa-solid fa-bell"></i></div><div class="m-menu-row__bd"><div class="m-menu-row__t">消息通知</div><div class="m-menu-row__s">接收学习提醒与公告</div></div><label class="m-switch"><input type="checkbox" id="sw-notify2"><span class="m-switch__track"></span></label></div>' +
+        '<div class="m-menu-row" data-act="remind"><div class="m-menu-row__ic" style="background:linear-gradient(135deg,#ec4899,#db2777)"><i class="fa-solid fa-clock"></i></div><div class="m-menu-row__bd"><div class="m-menu-row__t">学习提醒</div><div class="m-menu-row__s">每日学习目标推送</div></div><label class="m-switch"><input type="checkbox" id="sw-remind2"><span class="m-switch__track"></span></label></div>' +
+        '<div class="m-menu-row" data-act="export"><div class="m-menu-row__ic" style="background:linear-gradient(135deg,#14b8a6,#0d9488)"><i class="fa-solid fa-download"></i></div><div class="m-menu-row__bd"><div class="m-menu-row__t">导出学习数据</div><div class="m-menu-row__s">下载学习记录与证书</div></div><i class="m-menu-row__arrow fa-solid fa-chevron-right"></i></div>' +
+        '<div class="m-menu-row" data-act="del"><div class="m-menu-row__ic" style="background:#fef2f2;color:#ef4444"><i class="fa-solid fa-trash-can"></i></div><div class="m-menu-row__bd"><div class="m-menu-row__t" style="color:#ef4444">注销账户</div><div class="m-menu-row__s">永久删除账户与数据</div></div><i class="m-menu-row__arrow fa-solid fa-chevron-right" style="color:#ef4444"></i></div>' +
+        '<div class="m-menu-row" data-act="logout"><div class="m-menu-row__ic" style="background:#fef2f2;color:#ef4444"><i class="fa-solid fa-right-from-bracket"></i></div><div class="m-menu-row__bd"><div class="m-menu-row__t" style="color:#ef4444">退出登录</div></div><i class="m-menu-row__arrow fa-solid fa-chevron-right" style="color:#ef4444"></i></div>' +
+        '</div></div>';
+      App.openSheet(html);
+      // 绑定面板内事件
+      var sn2 = document.getElementById('sw-notify2'), sr2 = document.getElementById('sw-remind2');
+      if (sn2) { sn2.checked = localStorage.getItem('m_set_notify') !== '0'; sn2.addEventListener('change', function () { localStorage.setItem('m_set_notify', sn2.checked ? '1' : '0'); App.toast(sn2.checked ? '已开启消息通知' : '已关闭消息通知'); document.getElementById('sw-notify') && (document.getElementById('sw-notify').checked = sn2.checked); }); }
+      if (sr2) { sr2.checked = localStorage.getItem('m_set_remind') !== '0'; sr2.addEventListener('change', function () { localStorage.setItem('m_set_remind', sr2.checked ? '1' : '0'); App.toast(sr2.checked ? '已开启学习提醒' : '已关闭学习提醒'); document.getElementById('sw-remind') && (document.getElementById('sw-remind').checked = sr2.checked); }); }
+      // 面板内的 data-act 项
+      var panel = document.querySelector('.m-sheet.is-open .m-sheet__body');
+      if (panel) panel.querySelectorAll('[data-act]').forEach(function (el) {
+        el.addEventListener('click', function (ev) {
+          if (ev.target.closest('.m-switch')) return;
+          var a = el.getAttribute('data-act');
+          if (a === 'profile') { App.closeSheet(); setTimeout(openProfile, 250); return; }
+          if (a === 'pwd') { App.closeSheet(); setTimeout(openChangePwd, 250); return; }
+          if (a === 'export') { App.closeSheet(); setTimeout(exportData, 250); return; }
+          if (a === 'del') { App.closeSheet(); setTimeout(confirmDelete, 250); return; }
+          if (a === 'logout') { App.logout(); return; }
+          if (a === 'notify' || a === 'remind') { var s = el.querySelector('input'); if (s) { s.checked = !s.checked; s.dispatchEvent(new Event('change')); } return; }
+        });
+      });
+    }
+
+    /* ========== 修改密码 ========== */
+    function openChangePwd() {
+      var html = '<div class="m-sheet__hd"><div class="m-sheet__title">修改密码</div></div><div class="m-sheet__body">' +
+        '<label class="m-label">当前密码</label><input class="m-input" id="pw-old" type="password" placeholder="请输入当前密码" style="margin-bottom:12px">' +
+        '<label class="m-label">新密码</label><input class="m-input" id="pw-new" type="password" placeholder="至少 6 位" style="margin-bottom:12px">' +
+        '<label class="m-label">确认新密码</label><input class="m-input" id="pw-new2" type="password" placeholder="再次输入新密码" style="margin-bottom:16px">' +
+        '<button class="m-btn m-btn--block" id="pw-save">保存</button>' +
+        '<p style="font-size:12px;color:var(--ink-3);margin-top:10px;text-align:center">当前为演示环境，自助改密将连接后台后开放</p></div>';
+      App.openSheet(html);
+      document.getElementById('pw-save').addEventListener('click', async function () {
+        var oldP = document.getElementById('pw-old').value.trim();
+        var newP = document.getElementById('pw-new').value.trim();
+        var newP2 = document.getElementById('pw-new2').value.trim();
+        if (!oldP || !newP) return App.toast('请填写完整', 'error');
+        if (newP.length < 6) return App.toast('新密码至少 6 位', 'error');
+        if (newP !== newP2) return App.toast('两次输入不一致', 'error');
+        App.showLoading('提交中...');
+        try {
+          await Api.put('/auth/password', { oldPassword: oldP, newPassword: newP });
+          App.hideLoading(); App.toast('密码已修改'); App.closeSheet();
+        } catch (e) {
+          App.hideLoading();
+          App.toast('暂不支持自助修改，请联系管理员', 'error');
+        }
+      });
+    }
+
+    /* ========== 导出学习数据 ========== */
+    async function exportData() {
+      App.showLoading('导出中...');
+      try {
+        var key = 'user_learning_' + App.userId();
+        var ld = {}; try { ld = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+        var certs = [], exams = [], notifs = [], trains = [];
+        try { certs = await Api.certificates() || []; } catch (e) {}
+        try { exams = await Api.examRecords() || []; } catch (e) {}
+        try { notifs = await Api.notifications() || []; } catch (e) {}
+        try { var tr = await Api.userTrainings(); trains = (tr && tr.list) || []; } catch (e) {}
+        var payload = {
+          user: App.user(),
+          exportedAt: new Date().toISOString(),
+          learning: ld,
+          certificates: certs,
+          examRecords: exams,
+          notifications: notifs,
+          trainings: trains
+        };
+        var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = '游雁学院_学习数据_' + (App.userName() || 'user') + '.json';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        App.hideLoading(); App.toast('已导出');
+      } catch (e) { App.hideLoading(); App.toast('导出失败', 'error'); }
+    }
+
+    /* ========== 注销账户 ========== */
+    function confirmDelete() {
+      var html = '<div class="m-sheet__hd"><div class="m-sheet__title">注销账户</div></div><div class="m-sheet__body">' +
+        '<div style="text-align:center;padding:8px 0 16px">' +
+        '<div style="width:64px;height:64px;border-radius:50%;margin:0 auto 12px;background:#fef2f2;color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:28px"><i class="fa-solid fa-triangle-exclamation"></i></div>' +
+        '<div style="font-size:15px;font-weight:700;color:#1f2330">确认注销账户？</div>' +
+        '<div style="font-size:13px;color:#5b6172;margin-top:6px">此操作将清除本地学习数据并退出登录，且不可恢复。</div></div>' +
+        '<button class="m-btn m-btn--block" id="del-confirm" style="background:#ef4444">确认注销</button>' +
+        '<button class="m-btn m-btn--block m-btn--ghost" id="del-cancel" style="margin-top:10px">取消</button></div>';
+      App.openSheet(html);
+      document.getElementById('del-cancel').addEventListener('click', function () { App.closeSheet(); });
+      document.getElementById('del-confirm').addEventListener('click', function () {
+        try { localStorage.removeItem('user_learning_' + App.userId()); } catch (e) {}
+        App.toast('账户已注销'); App.closeSheet(); App.logout();
+      });
+    }
+
+    /* ========== 各弹层功能 ========== */
     async function openCert() {
       App.showLoading();
       try {
@@ -361,7 +903,7 @@
         else html += list.slice().reverse().map(function (n) {
           var unread = !n.read;
           return '<div class="m-notice" data-id="' + n.id + '" style="cursor:pointer">' +
-            '<div class="m-notice__ic"><i class="fa-solid fa-bell' + (unread ? '' : '') + '"></i></div>' +
+            '<div class="m-notice__ic"><i class="fa-solid fa-bell"></i></div>' +
             '<div class="m-notice__bd"><div class="m-notice__t">' + App.esc(n.title) + (unread ? ' <span class="m-badge m-badge--exam">未读</span>' : '') + '</div>' +
             '<div class="m-notice__d">' + App.esc(n.content ? n.content.replace(/<[^>]+>/g, '').slice(0, 40) : '') + '</div></div></div>';
         }).join('');
@@ -369,7 +911,6 @@
         App.openSheet(html);
         document.querySelectorAll('#m-sheet-body .m-notice[data-id]').forEach(function (el) {
           el.addEventListener('click', async function () {
-            var id = el.getAttribute('id') ? el.getAttribute('id').replace('notice-','') : el.getAttribute('data-id');
             try { await Api.markRead(el.getAttribute('data-id')); } catch (e) {}
             el.querySelector('.m-badge') && el.querySelector('.m-badge').remove();
           });

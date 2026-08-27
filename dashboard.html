@@ -7790,31 +7790,46 @@
 
     function exportAnalyticsAttendance() {
       if (!_analyticsAttendanceData || !_analyticsAttendanceData.signins) { toast('暂无数据可导出', 'warning'); return; }
-      const { signins, event, absentNames, expectedCount, actualCount } = _analyticsAttendanceData;
+      const { signins, event, absentNames, expectedCount, actualCount, leaveCount, enrollments } = _analyticsAttendanceData;
       const name = event ? event.name : '培训';
 
-      // Sheet 1: 签到明细
+      // Sheet 1: 签到明细（与页面表格一致：以报名学员为基准，缺卡也显示）
+      const signinMap = new Map(signins.map(s => [s.userId, s]));
+      const tableUsers = enrollments && enrollments.length > 0 ? enrollments : signins;
       const headers = ['序号', '姓名', '部门', '岗位', '签到时间', '状态'];
-      const rows = signins.map((s, i) => [
-        i + 1,
-        s.userName || '-',
-        s.department || '-',
-        s.position || '-',
-        s.signedAt ? new Date(s.signedAt).toLocaleString('zh-CN') : '-',
-        '已签到'
-      ]);
+      const rows = tableUsers.map((e, i) => {
+        const s = signinMap.get(e.userId);
+        const status = s ? (s.status || 'signed') : 'absent';
+        let timeText = '-';
+        let statusText = '缺卡';
+        if (status === 'signed') {
+          timeText = s.signedAt ? new Date(s.signedAt).toLocaleString('zh-CN') : '-';
+          statusText = '已签到';
+        } else if (status === 'leave') {
+          statusText = '请假';
+        }
+        return [
+          i + 1,
+          e.userName || '-',
+          e.department || '-',
+          e.position || '-',
+          timeText,
+          statusText
+        ];
+      });
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
       ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 22 }, { wch: 8 }];
 
       // Sheet 2: 考勤汇总
       const summaryHeaders = ['项目', '数值'];
-      const absentCount = Math.max(0, (expectedCount || 0) - (actualCount || 0));
+      const absentCount = Math.max(0, (expectedCount || 0) - (actualCount || 0) - (leaveCount || 0));
       const rate = expectedCount > 0 ? Math.round((actualCount / expectedCount) * 100) + '%' : '-';
       const summaryRows = [
         ['培训课题', name],
         ['讲师', event ? (event.instructor || '-') : '-'],
         ['应到人数', expectedCount || 0],
         ['实到人数', actualCount || 0],
+        ['请假人数', leaveCount || 0],
         ['缺卡人数', absentCount],
         ['签到率', rate],
         ['缺卡人员', (absentNames || []).join('、') || '无']
@@ -7827,6 +7842,100 @@
       XLSX.utils.book_append_sheet(wb, ws2, '考勤汇总');
       XLSX.writeFile(wb, name + '_考勤分析_' + new Date().toLocaleDateString('zh-CN') + '.xlsx');
       toast('考勤数据导出成功');
+    }
+
+    // ========== 考勤补录 / 标注请假 ==========
+    let _attActionMode = null; // 'backfill' | 'leave'
+
+    function ensureAttendanceModal() {
+      if (document.getElementById('att-modal')) return;
+      const html = `
+        <div id="att-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4">
+          <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h3 id="att-modal-title" class="text-lg font-semibold text-slate-800 mb-4">考勤补录</h3>
+            <label class="block text-sm text-slate-500 mb-1.5">选择学员</label>
+            <select id="att-modal-user" class="w-full px-3 py-2.5 border border-slate-200 rounded-lg mb-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"></select>
+            <p id="att-modal-tip" class="text-xs text-slate-400 mb-5"></p>
+            <div class="flex gap-3">
+              <button onclick="closeAttendanceAction()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 transition">取消</button>
+              <button id="att-modal-confirm" class="flex-1 py-2.5 rounded-xl bg-gradient-primary text-white text-sm font-medium hover:opacity-90 transition">确认</button>
+            </div>
+          </div>
+        </div>`;
+      document.body.insertAdjacentHTML('beforeend', html);
+      document.getElementById('att-modal-confirm').addEventListener('click', submitAttendanceAction);
+    }
+
+    function openAttendanceAction(mode, preselectUserId) {
+      if (!_analyticsAttendanceData || !_analyticsAttendanceData.trainingId) {
+        toast('请先打开培训考勤数据', 'warning');
+        return;
+      }
+      ensureAttendanceModal();
+      _attActionMode = mode;
+      const isBackfill = mode === 'backfill';
+      document.getElementById('att-modal-title').textContent = isBackfill ? '考勤补录' : '标注请假';
+      document.getElementById('att-modal-tip').textContent = isBackfill
+        ? '将为所选学员自动完成签到（不受签到时间限制）。'
+        : '将所选学员标注为请假。';
+      const sel = document.getElementById('att-modal-user');
+      const enrollments = _analyticsAttendanceData.enrollments || [];
+      if (enrollments.length === 0) {
+        sel.innerHTML = '<option value="">无报名学员</option>';
+      } else {
+        sel.innerHTML = enrollments.map(e =>
+          `<option value="${e.userId}">${e.userName || '未知'}（${e.department || '-'}）</option>`
+        ).join('');
+        if (preselectUserId && enrollments.some(e => String(e.userId) === String(preselectUserId))) {
+          sel.value = preselectUserId;
+        }
+      }
+      const modal = document.getElementById('att-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeAttendanceAction() {
+      const modal = document.getElementById('att-modal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      _attActionMode = null;
+    }
+
+    async function submitAttendanceAction() {
+      const modal = document.getElementById('att-modal');
+      const sel = document.getElementById('att-modal-user');
+      const userId = sel.value;
+      if (!userId) { toast('请选择学员', 'warning'); return; }
+      const trainingId = _analyticsAttendanceData.trainingId;
+      const isBackfill = _attActionMode === 'backfill';
+      const url = API + '/training/' + trainingId + (isBackfill ? '/signin/backfill' : '/leave');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const btn = document.getElementById('att-modal-confirm');
+      btn.disabled = true;
+      btn.textContent = '处理中...';
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ userId: userId })
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast(isBackfill ? '考勤补录成功' : '已标注为请假');
+          closeAttendanceAction();
+          renderAnalyticsAttendance(trainingId); // 重新加载刷新统计
+        } else {
+          toast(result.error || '操作失败', 'error');
+          btn.disabled = false;
+          btn.textContent = '确认';
+        }
+      } catch (e) {
+        toast('网络错误，请重试', 'error');
+        btn.disabled = false;
+        btn.textContent = '确认';
+      }
     }
 
     async function removeEnrollmentAndRefresh(enrollId, trainingId) {
@@ -8394,64 +8503,92 @@
           expectedCount = enrollData.count || 0;
         } catch(e) { /* ignore */ }
 
-        const actualCount = signins.length;
-        const absentCount = Math.max(0, expectedCount - actualCount);
+        const actualCount = signins.filter(s => (s.status || 'signed') === 'signed').length;
+        const leaveCount = signins.filter(s => s.status === 'leave').length;
+        const absentCount = Math.max(0, expectedCount - actualCount - leaveCount);
         const attendanceRate = expectedCount > 0 ? Math.round((actualCount / expectedCount) * 100) : 0;
 
-        // 签到时间分布
+        // 签到时间分布（仅统计已签到记录）
         let earliestSignin = '-', latestSignin = '-';
-        if (signins.length > 0) {
-          const sorted = [...signins].sort((a, b) => new Date(a.signedAt) - new Date(b.signedAt));
+        const signedRecs = signins.filter(s => (s.status || 'signed') === 'signed' && s.signedAt);
+        if (signedRecs.length > 0) {
+          const sorted = [...signedRecs].sort((a, b) => new Date(a.signedAt) - new Date(b.signedAt));
           earliestSignin = new Date(sorted[0].signedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
           latestSignin = new Date(sorted[sorted.length - 1].signedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
         }
 
-        // 获取报名人员列表来计算缺卡人员
+        // 获取报名人员列表来计算缺卡人员 / 供补录请假选择
         let absentNames = [];
+        let enrollments = [];
         try {
           const enrollRes = await fetch(API + '/training/' + trainingId + '/enrollments');
           const enrollData = await enrollRes.json();
           const enrolledUsers = (enrollData.data || []).map(e => e.userId);
           const signedUserIds = new Set(signins.map(s => s.userId));
-          const enrollments = enrollData.data || [];
+          enrollments = enrollData.data || [];
           absentNames = enrollments.filter(e => !signedUserIds.has(e.userId)).map(e => e.userName || '未知');
         } catch(e) { /* ignore */ }
         _analyticsAttendanceData.absentNames = absentNames;
+        _analyticsAttendanceData.enrollments = enrollments;
         _analyticsAttendanceData.expectedCount = expectedCount;
         _analyticsAttendanceData.actualCount = actualCount;
+        _analyticsAttendanceData.leaveCount = leaveCount;
 
-        const rows = signins.length > 0
-          ? signins.map((s, i) => {
-            const seed = encodeURIComponent(s.userName || s.userId);
+        const signinMap = new Map(signins.map(s => [s.userId, s]));
+        const tableUsers = enrollments.length > 0 ? enrollments : signins;
+        const rows = tableUsers.length > 0
+          ? tableUsers.map((e, i) => {
+            const s = signinMap.get(e.userId);
+            const status = s ? (s.status || 'signed') : 'absent';
+            const isSigned = status === 'signed';
+            const isLeave = status === 'leave';
+            const seed = encodeURIComponent(e.userName || e.userId);
             const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+            let timeText;
+            if (isSigned) {
+              timeText = `<span>${s.signedAt ? new Date(s.signedAt).toLocaleString('zh-CN') : '--'}</span>`;
+            } else if (isLeave) {
+              timeText = `<span class="text-amber-600">请假</span>`;
+            } else {
+              timeText = `<span class="text-red-500">--(缺卡)</span>`;
+            }
+            const safeUserId = String(e.userId).replace(/'/g, "\\'");
+            const backfillDisabled = isSigned;
+            const leaveDisabled = isLeave;
+            const backfillOnClick = backfillDisabled ? '' : `onclick="openAttendanceAction('backfill', '${safeUserId}')"`;
+            const leaveOnClick = leaveDisabled ? '' : `onclick="openAttendanceAction('leave', '${safeUserId}')"`;
+            const backfillClass = backfillDisabled
+              ? 'text-slate-300 cursor-not-allowed select-none'
+              : 'text-orange-500 hover:text-orange-600 cursor-pointer select-none';
+            const leaveClass = leaveDisabled
+              ? 'text-slate-300 cursor-not-allowed select-none'
+              : 'text-slate-500 hover:text-slate-700 cursor-pointer select-none';
+            const leaveLabel = isLeave ? '已标请假' : '标注请假';
             return `
             <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
-              <td class="px-4 py-2.5 text-sm text-slate-500">${i + 1}</td>
               <td class="px-4 py-2.5">
                 <div class="flex items-center gap-2">
                   <img src="${avatarUrl}" class="w-7 h-7 rounded-full object-cover" />
-                  <span class="text-sm font-medium text-slate-800">${s.userName || '-'}</span>
+                  <span class="text-sm font-medium text-slate-800">${e.userName || '-'}</span>
                 </div>
               </td>
-              <td class="px-4 py-2.5 text-sm text-slate-600">${s.department || '-'}</td>
-              <td class="px-4 py-2.5 text-sm text-slate-500">${new Date(s.signedAt).toLocaleString('zh-CN')}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-600">${e.department || '-'}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-600">${e.position || '-'}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-500">${timeText}</td>
+              <td class="px-4 py-2.5 text-sm text-slate-500">${e.employeeId || e.employeeNo || '-'}</td>
               <td class="px-4 py-2.5">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-600">已签到</span>
+                <div class="flex items-center gap-3 text-sm">
+                  <span ${backfillOnClick} class="${backfillClass} font-medium">考勤补录</span>
+                  <span ${leaveOnClick} class="${leaveClass} font-medium">${leaveLabel}</span>
+                </div>
               </td>
             </tr>`;
           }).join('')
-          : `<tr><td colspan="5" class="px-4 py-12 text-center text-slate-400 text-sm">暂无签到记录</td></tr>`;
+          : `<tr><td colspan="6" class="px-4 py-12 text-center text-slate-400 text-sm">暂无考勤记录</td></tr>`;
 
         container.innerHTML = `
           <div class="p-6">
             <div class="grid grid-cols-4 gap-4 mb-6">
-              <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4">
-                <div class="flex items-center gap-2 mb-1">
-                  <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center"><i class="fas fa-clipboard-check text-emerald-500 text-sm"></i></div>
-                  <span class="text-xs text-emerald-600/70">签到率</span>
-                </div>
-                <p class="text-2xl font-bold text-emerald-700">${expectedCount > 0 ? attendanceRate + '%' : '-'}</p>
-              </div>
               <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4">
                 <div class="flex items-center gap-2 mb-1">
                   <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><i class="fas fa-user-clock text-blue-500 text-sm"></i></div>
@@ -8465,6 +8602,13 @@
                   <span class="text-xs text-green-600/70">实到人数</span>
                 </div>
                 <p class="text-2xl font-bold text-green-700">${actualCount}</p>
+              </div>
+              <div class="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><i class="fas fa-plane-departure text-amber-500 text-sm"></i></div>
+                  <span class="text-xs text-amber-600/70">请假人数</span>
+                </div>
+                <p class="text-2xl font-bold text-amber-700">${leaveCount}</p>
               </div>
               <div class="bg-gradient-to-br from-red-50 to-red-100/50 rounded-xl p-4">
                 <div class="flex items-center gap-2 mb-1">
@@ -8480,6 +8624,7 @@
                 <div class="space-y-2 text-sm">
                   <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">培训课题</span><span class="font-medium text-slate-800">${event ? event.name : '-'}</span></div>
                   <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">讲师</span><span class="font-medium text-slate-800">${event ? (event.instructor || '-') : '-'}</span></div>
+                  <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">签到时间窗</span><span class="font-medium text-indigo-600">${event && event.signinStartTime && event.signinEndTime ? (event.signinStartTime + ' ~ ' + event.signinEndTime) : '未设置'}</span></div>
                   <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">最早签到</span><span class="font-medium text-emerald-600">${earliestSignin}</span></div>
                   <div class="flex justify-between p-2 bg-slate-50 rounded-lg"><span class="text-slate-500">最晚签到</span><span class="font-medium text-amber-600">${latestSignin}</span></div>
                 </div>
@@ -8495,18 +8640,21 @@
             <div>
               <div class="flex items-center justify-between mb-3">
                 <h4 class="text-sm font-semibold text-slate-700"><i class="fas fa-list-ul text-emerald-400 mr-2"></i>签到明细</h4>
-                <button onclick="exportAnalyticsAttendance()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
-                  <i class="fas fa-file-excel mr-1"></i>导出
-                </button>
+                <div class="flex items-center gap-2">
+                  <button onclick="exportAnalyticsAttendance()" class="px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 transition">
+                    <i class="fas fa-file-excel mr-1"></i>导出
+                  </button>
+                </div>
               </div>
               <div class="overflow-x-auto rounded-xl border border-slate-100">
                 <table class="w-full">
                   <thead class="bg-slate-50"><tr>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">序号</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">姓名</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">部门</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">岗位</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">签到时间</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">状态</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">工号</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500">操作</th>
                   </tr></thead>
                   <tbody>${rows}</tbody>
                 </table>
@@ -8749,17 +8897,31 @@
       // 标题
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
-      ctx.font = `bold 42px ${fontBase}`;
-      ctx.fillText('签到二维码', W / 2, 95);
+      ctx.font = `bold 40px ${fontBase}`;
+      ctx.shadowColor = 'rgba(0,0,0,0.18)';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetY = 3;
+      ctx.fillText('签到二维码', W / 2, 86);
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // 头栏内细分隔线（提升精致感，分层标题与培训名）
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(W / 2 - 52, 120);
+      ctx.lineTo(W / 2 + 52, 120);
+      ctx.stroke();
 
       // 培训名称
-      ctx.font = `28px ${fontBase}`;
-      fillTextWithWrap(ctx, training.name || training.project || '未命名培训', W / 2, 148, W - 80, 38, 'center');
+      ctx.font = `500 27px ${fontBase}`;
+      fillTextWithWrap(ctx, training.name || training.project || '未命名培训', W / 2, 168, W - 70, 38, 'center');
 
-      // 签到时间（头栏内，白色小字）
-      ctx.fillStyle = 'rgba(255,255,255,0.92)';
-      ctx.font = `20px ${fontBase}`;
-      ctx.fillText(timeText, W / 2, 210);
+      // 签到时间（头栏内，白色小字，靠近头栏底部）
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.font = `19px ${fontBase}`;
+      ctx.fillText(timeText, W / 2, 242);
 
       // 3) 生成二维码
       const url = location.origin + '/m/training.html?id=' + id;
@@ -8795,38 +8957,9 @@
                 }).catch(() => {});
               } catch (e) {}
             }
-            // 计算签到时间文本
-            const fmtDateTime = (v) => {
-              if (!v) return null;
-              const s = v.includes('T') ? v.replace('T', ' ') : String(v);
-              const [datePart, timePart] = s.split(' ');
-              const m = datePart && datePart.match(/(\d{4})-(\d{2})-(\d{2})/);
-              if (!m) return { dateLabel: s, timeLabel: '' };
-              const [, y, mo, d] = m;
-              return { dateLabel: `${y}年${parseInt(mo)}月${parseInt(d)}日`, timeLabel: timePart || '' };
-            };
-            const sStart = fmtDateTime(training.signinStartTime || training.startTime);
-            const sEnd = fmtDateTime(training.signinEndTime || training.endTime);
-            let timeText = '签到时间：';
-            if (sStart && sStart.timeLabel && sEnd && sEnd.timeLabel) {
-              timeText += (sStart.dateLabel === sEnd.dateLabel)
-                ? `${sStart.dateLabel} ${sStart.timeLabel} ~ ${sEnd.timeLabel}`
-                : `${sStart.dateLabel} ${sStart.timeLabel} ~ ${sEnd.dateLabel} ${sEnd.timeLabel}`;
-            } else if (sStart) {
-              timeText += sStart.timeLabel ? `${sStart.dateLabel} ${sStart.timeLabel}` : sStart.dateLabel;
-            } else {
-              timeText += '待定，请关注培训通知';
-            }
 
-            // 签到时间：头栏正下方（二维码上方），与培训名形成信息组
-            const timeY = headerH + 40;
-            ctx.fillStyle = '#475569';
-            ctx.font = `20px ${fontBase}`;
-            ctx.textAlign = 'center';
-            ctx.fillText(timeText, W / 2, timeY);
-
-            // 二维码在「时间下方 → 签到码」区域垂直居中（下方预留签到码空间）
-            const qrTop = headerH + 72;
+            // 二维码在「头栏下方 → 签到码」区域垂直居中（下方预留签到码空间）
+            const qrTop = headerH + 50;
             const bottomBound = H - 150;
             const reserveCode = 78;
             const regionBottom = bottomBound - reserveCode;

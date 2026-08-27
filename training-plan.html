@@ -17,6 +17,7 @@
     </style>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/mobile-enhanced.css">
+    <link rel="stylesheet" href="css/tp-detail.css">
     <script>
         tailwind.config = {
             theme: {
@@ -158,127 +159,7 @@
         /* 按钮 loading */
         .tp-task-btn.is-loading { pointer-events: none; opacity: 0.75; }
 
-        /* ===== 培训详情 - 基本信息卡片 ===== */
-        .tp-info-card {
-            background: #ffffff;
-            border: none;
-            border-radius: 1rem;
-            box-shadow: none;
-            overflow: hidden;
-            margin-bottom: 0.75rem;
-        }
-        .tp-info-back {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.375rem;
-            font-size: 0.75rem;
-            color: #6b7280;
-            padding: 0.625rem 1rem;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-        .tp-info-back:hover { color: #667eea; }
-        .tp-info-back i { font-size: 0.7rem; }
-        .tp-info-section-title {
-            display: flex;
-            align-items: center;
-            gap: 0.375rem;
-            font-size: 0.8125rem;
-            font-weight: 700;
-            color: #374151;
-            padding: 0 1rem 0.625rem 1rem;
-            margin-top: -0.25rem;
-        }
-        .tp-info-section-title i { color: #667eea; font-size: 0.875rem; }
-        .tp-info-body { padding: 0 1rem 1rem 1rem; }
-        .tp-category-tag {
-            display: inline-block;
-            font-size: 0.7rem;
-            padding: 0.2rem 0.55rem;
-            border-radius: 999px;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        .tp-course-title {
-            font-size: 1.35rem;
-            font-weight: 800;
-            color: #111827;
-            line-height: 1.3;
-            margin: 0 0 1rem 0;
-            letter-spacing: -0.01em;
-        }
-        .tp-info-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.625rem;
-        }
-        .tp-info-mini-card {
-            background: #ffffff;
-            border: 1px solid #edeef2;
-            border-radius: 0.75rem;
-            padding: 0.625rem 0.75rem;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.625rem;
-        }
-        .tp-info-mini-card:hover { border-color: #d7d9e0; box-shadow: 0 2px 6px rgba(102, 126, 234, 0.06); }
-        .tp-info-mini-icon {
-            width: 2rem;
-            height: 2rem;
-            border-radius: 0.6rem;
-            background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%);
-            color: #667eea;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            flex-shrink: 0;
-        }
-        .tp-info-mini-text { flex: 1; min-width: 0; }
-        .tp-info-mini-label {
-            font-size: 0.6875rem;
-            color: #9ca3af;
-            line-height: 1.2;
-            margin-bottom: 0.0625rem;
-        }
-        .tp-info-mini-value {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #374151;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            line-height: 1.3;
-        }
-        .tp-intro-box {
-            margin: 1rem 0 1.25rem 0;
-            padding: 1rem;
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.75rem;
-        }
-        .tp-intro-title {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #475569;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.375rem;
-        }
-        .tp-intro-title i { color: #667eea; }
-        .tp-intro-text {
-            font-size: 0.8125rem;
-            color: #374151;
-            line-height: 1.75;
-            white-space: pre-wrap;
-        }
-        .tp-info-footer {
-            padding: 0.875rem 1rem;
-            background: #ffffff;
-            border-top: 1px solid #f3f4f6;
-        }
+        /* ===== 培训详情 - .tp-info-* 基础样式已抽到 css/tp-detail.css 共享 ===== */
         .tp-enroll-header {
             display: flex;
             align-items: center;
@@ -861,6 +742,7 @@
     <script src="js/auth-modal.js?v=20260704"></script>
     <script src="js/auth-guard.js?v=20260704"></script>
     <script src="js/notification.js?v=20260704"></script>
+    <script src="js/course-detail-shared.js?v=20260827"></script>
     <script>
         // 退出登录（使用统一认证模块）
         function handleLogout() {
@@ -1786,41 +1668,11 @@
             document.getElementById('modal-date').textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${weekDays[d.getDay()]}`;
             document.getElementById('modal-title').textContent = '课程详情';
 
-            const introHtml = course.content
-                ? `<div class="tp-intro-box">
-                    <div class="tp-intro-title"><i class="fa fa-info-circle"></i>课程介绍</div>
-                    <div class="tp-intro-text">${course.content}</div>
-                   </div>`
-                : '';
-
-            const infoItems = [
-                { icon: 'fa-calendar-o', label: '日期', value: `${d.getMonth() + 1}月${d.getDate()}日` },
-                { icon: 'fa-clock-o', label: '时间', value: course.time },
-                { icon: 'fa-user-o', label: '讲师', value: course.instructor },
-                { icon: 'fa-map-marker', label: '地点', value: course.location || '待定' }
-            ];
-            const infoGridHtml = infoItems.map(item => `
-                <div class="tp-info-mini-card" title="${item.label}：${item.value}">
-                    <div class="tp-info-mini-icon"><i class="fa ${item.icon}"></i></div>
-                    <div class="tp-info-mini-text">
-                        <div class="tp-info-mini-label">${item.label}</div>
-                        <div class="tp-info-mini-value">${item.value}</div>
-                    </div>
-                </div>
-            `).join('');
-
-            const basicInfoContent = `
-                <div class="tp-info-card">
-                    <div class="tp-info-body" style="padding: 0;">
-                        <h2 class="tp-course-title" style="margin-bottom: 1.25rem;">${course.name}</h2>
-                        ${introHtml}
-                        <div class="tp-info-grid">${infoGridHtml}</div>
-                    </div>
-                    <div class="tp-info-footer" style="border-top: 1px solid #f3f4f6; margin-top: 1rem;">
-                        ${renderEnrolledAvatars(courseId)}
-                    </div>
-                </div>
-            `;
+            // 基本信息卡：使用共享组件 js/course-detail-shared.js 渲染（PC 端 + 移动端共用）
+            const basicInfoContent = window.CourseDetailShared.renderCourseDetailBody(course, {
+                showFooter: true,
+                footerHtml: renderEnrolledAvatars(courseId)
+            });
 
             const projectContent = renderProjectContentList(course);
             const gallery = getTrainingGallery(courseId);

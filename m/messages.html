@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>消息中心 · 游雁学院</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { primary: '#667eea', secondary: '#764ba2' } } } };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/m/css/mobile.css">
+</head>
+<body>
+  <div class="app-shell">
+
+    <!-- 顶部导航 -->
+    <header class="m-nav" style="background:#fff; border-bottom:1px solid var(--line)">
+      <div class="m-nav__left">
+        <button class="m-nav__btn" onclick="history.back()" aria-label="返回" style="width:36px;height:36px;border-radius:50%;background:#f4f5f9;border:none;color:var(--ink-2);font-size:17px;display:flex;align-items:center;justify-content:center">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <span class="m-nav__title">消息中心</span>
+      </div>
+    </header>
+
+    <!-- 合并信息流（公告 + 消息） -->
+    <div class="m-msg-sub" id="m-msg-sub" hidden>
+      <span class="m-msg-sub__unread" id="m-msg-unread"></span>
+      <span class="m-msg-sub__legend">
+        <i class="m-dot m-dot--notice"></i>公告
+        <i class="m-dot m-dot--msg"></i>消息
+      </span>
+    </div>
+    <div id="msg-list" style="padding:14px">
+      <div class="m-empty"><i class="fa-solid fa-spinner fa-spin"></i> 加载中...</div>
+    </div>
+
+  </div>
+
+  <script src="/js/auth-modal.js?v=20260723m"></script>
+  <script src="/m/js/api-client.js"></script>
+  <script src="/m/js/common.js"></script>
+  <script>
+    var allItems = [];
+
+    function stripTags(html) { return (html || '').replace(/<[^>]+>/g, ''); }
+    function firstImg(html) { var m = (html || '').match(/<img[^>]+src=["']([^"']+)["']/); return m ? m[1] : ''; }
+    function toTs(s) { var t = new Date(s).getTime(); return isNaN(t) ? 0 : t; }
+
+    async function initMsg() {
+      var notices = [], messages = [];
+      try { notices = (await Api.notices() || []).filter(function (n) { return !n.status || n.status === 'published'; }); } catch (e) { notices = []; }
+      try { messages = await Api.notifications() || []; } catch (e) { messages = []; }
+
+      allItems = [];
+      notices.forEach(function (n) {
+        allItems.push({
+          type: 'notice',
+          timeRaw: n.createdAt || n.created_at || '',
+          title: n.title || '公告',
+          content: stripTags(n.content),
+          raw: n.content || '',
+          views: n.views || n.visitCount || 0,
+          id: n.id
+        });
+      });
+      messages.forEach(function (n) {
+        allItems.push({
+          type: 'message',
+          timeRaw: n.createdAt || n.created_at || '',
+          title: n.title || '通知',
+          content: stripTags(n.content),
+          read: !!n.read,
+          id: n.id
+        });
+      });
+      // 按时间倒序合并（公告与消息同一条信息流，与 PC 端一致）
+      allItems.sort(function (a, b) { return toTs(b.timeRaw) - toTs(a.timeRaw); });
+      renderList();
+    }
+
+    function renderList() {
+      var container = document.getElementById('msg-list');
+      var subEl = document.getElementById('m-msg-sub');
+      var unreadEl = document.getElementById('m-msg-unread');
+      if (!allItems.length) {
+        if (subEl) subEl.hidden = true;
+        container.innerHTML = '<div class="m-empty"><i class="fa-regular fa-bell-slash"></i>暂无消息与公告<br><span style="font-size:12px;opacity:.7">公告与系统通知会统一显示在这里</span></div>';
+        return;
+      }
+      var unreadMsg = allItems.filter(function (i) { return i.type === 'message' && !i.read; }).length;
+      if (subEl) subEl.hidden = false;
+      if (unreadEl) unreadEl.textContent = unreadMsg > 0 ? (unreadMsg + ' 条未读消息') : '全部已读';
+
+      var html = '<div class="m-msg-group">';
+      allItems.forEach(function (it) {
+        if (it.type === 'notice') {
+          var plain = it.content.slice(0, 50);
+          var img = firstImg(it.raw || '');
+          var thumb = img
+            ? '<img class="m-msg-item__thumb" src="' + App.esc(img) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
+            : '<div class="m-msg-item__thumb m-msg-item__thumb--ph"><i class="fa-solid fa-bullhorn"></i></div>';
+          html += '<a class="m-msg-item m-msg-item--notice" href="/m/notice.html?id=' + App.esc(it.id) + '">' +
+            thumb +
+            '<div class="m-msg-item__bd">' +
+              '<div class="m-msg-item__t">' + App.esc(it.title) + '</div>' +
+              (plain ? '<div class="m-msg-item__d">' + App.esc(plain) + '</div>' : '') +
+              '<div class="m-msg-item__s"><span><i class="fa-regular fa-clock" style="margin-right:3px"></i>' + App.fmtDateTime(it.timeRaw) + '</span><span><i class="fa-regular fa-eye" style="margin-right:3px"></i>' + it.views + ' 浏览</span></div>' +
+            '</div>' +
+            '<i class="fa-solid fa-chevron-right" style="color:var(--ink-3);font-size:12px;flex-shrink:0"></i>' +
+          '</a>';
+        } else {
+          var plain2 = it.content.slice(0, 60);
+          html += '<div class="m-msg-item' + (it.read ? '' : ' m-msg-item--unread') + '" data-id="' + it.id + '">' +
+            (it.read ? '' : '<div class="m-msg-item__dot"></div>') +
+            '<div class="m-msg-item__tag m-msg-item__tag--msg">消息</div>' +
+            '<div class="m-msg-item__bd">' +
+              '<div class="m-msg-item__t">' + App.esc(it.title) + (it.read ? '' : ' <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ef4444;vertical-align:middle"></span>') + '</div>' +
+              (plain2 ? '<div class="m-msg-item__d">' + App.esc(plain2) + '</div>' : '') +
+              '<div class="m-msg-item__s"><span><i class="fa-regular fa-clock" style="margin-right:3px"></i>' + App.fmtDateTime(it.timeRaw) + '</span></div>' +
+            '</div>' +
+          '</div>';
+        }
+      });
+      html += '</div>';
+      container.innerHTML = html;
+
+      container.querySelectorAll('.m-msg-item[data-id]').forEach(function (item) {
+        item.addEventListener('click', function () {
+          var id = this.getAttribute('data-id');
+          var rec = allItems.filter(function (i) { return String(i.id) === String(id); })[0];
+          if (rec) rec.read = true;
+          markRead(id, this);
+          App.toast('已标记为已读');
+        });
+      });
+    }
+
+    async function markRead(id, el) {
+      try { await Api.markRead(id); } catch (e) {}
+      el.classList.remove('m-msg-item--unread');
+      var dot = el.querySelector('.m-msg-item__dot');
+      if (dot) dot.remove();
+      var badge = el.querySelector('.m-msg-item__t span[style*="#ef4444"]');
+      if (badge) badge.remove();
+    }
+
+    App.initPage({ active: 'mine', requireAuth: true, onReady: initMsg });
+  </script>
+</body>
+</html>

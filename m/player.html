@@ -24,7 +24,7 @@
 
     <!-- 视频区（自定义控制条，无原生三点菜单） -->
     <div class="m-player__stage" id="m-stage">
-      <video class="m-player__video" id="m-video" playsinline webkit-playsinline preload="metadata"></video>
+      <video class="m-player__video" id="m-video" controls playsinline webkit-playsinline preload="metadata"></video>
       <button class="m-player__centerbtn" id="m-centerbtn" onclick="startPlay()" aria-label="播放"><i class="fa-solid fa-play"></i></button>
       <!-- 自定义底部控制条 -->
       <div class="m-player__ctrls" id="m-ctrls">
@@ -37,6 +37,7 @@
         <span class="m-ctl-time" id="m-ctl-dur">0:00</span>
         <button class="m-ctl-btn m-ctl-speed" id="m-speed-btn" onclick="toggleSpeedPanel(event)" aria-label="倍速"><span id="m-speed-label">1.0x</span></button>
         <button class="m-ctl-btn" id="m-ctl-fs" onclick="toggleFullscreen()" aria-label="全屏"><i class="fa-solid fa-expand"></i></button>
+        <button class="m-ctl-btn m-ctl-vol" id="m-vol-btn" onclick="toggleVolPanel(event)" aria-label="音量"><i class="fa-solid fa-volume-high"></i></button>
       </div>
       <!-- 倍速面板 -->
       <div class="m-player__speedpanel" id="m-speed-panel">
@@ -49,6 +50,13 @@
           <div class="m-sp-opt" data-rate="2" onclick="setSpeed(2)">2.0x</div>
         </div>
       </div>
+      <!-- 音量面板 -->
+      <div class="m-player__volpanel" id="m-vol-panel">
+        <div class="m-player__volpanel-inner">
+          <button class="m-vol-mute" id="m-vol-mute" onclick="toggleMute()" aria-label="静音"><i class="fa-solid fa-volume-high"></i></button>
+          <input type="range" id="m-vol-range" class="m-vol-range" min="0" max="100" value="100" oninput="setVolume(this.value)" aria-label="音量滑块">
+        </div>
+      </div>
     </div>
 
     <!-- 课程信息 + 选集 -->
@@ -56,6 +64,18 @@
       <div class="m-player__info">
         <div class="m-player__title" id="m-course-title">—</div>
         <div class="m-player__meta" id="m-course-meta"></div>
+        <div class="m-player__study" id="m-study-time" style="display:none"></div>
+        <div class="m-player__acts" id="m-acts">
+          <button class="m-act" id="m-like-btn" onclick="mToggleLike()" aria-label="点赞">
+            <i class="fa-regular fa-thumbs-up"></i><span id="m-like-cnt">0</span>
+          </button>
+          <button class="m-act" id="m-share-btn" onclick="mDoShare()" aria-label="转发">
+            <i class="fa-solid fa-share"></i><span id="m-share-cnt">0</span>
+          </button>
+          <button class="m-act" id="m-rate-btn" onclick="mOpenRate()" aria-label="评分">
+            <i class="fa-regular fa-star"></i><span id="m-rate-avg">0.0</span>
+          </button>
+        </div>
         <div class="m-player__desc" id="m-course-desc"></div>
       </div>
 
@@ -70,10 +90,11 @@
     </div>
   </div>
 
-  <script src="/js/auth-modal.js?v=20260723m"></script>
-  <script src="/m/js/api-client.js"></script>
-  <script src="/m/js/common.js"></script>
-  <script src="/m/js/scan.js"></script>
+    <script src="/js/auth-modal.js?v=20260723m"></script>
+    <script src="/m/js/api-client.js"></script>
+    <script src="/m/js/common.js"></script>
+    <script src="/m/js/scan.js"></script>
+    <script src="/data-api.js"></script>
   <script>
     var courseId = new URLSearchParams(location.search).get('id');
     var curIndex = parseInt(new URLSearchParams(location.search).get('index') || '0', 10) || 0;
@@ -96,6 +117,14 @@
     var currentRate = 1;
     var isFullscreen = false;
     var progKey = function () { return 'mplayer:' + (courseId || ''); };
+    // 互动视频状态
+    var useCustom = false;
+    var ivFiredNodes = {};
+    var ivLastTime = 0; // 上次 timeupdate 的 currentTime，用于"正向穿越节点"判定（避免续播/seek 直接落在节点之后就弹）
+    var ivOverlayActive = false;
+    var ivCurrentQuestion = null;
+    var ivNodeShownAt = 0;
+    var ivCorrectCount = 0;
 
     /* ========== 导航 / 返回 ========== */
     function goBack() {
@@ -126,15 +155,55 @@
       document.getElementById('m-speed-panel').classList.remove('is-open');
     }
 
-    // 点击面板外部关闭
+    // 点击面板外部关闭（倍速 / 音量）
     document.addEventListener('click', function (e) {
-      var panel = document.getElementById('m-speed-panel');
-      var btn = document.getElementById('m-speed-btn');
-      if (!panel.classList.contains('is-open')) return;
-      if (!panel.contains(e.target) && !btn.contains(e.target)) {
-        panel.classList.remove('is-open');
-      }
+      var panels = [
+        { p: document.getElementById('m-speed-panel'), b: document.getElementById('m-speed-btn') },
+        { p: document.getElementById('m-vol-panel'), b: document.getElementById('m-vol-btn') }
+      ];
+      panels.forEach(function (o) {
+        if (!o.p.classList.contains('is-open')) return;
+        if (!o.p.contains(e.target) && !o.b.contains(e.target)) o.p.classList.remove('is-open');
+      });
     });
+
+    /* ========== 音量控制（自定义，替代被移除的原生控件） ========== */
+    function toggleVolPanel(e) {
+      if (e) e.stopPropagation();
+      var panel = document.getElementById('m-vol-panel');
+      var isOpen = panel.classList.contains('is-open');
+      panel.classList.toggle('is-open', !isOpen);
+      if (!isOpen) syncVolSlider();
+    }
+    function setVolume(v) {
+      var video = document.getElementById('m-video');
+      var vol = Math.min(1, Math.max(0, parseInt(v, 10) / 100));
+      video.volume = vol;
+      video.muted = (vol === 0);
+      updateVolIcon();
+    }
+    function toggleMute() {
+      var video = document.getElementById('m-video');
+      video.muted = !video.muted;
+      if (!video.muted && video.volume === 0) video.volume = 0.5;
+      syncVolSlider();
+      updateVolIcon();
+    }
+    function syncVolSlider() {
+      var video = document.getElementById('m-video');
+      var range = document.getElementById('m-vol-range');
+      if (range) range.value = Math.round((video.muted ? 0 : video.volume) * 100);
+      updateVolIcon();
+    }
+    function updateVolIcon() {
+      var video = document.getElementById('m-video');
+      var muted = video.muted || video.volume === 0;
+      var icon = muted ? 'fa-volume-xmark' : (video.volume < 0.5 ? 'fa-volume-low' : 'fa-volume-high');
+      var btn = document.getElementById('m-vol-btn');
+      var muteBtn = document.getElementById('m-vol-mute');
+      if (btn) btn.innerHTML = '<i class="fa-solid ' + icon + '"></i>';
+      if (muteBtn) muteBtn.innerHTML = '<i class="fa-solid ' + icon + '"></i>';
+    }
 
     /* ========== 全屏 / 横竖屏（自定义全屏按钮触发） ========== */
     function toggleFullscreen() {
@@ -223,11 +292,15 @@
     function seekFromEvent(e) {
       var track = document.getElementById('m-ctl-track');
       var video = document.getElementById('m-video');
-      if (!video.duration) return;
+      // 容错：元数据未就绪时用 seekable 兜底；都不可用则不放
+      var dur = video.duration || (video.seekable && video.seekable.length ? video.seekable.end(0) : 0);
+      if (!dur) return;
       var rect = track.getBoundingClientRect();
-      var x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      if (!rect || !rect.width) return; // 轨道不可见/无宽度时不处理，避免 NaN
+      var clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : (e.clientX || 0);
+      var x = clientX - rect.left;
       var ratio = Math.min(1, Math.max(0, x / rect.width));
-      video.currentTime = ratio * video.duration;
+      try { video.currentTime = ratio * dur; } catch (err) {}
       updateCtlProgress();
     }
 
@@ -249,6 +322,20 @@
     async function initPlayer() {
       if (!courseId) { App.toast('缺少课程参数', 'error'); return; }
       App.showLoading();
+      await mEnsureDataAPI();
+
+      // 控制条模式：默认自定义控制条（原生控制条的进度条在移动端很难拖动，用户反馈无法拖拽）。
+      // 仍可用 ?native=1 强制使用原生 controls。
+      useCustom = new URLSearchParams(location.search).get('native') !== '1';
+      var nv = document.getElementById('m-video');
+      var ctrls = ['m-ctrls', 'm-centerbtn', 'm-speed-panel', 'm-vol-panel'];
+      if (useCustom) {
+        nv.controls = false;
+        ctrls.forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = ''; });
+      } else {
+        nv.controls = true;
+        ctrls.forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; });
+      }
       try {
         course = await Api.course(courseId);
         if (!course) { App.toast('课程不存在', 'error'); return; }
@@ -261,6 +348,8 @@
         }
         renderInfo();
         renderEps();
+        try { mInitInteractions(); } catch (e) {}
+        mUpdateStudyTimeUI();
         if (videos.length) {
           var saved = loadProg();
           if (!new URLSearchParams(location.search).has('index') && saved && typeof saved.i === 'number' && saved.i < videos.length) {
@@ -317,14 +406,28 @@
     function playEpisode(i, saved) {
       if (i < 0 || i >= videos.length) return;
       curIndex = i;
+      mStopStudy(); // 切换集前先刷新上一集的累计学习时长
+      // 切换集：重置互动节点触发状态，清理残留弹层
+      ivFiredNodes = {};
+      ivOverlayActive = false;
+      ivCurrentQuestion = null;
+      var ov = document.getElementById('m-iv-overlay');
+      if (ov) { ov.style.display = 'none'; ov.innerHTML = ''; }
       var v = videos[i];
       var video = document.getElementById('m-video');
       video.src = v.url || '';
       video.load();
       // 续播时间点
+      var resumeTime = 0;
       if (saved && typeof saved.t === 'number' && saved.i === i && saved.t > 2 && saved.t < (video.duration || 1e9)) {
         video.currentTime = saved.t;
+        resumeTime = saved.t;
       }
+      // ⚠️ 必须立即用续播时间预标记"已被跳过的互动节点"，不能等 loadedmetadata（timeupdate 先于它触发）
+      ivLastTime = resumeTime;
+      ivGetNodes().forEach(function (n) {
+        if ((n.time || 0) <= ivLastTime) ivFiredNodes[n.id] = true;
+      });
       // 高亮当前集
       Array.prototype.forEach.call(document.querySelectorAll('.m-ep'), function (el) {
         var idx = parseInt(el.getAttribute('data-i'), 10);
@@ -397,12 +500,35 @@
       var v = document.getElementById('m-video');
       v.addEventListener('timeupdate', function () {
         updateCtlProgress();
-        if (Math.floor(v.currentTime) % 5 === 0) saveProg();
+        if (Math.floor(v.currentTime) % 5 === 0) {
+          saveProg();
+          var dur = v.duration || 0;
+          if (dur > 0) mUpdateVideoProgress(curIndex, Math.min(100, Math.floor(v.currentTime / dur * 100)));
+        }
+        ivCheckNodes(v);
       });
-      v.addEventListener('play', syncPlayIcon);
-      v.addEventListener('pause', function () { syncPlayIcon(); saveProg(); });
-      v.addEventListener('loadedmetadata', updateCtlProgress);
-      v.addEventListener('ended', function () { syncPlayIcon(); step(1); });
+      v.addEventListener('play', function () { syncPlayIcon(); mStartStudy(); });
+      v.addEventListener('pause', function () { syncPlayIcon(); saveProg(); mStopStudy(); });
+      v.addEventListener('loadedmetadata', function () {
+        updateCtlProgress();
+        // 元数据就绪后，真实的续播位置才生效：把已被跳过的互动节点标记为已触发，
+        // 避免"一打开视频就弹题"；同时把基线时间设为当前位置（正向穿越判定）
+        ivLastTime = v.currentTime || 0;
+        ivGetNodes().forEach(function (n) {
+          if ((n.time || 0) <= ivLastTime) ivFiredNodes[n.id] = true;
+        });
+      });
+      // 用户手动拖进度条 / 任何 seek 操作：把被跳过的节点标记为已触发（避免 seek 后弹历史节点）
+      v.addEventListener('seeked', function () {
+        var pos = v.currentTime || 0;
+        if (pos <= ivLastTime) return; // 往回拖不处理
+        ivGetNodes().forEach(function (n) {
+          if ((n.time || 0) <= pos && !ivFiredNodes[n.id]) ivFiredNodes[n.id] = true;
+        });
+        ivLastTime = pos;
+      });
+      v.addEventListener('ended', function () { syncPlayIcon(); step(1); mStopStudy(); });
+      v.addEventListener('volumechange', updateVolIcon);
     })();
 
     /* ========== 预加载讲师表（用于 renderInfo 取名） ========== */
@@ -411,6 +537,619 @@
         window._lecturers = list || [];
       }).catch(function () {});
     })();
+
+    /* ========== 互动视频：节点触发 / 覆盖层 / 对错分支 / 返回上一节点 ========== */
+    function ivVideo() { return document.getElementById('m-video'); }
+    function ivGetNodes() { return (videos[curIndex] && videos[curIndex].interactionNodes) || []; }
+    function ivEsc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+      });
+    }
+    function ivEnsureOverlay() {
+      // 挂到 body 而非 stage：脱离播放器低 z-index 容器，确保全屏弹层盖住底部 tabbar
+      var overlay = document.getElementById('m-iv-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'm-iv-overlay';
+        overlay.className = 'm-iv-overlay';
+        document.body.appendChild(overlay);
+      }
+      return overlay;
+    }
+    function ivCheckNodes(v) {
+      if (ivOverlayActive) return;
+      var cur = v.currentTime || 0;
+      var nodes = ivGetNodes();
+      for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
+        // 仅在"正向穿越"节点时间点时触发：ivLastTime < n.time <= cur
+        // 这样续播/快进跳过节点不会立即弹题，只有正常播放经过时才弹
+        if (!ivFiredNodes[n.id] && ivLastTime < (n.time || 0) && cur >= (n.time || 0)) {
+          ivFiredNodes[n.id] = true;
+          triggerInteractionNode(n);
+          break;
+        }
+      }
+      ivLastTime = cur;
+    }
+    function triggerInteractionNode(node) {
+      if (ivOverlayActive) return;
+      var v = ivVideo();
+      v.pause();
+      v.controls = false; // 隐藏原生控制条，避免与弹层重叠
+      ivOverlayActive = true;
+      ivNodeShownAt = Date.now();
+      renderInteractionOverlay(node);
+    }
+    function renderInteractionOverlay(node) {
+      var overlay = ivEnsureOverlay();
+      overlay.style.display = 'flex';
+      overlay.innerHTML = '';
+      if (node.type === 'knowledge') {
+        var kh = '<div class="m-iv-card">'
+          + '<h4 class="m-iv-title">' + ivEsc(node.title || '知识点') + '</h4>'
+          + '<div class="m-iv-body">'
+          + (node.imageUrl ? '<img class="m-iv-img" src="' + ivEsc(node.imageUrl) + '">' : '')
+          + '<p class="m-iv-text">' + ivEsc(node.content || '') + '</p>'
+          + '</div>'
+          + '<button class="m-iv-btn m-iv-btn--primary" onclick="ivResumePlay()">继续播放</button>'
+          + '</div>';
+        overlay.innerHTML = kh;
+        return;
+      }
+      if (node.type === 'survey') {
+        var refs = node.questionRefs || [];
+        var items = refs.map(function (r, i) {
+          return '<div class="m-iv-survey-item"><p class="m-iv-survey-q">' + (i + 1) + '. ' + ivEsc(r.content || '') + '</p>'
+            + '<input class="m-iv-input" data-qid="' + ivEsc(r.questionId) + '" placeholder="请输入你的回答"></div>';
+        }).join('');
+        overlay.innerHTML = '<div class="m-iv-card">'
+          + '<h4 class="m-iv-title">' + ivEsc(node.surveyTitle || '互动问卷') + '</h4>'
+          + '<div class="m-iv-body">' + items + '</div>'
+          + '<button class="m-iv-btn m-iv-btn--primary" onclick="ivSubmitSurvey(\'' + node.id + '\')">提交并继续播放</button>'
+          + '</div>';
+        return;
+      }
+      // 试题节点
+      var ref = (node.questionRefs && node.questionRefs[0]) ? node.questionRefs[0] : null;
+      var qid = ref ? ref.questionId : null;
+      if (qid == null) {
+        if (ref && ref.content) { ivRenderDeletedQuestionFallback(ref, node, overlay); return; }
+        ivResumePlay(); return;
+      }
+      fetch('/api/questions/' + qid).then(function (r) { return r.json(); }).then(function (res) {
+        var q = (res && res.data) ? res.data : res;
+        if (!q || (res && res.success === false) || res.error) {
+          if (ref && ref.content) { ivRenderDeletedQuestionFallback(ref, node, overlay); return; }
+          ivResumePlay(); return;
+        }
+        ivRenderQuestion(q, node, overlay);
+      }).catch(function () {
+        if (ref && ref.content) { ivRenderDeletedQuestionFallback(ref, node, overlay); return; }
+        ivResumePlay();
+      });
+    }
+    function ivRenderQuestion(q, node, overlay) {
+      ivCurrentQuestion = q;
+      var type = q.type || 'single';
+      var options = q.options || [];
+      var body = '';
+      if (type === 'multiple') {
+        body = options.map(function (o, i) {
+          var letter = String.fromCharCode(65 + i);
+          return '<label class="m-iv-opt" data-opt="' + letter + '"><input type="checkbox" class="m-iv-opt-input" value="' + letter + '"><span>' + ivEsc(o) + '</span></label>';
+        }).join('');
+      } else if (type === 'judge') {
+        body = '<label class="m-iv-opt" data-opt="A"><input type="radio" name="ivq" class="m-iv-opt-input" value="A"><span>正确</span></label>'
+          + '<label class="m-iv-opt" data-opt="B"><input type="radio" name="ivq" class="m-iv-opt-input" value="B"><span>错误</span></label>';
+      } else if (type === 'fill' || type === 'essay') {
+        body = '<textarea class="m-iv-textarea" rows="3" placeholder="请输入你的答案"></textarea>';
+      } else {
+        body = options.map(function (o, i) {
+          var letter = String.fromCharCode(65 + i);
+          return '<label class="m-iv-opt" data-opt="' + letter + '"><input type="radio" name="ivq" class="m-iv-opt-input" value="' + letter + '"><span>' + ivEsc(o) + '</span></label>';
+        }).join('');
+      }
+      var typeLabel = ({ single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' })[type] || '试题';
+      overlay.innerHTML = '<div class="m-iv-card">'
+        + '<div class="m-iv-head"><span class="m-iv-badge">互动试题</span><span class="m-iv-type">' + typeLabel + '</span></div>'
+        + '<p class="m-iv-q">' + ivEsc(q.title || q.content || '') + '</p>'
+        + '<div class="m-iv-opts" id="m-iv-options">' + body + '</div>'
+        + '<div class="m-iv-result" id="m-iv-result"></div>'
+        + '<div class="m-iv-btns" id="m-iv-btn-row">'
+        + '<button class="m-iv-btn m-iv-btn--primary" id="m-iv-submit" onclick="ivSubmitQuestion(\'' + node.id + '\', \'' + type + '\')">提交答案</button>'
+        + '<button class="m-iv-btn m-iv-btn--ghost" onclick="ivResumePlay()">继续播放</button>'
+        + '</div>'
+        + '</div>';
+    }
+    function ivRenderDeletedQuestionFallback(ref, node, overlay) {
+      var typeLabel = ({ single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题', essay: '简答题' })[ref.type] || '试题';
+      overlay.innerHTML = '<div class="m-iv-card">'
+        + '<div class="m-iv-warn"><i class="fa fa-exclamation-triangle"></i><span>原题已被删除，以下为插入时的历史快照（不可作答）</span></div>'
+        + '<p class="m-iv-sub">' + typeLabel + (ref.score != null ? ' · ' + ref.score + ' 分' : '') + '</p>'
+        + '<p class="m-iv-text">' + ivEsc(ref.content || '（该题无内容快照）') + '</p>'
+        + '<button class="m-iv-btn m-iv-btn--primary" onclick="ivResumePlay()">继续播放</button>'
+        + '</div>';
+    }
+    function ivCollectAnswer(type) {
+      if (type === 'multiple') {
+        return Array.prototype.slice.call(document.querySelectorAll('#m-iv-overlay .m-iv-opt-input:checked')).map(function (c) { return c.value; });
+      }
+      if (type === 'judge' || type === 'single') {
+        var sel = document.querySelector('#m-iv-overlay input[name="ivq"]:checked');
+        return sel ? sel.value : '';
+      }
+      if (type === 'fill' || type === 'essay') {
+        var ta = document.querySelector('#m-iv-overlay .m-iv-textarea');
+        return ta ? ta.value : '';
+      }
+      return '';
+    }
+    function ivJudge(q, userAnswer, type) {
+      var correct = Array.isArray(q.answer) ? q.answer : [q.answer];
+      if (type === 'multiple') {
+        var ca = correct.map(function (x) { return String(x).trim(); }).sort().join(',');
+        var ua = (Array.isArray(userAnswer) ? userAnswer : [userAnswer]).map(function (x) { return String(x).trim(); }).sort().join(',');
+        return ua === ca && ua !== '';
+      }
+      if (type === 'judge') {
+        var ub = (userAnswer === 'A');
+        var cb = (String(correct[0]).trim().toUpperCase() === 'A' || String(correct[0]).trim() === '正确' || String(correct[0]).trim() === 'true');
+        return ub === cb;
+      }
+      if (type === 'fill') {
+        var ua2 = String(userAnswer || '').trim().toLowerCase();
+        return ua2 !== '' && correct.map(function (x) { return String(x).trim().toLowerCase(); }).indexOf(ua2) !== -1;
+      }
+      return String(userAnswer || '').trim() === String(correct[0]).trim();
+    }
+    function ivSubmitQuestion(nodeId, type) {
+      var node = null, ns = ivGetNodes();
+      for (var i = 0; i < ns.length; i++) { if (ns[i].id === nodeId) node = ns[i]; }
+      if (!node) { ivResumePlay(); return; }
+      var q = ivCurrentQuestion;
+      if (!q) { ivResumePlay(); return; }
+      var userAnswer = ivCollectAnswer(type);
+      var isCorrect = ivJudge(q, userAnswer, type);
+      if (isCorrect) ivCorrectCount++;
+      ivRenderResult(q, node, type, userAnswer, isCorrect);
+      var ref = (node.questionRefs && node.questionRefs[0]) ? node.questionRefs[0] : null;
+      var qid = ref ? ref.questionId : null;
+      var timeSpent = Math.max(0, Math.round((Date.now() - ivNodeShownAt) / 1000));
+      var payload = {
+        userId: App.userId(),
+        userAnswer: (type === 'multiple') ? userAnswer : (type === 'fill' || type === 'essay' ? userAnswer : (Array.isArray(userAnswer) ? userAnswer[0] : userAnswer)),
+        timeSpentSec: timeSpent
+      };
+      fetch('/api/courses/' + courseId + '/videos/' + curIndex + '/nodes/' + nodeId + '/answer', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      }).catch(function () {});
+    }
+    function ivRenderResult(q, node, type, userAnswer, isCorrect) {
+      var correct = [];
+      if (type === 'judge') {
+        var ans = Array.isArray(q.answer) ? q.answer[0] : q.answer;
+        var a = String(ans == null ? '' : ans).trim();
+        var isTrue = a.toUpperCase() === 'A' || a === '正确' || a.toLowerCase() === 'true';
+        correct = [isTrue ? 'A' : 'B'];
+      } else {
+        correct = (Array.isArray(q.answer) ? q.answer : [q.answer]).map(function (x) { return String(x == null ? '' : x).trim(); }).filter(function (x) { return x; });
+      }
+      var opts = document.querySelectorAll('#m-iv-overlay .m-iv-opt');
+      Array.prototype.forEach.call(opts, function (row) {
+        var v = row.getAttribute('data-opt');
+        var inp = row.querySelector('.m-iv-opt-input');
+        var checked = inp && inp.checked;
+        var isCorrectOpt = correct.indexOf(v) !== -1;
+        if (isCorrectOpt) {
+          row.classList.add('is-correct');
+          var tag = document.createElement('span');
+          tag.className = 'm-iv-tag m-iv-tag--ok';
+          tag.textContent = '正确答案';
+          row.appendChild(tag);
+        } else if (checked) {
+          row.classList.add('is-wrong');
+          var tag2 = document.createElement('span');
+          tag2.className = 'm-iv-tag m-iv-tag--no';
+          tag2.textContent = '你的选择';
+          row.appendChild(tag2);
+        }
+        if (inp) inp.disabled = true;
+      });
+      var resultEl = document.getElementById('m-iv-result');
+      var analysis = String(q.analysis || q.explanation || '').trim();
+      var html = isCorrect
+        ? '<div class="m-iv-verdict m-iv-verdict--ok">✅ 回答正确</div>'
+        : '<div class="m-iv-verdict m-iv-verdict--no">❌ 回答错误</div>';
+      if (analysis) {
+        html += '<div class="m-iv-analysis"><p class="m-iv-analysis__t">📖 解析</p><p class="m-iv-analysis__c">' + ivEsc(analysis) + '</p></div>';
+      } else if (!isCorrect) {
+        html += '<p class="m-iv-analysis__c m-iv-analysis__c--muted">本题暂未配置解析</p>';
+      }
+      resultEl.innerHTML = html;
+      var submitBtn = document.getElementById('m-iv-submit');
+      if (submitBtn) submitBtn.style.display = 'none';
+      var btnRow = document.getElementById('m-iv-btn-row');
+      var actions = document.getElementById('m-iv-actions');
+      if (!actions) {
+        actions = document.createElement('div');
+        actions.id = 'm-iv-actions';
+        if (btnRow) btnRow.appendChild(actions);
+        else { actions.className = 'm-iv-actions'; resultEl.appendChild(actions); }
+      }
+      actions.innerHTML = isCorrect
+        ? ''
+        : '<button class="m-iv-btn m-iv-btn--warn" onclick="ivJumpPrevNode()">返回上一节点重新学习</button>';
+    }
+    function ivSubmitSurvey(nodeId) {
+      var node = null, ns = ivGetNodes();
+      for (var i = 0; i < ns.length; i++) { if (ns[i].id === nodeId) node = ns[i]; }
+      if (!node) { ivResumePlay(); return; }
+      var inputs = document.querySelectorAll('#m-iv-overlay input[data-qid]');
+      var answers = {};
+      Array.prototype.forEach.call(inputs, function (inp) { answers[inp.dataset.qid] = inp.value; });
+      fetch('/api/courses/' + courseId + '/videos/' + curIndex + '/nodes/' + nodeId + '/answer', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: App.userId(), userAnswer: answers })
+      }).catch(function () {});
+      ivResumePlay();
+    }
+    function ivResumePlay() {
+      var overlay = document.getElementById('m-iv-overlay');
+      if (overlay) { overlay.style.display = 'none'; overlay.innerHTML = ''; }
+      ivOverlayActive = false;
+      var v = ivVideo();
+      v.controls = !useCustom; // 恢复控制条（原生或自定义）
+      if (v.paused) v.play().catch(function () {});
+    }
+    function ivJumpPrevNode() {
+      var nodes = ivGetNodes();
+      if (!nodes.length) { ivResumePlay(); return; }
+      var current = null;
+      for (var k = 0; k < nodes.length; k++) { if (ivFiredNodes[nodes[k].id]) current = nodes[k]; }
+      var prev = null, prevTime = -1;
+      for (var j = 0; j < nodes.length; j++) {
+        if (current && nodes[j].time < current.time && nodes[j].time > prevTime) { prev = nodes[j]; prevTime = nodes[j].time; }
+      }
+      ivCurrentQuestion = null;
+      if (prev) {
+        ivFiredNodes[prev.id] = true;
+        for (var key in ivFiredNodes) {
+          if (!ivFiredNodes.hasOwnProperty(key)) continue;
+          var nd = null;
+          for (var m = 0; m < nodes.length; m++) { if (nodes[m].id === key) nd = nodes[m]; }
+          if (nd && nd.time > prev.time) delete ivFiredNodes[key];
+        }
+        ivVideo().currentTime = prev.time;
+      } else {
+        ivFiredNodes = {};
+        ivVideo().currentTime = 0;
+      }
+      ivResumePlay();
+    }
+
+    /* =========================================================
+       学习数据 / 时长同步（与 PC 端规则一致）
+       - 真实播放每秒 +1，每 10s 落库一次（增量，防丢失）
+       - 累计到 user_learning_${userId}.videoWatchTimes[courseId_idx] / totalSeconds / studyRecords
+       - 完成判定：每集真实观看时长 >= 视频时长（无时长则回退进度 100%）
+       - 通过 DataAPI.set 自动 POST /api/sync/:key 同步到服务端用户数据
+       ========================================================= */
+    var mStudyTimer = null;
+    var mStudySeconds = 0;
+    var __mDAPIReady = false;
+
+    function mGetUserId() { return App.userId(); }
+
+    function mDefaultLearning() {
+      return { totalHours: 0, totalSeconds: 0, completedCourses: [], videoProgress: {}, videoWatchTimes: {}, lastStudyTime: null, studyDates: [], studyRecords: [], ratings: 0, shares: 0, likes: 0 };
+    }
+    function mLoadLearning(uid) {
+      var d = window.DataAPI ? window.DataAPI.get('user_learning_' + uid) : null;
+      if (!d) d = mDefaultLearning();
+      var def = mDefaultLearning();
+      for (var k in def) if (d[k] === undefined) d[k] = def[k];
+      return d;
+    }
+    function mSaveLearning(uid, d) {
+      if (window.DataAPI) window.DataAPI.set('user_learning_' + uid, d);
+      else { try { localStorage.setItem('user_learning_' + uid, JSON.stringify(d)); } catch (e) {} }
+    }
+    async function mEnsureDataAPI() {
+      if (window.DataAPI && !__mDAPIReady) {
+        try { await window.DataAPI.init(); } catch (e) {}
+        __mDAPIReady = true;
+      }
+    }
+
+    function mFmtStudy(s) {
+      s = Math.floor(s || 0);
+      var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+      if (h > 0) return h + '小时' + m + '分';
+      return m + '分' + sec + '秒';
+    }
+    function mCourseWatchedSeconds(uid) {
+      var d = mLoadLearning(uid), total = 0;
+      if (d.videoWatchTimes) {
+        Object.keys(d.videoWatchTimes).forEach(function (k) {
+          if (String(k).indexOf(courseId + '_') === 0) total += (d.videoWatchTimes[k] || 0);
+        });
+      }
+      return total;
+    }
+    function mUpdateStudyTimeUI() {
+      var el = document.getElementById('m-study-time');
+      if (!el || !course) return;
+      var uid = mGetUserId();
+      var watched = uid ? mCourseWatchedSeconds(uid) : 0;
+      el.style.display = '';
+      el.innerHTML = '<i class="fa-regular fa-clock"></i> 已学习 ' + mFmtStudy(watched + mStudySeconds);
+    }
+
+    function mStartStudy() {
+      if (mStudyTimer) return;
+      mStudyTimer = setInterval(function () {
+        mStudySeconds++;
+        mUpdateStudyTimeUI();
+        if (mStudySeconds >= 10) {
+          mSaveStudyIncrement(mStudySeconds);
+          mStudySeconds = 0;
+        }
+      }, 1000);
+    }
+    function mStopStudy() {
+      if (mStudyTimer) { clearInterval(mStudyTimer); mStudyTimer = null; }
+      if (mStudySeconds > 0) { mSaveStudyIncrement(mStudySeconds); mStudySeconds = 0; }
+      mUpdateStudyTimeUI();
+    }
+    function mSaveStudyIncrement(inc) {
+      var uid = mGetUserId();
+      if (!uid || !courseId || !course) return;
+      var d = mLoadLearning(uid);
+      d.totalSeconds = (d.totalSeconds || 0) + inc;
+      d.totalHours = Math.floor(d.totalSeconds / 3600);
+      d.lastStudyTime = new Date().toISOString();
+      if (!d.videoWatchTimes) d.videoWatchTimes = {};
+      var wk = courseId + '_' + curIndex;
+      d.videoWatchTimes[wk] = (d.videoWatchTimes[wk] || 0) + inc;
+      if (!d.studyRecords) d.studyRecords = [];
+      var vtitle = (videos[curIndex] && videos[curIndex].title) || ('课时 ' + (curIndex + 1));
+      var today = new Date().toISOString().split('T')[0];
+      d.studyRecords.push({ courseId: courseId, courseTitle: course.title || '', videoIndex: curIndex, videoTitle: vtitle, duration: inc, timestamp: new Date().toISOString(), date: today });
+      if (d.studyRecords.length > 200) d.studyRecords = d.studyRecords.slice(-200);
+      if (!d.studyDates) d.studyDates = [];
+      if (d.studyDates.indexOf(today) < 0) d.studyDates.push(today);
+      if (mIsCourseCompleted(uid, d) && d.completedCourses.indexOf(String(courseId)) < 0) d.completedCourses.push(String(courseId));
+      mSaveLearning(uid, d);
+      mUpdateStudyTimeUI();
+    }
+    function mIsCourseCompleted(uid, d) {
+      if (!course || !course.videos || !course.videos.length) return false;
+      return course.videos.every(function (v, i) {
+        var k = courseId + '_' + i;
+        var dur = v.duration || 0;
+        if (d.videoWatchTimes && d.videoWatchTimes[k] && dur > 0) return d.videoWatchTimes[k] >= dur;
+        var p = (d.videoProgress && d.videoProgress[k]) || 0;
+        return p >= 100;
+      });
+    }
+    function mUpdateVideoProgress(idx, pct) {
+      var uid = mGetUserId();
+      if (!uid || !courseId || pct <= 0) return;
+      var d = mLoadLearning(uid);
+      var k = courseId + '_' + idx;
+      d.videoProgress[k] = Math.max(d.videoProgress[k] || 0, pct);
+      if (mIsCourseCompleted(uid, d) && d.completedCourses.indexOf(String(courseId)) < 0) d.completedCourses.push(String(courseId));
+      mSaveLearning(uid, d);
+    }
+
+    /* =========================================================
+       课程互动：点赞 / 转发 / 评分（与 PC 端一致）
+       - 落到 course_interaction_${courseId} 并同步服务端
+       - 点赞数/评分平均分同时写回 course.likes / course.rating
+       - 点赞/分享/评分的不同课程数镜像到 user_learning_ / learning_data_（徽章统计）
+       ========================================================= */
+    function mDefaultInteraction() { return { userLikes: {}, likes: 0, shares: 0, userRatings: {}, ratingSum: 0, ratingCount: 0 }; }
+    function mGetInteraction() {
+      var d = window.DataAPI ? window.DataAPI.get('course_interaction_' + courseId) : null;
+      if (!d) d = mDefaultInteraction();
+      var def = mDefaultInteraction();
+      for (var k in def) if (d[k] === undefined) d[k] = def[k];
+      return d;
+    }
+    function mSaveInteraction(d) { if (window.DataAPI) window.DataAPI.set('course_interaction_' + courseId, d); }
+    // 把点赞/评分聚合回写到 management_courses（PC 端规范数据源，保证与 PC 列表/详情一致，不遗漏）
+    function mSyncCourseMeta() {
+      if (!window.DataAPI || !window.DataAPI.getCourse) return;
+      var c = window.DataAPI.getCourse(courseId);
+      if (!c) return; // 课程不在 management_courses（数据未加载/误加载），不回写以免覆盖
+      var courses = window.DataAPI.getCourses();
+      var next = courses.map(function (x) {
+        if (String(x.id) === String(courseId)) {
+          return Object.assign({}, x, {
+            likes: course.likes != null ? course.likes : (x.likes || 0),
+            rating: course.rating != null ? course.rating : (x.rating || 0)
+          });
+        }
+        return x;
+      });
+      window.DataAPI.set('management_courses', next);
+    }
+
+    function mRenderInteractions() {
+      var uid = mGetUserId();
+      var data = mGetInteraction();
+      var likeBtn = document.getElementById('m-like-btn');
+      var likeCnt = document.getElementById('m-like-cnt');
+      var shareCnt = document.getElementById('m-share-cnt');
+      var rateBtn = document.getElementById('m-rate-btn');
+      var rateAvg = document.getElementById('m-rate-avg');
+      if (likeBtn) {
+        var liked = !!(uid && data.userLikes[uid]);
+        likeBtn.classList.toggle('is-active', liked);
+        var li = likeBtn.querySelector('i');
+        if (li) li.className = liked ? 'fa-solid fa-thumbs-up' : 'fa-regular fa-thumbs-up';
+      }
+      if (likeCnt) likeCnt.textContent = (data.likes || course.likes || 0);
+      if (shareCnt) shareCnt.textContent = (data.shares || 0);
+      if (rateAvg) {
+        var avg = (course.rating && parseFloat(course.rating)) ? parseFloat(course.rating).toFixed(1)
+          : (data.ratingCount ? (data.ratingSum / data.ratingCount).toFixed(1) : '0.0');
+        rateAvg.textContent = avg;
+      }
+      if (rateBtn && uid && data.userRatings[uid]) rateBtn.classList.add('is-active');
+    }
+
+    function mInitInteractions() {
+      mRenderInteractions();
+      // 拉取服务端评分（平均分 + 我的评分），与本地互动数据对齐
+      Api.get('/courses/' + courseId + '/ratings').then(function (r) {
+        if (r && r.avgRating !== undefined) course.rating = r.avgRating;
+        mRenderInteractions();
+      }).catch(function () {});
+    }
+
+    function mIncUserStat(field) {
+      var uid = mGetUserId(); if (!uid) return;
+      // 统计不同课程数（PC 端结构：user_likes_${uid}={totalLikes,likedCourses} 等）
+      var d = window.DataAPI ? (window.DataAPI.get('user_' + field + '_' + uid) || {}) : {};
+      var totalKey = 'total' + field.charAt(0).toUpperCase() + field.slice(1);
+      var arrKey = field + 'Courses';
+      d[totalKey] = (d[totalKey] || 0) + 1;
+      var arr = d[arrKey] || [];
+      if (arr.indexOf(String(courseId)) < 0) arr.push(String(courseId));
+      d[arrKey] = arr;
+      if (window.DataAPI) window.DataAPI.set('user_' + field + '_' + uid, d);
+      // 镜像到 user_learning_ / learning_data_（徽章按此统计，与 PC 一致）
+      ['user_learning_' + uid, 'learning_data_' + uid].forEach(function (lk) {
+        var ld = window.DataAPI ? (window.DataAPI.get(lk) || mDefaultLearning()) : {};
+        ld[field] = arr.length;
+        if (window.DataAPI) window.DataAPI.set(lk, ld);
+      });
+    }
+
+    function mToggleLike() {
+      var uid = mGetUserId();
+      if (!uid) { App.toast('请先登录', 'error'); return; }
+      var data = mGetInteraction();
+      if (data.userLikes[uid]) {
+        delete data.userLikes[uid];
+        data.likes = Math.max(0, (data.likes || 0) - 1);
+        if (course.likes) course.likes = Math.max(0, course.likes - 1);
+        App.toast('已取消点赞');
+      } else {
+        data.userLikes[uid] = true;
+        data.likes = (data.likes || 0) + 1;
+        course.likes = (course.likes || 0) + 1;
+        mIncUserStat('likes');
+        App.toast('点赞成功');
+      }
+      mSaveInteraction(data);
+      mSyncCourseMeta();
+      mRenderInteractions();
+    }
+
+    function mDoShare() {
+      var data = mGetInteraction();
+      var shareUrl = location.href;
+      var cname = course.title || '这个课程';
+      var text = '我在游雁学院发现了一个好课程《' + cname + '》，推荐给你！';
+      var finish = function (ok) {
+        if (!ok) return;
+        data.shares = (data.shares || 0) + 1;
+        mIncUserStat('shares');
+        mSaveInteraction(data);
+        mRenderInteractions();
+        App.toast('链接已复制，快去分享吧！');
+      };
+      if (navigator.share) {
+        navigator.share({ title: cname, text: text, url: shareUrl })
+          .then(function () { finish(true); })
+          .catch(function (e) { if (!e || e.name !== 'AbortError') finish(true); });
+      } else {
+        var copy = function () {
+          navigator.clipboard.writeText(text + ' ' + shareUrl).then(function () { finish(true); })
+            .catch(function () {
+              var ta = document.createElement('textarea');
+              ta.value = text + ' ' + shareUrl; document.body.appendChild(ta); ta.select();
+              try { document.execCommand('copy'); } catch (_) {}
+              document.body.removeChild(ta); finish(true);
+            });
+        };
+        copy();
+      }
+    }
+
+    function mRateLabel(n) { return ['', '很差', '一般', '不错', '满意', '非常棒'][n] || ''; }
+
+    function mOpenRate() {
+      var uid = mGetUserId();
+      if (!uid) { App.toast('请先登录', 'error'); return; }
+      var data = mGetInteraction();
+      var myRating = data.userRatings[uid] || 0;
+      if (myRating) App.toast('您已评过 ' + myRating + ' 分，可修改', 'error');
+      var html =
+        '<div class="m-sheet__hd"><div class="m-sheet__title">课程评分</div></div>' +
+        '<div class="m-sheet__body">' +
+          '<p style="font-size:13px;color:var(--ink-3);margin:0 0 12px">为《' + App.esc(course.title || '课程') + '》打分</p>' +
+          '<div class="m-rate-stars" id="m-rate-stars">' +
+            [1, 2, 3, 4, 5].map(function (n) {
+              return '<button class="m-rate-star' + (n <= myRating ? ' is-on' : '') + '" data-n="' + n + '"><i class="fa' + (n <= myRating ? '-solid' : '-regular') + ' fa-star"></i></button>';
+            }).join('') +
+          '</div>' +
+          '<div class="m-rate-label" id="m-rate-label">' + (myRating ? mRateLabel(myRating) : '点击星星评分') + '</div>' +
+          '<button class="m-btn m-btn--primary m-btn--block" id="m-rate-submit" style="margin-top:16px">提交评分</button>' +
+        '</div>';
+      App.openSheet(html);
+      var score = myRating || 5;
+      var stars = document.getElementById('m-rate-stars');
+      Array.prototype.forEach.call(stars.querySelectorAll('.m-rate-star'), function (b) {
+        b.addEventListener('click', function () {
+          score = parseInt(b.getAttribute('data-n'), 10);
+          Array.prototype.forEach.call(stars.querySelectorAll('.m-rate-star'), function (x) {
+            var n = parseInt(x.getAttribute('data-n'), 10);
+            var on = n <= score;
+            x.classList.toggle('is-on', on);
+            x.querySelector('i').className = (on ? 'fa-solid' : 'fa-regular') + ' fa-star';
+          });
+          var lbl = document.getElementById('m-rate-label');
+          if (lbl) lbl.textContent = mRateLabel(score);
+        });
+      });
+      document.getElementById('m-rate-submit').addEventListener('click', function () {
+        App.closeSheet();
+        mSubmitRate(score);
+      });
+    }
+
+    function mSubmitRate(score) {
+      var uid = mGetUserId();
+      if (!uid) return;
+      var data = mGetInteraction();
+      var already = data.userRatings[uid];
+      data.userRatings[uid] = score;
+      data.ratingSum = (data.ratingSum || 0) + (already ? (score - already) : score);
+      data.ratingCount = already ? data.ratingCount : (data.ratingCount || 0) + 1;
+      mSaveInteraction(data);
+      // 服务端评分接口（计算平均分并持久化）
+      Api.post('/courses/' + courseId + '/ratings', { userId: uid, score: score }).then(function (r) {
+        if (r && r.avgRating !== undefined) {
+          course.rating = r.avgRating;
+          var avgEl = document.getElementById('m-rate-avg');
+          if (avgEl) avgEl.textContent = parseFloat(r.avgRating).toFixed(1);
+        }
+        mSyncCourseMeta();
+      }).catch(function () { mSyncCourseMeta(); });
+      mIncUserStat('ratings');
+      mRenderInteractions();
+      App.toast('评分成功：' + score + '分 ' + mRateLabel(score));
+    }
+
+    // 离开页面时刷新累计学习时长（防止异步丢失）
+    window.addEventListener('pagehide', mStopStudy);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') mStopStudy();
+    });
 
     App.initPage({ active: 'course', requireAuth: true, onReady: initPlayer });
   </script>

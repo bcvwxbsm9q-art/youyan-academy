@@ -67,8 +67,29 @@
       });
     }
 
+    function drawPlaceholderQR(ctx, x, y, size) {
+      const n = 21;
+      const cell = size / n;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x, y, size, size);
+      ctx.fillStyle = '#1e293b';
+      const finder = (ox, oy) => {
+        ctx.fillRect(ox, oy, 7 * cell, 7 * cell);
+        ctx.clearRect(ox + cell, oy + cell, 5 * cell, 5 * cell);
+        ctx.fillRect(ox + 2 * cell, oy + 2 * cell, 3 * cell, 3 * cell);
+      };
+      finder(x, y);
+      finder(x + 14 * cell, y);
+      finder(x, y + 14 * cell);
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if ((r < 7 && c < 7) || (r < 7 && c >= 14) || (r >= 14 && c < 7)) continue;
+          if (Math.sin(r * 17 + c * 31) > 0.35) ctx.fillRect(x + c * cell, y + r * cell, cell, cell);
+        }
+      }
+    }
+
     function renderPoster() {
-      if (typeof QRCode === 'undefined') { alert('二维码组件未加载'); return; }
 
       const canvas = document.createElement('canvas');
       canvas.id = 'poster';
@@ -80,6 +101,29 @@
       // 1) 背景
       ctx.fillStyle = '#f8fafc';
       ctx.fillRect(0, 0, W, H);
+
+      // 预计算签到时间文本（紫色头栏内展示）
+      const fmtDateTime = (v) => {
+        if (!v) return null;
+        const s = v.includes('T') ? v.replace('T', ' ') : String(v);
+        const [datePart, timePart] = s.split(' ');
+        const m = datePart && datePart.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (!m) return { dateLabel: s, timeLabel: '' };
+        const [, y, mo, d] = m;
+        return { dateLabel: `${y}年${parseInt(mo)}月${parseInt(d)}日`, timeLabel: timePart || '' };
+      };
+      const sStart = fmtDateTime(training.signinStartTime || training.startTime);
+      const sEnd = fmtDateTime(training.signinEndTime || training.endTime);
+      let timeText = '签到时间：';
+      if (sStart && sStart.timeLabel && sEnd && sEnd.timeLabel) {
+        timeText += (sStart.dateLabel === sEnd.dateLabel)
+          ? `${sStart.dateLabel} ${sStart.timeLabel} ~ ${sEnd.timeLabel}`
+          : `${sStart.dateLabel} ${sStart.timeLabel} ~ ${sEnd.dateLabel} ${sEnd.timeLabel}`;
+      } else if (sStart) {
+        timeText += sStart.timeLabel ? `${sStart.dateLabel} ${sStart.timeLabel}` : sStart.dateLabel;
+      } else {
+        timeText += '待定，请关注培训通知';
+      }
 
       // 2) 顶部紫色头栏（直角 banner，高度 280）
       const headerH = 280;
@@ -98,12 +142,31 @@
       // 标题
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
-      ctx.font = `bold 42px ${fontBase}`;
-      ctx.fillText('签到二维码', W / 2, 100);
+      ctx.font = `bold 40px ${fontBase}`;
+      ctx.shadowColor = 'rgba(0,0,0,0.18)';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetY = 3;
+      ctx.fillText('签到二维码', W / 2, 86);
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // 头栏内细分隔线（提升精致感，分层标题与培训名）
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(W / 2 - 52, 120);
+      ctx.lineTo(W / 2 + 52, 120);
+      ctx.stroke();
 
       // 培训名称
-      ctx.font = `28px ${fontBase}`;
-      fillTextWithWrap(ctx, training.name || training.project || '未命名培训', W / 2, 160, W - 80, 40, 'center');
+      ctx.font = `500 27px ${fontBase}`;
+      fillTextWithWrap(ctx, training.name || training.project || '未命名培训', W / 2, 168, W - 70, 38, 'center');
+
+      // 签到时间（头栏内，白色小字，靠近头栏底部）
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.font = `19px ${fontBase}`;
+      ctx.fillText(timeText, W / 2, 242);
 
       // 3) 生成二维码
       const url = location.origin + '/m/training.html?id=' + training.id;
@@ -113,52 +176,32 @@
       qrContainer.style.left = '-9999px';
       document.body.appendChild(qrContainer);
 
-      new QRCode(qrContainer, {
-        text: url,
-        width: qrSize,
-        height: qrSize,
-        colorDark: '#1e293b',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
-      });
+      if (typeof QRCode !== 'undefined') {
+        new QRCode(qrContainer, {
+          text: url,
+          width: qrSize,
+          height: qrSize,
+          colorDark: '#1e293b',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H
+        });
+      } else {
+        // 离线预览占位 QR
+        const pCanvas = document.createElement('canvas');
+        pCanvas.width = qrSize;
+        pCanvas.height = qrSize;
+        drawPlaceholderQR(pCanvas.getContext('2d'), 0, 0, qrSize);
+        qrContainer.appendChild(pCanvas);
+      }
 
       setTimeout(() => {
         const qrCanvas = qrContainer.querySelector('canvas');
         const qrX = (W - qrSize) / 2;
         // 解决签到码
         let signinId = training.signinId || String(1000 + Math.floor(Math.random() * 9000));
-        // 计算签到时间文本
-        const fmtDateTime = (v) => {
-          if (!v) return null;
-          const s = v.includes('T') ? v.replace('T', ' ') : String(v);
-          const [datePart, timePart] = s.split(' ');
-          const m = datePart && datePart.match(/(\d{4})-(\d{2})-(\d{2})/);
-          if (!m) return { dateLabel: s, timeLabel: '' };
-          const [, y, mo, d] = m;
-          return { dateLabel: `${y}年${parseInt(mo)}月${parseInt(d)}日`, timeLabel: timePart || '' };
-        };
-        const sStart = fmtDateTime(training.signinStartTime || training.startTime);
-        const sEnd = fmtDateTime(training.signinEndTime || training.endTime);
-        let timeText = '签到时间：';
-        if (sStart && sStart.timeLabel && sEnd && sEnd.timeLabel) {
-          timeText += (sStart.dateLabel === sEnd.dateLabel)
-            ? `${sStart.dateLabel} ${sStart.timeLabel} ~ ${sEnd.timeLabel}`
-            : `${sStart.dateLabel} ${sStart.timeLabel} ~ ${sEnd.dateLabel} ${sEnd.timeLabel}`;
-        } else if (sStart) {
-          timeText += sStart.timeLabel ? `${sStart.dateLabel} ${sStart.timeLabel}` : sStart.dateLabel;
-        } else {
-          timeText += '待定，请关注培训通知';
-        }
 
-        // 签到时间：头栏正下方（二维码上方）
-        const timeY = headerH + 40;
-        ctx.fillStyle = '#475569';
-        ctx.font = `20px ${fontBase}`;
-        ctx.textAlign = 'center';
-        ctx.fillText(timeText, W / 2, timeY);
-
-        // 二维码在「时间下方 → 签到码」区域垂直居中
-        const qrTop = headerH + 72;
+        // 二维码在「头栏下方 → 签到码」区域垂直居中
+        const qrTop = headerH + 50;
         const bottomBound = H - 150;
         const reserveCode = 78;
         const regionBottom = bottomBound - reserveCode;

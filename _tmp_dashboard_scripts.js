@@ -4691,6 +4691,29 @@
       ctx.fillStyle = '#f8fafc';
       ctx.fillRect(0, 0, W, H);
 
+      // 预计算签到时间文本（用于紫色头栏内展示）
+      const fmtDateTime = (v) => {
+        if (!v) return null;
+        const s = v.includes('T') ? v.replace('T', ' ') : String(v);
+        const [datePart, timePart] = s.split(' ');
+        const m = datePart && datePart.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (!m) return { dateLabel: s, timeLabel: '' };
+        const [, y, mo, d] = m;
+        return { dateLabel: `${y}年${parseInt(mo)}月${parseInt(d)}日`, timeLabel: timePart || '' };
+      };
+      const sStart = fmtDateTime(training.signinStartTime || training.startTime);
+      const sEnd = fmtDateTime(training.signinEndTime || training.endTime);
+      let timeText = '签到时间：';
+      if (sStart && sStart.timeLabel && sEnd && sEnd.timeLabel) {
+        timeText += (sStart.dateLabel === sEnd.dateLabel)
+          ? `${sStart.dateLabel} ${sStart.timeLabel} ~ ${sEnd.timeLabel}`
+          : `${sStart.dateLabel} ${sStart.timeLabel} ~ ${sEnd.dateLabel} ${sEnd.timeLabel}`;
+      } else if (sStart) {
+        timeText += sStart.timeLabel ? `${sStart.dateLabel} ${sStart.timeLabel}` : sStart.dateLabel;
+      } else {
+        timeText += '待定，请关注培训通知';
+      }
+
       // 2) 顶部紫色头栏（直角 banner，高度 280）
       const headerH = 280;
       const headerGrad = ctx.createLinearGradient(0, 0, W, headerH);
@@ -4709,11 +4732,16 @@
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
       ctx.font = `bold 42px ${fontBase}`;
-      ctx.fillText('签到二维码', W / 2, 100);
+      ctx.fillText('签到二维码', W / 2, 95);
 
       // 培训名称
       ctx.font = `28px ${fontBase}`;
-      fillTextWithWrap(ctx, training.name || training.project || '未命名培训', W / 2, 160, W - 80, 40, 'center');
+      fillTextWithWrap(ctx, training.name || training.project || '未命名培训', W / 2, 148, W - 80, 38, 'center');
+
+      // 签到时间（头栏内，白色小字）
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.font = `20px ${fontBase}`;
+      ctx.fillText(timeText, W / 2, 210);
 
       // 3) 生成二维码
       const url = location.origin + '/m/training.html?id=' + id;
@@ -4749,38 +4777,9 @@
                 }).catch(() => {});
               } catch (e) {}
             }
-            // 计算签到时间文本
-            const fmtDateTime = (v) => {
-              if (!v) return null;
-              const s = v.includes('T') ? v.replace('T', ' ') : String(v);
-              const [datePart, timePart] = s.split(' ');
-              const m = datePart && datePart.match(/(\d{4})-(\d{2})-(\d{2})/);
-              if (!m) return { dateLabel: s, timeLabel: '' };
-              const [, y, mo, d] = m;
-              return { dateLabel: `${y}年${parseInt(mo)}月${parseInt(d)}日`, timeLabel: timePart || '' };
-            };
-            const sStart = fmtDateTime(training.signinStartTime || training.startTime);
-            const sEnd = fmtDateTime(training.signinEndTime || training.endTime);
-            let timeText = '签到时间：';
-            if (sStart && sStart.timeLabel && sEnd && sEnd.timeLabel) {
-              timeText += (sStart.dateLabel === sEnd.dateLabel)
-                ? `${sStart.dateLabel} ${sStart.timeLabel} ~ ${sEnd.timeLabel}`
-                : `${sStart.dateLabel} ${sStart.timeLabel} ~ ${sEnd.dateLabel} ${sEnd.timeLabel}`;
-            } else if (sStart) {
-              timeText += sStart.timeLabel ? `${sStart.dateLabel} ${sStart.timeLabel}` : sStart.dateLabel;
-            } else {
-              timeText += '待定，请关注培训通知';
-            }
 
-            // 签到时间：头栏正下方（二维码上方），与培训名形成信息组
-            const timeY = headerH + 40;
-            ctx.fillStyle = '#475569';
-            ctx.font = `20px ${fontBase}`;
-            ctx.textAlign = 'center';
-            ctx.fillText(timeText, W / 2, timeY);
-
-            // 二维码在「时间下方 → 签到码」区域垂直居中（下方预留签到码空间）
-            const qrTop = headerH + 72;
+            // 二维码在「头栏下方 → 签到码」区域垂直居中（下方预留签到码空间）
+            const qrTop = headerH + 50;
             const bottomBound = H - 150;
             const reserveCode = 78;
             const regionBottom = bottomBound - reserveCode;

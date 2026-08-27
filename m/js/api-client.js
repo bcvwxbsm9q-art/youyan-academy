@@ -88,8 +88,12 @@
     trainingSignins: function (id) { return Api.get('/training/' + id + '/signins'); },
 
     // ---- 签到 ----
-    signin: function (id, userId) {
-      return Api.post('/training/' + id + '/signin', { userId: userId, method: 'mobile', direct: true });
+    signin: function (id, userId, code) {
+      return Api.post('/training/' + id + '/signin', { userId: userId, code: code, method: 'mobile', direct: true });
+    },
+    // 按签到码定位培训（移动端输码/扫码通用）
+    trainingBySignin: function (code) {
+      return Api.get('/training/by-signin/' + encodeURIComponent(code));
     },
 
     // ---- 调研 ----
@@ -108,6 +112,7 @@
     profileUpdate: function (payload) { return Api.put('/auth/profile', payload); },
     examRecords: function () { return Api.get('/user/exam-records'); },
     certificates: function () { return Api.get('/user-certificates'); },
+    userTrainings: function () { return Api.get('/user/trainings'); },
     notifications: function () { return Api.get('/notifications'); },
     markRead: function (id) { return Api.put('/notifications/' + id + '/read', {}); },
     markAllRead: async function (ids) { return Api.post('/notifications/batch-read', { ids: ids }); },

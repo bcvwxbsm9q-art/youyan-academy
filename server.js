@@ -2765,6 +2765,24 @@ function generateSigninId(data) {
   return code;
 }
 
+// 解析 "2026-07-28 14:30" 形式的本地时间字符串为 Date
+function parseLocalDT(str) {
+  if (!str || typeof str !== 'string') return null;
+  const s = str.trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+  if (!m) return null;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]), Number(m[5]), 0, 0);
+}
+
+// 从请求头提取管理员身份（Bearer token + role=admin）
+function getAdminFromReq(req) {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) return null;
+  const p = verifyToken(auth.slice(7));
+  if (!p || p.role !== 'admin') return null;
+  return p;
+}
+
 // GET /api/training/by-signin/:code - 手机端按签到码定位培训（扫码/输码通用）
 app.get('/api/training/by-signin/:code', (req, res) => {
   const code = String(req.params.code).trim();
@@ -2850,6 +2868,7 @@ app.get('/api/training/schedule', (req, res) => {
       signinStartTime: event.signinStartTime,
       signinEndTime: event.signinEndTime,
       signinCode: event.signinCode,
+      signinId: event.signinId,
       signinDone,
       surveyEnabled: event.surveyEnabled,
       linkedSurveyId: event.linkedSurveyId,
@@ -2910,17 +2929,41 @@ app.post('/api/training/:id/signin', (req, res) => {
   if (!event.signinEnabled) {
     return res.status(400).json({ success: false, error: '该培训未开启签到' });
   }
-  
-  // 所有签到均通过培训任务页点击按钮完成，不再校验签到码
-  
+
+  // 签到时间窗校验：不在窗口内禁止签到，需由管理员后台补录
+  const now = new Date();
+  const winStart = parseLocalDT(event.signinStartTime);
+  const winEnd = parseLocalDT(event.signinEndTime);
+  if (winStart && winEnd) {
+    if (now < winStart || now > winEnd) {
+      return res.status(403).json({
+        success: false,
+        code: 'OUT_OF_WINDOW',
+        error: '当前不在签到时间内（' + (event.signinStartTime || '') + ' ~ ' + (event.signinEndTime || '') + '），无法签到。未按时签到请联系管理员在后台「考勤数据」中进行补录。'
+      });
+    }
+  }
+
+  // 签到码校验：海报/二维码上的 4 位 signinId（PC 端必填；移动端扫码或输码均会携带）
+  if (event.signinId) {
+    const provided = String(code == null ? '' : code).trim();
+    if (provided !== String(event.signinId)) {
+      return res.status(400).json({
+        success: false,
+        code: 'BAD_CODE',
+        error: '签到码不正确，请核对海报上的 4 位签到码'
+      });
+    }
+  }
+
   if (!data.training_signins) data.training_signins = [];
-  
+
   // 检查是否已签到
   const alreadySigned = data.training_signins.some(s => s.trainingId === trainingId && s.userId == userId);
   if (alreadySigned) {
     return res.status(400).json({ success: false, error: '您已签到，无需重复签到' });
   }
-  
+
   const user = (data.registered_users || []).find(u => u.id == userId);
   const signin = {
     id: Date.now(),
@@ -2929,7 +2972,8 @@ app.post('/api/training/:id/signin', (req, res) => {
     userName: user ? (user.realName || user.username) : '未知用户',
     department: user ? (user.department || '') : '',
     signedAt: new Date().toISOString(),
-    method: direct ? (reqMethod || 'direct') : 'code'
+    method: reqMethod || (direct ? 'direct' : 'code'),
+    status: 'signed'
   };
   data.training_signins.push(signin);
   
@@ -2953,6 +2997,85 @@ app.delete('/api/training/signins/:signinId', (req, res) => {
   } else {
     res.status(500).json({ success: false, error: '删除失败' });
   }
+});
+
+// POST /api/training/:id/signin/backfill - 管理员考勤补录（跳过时间窗与签到码，自动完成签到）
+app.post('/api/training/:id/signin/backfill', (req, res) => {
+  const admin = getAdminFromReq(req);
+  if (!admin) return res.status(401).json({ success: false, error: '无权限：需要管理员登录' });
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ success: false, error: '缺少用户ID' });
+  const event = (data.training_events || []).find(e => e.id === trainingId);
+  if (!event) return res.status(404).json({ success: false, error: '培训事件不存在' });
+  if (!data.training_signins) data.training_signins = [];
+  const user = (data.registered_users || []).find(u => u.id == userId);
+  let rec = data.training_signins.find(s => s.trainingId === trainingId && s.userId == userId);
+  if (rec) {
+    rec.status = 'signed';
+    rec.method = 'backfill';
+    rec.signedAt = new Date().toISOString();
+    rec.backfilledBy = admin.id || admin.username;
+    rec.userName = user ? (user.realName || user.username) : (rec.userName || '未知用户');
+    rec.department = user ? (user.department || '') : (rec.department || '');
+  } else {
+    rec = {
+      id: Date.now(),
+      trainingId,
+      userId: user ? user.id : userId,
+      userName: user ? (user.realName || user.username) : '未知用户',
+      department: user ? (user.department || '') : '',
+      signedAt: new Date().toISOString(),
+      method: 'backfill',
+      status: 'signed',
+      backfilledBy: admin.id || admin.username
+    };
+    data.training_signins.push(rec);
+  }
+  if (writeData(data)) res.json({ success: true, data: rec });
+  else res.status(500).json({ success: false, error: '补录失败' });
+});
+
+// POST /api/training/:id/leave - 管理员标记请假（未签到，记为请假）
+app.post('/api/training/:id/leave', (req, res) => {
+  const admin = getAdminFromReq(req);
+  if (!admin) return res.status(401).json({ success: false, error: '无权限：需要管理员登录' });
+  const data = readData();
+  const trainingId = parseInt(req.params.id);
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ success: false, error: '缺少用户ID' });
+  const event = (data.training_events || []).find(e => e.id === trainingId);
+  if (!event) return res.status(404).json({ success: false, error: '培训事件不存在' });
+  if (!data.training_signins) data.training_signins = [];
+  const user = (data.registered_users || []).find(u => u.id == userId);
+  let rec = data.training_signins.find(s => s.trainingId === trainingId && s.userId == userId);
+  if (rec && rec.status === 'signed') {
+    return res.status(400).json({ success: false, error: '该学员已签到，无法标记请假' });
+  }
+  if (rec) {
+    rec.status = 'leave';
+    rec.method = 'leave';
+    rec.signedAt = rec.signedAt || null;
+    rec.leaveBy = admin.id || admin.username;
+    rec.userName = user ? (user.realName || user.username) : (rec.userName || '未知用户');
+    rec.department = user ? (user.department || '') : (rec.department || '');
+  } else {
+    rec = {
+      id: Date.now(),
+      trainingId,
+      userId: user ? user.id : userId,
+      userName: user ? (user.realName || user.username) : '未知用户',
+      department: user ? (user.department || '') : '',
+      signedAt: null,
+      method: 'leave',
+      status: 'leave',
+      leaveBy: admin.id || admin.username
+    };
+    data.training_signins.push(rec);
+  }
+  if (writeData(data)) res.json({ success: true, data: rec });
+  else res.status(500).json({ success: false, error: '标记失败' });
 });
 
 // GET /api/training/:id/survey-responses - 获取某培训事件的调研结果
@@ -4441,6 +4564,36 @@ app.get('/api/user/login-days', (req, res) => {
     success: true,
     loginDays: loginDates.length,
     loginDates
+  });
+});
+
+// GET /api/user/learning-stats - 当前学员的学习统计（时长/完成/连续/徽章/证书/等级/XP）
+// 单一权威来源：移动端与 PC 端统一从此获取，避免各自计算导致漂移
+app.get('/api/user/learning-stats', (req, res) => {
+  const currentUser = getCurrentUser(req);
+  if (!currentUser) return res.status(401).json({ success: false, error: '未登录' });
+  const data = readData();
+  const uid = String(currentUser.id);
+  const stats = getUserLearningStats(data, uid, currentUser);
+  const badgeCount = stats.badgeCount || 0;
+  const totalXp = Math.floor((stats.totalHours || 0) * 5)
+    + (stats.courseCount || 0) * 5
+    + (stats.streakDays || 0) * 1
+    + (badgeCount + (stats.certificateCount || 0)) * 5;
+  res.json({
+    success: true,
+    data: {
+      hours: stats.totalHours || 0,
+      completed: stats.courseCount || 0,
+      streak: stats.streakDays || 0,
+      trainingCount: stats.trainingCount || 0,
+      certificateCount: stats.certificateCount || 0,
+      badgeCount: badgeCount,
+      examCount: stats.examCount || 0,
+      xp: totalXp,
+      level: stats.level,
+      levelName: stats.levelName
+    }
   });
 });
 

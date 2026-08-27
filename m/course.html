@@ -2,6 +2,9 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>课程 · 游雁学院</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -16,21 +19,7 @@
   <div class="app-shell">
     <!-- 顶部导航 + 搜索 -->
     <header class="m-nav" style="padding-bottom:10px">
-      <div class="m-nav__left">
-        <svg class="m-logo" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-          <defs>
-            <linearGradient id="mlogoGradC" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#667eea"/>
-              <stop offset="1" stop-color="#764ba2"/>
-            </linearGradient>
-          </defs>
-          <rect x="0" y="0" width="32" height="32" rx="9" fill="url(#mlogoGradC)"/>
-          <path d="M16 7 L27 12 L16 17 L5 12 Z" fill="#fff"/>
-          <path d="M9.5 13.5 V19.5 C9.5 19.5 12.5 21.6 16 21.6 C19.5 21.6 22.5 19.5 22.5 19.5 V13.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
-          <circle cx="27" cy="12" r="1.7" fill="#fff"/>
-        </svg>
-        <span class="m-nav__title">游雁学院</span>
-      </div>
+      <div class="m-nav__left"><span class="m-nav__title">游雁学院</span></div>
       <div class="m-nav__right">
         <button class="m-nav__pill" onclick="App.openSharePanel()" aria-label="更多">
           <i class="fa-solid fa-ellipsis"></i>
@@ -77,6 +66,7 @@
     var lecturerMap = {};
     var allCourses = [];
     var curCat = 'all';
+    var expandedPrimary = null; // 当前展开显示二级分类的一级分类 id
     var searchQ = '';
     var catMap = {};  // id → {name, parentId, parentName}
 
@@ -87,15 +77,18 @@
         // 判断选中的是父分类还是子分类
         var info = catMap[curCat];
         if (info && !info.parentId) {
-          // 父分类：匹配自身 + 所有子分类
-          var childIds = Object.keys(catMap).filter(function (k) { return catMap[k].parentId === curCat; });
+          // 一级分类：匹配自身及其所有二级子分类下的课程（同时看 categoryId 与 subcategoryId）
+          var childIds = Object.keys(catMap).filter(function (k) { return String(catMap[k].parentId) === String(curCat); });
           list = list.filter(function (c) {
             var cid = String(c.categoryId || '');
-            return cid === curCat || childIds.indexOf(cid) > -1;
+            var sid = String(c.subcategoryId || '');
+            return cid === curCat || sid === curCat || childIds.indexOf(cid) > -1 || childIds.indexOf(sid) > -1;
           });
         } else {
-          // 子分类或未知 ID：精确匹配
-          list = list.filter(function (c) { return String(c.categoryId) === curCat; });
+          // 二级分类或未知 ID：精确匹配 categoryId 或 subcategoryId
+          list = list.filter(function (c) {
+            return String(c.categoryId) === curCat || String(c.subcategoryId) === curCat;
+          });
         }
       } else if (curCat === '__none__') {
         list = list.filter(function (c) { return !c.categoryId; });
@@ -146,52 +139,66 @@
     }
 
     function renderCats() {
-      // 收集所有用到的分类 ID（优先子分类，同时列出父分类）
-      var usedParents = {};
-      var subIds = [];
+      // 从课程实际数据归纳「一级分类 → 二级分类」映射（兼容 categoryId 是一级或二级的情况）
+      var primaries = {}; // pid -> { id, name, children:{} }
       allCourses.forEach(function (c) {
         var cid = String(c.categoryId || '');
+        var sid = String(c.subcategoryId || '');
         if (!cid) return;
         var info = catMap[cid];
-        if (info) {
-          if (info.parentId && !usedParents[info.parentId]) {
-            usedParents[info.parentId] = info.parentName;
-          }
-          if (!info.parentId) usedParents[cid] = info.name;
-          if (subIds.indexOf(cid) < 0) subIds.push(cid);
-        } else {
-          // 分类数据里没有的 ID，显示为"未分类"
-          if (subIds.indexOf(cid) < 0) subIds.push(cid);
+        if (!info) return; // 分类数据缺失，跳过
+        var pid = info.parentId ? String(info.parentId) : cid;
+        var pname = info.parentId ? (catMap[info.parentId] ? catMap[info.parentId].name : info.parentName) : info.name;
+        if (!primaries[pid]) primaries[pid] = { id: pid, name: pname, children: {} };
+        if (sid && catMap[sid]) primaries[pid].children[sid] = catMap[sid].name;
+      });
+
+      // 一级行：默认全部显示
+      var html = '<div class="m-chips m-cat-row">';
+      html += '<button class="m-chip' + (curCat === 'all' ? ' is-active' : '') + '" data-cat="all">全部</button>';
+      Object.keys(primaries).forEach(function (pid) {
+        var p = primaries[pid];
+        var active = (curCat === pid || expandedPrimary === pid);
+        html += '<button class="m-chip' + (active ? ' is-active' : '') + '" data-cat="' + pid + '" data-primary="1">' + App.esc(p.name) + '</button>';
+      });
+      html += '</div>';
+
+      // 二级行：仅当某一级被展开时显示
+      if (expandedPrimary && primaries[expandedPrimary]) {
+        var kids = primaries[expandedPrimary].children;
+        var kidKeys = Object.keys(kids);
+        if (kidKeys.length) {
+          html += '<div class="m-chips m-cat-children">';
+          kidKeys.forEach(function (sid) {
+            html += '<button class="m-chip' + (curCat === sid ? ' is-active' : '') + '" data-cat="' + sid + '">' + App.esc(kids[sid]) + '</button>';
+          });
+          html += '</div>';
         }
-      });
-
-      var html = '<button class="m-chip is-active" data-cat="all">全部</button>';
-
-      // 按父分类分组展示
-      var parentOrder = Object.keys(usedParents);
-      parentOrder.forEach(function (pid) {
-        var pname = usedParents[pid];
-        // 父分类作为不可选标题（或可选）
-        html += '<button class="m-chip" data-cat="' + pid + '">' + App.esc(pname) + '</button>';
-        // 子分类
-        subIds.forEach(function (sid) {
-          var info = catMap[sid];
-          if (info && String(info.parentId) === pid) {
-            html += '<button class="m-chip" data-cat="' + sid + '">' + App.esc(info.name) + '</button>';
-          }
-        });
-      });
+      }
 
       // 未归类的课程
       var uncategorized = allCourses.some(function (c) { return !c.categoryId; });
-      if (uncategorized) html += '<button class="m-chip" data-cat="__none__">未分类</button>';
+      if (uncategorized) {
+        html += '<div class="m-chips m-cat-row" style="margin-top:8px"><button class="m-chip' + (curCat === '__none__' ? ' is-active' : '') + '" data-cat="__none__">未分类</button></div>';
+      }
 
       var box = document.getElementById('m-cat');
       box.innerHTML = html;
       Array.prototype.forEach.call(box.querySelectorAll('.m-chip'), function (el) {
         el.addEventListener('click', function () {
-          curCat = el.getAttribute('data-cat');
-          box.querySelectorAll('.m-chip').forEach(function (x) { x.classList.toggle('is-active', x === el); });
+          var cat = el.getAttribute('data-cat');
+          var isPrimary = el.getAttribute('data-primary') === '1';
+          if (cat === 'all') {
+            curCat = 'all'; expandedPrimary = null;
+          } else if (isPrimary) {
+            // 点击一级：选中并筛选其下全部课程，同时展开/收起二级
+            curCat = cat;
+            expandedPrimary = (expandedPrimary === cat) ? null : cat;
+          } else {
+            // 点击二级：仅筛选该二级，保持一级展开状态
+            curCat = cat;
+          }
+          renderCats();
           renderGrid(getFiltered());
         });
       });

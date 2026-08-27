@@ -16,21 +16,7 @@
   <div class="app-shell">
     <!-- 顶部导航（与首页/课程页统一：Logo + 扫码） -->
     <header class="m-nav">
-      <div class="m-nav__left">
-        <svg class="m-logo" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-          <defs>
-            <linearGradient id="mlogoGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#667eea"/>
-              <stop offset="1" stop-color="#764ba2"/>
-            </linearGradient>
-          </defs>
-          <rect x="0" y="0" width="32" height="32" rx="9" fill="url(#mlogoGrad)"/>
-          <path d="M16 7 L27 12 L16 17 L5 12 Z" fill="#fff"/>
-          <path d="M9.5 13.5 V19.5 C9.5 19.5 12.5 21.6 16 21.6 C19.5 21.6 22.5 19.5 22.5 19.5 V13.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
-          <circle cx="27" cy="12" r="1.7" fill="#fff"/>
-        </svg>
-        <span class="m-nav__title">游雁学院</span>
-      </div>
+      <div class="m-nav__left"><span class="m-nav__title">游雁学院</span></div>
       <div class="m-nav__right">
         <button class="m-nav__pill" onclick="App.openSharePanel()" aria-label="更多">
           <i class="fa-solid fa-ellipsis"></i>
@@ -41,44 +27,51 @@
       </div>
     </header>
 
-    <!-- 顶部品牌区 + 横向日期条（参考 Univ 风格） -->
-    <section class="m-train-hero">
-      <div class="m-train-hero__inner">
-        <div class="m-train-hero__info">
-          <h1 class="m-train-hero__title">培训安排</h1>
-          <p class="m-train-hero__sub" id="m-page-sub">查看你的培训日程与签到</p>
+    <!-- 课程表：干净白底日历 + 卡片列表（参考图风格） -->
+    <section class="cs-section">
+      <!-- 顶栏：左侧标题 + 右侧月份导航 -->
+      <div class="cs-topbar">
+        <h1 class="cs-page-title">课程表</h1>
+        <div class="cs-cal-nav">
+          <button class="cs-cal-nav__btn" onclick="shiftMonth(-1)" aria-label="上个月"><i class="fa-solid fa-chevron-left"></i></button>
+          <span class="cs-cal-nav__label" id="cs-month-label">2026年7月</span>
+          <button class="cs-cal-nav__btn" onclick="shiftMonth(1)" aria-label="下个月"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
-        <button class="m-train-hero__cal" id="m-cal-toggle" onclick="toggleMonthPanel()" aria-label="日历" title="日历">
-          <span class="m-train-hero__cal-icon"><i class="fa-regular fa-calendar"></i></span>
-          <span class="m-train-hero__cal-txt">日历</span>
-          <span class="m-train-hero__cal-arrow"><i class="fa-solid fa-caret-down"></i></span>
-        </button>
       </div>
 
-      <!-- 横向日期条（周视图，默认显示） -->
-      <div class="m-date-strip" id="m-date-strip"></div>
-
-      <!-- 月历网格（点击"日历"按钮切换显示，默认隐藏） -->
-      <div class="m-month-panel" id="m-month-panel" style="display:none">
-        <div class="m-cal-head">
-          <button class="m-cal-nav" id="cal-prev" aria-label="上个月"><i class="fa-solid fa-chevron-left"></i></button>
-          <span class="m-cal-title" id="m-cal-title">2026年7月</span>
-          <button class="m-cal-nav" id="cal-next" aria-label="下个月"><i class="fa-solid fa-chevron-right"></i></button>
-          <button class="m-cal-today" id="cal-today">今天</button>
+      <!-- 完整月历（始终显示） -->
+      <div class="cs-month-panel" id="m-month-panel">
+        <!-- 图例 + 本月统计（参考钉钉考勤） -->
+        <div class="cs-cal-meta">
+          <div class="cs-stat" id="cs-stat">本月 0 场培训</div>
+          <div class="cs-legend">
+            <span class="cs-legend__i"><i class="dot dot--done"></i>已完成</span>
+            <span class="cs-legend__i"><i class="dot dot--todo"></i>待完成</span>
+            <span class="cs-legend__i"><i class="dot dot--upcoming"></i>未开始</span>
+          </div>
         </div>
         <div class="m-month-view" id="m-month-view"></div>
       </div>
     </section>
 
-    <!-- 列表头部 -->
-    <div class="m-tl-hd">
-      <span class="m-tl-hd__title" id="tl-title">今日培训</span>
+    <!-- 列表头部（可选，当前由课程表统一承载） -->
+    <div class="m-tl-hd" id="tl-hd" style="display:none">
+      <span class="m-tl-hd__title" id="tl-title">本月培训</span>
       <span class="m-tl-hd__count" id="list-n">(0)</span>
     </div>
 
     <!-- 时间轴式日程列表 -->
     <section class="m-timeline" id="m-training-list">
       <div class="m-loading"><div class="m-spin"></div><div style="margin-left:10px">加载中...</div></div>
+    </section>
+
+    <!-- 底部：扫码签到 CTA（复用 scan.js 的 App.startScan） -->
+    <section class="m-scan-cta">
+      <button class="m-scan-cta__btn" onclick="App.startScan()" aria-label="扫码签到">
+        <i class="fa-solid fa-qrcode"></i>
+        <span>扫码签到</span>
+      </button>
+      <p class="m-scan-cta__tip">扫描培训现场的签到二维码，即可一键签到</p>
     </section>
   </div>
 
@@ -93,6 +86,16 @@
     var viewY, viewM;         // 当前查看的年月
     var selectedDate = null;  // 选中的日期（App.fmtDate 格式 'YYYY/M/D'），null=未选中
 
+    /* ========== 工具函数 ========== */
+    var AVATAR_COLORS = [
+      'linear-gradient(135deg,#667eea,#764ba2)',
+      'linear-gradient(135deg,#f093fb,#f5576c)',
+      'linear-gradient(135deg,#4facfe,#00f2fe)',
+      'linear-gradient(135deg,#43e97b,#38f9d7)',
+      'linear-gradient(135deg,#fa709a,#fee140)'
+    ];
+    function avatarColor(idx) { return AVATAR_COLORS[idx % AVATAR_COLORS.length]; }
+
     /* ========== 月历渲染（可翻月、可点选日期联动列表） ========== */
     function renderMonthGrid(y, m) {
       var firstDay = (new Date(y, m, 1).getDay() + 6) % 7; // 周一为每周起点，与上方周日期条对齐
@@ -101,12 +104,23 @@
       var today = isCur ? new Date().getDate() : -1;
       var dw = ['一','二','三','四','五','六','日'];
 
-      // 该月有培训的日期集合
+      // 该月有培训的日期集合 + 每日聚合状态（参考钉钉考勤：绿=已完成 / 橙=待完成 / 蓝=未开始）
       var trainingDays = {};
+      var dayStatus = {};
       allTrainings.forEach(function(t) {
         if (!t.startTime) return;
         var d = new Date(t.startTime);
-        if (d.getFullYear() === y && d.getMonth() === m) trainingDays[d.getDate()] = true;
+        if (d.getFullYear() === y && d.getMonth() === m) {
+          var day = d.getDate();
+          trainingDays[day] = true;
+          var st = calcStatus(t);
+          var key = st ? st.cls : 'is-doing';
+          // 优先级：todo > doing > upcoming > done（当天只要有未完成就标记为待完成）
+          if (key === 'is-todo') dayStatus[day] = 'todo';
+          else if (key === 'is-doing') { if (dayStatus[day] !== 'todo') dayStatus[day] = 'todo'; }
+          else if (key === 'is-upcoming') { if (!dayStatus[day]) dayStatus[day] = 'upcoming'; }
+          else if (key === 'is-done') { if (!dayStatus[day]) dayStatus[day] = 'done'; }
+        }
       });
 
       var html = '<div class="m-mg-row">';
@@ -118,9 +132,15 @@
         var cls = 'm-mg-d m-mg-d--click';
         if (d === today) cls += ' is-today';
         if (selectedDate && selectedDate === dateKey) cls += ' is-sel';
-        else if (signedDates.indexOf(d) > -1) cls += ' is-done';
         else if (trainingDays[d]) cls += ' is-has';
-        html += '<div class="' + cls + '" data-d="' + d + '">' + d + '</div>';
+
+        // 有培训时显示状态圆点（参考钉钉考勤的彩色圆点标识）
+        var dotHtml = '';
+        if (dayStatus[d]) {
+          dotHtml = '<span class="m-mg-d__dot m-mg-d__dot--' + dayStatus[d] + '"></span>';
+        }
+
+        html += '<div class="' + cls + '" data-d="' + d + '">' + d + dotHtml + '</div>';
       }
       html += '</div>';
       var box = document.getElementById('m-month-view');
@@ -128,12 +148,13 @@
       box.querySelectorAll('.m-mg-d--click').forEach(function(el) {
         el.addEventListener('click', function() {
           var day = parseInt(el.getAttribute('data-d'), 10);
-          var picked = App.fmtDate(new Date(y, m, day));
-          selectedDate = (selectedDate === picked) ? null : picked;  // 再次点击取消选中
-          document.getElementById('m-month-panel').style.display = 'none';
-          renderMonthGrid(y, m);
-          renderWeekStrip();
-          renderFiltered();
+          var dateKey = App.fmtDate(new Date(y, m, day));
+          var dayTrainings = allTrainings.filter(function(t) {
+            if (!t.startTime) return false;
+            return App.fmtDate(new Date(t.startTime)) === dateKey;
+          });
+          if (!dayTrainings.length) { App.toast('这一天没有培训安排'); return; }
+          openDaySheet(dayTrainings);
         });
       });
     }
@@ -149,7 +170,10 @@
           if (t.signinDone) monthSigned++;
         }
       });
-      document.getElementById('m-cal-title').textContent = y + '年' + (m + 1) + '月';
+      var ml = document.getElementById('cs-month-label');
+      if (ml) ml.textContent = y + '年' + (m + 1) + '月';
+      var stat = document.getElementById('cs-stat');
+      if (stat) stat.innerHTML = '本月 <b>' + monthCount + '</b> 场培训 · 已签到 <b>' + monthSigned + '</b> 场';
       renderMonthGrid(y, m);
     }
 
@@ -164,14 +188,13 @@
         box.classList.add(delta < 0 ? 'is-slide-right' : 'is-slide-left');
       }
       renderCalendar(viewY, viewM);
+      renderWeekStrip();
+      renderFiltered();
     }
     function resetCalView() {
       selectedDate = null;
       var now = new Date();
       viewY = now.getFullYear(); viewM = now.getMonth();
-      document.getElementById('m-month-panel').style.display = 'none';
-      var btn = document.getElementById('m-cal-toggle');
-      if (btn) btn.classList.remove('is-open');
       renderCalendar(viewY, viewM);
       renderWeekStrip();
       renderFiltered();
@@ -194,39 +217,50 @@
       return { m: (+p[1]) + '月' + (+p[2]) + '日', w: wd };
     }
 
-    /* ========== 横向日期条（周视图） ========== */
+    /* ========== 两行日期网格（星期名行 + 日期数字行） ========== */
     function renderWeekStrip() {
-      var strip = document.getElementById('m-date-strip');
+      var grid = document.getElementById('cs-week-grid');
+      if (!grid) return;
       var anchor = selectedDate ? new Date(selectedDate.replace(/\//g, '-')) : new Date();
       var day = anchor.getDay();
       var monOff = day === 0 ? -6 : 1 - day;
       var mon = new Date(anchor); mon.setDate(anchor.getDate() + monOff);
-      var wd = ['日', '一', '二', '三', '四', '五', '六'];
+      var wdNames = ['周日','周一','周二','周三','周四','周五','周六'];
       var todayStr = App.fmtDate(new Date());
       var trainingDates = {};
       allTrainings.forEach(function(t) {
         if (!t.startTime) return;
         trainingDates[App.fmtDate(new Date(t.startTime))] = true;
       });
-      var html = '';
+
+      // 第一行：星期名
+      var wdHtml = '';
+      for (var i = 0; i < 7; i++) {
+        var d = new Date(mon); d.setDate(mon.getDate() + i);
+        var isToday = (App.fmtDate(d) === todayStr);
+        wdHtml += '<div class="cs-wd-cell' + (isToday ? ' is-today' : '') + '">' + wdNames[d.getDay()] + '</div>';
+      }
+
+      // 第二行：日期数字
+      var dayHtml = '';
       for (var i = 0; i < 7; i++) {
         var d = new Date(mon); d.setDate(mon.getDate() + i);
         var key = App.fmtDate(d);
-        var cls = 'm-ds-day';
+        var cls = 'cs-day-cell';
         if (key === todayStr) cls += ' is-today';
         if (selectedDate && selectedDate === key) cls += ' is-sel';
         else if (trainingDates[key]) cls += ' has-training';
         else if (signedDates.indexOf(d.getDate()) > -1) cls += ' is-done';
-        var badge = (key === todayStr) ? '<span class="m-ds-day__badge">今</span>' : '';
-        html += '<div class="' + cls + '" data-date="' + key + '">' +
-                  badge +
-                  '<span class="m-ds-day__wd">周' + wd[d.getDay()] + '</span>' +
-                  '<span class="m-ds-day__num">' + d.getDate() + '</span>' +
-                  '<span class="m-ds-day__dot"></span>' +
-                '</div>';
+        dayHtml += '<div class="' + cls + '" data-date="' + key + '">' +
+                    '<span class="cs-day-cell__num">' + d.getDate() + '</span>' +
+                    '<span class="cs-day-cell__dot"></span>' +
+                  '</div>';
       }
-      strip.innerHTML = html;
-      strip.querySelectorAll('.m-ds-day').forEach(function(el) {
+
+      grid.innerHTML = wdHtml + dayHtml;
+
+      // 绑定点击（只绑第二行的日期格）
+      grid.querySelectorAll('.cs-day-cell').forEach(function(el) {
         el.addEventListener('click', function() {
           var dt = el.getAttribute('data-date');
           selectedDate = (selectedDate === dt) ? null : dt;
@@ -234,20 +268,18 @@
           renderFiltered();
         });
       });
-      var focus = strip.querySelector('.m-ds-day.is-sel') || strip.querySelector('.m-ds-day.is-today');
-      if (focus) focus.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
     }
 
-    function toggleMonthPanel() {
-      var panel = document.getElementById('m-month-panel');
-      var open = panel.style.display === 'none';
-      panel.style.display = open ? 'block' : 'none';
-      var btn = document.getElementById('m-cal-toggle');
-      if (btn) btn.classList.toggle('is-open', open);
-      if (open) renderCalendar(viewY, viewM);
+    function goToday() {
+      selectedDate = null;
+      var now = new Date();
+      viewY = now.getFullYear(); viewM = now.getMonth();
+      renderCalendar(viewY, viewM);
+      renderWeekStrip();
+      renderFiltered();
     }
 
-    /* ========== 列表数据源（默认今日 / 选中某天） ========== */
+    /* ========== 列表数据源（默认当月 / 选中某天） ========== */
     function getFiltered() {
       if (selectedDate) {
         return allTrainings.filter(function(t) {
@@ -255,10 +287,12 @@
           return App.fmtDate(new Date(t.startTime)) === selectedDate;
         });
       }
-      var today = App.fmtDate(new Date());
+      var now = new Date();
+      var y = now.getFullYear(), m = now.getMonth();
       return allTrainings.filter(function(t) {
         if (!t.startTime) return false;
-        return App.fmtDate(new Date(t.startTime)) === today;
+        var d = new Date(t.startTime);
+        return d.getFullYear() === y && d.getMonth() === m;
       });
     }
 
@@ -270,7 +304,7 @@
         var lbl = fmtSelectedLabel();
         titleEl.textContent = lbl.m + ' 培训';
       } else {
-        titleEl.textContent = '今日培训';
+        titleEl.textContent = '本月培训';
       }
       renderSchedList(list);
     }
@@ -289,7 +323,7 @@
       return past ? { cls: 'is-todo', label: '待完成' } : { cls: 'is-upcoming', label: '未开始' };
     }
 
-    /* ========== 时间轴日程列表（左时间列 + 中轴圆点 + 右卡片） ========== */
+    /* ========== 课程卡片列表（参考图风格） ========== */
     function renderSchedList(list) {
       var box = document.getElementById('m-training-list');
       if (!list || !list.length) {
@@ -297,16 +331,15 @@
         if (selectedDate) {
           var parts = selectedDate.split('/');
           emptyText = parts[1] + '月' + parts[2] + '日 没有培训安排';
-          guide = '<div class="m-empty__acts"><button class="m-btn m-btn--ghost m-btn--sm" onclick="clearDateSel()">查看今日</button></div>';
+          guide = '<div class="m-empty__acts"><button class="m-btn m-btn--ghost m-btn--sm" onclick="clearDateSel()">查看全部</button></div>';
         } else {
-          emptyText = '今天还没有培训安排';
-          guide = '<div class="m-empty__acts"><button class="m-btn m-btn--ghost m-btn--sm" onclick="toggleMonthPanel()">选择日期</button></div>';
+          emptyText = '本月还没有培训安排';
+          guide = '<div class="m-empty__acts"><button class="m-btn m-btn--ghost m-btn--sm" onclick="goToday()">回到今日</button></div>';
         }
         box.innerHTML = '<div class="m-empty"><i class="fa-regular fa-calendar-xmark"></i>' + emptyText + guide + '</div>';
         return;
       }
 
-      // 选中某天时，列表顶部加一条日期分隔标题，强化"正在看哪天"的视觉
       var sep = '';
       if (selectedDate) {
         var lbl = fmtSelectedLabel();
@@ -319,47 +352,68 @@
       }
 
       box.innerHTML = sep + list.map(function(t, idx) {
-        var sd = t.startTime ? new Date(t.startTime) : null;
-        var timeStr = sd ? App.fmtHM(sd) : (t.time || '');
-        var endStr = t.endTime ? App.fmtHM(new Date(t.endTime)) : '';
+        var timeStr = t.startTime ? App.fmtHM(t.startTime) : (t.time || '');
+        var endStr = t.endTime ? App.fmtHM(t.endTime) : '';
 
-        var tags = [];
-        if (t.signinEnabled) tags.push('<span class="m-stag m-stag--green">签到</span>');
-        if (t.surveyEnabled && t.linkedSurveyId) tags.push('<span class="m-stag m-stag--blue">调研</span>');
-        if (t.examEnabled && t.linkedExamId) tags.push('<span class="m-stag m-stag--orange">考试</span>');
-        if (t.coursewareEnabled && t.coursewareFiles && t.coursewareFiles.length) tags.push('<span class="m-stag m-stag--purple">课件</span>');
-
-        var st = calcStatus(t);
-        var statusHtml = st ? '<span class="tl-card__status ' + st.cls + '">' + st.label + '</span>' : '';
-
+        // 课程标签（项目名或分类）
         var proj = t.projectName || t.project || t.category || '';
-        var projHtml = proj ? '<span class="tl-card__chip">' + App.esc(proj) + '</span>' : '';
+        var tagHtml = proj ? '<span class="cs-tag cs-tag--proj">' + App.esc(proj) + '</span>' : '';
 
+        // 状态角标
+        var st = calcStatus(t);
+        var badgeHtml = st ? '<span class="cs-badge cs-badge--' + st.cls + '">' + App.esc(st.label) + '</span>' : '';
+
+        // 讲师信息
+        var instName = t.instructor || '待定';
+        var instInitial = instName.charAt(0);
+
+        // 副标题：时间范围 + 地点
+        var timePart = timeStr + (endStr ? '–' + endStr : '');
+        var subParts = [timePart];
+        if (t.location) subParts.push(App.esc(t.location));
+        var subTitle = subParts.join(' · ') || (t.category || '');
+
+        // 操作按钮
+        var acts = [];
+        if (t.coursewareEnabled && t.coursewareFiles && t.coursewareFiles.length) {
+          acts.push('<button class="cs-act" data-act="cw" onclick="event.stopPropagation();goDayTraining(' + t.id + ')"><i class="fa-regular fa-folder-open"></i><span>课件</span></button>');
+        }
+        if ((t.surveyEnabled && t.linkedSurveyId) || (t.examEnabled && t.linkedExamId)) {
+          acts.push('<button class="cs-act" data-act="task" onclick="event.stopPropagation();goDayTraining(' + t.id + ')"><i class="fa-regular fa-file-lines"></i><span>作业</span></button>');
+        }
+
+        // 必修进度
         var req = (t.signinEnabled ? 1 : 0) + (t.surveyEnabled && t.linkedSurveyId ? 1 : 0) + (t.examEnabled && t.linkedExamId ? 1 : 0);
         var done = (t.signinDone ? 1 : 0) + (t.surveyDone ? 1 : 0) + (t.examDone ? 1 : 0);
-        var progHtml = req ? '<div class="tl-card__prog"><span>必修</span><b>' + done + '/' + req + '</b></div>' : '';
+        var progHtml = req ? '<div class="cs-prog"><span>必修</span><b>' + done + '/' + req + '</b></div>' : '';
 
-        return '<div class="tl-item" data-id="' + t.id + '" style="--i:' + idx + '">' +
-          '<div class="tl-time">' +
-            '<div class="tl-time__start">' + App.esc(timeStr) + '</div>' +
-            (endStr ? '<div class="tl-time__end">' + App.esc(endStr) + '</div>' : '') +
-          '</div>' +
-          '<div class="tl-axis">' +
-            '<span class="tl-dot' + (t.signinDone ? ' is-done' : '') + '"></span>' +
-            '<span class="tl-line"></span>' +
-          '</div>' +
-          '<div class="tl-card">' +
-            '<div class="tl-card__top"><div class="tl-card__title">' + App.esc(t.name) + '</div>' + statusHtml + '</div>' +
-            projHtml +
-            '<div class="tl-card__row"><i class="fa-solid fa-location-dot"></i>' + App.esc(t.location || '待定') + '</div>' +
-            (tags.length ? '<div class="tl-card__tags">' + tags.join('') + '</div>' : '') +
+        return '<div class="tl-item" data-id="' + t.id + '" style="--i:' + idx + '" onclick="goDayTraining(' + t.id + ')">' +
+          '<div class="cs-card">' +
+            /* 第一行：课程名（大字）+ 标签 + 状态角标 */
+            '<div class="cs-card__row1">' +
+              '<span class="cs-title">' + App.esc(t.name || '未命名培训') + '</span>' +
+              tagHtml +
+              badgeHtml +
+            '</div>' +
+            /* 第二行：讲师头像 + 名字 + 副标题 + 操作按钮 */
+            '<div class="cs-card__row2">' +
+              '<div class="cs-inst">' +
+                '<span class="cs-avatar" style="background:' + avatarColor(idx) + '">' + App.esc(instInitial) + '</span>' +
+                '<div class="cs-inst__info">' +
+                  '<div class="cs-inst__name">' + App.esc(instName) + '</div>' +
+                  '<div class="cs-inst__sub">' + subTitle + '</div>' +
+                '</div>' +
+              '</div>' +
+              (acts.length ? '<div class="cs-actions">' + acts.join('') + '</div>' : '') +
+            '</div>' +
+            /* 第三行：必修进度 */
             progHtml +
           '</div>' +
         '</div>';
       }).join('');
 
       Array.prototype.forEach.call(box.querySelectorAll('.tl-item'), function(el) {
-        el.addEventListener('click', function() { openTraining(el.getAttribute('data-id')); });
+        el.addEventListener('click', function() { goDayTraining(el.getAttribute('data-id')); });
       });
     }
 
@@ -378,7 +432,7 @@
         location: ev.location, content: ev.content,
         date: App.fmtDate(ev.startTime),
         time: (App.fmtHM(ev.startTime) + (ev.endTime ? ' - ' + App.fmtHM(ev.endTime) : '')),
-        signinEnabled: ev.signinEnabled, signinStartTime: ev.signinStartTime, signinEndTime: ev.signinEndTime, signinDone: false,
+        signinEnabled: ev.signinEnabled, signinStartTime: ev.signinStartTime, signinEndTime: ev.signinEndTime, signinId: ev.signinId, signinDone: false,
         surveyEnabled: ev.surveyEnabled, linkedSurveyId: ev.linkedSurveyId, surveyDone: false,
         examEnabled: ev.examEnabled, linkedExamId: ev.linkedExamId, examDone: false,
         coursewareEnabled: ev.coursewareEnabled, coursewareFiles: ev.coursewareFiles || [],
@@ -425,8 +479,9 @@
 
         var total = allTrainings.length;
         var signed = allTrainings.filter(function(t) { return t.signinDone; }).length;
-        document.getElementById('m-page-sub').textContent =
-          total ? ('共 ' + total + ' 场培训 · 已签到 ' + signed + ' 场') : '暂无培训安排';
+        // 更新月份标签
+        var ml = document.getElementById('cs-month-label');
+        if (ml) ml.textContent = viewY + '年' + (viewM + 1) + '月';
       } catch(e) {
         document.getElementById('m-training-list').innerHTML =
           '<div class="m-empty"><i class="fa-regular fa-circle-xmark"></i>加载失败' +
@@ -435,6 +490,31 @@
     }
 
     function reloadTraining() { loadTrainings(); }
+
+    /* ========== 当日培训清单（点日历日格弹出，点项跳详情页） ========== */
+    function openDaySheet(list) {
+      var first = list[0];
+      var dt = new Date(first.startTime);
+      var parts = App.fmtDate(dt).split('/');
+      var wd = ['周日','周一','周二','周三','周四','周五','周六'][dt.getDay()];
+      var title = (+parts[1]) + '月' + (+parts[2]) + '日 · ' + wd;
+      var rows = list.map(function(t) {
+        var st = calcStatus(t);
+        var badge = st ? '<span class="cs-badge cs-badge--' + st.cls + '">' + App.esc(st.label) + '</span>' : '';
+        var timeStr = t.startTime ? App.fmtHM(t.startTime) : '';
+        var endStr = t.endTime ? App.fmtHM(t.endTime) : '';
+        return '<div class="cd-day-row" onclick="goDayTraining(' + t.id + ')">' +
+          '<div class="cd-day-row__main">' +
+            '<div class="cd-day-row__name">' + App.esc(t.name || '未命名培训') + '</div>' +
+            '<div class="cd-day-row__meta">' + App.esc(timeStr + (endStr ? '–' + endStr : '')) + (t.location ? ' · ' + App.esc(t.location) : '') + '</div>' +
+          '</div>' + badge + '<i class="cd-day-row__arrow fa-solid fa-chevron-right"></i></div>';
+      }).join('');
+      App.openSheet('<div class="m-sheet__hd"><div class="m-sheet__title">' + title + '</div></div><div class="m-sheet__body">' + rows + '</div>');
+    }
+    function goDayTraining(id) {
+      App.closeSheet();
+      location.href = '/m/course-detail.html?id=' + id;
+    }
 
     /* ========== 培训详情弹层 ========== */
     function fmtSigninTime(start, end) {
@@ -532,7 +612,8 @@
     async function doSigninActual(t) {
       App.showLoading('签到中...');
       try {
-        await Api.signin(t.id, App.userId());
+        // 移动端扫码进入本页后自动携带签到码（signinId）完成校验
+        await Api.signin(t.id, App.userId(), t.signinId);
         t.signinDone = true;
         var cached = allTrainings.find(function(x) { return String(x.id) === String(t.id); });
         if (cached) cached.signinDone = true;
@@ -678,12 +759,9 @@
 
     /* ========== 初始化 ========== */
     function onReady() {
-      document.getElementById('cal-prev').addEventListener('click', function () { shiftMonth(-1); });
-      document.getElementById('cal-next').addEventListener('click', function () { shiftMonth(1); });
-      document.getElementById('cal-today').addEventListener('click', resetCalView);
-      loadTrainings();
       var id = new URLSearchParams(location.search).get('id');
-      if (id) setTimeout(function() { openTraining(id); }, 500);
+      if (id) { location.href = '/m/course-detail.html?id=' + id; return; }
+      loadTrainings();
     }
     App.initPage({ active: 'training', requireAuth: true, onReady: onReady });
   </script>

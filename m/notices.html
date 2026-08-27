@@ -2,87 +2,12 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>公告 · 游雁学院</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { theme: { extend: { colors: { primary: '#667eea', secondary: '#764ba2' } } } };
-  </script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/m/css/mobile.css">
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Refresh" content="0; url=/m/messages.html">
+  <script>location.replace('/m/messages.html');</script>
+  <title>跳转中 · 游雁学院</title>
 </head>
 <body>
-  <div class="app-shell">
-    <!-- 顶部返回导航栏 -->
-    <header class="m-nd-nav">
-      <button class="m-nd-nav__back" onclick="App.nav('index.html')" aria-label="返回">
-        <i class="fa-solid fa-chevron-left"></i>
-      </button>
-      <span class="m-nd-nav__title">公告</span>
-      <span class="m-nd-nav__spacer"></span>
-    </header>
-
-    <!-- 列表区（JS 渲染） -->
-    <div class="m-ntc-list" id="m-ntc-list">
-      <div class="m-empty"><i class="fa-solid fa-spinner fa-spin"></i>加载中...</div>
-    </div>
-  </div>
-
-  <!-- 共享登录弹窗（复用 PC 端 auth-modal.js） -->
-  <script src="/js/auth-modal.js?v=20260723m"></script>
-  <script src="/m/js/api-client.js"></script>
-  <script src="/m/js/common.js"></script>
-  <script src="/m/js/scan.js"></script>
-  <script>
-    // 从 content 里提取第一张图片 src（用于列表缩略图）
-    function firstImg(content) {
-      var m = (content || '').match(/<img[^>]+src=["']([^"']+)["']/);
-      return m ? m[1] : '';
-    }
-
-    function renderList(notices) {
-      var box = document.getElementById('m-ntc-list');
-      if (!notices.length) {
-        box.innerHTML = '<div class="m-empty"><i class="fa-regular fa-bell-slash"></i>暂无已发布公告</div>';
-        return;
-      }
-      box.innerHTML = notices.map(function (n) {
-        var img = firstImg(n.content);
-        var views = n.views || n.visitCount || 0;
-        var thumb = img
-          ? '<img class="m-ntc__thumb" src="' + App.esc(img) + '" alt="" loading="lazy" onerror="this.parentNode.classList.add(\'m-ntc__thumb--ph\');this.remove();">'
-          : '<div class="m-ntc__thumb m-ntc__thumb--ph"><i class="fa-solid fa-bullhorn"></i></div>';
-        return '<a class="m-ntc" href="/m/notice.html?id=' + encodeURIComponent(n.id) + '">' +
-          thumb +
-          '<div class="m-ntc__main">' +
-            '<div class="m-ntc__t">' + App.esc(n.title || '公告') + '</div>' +
-            '<div class="m-ntc__sub">' +
-              '<span><i class="fa-regular fa-clock"></i> ' + App.fmtDate(n.createdAt || n.created_at || '') + '</span>' +
-              '<span><i class="fa-regular fa-eye"></i> ' + views + '</span>' +
-            '</div>' +
-          '</div>' +
-        '</a>';
-      }).join('');
-    }
-
-    async function initList() {
-      var box = document.getElementById('m-ntc-list');
-      try {
-        var all = (await Api.notices() || []).filter(function (n) {
-          return n && (n.status === 'published' || n.status === undefined);
-        });
-        // 按 createdAt 倒序（最新在上）
-        all.sort(function (a, b) {
-          return (b.createdAt || '').localeCompare(a.createdAt || '');
-        });
-        renderList(all);
-      } catch (e) {
-        box.innerHTML = '<div class="m-empty"><i class="fa-regular fa-circle-xmark"></i>加载失败，请重试</div>';
-      }
-    }
-
-    App.initPage({ active: 'home', requireAuth: true, onReady: initList });
-  </script>
+  <p style="font-family:sans-serif;text-align:center;margin-top:40vh;color:#666">正在跳转到消息中心…</p>
 </body>
 </html>

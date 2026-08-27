@@ -1102,6 +1102,7 @@
         </div>
     </div>
 
+    <script src="js/xp-system.js"></script>
     <script src="js/auth-modal.js?v=20260704"></script>
     <script src="js/auth-guard.js?v=20260704"></script>
     <script src="js/data-sync.js"></script>
@@ -1194,7 +1195,7 @@ const BADGES = [
 
         // 初始化
         document.addEventListener('DOMContentLoaded', async () => {
-            cleanupExpV2();
+            window.XP.cleanupExpV2();
             await api.init();
             checkAuthAndUpdateUI();
             loadUserData();
@@ -1595,6 +1596,9 @@ const BADGES = [
             if (!currentUser || !currentUser.id) return;
             const userId = currentUser.id;
 
+            // 拉取服务端权威学习统计（经验值/等级的唯一来源，与移动端统一）
+            await loadServerLearningStats();
+
             // 先从服务端拉取最新证书数量，确保徽章/经验值计算与管理员操作同步
             await loadCertificates();
 
@@ -1621,15 +1625,29 @@ const BADGES = [
             document.getElementById('stats-completed-courses').textContent = completedCount;
             document.getElementById('stat-completed').textContent = completedCount;
             
+        // 模块级缓存：getBadgeStats 的最新结果，供 header / level-modal / 成就页共享
+        let _cachedStats = null;
+        function getCachedStats() { return _cachedStats; }
+        function setCachedStats(s) { _cachedStats = s; }
+
             // 成就徽章数量（统一使用同一套计算和 UI 刷新）
             const stats = getBadgeStats();
+            setCachedStats(stats);  // 缓存，供 renderLevelProgress 复用
             const { allIds: unlockedBadgeIds } = calculateUnlockedBadgeIds();
             if (currentUser?.id) localStorage.setItem(`badges_unlocked_${currentUser.id}`, JSON.stringify(unlockedBadgeIds));
             updateBadgeStatsUI(unlockedBadgeIds);
 
             // 同步并持久化经验值，确保只增不减
-            const { totalExp } = syncExp(userId, stats);
-            const levelInfo = getLevelInfo(totalExp);
+            // 优先使用服务端权威经验值（与移动端统一），接口不可用再回退本地计算
+            let totalExp;
+            const srv = serverXpOrNull();
+            if (srv) {
+                totalExp = srv.xp;
+                window.XP.saveXp(userId, totalExp); // 落盘与服务端一致，离线时不漂移
+            } else {
+                totalExp = syncExp(userId, stats).totalExp;
+            }
+            const levelInfo = window.XP.getLevelInfo(totalExp);
             
             // 更新等级徽章
             const levelEl = document.getElementById('user-level');
@@ -1643,6 +1661,9 @@ const BADGES = [
                 const expPercent = (levelInfo.currentExp / levelInfo.requiredExp) * 100;
                 expBarEl.style.width = `${expPercent}%`;
             }
+
+            // 同步刷新等级进度弹窗（确保头部与弹窗始终一致）
+            renderLevelProgress();
             
             // 进行中课程数
             let inProgressCount = 0;
@@ -2114,10 +2135,12 @@ const BADGES = [
                 badges: parseInt(document.getElementById('stat-badges')?.textContent) || 0,
                 certificates: parseInt(document.getElementById('stat-certificates')?.textContent) || 0
             };
-            const totalExp = userId ? syncExp(userId, stats).totalExp : getTotalExp(stats);
+            // 优先使用服务端权威经验值（与移动端统一），保证 PC/移动端等级一致
+            const _sxp2 = serverXpOrNull();
+            const totalExp = _sxp2 ? _sxp2.xp : (userId ? syncExp(userId, stats).totalExp : getTotalExp(stats));
 
-            tableEl.innerHTML = LEVEL_CONFIG.map((cfg, index) => {
-                const isCurrent = totalExp >= cfg.expRequired && (index === LEVEL_CONFIG.length - 1 || totalExp < LEVEL_CONFIG[index + 1].expRequired);
+            tableEl.innerHTML = window.XP.LEVEL_CONFIG.map((cfg, index) => {
+                const isCurrent = totalExp >= cfg.expRequired && (index === window.XP.LEVEL_CONFIG.length - 1 || totalExp < window.XP.LEVEL_CONFIG[index + 1].expRequired);
                 return `
                     <div class="flex items-center justify-between px-3 py-2 ${isCurrent ? 'bg-primary/5' : index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
                         <div class="flex items-center gap-2">
@@ -2194,11 +2217,16 @@ const BADGES = [
         function renderLevelProgress(stats) {
             const levelContainer = document.getElementById('level-progress');
             if (!levelContainer) return;
+
+            // 优先使用传入的 stats，回退到实时计算（getCachedStats 仅在 updateLearningStats 作用域内，此处直接重算保证一致）
+            stats = stats || getBadgeStats();
             
             // 同步持久化经验值，确保只增不减
+            // 优先使用服务端权威经验值（与移动端统一），保证 PC/移动端完全一致
             const userId = currentUser?.id;
-            const { totalExp } = userId ? syncExp(userId, stats) : { totalExp: getTotalExp(stats) };
-            const levelInfo = getLevelInfo(totalExp);
+            const _sxp = serverXpOrNull();
+            const totalExp = _sxp ? _sxp.xp : (userId ? syncExp(userId, stats).totalExp : getTotalExp(stats));
+            const levelInfo = window.XP.getLevelInfo(totalExp);
             const expPercent = (levelInfo.currentExp / levelInfo.requiredExp) * 100;
             
             levelContainer.innerHTML = `
@@ -2227,110 +2255,66 @@ const BADGES = [
                 <div class="mt-4 pt-4 border-t border-gray-100">
                     <p class="text-xs text-gray-400 mb-2">经验值来源</p>
                     <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">学习时长</span>
-                            <span class="font-medium">+${Math.floor(stats.hours * 5)} XP</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">完成课程</span>
-                            <span class="font-medium">+${stats.completed * 5} XP</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">连续学习</span>
-                            <span class="font-medium">+${stats.streak || 0} XP</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">任务奖励</span>
-                            <span class="font-medium">+${((stats.badges || 0) + (stats.certificates || 0)) * 5} XP</span>
-                        </div>
+                        ${(() => {
+                            const bd = _sxp ? _sxp : stats;
+                            const h = Math.floor((bd.hours || 0) * 5);
+                            const c = (bd.completed || 0) * 5;
+                            const s = (bd.streak || 0);
+                            const tr = ((bd.badgeCount != null ? bd.badgeCount : (bd.badges || 0)) + (bd.certificateCount != null ? bd.certificateCount : (bd.certificates || 0))) * 5;
+                            return `
+                            <div class="flex justify-between"><span class="text-gray-500">学习时长</span><span class="font-medium">+${h} XP</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">完成课程</span><span class="font-medium">+${c} XP</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">连续学习</span><span class="font-medium">+${s} XP</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">任务奖励</span><span class="font-medium">+${tr} XP</span></div>`;
+                        })()}
                     </div>
                 </div>
             `;
 
         }
         
-        // 计算总经验值（新规则，用于展示当前各来源贡献）
-        function calculateTotalExp(stats) {
-            let exp = 0;
-            exp += Math.floor(stats.hours * 5);         // 学习时长：1小时=5XP
-            exp += stats.completed * 5;                  // 完成课程：每门5XP
-            exp += (stats.streak || 0) * 1;              // 连续学习：每天1XP
-            exp += ((stats.badges || 0) + (stats.certificates || 0)) * 5;  // 任务奖励：徽章/证书每个5XP
-            return exp;
-        }
+        // ===== XP 计算统一走 window.XP（js/xp-system.js），PC 与移动端共用同一套逻辑 =====
 
-        // 获取总经验值（统一使用 calculateTotalExp 计算规则）
+        // 获取总经验值（转发到 XP.calcXp 计算规则）
         function getTotalExp(stats) {
-            return calculateTotalExp(stats);
-        }
-
-        // 等级配置
-        const LEVEL_CONFIG = [
-            { level: 1, name: '新手学员', expRequired: 0 },
-            { level: 2, name: '初级学员', expRequired: 100 },
-            { level: 3, name: '中级学员', expRequired: 300 },
-            { level: 4, name: '高级学员', expRequired: 600 },
-            { level: 5, name: '学习达人', expRequired: 1000 },
-            { level: 6, name: '探究达人', expRequired: 1500 },
-            { level: 7, name: '博学达人', expRequired: 2200 },
-            { level: 8, name: '学术先锋', expRequired: 3000 },
-            { level: 9, name: '研究学者', expRequired: 4000 },
-            { level: 10, name: '资深学者', expRequired: 5500 },
-            { level: 11, name: '卓越学者', expRequired: 7500 },
-            { level: 12, name: '学术宗师', expRequired: 9999 }
-        ];
-        
-        // 获取等级信息
-        function getLevelInfo(totalExp) {
-            let currentLevel = LEVEL_CONFIG[0];
-            let nextLevel = LEVEL_CONFIG[1];
-            
-            for (let i = 0; i < LEVEL_CONFIG.length; i++) {
-                if (totalExp >= LEVEL_CONFIG[i].expRequired) {
-                    currentLevel = LEVEL_CONFIG[i];
-                    nextLevel = LEVEL_CONFIG[i + 1] || LEVEL_CONFIG[i];
-                } else {
-                    break;
-                }
-            }
-            
-            const requiredExp = nextLevel.expRequired - currentLevel.expRequired;
-            const currentExp = totalExp - currentLevel.expRequired;
-            const remainingExp = nextLevel.expRequired - totalExp;
-            
-            return {
-                level: currentLevel.level,
-                name: currentLevel.name,
-                currentExp: Math.max(0, currentExp),
-                requiredExp: Math.max(1, requiredExp),
-                remainingExp: Math.max(0, remainingExp),
-                totalExp: totalExp
-            };
-        }
-        
-        // ========== 等级经验值持久化 ==========
-        function getExpStorageKey(userId) { return `user_total_exp_v3_${userId}`; }
-
-        function cleanupExpV2() {
-            Object.keys(localStorage).forEach(k => {
-                if (k.startsWith('user_total_exp_v2_')) localStorage.removeItem(k);
-            });
-        }
-
-        function getPersistedExp(userId) {
-            const val = parseInt(localStorage.getItem(getExpStorageKey(userId)), 10);
-            return isNaN(val) ? 0 : val;
-        }
-
-        function saveExp(userId, exp) {
-            localStorage.setItem(getExpStorageKey(userId), String(exp));
+            return window.XP.calcXp(stats);
         }
 
         // 同步经验值：以当前真实数据计算结果为准（证书被管理员删除后可下降）
         function syncExp(userId, stats) {
-            const currentExp = calculateTotalExp(stats);
-            saveExp(userId, currentExp);
+            const currentExp = window.XP.calcXp(stats);
+            window.XP.saveXp(userId, currentExp);
             return { totalExp: currentExp };
+        }
+
+        // ===== 服务端权威经验值（与移动端统一从此获取，杜绝各自计算导致漂移）======
+        // 单一权威来源：/api/user/learning-stats 返回服务端用 getUserLearningStats 计算的 xp / level / levelName，
+        // PC 与移动端都应以它为准，避免本地 calcXp 口径（证书 active+expired、完成数严格判定等）与服务端不一致。
+        let _serverStatsCache = null;
+        let _serverStatsPromise = null;
+        async function loadServerLearningStats() {
+            if (_serverStatsCache) return _serverStatsCache;
+            if (_serverStatsPromise) return _serverStatsPromise;
+            _serverStatsPromise = (async () => {
+                try {
+                    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+                    const res = await fetch('/api/user/learning-stats', { headers: { 'Authorization': 'Bearer ' + token } });
+                    if (!res.ok) throw new Error('stats http ' + res.status);
+                    const result = await res.json();
+                    if (!result || !result.success || !result.data) throw new Error('stats no data');
+                    _serverStatsCache = result.data;
+                    return _serverStatsCache;
+                } catch (e) {
+                    _serverStatsCache = null;
+                    _serverStatsPromise = null;
+                    return null;
+                }
+            })();
+            return _serverStatsPromise;
+        }
+        // 取服务端权威经验值；不可用（离线/接口失败）时返回 null，调用方回退本地计算
+        function serverXpOrNull() {
+            return (_serverStatsCache && _serverStatsCache.xp != null) ? _serverStatsCache : null;
         }
 
         // 加载证书

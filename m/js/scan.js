@@ -24,24 +24,23 @@
       '<video class="m-scan__video" id="m-scan-video" playsinline muted></video>' +
       '<div class="m-scan__frame"><div class="m-scan__line"></div></div>' +
       '<div class="m-scan__tip" id="m-scan-tip">将培训二维码放入框内</div>' +
-      '<button class="m-scan__manual" id="m-scan-manual">无法扫码？手动输入培训ID</button>' +
+      '<button class="m-scan__manual" id="m-scan-manual">无法扫码？输入签到码</button>' +
       '<div id="m-scan-manual-wrap" style="display:none;margin-top:8px;width:240px">' +
-        '<input id="m-scan-input" class="m-input" style="margin-bottom:8px;background:#fff" placeholder="请输入培训ID">' +
-        '<button class="m-btn m-btn--block" id="m-scan-submit">确定</button>' +
+        '<input id="m-scan-input" class="m-input" style="margin-bottom:8px;background:#fff;text-align:center;letter-spacing:0.3em" placeholder="请输入 4 位签到码" inputmode="numeric" maxlength="4">' +
+        '<button class="m-btn m-btn--block" id="m-scan-submit">签到</button>' +
       '</div>';
     document.body.appendChild(el);
 
     document.getElementById('m-scan-close').addEventListener('click', stopScan);
     document.getElementById('m-scan-manual').addEventListener('click', function () {
-      document.getElementById('m-scan-manual-wrap').style.display = 'block';
-      document.getElementById('m-scan-input').focus();
+      showManual();
     });
     document.getElementById('m-scan-submit').addEventListener('click', function () {
       var v = document.getElementById('m-scan-input').value.trim();
-      handleResult(v);
+      handleManualCode(v);
     });
     document.getElementById('m-scan-input').addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') handleResult(this.value.trim());
+      if (e.key === 'Enter') handleManualCode(this.value.trim());
     });
   }
 
@@ -51,6 +50,19 @@
     if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
     var ov = document.getElementById('m-scan');
     if (ov) ov.classList.remove('is-open');
+  }
+
+  // 显示手动输入区并聚焦（摄像头不可用 / 用户主动点“手动输入”时调用）
+  function showManual() {
+    var wrap = document.getElementById('m-scan-manual-wrap');
+    if (wrap) {
+      wrap.style.display = 'block';
+      var input = document.getElementById('m-scan-input');
+      if (input) {
+        // 延迟聚焦，等布局稳定（移动端键盘弹起更可靠）
+        setTimeout(function () { input.focus(); }, 60);
+      }
+    }
   }
 
   function handleResult(text) {
@@ -66,6 +78,40 @@
     } else {
       location.href = '/m/training.html?id=' + encodeURIComponent(id);
     }
+  }
+
+  // 手动输入 4 位签到码：解析培训并直接完成签到（移动端输码签到）
+  function handleManualCode(code) {
+    if (!/^\d{4}$/.test(code)) {
+      if (window.App) App.toast('请输入 4 位数字签到码', 'error');
+      return;
+    }
+    if (!window.Api || !window.App) return;
+    if (typeof App.showLoading === 'function') App.showLoading('签到中...');
+    Api.trainingBySignin(code)
+      .then(function (r) {
+        if (!r || !r.success || !r.event) {
+          if (typeof App.hideLoading === 'function') App.hideLoading();
+          App.toast('签到码无效或培训不存在', 'error');
+          return;
+        }
+        var ev = r.event;
+        Api.signin(ev.id, App.userId(), ev.signinId)
+          .then(function () {
+            if (typeof App.hideLoading === 'function') App.hideLoading();
+            App.toast('签到成功');
+            // 进入培训详情页（已签到，可继续完成调研/考试）
+            location.href = '/m/training.html?id=' + encodeURIComponent(ev.id);
+          })
+          .catch(function (err) {
+            if (typeof App.hideLoading === 'function') App.hideLoading();
+            App.toast((err && err.message) || '签到失败', 'error');
+          });
+      })
+      .catch(function () {
+        if (typeof App.hideLoading === 'function') App.hideLoading();
+        App.toast('签到码无效或培训不存在', 'error');
+      });
   }
 
   function tick() {
@@ -94,12 +140,12 @@
     var tip = document.getElementById('m-scan-tip');
     if (typeof jsQR === 'undefined') {
       if (tip) tip.textContent = '扫码组件未加载，请手动输入培训ID';
-      document.getElementById('m-scan-manual-wrap').style.display = 'block';
+      showManual();
       return;
     }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       if (tip) tip.textContent = '当前环境不支持摄像头，请手动输入培训ID';
-      document.getElementById('m-scan-manual-wrap').style.display = 'block';
+      showManual();
       return;
     }
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
@@ -119,7 +165,7 @@
       })
       .catch(function (err) {
         if (tip) tip.textContent = '无法访问摄像头，请手动输入培训ID';
-        document.getElementById('m-scan-manual-wrap').style.display = 'block';
+        showManual();
       });
   }
 

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>培训详情 · 游雁学院</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { primary: '#667eea', secondary: '#764ba2' } } } };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/m/css/mobile.css">
+  <link rel="stylesheet" href="/m/css/course-detail.css">
+  <link rel="stylesheet" href="/css/tp-detail.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- 顶栏：返回键 + 标题 + 更多 -->
+    <header class="m-nav">
+      <div class="m-nav__left">
+        <button class="m-nav__back" onclick="CourseDetail.goBack()" aria-label="返回"><i class="fa-solid fa-chevron-left"></i></button>
+        <span class="m-nav__title">培训详情</span>
+      </div>
+      <div class="m-nav__right">
+        <button class="m-nav__pill" onclick="App.openSharePanel()" aria-label="更多">
+          <i class="fa-solid fa-ellipsis"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- 详情内容容器（由 course-detail.js 渲染） -->
+    <main class="cd-page" id="cd-body">
+      <div class="m-loading" style="padding:50px 0"><div class="m-spin"></div><div style="margin-left:10px">加载中...</div></div>
+    </main>
+  </div>
+
+  <script src="/js/auth-modal.js?v=20260723m"></script>
+  <script src="/js/course-detail-shared.js?v=20260827"></script>
+  <script src="/m/js/api-client.js"></script>
+  <script src="/m/js/common.js"></script>
+  <script src="/m/js/course-detail.js"></script>
+  <script>CourseDetail.init();</script>
+</body>
+</html>

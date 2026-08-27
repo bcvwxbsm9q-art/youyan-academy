@@ -1,0 +1,42 @@
+/* =========================================================
+ * 培训详情页（移动端）样式
+ *
+ * 设计原则：
+ * - 基本信息卡(.tp-info-*)复用 css/tp-detail.css（与 PC 端共享）
+ * - 本文件只保留移动端特有：返回键、内容容器、状态徽章
+ * ========================================================= */
+
+/* 返回键（顶栏左侧圆形按钮，浅色底适配白底导航） */
+.m-nav__back {
+  width: 38px; height: 38px; border: none; border-radius: 50%;
+  background: #eef0f5; color: #1f2937; font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; margin-right: 6px;
+  transition: background .15s, transform .15s;
+}
+.m-nav__back:active { background: #e2e4ea; transform: scale(.92); }
+
+/* 详情内容容器 */
+.cd-page { padding-bottom: 40px; }
+
+/* 通用区块（在共享组件上方放标题） */
+.cd-section { margin: 12px; }
+.cd-section .m-section__title { margin-bottom: 10px; }
+
+/* 状态徽章（基本信息系统标题右侧） */
+.cd-status-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.cd-status-chip .cs-badge { font-size: 11.5px; }
+
+/* 复用组件在移动端宽度下的微调（tp-detail.css 已有 @media (max-width: 480px)，
+   这里只补充移动端独有的边框/阴影，让卡片在 m-shell 内不显突兀） */
+.cd-section .tp-info-card {
+  background: #fff;
+  border: 1px solid #eef0f5;
+  box-shadow: 0 2px 8px -4px rgba(0,0,0,.06);
+}
+</content>
+</invoke>

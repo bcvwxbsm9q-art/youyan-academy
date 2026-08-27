@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/user-avatars/1783579052402-447707856.jpg",
       "createdAt": "2026/7/9 14:22:27",
-      "lastLogin": "2026/8/27 14:03:43",
+      "lastLogin": "2026/7/29 14:18:33",
       "status": "active",
       "position": "人事经理"
     },
@@ -482,7 +482,7 @@
       "attachments": [],
       "duration": 2249,
       "views": 14,
-      "rating": 5,
+      "rating": 0,
       "id": 1784182455662,
       "createdAt": "2026/7/16 14:14:15",
       "updatedAt": "2026/7/24 09:30:00"
@@ -560,8 +560,7 @@
       "rating": 0,
       "id": 1784776157906,
       "createdAt": "2026/7/23 11:09:17",
-      "updatedAt": "2026/7/23 11:11:15",
-      "likes": 1
+      "updatedAt": "2026/7/23 11:11:15"
     }
   ],
   "training_projects": [
@@ -605,29 +604,17 @@
       "signinId": "2824"
     },
     {
-      "project": "新雁计划",
-      "name": "新员工培训",
-      "content": "本期课主要介绍游戏UI字体设计要点，分享与游戏风格适配的字体应用技巧与AI辅助设计方法，帮助UI伙伴们梳理与掌握专业的字体设计规范及其优化体系。",
-      "instructor": "魏少银",
-      "location": "B区培训室",
-      "date": "2026-08-27",
-      "startTime": "2026-08-27T20:00",
-      "endTime": "2026-08-27T21:00",
-      "signinEnabled": false,
-      "signinCode": null,
-      "signinStartTime": null,
-      "signinEndTime": null,
-      "examEnabled": false,
-      "surveyEnabled": false,
-      "coursewareEnabled": false,
-      "linkedSurveyId": null,
-      "linkedExamId": null,
-      "accessType": "none",
-      "allowedUsers": null,
-      "coursewareFiles": [],
-      "id": 1787811263606,
-      "createdAt": "2026/8/27 14:14:23",
-      "signinId": "5736"
+      "name": "测试签到逻辑",
+      "project": "测试",
+      "instructor": "测试员",
+      "location": "线上",
+      "signinEnabled": true,
+      "signinStartTime": "2026-07-29 14:03",
+      "signinEndTime": "2026-07-29 14:43",
+      "signinId": "9999",
+      "allowedUsers": [],
+      "id": 1785305636139,
+      "createdAt": "2026/7/29 14:13:56"
     }
   ],
   "user_learning_1": {
@@ -934,7 +921,7 @@
       "userCertificateId": "uc-1784873603670-495976430",
       "read": true,
       "createdAt": "2026-07-24T06:13:23.670Z",
-      "readAt": "2026-07-29T07:53:36.446Z"
+      "readAt": "2026-07-24T06:13:28.422Z"
     }
   ],
   "notification_reads": [
@@ -1967,6 +1954,38 @@
       "department": "人力资源部",
       "signedAt": "2026-07-28T06:31:34.606Z",
       "method": "direct"
+    },
+    {
+      "id": 1785305636145,
+      "trainingId": 1785305636139,
+      "userId": 778899001,
+      "userName": "未知用户",
+      "department": "",
+      "signedAt": "2026-07-29T06:13:56.145Z",
+      "method": "pc",
+      "status": "signed"
+    },
+    {
+      "id": 1785305636163,
+      "trainingId": 1785305636139,
+      "userId": 778899003,
+      "userName": "未知用户",
+      "department": "",
+      "signedAt": "2026-07-29T06:13:56.163Z",
+      "method": "backfill",
+      "status": "signed",
+      "backfilledBy": 1
+    },
+    {
+      "id": 1785305636171,
+      "trainingId": 1785305636139,
+      "userId": 778899004,
+      "userName": "未知用户",
+      "department": "",
+      "signedAt": null,
+      "method": "leave",
+      "status": "leave",
+      "leaveBy": 1
     }
   ],
   "training_assign_history": [
@@ -2069,34 +2088,6 @@
     {
       "userId": "1780909174403",
       "loginTime": "2026-07-29T06:18:33.079Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-08-24T06:19:35.964Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-08-24T06:19:44.509Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-08-25T10:18:02.996Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-08-25T10:32:59.702Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-08-25T10:33:34.273Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-08-27T06:03:33.816Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-08-27T06:03:43.360Z"
     }
   ],
   "lecturer_payment_records": [
@@ -2152,30 +2143,27 @@
     "videoProgress": {
       "1784182455662_0": 86,
       "1784185505080_0": 0,
-      "1784184709620_0": 52
+      "1784184709620_0": 0
     },
     "videoWatchTimes": {
       "1784019677171_0": 42,
       "1784019483483_0": 384,
-      "1784182455662_0": 288,
-      "1784184709620_0": 31,
-      "1784776157906_0": 10
+      "1784182455662_0": 224,
+      "1784184709620_0": 26
     },
-    "lastStudyTime": "2026-08-27T06:26:41.165Z",
+    "lastStudyTime": "2026-07-27T10:15:12.283Z",
     "studyDates": [
       "2026-07-14",
       "2026-07-15",
       "2026-07-16",
       "2026-07-23",
-      "2026-07-27",
-      "2026-07-29",
-      "2026-08-27"
+      "2026-07-27"
     ],
     "ratings": 1,
     "shares": 1,
     "likes": 1,
     "examRecords": [],
-    "totalSeconds": 745,
+    "totalSeconds": 666,
     "studyRecords": [
       {
         "courseId": 1784019677171,
@@ -2950,105 +2938,6 @@
         "duration": 4,
         "timestamp": "2026-07-27T10:15:12.283Z",
         "date": "2026-07-27"
-      },
-      {
-        "courseId": "1784182455662",
-        "courseTitle": "粒子系统",
-        "videoIndex": 0,
-        "videoTitle": "粒子系统（钟飞跃）.mp4",
-        "duration": 3,
-        "timestamp": "2026-07-29T10:17:05.366Z",
-        "date": "2026-07-29"
-      },
-      {
-        "courseId": "1784182455662",
-        "courseTitle": "粒子系统",
-        "videoIndex": 0,
-        "videoTitle": "粒子系统（钟飞跃）.mp4",
-        "duration": 10,
-        "timestamp": "2026-07-29T10:17:25.352Z",
-        "date": "2026-07-29"
-      },
-      {
-        "courseId": "1784182455662",
-        "courseTitle": "粒子系统",
-        "videoIndex": 0,
-        "videoTitle": "粒子系统（钟飞跃）.mp4",
-        "duration": 10,
-        "timestamp": "2026-07-29T10:17:35.352Z",
-        "date": "2026-07-29"
-      },
-      {
-        "courseId": "1784182455662",
-        "courseTitle": "粒子系统",
-        "videoIndex": 0,
-        "videoTitle": "粒子系统（钟飞跃）.mp4",
-        "duration": 4,
-        "timestamp": "2026-07-29T10:17:40.112Z",
-        "date": "2026-07-29"
-      },
-      {
-        "courseId": "1784182455662",
-        "courseTitle": "粒子系统",
-        "videoIndex": 0,
-        "videoTitle": "粒子系统（钟飞跃）.mp4",
-        "duration": 10,
-        "timestamp": "2026-07-29T10:17:52.366Z",
-        "date": "2026-07-29"
-      },
-      {
-        "courseId": "1784182455662",
-        "courseTitle": "粒子系统",
-        "videoIndex": 0,
-        "videoTitle": "粒子系统（钟飞跃）.mp4",
-        "duration": 10,
-        "timestamp": "2026-07-29T10:18:02.353Z",
-        "date": "2026-07-29"
-      },
-      {
-        "courseId": "1784182455662",
-        "courseTitle": "粒子系统",
-        "videoIndex": 0,
-        "videoTitle": "粒子系统（钟飞跃）.mp4",
-        "duration": 10,
-        "timestamp": "2026-07-29T10:18:12.362Z",
-        "date": "2026-07-29"
-      },
-      {
-        "courseId": "1784182455662",
-        "courseTitle": "粒子系统",
-        "videoIndex": 0,
-        "videoTitle": "粒子系统（钟飞跃）.mp4",
-        "duration": 5,
-        "timestamp": "2026-07-29T10:18:17.854Z",
-        "date": "2026-07-29"
-      },
-      {
-        "courseId": "1784182455662",
-        "courseTitle": "粒子系统",
-        "videoIndex": 0,
-        "videoTitle": "粒子系统（钟飞跃）.mp4",
-        "duration": 2,
-        "timestamp": "2026-07-29T10:18:32.694Z",
-        "date": "2026-07-29"
-      },
-      {
-        "courseId": "1784184709620",
-        "courseTitle": "游戏项目上线与故障排查",
-        "videoIndex": 0,
-        "videoTitle": "游戏项目上线与故障排查（陈志勇）.mp4",
-        "duration": 5,
-        "timestamp": "2026-08-27T06:26:29.497Z",
-        "date": "2026-08-27"
-      },
-      {
-        "courseId": "1784776157906",
-        "courseTitle": "AI绘画技巧分享",
-        "videoIndex": 0,
-        "videoTitle": "AI绘画技巧分享.mp4",
-        "duration": 10,
-        "timestamp": "2026-08-27T06:26:41.165Z",
-        "date": "2026-08-27"
       }
     ],
     "migratedAt": "2026-07-14T09:01:38.982Z",
@@ -3067,12 +2956,9 @@
     "examRecords": []
   },
   "user_likes_1780909174403": {
-    "totalLikes": 2,
+    "totalLikes": 1,
     "likedCourses": [
       1784019483483
-    ],
-    "likesCourses": [
-      "1784776157906"
     ]
   },
   "learning_data_1780909174403": {
@@ -3764,137 +3650,10 @@
       "score": 0,
       "timeSpentSec": 61,
       "answeredAt": "2026-07-29T06:40:31.929Z"
-    },
-    {
-      "id": 1785307498888,
-      "courseId": 1784182455662,
-      "videoIndex": 0,
-      "videoTitle": "粒子系统（钟飞跃）.mp4",
-      "nodeId": "n_1784802351629_827",
-      "nodeType": "question",
-      "nodeTime": 20.250529661016948,
-      "questionId": 1784777637116,
-      "userId": 1780909174403,
-      "userName": "许志坚",
-      "department": "人力资源部",
-      "userAnswer": [
-        "A",
-        "B"
-      ],
-      "isCorrect": false,
-      "score": 0,
-      "timeSpentSec": 20,
-      "answeredAt": "2026-07-29T06:44:58.888Z"
-    },
-    {
-      "id": 1785307533039,
-      "courseId": 1784182455662,
-      "videoIndex": 0,
-      "videoTitle": "粒子系统（钟飞跃）.mp4",
-      "nodeId": "n_1784802303365_522",
-      "nodeType": "question",
-      "nodeTime": 46.45709745762712,
-      "questionId": 1784777637112,
-      "userId": 1780909174403,
-      "userName": "许志坚",
-      "department": "人力资源部",
-      "userAnswer": "B",
-      "isCorrect": true,
-      "score": 3,
-      "timeSpentSec": 6,
-      "answeredAt": "2026-07-29T06:45:33.039Z"
-    },
-    {
-      "id": 1785307538407,
-      "courseId": 1784182455662,
-      "videoIndex": 0,
-      "videoTitle": "粒子系统（钟飞跃）.mp4",
-      "nodeId": "n_1784802308732_125",
-      "nodeType": "question",
-      "nodeTime": 73.85487288135594,
-      "questionId": 1784777637114,
-      "userId": 1780909174403,
-      "userName": "许志坚",
-      "department": "人力资源部",
-      "userAnswer": "B",
-      "isCorrect": false,
-      "score": 0,
-      "timeSpentSec": 2,
-      "answeredAt": "2026-07-29T06:45:38.407Z"
-    },
-    {
-      "id": 1785308530050,
-      "courseId": 1784182455662,
-      "videoIndex": 0,
-      "videoTitle": "粒子系统（钟飞跃）.mp4",
-      "nodeId": "n_1784802351629_827",
-      "nodeType": "question",
-      "nodeTime": 20.250529661016948,
-      "questionId": 1784777637116,
-      "userId": 1780909174403,
-      "userName": "许志坚",
-      "department": "人力资源部",
-      "userAnswer": [
-        "A"
-      ],
-      "isCorrect": false,
-      "score": 0,
-      "timeSpentSec": 8,
-      "answeredAt": "2026-07-29T07:02:10.050Z"
-    },
-    {
-      "id": 1785320220697,
-      "courseId": 1784182455662,
-      "videoIndex": 0,
-      "videoTitle": "粒子系统（钟飞跃）.mp4",
-      "nodeId": "n_1784802351629_827",
-      "nodeType": "question",
-      "nodeTime": 20.250529661016948,
-      "questionId": 1784777637116,
-      "userId": 1780909174403,
-      "userName": "许志坚",
-      "department": "人力资源部",
-      "userAnswer": [
-        "A"
-      ],
-      "isCorrect": false,
-      "score": 0,
-      "timeSpentSec": 2,
-      "answeredAt": "2026-07-29T10:17:00.697Z"
-    },
-    {
-      "id": 1785320234522,
-      "courseId": 1784182455662,
-      "videoIndex": 0,
-      "videoTitle": "粒子系统（钟飞跃）.mp4",
-      "nodeId": "n_1784802351629_827",
-      "nodeType": "question",
-      "nodeTime": 20.250529661016948,
-      "questionId": 1784777637116,
-      "userId": 1780909174403,
-      "userName": "许志坚",
-      "department": "人力资源部",
-      "userAnswer": [
-        "C"
-      ],
-      "isCorrect": false,
-      "score": 0,
-      "timeSpentSec": 6,
-      "answeredAt": "2026-07-29T10:17:14.522Z"
     }
   ],
   "video_pos_1780909174403_1784184709620_0": {
     "position": 26,
     "savedAt": "2026-07-27T10:13:54.948Z"
-  },
-  "course_interaction_1784776157906": {
-    "userLikes": {
-      "1780909174403": true
-    },
-    "likes": 1,
-    "shares": 0,
-    "userRatings": {},
-    "ratingSum": 0,
-    "ratingCount": 0
   }
 }
