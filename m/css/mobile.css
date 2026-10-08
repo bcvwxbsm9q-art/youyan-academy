@@ -36,7 +36,7 @@ button { font-family: inherit; cursor: pointer; }
 ::-webkit-scrollbar { width: 0; height: 0; }
 
 /* ---------- 布局壳体 ---------- */
-.app-shell { min-height: 100vh; }
+.app-shell { min-height: 100vh; position: relative; }
 
 /* ---------- 顶部导航 ---------- */
 .m-nav {
@@ -620,7 +620,8 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 /* ---------- 推荐讲师（底部横滑） ---------- */
-.m-lec-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 0 14px 6px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+.m-lec-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 0 14px 6px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; cursor: grab; }
+.m-lec-scroll.is-dragging { cursor: grabbing; scroll-behavior: auto; scroll-snap-type: none; user-select: none; }
 .m-lec-scroll::-webkit-scrollbar { display: none; }
 .m-lec-scroll .m-empty { width: 100%; }
 .m-lec {
@@ -664,6 +665,85 @@ button { font-family: inherit; cursor: pointer; }
 /* 二级分类行（一级展开后显示，缩进 + 略小） */
 .m-cat-children { margin-top: 8px; padding-left: 2px; flex-wrap: wrap; }
 .m-cat-children .m-chip { font-size: 12.5px; padding: 6px 12px; }
+
+/* 筛选 chip 数量徽标 */
+.m-chip__cnt {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 16px; height: 16px; margin-left: 6px; padding: 0 5px;
+  border-radius: 999px; background: var(--line); color: var(--ink-3);
+  font-size: 11px; font-weight: 600; line-height: 1; transform: translateY(-0.5px);
+}
+.m-chip.is-active .m-chip__cnt { background: rgba(102,126,234,.16); color: var(--brand-from); }
+.m-chip__cnt--zero { opacity: .5; }
+
+/* ========== 分类筛选：右下角悬浮按钮 + 弹层 ========== */
+.m-filter-fab {
+  position: absolute; right: 16px;
+  bottom: calc(var(--tab-h) + var(--safe-b) + 18px);
+  z-index: 70;
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; color: var(--brand-from);
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 22px -8px rgba(31,35,48,.35);
+  cursor: pointer; transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.m-filter-fab:active { transform: scale(.93); box-shadow: 0 4px 14px -8px rgba(31,35,48,.4); }
+.m-filter-fab > i.fa-sliders { font-size: 19px; }
+/* 已选分类：品牌紫渐变填充 + 白图标 */
+.m-filter-fab.is-active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; border-color: transparent;
+}
+/* 清除徽标（仅已选时显示） */
+.m-filter-fab__badge {
+  display: none; position: absolute; top: -4px; right: -4px;
+  width: 20px; height: 20px; border-radius: 999px;
+  background: #ef4444; color: #fff;
+  align-items: center; justify-content: center; font-size: 10px;
+  border: 2px solid #fff; cursor: pointer;
+}
+.m-filter-fab.is-active .m-filter-fab__badge { display: inline-flex; }
+
+/* 弹层中的分类树 */
+.m-cat-sheet__body { padding: 8px 12px 18px; }
+.m-cat-tree { display: flex; flex-direction: column; }
+.m-cat-tree__group { margin-bottom: 6px; }
+.m-cat-tree__group:last-child { margin-bottom: 0; }
+.m-cat-tree__children {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 6px 8px 10px 28px; /* 与一级图标对齐缩进 */
+}
+.m-cat-tree__item {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 10px 12px;
+  background: transparent; border: 0; border-radius: 10px;
+  font-size: 14px; color: var(--ink-1); text-align: left;
+  cursor: pointer; transition: background .12s ease;
+}
+.m-cat-tree__item:active { background: var(--bg); }
+.m-cat-tree__item.is-primary { font-weight: 700; color: var(--ink-1); }
+.m-cat-tree__children .m-cat-tree__item {
+  width: auto; padding: 6px 12px;
+  background: var(--bg); border-radius: 999px;
+  font-size: 13px; color: var(--ink-2); font-weight: 500;
+}
+.m-cat-tree__children .m-cat-tree__item.is-active {
+  background: linear-gradient(135deg, rgba(102,126,234,.12), rgba(118,75,162,.10));
+  color: var(--brand-from); font-weight: 700;
+}
+.m-cat-tree__ic { width: 18px; text-align: center; color: var(--brand-from); font-size: 14px; flex-shrink: 0; }
+.m-cat-tree__children .m-cat-tree__ic { width: auto; }
+.m-cat-tree__t { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-cat-tree__cnt {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 18px; padding: 0 7px;
+  border-radius: 999px; background: var(--line); color: var(--ink-3);
+  font-size: 11px; font-weight: 600; line-height: 1;
+}
+.m-cat-tree__children .m-cat-tree__cnt { background: rgba(255,255,255,.6); }
+.m-cat-tree__cnt--zero { opacity: .45; }
+.m-cat-tree__check { color: var(--brand-from); font-size: 13px; flex-shrink: 0; }
 
 /* 课程两列卡片（参考图风格） */
 .m-ccard {
@@ -833,9 +913,6 @@ button { font-family: inherit; cursor: pointer; }
 }
 .cs-stat { font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
 .cs-stat b { color: var(--brand-from); font-weight: 800; }
-.cs-legend { display: flex; gap: 12px; }
-.cs-legend__i { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--ink-3); }
-.cs-legend__i .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
 /* 当日清单行（training.html 弹层复用，日格 → 详情页跳转） */
 .cd-day-row {
@@ -847,9 +924,6 @@ button { font-family: inherit; cursor: pointer; }
 .cd-day-row__name { font-size: 15px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cd-day-row__meta { font-size: 12.5px; color: var(--ink-3); margin-top: 3px; }
 .cd-day-row__arrow { color: var(--ink-3); font-size: 13px; flex-shrink: 0; }
-.dot--done { background: #10b981; }
-.dot--todo { background: #f59e0b; }
-.dot--upcoming { background: #667eea; }
 
 /* —— 完整月历面板（始终显示，参考图卡片风格） —— */
 .cs-month-panel {
@@ -865,64 +939,62 @@ button { font-family: inherit; cursor: pointer; }
 .m-month-view.is-slide-left  { animation: mgSlideLeft  .3s cubic-bezier(.22,1,.36,1); }
 .m-month-view.is-slide-right { animation: mgSlideRight .3s cubic-bezier(.22,1,.36,1); }
 
-.m-mg-row { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 6px 5px; }
+.m-mg-row { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 8px 5px; }
 .m-mg-dw { font-size: 12.5px; color: var(--ink-3); padding-bottom: 11px; font-weight: 700; letter-spacing: 1px; }
+
+/* 单元格：干净无底纹，数字用圆形容器承载态（钉钉风格，去掉白色底纹） */
 .m-mg-d {
-  /* 圆角矩形卡片 —— 高对比度版本，日期一眼可见 */
   aspect-ratio: auto;
-  min-height: 58px;
-  margin: 0 auto; border-radius: 12px;
+  min-height: 64px;
+  margin: 0 auto;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  font-size: 17.5px; font-weight: 700; position: relative;
-  transition: transform .15s, background .18s, color .18s, box-shadow .18s, border-color .18s;
+  font-size: 16px; font-weight: 600; position: relative;
+  transition: transform .15s, color .18s;
   color: var(--ink);
-  padding: 7px 4px 6px;
-  background: #fafbff;            /* 浅底白，让所有格子的"日历感"都出来 */
+  padding: 6px 2px;
+  background: transparent;        /* 去掉每格白底 */
   border: 1.5px solid transparent;
 }
 .m-mg-d--click { cursor: pointer; }
 .m-mg-d--click:active { transform: scale(.94); }
 .m-mg-d.is-empty { visibility: hidden; }
 
-/* 状态圆点（参考钉钉考勤：绿=已完成 / 橙=待完成 / 蓝=未开始）—— 加白圈，在浅底上更明显 */
-.m-mg-d__dot {
-  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
-  box-shadow: 0 0 0 1.5px #fff;  /* 白圈描边，确保在任何背景色上都能看清 */
+/* 数字圆形容器：默认透明，今日/选中才显底色 */
+.m-mg-d__num {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 600; line-height: 1;
+  transition: background .18s, color .18s, box-shadow .18s, transform .18s;
+  color: inherit;
 }
-.m-mg-d__dot--done { background: #10b981; }
-.m-mg-d__dot--todo { background: #f59e0b; }
-.m-mg-d__dot--upcoming { background: #667eea; }
 
-/* 今日：白底 + 2px 实心紫圈 + 阴影（最显眼的"今天"标识） */
-.m-mg-d.is-today {
+/* 今日：浅蓝软底圆（钉钉风格），不再用白色方块 */
+.m-mg-d.is-today { color: var(--brand-from); font-weight: 800; }
+.m-mg-d.is-today .m-mg-d__num {
+  background: rgba(102,126,234,.14);
   color: var(--brand-from);
   font-weight: 800;
-  background: #ffffff !important;
-  border: 2px solid var(--brand-from);
-  box-shadow: 0 6px 14px -4px rgba(102,126,234,.35);
-  transform: scale(1.02);  /* 今日略微放大，更突出 */
+  transform: scale(1.05);
 }
 
-/* 有培训：明显紫底 + 紫字 + 粗体（一眼找到哪天有课） */
-.m-mg-d.is-has {
-  background: rgba(102,126,234,.10);
-  color: var(--brand-from);
-  font-weight: 800;
-}
+/* 有培训：仅数字加粗变紫 + 彩色圆点，不加任何底色 */
+.m-mg-d.is-has .m-mg-d__num { color: var(--brand-from); font-weight: 800; }
+/* 数字下方紫色小圆点，默认隐藏，仅 is-has 时显示 */
+.m-mg-d__dot { width: 4px; height: 4px; border-radius: 50%; background: var(--brand-from); display: none; }
+.m-mg-d.is-has .m-mg-d__dot { display: block; }
 
-/* 选中态：实心紫底 + 白字（钉钉选中风格，最强视觉） */
-.m-mg-d.is-sel {
-  background: var(--brand-from) !important;
+/* 选中态：实心紫渐变圆 + 白字（最强视觉） */
+.m-mg-d.is-sel .m-mg-d__num {
+  background: linear-gradient(135deg, #667eea, #764ba2);
   color: #fff !important;
   font-weight: 800;
-  border-color: transparent !important;
-  box-shadow: 0 8px 18px -4px rgba(102,126,234,.55) !important;
+  box-shadow: 0 6px 14px -4px rgba(102,126,234,.55);
 }
-.m-mg-d.is-sel .m-mg-d__dot { box-shadow: 0 0 0 1.5px rgba(102,126,234,.4); }
 
-/* 今日与有培训叠加时：保留今日的圈，但叠加"有培训"的紫点 */
-.m-mg-d.is-today.is-has {
-  background: rgba(102,126,234,.06) !important;  /* 紫底比纯白更有"有培训"暗示 */
+/* 今日且选中：保留紫渐变圆 */
+.m-mg-d.is-today.is-sel .m-mg-d__num {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff !important;
 }
 
 /* —— 选中某天 → 列表顶部分隔标题 —— */
@@ -988,10 +1060,10 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 10px;
   line-height: 1.25; white-space: nowrap;
 }
-.cs-badge--done    { color: #059669; background: #f1f5f9; }
-.cs-badge--doing   { color: #d97706; background: #fffbeb; }
-.cs-badge--todo    { color: var(--ink-2); background: #f1f2f6; }
-.cs-badge--upcoming { color: #fff; background: #22c55e; } /* "即将开始" 绿底白字 */
+.cs-badge--done     { color: #059669; background: #ecfdf5; } /* 已完成：绿 */
+.cs-badge--ended    { color: #6b7280; background: #f3f4f6; } /* 已结束：灰 */
+.cs-badge--enrolled { color: #667eea; background: #eef2ff; } /* 已报名：蓝紫 */
+.cs-badge--open     { color: #764ba2; background: #f5f3ff; } /* 我要报名：紫 */
 
 /* 第二行：讲师头像 + 名字 + 操作按钮 */
 .cs-card__row2 {
@@ -1028,6 +1100,31 @@ button { font-family: inherit; cursor: pointer; }
 .cs-act i { font-size: 18px; color: var(--ink-2); }
 .cs-act span { font-size: 10px; color: var(--ink-3); font-weight: 600; }
 .cs-act:active { background: var(--brand-soft); border-color: var(--brand-from); }
+
+/* 报名按钮（列表卡片操作区） */
+.cs-act--enroll {
+  border: none;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  box-shadow: 0 4px 10px rgba(102,126,234,.30);
+}
+.cs-act--enroll i, .cs-act--enroll span { color: #fff; }
+.cs-act--enroll:active { transform: translateY(1px); filter: brightness(.97); }
+.cs-act--on { border-color: #10b981; background: #ecfdf5; }
+.cs-act--on i { color: #10b981; }
+.cs-act--on span { color: #059669; }
+.cs-act--on:active { background: #d1fae5; }
+.cs-act--disabled { border-color: var(--line); background: #f3f4f6; cursor: not-allowed; }
+.cs-act--disabled i, .cs-act--disabled span { color: #9ca3af; }
+.cs-act--disabled:active { transform: none; }
+
+/* 详情页报名 CTA */
+.cd-enroll { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--brand-soft); border: 1px solid rgba(102,126,234,.18); }
+.cd-enroll__info { font-size: 13px; color: var(--ink-2); }
+.cd-enroll__info b { color: var(--brand-from); font-weight: 800; }
+.cd-enroll__btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px; border: none; border-radius: 999px; cursor: pointer; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; font-size: 14px; font-weight: 700; box-shadow: 0 6px 16px rgba(102,126,234,.35); transition: filter .15s, transform .1s; }
+.cd-enroll__btn:active { transform: scale(.97); filter: brightness(.97); }
+.cd-enroll__btn.is-on { background: #fff; color: #059669; border: 1px solid #10b981; box-shadow: none; }
+.cd-enroll__btn.is-disabled { background: #f3f4f6; color: #9ca3af; box-shadow: none; cursor: not-allowed; border: none; }
 
 /* 必修进度 */
 .cs-prog {
@@ -1151,6 +1248,41 @@ button { font-family: inherit; cursor: pointer; }
   position: absolute; right: -1px; bottom: -1px; width: 18px; height: 18px; border-radius: 50%;
   background: #fff; color: var(--ink-3); font-size: 9px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);
 }
+
+/* 成就徽章：底部弹层内 3 列网格（不再全屏覆盖） */
+.m-ach-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 10px; }
+.m-ach-cell { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; cursor: pointer; transition: transform .15s; }
+.m-ach-cell:active { transform: scale(.94); }
+.m-ach-cell__badge { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #fff; position: relative; flex-shrink: 0; background: var(--brand-grad); box-shadow: 0 8px 18px -8px rgba(102,126,234,.6); }
+.m-ach-cell.is-locked .m-ach-cell__badge { background: #e9ebf1; color: var(--ink-3); box-shadow: none; }
+.m-ach-cell__name { font-size: 12px; font-weight: 600; color: var(--ink); line-height: 1.3; }
+.m-ach-cell.is-locked .m-ach-cell__name { color: var(--ink-3); }
+.m-ach-cell__lock { position: absolute; right: -1px; bottom: -1px; width: 20px; height: 20px; border-radius: 50%; background: #fff; color: var(--ink-3); font-size: 9px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
+.m-ach-back { border: none; background: #f1f2f6; color: var(--ink-2); width: 30px; height: 30px; border-radius: 50%; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; vertical-align: middle; }
+.m-ach-back:active { background: #e6e8ef; }
+
+/* 成就徽章：单个徽章发光详情弹层（居中卡片 + 光晕） */
+.m-ach-modal { position: fixed; inset: 0; z-index: 95; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+.m-ach-modal.is-open { opacity: 1; pointer-events: auto; }
+.m-ach-modal__mask { position: absolute; inset: 0; background: rgba(15,18,30,.55); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.m-ach-modal__card { position: relative; z-index: 1; width: 84%; max-width: 320px; background: #fff; border-radius: 22px; padding: 30px 22px 24px; text-align: center; box-shadow: 0 24px 60px -20px rgba(31,35,48,.5); transform: translateY(12px) scale(.96); transition: transform .26s cubic-bezier(.22,1,.36,1); }
+.m-ach-modal.is-open .m-ach-modal__card { transform: translateY(0) scale(1); }
+.m-ach-modal__close { position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border: none; background: #f1f2f6; color: var(--ink-2); border-radius: 50%; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+.m-ach-modal__close:active { background: #e6e8ef; }
+.m-ach-modal__badge { width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #fff; position: relative; }
+.m-ach-modal__badge.is-on { animation: achGlowPulse 2.2s ease-in-out infinite; }
+.m-ach-modal__badge.is-on::after { content: ""; position: absolute; inset: -12px; border-radius: 50%; background: radial-gradient(circle, rgba(102,126,234,.4), transparent 70%); z-index: -1; animation: achGlowBreath 2.6s ease-in-out infinite; }
+.m-ach-modal__badge.is-off { background: #e9ebf1; color: var(--ink-3); }
+.m-ach-modal__name { font-size: 19px; font-weight: 800; color: #1f2330; }
+.m-ach-modal__desc { font-size: 13px; color: #5b6172; margin-top: 8px; line-height: 1.6; }
+.m-ach-modal__status { margin-top: 14px; font-size: 13px; font-weight: 700; }
+.m-ach-modal__status.is-on { color: #059669; }
+.m-ach-modal__status.is-off { color: #9aa0b0; }
+.m-ach-modal__time { margin-top: 10px; font-size: 12.5px; color: var(--ink-3); }
+@keyframes achGlowBreath { 0%,100% { transform: scale(1); opacity: .6; } 50% { transform: scale(1.18); opacity: 1; } }
+@keyframes achGlowPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(102,126,234,.45); } 70% { box-shadow: 0 0 0 18px rgba(102,126,234,0); } }
+@media (prefers-reduced-motion: reduce) { .m-ach-modal__badge.is-on, .m-ach-modal__badge.is-on::after { animation: none; } }
+
 .m-profile__welcome {
   position: relative; z-index: 1; margin-top: 16px; padding-top: 14px;
   border-top: 1px solid rgba(255,255,255,.18); font-size: 13px; opacity: .92;

@@ -1137,6 +1137,33 @@ function calculateStreakDays(record) {
 
 // 基于服务端可获取数据计算当前满足条件的徽章数量（与 center.html 逻辑对齐）
 function calculateBadgeCount(data, uid, stats) {
+  const detail = getBadgeDetails(data, uid, stats);
+  return detail.count;
+}
+
+// 计算徽章详情（每枚解锁状态 + 总数），用于 /api/user/learning-stats 返回给移动端，
+// 让移动端 MOBILE_BADGES[i].test(d) 不再本地估算，逐枚与 PC 端完全一致。
+const BADGE_KEYS = [
+  // 学习时长类（6）
+  'learner-1', 'learner-10', 'learner-50', 'learner-100', 'learner-300', 'learner-500',
+  // 课程完成类（6）
+  'course-1', 'course-5', 'course-10', 'course-20', 'course-30', 'course-50',
+  // 连续学习类（6）
+  'streak-3', 'streak-7', 'streak-30', 'streak-60', 'streak-90', 'streak-100',
+  // 特殊时段类（3）
+  'early-bird', 'night-owl', 'weekend-warrior',
+  // 考试类（3）
+  'first-exam', 'exam-pass', 'perfect-score',
+  // 社交互动类（3）
+  'rater', 'sharer', 'liker',
+  // 里程碑类（5）
+  'day-7', 'day-30', 'day-100', 'day-200', 'day-365',
+  // 培训参与类（5）
+  'training-1', 'training-5', 'training-10', 'training-20', 'training-30',
+  // 证书获得类（5）
+  'certificate-1', 'certificate-3', 'certificate-5', 'certificate-10', 'certificate-20'
+];
+function getBadgeDetails(data, uid, stats) {
   const record = stats.record || {};
   const records = Array.isArray(record.studyRecords) ? record.studyRecords : [];
 
@@ -1189,7 +1216,7 @@ function calculateBadgeCount(data, uid, stats) {
     shares: sharesCount
   };
 
-  // 徽章条件列表（与 center.html 的 BADGES 条件一一对应）
+  // 徽章条件列表（与 BADGE_KEYS 一一对应）
   const conditions = [
     d.hours >= 1, d.hours >= 10, d.hours >= 50, d.hours >= 100, d.hours >= 300, d.hours >= 500,
     d.completed >= 1, d.completed >= 5, d.completed >= 10, d.completed >= 20, d.completed >= 30, d.completed >= 50,
@@ -1202,7 +1229,8 @@ function calculateBadgeCount(data, uid, stats) {
     d.certificateCount >= 1, d.certificateCount >= 3, d.certificateCount >= 5, d.certificateCount >= 10, d.certificateCount >= 20
   ];
 
-  return conditions.filter(Boolean).length;
+  const badges = BADGE_KEYS.map((key, i) => ({ key, ok: !!conditions[i] }));
+  return { count: conditions.filter(Boolean).length, badges, d };
 }
 
 // 计算学员报表所需的学习统计数据
@@ -1246,8 +1274,15 @@ function getUserLearningStats(data, userId, userInfo) {
   });
   const trainingCount = trainingIds.size;
 
-  // 获得证书数
-  const certificateCount = (data.certificateRecords || []).filter(r => String(r.userId) === uid && r.status === 'active').length;
+  // 获得证书数（以 user_certificates 为准，与 /api/user-certificates 列表同源；certificateRecords 为废弃表，不再写入）
+  const _ucNow = Date.now();
+  const certificateCount = (data.user_certificates || [])
+    .filter(uc => String(uc.userId) === uid)
+    .filter(uc => {
+      let st = uc.status;
+      if (st === 'active' && uc.expireAt && new Date(uc.expireAt).getTime() < _ucNow) st = 'expired';
+      return st === 'active';
+    }).length;
 
   // 考试相关统计
   const userExamAttempts = (data.exam_attempts || []).filter(a => String(a.userId) === uid);
@@ -2877,7 +2912,9 @@ app.get('/api/training/schedule', (req, res) => {
       linkedExamId: event.linkedExamId,
       examDone,
       coursewareEnabled: event.coursewareEnabled,
-      coursewareFiles: event.coursewareFiles || []
+      coursewareFiles: event.coursewareFiles || [],
+      // 当前用户是否已报名（移动端列表/详情页判定用）
+      isEnrolled: uid ? eventEnrollments.some(e => String(e.userId) === uid) : false
     };
   });
 
@@ -4539,6 +4576,57 @@ app.get('/api/user/trainings', (req, res) => {
   res.json({ success: true, count: trainingIds.size, trainingIds: Array.from(trainingIds), list });
 });
 
+// GET /api/user/all-trainings - 获取系统全部培训（不限于已报名，供个人中心"全部培训"使用）
+// 返回结构与 /api/user/trainings 一致，便于前端复用同一渲染逻辑
+app.get('/api/user/all-trainings', (req, res) => {
+  const currentUser = getCurrentUser(req);
+  if (!currentUser) {
+    return res.status(401).json({ success: false, error: '未登录' });
+  }
+  const data = readData();
+  const userId = String(currentUser.id);
+
+  const now = new Date();
+  const list = (data.training_events || []).map(event => {
+    const start = event.startTime ? new Date(event.startTime) : null;
+    const end = event.endTime ? new Date(event.endTime) : null;
+    let trainingStatus = '未开始';
+    if (end && !isNaN(end) && now > end) trainingStatus = '已结束';
+    else if (start && !isNaN(start) && now >= start) trainingStatus = '进行中';
+    else if (start && !isNaN(start) && now < start) trainingStatus = '未开始';
+
+    const signedIn = (data.training_signins || []).some(s => String(s.trainingId) === String(event.id) && String(s.userId) === userId);
+    const examDone = event.linkedExamId
+      ? (data.exam_attempts || []).some(a => String(a.examId) === String(event.linkedExamId) && String(a.userId) === userId && (a.status === 'completed' || a.passed === true))
+      : null;
+    const surveyDone = event.linkedSurveyId
+      ? (data.survey_responses || []).some(r => String(r.surveyId) === String(event.linkedSurveyId) && String(r.userId) === userId && String(r.trainingId) === String(event.id))
+      : null;
+    const isEnrolled = (data.training_enrollments || []).some(e => String(e.trainingId) === String(event.id) && String(e.userId) === userId);
+
+    return {
+      id: event.id,
+      name: event.name || event.project || '未命名培训',
+      project: event.project || '',
+      instructor: event.instructor || '',
+      location: event.location || '',
+      startTime: event.startTime || null,
+      endTime: event.endTime || null,
+      trainingStatus,
+      signedIn,
+      examDone,
+      surveyDone,
+      signinEnabled: !!event.signinEnabled,
+      examEnabled: !!event.examEnabled && !!event.linkedExamId,
+      surveyEnabled: !!event.surveyEnabled && !!event.linkedSurveyId,
+      isEnrolled
+    };
+  })
+  .sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0));
+
+  res.json({ success: true, count: list.length, list });
+});
+
 // GET /api/user/login-days - 获取当前用户的实际登录天数（按日期去重）
 app.get('/api/user/login-days', (req, res) => {
   const currentUser = getCurrentUser(req);
@@ -4576,6 +4664,20 @@ app.get('/api/user/learning-stats', (req, res) => {
   const uid = String(currentUser.id);
   const stats = getUserLearningStats(data, uid, currentUser);
   const badgeCount = stats.badgeCount || 0;
+  // 逐枚徽章解锁详情（保证移动端 MOBILE_BADGES 与 PC 端完全一致）
+  const record = data['user_learning_' + uid] || data['learning_data_' + uid] || {};
+  const badgeDetail = getBadgeDetails(data, uid, {
+    record,
+    totalHours: stats.totalHours || 0,
+    courseCount: stats.courseCount || 0,
+    streakDays: stats.streakDays || 0,
+    registerDays: stats.registerDays || 0,
+    examCount: stats.examCount || 0,
+    examPassed: stats.examPassed || 0,
+    perfectScore: stats.perfectScore || false,
+    trainingCount: stats.trainingCount || 0,
+    certificateCount: stats.certificateCount || 0
+  });
   const totalXp = Math.floor((stats.totalHours || 0) * 5)
     + (stats.courseCount || 0) * 5
     + (stats.streakDays || 0) * 1
@@ -4590,6 +4692,18 @@ app.get('/api/user/learning-stats', (req, res) => {
       certificateCount: stats.certificateCount || 0,
       badgeCount: badgeCount,
       examCount: stats.examCount || 0,
+      examPassed: stats.examPassed || 0,
+      perfectScore: stats.perfectScore || false,
+      days: stats.registerDays || 0,
+      // 移动端需要：点赞/评分/分享 + 时段
+      likes: (badgeDetail.d && badgeDetail.d.likes) || 0,
+      ratings: (badgeDetail.d && badgeDetail.d.ratings) || 0,
+      shares: (badgeDetail.d && badgeDetail.d.shares) || 0,
+      nightStudy: !!(badgeDetail.d && badgeDetail.d.nightStudy),
+      earlyStudy: !!(badgeDetail.d && badgeDetail.d.earlyStudy),
+      weekendStudy: !!(badgeDetail.d && badgeDetail.d.weekendStudy),
+      // 逐枚解锁状态（key + ok），移动端按 key 匹配 MOBILE_BADGES
+      badges: badgeDetail.badges || [],
       xp: totalXp,
       level: stats.level,
       levelName: stats.levelName

@@ -3071,7 +3071,8 @@ const BADGES = [
 
             try {
                 const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-                const res = await fetch('/api/user/trainings', {
+                // 个人中心"我的培训"展示系统全部培训（不限于已报名），与移动端 m/mine.html 同款数据源
+                const res = await fetch('/api/user/all-trainings', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const result = await res.json();

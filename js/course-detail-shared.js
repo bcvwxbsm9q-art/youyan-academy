@@ -81,10 +81,11 @@
     var instructor = course.instructor || '待定';
     var location = course.location || '待定';
 
+    // 实心图标：FA4（PC） + FA5+/FA6（移动端）通用，避免 .fa-calendar-o 等已废弃类名
     var infoItems = [
-      { icon: 'fa-calendar-o', label: '日期', value: monthDay, full: monthDay },
-      { icon: 'fa-clock-o',    label: '时间', value: time || '待定', full: time || '待定' },
-      { icon: 'fa-user-o',     label: '讲师', value: instructor, full: instructor },
+      { icon: 'fa-calendar',   label: '日期', value: monthDay, full: monthDay },
+      { icon: 'fa-clock',      label: '时间', value: time || '待定', full: time || '待定' },
+      { icon: 'fa-user',       label: '讲师', value: instructor, full: instructor },
       { icon: 'fa-map-marker', label: '地点', value: location, full: location }
     ];
     var infoGridHtml = infoItems.map(function (it) {

@@ -17,7 +17,7 @@ REM 2. 定位 node 可执行文件（PATH > 系统默认 > WorkBuddy managed）
 set NODE_EXE=
 for /f "tokens=*" %%i in ('where node 2^>nul') do ( if not defined NODE_EXE set NODE_EXE=%%i )
 if not defined NODE_EXE ( if exist "C:\Program Files\nodejs\node.exe" set NODE_EXE=C:\Program Files\nodejs\node.exe )
-if not defined NODE_EXE ( if exist "C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2\node.exe" set NODE_EXE=C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2\node.exe )
+if not defined NODE_EXE ( if exist "C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.exe" set NODE_EXE=C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.exe )
 if not defined NODE_EXE (
   echo [错误] 找不到 node.exe，请先安装 Node.js 或检查路径。
   pause

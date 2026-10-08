@@ -836,7 +836,8 @@
        - 通过 DataAPI.set 自动 POST /api/sync/:key 同步到服务端用户数据
        ========================================================= */
     var mStudyTimer = null;
-    var mStudySeconds = 0;
+    var mStudyStartAt = 0;      // 当前播放会话开始时间戳（毫秒）
+    var mStudyLastFlushAt = 0;  // 上次落库时间戳（毫秒）
     var __mDAPIReady = false;
 
     function mGetUserId() { return App.userId(); }
@@ -882,24 +883,34 @@
       if (!el || !course) return;
       var uid = mGetUserId();
       var watched = uid ? mCourseWatchedSeconds(uid) : 0;
+      var sessionSeconds = 0;
+      if (mStudyStartAt > 0 && mStudyLastFlushAt > 0) {
+        sessionSeconds = Math.floor((Date.now() - mStudyLastFlushAt) / 1000);
+      }
       el.style.display = '';
-      el.innerHTML = '<i class="fa-regular fa-clock"></i> 已学习 ' + mFmtStudy(watched + mStudySeconds);
+      el.innerHTML = '<i class="fa-regular fa-clock"></i> 已学习 ' + mFmtStudy(watched + sessionSeconds);
     }
 
     function mStartStudy() {
       if (mStudyTimer) return;
+      var now = Date.now();
+      if (mStudyStartAt === 0) { mStudyStartAt = now; mStudyLastFlushAt = now; }
       mStudyTimer = setInterval(function () {
-        mStudySeconds++;
         mUpdateStudyTimeUI();
-        if (mStudySeconds >= 10) {
-          mSaveStudyIncrement(mStudySeconds);
-          mStudySeconds = 0;
+        if (Date.now() - mStudyLastFlushAt >= 10000) {
+          var inc = Math.floor((Date.now() - mStudyLastFlushAt) / 1000);
+          if (inc > 0) { mSaveStudyIncrement(inc); mStudyLastFlushAt = Date.now(); }
         }
-      }, 1000);
+      }, 5000); // 每 5 秒刷新一次 UI，满足 10s 落库条件时一次性落库
     }
     function mStopStudy() {
       if (mStudyTimer) { clearInterval(mStudyTimer); mStudyTimer = null; }
-      if (mStudySeconds > 0) { mSaveStudyIncrement(mStudySeconds); mStudySeconds = 0; }
+      if (mStudyStartAt > 0 && mStudyLastFlushAt > 0) {
+        var inc = Math.floor((Date.now() - mStudyLastFlushAt) / 1000);
+        if (inc > 0) { mSaveStudyIncrement(inc); }
+      }
+      mStudyStartAt = 0;
+      mStudyLastFlushAt = 0;
       mUpdateStudyTimeUI();
     }
     function mSaveStudyIncrement(inc) {

@@ -173,9 +173,7 @@
       </div>
     </section>
 
-    <!-- ====== 学习成就横滑墙 ====== -->
-    <div class="m-hd m-rise"><div class="m-hd__t"><i class="fa-solid fa-trophy"></i> 成就徽章</div><span class="m-hd__more" id="m-ach-more">0/42</span></div>
-    <div class="m-ach-scroll m-rise" id="m-ach-scroll"></div>
+    <!-- 成就徽章改为底部弹层（openAchSheet，见 data-act=ach），「我的」页不再内联横滑墙 -->
 
     <!-- ====== 邀请好友横幅 ====== -->
     <div class="m-invite-banner m-rise">
@@ -211,6 +209,19 @@
     </div>
 
   </div>
+
+    <!-- ====== 成就徽章：单个徽章发光详情弹层 ====== -->
+    <div id="m-ach-detail" class="m-ach-modal" hidden>
+      <div class="m-ach-modal__mask" onclick="App.closeAchDetail()"></div>
+      <div class="m-ach-modal__card">
+        <button class="m-ach-modal__close" onclick="App.closeAchDetail()"><i class="fa-solid fa-xmark"></i></button>
+        <div class="m-ach-modal__badge" id="m-ach-detail-badge"></div>
+        <div class="m-ach-modal__name" id="m-ach-detail-name"></div>
+        <div class="m-ach-modal__desc" id="m-ach-detail-desc"></div>
+        <div class="m-ach-modal__status" id="m-ach-detail-status"></div>
+        <div class="m-ach-modal__time" id="m-ach-detail-time"></div>
+      </div>
+    </div>
 
   <script src="/js/auth-modal.js?v=20260723m"></script>
   <script src="/m/js/api-client.js"></script>
@@ -410,8 +421,40 @@
       });
       var badgeCount = achievements.filter(function (a) { return a.ok; }).length;
       var achUnlocked = badgeCount;
-      // 服务端徽章数（calculateBadgeCount）为权威值，覆盖本地 MOBILE_BADGES 估算，保证与 PC 端一致
-      if (srvStats && srvStats.badgeCount != null) { badgeCount = srvStats.badgeCount; achUnlocked = badgeCount; }
+      // 服务端徽章详情（calculateBadgeCount）为权威值，覆盖本地 MOBILE_BADGES 估算，保证与 PC 端逐枚一致
+      if (srvStats) {
+        if (srvStats.badgeCount != null) { badgeCount = srvStats.badgeCount; achUnlocked = badgeCount; }
+        if (Array.isArray(srvStats.badges) && srvStats.badges.length) {
+          var srvMap = {}; srvStats.badges.forEach(function (x) { if (x && x.key) srvMap[x.key] = !!x.ok; });
+          achievements.forEach(function (a) { if (srvMap[a.key] != null) a.ok = srvMap[a.key]; });
+          badgeCount = achievements.filter(function (a) { return a.ok; }).length;
+          achUnlocked = badgeCount;
+        }
+      }
+
+      // 本地记录徽章获得时间（解锁瞬间存时间戳；首跑/历史已解锁的显示"此前已获得"）
+      (function () {
+        try {
+          var uid = App.userId();
+          if (!uid) return;
+          var ek = 'ach_earned_' + uid, pk = 'ach_prevok_' + uid;
+          var earned = {}, prevOk = [];
+          try { earned = JSON.parse(localStorage.getItem(ek) || '{}'); } catch (e) {}
+          try { prevOk = JSON.parse(localStorage.getItem(pk) || '[]'); } catch (e) {}
+          var prevSet = {}; prevOk.forEach(function (k) { prevSet[k] = 1; });
+          var hadPrev = localStorage.getItem(pk) !== null;
+          var nowOk = [];
+          achievements.forEach(function (a) {
+            if (a.ok) {
+              if (earned[a.key] == null && hadPrev && !prevSet[a.key]) earned[a.key] = Date.now();
+              a.earnedAt = earned[a.key] || null;
+              nowOk.push(a.key);
+            } else { a.earnedAt = null; }
+          });
+          localStorage.setItem(ek, JSON.stringify(earned));
+          localStorage.setItem(pk, JSON.stringify(nowOk));
+        } catch (e) {}
+      })();
 
       // 等级 / 经验值（统一走 window.XP 计算；优先用服务端 XP，其次共享持久化值，最后本地计算）
       var xp = (srvStats && srvStats.xp != null) ? srvStats.xp : XP.loadPersistedXp(App.userId());
@@ -478,15 +521,9 @@
       // 欢迎语
       document.getElementById('m-welcome').textContent = name + '，今天也要坚持学习哦';
 
-      // ===== 学习成就横滑墙 =====
-      var achHtml = achievements.map(function (a) {
-        var bg = a.ok ? 'background:linear-gradient(135deg,' + a.color + ',' + a.color + 'cc);' : '';
-        var badge = '<div class="m-ach__badge" style="' + bg + '"><i class="fa-solid ' + a.icon + '"></i>' +
-          (a.ok ? '' : '<span class="m-ach__lock"><i class="fa-solid fa-lock"></i></span>') + '</div>';
-        return '<div class="m-ach' + (a.ok ? '' : ' is-locked') + '" data-ach="' + a.key + '">' + badge + '<div class="m-ach__name">' + a.name + '</div></div>';
-      }).join('');
-      document.getElementById('m-ach-scroll').innerHTML = achHtml;
-      document.getElementById('m-ach-more').textContent = badgeCount + '/42';
+      // ===== 成就徽章：数据存全局，供全屏覆盖层使用（横滑墙已移除） =====
+      window.__achievements = achievements;
+      window.__achUnlocked = achUnlocked;
 
       // （我的课程 / 我的培训 改为点网格按钮弹窗显示，不再内联渲染）
 
@@ -511,7 +548,7 @@
 
       // ===== 事件绑定 =====
       bindMenuActions();
-      bindAchPopover(achievements);
+      /* 成就徽章改为底部弹层：入口见 data-act=ach → openAchSheet */
 
       // 铃铛按钮 → 消息中心
       var bellBtn = document.getElementById('m-bell-btn');
@@ -558,7 +595,6 @@
       if (!courses.length) return '<div class="m-sec-empty">暂无课程，去课程中心看看吧</div>';
       var html = '';
       if (cont.length) {
-        html += '<div style="font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:8px"><i class="fa-solid fa-spinner fa-spin" style="color:#f59e0b"></i> 继续学习</div>';
         html += cont.slice(0, 3).map(function (c) { return courseItem(c, 'go'); }).join('');
       }
       if (done.length) {
@@ -582,13 +618,13 @@
       });
     }
 
-    /* ========== 我的培训（改为点网格按钮弹窗显示） ========== */
+    /* ========== 我的培训（弹层展示全部培训，不再仅限已报名） ========== */
     async function openTrainingsSheet() {
       var res = null;
-      try { res = await Api.userTrainings(); } catch (e) {}
+      try { res = await Api.userCenterTrainings(); } catch (e) {}
       var list = (res && res.list) || [];
       var html;
-      if (!list.length) { html = '<div class="m-sec-empty">你还没有参与的培训，去扫码签到吧</div>'; }
+      if (!list.length) { html = '<div class="m-sec-empty">暂无培训记录</div>'; }
       else {
         var map = { '进行中': 'm-status--ing', '未开始': 'm-status--wait', '已结束': 'm-status--end' };
         var order = { '进行中': 0, '未开始': 1, '已结束': 2 };
@@ -598,40 +634,76 @@
           return '<div class="m-train-item" data-train="' + App.esc(t.id) + '">' +
             '<div class="m-train-item__ic"><i class="fa-solid fa-users"></i></div>' +
             '<div class="m-train-item__bd">' +
-              '<div class="m-train-item__t">' + App.esc(t.name || '未命名培训') + '</div>' +
+              '<div class="m-train-item__t">' + App.esc(t.name || '未命名培训') + (t.isEnrolled ? ' <span style="font-size:10px;color:#7c5cff;background:#f3eefe;padding:1px 6px;border-radius:8px;margin-left:4px;font-weight:600">已报名</span>' : '') + '</div>' +
               '<div class="m-train-item__s">' + (t.startTime ? fmtDateTimeShort(t.startTime) : (t.location || '')) + (t.location ? ' · ' + App.esc(t.location) : '') + '</div>' +
             '</div>' +
             '<span class="m-train-item__status ' + cls + '">' + t.trainingStatus + '</span>' +
           '</div>';
         }).join('') + '</div>';
       }
-      App.openSheet('<div class="m-sheet__hd"><div class="m-sheet__title">我的培训</div></div><div class="m-sheet__body">' + html + '</div>');
+      App.openSheet('<div class="m-sheet__hd"><div class="m-sheet__title">全部培训 <span style="font-size:12px;color:var(--ink-3);font-weight:600;margin-left:4px">共 ' + list.length + ' 场</span></div></div><div class="m-sheet__body">' + html + '</div>');
       var body = document.querySelector('.m-sheet.is-open .m-sheet__body');
       if (body) body.querySelectorAll('[data-train]').forEach(function (el) {
         el.addEventListener('click', function () { App.closeSheet(); setTimeout(function () { location.href = '/m/training.html?id=' + el.getAttribute('data-train'); }, 200); });
       });
     }
 
-    /* ========== 学习成就弹层 ========== */
-    function bindAchPopover(achievements) {
-      document.querySelectorAll('#m-ach-scroll .m-ach').forEach(function (el) {
+    /* ========== 成就徽章全屏覆盖层 ========== */
+    /* ========== 成就徽章（底部弹层，不再全屏） ========== */
+    function openAchSheet() {
+      var list = window.__achievements || [];
+      var unlocked = window.__achUnlocked != null ? window.__achUnlocked : list.filter(function (x) { return x.ok; }).length;
+      var grid = list.length ? list.map(function (a) {
+        var bg = a.ok ? 'background:linear-gradient(135deg,' + a.color + ',' + a.color + 'cc);' : '';
+        var badge = '<div class="m-ach-cell__badge" style="' + bg + '"><i class="fa-solid ' + a.icon + '"></i>' +
+          (a.ok ? '' : '<span class="m-ach-cell__lock"><i class="fa-solid fa-lock"></i></span>') + '</div>';
+        return '<div class="m-ach-cell' + (a.ok ? '' : ' is-locked') + '" data-ach="' + a.key + '">' + badge + '<div class="m-ach-cell__name">' + a.name + '</div></div>';
+      }).join('') : '<div class="m-empty">暂无成就数据</div>';
+      var html = '<div class="m-sheet__hd"><div class="m-sheet__title">成就徽章 <span style="font-size:12px;color:var(--ink-3);font-weight:600;margin-left:4px">已解锁 ' + unlocked + '/' + list.length + '</span></div></div>' +
+        '<div class="m-ach-grid">' + grid + '</div>';
+      App.openSheet(html);
+      var body = document.querySelector('.m-sheet.is-open .m-sheet__body');
+      if (body) body.querySelectorAll('.m-ach-cell[data-ach]').forEach(function (el) {
         el.addEventListener('click', function () {
-          var a = null;
-          for (var k = 0; k < achievements.length; k++) { if (achievements[k].key === el.getAttribute('data-ach')) { a = achievements[k]; break; } }
-          if (!a) return;
-          var html = '<div class="m-sheet__hd"><div class="m-sheet__title">学习成就</div></div><div class="m-sheet__body">' +
-            '<div style="text-align:center;padding:10px 0 16px">' +
-            '<div style="width:84px;height:84px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff;' +
-            (a.ok ? 'background:linear-gradient(135deg,' + a.color + ',' + a.color + 'cc)' : 'background:#e9ebf1;color:#9aa0b0') + '"><i class="fa-solid ' + a.icon + '"></i></div>' +
-            '<div style="font-size:17px;font-weight:800;color:#1f2330">' + a.name + '</div>' +
-            '<div style="font-size:13px;color:#5b6172;margin-top:6px">' + a.desc + '</div>' +
-            '<div style="margin-top:14px;font-size:13px;font-weight:700;color:' + (a.ok ? '#059669' : '#9aa0b0') + '">' +
-            (a.ok ? '<i class="fa-solid fa-check-circle"></i> 已解锁' : '<i class="fa-solid fa-lock"></i> 未解锁') + '</div>' +
-            '</div></div>';
-          App.openSheet(html);
+          var a = null, key = el.getAttribute('data-ach');
+          for (var k = 0; k < list.length; k++) { if (list[k].key === key) { a = list[k]; break; } }
+          if (a) showAchDetail(a);
         });
       });
     }
+
+    function showAchDetail(a) {
+      var modal = document.getElementById('m-ach-detail');
+      if (!modal) return;
+      var ok = !!a.ok;
+      var badge = modal.querySelector('#m-ach-detail-badge');
+      badge.className = 'm-ach-modal__badge ' + (ok ? 'is-on' : 'is-off');
+      badge.style.background = ok ? 'linear-gradient(135deg,' + a.color + ',' + a.color + 'cc)' : '#e9ebf1';
+      badge.innerHTML = '<i class="fa-solid ' + a.icon + '"></i>';
+      modal.querySelector('#m-ach-detail-name').textContent = a.name;
+      modal.querySelector('#m-ach-detail-desc').textContent = a.desc;
+      var status = modal.querySelector('#m-ach-detail-status');
+      status.className = 'm-ach-modal__status ' + (ok ? 'is-on' : 'is-off');
+      status.innerHTML = ok ? '<i class="fa-solid fa-check-circle"></i> 已解锁' : '<i class="fa-solid fa-lock"></i> 未解锁';
+      var timeEl = modal.querySelector('#m-ach-detail-time');
+      if (ok) {
+        timeEl.style.display = '';
+        timeEl.textContent = a.earnedAt ? ('获得时间：' + App.fmtDate(a.earnedAt)) : '获得时间：此前已获得';
+      } else {
+        timeEl.style.display = 'none';
+      }
+      modal.hidden = false;
+      requestAnimationFrame(function () { modal.classList.add('is-open'); });
+    }
+
+    function closeAchDetail() {
+      var modal = document.getElementById('m-ach-detail');
+      if (!modal) return;
+      modal.classList.remove('is-open');
+      setTimeout(function () { modal.hidden = true; }, 220);
+    }
+    App.closeAchDetail = closeAchDetail;
+    App.openAchSheet = openAchSheet;
 
     /* ========== 等级说明弹层 ========== */
     function openLevelInfo() {
@@ -666,7 +738,7 @@
           if (a === 'logout') return App.logout();
           if (a === 'level') return openLevelInfo();
           if (a === 'courses') return openCoursesSheet();
-          if (a === 'ach') { document.getElementById('m-ach-scroll').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+          if (a === 'ach') return openAchSheet();
           if (a === 'pwd') return openChangePwd();
           if (a === 'export') return exportData();
           if (a === 'del') return confirmDelete();
@@ -682,7 +754,7 @@
     /* ========== 设置面板（从网格入口打开 · 顶部含等级卡） ========== */
     function openSettingsPanel() {
       // 动态读取当前用户等级数据（统一走 window.XP，优先使用共享持久化 XP，确保与 PC 端一致）
-      var u = App.user || {};
+      var u = App.user() || {};
       var ms = window.__mineStats || {};
       var xp = (ms.xp != null) ? ms.xp : XP.loadPersistedXp(App.userId());
       if (xp === null || xp === undefined) {
@@ -835,7 +907,13 @@
     async function openCert() {
       App.showLoading();
       try {
-        var list = await Api.certificates() || [];
+        var all = await Api.certificates() || [];
+        // 仅展示有效证书（active 且未过期），与顶部「已获得 N 张」计数口径一致
+        var list = all.filter(function (c) {
+          var st = c.status;
+          if (st === 'active' && c.expireAt && new Date(c.expireAt).getTime() < Date.now()) st = 'expired';
+          return st === 'active';
+        });
         App.hideLoading();
         var html = '<div class="m-sheet__hd"><div class="m-sheet__title">我的证书</div></div><div class="m-sheet__body">';
         if (!list.length) html += '<div class="m-empty"><i class="fa-regular fa-award"></i>暂无证书<br><span style="font-size:12px">完成培训课程后即可获得证书</span></div>';

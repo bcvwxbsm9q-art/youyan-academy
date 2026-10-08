@@ -41,14 +41,9 @@
 
       <!-- 完整月历（始终显示） -->
       <div class="cs-month-panel" id="m-month-panel">
-        <!-- 图例 + 本月统计（参考钉钉考勤） -->
+        <!-- 当月统计（参考钉钉考勤） -->
         <div class="cs-cal-meta">
-          <div class="cs-stat" id="cs-stat">本月 0 场培训</div>
-          <div class="cs-legend">
-            <span class="cs-legend__i"><i class="dot dot--done"></i>已完成</span>
-            <span class="cs-legend__i"><i class="dot dot--todo"></i>待完成</span>
-            <span class="cs-legend__i"><i class="dot dot--upcoming"></i>未开始</span>
-          </div>
+          <div class="cs-stat" id="cs-stat">当月 0 场培训</div>
         </div>
         <div class="m-month-view" id="m-month-view"></div>
       </div>
@@ -56,7 +51,7 @@
 
     <!-- 列表头部（可选，当前由课程表统一承载） -->
     <div class="m-tl-hd" id="tl-hd" style="display:none">
-      <span class="m-tl-hd__title" id="tl-title">本月培训</span>
+      <span class="m-tl-hd__title" id="tl-title">当月培训列表</span>
       <span class="m-tl-hd__count" id="list-n">(0)</span>
     </div>
 
@@ -104,22 +99,13 @@
       var today = isCur ? new Date().getDate() : -1;
       var dw = ['一','二','三','四','五','六','日'];
 
-      // 该月有培训的日期集合 + 每日聚合状态（参考钉钉考勤：绿=已完成 / 橙=待完成 / 蓝=未开始）
+      // 该月"有培训"的日期集合（仅用于标记有培训，不再显示已完成/未开始/待完成状态）
       var trainingDays = {};
-      var dayStatus = {};
       allTrainings.forEach(function(t) {
         if (!t.startTime) return;
         var d = new Date(t.startTime);
         if (d.getFullYear() === y && d.getMonth() === m) {
-          var day = d.getDate();
-          trainingDays[day] = true;
-          var st = calcStatus(t);
-          var key = st ? st.cls : 'is-doing';
-          // 优先级：todo > doing > upcoming > done（当天只要有未完成就标记为待完成）
-          if (key === 'is-todo') dayStatus[day] = 'todo';
-          else if (key === 'is-doing') { if (dayStatus[day] !== 'todo') dayStatus[day] = 'todo'; }
-          else if (key === 'is-upcoming') { if (!dayStatus[day]) dayStatus[day] = 'upcoming'; }
-          else if (key === 'is-done') { if (!dayStatus[day]) dayStatus[day] = 'done'; }
+          trainingDays[d.getDate()] = true;
         }
       });
 
@@ -134,13 +120,7 @@
         if (selectedDate && selectedDate === dateKey) cls += ' is-sel';
         else if (trainingDays[d]) cls += ' is-has';
 
-        // 有培训时显示状态圆点（参考钉钉考勤的彩色圆点标识）
-        var dotHtml = '';
-        if (dayStatus[d]) {
-          dotHtml = '<span class="m-mg-d__dot m-mg-d__dot--' + dayStatus[d] + '"></span>';
-        }
-
-        html += '<div class="' + cls + '" data-d="' + d + '">' + d + dotHtml + '</div>';
+        html += '<div class="' + cls + '" data-d="' + d + '"><span class="m-mg-d__num">' + d + '</span><span class="m-mg-d__dot"></span></div>';
       }
       html += '</div>';
       var box = document.getElementById('m-month-view');
@@ -173,7 +153,7 @@
       var ml = document.getElementById('cs-month-label');
       if (ml) ml.textContent = y + '年' + (m + 1) + '月';
       var stat = document.getElementById('cs-stat');
-      if (stat) stat.innerHTML = '本月 <b>' + monthCount + '</b> 场培训 · 已签到 <b>' + monthSigned + '</b> 场';
+      if (stat) stat.innerHTML = '当月 <b>' + monthCount + '</b> 场培训 · 已签到 <b>' + monthSigned + '</b> 场';
       renderMonthGrid(y, m);
     }
 
@@ -279,7 +259,7 @@
       renderFiltered();
     }
 
-    /* ========== 列表数据源（默认当月 / 选中某天） ========== */
+    /* ========== 列表数据源（默认当前查看月 / 选中某天） ========== */
     function getFiltered() {
       if (selectedDate) {
         return allTrainings.filter(function(t) {
@@ -287,12 +267,11 @@
           return App.fmtDate(new Date(t.startTime)) === selectedDate;
         });
       }
-      var now = new Date();
-      var y = now.getFullYear(), m = now.getMonth();
+      // 无选中时，使用当前查看月（viewY/viewM）而非系统当前月，保证翻月后列表跟着切
       return allTrainings.filter(function(t) {
         if (!t.startTime) return false;
         var d = new Date(t.startTime);
-        return d.getFullYear() === y && d.getMonth() === m;
+        return d.getFullYear() === viewY && d.getMonth() === viewM;
       });
     }
 
@@ -304,23 +283,20 @@
         var lbl = fmtSelectedLabel();
         titleEl.textContent = lbl.m + ' 培训';
       } else {
-        titleEl.textContent = '本月培训';
+        titleEl.textContent = '当月培训列表';
       }
       renderSchedList(list);
     }
 
-    /* ========== 状态计算（已完成/进行中/待完成/未开始） ========== */
+    /* ========== 状态计算（与 PC 端一致：报名状态 + 是否已过结束时间） ========== */
     function calcStatus(t) {
-      var req = (t.signinEnabled ? 1 : 0) +
-                (t.surveyEnabled && t.linkedSurveyId ? 1 : 0) +
-                (t.examEnabled && t.linkedExamId ? 1 : 0);
-      if (!req) return null;
-      var done = (t.signinDone ? 1 : 0) + (t.surveyDone ? 1 : 0) + (t.examDone ? 1 : 0);
-      if (done === req) return { cls: 'is-done', label: '已完成' };
-      if (done > 0) return { cls: 'is-doing', label: '进行中' };
-      var sd = t.startTime ? new Date(t.startTime) : null;
-      var past = sd ? sd <= new Date() : true;
-      return past ? { cls: 'is-todo', label: '待完成' } : { cls: 'is-upcoming', label: '未开始' };
+      var now = new Date();
+      var ended = false;
+      if (t.endTime) ended = new Date(t.endTime) <= now;
+      else if (t.startTime) ended = new Date(t.startTime) <= now;
+      var enrolled = !!t.isEnrolled;
+      if (ended) return enrolled ? { cls: 'is-done', label: '已完成' } : { cls: 'is-ended', label: '已结束' };
+      return enrolled ? { cls: 'is-enrolled', label: '已报名' } : { cls: 'is-open', label: '我要报名' };
     }
 
     /* ========== 课程卡片列表（参考图风格） ========== */
@@ -333,7 +309,7 @@
           emptyText = parts[1] + '月' + parts[2] + '日 没有培训安排';
           guide = '<div class="m-empty__acts"><button class="m-btn m-btn--ghost m-btn--sm" onclick="clearDateSel()">查看全部</button></div>';
         } else {
-          emptyText = '本月还没有培训安排';
+          emptyText = '当月还没有培训安排';
           guide = '<div class="m-empty__acts"><button class="m-btn m-btn--ghost m-btn--sm" onclick="goToday()">回到今日</button></div>';
         }
         box.innerHTML = '<div class="m-empty"><i class="fa-regular fa-calendar-xmark"></i>' + emptyText + guide + '</div>';
@@ -359,9 +335,8 @@
         var proj = t.projectName || t.project || t.category || '';
         var tagHtml = proj ? '<span class="cs-tag cs-tag--proj">' + App.esc(proj) + '</span>' : '';
 
-        // 状态角标
-        var st = calcStatus(t);
-        var badgeHtml = st ? '<span class="cs-badge cs-badge--' + st.cls + '">' + App.esc(st.label) + '</span>' : '';
+        // 状态由下方按钮直接呈现，不再在标题旁重复角标
+        var stt = calcStatus(t);
 
         // 讲师信息
         var instName = t.instructor || '待定';
@@ -373,8 +348,16 @@
         if (t.location) subParts.push(App.esc(t.location));
         var subTitle = subParts.join(' · ') || (t.category || '');
 
-        // 操作按钮
+        // 操作按钮（报名按钮按四态渲染，与 PC 端对齐；已结束态禁用）
         var acts = [];
+        if (stt.cls === 'is-ended') {
+          acts.push('<button class="cs-act cs-act--disabled" data-act="enroll" disabled><i class="fa-solid fa-ban"></i><span>已结束</span></button>');
+        } else if (stt.cls === 'is-done') {
+          acts.push('<button class="cs-act cs-act--on" data-act="enroll" disabled><i class="fa-solid fa-circle-check"></i><span>已完成</span></button>');
+        } else {
+          var enrolled = stt.cls === 'is-enrolled';
+          acts.push('<button class="cs-act ' + (enrolled ? 'cs-act--on' : 'cs-act--enroll') + '" data-act="enroll" onclick="event.stopPropagation();toggleEnroll(' + t.id + ')"><i class="fa-solid ' + (enrolled ? 'fa-circle-check' : 'fa-ticket') + '"></i><span>' + (enrolled ? '已报名' : '报名') + '</span></button>');
+        }
         if (t.coursewareEnabled && t.coursewareFiles && t.coursewareFiles.length) {
           acts.push('<button class="cs-act" data-act="cw" onclick="event.stopPropagation();goDayTraining(' + t.id + ')"><i class="fa-regular fa-folder-open"></i><span>课件</span></button>');
         }
@@ -393,7 +376,6 @@
             '<div class="cs-card__row1">' +
               '<span class="cs-title">' + App.esc(t.name || '未命名培训') + '</span>' +
               tagHtml +
-              badgeHtml +
             '</div>' +
             /* 第二行：讲师头像 + 名字 + 副标题 + 操作按钮 */
             '<div class="cs-card__row2">' +
@@ -514,6 +496,47 @@
     function goDayTraining(id) {
       App.closeSheet();
       location.href = '/m/course-detail.html?id=' + id;
+    }
+
+    /* ========== 报名 / 取消报名 ========== */
+    async function toggleEnroll(id) {
+      var uid = App.userId();
+      if (!uid) { App.toast('请先登录后再报名', 'error'); return; }
+      var t = allTrainings.find(function (x) { return String(x.id) === String(id); });
+      if (!t) return;
+      // 已结束的培训不允许报名 / 取消报名
+      var stt = calcStatus(t);
+      if (stt.cls === 'is-ended' || stt.cls === 'is-done') {
+        App.toast('该培训已结束，无法操作', 'error');
+        return;
+      }
+      var willCancel = !!t.isEnrolled;
+      App.confirm({
+        title: willCancel ? '取消报名' : '报名培训',
+        message: (willCancel ? '确定取消报名「' : '确定报名「') + App.esc(t.name || '该培训') + '」？' + (willCancel ? '取消后将从你的报名列表移除。' : ''),
+        confirmText: willCancel ? '取消报名' : '确认报名',
+        onConfirm: function () { applyEnroll(id, willCancel); }
+      });
+    }
+
+    async function applyEnroll(id, willCancel) {
+      var uid = App.userId();
+      App.showLoading(willCancel ? '取消中...' : '报名中...');
+      try {
+        if (willCancel) {
+          await Api.cancelEnroll(id, uid);
+        } else {
+          await Api.enroll(id, uid);
+        }
+        var t = allTrainings.find(function (x) { return String(x.id) === String(id); });
+        if (t) t.isEnrolled = !willCancel;
+        App.hideLoading();
+        App.toast(willCancel ? '已取消报名' : '报名成功');
+        renderFiltered();
+      } catch (e) {
+        App.hideLoading();
+        App.toast(e.message || '操作失败', 'error');
+      }
     }
 
     /* ========== 培训详情弹层 ========== */

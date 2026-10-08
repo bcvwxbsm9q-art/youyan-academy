@@ -62,6 +62,7 @@
     get:  function (p) { return request('GET', p); },
     post: function (p, b) { return request('POST', p, b); },
     put:  function (p, b) { return request('PUT', p, b); },
+    del:  function (p, b) { return request('DELETE', p, b); },
 
     // ---- 首页 ----
     banners: function () { return Api.get('/banners'); },
@@ -86,6 +87,10 @@
     trainingSchedule: function () { return Api.get('/training/schedule'); },
     trainingDetail:  function (id) { return Api.get('/training/' + id); },
     trainingSignins: function (id) { return Api.get('/training/' + id + '/signins'); },
+    // 报名相关
+    enrollments:  function (id) { return Api.get('/training/' + id + '/enrollments'); },
+    enroll:       function (id, userId) { return Api.post('/training/' + id + '/enroll', { userId: userId }); },
+    cancelEnroll: function (id, userId) { return Api.del('/training/' + id + '/enroll', { userId: userId }); },
 
     // ---- 签到 ----
     signin: function (id, userId, code) {
@@ -113,6 +118,8 @@
     examRecords: function () { return Api.get('/user/exam-records'); },
     certificates: function () { return Api.get('/user-certificates'); },
     userTrainings: function () { return Api.get('/user/trainings'); },
+    // 个人中心「全部培训」：系统所有培训（不限于已报名），供 m/mine.html 与 PC 端复用
+    userCenterTrainings: function () { return Api.get('/user/all-trainings'); },
     notifications: function () { return Api.get('/notifications'); },
     markRead: function (id) { return Api.put('/notifications/' + id + '/read', {}); },
     markAllRead: async function (ids) { return Api.post('/notifications/batch-read', { ids: ids }); },

@@ -11,7 +11,7 @@
       "role": "admin",
       "avatar": "/uploads/user-avatars/1783579052402-447707856.jpg",
       "createdAt": "2026/7/9 14:22:27",
-      "lastLogin": "2026/10/8 10:41:09",
+      "lastLogin": "2026/8/27 14:03:43",
       "status": "active",
       "position": "人事经理"
     },
@@ -507,11 +507,10 @@
       "attachments": [],
       "duration": 2838,
       "views": 1,
-      "rating": 5,
+      "rating": 0,
       "id": 1784184709620,
       "createdAt": "2026/7/16 14:51:49",
-      "updatedAt": "2026/7/16 14:51:49",
-      "likes": 1
+      "updatedAt": "2026/7/16 14:51:49"
     },
     {
       "title": "浅谈抖音小游戏接入及常见处理",
@@ -1183,14 +1182,6 @@
       "score": 2,
       "createdAt": "2026-06-11T10:52:18.287Z",
       "updatedAt": "2026-06-11T10:52:18.287Z"
-    },
-    {
-      "id": 1787816351891,
-      "userId": 1780909174403,
-      "courseId": 1784184709620,
-      "score": 5,
-      "createdAt": "2026-08-27T07:39:11.891Z",
-      "updatedAt": "2026-08-27T07:39:21.616Z"
     }
   ],
   "lecturer_applications": [],
@@ -1934,6 +1925,13 @@
       "userId": 1780909174403,
       "enrolledAt": "2026-07-28T06:31:13.010Z",
       "source": "self"
+    },
+    {
+      "id": 1787814262127,
+      "trainingId": 1787811263606,
+      "userId": 1780909174403,
+      "enrolledAt": "2026-08-27T07:04:22.127Z",
+      "source": "self"
     }
   ],
   "papers": [
@@ -2106,58 +2104,6 @@
     {
       "userId": "1780909174403",
       "loginTime": "2026-08-27T06:03:43.360Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-08-28T09:00:03.215Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-08-28T09:16:17.006Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-08-31T03:57:54.703Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-09-04T02:01:33.921Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-09-04T02:01:39.392Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-09-15T10:12:21.551Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-09-17T08:05:41.453Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-09-24T03:13:38.071Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-09-24T03:17:08.745Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-09-29T09:54:03.298Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-10-08T02:21:04.713Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-10-08T02:39:36.919Z"
-    },
-    {
-      "userId": "1780909174403",
-      "loginTime": "2026-10-08T02:41:09.754Z"
     }
   ],
   "lecturer_payment_records": [
@@ -2212,18 +2158,17 @@
     "completedCourses": [],
     "videoProgress": {
       "1784182455662_0": 86,
-      "1784185505080_0": 91,
-      "1784184709620_0": 54
+      "1784185505080_0": 0,
+      "1784184709620_0": 52
     },
     "videoWatchTimes": {
       "1784019677171_0": 42,
       "1784019483483_0": 384,
       "1784182455662_0": 288,
-      "1784184709620_0": 100,
-      "1784776157906_0": 10,
-      "1784185505080_0": 60
+      "1784184709620_0": 31,
+      "1784776157906_0": 10
     },
-    "lastStudyTime": "2026-08-28T09:38:51.890Z",
+    "lastStudyTime": "2026-08-27T06:26:41.165Z",
     "studyDates": [
       "2026-07-14",
       "2026-07-15",
@@ -2231,14 +2176,13 @@
       "2026-07-23",
       "2026-07-27",
       "2026-07-29",
-      "2026-08-27",
-      "2026-08-28"
+      "2026-08-27"
     ],
     "ratings": 1,
     "shares": 1,
-    "likes": 2,
+    "likes": 1,
     "examRecords": [],
-    "totalSeconds": 874,
+    "totalSeconds": 745,
     "studyRecords": [
       {
         "courseId": 1784019677171,
@@ -3112,150 +3056,6 @@
         "duration": 10,
         "timestamp": "2026-08-27T06:26:41.165Z",
         "date": "2026-08-27"
-      },
-      {
-        "courseId": "1784184709620",
-        "courseTitle": "游戏项目上线与故障排查",
-        "videoIndex": 0,
-        "videoTitle": "游戏项目上线与故障排查（陈志勇）.mp4",
-        "duration": 10,
-        "timestamp": "2026-08-27T07:38:32.977Z",
-        "date": "2026-08-27"
-      },
-      {
-        "courseId": "1784184709620",
-        "courseTitle": "游戏项目上线与故障排查",
-        "videoIndex": 0,
-        "videoTitle": "游戏项目上线与故障排查（陈志勇）.mp4",
-        "duration": 10,
-        "timestamp": "2026-08-27T07:38:42.978Z",
-        "date": "2026-08-27"
-      },
-      {
-        "courseId": "1784184709620",
-        "courseTitle": "游戏项目上线与故障排查",
-        "videoIndex": 0,
-        "videoTitle": "游戏项目上线与故障排查（陈志勇）.mp4",
-        "duration": 10,
-        "timestamp": "2026-08-27T07:38:52.977Z",
-        "date": "2026-08-27"
-      },
-      {
-        "courseId": "1784184709620",
-        "courseTitle": "游戏项目上线与故障排查",
-        "videoIndex": 0,
-        "videoTitle": "游戏项目上线与故障排查（陈志勇）.mp4",
-        "duration": 10,
-        "timestamp": "2026-08-27T07:39:02.977Z",
-        "date": "2026-08-27"
-      },
-      {
-        "courseId": "1784184709620",
-        "courseTitle": "游戏项目上线与故障排查",
-        "videoIndex": 0,
-        "videoTitle": "游戏项目上线与故障排查（陈志勇）.mp4",
-        "duration": 10,
-        "timestamp": "2026-08-27T07:39:12.978Z",
-        "date": "2026-08-27"
-      },
-      {
-        "courseId": "1784184709620",
-        "courseTitle": "游戏项目上线与故障排查",
-        "videoIndex": 0,
-        "videoTitle": "游戏项目上线与故障排查（陈志勇）.mp4",
-        "duration": 2,
-        "timestamp": "2026-08-27T07:39:15.068Z",
-        "date": "2026-08-27"
-      },
-      {
-        "courseId": "1784184709620",
-        "courseTitle": "游戏项目上线与故障排查",
-        "videoIndex": 0,
-        "videoTitle": "游戏项目上线与故障排查（陈志勇）.mp4",
-        "duration": 10,
-        "timestamp": "2026-08-27T07:39:27.014Z",
-        "date": "2026-08-27"
-      },
-      {
-        "courseId": "1784184709620",
-        "courseTitle": "游戏项目上线与故障排查",
-        "videoIndex": 0,
-        "videoTitle": "游戏项目上线与故障排查（陈志勇）.mp4",
-        "duration": 7,
-        "timestamp": "2026-08-27T07:39:34.421Z",
-        "date": "2026-08-27"
-      },
-      {
-        "courseId": "1784185505080",
-        "courseTitle": "浅谈抖音小游戏接入及常见处理",
-        "videoIndex": 0,
-        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
-        "duration": 10,
-        "timestamp": "2026-08-28T09:25:56.116Z",
-        "date": "2026-08-28"
-      },
-      {
-        "courseId": "1784185505080",
-        "courseTitle": "浅谈抖音小游戏接入及常见处理",
-        "videoIndex": 0,
-        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
-        "duration": 10,
-        "timestamp": "2026-08-28T09:26:06.118Z",
-        "date": "2026-08-28"
-      },
-      {
-        "courseId": "1784185505080",
-        "courseTitle": "浅谈抖音小游戏接入及常见处理",
-        "videoIndex": 0,
-        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
-        "duration": 2,
-        "timestamp": "2026-08-28T09:26:08.631Z",
-        "date": "2026-08-28"
-      },
-      {
-        "courseId": "1784185505080",
-        "courseTitle": "浅谈抖音小游戏接入及常见处理",
-        "videoIndex": 0,
-        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
-        "duration": 10,
-        "timestamp": "2026-08-28T09:26:20.420Z",
-        "date": "2026-08-28"
-      },
-      {
-        "courseId": "1784185505080",
-        "courseTitle": "浅谈抖音小游戏接入及常见处理",
-        "videoIndex": 0,
-        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
-        "duration": 10,
-        "timestamp": "2026-08-28T09:26:30.428Z",
-        "date": "2026-08-28"
-      },
-      {
-        "courseId": "1784185505080",
-        "courseTitle": "浅谈抖音小游戏接入及常见处理",
-        "videoIndex": 0,
-        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
-        "duration": 14,
-        "timestamp": "2026-08-28T09:26:45.421Z",
-        "date": "2026-08-28"
-      },
-      {
-        "courseId": "1784185505080",
-        "courseTitle": "浅谈抖音小游戏接入及常见处理",
-        "videoIndex": 0,
-        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
-        "duration": 3,
-        "timestamp": "2026-08-28T09:26:48.432Z",
-        "date": "2026-08-28"
-      },
-      {
-        "courseId": "1784185505080",
-        "courseTitle": "浅谈抖音小游戏接入及常见处理",
-        "videoIndex": 0,
-        "videoTitle": "浅谈抖音小游戏接入及常见处理.mp4",
-        "duration": 1,
-        "timestamp": "2026-08-28T09:38:51.890Z",
-        "date": "2026-08-28"
       }
     ],
     "migratedAt": "2026-07-14T09:01:38.982Z",
@@ -3274,13 +3074,12 @@
     "examRecords": []
   },
   "user_likes_1780909174403": {
-    "totalLikes": 3,
+    "totalLikes": 2,
     "likedCourses": [
       1784019483483
     ],
     "likesCourses": [
-      "1784776157906",
-      "1784184709620"
+      "1784776157906"
     ]
   },
   "learning_data_1780909174403": {
@@ -3300,7 +3099,7 @@
     ],
     "ratings": 1,
     "shares": 1,
-    "likes": 2,
+    "likes": 1,
     "examRecords": [],
     "totalSeconds": 320,
     "studyRecords": [
@@ -3615,21 +3414,15 @@
     "migrationVersion": 2
   },
   "user_shares_1780909174403": {
-    "totalShares": 2,
+    "totalShares": 1,
     "sharedCourses": [
       1784019483483
-    ],
-    "sharesCourses": [
-      "1784184709620"
     ]
   },
   "user_ratings_1780909174403": {
-    "totalRatings": 3,
+    "totalRatings": 1,
     "ratedCourses": [
       1784019483483
-    ],
-    "ratingsCourses": [
-      "1784184709620"
     ]
   },
   "course_interaction_1783590826474": {
@@ -4110,17 +3903,5 @@
     "userRatings": {},
     "ratingSum": 0,
     "ratingCount": 0
-  },
-  "course_interaction_1784184709620": {
-    "userLikes": {
-      "1780909174403": true
-    },
-    "likes": 1,
-    "shares": 1,
-    "userRatings": {
-      "1780909174403": 5
-    },
-    "ratingSum": 5,
-    "ratingCount": 1
   }
 }

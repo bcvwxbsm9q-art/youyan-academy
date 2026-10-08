@@ -358,4 +358,74 @@
   }
 
   window.App = App;
+
+  /* 横向滚动容器（推荐讲师等）：补上「鼠标拖拽滑动 + 惯性」
+     - 触屏原生 swipe 已可滚动，这里只处理鼠标（pointerType==='mouse'），避免与触屏冲突
+     - 桌面预览/PC 上用鼠标拖拽 overflow 容器默认不滚动，故用 pointer 事件模拟拖拽
+     - 拖拽期间关闭 scroll-snap（避免吸附点和跟手打架、产生卡顿），松手恢复并带惯性衰减
+     - 拖拽位移超过阈值后抑制随后的 click，避免误触 */
+  (function enableDragScrollX() {
+    var box = null, startX = 0, startLeft = 0, moved = 0;
+    var lastX = 0, lastT = 0, vel = 0; // 速度 px/ms（带方向）
+    var raf = 0;
+    function targetBox(e) {
+      var el = e.target && e.target.closest ? e.target.closest('.m-lec-scroll, [data-drag-scroll]') : null;
+      if (!el) return null;
+      if (el.scrollWidth <= el.clientWidth + 2) return null; // 未溢出则无需拖拽
+      return el;
+    }
+    function clamp(el, v) {
+      var max = el.scrollWidth - el.clientWidth;
+      if (v < 0) v = 0;
+      if (v > max) v = max;
+      return v;
+    }
+    function stopMomentum() { if (raf) { cancelAnimationFrame(raf); raf = 0; } }
+    document.addEventListener('pointerdown', function (e) {
+      if (e.pointerType && e.pointerType !== 'mouse') return; // 触屏交给原生滑动
+      box = targetBox(e);
+      if (!box) return;
+      stopMomentum();
+      startX = e.clientX; lastX = e.clientX; startLeft = box.scrollLeft;
+      moved = 0; vel = 0; lastT = e.timeStamp || Date.now();
+      box.classList.add('is-dragging'); // 关闭吸附，跟手 1:1
+    }, { passive: true });
+    document.addEventListener('pointermove', function (e) {
+      if (!box) return;
+      var dx = e.clientX - startX;
+      if (Math.abs(dx) > 4) moved = Math.abs(dx);
+      box.scrollLeft = clamp(box, startLeft - dx);
+      var now = e.timeStamp || Date.now();
+      var dt = now - lastT;
+      if (dt > 0) vel = (e.clientX - lastX) / dt; // px/ms，向右为正
+      lastX = e.clientX; lastT = now;
+    }, { passive: true });
+    function end() {
+      if (!box) return;
+      var b = box; box = null;
+      if (moved > 6 && Math.abs(vel) > 0.05) {
+        // 惯性滑动：摩擦衰减，松手后继续滑一段再吸附归位
+        var v = vel;
+        var step = function () {
+          v *= 0.94;
+          if (Math.abs(v) < 0.08) { raf = 0; b.classList.remove('is-dragging'); return; }
+          b.scrollLeft = clamp(b, b.scrollLeft - v * 16);
+          raf = requestAnimationFrame(step);
+        };
+        raf = requestAnimationFrame(step);
+      } else {
+        b.classList.remove('is-dragging'); // 无惯性则直接恢复吸附
+      }
+      if (moved > 6) {
+        // 拖拽后抑制本次 click，避免误触内部按钮/链接
+        var stop = function (ev) { ev.preventDefault(); ev.stopPropagation(); document.removeEventListener('click', stop, true); };
+        document.addEventListener('click', stop, true);
+        setTimeout(function () { document.removeEventListener('click', stop, true); }, 0);
+      }
+    }
+    document.addEventListener('pointerup', end);
+    document.addEventListener('pointercancel', end);
+    document.addEventListener('pointerleave', end);
+  })();
+
 })();

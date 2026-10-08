@@ -23,16 +23,13 @@
   }
 
   function calcStatus(t) {
-    var req = (t.signinEnabled ? 1 : 0) +
-              (t.surveyEnabled && t.linkedSurveyId ? 1 : 0) +
-              (t.examEnabled && t.linkedExamId ? 1 : 0);
-    if (!req) return null;
-    var done = (t.signinDone ? 1 : 0) + (t.surveyDone ? 1 : 0) + (t.examDone ? 1 : 0);
-    if (done === req) return { cls: 'is-done', label: '已完成' };
-    if (done > 0) return { cls: 'is-doing', label: '进行中' };
-    var sd = t.startTime ? new Date(t.startTime) : null;
-    var past = sd ? sd <= new Date() : true;
-    return past ? { cls: 'is-todo', label: '待完成' } : { cls: 'is-upcoming', label: '未开始' };
+    var now = new Date();
+    var ended = false;
+    if (t.endTime) ended = new Date(t.endTime) <= now;
+    else if (t.startTime) ended = new Date(t.startTime) <= now;
+    var enrolled = !!t.isEnrolled;
+    if (ended) return enrolled ? { cls: 'is-done', label: '已完成' } : { cls: 'is-ended', label: '已结束' };
+    return enrolled ? { cls: 'is-enrolled', label: '已报名' } : { cls: 'is-open', label: '我要报名' };
   }
 
   async function getTraining(id) {
@@ -69,6 +66,13 @@
           t.examDone = recs.some(function (r) { return String(r.examId) == String(t.linkedExamId); });
         } catch (e) {}
       }
+      // 报名状态（自主报名）
+      try {
+        var enr = await Api.enrollments(t.id);
+        var enrList = Array.isArray(enr) ? enr : (enr && enr.data ? enr.data : []);
+        t.isEnrolled = enrList.some(function (e) { return String(e.userId) === String(uid); });
+        t.enrollCount = enrList.length;
+      } catch (e) { t.isEnrolled = false; t.enrollCount = 0; }
     }
     return t;
   }
@@ -252,7 +256,6 @@
   function renderDetailPage(t) {
     currentTraining = t;
     var st = calcStatus(t);
-    var badgeHtml = st ? '<span class="cs-badge cs-badge--' + st.cls + '">' + App.esc(st.label) + '</span>' : '';
 
     // 任务
     var tasks = buildTasks(t);
@@ -288,10 +291,29 @@
     // 基本信息卡：使用共享组件（PC 端模态 + 移动端页面共用）
     var sharedCardHtml = window.CourseDetailShared.renderCourseDetailBody(t, { showFooter: false });
 
-    // 状态徽章（追加到课程名后面）
-    var statusChip = badgeHtml ? '<span class="cd-status-chip">' + badgeHtml + '</span>' : '';
+    // 报名 CTA（四态，与 PC 端 training-plan.html 对齐）
+    // is-ended 已结束未报名 / is-done 已结束已报名 → disabled 不可点
+    // is-enrolled 未结束已报名 → 可取消 / is-open 未结束未报名 → 可报名
+    var enrollBtnHtml;
+    if (st.cls === 'is-ended') {
+      enrollBtnHtml = '<div class="cd-enroll">' +
+        '<div class="cd-enroll__info"><i class="fa-solid fa-users"></i> 已有 <b>' + (t.enrollCount || 0) + '</b> 人报名</div>' +
+        '<button class="cd-enroll__btn is-disabled" disabled><i class="fa-solid fa-ban"></i> 已结束</button></div>';
+    } else if (st.cls === 'is-done') {
+      enrollBtnHtml = '<div class="cd-enroll">' +
+        '<div class="cd-enroll__info"><i class="fa-solid fa-users"></i> 已有 <b>' + (t.enrollCount || 0) + '</b> 人报名</div>' +
+        '<button class="cd-enroll__btn is-on" disabled><i class="fa-solid fa-circle-check"></i> 已完成</button></div>';
+    } else if (st.cls === 'is-enrolled') {
+      enrollBtnHtml = '<div class="cd-enroll">' +
+        '<div class="cd-enroll__info"><i class="fa-solid fa-users"></i> 已有 <b>' + (t.enrollCount || 0) + '</b> 人报名</div>' +
+        '<button class="cd-enroll__btn is-on" onclick="CourseDetail.toggleEnroll(' + t.id + ')"><i class="fa-solid fa-circle-check"></i> 已报名</button></div>';
+    } else {
+      enrollBtnHtml = '<div class="cd-enroll">' +
+        '<div class="cd-enroll__info"><i class="fa-solid fa-users"></i> 已有 <b>' + (t.enrollCount || 0) + '</b> 人报名</div>' +
+        '<button class="cd-enroll__btn" onclick="CourseDetail.toggleEnroll(' + t.id + ')"><i class="fa-solid fa-ticket"></i> 立即报名</button></div>';
+    }
 
-    // PC 端"项目内容"区块标题保持原样
+    // 状态由下方报名 CTA 按钮直接呈现，不再在标题旁重复徽章
     var tasksSectionHtml = tasks.length
       ? '<div class="cd-section">' +
           '<h3 class="m-section__title"><i class="fa-solid fa-list-check"></i>项目内容</h3>' +
@@ -305,8 +327,9 @@
       '<button class="tp-info-back" onclick="CourseDetail.goBack()"><i class="fa-solid fa-arrow-left"></i><span>返回课程列表</span></button>' +
       // 基本信息区块
       '<div class="cd-section">' +
-        '<h3 class="m-section__title"><i class="fa-solid fa-circle-info"></i>基本信息' + statusChip + '</h3>' +
+        '<h3 class="m-section__title"><i class="fa-solid fa-circle-info"></i>基本信息</h3>' +
         sharedCardHtml +
+        enrollBtnHtml +
       '</div>' +
       // 课件
       cwHtml +
@@ -358,5 +381,37 @@
     location.href = '/m/training.html';
   }
 
-  window.CourseDetail = { init: init, goBack: goBack };
+  /* ---------- 报名 / 取消报名 ---------- */
+  async function toggleEnroll(id) {
+    var uid = App.userId();
+    if (!uid) { App.toast('请先登录后再报名', 'error'); return; }
+    var t = currentTraining;
+    if (!t || String(t.id) !== String(id)) return;
+    // 已结束的培训不允许报名 / 取消报名
+    var st = calcStatus(t);
+    if (st.cls === 'is-ended' || st.cls === 'is-done') {
+      App.toast('该培训已结束，无法操作', 'error');
+      return;
+    }
+    var willCancel = !!t.isEnrolled;
+    App.confirm({
+      title: willCancel ? '取消报名' : '报名培训',
+      message: (willCancel ? '确定取消报名「' : '确定报名「') + App.esc(t.name || '该培训') + '」？' + (willCancel ? '取消后将从你的报名列表移除。' : ''),
+      confirmText: willCancel ? '取消报名' : '确认报名',
+      onConfirm: function () { applyEnroll(id, willCancel); }
+    });
+  }
+  async function applyEnroll(id, willCancel) {
+    var uid = App.userId();
+    App.showLoading(willCancel ? '取消中...' : '报名中...');
+    try {
+      if (willCancel) await Api.cancelEnroll(id, uid); else await Api.enroll(id, uid);
+      currentTraining.isEnrolled = !willCancel;
+      App.hideLoading();
+      App.toast(willCancel ? '已取消报名' : '报名成功');
+      renderDetailPage(currentTraining);
+    } catch (e) { App.hideLoading(); App.toast(e.message || '操作失败', 'error'); }
+  }
+
+  window.CourseDetail = { init: init, goBack: goBack, toggleEnroll: toggleEnroll };
 })();

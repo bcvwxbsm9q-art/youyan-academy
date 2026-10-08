@@ -1,0 +1,25 @@
+﻿17176|C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.EXE C:\Users\xzj\.workbuddy\plugins\cache\workbuddy-builtin\sheetagent\5.5.6-wb.38337834.g5f969292.h4918b5ced607/mcp/start.mjs
+16976|"C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.exe"  C:\Users\xzj\.workbuddy\plugins\cache\workbuddy-builtin\weixinpay\1.6.109/dist/mcp-server.mjs
+8924|"C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\\node.exe"  "C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node_modules\npm\bin\npx-cli.js" @coding-solo/godot-mcp
+17832|"node"   "C:\Users\xzj\AppData\Local\npm-cache\_npx\6e568f649a25892d\node_modules\.bin\\..\@coding-solo\godot-mcp\build\index.js" 
+19360|"C:\Program Files (x86)\Adobe\Adobe Creative Cloud\CCXProcess\libs\node.exe" "C:\Program Files (x86)\Adobe\Adobe Creative Cloud\CCXProcess\js\main.js"
+28064|C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.EXE C:\Users\xzj\.workbuddy\plugins\cache\workbuddy-builtin\sheetagent\5.5.6-wb.38337834.g5f969292.h4918b5ced607/mcp/start.mjs
+29464|"C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.exe"  C:\Users\xzj\.workbuddy\plugins\cache\workbuddy-builtin\weixinpay\1.6.109/dist/mcp-server.mjs
+29904|"C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\\node.exe"  "C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node_modules\npm\bin\npx-cli.js" @coding-solo/godot-mcp
+24364|"node"   "C:\Users\xzj\AppData\Local\npm-cache\_npx\6e568f649a25892d\node_modules\.bin\\..\@coding-solo\godot-mcp\build\index.js" 
+28012|"C:\Program Files\Common Files\Adobe\Creative Cloud Libraries\libs\node.exe" "C:\Program Files\Common Files\Adobe\Creative Cloud Libraries\js\server.js"
+36420|C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.EXE C:\Users\xzj\.workbuddy\plugins\cache\workbuddy-builtin\sheetagent\5.5.6-wb.38337834.g5f969292.h4918b5ced607/mcp/start.mjs
+28760|"C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.exe"  C:\Users\xzj\.workbuddy\plugins\cache\workbuddy-builtin\weixinpay\1.6.109/dist/mcp-server.mjs
+35936|"C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\\node.exe"  "C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node_modules\npm\bin\npx-cli.js" @coding-solo/godot-mcp
+37140|"node"   "C:\Users\xzj\AppData\Local\npm-cache\_npx\6e568f649a25892d\node_modules\.bin\\..\@coding-solo\godot-mcp\build\index.js" 
+15036|C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.EXE C:\Users\xzj\.workbuddy\plugins\cache\workbuddy-builtin\sheetagent\5.5.6-wb.38337834.g5f969292.h4918b5ced607/mcp/start.mjs
+36176|"C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.exe"  C:\Users\xzj\.workbuddy\plugins\cache\workbuddy-builtin\weixinpay\1.6.109/dist/mcp-server.mjs
+37936|C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.EXE C:\Users\xzj\.workbuddy\plugins\cache\workbuddy-builtin\sheetagent\5.5.6-wb.38337834.g5f969292.h4918b5ced607/mcp/start.mjs
+30680|"C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.exe"  C:\Users\xzj\.workbuddy\plugins\cache\workbuddy-builtin\weixinpay\1.6.109/dist/mcp-server.mjs
+19524|"C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\\node.exe"  "C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node_modules\npm\bin\npx-cli.js" @coding-solo/godot-mcp
+41660|"node"   "C:\Users\xzj\AppData\Local\npm-cache\_npx\6e568f649a25892d\node_modules\.bin\\..\@coding-solo\godot-mcp\build\index.js" 
+29788|C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.EXE C:\Users\xzj\.workbuddy\plugins\cache\workbuddy-builtin\sheetagent\5.5.6-wb.38337834.g5f969292.h4918b5ced607/mcp/start.mjs
+39512|"C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.exe"  C:\Users\xzj\.workbuddy\plugins\cache\workbuddy-builtin\weixinpay\1.6.109/dist/mcp-server.mjs
+39352|"C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\\node.exe"  "C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node_modules\npm\bin\npx-cli.js" @coding-solo/godot-mcp
+37200|"node"   "C:\Users\xzj\AppData\Local\npm-cache\_npx\6e568f649a25892d\node_modules\.bin\\..\@coding-solo\godot-mcp\build\index.js" 
+31944|C:\Users\xzj\.workbuddy\binaries\node\versions\22.22.2-3\node.exe E:/培训相关/桌面/learning/server.js
